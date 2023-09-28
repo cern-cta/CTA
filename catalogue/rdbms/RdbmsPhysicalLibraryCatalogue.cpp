@@ -300,9 +300,9 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
 }
 
 void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) const {
-  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
-  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
-  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
+  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", RdbmsCatalogueUtils::convertEmptyStringToNull(pl.guiUrl.value()));
+  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", RdbmsCatalogueUtils::convertEmptyStringToNull(pl.webcamUrl.value()));
+  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", RdbmsCatalogueUtils::convertEmptyStringToNull(pl.location.value()));
   if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
   if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
   if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());

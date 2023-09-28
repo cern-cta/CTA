@@ -72,6 +72,7 @@ public:
 
   static bool isSetAndEmpty(const std::optional<std::string> &optionalStr);
   static bool isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList);
+  static std::optional<std::string> convertEmptyStringToNull(const std::string & str);
 
   /**
    * Set the DIRTY flag to true
