@@ -132,6 +132,11 @@ set_property(TARGET cta-objectstore-initialize APPEND PROPERTY INSTALL_RPATH ${P
 target_link_libraries(cta-objectstore-initialize
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
+add_executable(cta-objectstore-dummy cta-objectstore-dummy.cpp)
+set_property(TARGET cta-objectstore-dummy APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-objectstore-dummy
+        ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
 set_property(TARGET cta-objectstore-list APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-list
@@ -157,6 +162,6 @@ set_property(TARGET cta-objectstore-create-missing-repack-index APPEND PROPERTY 
 target_link_libraries(cta-objectstore-create-missing-repack-index
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
-install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
+install(TARGETS cta-objectstore-initialize cta-objectstore-dummy cta-objectstore-list cta-objectstore-dump-object
   cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
   DESTINATION usr/bin)

@@ -391,6 +391,7 @@ CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
 %files -n cta-objectstore-tools
 %attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
+%attr(0755,root,root) %{_bindir}/cta-objectstore-dummy
 %attr(0755,root,root) %{_bindir}/cta-objectstore-list
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
