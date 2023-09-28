@@ -38,6 +38,8 @@ public:
   // Initializer
   void initialize(const std::string & owner);
 
+  void overrideTotalSize(uint64_t size);
+
   // dumper
   std::string dump();
 

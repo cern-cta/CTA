@@ -23,6 +23,7 @@
 
 #include "Agent.hpp"
 #include "AgentReference.hpp"
+#include "ArchiveQueueShard.hpp"
 #include "BackendVFS.hpp"
 #include "BackendFactory.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -49,33 +50,19 @@ int main(int argc, char ** argv) {
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
-    cta::objectstore::RootEntry re(*be);
-    re.initialize();
-    re.insert();
-    cta::objectstore::ScopedExclusiveLock rel(re);
-    re.fetch();
-    cta::objectstore::AgentReference agr("cta-objectstore-dummy", logger);
-    cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
-    ag.initialize();
-    cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(nullptr));
-    re.addOrGetAgentRegisterPointerAndCommit(agr,el, lc);
-    rel.release();
-    ag.insertAndRegisterSelf(lc);
-    rel.lock(re);
-    re.fetch();
-    re.addOrGetDriveRegisterPointerAndCommit(agr, el);
-    re.addOrGetSchedulerGlobalLockAndCommit(agr,el);
-    {
-      cta::objectstore::ScopedExclusiveLock agentLock(ag);
-      ag.fetch();
-      ag.removeAndUnregisterSelf(lc);
+    cta::objectstore::ArchiveQueueShard aqs(*be);
+    aqs.setAddress("dummy-shard");
+    aqs.initialize("ArchiveQueueToTransferForUser-r_archive_1-Frontend-ctaproductionfrontend01.cern.ch-23877-20230920-11:43:11-0-1645730"); //Owner
+
+    for (int i = 0; i < 893; i++) {
+      cta::objectstore::ArchiveQueue::JobToAdd obj;
+      obj.archiveRequestAddress = std::string("dummy-archive-request-ref-") + std::to_string(i);
+      aqs.addJob(obj);
     }
-    rel.release();
-    std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
+    aqs.overrideTotalSize(5772115128);
+    aqs.insert();
     return EXIT_SUCCESS;
   } catch (std::exception & e) {
-    std::cerr << "Failed to initialise the root entry in a new " << ((be != nullptr) ? be->typeName() : "no-backend") << " objectstore"
-        << std::endl << e.what() << std::endl;
     return EXIT_FAILURE;
   }
 }

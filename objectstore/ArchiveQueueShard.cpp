@@ -130,6 +130,10 @@ void ArchiveQueueShard::initialize(const std::string& owner) {
   m_payloadInterpreted=true;
 }
 
+void ArchiveQueueShard::overrideTotalSize(uint64_t size) {
+  m_payload.set_archivejobstotalsize(size);
+}
+
 auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> {
   checkPayloadReadable();
   std::list<JobInfo> ret;

@@ -74,10 +74,10 @@ public:
   // Archive jobs management ===================================================
   struct JobToAdd {
     ArchiveRequest::JobDump job;
-    const std::string archiveRequestAddress;
+    std::string archiveRequestAddress;
     uint64_t archiveFileId;
     uint64_t fileSize;
-    const cta::common::dataStructures::MountPolicy policy;
+    cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
   };
   /** Add the jobs to the queue. 
