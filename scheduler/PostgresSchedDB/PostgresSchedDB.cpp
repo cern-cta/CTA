@@ -109,7 +109,7 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   return aReq->getIdStr();
 }
 
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<void> > PostgresSchedDB::getArchiveJobs() const
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> PostgresSchedDB::getArchiveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -255,7 +255,7 @@ void PostgresSchedDB::deleteFailed(const std::string &objectId, log::LogContext 
    throw cta::exception::Exception("Not implemented");
 }
 
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<void> > PostgresSchedDB::getRetrieveJobs() const
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> PostgresSchedDB::getRetrieveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
