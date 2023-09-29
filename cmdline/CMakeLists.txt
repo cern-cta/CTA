@@ -19,6 +19,8 @@ add_subdirectory (standalone_cli_tools)
 
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
+link_directories("/usr/lib64")
+link_directories(${PROTOBUF3_LIBRARY_DIRS})
 
 # XRootD SSI
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
@@ -35,6 +37,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
 target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon stdc++fs)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+message(STATUS "BLOBLBOBOOBOOSADFSDAD PROTOBUF3_LIBRARIES: ${PROTOBUF3_LIBRARIES}")
 
 #
 # cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
