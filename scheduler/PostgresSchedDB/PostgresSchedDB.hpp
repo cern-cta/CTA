@@ -68,7 +68,7 @@ class PostgresSchedDB: public SchedulerDatabase {
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
@@ -120,7 +120,7 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   void deleteFailed(const std::string &objectId, log::LogContext &lc) override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 
@@ -129,6 +129,7 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext &logContext) override;
 
+  bool repackExists() override;
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
 
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;

@@ -51,7 +51,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
 
   common::dataStructures::JobQueueType queueType;
 
-  switch(mountType) {
+  switch(mount.type) {
     case common::dataStructures::MountType::ArchiveForUser:
       queueType = common::dataStructures::JobQueueType::JobsToTransferForUser;
       break;
@@ -86,7 +86,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
 
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
-  am.mountInfo.mountType       = mountType;
+  am.mountInfo.mountType       = mount.type;
   am.mountInfo.drive           = driveName;
   am.mountInfo.host            = hostName;
   am.mountInfo.mountId         = newMount.mountId;
