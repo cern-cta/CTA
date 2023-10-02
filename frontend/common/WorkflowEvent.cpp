@@ -404,6 +404,10 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
 
   std::string lpath         = m_event.file().lpath();
   uint64_t diskFileId       = m_event.file().fid();
+  m_lc.log(log::WARNING, "JORGE File fid: " + std::to_string(m_event.file().fid()));
+  m_lc.log(log::WARNING, "JORGE File path: " + m_event.file().lpath());
+  m_lc.log(log::WARNING, "JORGE File Size: " + std::to_string(m_event.file().size()));
+  m_lc.log(log::WARNING, "JORGE CheckSum Value: " + std::to_string(m_event.file().csb().cs().size()));
   request.diskFilePath          = lpath;
   request.diskFileId = std::to_string(diskFileId);
   request.diskInstance = m_cliIdentity.username;
