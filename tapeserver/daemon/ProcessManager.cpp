@@ -101,17 +101,17 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   bool nonDriveAskedShutdown = false;
-  std::list<SubprocessAndStatus> drivesToShutdown;
+  std::list<SubprocessAndStatus*> drivesToShutdown;
   int aliveDrives = 0;
 
   for(const auto &i : m_subprocessHandlers) {
-    if (i.handler->index.find("drive:")) aliveDrives++;
+    if (i.handler->index.starts_with("drive:")) aliveDrives++;
     if (i.status.shutdownRequested) {
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", i.handler->index);
       m_logContext.log(log::INFO, "Subprocess requested shutdown");
-      if (i.handler->index.find("drive:"))
-        drivesToShutdown.insert(i);
+      if (i.handler->index.starts_with("drive:"))
+        drivesToShutdown.insert(&i);
       else {
         nonDriveAskedShutdown = true;
         break;
