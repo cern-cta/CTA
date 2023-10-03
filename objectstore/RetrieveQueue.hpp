@@ -138,7 +138,7 @@ public:
   // The set of retrieve requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip,
-    const std::set<std::string> & diskSystemsToSkip);
+    const std::set<std::string> & diskSystemsToSkip, log::LogContext & lc);
  
 
   //! Return a summary of the number of jobs and number of bytes in the queue
@@ -147,7 +147,7 @@ public:
   //! Return the mount policy names for the queue object
   std::list<std::string> getMountPolicyNames();
   
-  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove, log::LogContext & lc);
 
   bool getQueueCleanupDoCleanup();
   void setQueueCleanupDoCleanup(bool value = true);
@@ -194,8 +194,8 @@ public:
   /** Helper function for unit tests: use smaller shard size to validate ordered insertion */
   void setShardSize(uint64_t shardSize);
   
-  /** Helper function for unit tests: validate that we have the expected number of shards */
-  uint64_t getShardCount();
+  /** Helper function for unit tests: validate that we have the expected shards */
+  std::list<std::string> getShardAddresses();
 private:
   // The shard size. From experience, 100k is where we start to see performance difference,
   // but nothing prevents us from using a smaller size.

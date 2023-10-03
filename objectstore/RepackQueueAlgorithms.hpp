@@ -124,8 +124,8 @@ struct ContainerTraits<RepackQueue,C>
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
-  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
-  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
+  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures, log::LogContext & lc);
+  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList, log::LogContext & lc);
 
   static typename OpFailure<InsertedElement>::list
   switchElementsOwnership(typename InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
@@ -317,7 +317,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
 
 template<typename C>
 void ContainerTraits<RepackQueue,C>::
-removeReferencesAndCommit(Container& cont, typename OpFailure<InsertedElement>::list& elementsOpFailures) {
+removeReferencesAndCommit(Container& cont, typename OpFailure<InsertedElement>::list& elementsOpFailures, log::LogContext & lc) {
   std::list<std::string> elementsToRemove;
   for (auto &eof : elementsOpFailures) {
     elementsToRemove.emplace_back(eof.element->repackRequest->getAddressIfSet());
@@ -327,7 +327,7 @@ removeReferencesAndCommit(Container& cont, typename OpFailure<InsertedElement>::
 
 template<typename C>
 void ContainerTraits<RepackQueue,C>::
-removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList) {
+removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList, log::LogContext & lc) {
   cont.removeRequestsAndCommit(elementAddressList);
 }
 

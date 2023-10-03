@@ -984,7 +984,7 @@ std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::c
         objectstore::ArchiveQueue aq(*tpa, m_objectStore);
         ScopedExclusiveLock aql(aq);
         aq.fetch();
-        aq.removeJobsAndCommit({aReq->getAddressIfSet()});
+        aq.removeJobsAndCommit({aReq->getAddressIfSet()}, logContext);
       }
       aReq->remove();
       log::ScopedParamContainer params(logContext);
@@ -1764,7 +1764,7 @@ void OStoreDB::deleteFailed(const std::string &objectId, log::LogContext &lc)
         ArchiveQueue arq(arq_id, m_objectStore);
         ScopedExclusiveLock arq_el(arq);
         arq.fetch();
-        arq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        arq.removeJobsAndCommit(std::list<std::string>(1, objectId), lc);
         if(arq.isEmpty()) isQueueEmpty = true;
       }
       break;
@@ -1774,7 +1774,7 @@ void OStoreDB::deleteFailed(const std::string &objectId, log::LogContext &lc)
         RetrieveQueue rrq(rrq_id, m_objectStore);
         ScopedExclusiveLock rrq_el(rrq);
         rrq.fetch();
-        rrq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        rrq.removeJobsAndCommit(std::list<std::string>(1, objectId), lc);
         if(rrq.isEmpty()) isQueueEmpty = true;
       }
       break;

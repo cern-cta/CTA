@@ -40,7 +40,7 @@ getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, 
   log::LogContext& lc) -> PoppedElementsBatch
 {
   PoppedElementsBatch ret;
-  auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip, lc);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement());
     PoppedElement & elem = ret.elements.back();

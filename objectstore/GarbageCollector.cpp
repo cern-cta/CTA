@@ -715,7 +715,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         }
         requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
         if (requestsToDequeue.size()) {
-          rq.removeJobsAndCommit(requestsToDequeue);
+          rq.removeJobsAndCommit(requestsToDequeue, lc);
           log::ScopedParamContainer params(lc);
           params.add("retreveQueueObject", rq.getAddressIfSet());
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "
