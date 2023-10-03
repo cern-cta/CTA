@@ -431,6 +431,7 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
 }
 
 TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
+  // Test in response to "missing shard" issue: https://gitlab.cern.ch/cta/CTA/-/issues/500
   using cta::common::dataStructures::JobQueueType;
   using cta::objectstore::RetrieveQueue;
   using cta::objectstore::RetrieveQueueToTransfer;

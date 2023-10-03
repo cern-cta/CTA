@@ -45,16 +45,16 @@ void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, Inse
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
 
-void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, OpFailure<InsertedElement>::list& elementsOpFailures) {
+void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, OpFailure<InsertedElement>::list& elementsOpFailures, log::LogContext & lc) {
   std::list<std::string> elementsToRemove;
   for (auto & eof: elementsOpFailures) {
     elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
   }
-  cont.removeJobsAndCommit(elementsToRemove);
+  cont.removeJobsAndCommit(elementsToRemove, lc);
 }
 
-void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList) {
-  cont.removeJobsAndCommit(elementAddressList);
+void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList, log::LogContext & lc) {
+  cont.removeJobsAndCommit(elementAddressList, lc);
 }
 
 void ContainerTraits<ArchiveQueue>::PoppedElementsSummary::addDeltaToLog(const PoppedElementsSummary& previous,
@@ -172,7 +172,7 @@ void ContainerTraits<ArchiveQueue>::PoppedElementsBatch::addToLog(log::ScopedPar
 auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
     ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
-  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip, lc);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size});
     ret.summary.bytes += cjfq.size;

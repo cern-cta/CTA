@@ -65,7 +65,7 @@ public:
     timingList.insertAndReset("requestsUpdatingTime", t);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
-      ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
+      ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements, lc);
       timingList.insertAndReset("queueRecommitTime", t);
     }
     auto contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
@@ -149,7 +149,7 @@ public:
     timingList.insertAndReset("requestsUpdatingTime", t);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
-      ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
+      ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements, lc);
       timingList.insertAndReset("queueRecommitTime", t);
     }
     // We are now done with the container.
@@ -228,7 +228,7 @@ public:
       if (failedOwnershipSwitchElements.empty()) {
         timingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
         timingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         // We skip the container trimming as we do not have the contId.
@@ -273,7 +273,7 @@ public:
           }
         }
         timingList.insertAndReset("updateResultProcessingTime", t);
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
         timingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         if (contLock.isLocked()) contLock.release();
@@ -367,7 +367,7 @@ public:
       if (failedOwnershipSwitchElements.empty()) {
         localTimingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
         localTimingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.
@@ -418,7 +418,7 @@ public:
           }
         }
         localTimingList.insertAndReset("updateResultProcessingTime", t);
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
         localTimingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.

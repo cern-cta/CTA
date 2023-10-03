@@ -138,8 +138,8 @@ struct ContainerTraits<RetrieveQueue,C>
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
-  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
-  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
+  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures, log::LogContext & lc);
+  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList, log::LogContext & lc);
 
   static typename OpFailure<InsertedElement>::list
   switchElementsOwnership(typename InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
@@ -304,19 +304,19 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
-removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures)
+removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures, log::LogContext& lc)
 {
   std::list<std::string> elementsToRemove;
   for (auto &eof : elementsOpFailures) {
     elementsToRemove.emplace_back(eof.element->retrieveRequest->getAddressIfSet());
   }
-  cont.removeJobsAndCommit(elementsToRemove);
+  cont.removeJobsAndCommit(elementsToRemove, lc);
 }
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
-removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList) {
-  cont.removeJobsAndCommit(elementAddressList);
+removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList, log::LogContext& lc) {
+  cont.removeJobsAndCommit(elementAddressList, lc);
 }
 
 template<typename C>
@@ -523,7 +523,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
     // This parameter is needed only in the specialized version:
     // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates
     // We provide an empty set here.
-    std::set<std::string>()
+    std::set<std::string>(), lc
   );
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{

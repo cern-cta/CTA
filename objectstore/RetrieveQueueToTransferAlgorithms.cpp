@@ -47,7 +47,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 
   std::set<std::string> diskSystemsToSkipNames;
   for (auto &ds: unfulfilledCriteria.diskSystemsToSkip) diskSystemsToSkipNames.insert(ds.name);
-  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, diskSystemsToSkipNames);
+  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, diskSystemsToSkipNames, lc);
   if (unfulfilledCriteria.diskSystemsToSkip.size() && candidateJobsFromQueue.candidates.empty() && cont.getJobsSummary().jobs && elementsToSkip.empty()) {
     // We failed to find any candidates from a non empty queue, from which there are no individual elements to skip.
     // this means the it is time to sleep this queue.

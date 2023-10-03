@@ -108,7 +108,7 @@ public:
   };
   JobsSummary getJobsSummary();
   
-  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove, log::LogContext & lc);
   struct JobDump {
     uint64_t size;
     std::string address;
@@ -124,7 +124,7 @@ public:
   };
   // The set of archive requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
-  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip);
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc);
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();

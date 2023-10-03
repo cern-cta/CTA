@@ -497,7 +497,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   return ret;
 }
 
-void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
+void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove, log::LogContext & lc) {
   checkPayloadWritable();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
@@ -513,7 +513,22 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
     // Get hold of the shard
     ArchiveQueueShard aqs(shardPointer->address(), m_objectStore);
     m_exclusiveLock->includeSubObject(aqs);
-    aqs.fetch();
+    try {
+      aqs.fetch();
+    } catch(const cta::exception::NoSuchObject &) {
+      // If the shard's gone, so should the pointer be gone... Push it to the end of the queue and trim it.
+      log::ScopedParamContainer params(lc);
+      params.add("archiveQueueObject", getAddressIfSet());
+      params.add("archiveQueueShardObject", shardPointer->address());
+      lc.log(log::ERR, "In ArchiveQueue::removeJobsAndCommit(): Shard object is missing. Removing reference from queue.");
+      for (auto i=shardIndex; i<mutableArchiveQueueShards->size()-1; i++) {
+        mutableArchiveQueueShards->SwapElements(i, i+1);
+      }
+      mutableArchiveQueueShards->RemoveLast();
+      recomputeOldestAndYoungestJobCreationTime();
+      commit();
+      continue;
+    }
     // Remove jobs from shard
     auto removalResult = aqs.removeJobs(localJobsToRemove);
     // If the shard is drained, remove, otherwise commit. We update the pointer afterwards.
@@ -596,15 +611,24 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
+auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
   for (auto & aqsp: m_payload.archivequeueshards()) {
-    // We need to go through all shard poiters unconditionnaly to count what is left (see else part)
+    // We need to go through all shard pointers unconditionally to count what is left (see else part)
     if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
       // Fetch the shard
       ArchiveQueueShard aqs(aqsp.address(), m_objectStore);
-      aqs.fetchNoLock();
+      try {
+        aqs.fetchNoLock();
+      } catch(const cta::exception::NoSuchObject &) {
+        // If the shard's gone we are not getting any pointers from it...
+        log::ScopedParamContainer params(lc);
+        params.add("archiveQueueObject", getAddressIfSet());
+        params.add("archiveQueueShardObject", aqsp.address());
+        lc.log(log::ERR, "In ArchiveQueue::getCandidateList(): Shard object is missing. Ignoring shard.");
+        continue;
+      }
       auto shardCandidates = aqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles, archiveRequestsToSkip);
       ret.candidateBytes += shardCandidates.candidateBytes;
       ret.candidateFiles += shardCandidates.candidateFiles;

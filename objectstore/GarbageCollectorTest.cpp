@@ -472,7 +472,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
     for (auto &j: aq.dumpJobs()) {
       ajtr.push_back(j.address);
     }
-    aq.removeJobsAndCommit(ajtr);
+    aq.removeJobsAndCommit(ajtr, lc);
     aql.release();
     // Remove queues from root
     re.removeArchiveQueueAndCommit(tp, JobQueueType::JobsToTransferForUser, lc);
@@ -661,7 +661,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
     for (auto &j: rq.dumpJobs()) {
       jtrl.push_back(j.address);
     }
-    rq.removeJobsAndCommit(jtrl);
+    rq.removeJobsAndCommit(jtrl, lc);
     rql.release();
     // Remove queues from root
     re.removeRetrieveQueueAndCommit(vid, JobQueueType::JobsToTransferForUser, lc);
@@ -1252,7 +1252,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1291,7 +1291,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1333,7 +1333,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1371,7 +1371,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1421,7 +1421,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1461,7 +1461,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1503,7 +1503,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(rr);
@@ -1542,7 +1542,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForFailure), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1702,7 +1702,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
     rql.release();
 
     {
@@ -1837,7 +1837,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -1879,7 +1879,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -1922,7 +1922,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -1963,7 +1963,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -2006,7 +2006,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2045,7 +2045,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -2089,7 +2089,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2144,7 +2144,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -2188,7 +2188,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2228,7 +2228,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
 
@@ -2271,7 +2271,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForFailure), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
