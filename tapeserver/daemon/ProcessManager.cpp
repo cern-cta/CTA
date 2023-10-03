@@ -101,25 +101,25 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   bool nonDriveAskedShutdown = false;
-  std::list<SubprocessAndStatus *> drivesToShutdown();
+  std::list<SubprocessAndStatus> drivesToShutdown;
   int aliveDrives = 0;
 
   for(const auto &i : m_subprocessHandlers) {
-    if (i.handler.index.find("drive:")) aliveDrives++;
+    if (i.handler->index.find("drive:")) aliveDrives++;
     if (i.status.shutdownRequested) {
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", i.handler->index);
       m_logContext.log(log::INFO, "Subprocess requested shutdown");
-      if (i.handler.index.find("drive:"))
-        drivesToShutDown.insert(i);
+      if (i.handler->index.find("drive:"))
+        drivesToShutdown.insert(i);
       else {
         nonDriveAskedShutdown = true;
         break;
       }
+    }
   }
-
   // If a non drive handler requests a shutdown or all alive drive handlers request shutdown kill everything.
-  if (nonDriveAskedShutdown || (aliveDrives == drivesToShutDown.size())) {
+  if (nonDriveAskedShutdown || (aliveDrives == static_cast<int>(drivesToShutdown.size()))) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
@@ -143,14 +143,14 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Only a subset of alive drives requested shutdown, proceed with those a keep going.
   if (drivesToShutdown.size()){
     cta::log::ScopedParamContainer params(m_logContext);
-    m_logContext.log(log::INFO, "Shutting down " + std::to_string(drivesToShutdown.size()) + " drive handlers.")
+    m_logContext.log(log::INFO, "Shutting down " + std::to_string(drivesToShutdown.size()) + " drive handlers.");
 
     for(auto & dh : drivesToShutdown) {
       dh.handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", dh.handler->index)
-            .add("ShutdownComplete", dh.status.shudownComplete);
-      m_logContext.log(log::INFO, "Signaled shutdown to drive handler.")
+            .add("ShutdownComplete", dh.status.shutdownComplete);
+      m_logContext.log(log::INFO, "Signaled shutdown to drive handler.");
     }
   }
 
