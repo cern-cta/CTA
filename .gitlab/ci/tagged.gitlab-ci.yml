@@ -22,6 +22,7 @@ cta_tagged_rpm:
     expire_in: 30 days
     paths:
     - build_tagged_rpm/RPM/RPMS
+<<<<<<< HEAD
 
 cta_tagged_rpm_alma9:
   rules:
@@ -52,6 +53,8 @@ cta_tagged_rpm_alma9:
     expire_in: 30 days
     paths:
     - build_tagged_rpm/RPM/RPMS
+=======
+>>>>>>> b1df862370 (Remove docker tags and skip tests)
 
 publish_tagged_rpm:
   stage: publish_rpm

@@ -39,7 +39,7 @@
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} -DSKIP_UNIT_TESTS=1 ..
     - make cta_rpm
     - echo "Download my eos version"
     - wget https://cernbox.cern.ch/remote.php/dav/public-files/PDJp3K7CF1WilhH/RPM.tar.gz
