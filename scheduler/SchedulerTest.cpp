@@ -20,6 +20,7 @@
 #include <bits/unique_ptr.h>
 #include <exception>
 #include <memory>
+#include <unistd.h>
 #include <utility>
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
@@ -2202,6 +2203,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   using namespace cta;
   using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
+
+  int i = 0;
+  while (i == 0) usleep(1000000);
 
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
