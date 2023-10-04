@@ -416,6 +416,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
+
+  int ctrl_var = 0;
+  while (ctrl_var == 0) usleep(10000);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2079,6 +2082,9 @@ TEST_P(SchedulerTest, repack) {
   ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
 
   catalogue.Tape()->setTapeFull(cliId,tape1,true);
+
+  int ctrl_var = 0;
+  while( ctrl_var == 0) usleep(10000);
 
   // Create and then cancel repack
   qrr.m_vid = tape1;
