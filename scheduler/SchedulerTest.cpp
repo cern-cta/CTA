@@ -2204,8 +2204,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
 
-  int i = 0;
-  while (i == 0) usleep(1000000);
+  int ctrl_var = 0;
+  while (ctrl_var == 0) usleep(1000000);
 
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -2423,7 +2423,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
 
-        while (i == 0) usleep(1000000);
+        while (ctrl_var == 0) usleep(1000000);
 
         //Fetch the queue so that we can get the retrieveRequests from it
         cta::objectstore::ScopedExclusiveLock rql(rq);
