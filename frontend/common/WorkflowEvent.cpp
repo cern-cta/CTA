@@ -399,18 +399,19 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
 
   // Unpack message
   common::dataStructures::DeleteArchiveRequest request;
+  if (m_event.file().csb().cs().size() > 0) {
+    checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob.value());
+  }
   request.requester.name    = m_event.cli().user().username();
   request.requester.group   = m_event.cli().user().groupname();
-
   std::string lpath         = m_event.file().lpath();
   uint64_t diskFileId       = m_event.file().fid();
-  m_lc.log(log::WARNING, "JORGE File fid: " + std::to_string(m_event.file().fid()));
-  m_lc.log(log::WARNING, "JORGE File path: " + m_event.file().lpath());
-  m_lc.log(log::WARNING, "JORGE File Size: " + std::to_string(m_event.file().size()));
-  m_lc.log(log::WARNING, "JORGE CheckSum Value: " + std::to_string(m_event.file().csb().cs().size()));
-  request.diskFilePath          = lpath;
-  request.diskFileId = std::to_string(diskFileId);
-  request.diskInstance = m_cliIdentity.username;
+  if (m_event.file().size()) {
+    request.diskFileSize      = m_event.file().size();
+  }
+  request.diskFilePath      = lpath;
+  request.diskFileId        = std::to_string(diskFileId);
+  request.diskInstance      = m_cliIdentity.username;
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
   // must be converted to a valid uint64_t
   auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
