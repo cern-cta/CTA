@@ -2422,6 +2422,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)), JobQueueType::JobsToReportToRepackForSuccess);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
+
+        while (i == 0) usleep(1000000);
+
         //Fetch the queue so that we can get the retrieveRequests from it
         cta::objectstore::ScopedExclusiveLock rql(rq);
         rq.fetch();
