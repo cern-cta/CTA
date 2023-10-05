@@ -399,16 +399,16 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
 
   // Unpack message
   common::dataStructures::DeleteArchiveRequest request;
-  if (m_event.file().csb().cs().size() > 0) {
-    checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob.value());
-  }
+  // if (m_event.file().csb().cs().size() > 0) {
+  //   checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob.value());
+  // }
   request.requester.name    = m_event.cli().user().username();
   request.requester.group   = m_event.cli().user().groupname();
   std::string lpath         = m_event.file().lpath();
   uint64_t diskFileId       = m_event.file().fid();
-  if (m_event.file().size()) {
-    request.diskFileSize      = m_event.file().size();
-  }
+  // if (m_event.file().size()) {
+  //   request.diskFileSize      = m_event.file().size();
+  // }
   request.diskFilePath      = lpath;
   request.diskFileId        = std::to_string(diskFileId);
   request.diskInstance      = m_cliIdentity.username;
