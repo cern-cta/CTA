@@ -406,9 +406,9 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   request.requester.group   = m_event.cli().user().groupname();
   std::string lpath         = m_event.file().lpath();
   uint64_t diskFileId       = m_event.file().fid();
-  // if (m_event.file().size()) {
-  //   request.diskFileSize      = m_event.file().size();
-  // }
+  if (m_event.file().size()) {
+    request.diskFileSize      = m_event.file().size();
+  }
   request.diskFilePath      = lpath;
   request.diskFileId        = std::to_string(diskFileId);
   request.diskInstance      = m_cliIdentity.username;
