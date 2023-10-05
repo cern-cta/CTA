@@ -10,7 +10,7 @@
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
 - cta/CTA#494 - Workaround for scheduler crashing
-- cta/CTA#500 - Safely ignore empty shards in object store
+- cta/CTA#500 - Safely handle empty shards in object store
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code
