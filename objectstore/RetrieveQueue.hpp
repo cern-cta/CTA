@@ -173,7 +173,6 @@ private:
     bool creationDone=false;
     bool splitDone=false;
     bool toSplit=false;
-    bool comitted=false;
     ShardForAddition * splitDestination = nullptr;
     bool fromSplit=false;
     ShardForAddition * splitSource = nullptr;

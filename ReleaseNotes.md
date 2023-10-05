@@ -2,7 +2,7 @@
 
 ### Bug Fixes
 - cta/CTA#494 - Workaround for scheduler crashing
-- cta/CTA#500 - Safely ignore empty shards in object store
+- cta/CTA#500 - Safely handle empty shards in object store
 
 # v4.10.4-1
 

@@ -115,10 +115,14 @@ void RetrieveQueue::rebuild() {
   time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
   
   while (s != shards.end()) {
-    // Each shard could be gone
+    // Each shard could be gone or be empty
+    bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
     } catch (cta::exception::NoSuchObject & ex) {
+      shardObjectNotFound = true;
+    }
+    if (shardObjectNotFound || s->dumpJobs().empty()) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_retrievequeueshards()->begin();
       while (aqs != m_payload.mutable_retrievequeueshards()->end()) {
@@ -516,23 +520,19 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     // Update global summaries
     m_payload.set_retrievejobscount(m_payload.retrievejobscount() + addedJobs - transferedInSplitJobs);
     m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + addedBytes - transferedInSplitBytes);
-    // If we are creating a new shard, we have to do a blind commit: the
-    // stats for shard we are splitting from could not be accounted for properly
-    // and the new shard is not yet inserted yet.
-    if (shard.fromSplit)
-      ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::commit();
-    else {
-      // in other cases, we should have a coherent state.
-      commit();
-    }
-    shard.comitted = true;
 
+    // We will now commit this shard (and the queue) before moving to the next.
+    // Commit in the right order:
+    // 1) Get the shard on storage. Could be either insert or commit.
     if (shard.newShard) {
       rqs.insert();
       if (shard.fromSplit)
         rqsSplitFrom.commit();
+    } else {
+      rqs.commit();
     }
-    else rqs.commit();
+    // 2) commit the queue so the shard is referenced.
+    commit();
   }
 }
 
@@ -734,23 +734,16 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       log::ScopedParamContainer params(lc);
       params.add("retrieveQueueObject", getAddressIfSet());
       params.add("retrieveQueueShardObject", shardPointer->address());
-      lc.log(log::ERR, "In RetrieveQueue::removeJobsAndCommit(): Shard object is missing. Removing reference from queue.");
-      for (auto i=shardIndex; i<mutableRetrieveQueueShards->size()-1; i++) {
-        mutableRetrieveQueueShards->SwapElements(i, i+1);
-      }
-      mutableRetrieveQueueShards->RemoveLast();
+      lc.log(log::ERR, "In RetrieveQueue::removeJobsAndCommit(): Shard object is missing. Rebuilding queue.");
       rebuild();
       commit();
       continue;
     }
     // Remove jobs from shard
     auto removalResult = rqs.removeJobs(localJobsToRemove);
-    // If the shard is drained, remove, otherwise commit. We update the pointer afterwards.
-    if (removalResult.jobsAfter) {
-      rqs.commit();
-    } else {
-      rqs.remove();
-    }
+    // Commit shard changes. If it has been drained, it will be deleted afterwards.
+    rqs.commit();
+
     // We still need to update the tracking queue side.
     // Update stats and remove the jobs from the todo list.
     bool needToRebuild = false;
@@ -812,6 +805,11 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       rebuild();
     }
     commit();
+    // Only remove the drained shard after the queue updates have been committed,
+    // in order to avoid a dangling shard address
+    if (!removalResult.jobsAfter) {
+      rqs.remove();
+    }
   }
 }
 
