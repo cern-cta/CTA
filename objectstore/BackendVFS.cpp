@@ -106,7 +106,7 @@ void BackendVFS::create(const std::string& name, const std::string& content) {
   std::string tmp_name = name;
 
   if (tmp_name.length() >= 100){
-    tmp_name = tmp_name.sub(0,100);
+    tmp_name = tmp_name.substr(0,100);
   }
 
   std::string path = m_root + "/" + tmp_name;
