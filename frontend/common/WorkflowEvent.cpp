@@ -403,7 +403,11 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   // Unpack message
   common::dataStructures::DeleteArchiveRequest request;
   if (!m_event.file().csb().cs().empty()) {
-    checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob.value());
+    m_lc.log(log::INFO, "In WorkflowEvent::processDELETE(): checksum blob is not empty. "
+      "Type: " + std::to_string(m_event.file().csb().cs(0).type()) + " Value: " + m_event.file().csb().cs(0).value());
+    checksum::ChecksumBlob csb;
+    checksum::ProtobufToChecksumBlob(m_event.file().csb(), csb);
+    request.checksumBlob = csb;
   }
   request.requester.name    = m_event.cli().user().username();
   request.requester.group   = m_event.cli().user().groupname();
