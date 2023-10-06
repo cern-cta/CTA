@@ -417,8 +417,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
 
-  int ctrl_var = 0;
-  while (ctrl_var == 0) usleep(10000);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2083,9 +2081,6 @@ TEST_P(SchedulerTest, repack) {
 
   catalogue.Tape()->setTapeFull(cliId,tape1,true);
 
-  int ctrl_var = 0;
-  while( ctrl_var == 0) usleep(10000);
-
   // Create and then cancel repack
   qrr.m_vid = tape1;
   scheduler.queueRepack(cliId, qrr, lc);
@@ -2209,9 +2204,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   using namespace cta;
   using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
-
-  int ctrl_var = 0;
-  while (ctrl_var == 0) usleep(1000000);
 
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -2368,6 +2360,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   const std::string driveName = "tape_drive";
+  int ctrl_var = 0;
+  while (ctrl_var == 0) usleep(1000000);
 
   //Now, we need to simulate a retrieve for each file
   {
@@ -2429,7 +2423,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
 
-        while (ctrl_var == 0) usleep(1000000);
+
 
         //Fetch the queue so that we can get the retrieveRequests from it
         cta::objectstore::ScopedExclusiveLock rql(rq);

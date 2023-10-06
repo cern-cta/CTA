@@ -42,6 +42,8 @@
     - sleep infinity
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
+  tags:
+    - docker
 
 cta_srpm_xrootd4:
   stage: build

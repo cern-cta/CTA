@@ -394,8 +394,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
-  int ctrl_var = 0;
-  while (ctrl_var == 0) usleep(1000000);
 
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
@@ -2173,9 +2171,6 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
   // Queue the repack request for a repacking tape
   // Should work
   {
-    int ctrl_var = 0;
-    while (ctrl_var == 0) usleep(100000);
-
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
