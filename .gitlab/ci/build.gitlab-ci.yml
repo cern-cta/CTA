@@ -39,7 +39,6 @@
     - cd build_rpm
     - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_rpm
-    - sleep infinity
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
