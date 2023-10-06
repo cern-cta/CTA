@@ -104,9 +104,11 @@ BackendVFS::~BackendVFS() {
 
 void BackendVFS::create(const std::string& name, const std::string& content) {
   std::string tmp_name = name;
-  tmp_name.pop_back();
-  tmp_name.pop_back();
-  tmp_name.pop_back();
+
+  if (tmp_name.length() >= 100){
+    tmp_name = tmp_name.sub(0,100);
+  }
+
   std::string path = m_root + "/" + tmp_name;
   std::string lockPath = m_root + "/." + tmp_name + ".lock";
   bool fileCreated = false;
