@@ -103,14 +103,8 @@ BackendVFS::~BackendVFS() {
 }
 
 void BackendVFS::create(const std::string& name, const std::string& content) {
-  std::string tmp_name = name;
-
-  if (tmp_name.length() >= 100){
-    tmp_name.resize(100);
-  }
-
-  std::string path = m_root + "/" + tmp_name;
-  std::string lockPath = m_root + "/." + tmp_name + ".lock";
+  std::string path = m_root + "/" + name;
+  std::string lockPath = m_root + "/." + name + ".lock";
   bool fileCreated = false;
   bool lockCreated = false;
   try {
@@ -120,7 +114,7 @@ void BackendVFS::create(const std::string& name, const std::string& content) {
         "In ObjectStoreVFS::create, failed to open the file");
     fileCreated = true;
     #ifdef LOW_LEVEL_TRACING
-      ::printf("In BackendVFS::create(): created object %s, tid=%li\n", tmp_name.c_str(), ::syscall(SYS_gettid));
+      ::printf("In BackendVFS::create(): created object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
     #endif
     cta::exception::Errnum::throwOnMinusOne(
         ::write(fd, content.c_str(), content.size()),
@@ -131,9 +125,9 @@ void BackendVFS::create(const std::string& name, const std::string& content) {
     int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
     lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
-        std::string("In ObjectStoreVFS::create, failed to create the lock file: ") + tmp_name);
+        std::string("In ObjectStoreVFS::create, failed to create the lock file: ") + name);
     cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
-        std::string("In ObjectStoreVFS::create, failed to close the lock file: ") + tmp_name);
+        std::string("In ObjectStoreVFS::create, failed to close the lock file: ") + name);
   } catch (...) {
     if (fileCreated) unlink(path.c_str());
     if (lockCreated) unlink(lockPath.c_str());
