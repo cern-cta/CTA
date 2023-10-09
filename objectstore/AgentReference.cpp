@@ -46,7 +46,7 @@ AgentReference::AgentReference(const std::string & clientType, log::Logger &logg
 
   // gettid is a safe system call (never fails)
   uint64_t id=g_nextAgentId++;
-  aid << clientType << "-" << m_host << "-" << syscall(SYS_gettid) << "-"
+  aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
     << 1900 + localNow.tm_year
     << std::setfill('0') << std::setw(2)
     << 1 + localNow.tm_mon
