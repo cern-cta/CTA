@@ -38,7 +38,7 @@ AgentReference::AgentReference(const std::string & clientType, log::Logger &logg
   struct tm localNow;
   localtime_r(&now, &localNow);
   // Get hostname
-  char host[200];
+  char host[45];
   cta::exception::Errnum::throwOnMinusOne(::gethostname(host, sizeof(host)),
     "In AgentId::AgentId:  failed to gethostname");
   // gettid is a safe system call (never fails)
