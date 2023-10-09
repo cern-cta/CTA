@@ -20,7 +20,6 @@
 #include <bits/unique_ptr.h>
 #include <exception>
 #include <memory>
-#include <unistd.h>
 #include <utility>
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
@@ -416,7 +415,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
-
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2360,8 +2358,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   const std::string driveName = "tape_drive";
-  int ctrl_var = 0;
-  while (ctrl_var == 0) usleep(1000000);
 
   //Now, we need to simulate a retrieve for each file
   {

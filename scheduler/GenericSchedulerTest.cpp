@@ -20,7 +20,6 @@
 #include <bits/unique_ptr.h>
 #include <exception>
 #include <memory>
-#include <unistd.h>
 #include <utility>
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
@@ -394,7 +393,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
-
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
