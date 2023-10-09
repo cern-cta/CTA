@@ -345,6 +345,8 @@ void Scheduler::checkTapeCanBeRepacked(const std::string & vid,[[maybe_unused]] 
               + vid
               + ". The current state is unknown.");
     }
+  } catch(const exception::UserError&) {
+      throw;
   } catch(const exception::Exception&) {
     throw exception::UserError("The VID provided for repacking does not exist");
   }
