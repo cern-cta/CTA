@@ -34,8 +34,7 @@ void RepackRequestManager::runOnePass(log::LogContext &lc,
   m_scheduler.promoteRepackRequestsToToExpand(lc, repackMaxRequestsToExpand);
 
   //Retrieve the first repack request from the RepackQueueToExpand queue
-  std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
-  if(repackRequest != nullptr){
+  if(const auto repackRequest = m_scheduler.getNextRepackRequestToExpand(); repackRequest != nullptr) {
     //We have a RepackRequest that has the status ToExpand, expand it
     try{
       try{
@@ -50,7 +49,7 @@ void RepackRequestManager::runOnePass(log::LogContext &lc,
         spc.add("vid",repackRequest->getRepackInfo().vid);
         lc.log(log::ERR,e.getMessageValue());
         repackRequest->fail();
-        throw e;
+        throw;
       }
     } catch (const cta::exception::NoSuchObject &){
       //In case the repack request is deleted during expansion, avoid a segmentation fault of the tapeserver

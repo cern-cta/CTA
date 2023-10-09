@@ -270,7 +270,7 @@ std::string Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive([[maybe_unused]] const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request,
+void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName, const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
@@ -479,7 +479,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
+void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
   auto repackInfo = repackRequest->getRepackInfo();
 
   using RepackType = cta::common::dataStructures::RepackInfo::Type;

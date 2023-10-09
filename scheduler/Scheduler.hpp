@@ -158,7 +158,7 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void deleteArchive(const std::string &instanceName,
+  void deleteArchive(std::string_view instanceName,
     const cta::common::dataStructures::DeleteArchiveRequest &request,
     log::LogContext & lc);
 
@@ -375,7 +375,7 @@ public:
                                        size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
-  void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
+  void expandRepackRequest(const std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {
     friend Scheduler;
