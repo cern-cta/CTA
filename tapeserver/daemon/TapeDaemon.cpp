@@ -69,7 +69,7 @@ int TapeDaemon::main() {
 // getHostName
 //------------------------------------------------------------------------------
 std::string cta::tape::daemon::TapeDaemon::getHostName() const {
-  char nameBuf[HOST_NAME_MAX + 1];
+  char nameBuf[44 + 1];
   if(gethostname(nameBuf, sizeof(nameBuf)))
     throw cta::exception::Errnum("Failed to get host name");
   return nameBuf;
