@@ -280,6 +280,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   request.requester.name         = m_event.cli().user().username();
   request.requester.group        = m_event.cli().user().groupname();
   request.dstURL                 = m_event.transport().dst_url();
+  request.retrieveReportURL      = m_event.transport().report_url();
   request.errorReportURL         = m_event.transport().error_report_url();
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
   request.diskFileInfo.gid       = m_event.file().owner().gid();

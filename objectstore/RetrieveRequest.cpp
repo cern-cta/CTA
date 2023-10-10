@@ -57,6 +57,7 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
 void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
+  m_payload.set_retrievereporturl("");
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   m_payload.set_isrepack(false);
@@ -473,6 +474,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->mutable_requester()->set_group(retrieveRequest.requester.group);
   sr->set_archivefileid(retrieveRequest.archiveFileID);
   sr->set_dsturl(retrieveRequest.dstURL);
+  sr->set_retrievereporturl(retrieveRequest.retrieveReportURL);
   sr->set_retrieveerrorreporturl(retrieveRequest.errorReportURL);
   sr->set_isverifyonly(retrieveRequest.isVerifyOnly);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
@@ -494,6 +496,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.creationLog = el;
   ret.dstURL = m_payload.schedulerrequest().dsturl();
+  ret.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl(); 
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   ret.isVerifyOnly = m_payload.schedulerrequest().isverifyonly();
   objectstore::DiskFileInfoSerDeser dfisd;
@@ -733,6 +736,8 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return common::dataStructures::JobQueueType::JobsToTransferForUser;
       break;
+    case serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer:
+      return common::dataStructures::JobQueueType::JobsToReportToUser;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
       break;
@@ -759,6 +764,8 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType(uint32_t copy
       switch(j.status()){
         case serializers::RetrieveJobStatus::RJS_ToTransfer:
           return common::dataStructures::JobQueueType::JobsToTransferForUser;
+        case serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer:
+          return common::dataStructures::JobQueueType::JobsToReportToUser;
         case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
           return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
@@ -838,7 +845,7 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
       }
       break;
     case JobEvent::ReportFailed:
-      if(*currentStatus != RetrieveJobStatus::RJS_ToReportToUserForFailure) {
+      if(*currentStatus != RetrieveJobStatus::RJS_ToReportToUserForFailure && *currentStatus != RetrieveJobStatus::RJS_ToReportToUserForTransfer) {
         // Wrong status, but end status will be the same anyway
         log::ScopedParamContainer params(lc);
         params.add("event", eventToString(jobEvent))
@@ -949,6 +956,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retrieveRequest.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retrieveRequest.isVerifyOnly = payload.schedulerrequest().isverifyonly();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
@@ -1146,6 +1154,57 @@ RetrieveRequest::AsyncJobDeleter * RetrieveRequest::asyncDeleteJob() {
 //------------------------------------------------------------------------------
 void RetrieveRequest::AsyncJobDeleter::wait() {
   m_backendDeleter->wait();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::asyncReportSucceed()
+//------------------------------------------------------------------------------
+RetrieveRequest::AsyncJobSucceedReporter * RetrieveRequest::asyncReportSucceed(uint32_t copyNb) {
+  std::unique_ptr<AsyncJobSucceedReporter> ret(new AsyncJobSucceedReporter);
+
+  ret->m_updaterCallback = [&ret, copyNb](const std::string &in)->std::string {
+    // We have a locked and fetched object, so we just need to work on its representation.
+    cta::objectstore::serializers::ObjectHeader oh;
+    if (!oh.ParseFromString(in)) {
+      // Use a the tolerant parser to assess the situation.
+      oh.ParsePartialFromString(in);
+      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceed(): could not parse header: ")+
+        oh.InitializationErrorString());
+    }
+    if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+      std::stringstream err;
+      err << "In RetrieveRequest::asyncReportSucceed()::lambda(): wrong object type: " << oh.type();
+      throw cta::exception::Exception(err.str());
+    }
+    serializers::RetrieveRequest payload;
+
+    if (!payload.ParseFromString(oh.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      payload.ParsePartialFromString(oh.payload());
+      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceed(): could not parse payload: ")+
+        payload.InitializationErrorString());
+    }
+    auto retrieveJobs = payload.mutable_jobs();
+    for (auto &job : *retrieveJobs) {
+      if (job.copynb() == copyNb) {
+        //Change the status to RJS_Succeed
+        job.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer);
+        oh.set_payload(payload.SerializeAsString());
+        return oh.SerializeAsString();
+      }
+    }
+    ret->m_MountPolicy.deserialize(payload.mountpolicy());
+    throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceed::lambda(): copyNb not found");
+  };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));
+  return ret.release();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobSucceedReporter::wait()
+//------------------------------------------------------------------------------
+void RetrieveRequest::AsyncJobSucceedReporter::wait() {
+  m_backendUpdater->wait();
 }
 
 //------------------------------------------------------------------------------

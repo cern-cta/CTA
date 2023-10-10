@@ -3921,6 +3921,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     log::LogContext& lc) {
   std::list<std::string> rjToUnown;
   std::map<std::string, std::list<OStoreDB::RetrieveJob*>> jobsToRequeueForRepackMap;
+  std::map<std::string, std::list<OStoreDB::RetrieveJob*>> jobsToRequeueForReportToUser;
   // We will wait on the asynchronously started reports of jobs, queue the retrieve jobs
   // for report and remove them from ownership.
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
@@ -3960,7 +3961,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     } else {
       try {
-        osdbJob->m_jobDelete->wait();
+        osdbJob->m_jobSucceedReporter->wait();
         {
           //Log for monitoring
           cta::log::ScopedParamContainer spc(lc);
@@ -3972,31 +3973,21 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         }
         osdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
         std::string requestAddress = osdbJob->m_retrieveRequest.getAddressIfSet();
-
-        rjToUnown.push_back(requestAddress);
-
-        cta::common::dataStructures::LifecycleTimings requestTimings = osdbJob->retrieveRequest.lifecycleTimings;
-        log::ScopedParamContainer params(lc);
-        params.add("requestAddress",requestAddress)
-              .add("fileId",osdbJob->archiveFile.archiveFileID)
-              .add("vid",osdbJob->m_retrieveMount->mountInfo.vid)
-              .add("timeForSelection",requestTimings.getTimeForSelection())
-              .add("timeForCompletion", requestTimings.getTimeForCompletion());
-        lc.log(log::INFO, "Retrieve job successfully deleted");
+        jobsToRequeueForReportToUser[requestAddress].emplace_back(osdbJob);
       } catch(const cta::exception::NoSuchObject & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
               .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
               .add("exceptionMessage", ex.getMessageValue());
         lc.log(log::WARNING,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed because the object does not exist anymore. ");
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
               .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
               .add("exceptionMessage", ex.getMessageValue());
         lc.log(log::ERR,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed. "
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
             "Will leave job to garbage collection.");
       }
     }
@@ -4005,7 +3996,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
-    typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
+    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
     RQTRTRFSAlgo::InsertedElement::list insertedRequests;
     // Keep a map of objectstore request -> sDBJob to handle errors.
     std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
@@ -4014,7 +4005,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
           mountPolicy, req->m_activity, req->m_diskSystemName});
       requestToJobMap[&req->m_retrieveRequest] = req;
-       }
+    }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
       rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
@@ -4059,7 +4050,65 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       lc.log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue a batch of requests.");
     }
   }
-  // 3) Remove requests from ownership.
+
+  // 3)
+  for (auto & reportRequestQueue: jobsToRequeueForReportToUser) {
+    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser> RQTRTRFSAlgo;
+    RQTRTRFSAlgo::InsertedElement::list insertedRequests;
+    // Keep a map of objectstore request -> sDBJob to handle errors.
+    std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
+    for (auto & req: reportRequestQueue.second) {
+      insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb,
+          req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
+          mountPolicy, req->m_activity, req->m_diskSystemName});
+      requestToJobMap[&req->m_retrieveRequest] = req;
+    }
+    RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    try {
+      rQTRTRFSAlgo.referenceAndSwitchOwnership(reportRequestQueue.first, insertedRequests, lc);
+      // In case all goes well, we can remove ownership of all requests.
+      for (auto & req: reportRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }
+    } catch (RQTRTRFSAlgo::OwnershipSwitchFailure & failure) {
+      // Some requests did not make it to the queue. Log and leave them for GC to sort out (leave them in ownership).
+      std::set<std::string> failedElements;
+      for (auto & fe: failure.failedElements) {
+        // Log error.
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", requestToJobMap.at(fe.element->retrieveRequest)->archiveFile.archiveFileID)
+              .add("copyNb", fe.element->copyNb)
+              .add("requestObject", fe.element->retrieveRequest->getAddressIfSet());
+        std::string logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for user."
+          " Leaving request to be garbage collected.";
+        int priority = log::ERR;
+        try {
+          std::rethrow_exception(fe.failure);
+        } catch (cta::exception::NoSuchObject &ex) {
+          priority=log::WARNING;
+          logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for user, job does not exist in the objectstore.";
+        } catch (cta::exception::Exception & ex) {
+          params.add("exeptionMessage", ex.getMessageValue());
+        } catch (std::exception & ex) {
+          params.add("exceptionWhat", ex.what())
+                .add("exceptionTypeName", typeid(ex).name());
+        }
+        lc.log(priority, logMessage);
+        // Add the failed request to the set.
+        failedElements.insert(fe.element->retrieveRequest->getAddressIfSet());
+      }
+      for (auto & req: reportRequestQueue.second)  {
+        if (!failedElements.count(req->m_retrieveRequest.getAddressIfSet())) {
+          rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet());
+        }
+      }
+    } catch (exception::Exception & ex) {
+      // Something else happened. We just log the error and let the garbage collector go through all the requests.
+      log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue a batch of requests.");
+    }
+  }
+
+  // 4) Remove requests from ownership.
   m_oStoreDB.m_agentReference->removeBatchFromOwnership(rjToUnown, m_oStoreDB.m_objectStore);
 }
 
@@ -5294,8 +5343,9 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
     // for repack success). Queueing will be done in batch in
     m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
   } else {
-    // set the user transfer request as successful (delete it).
-    m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
+    // else we change its status (to report for transfer success).
+    // Queueing will be done in batch in
+    m_jobSucceedReporter.reset(m_retrieveRequest.asyncReportSucceed(this->selectedCopyNb));
   }
 }
 
