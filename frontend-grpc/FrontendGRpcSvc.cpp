@@ -296,6 +296,7 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::fronten
     retrieveRequest.requester.name         = request->md().cli().user().username();
     retrieveRequest.requester.group        = request->md().cli().user().groupname();
     retrieveRequest.dstURL                 = request->md().transport().dst_url();
+    retrieveRequest.retrieveReportURL      = request->md().transport().report_url();
     retrieveRequest.errorReportURL         = request->md().transport().error_report_url();
     retrieveRequest.diskFileInfo.owner_uid = request->md().file().owner().uid();
     retrieveRequest.diskFileInfo.gid       = request->md().file().owner().gid();

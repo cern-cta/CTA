@@ -69,6 +69,20 @@ public:
   };
   AsyncJobDeleter * asyncDeleteJob();
 
+  class AsyncJobSucceedReporter {
+    friend class RetrieveRequest;
+  public:
+    /**
+     * Wait for the end of the execution of the updater callback
+     */
+    void wait();
+    MountPolicySerDeser m_MountPolicy;
+  private:
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    //Callback to be executed by the AsyncUpdater
+    std::function<std::string(const std::string &)> m_updaterCallback;
+  };
 
   class AsyncJobSucceedForRepackReporter{
     friend class RetrieveRequest;
@@ -99,6 +113,16 @@ public:
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string &)> m_updaterCallback;
   };
+
+  /**
+   * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
+   * as RJS_Success
+   * @param copyNb the copyNb corresponding to the RetrieveJob we want to report as
+   * RJS_Succeeded
+   * @return the class that is Responsible to save the updater callback
+   * and the backend async updater (responsible for executing asynchronously the updater callback
+   */
+  AsyncJobSucceedReporter * asyncReportSucceed(uint32_t copyNb);
 
   /**
    * Asynchronously report the RetrieveJob corresponding to the copyNb parameter

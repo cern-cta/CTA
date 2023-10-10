@@ -708,6 +708,18 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
+
+  {
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  }
+
 }
 
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_policy) {
@@ -929,6 +941,18 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
+
+  {
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  }
+
 }
 
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
@@ -1363,6 +1387,18 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
+
+  {
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  }
+
 }
 
 TEST_P(SchedulerTest, archive_and_retrieve_failure) {

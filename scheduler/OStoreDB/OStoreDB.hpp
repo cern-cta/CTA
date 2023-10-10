@@ -351,6 +351,7 @@ class OStoreDB: public SchedulerDatabase {
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter> m_jobSucceedReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
     std::optional<std::string> m_activity;
     std::optional<std::string> m_diskSystemName;
