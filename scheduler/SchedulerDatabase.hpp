@@ -494,6 +494,7 @@ class SchedulerDatabase {
     std::string errorReportURL;
     enum class ReportType: uint8_t {
       NoReportRequired,
+      CompletionReport,
       FailureReport,
       Report //!< A generic grouped type
     };
