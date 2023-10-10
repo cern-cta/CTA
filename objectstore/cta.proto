@@ -386,6 +386,7 @@ message ArchiveRequest {
 
 enum RetrieveJobStatus {
   RJS_ToTransfer = 1;
+  RJS_ToReportToUserForTransfer = 2;
   RJS_ToReportToUserForFailure = 997;
   RJS_Failed = 998;
   RJS_ToReportToRepackForSuccess = 1002; //For Retrieve request created by a Repack request
@@ -398,6 +399,7 @@ message SchedulerRetrieveRequest {
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;
   required EntryLog entrylog = 9106;
+  required string retrievereporturl = 9109;
   required string retrieveerrorreporturl = 9110;
   required bool isverifyonly = 9111;
 }
@@ -464,6 +466,7 @@ message RetrieveRequest {
   optional string disk_system_name = 9161;
   required bool isverifyonly = 9162;
   optional bool isfailed = 9166 [default = false];
+  required string retrievereporturl = 91667;
 }
 
 message ValueCountPair {

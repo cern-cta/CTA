@@ -21,6 +21,8 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "RetrieveQueue.hpp"
 
+#include <iostream>
+
 namespace cta { namespace objectstore {
 
 template<typename C>
@@ -395,6 +397,9 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e.activity = u.get()->getActivity();
       e.diskSystemName = u.get()->getDiskSystemName();
       switch(u.get()->getJobStatus()) {
+        case serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer:
+          e.reportType = SchedulerDatabase::RetrieveJob::ReportType::CompletionReport;
+          break;
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
           break;
