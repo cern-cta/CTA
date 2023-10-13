@@ -12,6 +12,7 @@
 - cta/CTA#494 - Workaround for scheduler crashing
 - cta/CTA#500 - Safely handle empty shards in object store
 - cta/CTA#509 - Avoid looping in cleaning up state
+- cta/CTA#510 - Remove critical constrain after update heartbeat
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code

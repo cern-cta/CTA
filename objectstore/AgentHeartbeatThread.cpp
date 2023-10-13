@@ -49,9 +49,7 @@ void AgentHeartbeatThread::run() {
         log::ScopedParamContainer params(lc);
         params.add("HeartbeatDeadline", std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count())
               .add("HeartbeatUpdateTime", updateTime);
-        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting (segfault).");
-        cta::utils::segfault();
-        ::exit(EXIT_FAILURE);
+        lc.log(log::WARNING, "In AgentHeartbeatThread::run(): Could not update heartbeat in time.");
       }
     }
   } catch (cta::exception::Exception & ex) {
