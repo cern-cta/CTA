@@ -145,12 +145,21 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
     cta::log::ScopedParamContainer params(m_logContext);
     m_logContext.log(log::INFO, "Shutting down " + std::to_string(drivesToShutdown.size()) + " drive handlers.");
 
-    for(auto & dh : m_subprocessHandlers) {
-      dh.handler->shutdown();
+    for(auto & dh : drivesToShutdown) {
+      dh->handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
-      params.add("SubprocessName", dh.handler->index)
-            .add("ShutdownComplete", dh.status.shutdownComplete);
+      params.add("SubprocessName", dh->handler->index)
+            .add("ShutdownComplete", dh->status.shutdownComplete);
       m_logContext.log(log::INFO, "Signaled shutdown to drive handler.");
+
+      // Remove subprocess handler from list of managed processes.
+      for( int i = 0; auto & dh2 : m_subprocessHandlers) {
+        if (dh->handler->index == dh2.handler->index){
+          auto dh = m_subprocessHandlers.pop(i);
+          x.handler.reset(); // Call the destructor of the subprocess handler.
+        }
+        ++i;
+      }
     }
   }
 
