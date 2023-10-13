@@ -104,13 +104,13 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   std::list<SubprocessAndStatus*> drivesToShutdown;
   int aliveDrives = 0;
 
-  for(const auto &i : m_subprocessHandlers) {
-    if (i.handler->index.starts_with("drive:")) aliveDrives++;
+  for(auto &i : m_subprocessHandlers) {
+    if (i.handler->index.find("drive:") != -1) aliveDrives++;
     if (i.status.shutdownRequested) {
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", i.handler->index);
       m_logContext.log(log::INFO, "Subprocess requested shutdown");
-      if (i.handler->index.starts_with("drive:"))
+      if (i.handler->index.find("drive:") != -1)
         drivesToShutdown.push_back(&i);
       else {
         nonDriveAskedShutdown = true;
