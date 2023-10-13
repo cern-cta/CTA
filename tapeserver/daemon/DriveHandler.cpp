@@ -902,6 +902,8 @@ int DriveHandler::runChild() {
   std::set<SessionState> statesRequiringCleaner = {SessionState::Mounting,
                                                    SessionState::Running, SessionState::Unmounting};
   if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
+    // Set session type to cleanup
+    m_sessionType = SessionType::Cleanup;
     if (m_previousVid.empty()) {
       int logLevel = log::ERR;
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
@@ -1171,6 +1173,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       driveInfo.driveName = m_driveConfig.unitName;
       driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
       driveInfo.host = cta::utils::getShortHostname();
+      // Set session type to cleanup
+      m_sessionType = SessionType::Cleanup;
       scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
                                    cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer scoped(m_processManager.logContext());
