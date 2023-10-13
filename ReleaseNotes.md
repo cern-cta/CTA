@@ -1,3 +1,8 @@
+# v4.10.6-1
+
+### Bug Fixes
+- cta/CTA#510 - Remove critical constrain after update heartbeat
+
 # v4.10.5-1
 
 ### Bug Fixes
