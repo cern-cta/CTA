@@ -111,7 +111,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       params.add("SubprocessName", i.handler->index);
       m_logContext.log(log::INFO, "Subprocess requested shutdown");
       if (i.handler->index.starts_with("drive:"))
-        drivesToShutdown.insert(&i);
+        drivesToShutdown.push_back(&i);
       else {
         nonDriveAskedShutdown = true;
         break;
@@ -145,7 +145,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
     cta::log::ScopedParamContainer params(m_logContext);
     m_logContext.log(log::INFO, "Shutting down " + std::to_string(drivesToShutdown.size()) + " drive handlers.");
 
-    for(auto & dh : drivesToShutdown) {
+    for(auto & dh : m_subprocessHandlers) {
       dh.handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", dh.handler->index)
