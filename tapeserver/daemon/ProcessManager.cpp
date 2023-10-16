@@ -153,7 +153,8 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       m_logContext.log(log::INFO, "Signaled shutdown to drive handler.");
 
       // Remove subprocess handler from list of managed processes.
-      for( int i = 0; auto & dh2 : m_subprocessHandlers) {
+      int i = 0;
+      for( auto & dh2 : m_subprocessHandlers) {
         if (dh->handler->index == dh2.handler->index){
           auto dh = m_subprocessHandlers.pop(i);
           x.handler.reset(); // Call the destructor of the subprocess handler.
