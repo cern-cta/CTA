@@ -16,7 +16,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <unistd.h>
 
 #include "ProcessManager.hpp"
 #include "TestSubprocessHandlers.hpp"
@@ -26,7 +25,6 @@
 namespace unitTests {
 
 TEST(cta_Daemon, ProcessManager) {
-  usleep(1000000);
   cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);

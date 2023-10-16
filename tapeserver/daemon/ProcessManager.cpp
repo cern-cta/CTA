@@ -119,7 +119,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
     }
   }
   // If a non drive handler requests a shutdown or all alive drive handlers request shutdown kill everything.
-  if (nonDriveAskedShutdown || (aliveDrives == static_cast<int>(drivesToShutdown.size()))) {
+  if (nonDriveAskedShutdown || (aliveDrives > 0 && aliveDrives == static_cast<int>(drivesToShutdown.size()))) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
@@ -153,11 +153,9 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       m_logContext.log(log::INFO, "Signaled shutdown to drive handler.");
 
       // Remove subprocess handler from list of managed processes.
-      for ( auto it = m_subprocessHandlers.begin(); it1 != m_subprocessHandlers.end(); ++it ) {
-        if (dh->handler->index == *it.handler->index){
-          m_subprocessHandlers.erase(it);
-        }
-      }
+      m_subprocessHandlers.remove_if([&dh](auto & dh_g) {
+        return dh->handler->index == dh_g.handler->index;
+      });
     }
   }
 
