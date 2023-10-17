@@ -595,6 +595,12 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Fri Oct 13 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.6-1
+- Remove critical constrain after update heartbeat
+
+* Mon Sep 25 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.5-1
+- Workaround for scheduler crashing
+
 * Mon Sep 18 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.4-1
 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
 
