@@ -45,19 +45,24 @@ void AgentHeartbeatThread::run() {
       utils::Timer t;
       m_agentReference.bumpHeatbeat(m_backend);
       auto updateTime = t.secs();
+      if (updateTime > 0.5 * std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count()) {
+        log::ScopedParamContainer params(lc);
+        params.add("HeartbeatUpdateTime", updateTime);
+        lc.log(log::WARNING, "In AgentHeartbeatThread::run(): Late to update the heartbeat.");
+      }
       if (updateTime > std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count()) {
         log::ScopedParamContainer params(lc);
         params.add("HeartbeatDeadline", std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count())
               .add("HeartbeatUpdateTime", updateTime);
-        lc.log(log::WARNING, "In AgentHeartbeatThread::run(): Could not update heartbeat in time.");
+        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting.");
+        ::exit(EXIT_FAILURE);
       }
     }
   } catch (cta::exception::Exception & ex) {
     log::ScopedParamContainer params(lc);
     params.add("Message", ex.getMessageValue());
-    lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting (segfault).");
+    lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting.");
     lc.logBacktrace(log::INFO, ex.backtrace());
-    cta::utils::segfault();
     ::exit(EXIT_FAILURE);
   }
 }
