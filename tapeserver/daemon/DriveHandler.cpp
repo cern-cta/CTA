@@ -60,7 +60,7 @@ DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const Tpconfig
 }
 
 DriveHandler::DriveHandler(ProcessManager& pm) :
-  SubprocessHandler(std::string("drive:Dummy"), m_processManager(pm), m_sessionEndContext(m_processManager.logContext().logger())) {}
+  SubprocessHandler(std::string("drive:Dummy")), m_processManager(pm), m_sessionEndContext(m_processManager.logContext().logger()) {}
 
 using session::SessionState;
 using session::SessionType;
