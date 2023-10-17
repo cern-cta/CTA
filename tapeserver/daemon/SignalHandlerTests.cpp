@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "DriveHandler.hpp"
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "TestSubprocessHandlers.hpp"
@@ -25,6 +26,7 @@
 namespace unitTests {
 using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
+using cta::tape::daemon::DriveHandler;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
   cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
@@ -67,6 +69,32 @@ TEST(cta_Daemon, SignalHandlerKill) {
   ProbeSubprocess &ps=dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
   ASSERT_TRUE(ps.sawShutdown());
   ASSERT_TRUE(ps.sawKill());
+}
+
+TEST(cta_Daemon, SignalHandlerKillDualDrive) {
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
+  cta::log::LogContext lc(dlog);
+  cta::tape::daemon::ProcessManager pm(lc);
+  {
+    // Add the signal handler to the manager
+    std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
+    // Set the timeout
+    sh->setTimeout(std::chrono::milliseconds(10));
+    pm.addHandler(std::move(sh));
+    // Add two drive handlers to the manager.
+    std::unique_ptr<DriveHandler> dh1(new DriveHandler(pm));
+    std::unique_ptr<DriveHandler> dh2(new DriveHandler(pm));
+    pm.addHandler(std::move(dh1));
+    pm.addHandler(std::move(df2));
+
+    // This signal will be queued for the signal handler.
+    ::kill(::getpid(), SIGTERM);
+  }
+  pm.run();
+  //ProbeSubprocess &ps=dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
+  //ASSERT_TRUE(ps.sawShutdown());
+  //ASSERT_TRUE(ps.sawKill());
+
 }
 
 TEST(cta_Daemon, SignalHandlerSigChild) {
