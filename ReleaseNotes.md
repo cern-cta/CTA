@@ -10,6 +10,7 @@
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
 - cta/CTA#500 - Safely handle empty shards in object store
+- cta/CTA#501 - Report max requests to expand in cta-admin command
 - cta/CTA#509 - Avoid looping in cleaning up state
 
 ### Features
