@@ -191,6 +191,7 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.shutdownTime = std::nullopt;
   driveState.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveState.host, inputs.reportTime);
   driveState.mountType = common::dataStructures::MountType::NoMount;
+  driveState.nextMountType = common::dataStructures::MountType::NoMount;
   driveState.driveStatus = common::dataStructures::DriveStatus::Down;
   driveState.desiredUp = false;
   driveState.desiredForceDown = false;
