@@ -13,6 +13,7 @@
 - cta/CTA#501 - Report max requests to expand in cta-admin command
 - cta/CTA#509 - Avoid looping in cleaning up state
 - cta/CTA#512 - Set next mount type to NoMount when a tape drive is set down
+- cta/CTA#510 - Revert CTA#510 but keeping a soft deadline and a hard deadline
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code

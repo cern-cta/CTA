@@ -55,7 +55,6 @@ void AgentHeartbeatThread::run() {
         log::ScopedParamContainer params(lc);
         params.add("HeartbeatDeadline", std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count())
               .add("HeartbeatUpdateTime", updateTime);
-        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time.");
         lc.log(log::CRIT, "In AgentHeartbeatThread::run(): The heartbeat couldn't be updated in the double time"
           "of the deadline. Exiting.");
         ::exit(EXIT_FAILURE);
