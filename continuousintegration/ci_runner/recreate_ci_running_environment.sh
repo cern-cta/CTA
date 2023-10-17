@@ -54,7 +54,7 @@ ls -lR /opt/mhvtl
 echo Running mhvtl config generator...
 ndrives=3
 if [ -n "$1" ]; then
-  echo "Using $1 number of dirves instead of default (3)."
+  echo "Using $1 number of drives instead of default (3)."
   ndrives=$1
 fi
 ./generate_mhvtl_config.sh "$ndrives"
