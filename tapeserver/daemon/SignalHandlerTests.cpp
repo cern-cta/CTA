@@ -23,12 +23,14 @@
 #include "TestSubprocessHandlers.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "tests/TempFile.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace unitTests {
 using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
 using cta::tape::daemon::DriveHandler;
-using cta::tape::dademon::TapedConfiguration;
+using cta::tape::daemon::tests::DummyDriveHandler;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
   cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
@@ -84,7 +86,7 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     sh->setTimeout(std::chrono::milliseconds(10));
     pm.addHandler(std::move(sh));
     // Create taped config file.
-    TempFile tapedConfig;
+    TempFile tapedConfigFile;
     tapedConfigFile.stringFill(
       "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
       "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
@@ -92,7 +94,7 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
       "taped ArchiveFlushBytesFiles 3, 4\n"
       "taped RetrieveFetchBytesFiles 5, 6\n"
       "taped BufferCount 1\n"
-      "taped TpConfigPath");
+      "taped TpConfigPath ");
 
     // Create drive config file.
     TempFile driveConfigFile;
@@ -100,13 +102,13 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
       "drive1 lib0 /dev/tape1 smc1\n"
       "drive2 lib0 /dev/tape2 smc2");
 
-    tapedConfigFile.stringAppend(driveConfig.path());
+    tapedConfigFile.stringAppend(driveConfigFile.path());
 
-    auto tapedConfig = createFromCtaConf(tapedConfigFile.path());
+    auto tapedConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapedConfigFile.path());
 
     // Add two drive handlers to the manager.
-    for(auto & drive : tapedConfig.driveCofigs) {
-      std::unique_ptr<DriveHandler> dh(new DummyDriveHandler(tapedConfig,
+    for(auto & drive : tapedConfig.driveConfigs) {
+      std::unique_ptr<DummyDriveHandler> dh(new DummyDriveHandler(tapedConfig,
                                                         drive.second.value(), pm));
       pm.addHandler(std::move(dh));
     }
@@ -115,8 +117,8 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     ::kill(::getpid(), SIGTERM);
   }
   pm.run();
-  DriveHandler& dhToShutdown = dynamic_cast<DriveHandler&>(pm.at("DriveNameHere"));
-  dhToKill.requestShutdown();
+  DummyDriveHandler& dhToShutdown = dynamic_cast<DummyDriveHandler&>(pm.at("DriveNameHere"));
+  dhToShutdown.requestShutdown();
 
   //Some asserts here.
 }

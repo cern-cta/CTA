@@ -27,6 +27,8 @@
  * */
 namespace cta::tape::daemon::tests {
 class DummyDriveHandler : public DriveHandler {
+  using DriveHandler::DriveHandler;
+
 public:
   void requestKill();
   void requestShutdown();
