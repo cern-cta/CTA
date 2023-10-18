@@ -1,23 +1,24 @@
-# v4.NEXT
+# v4.10.7-1
 
 ### Bug Fixes
 - cta/CTA#460 - Fix "trying to unlock an unlocked lock" error
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#469 - Fix command 'cta-admin drive ls' not showing REPACK VO on mounts of type ARCHIVE_FOR_REPACK
 - cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
+- cta/CTA#473 - Fix some code smells from repack expansion changes
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
-- cta/CTA#473 - Fix some code smells from repack expansion changes.
+- cta/CTA#498 - Fix compilation of CTA with PGSCHED after recent code changes
 - cta/CTA#500 - Safely handle empty shards in object store
 - cta/CTA#501 - Report max requests to expand in cta-admin command
 - cta/CTA#509 - Avoid looping in cleaning up state
-- cta/CTA#512 - Set next mount type to NoMount when a tape drive is set down
 - cta/CTA#510 - Revert CTA#510 but keeping a soft deadline and a hard deadline
+- cta/CTA#512 - Set next mount type to NoMount when a tape drive is set down
 
 ### Features
-- cta/CTA#490 - Improve code quality in the Physical Library catalogue code
 - cta/CTA#134 - Change EOS disk id from integer to string
+- cta/CTA#490 - Improve code quality in the Physical Library catalogue code
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
@@ -36,7 +37,6 @@
 # v4.10.4-1
 
 ### Features
-- cta/CTA#486 - Fix cppcheck new errors
 - cta/CTA#487 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
 
 ### Bug Fixes
