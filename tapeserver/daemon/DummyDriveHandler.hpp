@@ -28,6 +28,8 @@
 namespace cta::tape::daemon::tests {
 class DummyDriveHandler : public DriveHandler {
 public:
+  void requestKill();
+  void requestShutdown();
   void setProcessingStatus(SubprocessHandler::ProcessingStatus newProcStatus);
 };
 } // namespace cta::tape::daemon::tests

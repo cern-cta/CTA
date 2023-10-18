@@ -2,6 +2,14 @@
 
 namespace cta::tape::daemon::tests {
 
+void DummyDriveHandler::requestKill() {
+  m_processingStatus.killRequested = true;
+}
+
+void DummyDriveHandler::requestShutdown() {
+  m_processingStatus.shutdownRequested = true;
+}
+
 void DummyDriveHandler::setProcessingStatus(
     SubprocessHandler::ProcessingStatus newProcStatus) {
   m_processingStatus.shutdownRequested = newProcStatus.shutdownRequested;

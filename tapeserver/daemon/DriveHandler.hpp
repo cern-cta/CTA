@@ -65,7 +65,7 @@ public:
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
-private:
+protected:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager& m_processManager;
   /** The parameters */
