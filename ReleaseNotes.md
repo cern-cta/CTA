@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Features
+- cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
+
 # v4.10.7-1
 
 ### Bug Fixes
