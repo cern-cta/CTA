@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 #include "DriveHandler.hpp"
+#include "DummyDriveHandler.hpp"
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "TestSubprocessHandlers.hpp"
@@ -27,6 +28,7 @@ namespace unitTests {
 using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
 using cta::tape::daemon::DriveHandler;
+using cta::tape::dademon::TapedConfiguration;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
   cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
@@ -81,15 +83,30 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     // Set the timeout
     sh->setTimeout(std::chrono::milliseconds(10));
     pm.addHandler(std::move(sh));
-
-    // Create drive config file.
-    TempFile driveConfig;
-
     // Create taped config file.
     TempFile tapedConfig;
+    tapedConfigFile.stringFill(
+      "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+      "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
+      "taped ArchiveFetchBytesFiles 1, 2\n"
+      "taped ArchiveFlushBytesFiles 3, 4\n"
+      "taped RetrieveFetchBytesFiles 5, 6\n"
+      "taped BufferCount 1\n"
+      "taped TpConfigPath");
+
+    // Create drive config file.
+    TempFile driveConfigFile;
+    driveConfigFile.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape2 smc2");
+
+    tapedConfigFile.stringAppend(driveConfig.path());
+
+    auto tapedConfig = createFromCtaConf(tapedConfigFile.path());
+
     // Add two drive handlers to the manager.
     for(auto & drive : tapedConfig.driveCofigs) {
-      std::unique_ptr<DriveHandler> dh(new DriveHandler(tapedConfig,
+      std::unique_ptr<DriveHandler> dh(new DummyDriveHandler(tapedConfig,
                                                         drive.second.value(), pm));
       pm.addHandler(std::move(dh));
     }
@@ -98,10 +115,10 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     ::kill(::getpid(), SIGTERM);
   }
   pm.run();
-  //ProbeSubprocess &ps=dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
-  //ASSERT_TRUE(ps.sawShutdown());
-  //ASSERT_TRUE(ps.sawKill());
+  DriveHandler& dhToShutdown = dynamic_cast<DriveHandler&>(pm.at("DriveNameHere"));
+  dhToKill.requestShutdown();
 
+  //Some asserts here.
 }
 
 TEST(cta_Daemon, SignalHandlerSigChild) {
