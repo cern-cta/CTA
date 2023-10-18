@@ -81,11 +81,18 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     // Set the timeout
     sh->setTimeout(std::chrono::milliseconds(10));
     pm.addHandler(std::move(sh));
+
+    // Create drive config file.
+    TempFile driveConfig;
+
+    // Create taped config file.
+    TempFile tapedConfig;
     // Add two drive handlers to the manager.
-    std::unique_ptr<DriveHandler> dh1(new DriveHandler(pm));
-    std::unique_ptr<DriveHandler> dh2(new DriveHandler(pm));
-    pm.addHandler(std::move(dh1));
-    pm.addHandler(std::move(df2));
+    for(auto & drive : tapedConfig.driveCofigs) {
+      std::unique_ptr<DriveHandler> dh(new DriveHandler(tapedConfig,
+                                                        drive.second.value(), pm));
+      pm.addHandler(std::move(dh));
+    }
 
     // This signal will be queued for the signal handler.
     ::kill(::getpid(), SIGTERM);
