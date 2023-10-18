@@ -96,7 +96,7 @@ MAP 1:
 EOF
 
     for ((tape=1; tape<=${ntape}; tape++)); do
-      echo "Slot ${tape}: V$(printf %.1d ${lib})$(printf %.2d ${tape})L8" >> /etc/mhvtl/library_contents.${libid}
+      echo "Slot ${tape}: V$(printf %.2d ${lib})$(printf %.3d ${tape})L8" >> /etc/mhvtl/library_contents.${libid}
     done
 
     for ((i=1;i<=${freetapeslots};i++)); do
