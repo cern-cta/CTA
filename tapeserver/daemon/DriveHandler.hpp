@@ -80,13 +80,15 @@ public:
   
   void setScheduler(std::shared_ptr<Scheduler> scheduler);
 
-private:
+protected:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager& m_processManager;
   /** The parameters */
   const TapedConfiguration& m_tapedConfig;
   /** This drive's parameters */
   const TpconfigLine& m_driveConfig;
+  
+private:
   /** Possible outcomes of the previous session/child process.  */
   enum class PreviousSession {
     Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
@@ -164,7 +166,7 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
 
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    cta::log::LogContext* lc) const;
+    cta::Scheduler* scheduler, cta::log::LogContext* lc) const;
 
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;

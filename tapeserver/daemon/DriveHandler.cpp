@@ -697,7 +697,7 @@ int DriveHandler::runChild() {
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
-    const auto cleanerSession = createCleanerSession(&lc);
+    const auto cleanerSession = createCleanerSession(m_scheduler.get(), &lc);
     return cleanerSession->execute();
   }
   else {
@@ -864,7 +864,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
             .add("sessionType", session::toString(m_sessionType));
       lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
 
-      const auto cleanerSession = createCleanerSession(&m_processManager.logContext());
+      const auto cleanerSession = createCleanerSession(m_scheduler.get(), &m_processManager.logContext());
       if (cleanerSession->execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
@@ -877,7 +877,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 }
 
 std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::createCleanerSession(
-  cta::log::LogContext* lc) const {
+  cta::Scheduler* scheduler, cta::log::LogContext* lc) const {
   // Capabilities management.
   cta::server::ProcessCap capUtils;
   // Mounting management.
@@ -898,7 +898,7 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::
     m_tapedConfig.tapeLoadTimeout.value(),
     "",
     *m_catalogue,
-    *m_scheduler);
+    *scheduler);
 }
 
 void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {

@@ -47,10 +47,6 @@ public:
   void build();
 
 private:
-  const TapedConfiguration* m_tapedConfig;
-  const TpconfigLine* m_driveConfig;
-  ProcessManager* m_processManager;
-
   std::unique_ptr<OStoreDBInit> m_sched_db_init;
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
