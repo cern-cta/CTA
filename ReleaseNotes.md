@@ -1,3 +1,8 @@
+# next
+
+### Continuous Integration
+- cta/CTA#515 - Upgrade eos to 4.8.105/5.1.28
+
 # v4.10.7-1
 
 ### Bug Fixes
