@@ -22,6 +22,8 @@
 #include "objectstore/cta.pb.h"
 #include "common/log/LogContext.hpp"
 #include "common/metric/Meter.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
 #include <memory>
 #include <stdint.h>
 #include <cryptopp/base64.h>
@@ -348,8 +350,9 @@ protected:
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock() :
-          countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
-          durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
+      shortHostname(cta::utils::getShortHostname()),
+      countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
+      durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
 
   ScopedSharedLock(ObjectOpsBase & oo) : ScopedSharedLock() {
     lock(oo);
@@ -364,12 +367,18 @@ public:
   }
 
   void lock(ObjectOpsBase & oo) {
-    checkNotLocked();
-    m_objectOps  = & oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
-    ScopedSharedLock::setObjectLocked(m_objectOps);
-    m_locked = true;
+    utils::Timer t;
+    {
+      checkNotLocked();
+      m_objectOps = &oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
+      ScopedSharedLock::setObjectLocked(m_objectOps);
+      m_locked = true;
+    }
+    const auto lockAcqTime = t.secs();
+    durationLockAcq.record(lockAcqTime, {{"HostName", shortHostname}, {"LockType", "ScopedSharedLock"}});
+    countLockAcq.add(1, {{"HostName", shortHostname}, {"LockType", "ScopedSharedLock"}});
   }
 
   virtual ~ScopedSharedLock() {
@@ -377,6 +386,7 @@ public:
   }
 
 protected:
+  const std::string shortHostname;
   metric::MeterCounter countLockAcq;
   metric::MeterHistogram durationLockAcq;
 
@@ -385,6 +395,7 @@ protected:
 class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() :
+      shortHostname(cta::utils::getShortHostname()),
       countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
       durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
 
@@ -403,13 +414,19 @@ public:
   }
 
   void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
-    checkNotLocked();
-    m_objectOps = &oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
-    ScopedExclusiveLock::setObjectLocked(m_objectOps);
-    m_objectOps->m_exclusiveLock = this;
-    m_locked = true;
+    utils::Timer t;
+    {
+      checkNotLocked();
+      m_objectOps = &oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
+      ScopedExclusiveLock::setObjectLocked(m_objectOps);
+      m_objectOps->m_exclusiveLock = this;
+      m_locked = true;
+    }
+    const auto lockAcqTime = t.secs();
+    durationLockAcq.record(lockAcqTime, {{"HostName", shortHostname}, {"LockType", "ScopedExclusiveLock"}});
+    countLockAcq.add(1, {{"HostName", shortHostname}, {"LockType", "ScopedExclusiveLock"}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
@@ -438,6 +455,7 @@ public:
   }
 
 protected:
+  const std::string shortHostname;
   metric::MeterCounter countLockAcq;
   metric::MeterHistogram durationLockAcq;
 
@@ -449,9 +467,11 @@ protected:
 
   ObjectOps(Backend & os):
       ObjectOpsBase(os),
+      shortHostname(cta::utils::getShortHostname()),
       countObjFetch(meterProvider.getMeterCounter("obj", "obj_fetch_count")),
       countObjCommit(meterProvider.getMeterCounter("obj", "obj_commit_count")),
       countObjRemove(meterProvider.getMeterCounter("obj", "obj_remove_count")),
+      countObjInsert(meterProvider.getMeterCounter("obj", "obj_insert_count")),
       durationObjFetch(meterProvider.getMeterHistogram("obj", "obj_fetch_duration")) {
   }
 
@@ -462,16 +482,34 @@ protected:
   virtual ~ObjectOps() {}
 
 public:
+
+  void remove () {
+    ObjectOpsBase::remove();
+    countObjRemove.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+  }
+
   void fetch() {
-    // Check that the object is locked, one way or another
-    if(!m_locksCount)
-      throw NotLocked("In ObjectOps::fetch(): object not locked");
-    fetchBottomHalf();
+    utils::Timer t;
+    {
+      // Check that the object is locked, one way or another
+      if (!m_locksCount)
+        throw NotLocked("In ObjectOps::fetch(): object not locked");
+      fetchBottomHalf();
+    }
+    const auto fetchTime = t.secs();
+    durationObjFetch.record(fetchTime, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}});
+    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   void fetchNoLock() {
-    m_noLock = true;
-    fetchBottomHalf();
+    utils::Timer t;
+    {
+      m_noLock = true;
+      fetchBottomHalf();
+    }
+    const auto fetchTime = t.secs();
+    durationObjFetch.record(fetchTime, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}});
+    countObjFetch.add(1, {{"Type", "Lock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
 protected:
@@ -507,6 +545,7 @@ public:
     std::unique_ptr<AsyncLockfreeFetcher> ret;
     ret.reset(new AsyncLockfreeFetcher(*this));
     ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Async"}});
     return ret.release();
   }
 
@@ -540,6 +579,7 @@ public:
     // yet in the object store (and this is ensured by the )
     m_header.set_payload(m_payload.SerializeAsString());
     ret->m_asyncCreator.reset(m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString()));
+    countObjInsert.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Async"}});
     return ret.release();
   }
 
@@ -556,6 +596,7 @@ public:
     }
     // Write the object
     m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
+    countObjCommit.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   CTA_GENERATE_EXCEPTION_CLASS(WrongTypeForGarbageCollection);
@@ -641,6 +682,7 @@ public:
     m_header.set_payload(m_payload.SerializeAsString());
     m_objectStore.create(getAddressIfSet(), m_header.SerializeAsString());
     m_existingObject = true;
+    countObjInsert.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   bool exists() {
@@ -667,9 +709,11 @@ private:
   }
 
 protected:
+  const std::string shortHostname;
   metric::MeterCounter countObjFetch;
   metric::MeterCounter countObjCommit;
   metric::MeterCounter countObjRemove;
+  metric::MeterCounter countObjInsert;
   metric::MeterHistogram durationObjFetch;
   static const serializers::ObjectType payloadTypeId = PayloadTypeId;
   PayloadType m_payload;
