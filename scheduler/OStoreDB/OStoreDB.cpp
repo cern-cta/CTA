@@ -1293,6 +1293,9 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
   while(jobsBatchItor != jobsBatch.end()) {
     auto & j = *jobsBatchItor;
     switch(j->reportType) {
+      case SchedulerDatabase::RetrieveJob::ReportType::CompletionReport:
+        // do nothing
+        break;
       case SchedulerDatabase::RetrieveJob::ReportType::FailureReport: {
         try {
           j->fail();
