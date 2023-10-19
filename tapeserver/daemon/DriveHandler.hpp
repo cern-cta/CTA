@@ -164,7 +164,6 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
 
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    const std::unique_ptr<Scheduler>& scheduler,
     cta::log::LogContext* lc) const;
 
 protected:

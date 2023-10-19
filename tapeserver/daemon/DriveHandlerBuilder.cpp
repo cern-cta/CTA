@@ -34,20 +34,20 @@ namespace daemon {
 
 DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, const TpconfigLine* driveConfig,
   ProcessManager* pm) 
-  : DriveHandler(*tapedConfig, *driveConfig, *pm), m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_processManager(pm) {
-  
+  : DriveHandler(*tapedConfig, *driveConfig, *pm), m_tapedConfig(tapedConfig), m_driveConfig(driveConfig),
+    m_processManager(pm) {
 }
 
 void DriveHandlerBuilder::build() {
   // auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
   m_catalogue = std::shared_ptr<cta::catalogue::Catalogue>(createCatalogue());
-  // auto scheduler = std::shared_ptr<Scheduler>(createScheduler(catalogue));
+  m_scheduler = std::shared_ptr<Scheduler>(createScheduler(m_catalogue));
   // setScheduler(scheduler);
   // setCatalogue(catalogue);
   // return std::unique_ptr<DriveHandler>(this);
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue() {
+std::unique_ptr<catalogue::Catalogue> DriveHandlerBuilder::createCatalogue() {
   log::ScopedParamContainer params(m_processManager->logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig->fileCatalogConfigFile.value());
   m_processManager->logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): "
@@ -94,7 +94,6 @@ std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(std::shared_ptr<
   return std::make_unique<Scheduler>(*catalogue, *m_sched_db, m_tapedConfig->mountCriteria.value().maxFiles,
     m_tapedConfig->mountCriteria.value().maxBytes);
 }
-
 
 } // namespace daemon
 } // namespace tape
