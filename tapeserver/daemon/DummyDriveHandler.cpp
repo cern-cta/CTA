@@ -16,8 +16,6 @@
  * Organization or submit itself to any jurisdiction.
  */
 
-#pragma once
-
 #include "DummyDriveHandler.hpp"
 
 namespace cta::tape::daemon {
