@@ -299,7 +299,7 @@ void ProcessManager::runEventLoop() {
   nextTimeoutMs = std::min(fiveMin, nextTimeoutMs);
   // Call epoll with an array of 5 events. As we expect 3-4 processes, this
   // should be large enough
-  const int eventSlotCount = 5;
+  const int eventSlotCount = m_subprocessHandlers.size();
   ::epoll_event ee[eventSlotCount];
   int receivedEvents = ::epoll_wait(m_epollFd, ee, eventSlotCount, nextTimeoutMs);
   // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
