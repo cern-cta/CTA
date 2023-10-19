@@ -70,14 +70,10 @@ MeterHistogram MeterProvider::getMeterHistogram(const std::string & meterName, c
   return meter;
 }
 
-MeterCounter::MeterCounter() {}
-
 void MeterCounter::add(uint64_t value, std::map<std::string, std::string> attributes) {
   auto labelKv = opentelemetry::common::KeyValueIterableView<decltype(attributes)>{attributes};
   _counter->Add(value, labelKv);
 }
-
-MeterHistogram::MeterHistogram() {}
 
 void MeterHistogram::record(double value, std::map<std::string, std::string> attributes) {
   auto labelKv = opentelemetry::common::KeyValueIterableView<decltype(attributes)>{attributes};

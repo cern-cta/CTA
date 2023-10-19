@@ -47,9 +47,8 @@ class MeterCounter {
 public:
   void add(uint64_t value, std::map<std::string, std::string> attributes);
 private:
-  MeterCounter();
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> _meter;
-  opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> _counter;
+  opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> _counter;
 };
 
 class MeterHistogram {
@@ -57,9 +56,8 @@ class MeterHistogram {
 public:
   void record(double value, std::map<std::string, std::string> attributes);
 private:
-  MeterHistogram();
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> _meter;
-  opentelemetry::nostd::unique_ptr<opentelemetry::metrics::Histogram<double>> _histogram;
+  opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Histogram<double>> _histogram;
 };
 
 } // namespace cta::metric

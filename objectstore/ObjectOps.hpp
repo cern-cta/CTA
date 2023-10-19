@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/log/LogContext.hpp"
+#include "common/metric/Meter.hpp"
 #include <memory>
 #include <stdint.h>
 #include <cryptopp/base64.h>
@@ -32,6 +33,8 @@ class Catalogue;
 }
 
 namespace objectstore {
+
+extern metric::MeterProvider meterProvider;
 
 class AgentReference;
 class ScopedLock;
@@ -344,8 +347,11 @@ protected:
 
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock() {}
-  ScopedSharedLock(ObjectOpsBase & oo) {
+  ScopedSharedLock() :
+          countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
+          durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
+
+  ScopedSharedLock(ObjectOpsBase & oo) : ScopedSharedLock() {
     lock(oo);
   }
 
@@ -370,12 +376,19 @@ public:
     releaseIfNeeded();
   }
 
+protected:
+  metric::MeterCounter countLockAcq;
+  metric::MeterHistogram durationLockAcq;
+
 };
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock() {}
-  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
+  ScopedExclusiveLock() :
+      countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
+      durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
+
+  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
   }
 
@@ -424,16 +437,27 @@ public:
     releaseIfNeeded();
   }
 
+protected:
+  metric::MeterCounter countLockAcq;
+  metric::MeterHistogram durationLockAcq;
+
 };
 
 template <class PayloadType, serializers::ObjectType PayloadTypeId>
 class ObjectOps: public ObjectOpsBase {
 protected:
-  ObjectOps(Backend & os, const std::string & name): ObjectOpsBase(os) {
-    setAddress(name);
+
+  ObjectOps(Backend & os):
+      ObjectOpsBase(os),
+      countObjFetch(meterProvider.getMeterCounter("obj", "obj_fetch_count")),
+      countObjCommit(meterProvider.getMeterCounter("obj", "obj_commit_count")),
+      countObjRemove(meterProvider.getMeterCounter("obj", "obj_remove_count")),
+      durationObjFetch(meterProvider.getMeterHistogram("obj", "obj_fetch_duration")) {
   }
 
-  ObjectOps(Backend & os): ObjectOpsBase(os) {}
+  ObjectOps(Backend & os, const std::string & name): ObjectOps(os) {
+    setAddress(name);
+  }
 
   virtual ~ObjectOps() {}
 
@@ -450,6 +474,7 @@ public:
     fetchBottomHalf();
   }
 
+protected:
   void fetchBottomHalf() {
     m_existingObject = true;
     // Get the header from the object store
@@ -458,6 +483,7 @@ public:
     getPayloadFromHeader();
   }
 
+public:
   class AsyncLockfreeFetcher {
     friend class ObjectOps;
     AsyncLockfreeFetcher(ObjectOps & obj): m_obj(obj) {}
@@ -641,6 +667,10 @@ private:
   }
 
 protected:
+  metric::MeterCounter countObjFetch;
+  metric::MeterCounter countObjCommit;
+  metric::MeterCounter countObjRemove;
+  metric::MeterHistogram durationObjFetch;
   static const serializers::ObjectType payloadTypeId = PayloadTypeId;
   PayloadType m_payload;
 };

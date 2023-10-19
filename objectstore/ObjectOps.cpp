@@ -19,6 +19,8 @@
 
 namespace cta { namespace objectstore {
 
+metric::MeterProvider meterProvider;
+
 ObjectOpsBase::~ObjectOpsBase()  {
   if (m_lockForSubObject) m_lockForSubObject->dereferenceSubObject(*this);
 }
