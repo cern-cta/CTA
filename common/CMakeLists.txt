@@ -30,6 +30,10 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+# Opentelemetry libraries
+find_package(opentelemetry-cpp CONFIG REQUIRED)
+find_package(prometheus-cpp CONFIG REQUIRED)
+
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
@@ -130,6 +134,7 @@ set (COMMON_LIB_SRC_FILES
   log/StringLogger.cpp
   log/SyslogLogger.cpp
   log/TimingList.cpp
+  metric/Meter.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
@@ -168,6 +173,8 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
+
 target_link_libraries (ctacommon
   XrdSsiPbEosCta
   pthread
@@ -176,6 +183,7 @@ target_link_libraries (ctacommon
   cap
   XrdCl
   json-c
+  ${OPENTELEMETRY_CPP_LIBRARIES}
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
