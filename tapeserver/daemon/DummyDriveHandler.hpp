@@ -25,7 +25,7 @@
  * Dummy handler for testing purposes to be able to set manually different type
  * of statuses.
  * */
-namespace cta::tape::daemon::tests {
+namespace cta::tape::daemon {
 class DummyDriveHandler : public DriveHandler {
   using DriveHandler::DriveHandler;
 
@@ -34,4 +34,4 @@ public:
   void requestShutdown();
   void setProcessingStatus(SubprocessHandler::ProcessingStatus newProcStatus);
 };
-} // namespace cta::tape::daemon::tests
+} // namespace cta::tape::daemon

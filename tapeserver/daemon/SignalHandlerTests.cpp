@@ -104,7 +104,7 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
 
     tapedConfigFile.stringAppend(driveConfigFile.path());
 
-    auto tapedConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapedConfigFile.path());
+    auto tapedConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapedConfigFile.path(), dlog);
 
     // Add two drive handlers to the manager.
     for(auto & drive : tapedConfig.driveConfigs) {
@@ -113,11 +113,9 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
       pm.addHandler(std::move(dh));
     }
 
-    // This signal will be queued for the signal handler.
-    ::kill(::getpid(), SIGTERM);
   }
   pm.run();
-  DummyDriveHandler& dhToShutdown = dynamic_cast<DummyDriveHandler&>(pm.at("DriveNameHere"));
+  DummyDriveHandler& dhToShutdown = dynamic_cast<DummyDriveHandler&>(pm.at("drive:drive0"));
   dhToShutdown.requestShutdown();
 
   //Some asserts here.
