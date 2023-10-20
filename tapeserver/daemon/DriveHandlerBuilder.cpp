@@ -41,33 +41,32 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
   params.add("processName", processName);
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): "
+  m_lc->log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): "
     "will get catalogue login information.");
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): will connect to catalogue.");
-  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
+  m_lc->log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): will connect to catalogue.");
+  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc->logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
   return catalogueFactory->create();
 }
 
 std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::string& prefixProcessName,
   const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) {
-  auto& lc = m_processManager.logContext();
   std::string processName;
   try {
     processName =  prefixProcessName + m_driveConfig.unitName;
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("processName", processName);
-    lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
+    m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
       "Enabling leaving non-empty agent behind.");
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), lc.logger(),
-      true);
+    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(),
+      m_lc->logger(), true);
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to connect to objectstore or "
+    m_lc->log(log::CRIT, "In DriveHandler::createScheduler(): failed to connect to objectstore or "
       "failed to instantiate agent entry. Reporting fatal error.");
     throw;
   }
@@ -75,15 +74,15 @@ std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::
     if (!m_catalogue) {
       m_catalogue = createCatalogue(processName);
     }
-    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, m_lc->logger());
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
+    m_lc->log(log::CRIT, "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
       "Reporting fatal error.");
     throw;
   }
-  lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
+  m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
   return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 

@@ -54,8 +54,8 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm) :
   SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
-  m_tapedConfig(tapedConfig), m_driveConfig(driveConfig),
-  m_sessionEndContext(m_processManager.logContext().logger()) {
+  m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_lc(&m_processManager.logContext()),
+  m_sessionEndContext(m_lc->logger()) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
@@ -171,10 +171,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       return m_processingStatus;
     }
   } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(*m_lc);
     params.add("tapeDrive", m_driveConfig.unitName)
           .add("Error", ex.getMessageValue());
-    m_processManager.logContext().log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
+    m_lc->log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
     m_processingStatus = SubprocessHandler::ProcessingStatus();
     m_sessionState = SessionState::Shutdown;
@@ -219,14 +219,14 @@ decltype(SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTim
     m_sessionTypeWhenTimeoutDecided = m_sessionType;
   }
   {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    log::ScopedParamContainer params(*m_lc);
     params.add("TimeoutType", m_timeoutType)
           .add("LastStateChangeTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
           .add("LastHeartBeatTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastHeartBeatTime.time_since_epoch()).count())
           .add("LastDataMovementTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastDataMovementTime.time_since_epoch()).count())
           .add("Now", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count())
           .add("Timeout", std::chrono::duration_cast<std::chrono::seconds>(ret.time_since_epoch()).count());
-    m_processManager.logContext().log(log::DEBUG, "Computed new timeout");
+    m_lc->log(log::DEBUG, "Computed new timeout");
   }
   return ret;
 }
@@ -237,7 +237,7 @@ decltype(SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTim
 void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
   // track of the exit state as kill() means we will not be called anymore.
-  log::ScopedParamContainer params(m_processManager.logContext());
+  log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveConfig.unitName);
   if (m_pid != -1) {
     params.add("SubProcessId", m_pid);
@@ -259,7 +259,7 @@ void DriveHandler::kill() {
       else {
         params.add("WIFSIGNALED", WIFSIGNALED(status));
       }
-      m_processManager.logContext().log(log::INFO, "In DriveHandler::kill(): sub process completed");
+      m_lc->log(log::INFO, "In DriveHandler::kill(): sub process completed");
       m_sessionEndContext.pushOrReplace({"Error_sessionKilled", "1"});
       m_sessionEndContext.pushOrReplace({"killSignal", WTERMSIG(status)});
       m_sessionEndContext.pushOrReplace({"status", "failure"});
@@ -269,11 +269,11 @@ void DriveHandler::kill() {
       m_pid = -1;
     } catch (exception::Exception& ex) {
       params.add("Exception", ex.getMessageValue());
-      m_processManager.logContext().log(log::ERR, "In DriveHandler::kill(): failed to kill existing subprocess");
+      m_lc->log(log::ERR, "In DriveHandler::kill(): failed to kill existing subprocess");
     }
   }
   else {
-    m_processManager.logContext().log(log::INFO, "In DriveHandler::kill(): no subprocess to kill");
+    m_lc->log(log::INFO, "In DriveHandler::kill(): no subprocess to kill");
   }
 }
 
@@ -281,7 +281,7 @@ void DriveHandler::kill() {
 // DriveHandler::processEvent
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
-  log::ScopedParamContainer scoped(m_processManager.logContext());
+  log::ScopedParamContainer scoped(*m_lc);
   scoped.add("tapeDrive", m_driveConfig.unitName);
   m_lastHeartBeatTime = std::chrono::steady_clock::now();
 
@@ -304,7 +304,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     // If we report a state change, process it (last as this can change the return value)
     if (message.reportingstate()) {
       DriveHandlerStateReporter stateReporter(m_driveConfig.unitName, &m_processingStatus, &m_sessionVid,
-        &m_lastDataMovementTime, &m_processManager.logContext());
+        &m_lastDataMovementTime, m_lc);
       m_lastStateChangeTime = stateReporter.processState(message, &m_sessionState, &m_previousState,
                                                                   &m_sessionType, &m_previousType);
     }
@@ -320,19 +320,19 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       m_socketPair.reset(nullptr);
     }
     else {
-      m_processManager.logContext().log(log::ERR,
+      m_lc->log(log::ERR,
                                         "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
     }
     // We expect to be woken up by the child's signal.
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(*m_lc);
     params.add("Message", ex.getMessageValue());
-    m_processManager.logContext().log(log::DEBUG,
+    m_lc->log(log::DEBUG,
                                       "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(*m_lc);
     params.add("Message", ex.getMessageValue());
-    m_processManager.logContext().log(log::ERR,
+    m_lc->log(log::ERR,
                                       "In DriveHandler::processEvent(): failed");
     return m_processingStatus;
   }
@@ -385,12 +385,12 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
       m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
     if (message.totaltapebytesmoved() < m_totalTapeBytesMoved ||
         message.totaldiskbytesmoved() < m_totalDiskBytesMoved) {
-      log::ScopedParamContainer params(m_processManager.logContext());
+      log::ScopedParamContainer params(*m_lc);
       params.add("PreviousTapeBytesMoved", m_totalTapeBytesMoved)
             .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
             .add("NewTapeBytesMoved", message.totaltapebytesmoved())
             .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_processManager.logContext().log(log::DEBUG, "WARNING: In DriveHandler::processBytes(): total bytes moved going backwards");
+      m_lc->log(log::DEBUG, "WARNING: In DriveHandler::processBytes(): total bytes moved going backwards");
     }
     m_totalTapeBytesMoved = message.totaltapebytesmoved();
     m_totalDiskBytesMoved = message.totaldiskbytesmoved();
@@ -409,7 +409,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   // waitpid will return 0. Non zero if process completed (and status needs to
   // be picked up) and -1 if the process is entirely gone.
   // Of course we might not have a child process to begin with.
-  log::ScopedParamContainer params(m_processManager.logContext());
+  log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveConfig.unitName);
   if (-1 == m_pid) return m_processingStatus;
   int processStatus;
@@ -418,13 +418,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   try {
     exception::Errnum::throwOnMinusOne(rc);
   } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer scoped(m_processManager.logContext());
+    cta::log::ScopedParamContainer scoped(*m_lc);
     scoped.add("pid", m_pid)
           .add("tapeDrive", m_driveConfig.unitName)
           .add("Message", ex.getMessageValue())
           .add("SessionState", session::toString(m_sessionState))
           .add("SessionType", toString(m_sessionType));
-    m_processManager.logContext().log(log::WARNING,
+    m_lc->log(log::WARNING,
                                       "In DriveHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
     return m_processingStatus;
   }
@@ -447,12 +447,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       params.add("exitCode", WEXITSTATUS(processStatus));
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
-        m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
+        m_lc->log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
         resetToDefault(PreviousSession::Up);
         m_processingStatus.forkRequested = true;
       }
       else {
-        m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will not spawn new one as we are shutting down.");
+        m_lc->log(log::INFO, "Drive subprocess exited. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested = false;
       }
     }
@@ -464,11 +464,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       resetToDefault(PreviousSession::Crashed);
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
-        m_processManager.logContext().log(log::INFO, "Drive subprocess crashed. Will spawn a new one.");
+        m_lc->log(log::INFO, "Drive subprocess crashed. Will spawn a new one.");
         m_processingStatus.forkRequested = true;
       }
       else {
-        m_processManager.logContext().log(log::INFO, "Drive subprocess crashed. Will not spawn new one as we are shutting down.");
+        m_lc->log(log::INFO, "Drive subprocess crashed. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested = false;
       }
       m_sessionEndContext.pushOrReplace({"Error_sessionKilled", "1"});
@@ -492,11 +492,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
 SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   // Process manager found that we timed out. Let's log why and kill the child process,
   // if any (there should be one).
-  log::ScopedParamContainer params(m_processManager.logContext());
+  log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveConfig.unitName);
   if (-1 == m_pid) {
-    m_processManager.logContext().log(log::ERR, "In DriveHandler::processTimeout(): Received timeout without child process present.");
-    m_processManager.logContext().log(log::INFO, "Re-launching child process.");
+    m_lc->log(log::ERR, "In DriveHandler::processTimeout(): Received timeout without child process present.");
+    m_lc->log(log::INFO, "Re-launching child process.");
     m_processingStatus.forkRequested = true;
     m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
     // Record the status of the session for cleanup startup (not needed here)
@@ -539,10 +539,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   try {
     params.add("SubprocessId", m_pid);
     exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL));
-    m_processManager.logContext().log(log::WARNING, "In DriveHandler::processTimeout(): Killed subprocess.");
+    m_lc->log(log::WARNING, "In DriveHandler::processTimeout(): Killed subprocess.");
   } catch (exception::Exception& ex) {
     params.add("Error", ex.getMessageValue());
-    m_processManager.logContext().log(log::ERR, "In DriveHandler::processTimeout(): Failed to kill subprocess.");
+    m_lc->log(log::ERR, "In DriveHandler::processTimeout(): Failed to kill subprocess.");
   }
   // We now should receive the sigchild, so we ask nothing from process manager
   m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
@@ -579,11 +579,10 @@ int DriveHandler::runChild() {
   driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
-  auto& lc = m_processManager.logContext();
   {
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("backendPath", m_tapedConfig.backendPath.value());
-    lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
+    m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
 
   // Before anything, we need to check we have access to the scheduler's central storage
@@ -591,14 +590,14 @@ int DriveHandler::runChild() {
   try {
     std::string processName = "DriveProcess-";
     processName += m_driveConfig.unitName;
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("processName", processName);
-    lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
-    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_processManager.logContext().logger(), true));
+    m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_lc->logger(), true));
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -608,70 +607,70 @@ int DriveHandler::runChild() {
     if (!m_catalogue) {
       m_catalogue = createCatalogue("DriveHandler::runChild()");
     }
-    sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+    sched_db = sched_db_init->getSchedDB(*m_catalogue, m_lc->logger());
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
-  lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler->");
+  m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler->");
 
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
     scheduler = createScheduler("DriveProcess-", m_tapedConfig.mountCriteria.value().maxFiles,
       m_tapedConfig.mountCriteria.value().maxBytes);
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate scheduler. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate scheduler. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   
   // Before launching the transfer session, we validate that the scheduler is reachable.
-  lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
+  m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
-    scheduler->ping(lc);
+    scheduler->ping(*m_lc);
   } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("tapeDrive", m_driveConfig.unitName);
     int logLevel = log::ERR;
     std::string errorMsg = "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.";
-    lc.log(log::ERR, errorMsg);
+    m_lc->log(log::ERR, errorMsg);
     // Get hold of the scheduler
     try {
       scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-        cta::common::dataStructures::DriveStatus::Down, lc);
+        cta::common::dataStructures::DriveStatus::Down, *m_lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
       driveState.setReasonFromLogMsg(logLevel, errorMsg);
-      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
+      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception& ex) {
-      log::ScopedParamContainer param(lc);
+      log::ScopedParamContainer param(*m_lc);
       param.add("errorMessage", ex.getMessageValue());
-      lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
+      m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       sleep(1);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -688,21 +687,21 @@ int DriveHandler::runChild() {
     if (m_previousVid.empty()) {
       int logLevel = log::ERR;
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
-      lc.log(log::ERR, errorMsg);
+      m_lc->log(log::ERR, errorMsg);
       try {
         scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-          cta::common::dataStructures::DriveStatus::Down, lc);
+          cta::common::dataStructures::DriveStatus::Down, *m_lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
         driveState.forceDown = false;
         driveState.setReasonFromLogMsg(logLevel, errorMsg);
-        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
+        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception& ex) {
-        log::ScopedParamContainer param(lc);
+        log::ScopedParamContainer param(*m_lc);
         param.add("errorMessage", ex.getMessageValue());
-        lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
+        m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         sleep(1);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -711,39 +710,39 @@ int DriveHandler::runChild() {
     // Log the decision
     {
       scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-                                  cta::common::dataStructures::DriveStatus::CleaningUp, lc);
-      log::ScopedParamContainer params(lc);
+                                  cta::common::dataStructures::DriveStatus::CleaningUp, *m_lc);
+      log::ScopedParamContainer params(*m_lc);
       params.add("tapeVid", m_previousVid)
             .add("tapeDrive", m_driveConfig.unitName)
             .add("PreviousState", session::toString(m_sessionState))
             .add("PreviousType", session::toString(m_sessionType));
-      lc.log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
+      m_lc->log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
     }
     // TODO: the cleaner session does not yet report to the scheduler
 //    // Before launching the transfer session, we validate that the scheduler is reachable.
 //    if (!scheduler->ping()) {
-//      lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before cleaner. Reporting fatal error.");
+//      m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before cleaner. Reporting fatal error.");
 //      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
 //      sleep(1);
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 //    }
     try {
-      scheduler->ping(lc);
+      scheduler->ping(*m_lc);
     } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
-      log::ScopedParamContainer param(lc);
+      log::ScopedParamContainer param(*m_lc);
       param.add("errorMessage", ex.getMessageValue());
-      lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
+      m_lc->log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception& ex) {
-      log::ScopedParamContainer param(lc);
+      log::ScopedParamContainer param(*m_lc);
       param.add("errorMessage", ex.getMessageValue());
-      lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
+      m_lc->log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
-    const auto cleanerSession = createCleanerSession(scheduler.get(), &lc);
+    const auto cleanerSession = createCleanerSession(scheduler.get());
     return cleanerSession->execute();
   }
   else {
@@ -791,25 +790,25 @@ int DriveHandler::runChild() {
     // put the drive down.
     if (m_previousSession == PreviousSession::Initiating) {
       // Log that we put the drive's desired state to down and do it.
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(*m_lc);
       params.add("tapeDrive", m_driveConfig.unitName);
       int logLevel = log::INFO;
       std::string msg = "Startup";
-      lc.log(logLevel, msg);
+      m_lc->log(logLevel, msg);
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
         // Checking the drive does not already exist in the database
-        if (!scheduler->checkDriveCanBeCreated(driveInfo, lc)) {
+        if (!scheduler->checkDriveCanBeCreated(driveInfo, *m_lc)) {
           driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
         cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState;
         try {
-          currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveConfig.unitName, lc);
+          currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveConfig.unitName, *m_lc);
         } catch (Scheduler::NoSuchDrive& ex) {
-          lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
+          m_lc->log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
         }
 
         cta::common::dataStructures::SecurityIdentity securityIdentity;
@@ -817,7 +816,7 @@ int DriveHandler::runChild() {
         driveState.up = false;
         driveState.forceDown = false;
         scheduler->createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
-                                        common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, lc);
+                                        common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, *m_lc);
 
         // Get the drive state to see if there is a reason or not, we don't want to change the reason
         // why a drive is down at the startup of the tapeserver. If it's setted up a previous Reason From Log
@@ -830,12 +829,12 @@ int DriveHandler::runChild() {
           driveState.reason = currentDesiredDriveState.reason.value();
         }
 
-        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
-        scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, lc);
+        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
+        scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, *m_lc);
       } catch (cta::exception::Exception& ex) {
         params.add("Message", ex.getMessageValue())
               .add("Backtrace", ex.backtrace());
-        lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
+        m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -849,11 +848,11 @@ int DriveHandler::runChild() {
       m_tapedConfig.rmcPort.value(),
       m_tapedConfig.rmcNetTimeout.value(),
       m_tapedConfig.rmcRequestAttempts.value());
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
     castor::tape::System::realWrapper sWrapper;
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
-      lc.logger(),
+      m_lc->logger(),
       sWrapper,
       m_driveConfig,
       mediaChangerFacade,
@@ -881,32 +880,31 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     return m_processingStatus;
   };
   // TODO: improve in the future (preempt the child process)
-  auto& lc = m_processManager.logContext();
-  log::ScopedParamContainer params(lc);
+  log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveConfig.unitName);
-  lc.log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
+  m_lc->log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
   // Mounting management.
   if (!m_catalogue)
     m_catalogue = createCatalogue("DriveHandler::shutdown()");
   // Create the scheduler
-  lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler");
+  m_lc->log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler");
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
     scheduler = createScheduler("DriveHandlerShutdown-", 0, 0);
   } catch (cta::exception::Exception &ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to instantiate scheduler. Reporting fatal error.");
+    m_lc->log(log::CRIT, "In DriveHandler::shutdown(): failed to instantiate scheduler. Reporting fatal error.");
     // Putting the drive down
     try {
-      setDriveDownForShutdown("Failed to instantiate scheduler", &lc);
+      setDriveDownForShutdown("Failed to instantiate scheduler");
     } catch(const cta::exception::Exception &ex) {
       params.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_driveConfig.unitName)
             .add("message", ex.getMessageValue());
-      lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+      m_lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
     }
     return exitShutdown();
   }
@@ -915,7 +913,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     SessionState::Running, SessionState::Unmounting };
   if (statesRequiringCleaner.count(m_previousState)) {
     if (m_sessionVid.empty()) {
-      lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
+      m_lc->log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     }
     else {
       cta::common::dataStructures::DriveInfo driveInfo;
@@ -925,28 +923,28 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       // Set session type to cleanup
       m_sessionType = SessionType::Cleanup;
       scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-                                   cta::common::dataStructures::DriveStatus::CleaningUp, lc);
-      log::ScopedParamContainer scoped(m_processManager.logContext());
+                                   cta::common::dataStructures::DriveStatus::CleaningUp, *m_lc);
+      log::ScopedParamContainer scoped(*m_lc);
       scoped.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_driveConfig.unitName)
             .add("sessionState", session::toString(m_sessionState))
             .add("sessionType", session::toString(m_sessionType));
-      lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
+      m_lc->log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
 
-      const auto cleanerSession = createCleanerSession(scheduler.get(), &m_processManager.logContext());
+      const auto cleanerSession = createCleanerSession(scheduler.get());
       if (cleanerSession->execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
     }
   }
   // Putting the drive down
-  setDriveDownForShutdown("Shutdown", &lc);
+  setDriveDownForShutdown("Shutdown");
   
   return exitShutdown();
 }
 
 std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::createCleanerSession(
-  cta::Scheduler* scheduler, cta::log::LogContext* lc) const {
+  cta::Scheduler* scheduler) const {
   // Capabilities management.
   cta::server::ProcessCap capUtils;
   // Mounting management.
@@ -954,12 +952,12 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::
     m_tapedConfig.rmcPort.value(),
     m_tapedConfig.rmcNetTimeout.value(),
     m_tapedConfig.rmcRequestAttempts.value());
-  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_processManager.logContext().logger());
+  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
   castor::tape::System::realWrapper sWrapper;
   return std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
     capUtils,
     mediaChangerFacade,
-    lc->logger(),
+    m_lc->logger(),
     m_driveConfig,
     sWrapper,
     m_sessionVid,
@@ -970,7 +968,7 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::
     *scheduler);
 }
 
-void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {
+void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
   try {
     cta::common::dataStructures::DriveInfo driveInfo;
     driveInfo.driveName = m_driveConfig.unitName;
@@ -979,7 +977,7 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::
 
     auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
     if (!driveState) {
-      lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
+      m_lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
       return;
     }
 
@@ -1000,26 +998,26 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::
 
     TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
     driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::Down, time(nullptr), *lc);
-    driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *lc);
+      cta::common::dataStructures::DriveStatus::Down, time(nullptr), *m_lc);
+    driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *m_lc);
   } catch(const cta::exception::Exception &ex) {
-    log::ScopedParamContainer params(*lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("tapeVid", m_sessionVid)
           .add("tapeDrive", m_driveConfig.unitName)
           .add("message", ex.getMessageValue());
-    lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+    m_lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
   }
 }
 
 std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
-  log::ScopedParamContainer params(m_processManager.logContext());
+  log::ScopedParamContainer params(*m_lc);
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
   params.add("processName", processName);
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will get catalogue login information.");
+  m_lc->log(log::DEBUG, "In DriveHandler::createCatalogue(): will get catalogue login information.");
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
+  m_lc->log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
   return catalogueFactory->create();
@@ -1027,20 +1025,19 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
 
 std::unique_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string& prefixProcessName,
   const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) {
-  auto& lc = m_processManager.logContext();
   std::string processName;
   try {
     processName =  prefixProcessName + m_driveConfig.unitName;
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(*m_lc);
     params.add("processName", processName);
-    lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
+    m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
       "Enabling leaving non-empty agent behind.");
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), lc.logger(),
+    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_lc->logger(),
       true);
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to connect to objectstore or "
+    m_lc->log(log::CRIT, "In DriveHandler::createScheduler(): failed to connect to objectstore or "
       "failed to instantiate agent entry. Reporting fatal error.");
     throw;
   }
@@ -1048,15 +1045,15 @@ std::unique_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string&
     if (!m_catalogue) {
       m_catalogue = createCatalogue(processName);
     }
-    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, m_lc->logger());
   } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(lc);
+    log::ScopedParamContainer param(*m_lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
+    m_lc->log(log::CRIT, "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
       "Reporting fatal error.");
     throw;
   }
-  lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
+  m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
   return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 

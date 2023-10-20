@@ -83,6 +83,8 @@ protected:
   const TapedConfiguration& m_tapedConfig;
   /** This drive's parameters */
   const TpconfigLine& m_driveConfig;
+  /** The log context */
+  cta::log::LogContext* m_lc;
   
 private:
   /** Possible outcomes of the previous session/child process.  */
@@ -103,7 +105,7 @@ private:
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
-  void setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc);
+  void setDriveDownForShutdown(const std::string& reason);
 
   /**
    * Utility function resetting all parameters to pre-fork state
@@ -160,7 +162,7 @@ private:
   void processBytes(serializers::WatchdogMessage& message);
 
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    cta::Scheduler* scheduler, cta::log::LogContext* lc) const;
+    cta::Scheduler* scheduler) const;
 
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
