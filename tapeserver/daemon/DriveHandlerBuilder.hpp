@@ -49,6 +49,13 @@ private:
 
   std::unique_ptr<cta::Scheduler> createScheduler(const std::string& prefixProcessName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) override;
+
+  std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
+    Scheduler* scheduler) const override;
+
+  std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> createDataTransferSession(
+    Scheduler* scheduler, tape::daemon::DriveHandlerProxy* driveHandlerProxy, server::ProcessCap* capUtils,
+    mediachanger::MediaChangerFacade* mediaChangerFacade, castor::tape::System::realWrapper* sWrapper) const override;
 };
 
 } // namespace daemon

@@ -747,32 +747,6 @@ int DriveHandler::runChild() {
   }
   else {
     // The next session will be a normal session (no crash with a mounted tape before).
-    
-    // Passing values from taped config to data transfer session config
-    // When adding new config variables, be careful not to forget to pass them here
-    castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
-    dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
-    dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
-    dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
-    dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
-    dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
-    dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
-    dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
-    dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
-    dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
-    dataTransferConfig.useLbp = true;
-    dataTransferConfig.useRAO = (m_tapedConfig.useRAO.value() == "yes");
-    dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
-    dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
-    dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.externalFreeDiskSpaceScript.value();
-    dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
-    dataTransferConfig.xrootTimeout = 0;
-    dataTransferConfig.useEncryption = (m_tapedConfig.useEncryption.value() == "yes");
-    dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
-    dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
-    dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
-    dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
-
     m_stateChangeTimeouts[session::SessionState::Checking] = std::chrono::duration_cast<Timeout>(
       std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
     m_stateChangeTimeouts[session::SessionState::Scheduling] = std::chrono::duration_cast<Timeout>(
@@ -850,18 +824,9 @@ int DriveHandler::runChild() {
       m_tapedConfig.rmcRequestAttempts.value());
     cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
     castor::tape::System::realWrapper sWrapper;
-    castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
-      cta::utils::getShortHostname(),
-      m_lc->logger(),
-      sWrapper,
-      m_driveConfig,
-      mediaChangerFacade,
-      driveHandlerProxy,
-      capUtils,
-      dataTransferConfig,
-      *scheduler);
-
-    auto ret = dataTransferSession.execute();
+    const auto dataTransferSession = createDataTransferSession(scheduler.get(), &driveHandlerProxy, &capUtils,
+                                                               &mediaChangerFacade, &sWrapper);
+    auto ret = dataTransferSession->execute();
     return ret;
   }
 }
@@ -1055,6 +1020,46 @@ std::unique_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string&
   }
   m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
   return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
+}
+
+std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> DriveHandler::createDataTransferSession(
+  Scheduler* scheduler, tape::daemon::DriveHandlerProxy* driveHandlerProxy, server::ProcessCap* capUtils,
+  mediachanger::MediaChangerFacade* mediaChangerFacade, castor::tape::System::realWrapper* sWrapper) const {
+  // Passing values from taped config to data transfer session config
+  // When adding new config variables, be careful not to forget to pass them here
+  castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
+  dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
+  dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
+  dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
+  dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
+  dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
+  dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
+  dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
+  dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
+  dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
+  dataTransferConfig.useLbp = true;
+  dataTransferConfig.useRAO = (m_tapedConfig.useRAO.value() == "yes");
+  dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
+  dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
+  dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.externalFreeDiskSpaceScript.value();
+  dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
+  dataTransferConfig.xrootTimeout = 0;
+  dataTransferConfig.useEncryption = (m_tapedConfig.useEncryption.value() == "yes");
+  dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
+  dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
+  dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
+  dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
+
+  return std::make_unique<castor::tape::tapeserver::daemon::DataTransferSession>(
+    cta::utils::getShortHostname(),
+    m_lc->logger(),
+    *sWrapper,
+    m_driveConfig,
+    *mediaChangerFacade,
+    *driveHandlerProxy,
+    *capUtils,
+    dataTransferConfig,
+    *scheduler);
 }
 
 }

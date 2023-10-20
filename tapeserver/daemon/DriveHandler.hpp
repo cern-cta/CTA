@@ -31,9 +31,13 @@
 
 namespace castor {
 namespace tape {
+namespace System {
+class realWrapper;
+}
 namespace tapeserver {
 namespace daemon {
 class CleanerSession;
+class DataTransferSession;
 }
 }
 }
@@ -45,8 +49,18 @@ namespace catalogue {
 class Catalogue;
 }
 
+namespace mediachanger {
+class MediaChangerFacade;
+}
+
+namespace server {
+class ProcessCap;
+}
+
 namespace tape {
 namespace daemon {
+
+class DriveHandlerProxy;
 
 /**
  * Handler for tape drive session subprocesses. On process/session will handle
@@ -115,8 +129,10 @@ private:
 
   /** Current session's type */
   session::SessionType m_sessionType = session::SessionType::Undetermined;
+protected:
   /** Current session's VID */
   std::string m_sessionVid;
+private:
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
   log::LogContext m_sessionEndContext;
@@ -161,9 +177,6 @@ private:
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage& message);
 
-  std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    cta::Scheduler* scheduler) const;
-
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::shared_ptr<cta::Scheduler> m_scheduler;
@@ -174,6 +187,13 @@ protected:
   virtual std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
   virtual std::unique_ptr<cta::Scheduler> createScheduler(const std::string& processName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
+
+  virtual std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
+    cta::Scheduler* scheduler) const;
+
+  virtual std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> createDataTransferSession(
+    cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy, server::ProcessCap* capUtils,
+    mediachanger::MediaChangerFacade* mediaChangerFacade, castor::tape::System::realWrapper* sWrapper) const;
 };
 
 // TODO: remove/merge ChildProcess.
