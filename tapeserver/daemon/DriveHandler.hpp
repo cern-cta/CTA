@@ -163,13 +163,14 @@ private:
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage& message);
 
-  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
-
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
     cta::Scheduler* scheduler, cta::log::LogContext* lc) const;
 
+protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::shared_ptr<cta::Scheduler> m_scheduler;
+
+  virtual std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
 };
 
 // TODO: remove/merge ChildProcess.

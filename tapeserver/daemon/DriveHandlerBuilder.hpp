@@ -42,7 +42,7 @@ class DriveHandlerBuilder : public DriveHandler {
 public:
   DriveHandlerBuilder(const TapedConfiguration* tapedConfig, const TpconfigLine* driveConfig, ProcessManager* pm);
 
-  ~DriveHandlerBuilder() = default;
+  ~DriveHandlerBuilder() override = default;
 
   void build();
 
@@ -50,7 +50,7 @@ private:
   std::unique_ptr<OStoreDBInit> m_sched_db_init;
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
-  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue();
+  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const override;
 
   std::unique_ptr<Scheduler> createScheduler(std::shared_ptr<cta::catalogue::Catalogue> catalogue);
 

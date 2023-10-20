@@ -37,17 +37,10 @@ DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, 
   : DriveHandler(*tapedConfig, *driveConfig, *pm) {
 }
 
-void DriveHandlerBuilder::build() {
-  // auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
-  m_catalogue = std::shared_ptr<cta::catalogue::Catalogue>(createCatalogue());
-  auto scheduler = std::shared_ptr<Scheduler>(createScheduler(m_catalogue));
-  setScheduler(scheduler);
-  // return std::unique_ptr<DriveHandler>(this);
-}
-
-std::unique_ptr<catalogue::Catalogue> DriveHandlerBuilder::createCatalogue() {
+std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(const std::string& methodCaller) const {
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
+  params.add("caller", methodCaller);
   m_processManager.logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): "
     "will get catalogue login information.");
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
