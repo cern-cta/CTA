@@ -586,6 +586,42 @@ int DriveHandler::runChild() {
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
 
+  // Before anything, we need to check we have access to the scheduler's central storage
+  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+  try {
+    std::string processName = "DriveProcess-";
+    processName += m_driveConfig.unitName;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName);
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_processManager.logContext().logger(), true));
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    sleep(1);
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+  }
+  std::unique_ptr<SchedulerDB_t> sched_db;
+  try {
+    if (!m_catalogue) {
+      m_catalogue = createCatalogue("DriveHandler::runChild()");
+    }
+    sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
+    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    sleep(1);
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+  }
+  lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler->");
+  auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *sched_db,
+                          m_tapedConfig.mountCriteria.value().maxFiles,
+                          m_tapedConfig.mountCriteria.value().maxBytes);
+  
   // Before launching the transfer session, we validate that the scheduler is reachable.
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
@@ -842,6 +878,37 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   kill();
 
   // Mounting management.
+  if (!m_catalogue)
+    m_catalogue = createCatalogue("DriveHandler::shutdown()");
+  // Create the scheduler
+  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+
+  try {
+    std::string processName = "DriveHandlerShutdown-";
+    processName+= m_driveConfig.unitName;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName);
+    lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    // Putting the drive down
+    try {
+      setDriveDownForShutdown("Failed to connect to objectstore or failed to instantiate agent entry", &lc);
+    } catch(const cta::exception::Exception &ex) {
+      params.add("tapeVid", m_sessionVid)
+            .add("tapeDrive", m_driveConfig.unitName)
+            .add("message", ex.getMessageValue());
+      lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+    }
+    return exitShutdown();
+  }
+  std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+  lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler->");
+  auto scheduler = std::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
+
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };
   if (statesRequiringCleaner.count(m_previousState)) {

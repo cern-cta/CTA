@@ -168,7 +168,6 @@ private:
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
     cta::Scheduler* scheduler, cta::log::LogContext* lc) const;
 
-protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::shared_ptr<cta::Scheduler> m_scheduler;
 };

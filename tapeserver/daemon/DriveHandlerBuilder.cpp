@@ -40,9 +40,8 @@ DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, 
 void DriveHandlerBuilder::build() {
   // auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
   m_catalogue = std::shared_ptr<cta::catalogue::Catalogue>(createCatalogue());
-  m_scheduler = std::shared_ptr<Scheduler>(createScheduler(m_catalogue));
-  // setScheduler(scheduler);
-  // setCatalogue(catalogue);
+  auto scheduler = std::shared_ptr<Scheduler>(createScheduler(m_catalogue));
+  setScheduler(scheduler);
   // return std::unique_ptr<DriveHandler>(this);
 }
 
