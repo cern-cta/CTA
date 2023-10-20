@@ -92,7 +92,7 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
       "taped TpConfigPath ");
 
   // Create drive config file.
-  TempFile driveConfigFileA::B *p = new A::B(100;
+  TempFile driveConfigFile;
   driveConfigFile.stringFill("drive0 lib0 /dev/tape0 smc0\n"
       "drive1 lib0 /dev/tape1 smc1\n"
       "drive2 lib0 /dev/tape2 smc2");
@@ -107,7 +107,8 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
     // Set the timeout
     sh->setTimeout(std::chrono::milliseconds(10));
     pm.addHandler(std::move(sh));
-        // Add two drive handlers to the manager.
+
+    // Add two drive handlers to the manager.
     for(auto & drive : tapedConfig.driveConfigs) {
       std::unique_ptr<DummyDriveHandler> dh(new DummyDriveHandler(tapedConfig,
                                                         drive.second.value(), pm));
