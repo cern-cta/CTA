@@ -30,7 +30,7 @@ namespace unitTests {
 using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
 using cta::tape::daemon::DriveHandler;
-using cta::tape::daemon::tests::DummyDriveHandler;
+using cta::tape::daemon::DummyDriveHandler;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
   cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
@@ -79,15 +79,10 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
   cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);
-  {
-    // Add the signal handler to the manager
-    std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
-    // Set the timeout
-    sh->setTimeout(std::chrono::milliseconds(10));
-    pm.addHandler(std::move(sh));
-    // Create taped config file.
-    TempFile tapedConfigFile;
-    tapedConfigFile.stringFill(
+
+  // Create taped config file.
+  TempFile tapedConfigFile;
+  tapedConfigFile.stringFill(
       "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
       "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
       "taped ArchiveFetchBytesFiles 1, 2\n"
@@ -96,17 +91,23 @@ TEST(cta_Daemon, SignalHandlerKillDualDrive) {
       "taped BufferCount 1\n"
       "taped TpConfigPath ");
 
-    // Create drive config file.
-    TempFile driveConfigFile;
-    driveConfigFile.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+  // Create drive config file.
+  TempFile driveConfigFileA::B *p = new A::B(100;
+  driveConfigFile.stringFill("drive0 lib0 /dev/tape0 smc0\n"
       "drive1 lib0 /dev/tape1 smc1\n"
       "drive2 lib0 /dev/tape2 smc2");
 
-    tapedConfigFile.stringAppend(driveConfigFile.path());
+  tapedConfigFile.stringAppend(driveConfigFile.path());
 
-    auto tapedConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapedConfigFile.path(), dlog);
+  auto tapedConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapedConfigFile.path(), dlog);
 
-    // Add two drive handlers to the manager.
+  {
+    // Add the signal handler to the manager
+    std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
+    // Set the timeout
+    sh->setTimeout(std::chrono::milliseconds(10));
+    pm.addHandler(std::move(sh));
+        // Add two drive handlers to the manager.
     for(auto & drive : tapedConfig.driveConfigs) {
       std::unique_ptr<DummyDriveHandler> dh(new DummyDriveHandler(tapedConfig,
                                                         drive.second.value(), pm));

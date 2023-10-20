@@ -27,9 +27,12 @@
  * */
 namespace cta::tape::daemon {
 class DummyDriveHandler : public DriveHandler {
-  using DriveHandler::DriveHandler;
-
+  // using DriveHandler::DriveHandler;
 public:
+  DummyDriveHandler(const TapedConfiguration &tapedConfig,
+                    const TpconfigLine &driveConfig, ProcessManager &pm)
+      : DriveHandler(tapedConfig, driveConfig, pm){};
+
   void requestKill();
   void requestShutdown();
   void setProcessingStatus(SubprocessHandler::ProcessingStatus newProcStatus);
