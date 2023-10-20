@@ -17,6 +17,8 @@
 
 #include "ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
+
+#include <google/protobuf/service.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <algorithm>
@@ -185,7 +187,11 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         }
         // We are in the child side: run the subprocess and exit.
         m_logContext.log(log::INFO, "In child process. Running child.");
-        ::exit(sp.handler->runChild());
+        {
+          auto ret = sp.handler->runChild();
+          google::protobuf::ShutdownProtobufLibrary();
+          ::exit(ret);
+        }
       case SubprocessHandler::ForkState::parent:
         // We are parent side. Record the new state for this handler
         newStatus.forkState = SubprocessHandler::ForkState::notForking;

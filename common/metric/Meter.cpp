@@ -28,7 +28,7 @@ MeterProvider::MeterProvider() {
   static std::mutex setup_lock;
   static std::atomic<bool> setup_done = false;
 
-  {
+  if (!setup_done) {
     std::unique_lock lock(setup_lock);
     if (setup_done == false) {
       initMeterProvider();
@@ -39,8 +39,9 @@ MeterProvider::MeterProvider() {
 
 void MeterProvider::initMeterProvider() {
   std::ofstream ofs;
-  ofs.open(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
-  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(ofs);
+  //ofs.open(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
+  //auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(ofs);
+  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
 
   // Initialize and set the global MeterProvider
   opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;

@@ -607,15 +607,3 @@ void castor::tape::tapeserver::daemon::DataTransferSession::putDriveDown(const s
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession() noexcept {
-  try {
-    google::protobuf::ShutdownProtobufLibrary();
-  } catch (...) {
-    m_log(cta::log::ERR, "google::protobuf::ShutdownProtobufLibrary() threw an"
-                         " unexpected exception");
-  }
-}

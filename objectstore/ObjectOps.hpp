@@ -36,8 +36,6 @@ class Catalogue;
 
 namespace objectstore {
 
-extern metric::MeterProvider meterProvider;
-
 class AgentReference;
 class ScopedLock;
 class ScopedExclusiveLock;
@@ -218,6 +216,7 @@ protected:
   // When being locked as a sub object, we will keep a reference to the lock
   // we are provided with. Likewise, the lock will update ourselves when released.
   ScopedLock * m_lockForSubObject = nullptr;
+  metric::MeterProvider meterProvider;
 };
 
 class ScopedLock {
@@ -314,6 +313,7 @@ protected:
   std::unique_ptr<Backend::ScopedLock> m_lock;
   ObjectOpsBase * m_objectOps;
   std::list <ObjectOpsBase *> m_subObjectsOps;
+  metric::MeterProvider meterProvider;
   bool m_locked;
   void checkNotLocked() {
     if (m_locked)
@@ -473,6 +473,9 @@ protected:
       countObjRemove(meterProvider.getMeterCounter("obj", "obj_remove_count")),
       countObjInsert(meterProvider.getMeterCounter("obj", "obj_insert_count")),
       durationObjFetch(meterProvider.getMeterHistogram("obj", "obj_fetch_duration")) {
+
+      auto objectTypeDescriptor = serializers::ObjectType_descriptor();
+      m_payloadTypeIdStr = objectTypeDescriptor->FindValueByNumber(payloadTypeId)->name();
   }
 
   ObjectOps(Backend & os, const std::string & name): ObjectOps(os) {
@@ -485,7 +488,7 @@ public:
 
   void remove () {
     ObjectOpsBase::remove();
-    countObjRemove.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+    countObjRemove.add(1, {{"Type", "NoLock"}, {"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   void fetch() {
@@ -497,8 +500,8 @@ public:
       fetchBottomHalf();
     }
     const auto fetchTime = t.secs();
-    durationObjFetch.record(fetchTime, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}});
-    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+    durationObjFetch.record(fetchTime, {{"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}});
+    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   void fetchNoLock() {
@@ -508,8 +511,8 @@ public:
       fetchBottomHalf();
     }
     const auto fetchTime = t.secs();
-    durationObjFetch.record(fetchTime, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}});
-    countObjFetch.add(1, {{"Type", "Lock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+    durationObjFetch.record(fetchTime, {{"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}});
+    countObjFetch.add(1, {{"Type", "Lock"}, {"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
 protected:
@@ -545,7 +548,7 @@ public:
     std::unique_ptr<AsyncLockfreeFetcher> ret;
     ret.reset(new AsyncLockfreeFetcher(*this));
     ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
-    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Async"}});
+    countObjFetch.add(1, {{"Type", "NoLock"}, {"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Async"}});
     return ret.release();
   }
 
@@ -579,7 +582,7 @@ public:
     // yet in the object store (and this is ensured by the )
     m_header.set_payload(m_payload.SerializeAsString());
     ret->m_asyncCreator.reset(m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString()));
-    countObjInsert.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Async"}});
+    countObjInsert.add(1, {{"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Async"}});
     return ret.release();
   }
 
@@ -596,7 +599,7 @@ public:
     }
     // Write the object
     m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
-    countObjCommit.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+    countObjCommit.add(1, {{"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   CTA_GENERATE_EXCEPTION_CLASS(WrongTypeForGarbageCollection);
@@ -682,7 +685,7 @@ public:
     m_header.set_payload(m_payload.SerializeAsString());
     m_objectStore.create(getAddressIfSet(), m_header.SerializeAsString());
     m_existingObject = true;
-    countObjInsert.add(1, {{"PayloadType", serializers::ObjectType_Name(PayloadTypeId)}, {"HostName", shortHostname}, {"Sync", "Sync"}});
+    countObjInsert.add(1, {{"PayloadType", m_payloadTypeIdStr}, {"HostName", shortHostname}, {"Sync", "Sync"}});
   }
 
   bool exists() {
@@ -716,6 +719,7 @@ protected:
   metric::MeterCounter countObjInsert;
   metric::MeterHistogram durationObjFetch;
   static const serializers::ObjectType payloadTypeId = PayloadTypeId;
+  std::string m_payloadTypeIdStr;
   PayloadType m_payload;
 };
 
