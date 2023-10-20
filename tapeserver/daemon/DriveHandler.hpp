@@ -76,10 +76,6 @@ public:
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
-  void setCatalogue(std::shared_ptr<catalogue::Catalogue> catalogue);
-  
-  void setScheduler(std::shared_ptr<Scheduler> scheduler);
-
 protected:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager& m_processManager;
@@ -170,7 +166,12 @@ protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::shared_ptr<cta::Scheduler> m_scheduler;
 
-  virtual std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
+  std::unique_ptr<OStoreDBInit> m_sched_db_init;
+  std::unique_ptr<SchedulerDB_t> m_sched_db;
+
+  virtual std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
+  virtual std::unique_ptr<cta::Scheduler> createScheduler(const std::string& processName,
+    const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
 };
 
 // TODO: remove/merge ChildProcess.

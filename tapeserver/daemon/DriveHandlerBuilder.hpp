@@ -43,19 +43,12 @@ public:
   DriveHandlerBuilder(const TapedConfiguration* tapedConfig, const TpconfigLine* driveConfig, ProcessManager* pm);
 
   ~DriveHandlerBuilder() override = default;
-
-  void build();
-
 private:
-  std::unique_ptr<OStoreDBInit> m_sched_db_init;
-  std::unique_ptr<SchedulerDB_t> m_sched_db;
 
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const override;
 
-  std::unique_ptr<Scheduler> createScheduler(std::shared_ptr<cta::catalogue::Catalogue> catalogue);
-
-  // std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-  //   const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc);
+  std::unique_ptr<cta::Scheduler> createScheduler(const std::string& prefixProcessName,
+    const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) override;
 };
 
 } // namespace daemon

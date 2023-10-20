@@ -37,10 +37,10 @@ DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, 
   : DriveHandler(*tapedConfig, *driveConfig, *pm) {
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(const std::string& methodCaller) const {
+std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(const std::string& processName) const {
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
-  params.add("caller", methodCaller);
+  params.add("processName", processName);
   m_processManager.logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): "
     "will get catalogue login information.");
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
@@ -52,38 +52,39 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(
   return catalogueFactory->create();
 }
 
-std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(std::shared_ptr<cta::catalogue::Catalogue> catalogue) {
+std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::string& prefixProcessName,
+  const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) {
   auto& lc = m_processManager.logContext();
-  // std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+  std::string processName;
   try {
-    std::string processName = "DriveProcess-";
-    processName += m_driveConfig.unitName;
+    processName =  prefixProcessName + m_driveConfig.unitName;
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
-    lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create agent entry. Enabling leaving non-empty agent behind.");
-    m_sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
+    lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
+      "Enabling leaving non-empty agent behind.");
+    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), lc.logger(),
+      true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandlerBuilder::createScheduler(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
-    // driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    // sleep(1);
+    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to connect to objectstore or "
+      "failed to instantiate agent entry. Reporting fatal error.");
     throw;
   }
-  // std::shared_ptr<SchedulerDB_t> sched_db;
   try {
-    m_sched_db = m_sched_db_init->getSchedDB(*catalogue, lc.logger());
+    if (!m_catalogue) {
+      m_catalogue = createCatalogue(processName);
+    }
+    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandlerBuilder::createScheduler(): failed to instantiate catalogue. Reporting fatal error.");
-    // driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    // sleep(1);
+    lc.log(log::CRIT, "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
+      "Reporting fatal error.");
     throw;
   }
-  lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create scheduler.");
-  return std::make_unique<Scheduler>(*catalogue, *m_sched_db, m_tapedConfig.mountCriteria.value().maxFiles,
-    m_tapedConfig.mountCriteria.value().maxBytes);
+  lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
+  return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
 } // namespace daemon
