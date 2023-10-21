@@ -120,9 +120,8 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandlerBu
     *scheduler);
 }
 
-std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> DriveHandlerBuilder::createDataTransferSession(
-  cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy, server::ProcessCap* capUtils,
-  mediachanger::MediaChangerFacade* mediaChangerFacade, castor::tape::System::realWrapper* sWrapper) const {
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandlerBuilder::executeDataTransferSession(
+  cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy) const {
   // Passing values from taped config to data transfer session config
   // When adding new config variables, be careful not to forget to pass them here
   castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
@@ -148,16 +147,28 @@ std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> DriveHand
   dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
 
-  return std::make_unique<castor::tape::tapeserver::daemon::DataTransferSession>(
+  // Capabilities management.
+  cta::server::ProcessCap capUtils;
+  // Mounting management.
+  cta::mediachanger::RmcProxy rmcProxy(
+    m_tapedConfig.rmcPort.value(),
+    m_tapedConfig.rmcNetTimeout.value(),
+    m_tapedConfig.rmcRequestAttempts.value());
+  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
+  castor::tape::System::realWrapper sWrapper;
+
+  const auto dataTransferSession = std::make_unique<castor::tape::tapeserver::daemon::DataTransferSession>(
     cta::utils::getShortHostname(),
     m_lc->logger(),
-    *sWrapper,
+    sWrapper,
     m_driveConfig,
-    *mediaChangerFacade,
+    mediaChangerFacade,
     *driveHandlerProxy,
-    *capUtils,
+    capUtils,
     dataTransferConfig,
     *scheduler);
+
+  return dataTransferSession->execute();
 }
 
 } // namespace daemon

@@ -107,7 +107,7 @@ private:
    * The configuration of the tape drive to be used by this session.
    */
   const cta::tape::daemon::TpconfigLine m_driveConfig;
-  const DataTransferConfig& m_dataTransferConfig;
+  const DataTransferConfig m_dataTransferConfig;
   /**
    * The drive information bundle allowing drive register update.
    * Filled up at construction time.

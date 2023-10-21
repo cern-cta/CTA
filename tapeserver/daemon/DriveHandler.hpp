@@ -28,6 +28,7 @@
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 
 namespace castor {
 namespace tape {
@@ -179,7 +180,6 @@ private:
 
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::shared_ptr<cta::Scheduler> m_scheduler;
 
   std::unique_ptr<OStoreDBInit> m_sched_db_init;
   std::unique_ptr<SchedulerDB_t> m_sched_db;
@@ -191,9 +191,8 @@ protected:
   virtual std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
     cta::Scheduler* scheduler) const;
 
-  virtual std::unique_ptr<castor::tape::tapeserver::daemon::DataTransferSession> createDataTransferSession(
-    cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy, server::ProcessCap* capUtils,
-    mediachanger::MediaChangerFacade* mediaChangerFacade, castor::tape::System::realWrapper* sWrapper) const;
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(
+    cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy) const;
 };
 
 // TODO: remove/merge ChildProcess.
