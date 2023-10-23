@@ -962,7 +962,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
-            retRef.m_retrieveRequest.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl();
+            retRef.m_retrieveRequest.retrieveReportURL = payload.schedulerrequest().retrievereporturl();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retrieveRequest.isVerifyOnly = payload.schedulerrequest().isverifyonly();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
