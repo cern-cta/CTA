@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "TapedProxy.hpp"
 #include "common/threading/SocketPair.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 
 namespace cta  { namespace tape { namespace daemon {
 
@@ -33,7 +33,7 @@ public:
    * pair.
    * @param sopcketPair Reference to the socket pair.
    */
-  DriveHandlerProxy(server::SocketPair & sopcketPair);
+  explicit DriveHandlerProxy(server::SocketPair & sopcketPair);
   ~DriveHandlerProxy() override = default;
   void reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) override;
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;

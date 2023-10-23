@@ -56,6 +56,7 @@
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "scheduler/IScheduler.hpp"
 
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
@@ -82,7 +83,7 @@ struct LogicalLibrary;
  */
 CTA_GENERATE_EXCEPTION_CLASS(ExpandRepackRequestException);
 
-class Scheduler {
+class Scheduler : public IScheduler {
 public:
   /**
    * Constructor.
@@ -96,13 +97,13 @@ public:
   /**
    * Destructor.
    */
-  ~Scheduler() noexcept =default;
+  ~Scheduler() override = default;
 
   /**
    * Validates that the underlying storages are accessible
    * Lets the exception through in case of failure.
    */
-  void ping(log::LogContext & lc);
+  void ping(log::LogContext & lc) override;
 
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
@@ -195,7 +196,7 @@ public:
    * @param driveName
    * @return The structure representing the desired states
    */
-  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc);
+  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc) override;
 
   /**
    * Sets the desired drive state. This function is used by the front end to pass instructions to the
@@ -206,9 +207,9 @@ public:
    * @param desiredState, the structure that contains the desired state informations
    */
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string & driveName,
-    const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc);
+    const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc) override;
 
-  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc);
+  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc) override;
 
   /**
    * Remove drive from the drive register.
@@ -230,7 +231,7 @@ public:
    * error encountered by the drive.
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type,
-    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
+    cta::common::dataStructures::DriveStatus status, log::LogContext & lc) override;
 
   /**
    * Creates a Table in the Database for a new Tape Drives
@@ -243,14 +244,15 @@ public:
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
     const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
+    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) override;
 
   /**
    * Reports the configuration of the drive to the objectstore.
    * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
-  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,
+    const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
 
   /**
    * Dumps the state of an specifig drive

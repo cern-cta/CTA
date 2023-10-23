@@ -20,15 +20,16 @@
 #include <memory>
 
 #include "common/threading/SocketPair.hpp"
-#include "scheduler/Scheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#include "scheduler/Scheduler.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 
 namespace castor {
 namespace tape {
@@ -39,12 +40,15 @@ namespace tapeserver {
 namespace daemon {
 class CleanerSession;
 class DataTransferSession;
+// class TapedProxy;
 }
 }
 }
 }
 
 namespace cta {
+
+class IScheduler;
 
 namespace catalogue {
 class Catalogue;
@@ -185,14 +189,16 @@ protected:
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
   virtual std::shared_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
-  virtual std::shared_ptr<cta::Scheduler> createScheduler(const std::string& processName,
+  virtual std::shared_ptr<cta::IScheduler> createScheduler(const std::string& processName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
 
+  virtual std::shared_ptr<cta::tape::daemon::TapedProxy> createDriveHandlerProxy() const;
+
   virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
-    cta::Scheduler* scheduler) const;
+    cta::IScheduler* scheduler) const;
 
   virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(
-    cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy) const;
+    cta::IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) const;
 };
 
 // TODO: remove/merge ChildProcess.

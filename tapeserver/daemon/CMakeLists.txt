@@ -48,7 +48,7 @@ target_link_libraries(ctatapedaemon
   File)
 
 add_library(ctadaemonunittests SHARED
-  # DriveHandlerTests.cpp
+  DriveHandlerTests.cpp
   TapedConfigurationTests.cpp
   TpconfigTests.cpp
 )
