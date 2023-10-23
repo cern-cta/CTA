@@ -2118,6 +2118,13 @@ reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBa
     try {
       current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
       current.reporter->asyncReport();
+      // Log the debug, report URL.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID)
+            .add("reportType", j->reportType())
+            .add("reportURL", j->exceptionThrowingReportURL());
+      lc.log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): report URL."); 
+     
       current.retrieveJob = j.get();
     } catch (cta::exception::Exception & ex) {
       // Whether creation or launching of reporter failed, the promise will not receive result, so we can safely delete it.
