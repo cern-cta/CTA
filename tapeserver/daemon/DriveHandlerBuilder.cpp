@@ -45,7 +45,7 @@ DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, 
   : DriveHandler(*tapedConfig, *driveConfig, *pm) {
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(const std::string& processName) const {
+std::shared_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(const std::string& processName) const {
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
   params.add("processName", processName);
@@ -57,10 +57,10 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(
   m_lc->log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc->logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return catalogueFactory->create();
+  return std::move(catalogueFactory->create());
 }
 
-std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::string& prefixProcessName,
+std::shared_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::string& prefixProcessName,
   const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) {
   std::string processName;
   try {
@@ -91,7 +91,7 @@ std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::
     throw;
   }
   m_lc->log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create scheduler.");
-  return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
+  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandlerBuilder::executeCleanerSession(

@@ -147,7 +147,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       throw exception::Exception(err.str());
     }
     // First prepare a socket pair for this new subprocess
-    m_socketPair.reset(new cta::server::SocketPair());
+    m_socketPair = std::make_unique<cta::server::SocketPair>();
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
@@ -585,40 +585,8 @@ int DriveHandler::runChild() {
     m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
 
-  // Before anything, we need to check we have access to the scheduler's central storage
-  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
-  try {
-    std::string processName = "DriveProcess-";
-    processName += m_driveConfig.unitName;
-    log::ScopedParamContainer params(*m_lc);
-    params.add("processName", processName);
-    m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
-    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_lc->logger(), true));
-  } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(*m_lc);
-    param.add("errorMessage", ex.getMessageValue());
-    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    sleep(1);
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-  }
-  std::unique_ptr<SchedulerDB_t> sched_db;
-  try {
-    if (!m_catalogue) {
-      m_catalogue = createCatalogue("DriveHandler::runChild()");
-    }
-    sched_db = sched_db_init->getSchedDB(*m_catalogue, m_lc->logger());
-  } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(*m_lc);
-    param.add("errorMessage", ex.getMessageValue());
-    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    sleep(1);
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-  }
-  m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler->");
-
-  std::unique_ptr<cta::Scheduler> scheduler;
+  m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
+  std::shared_ptr<cta::Scheduler> scheduler;
   try {
     scheduler = createScheduler("DriveProcess-", m_tapedConfig.mountCriteria.value().maxFiles,
       m_tapedConfig.mountCriteria.value().maxBytes);
@@ -842,7 +810,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     m_catalogue = createCatalogue("DriveHandler::shutdown()");
   // Create the scheduler
   m_lc->log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler");
-  std::unique_ptr<cta::Scheduler> scheduler;
+  std::shared_ptr<cta::Scheduler> scheduler;
   try {
     scheduler = createScheduler("DriveHandlerShutdown-", 0, 0);
   } catch (cta::exception::Exception &ex) {
@@ -962,7 +930,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
   return cleanerSession->execute();
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
+std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
   log::ScopedParamContainer params(*m_lc);
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
   params.add("processName", processName);
@@ -973,10 +941,10 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   m_lc->log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return catalogueFactory->create();
+  return std::move(catalogueFactory->create());
 }
 
-std::unique_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string& prefixProcessName,
+std::shared_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string& prefixProcessName,
   const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) {
   std::string processName;
   try {
@@ -1007,7 +975,7 @@ std::unique_ptr<cta::Scheduler> DriveHandler::createScheduler(const std::string&
     throw;
   }
   m_lc->log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
-  return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
+  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeDataTransferSession(

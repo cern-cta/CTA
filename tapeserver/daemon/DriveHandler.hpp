@@ -184,8 +184,8 @@ protected:
   std::unique_ptr<OStoreDBInit> m_sched_db_init;
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
-  virtual std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
-  virtual std::unique_ptr<cta::Scheduler> createScheduler(const std::string& processName,
+  virtual std::shared_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
+  virtual std::shared_ptr<cta::Scheduler> createScheduler(const std::string& processName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
 
   virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(

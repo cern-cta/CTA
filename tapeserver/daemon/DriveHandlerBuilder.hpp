@@ -45,9 +45,9 @@ public:
   ~DriveHandlerBuilder() override = default;
 private:
 
-  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const override;
+  std::shared_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const override;
 
-  std::unique_ptr<cta::Scheduler> createScheduler(const std::string& prefixProcessName,
+  std::shared_ptr<cta::Scheduler> createScheduler(const std::string& prefixProcessName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) override;
 
   castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
