@@ -15,30 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <atomic>
+#include "common/metric/MeterProviderBackendOTLP.hpp"
+#include "common/metric/MeterCounterOTLP.hpp"
+#include "common/metric/MeterHistogramOTLP.hpp"
 
-#include "common/metric/Meter.hpp"
+#include "opentelemetry/metrics/provider.h"
+#include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
+#include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
+#include "opentelemetry/sdk/metrics/meter_context_factory.h"
+#include "opentelemetry/sdk/metrics/meter_provider_factory.h"
+#include "opentelemetry/sdk/metrics/push_metric_exporter.h"
+#include "opentelemetry/nostd/shared_ptr.h"
 
 namespace cta::metric {
 
-std::ofstream MeterProvider::_ofs;
-
-MeterProvider::MeterProvider() {
-  static std::mutex setup_lock;
-  static std::atomic<bool> setup_done = false;
-
-  if (!setup_done) {
-    std::unique_lock lock(setup_lock);
-    if (setup_done == false) {
-      _ofs = std::ofstream(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
-      initMeterProvider();
-      setup_done = true;
-    }
-  }
-}
-
-void MeterProvider::initMeterProvider() {
-  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(_ofs);
+MeterProviderBackendOTLP::MeterProviderBackendOTLP() {
+  m_ofs = std::ofstream(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
+  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(m_ofs);
   //auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
 
   // Initialize and set the global MeterProvider
@@ -56,31 +49,19 @@ void MeterProvider::initMeterProvider() {
   opentelemetry::metrics::Provider::SetMeterProvider(provider);
 }
 
-MeterCounter MeterProvider::getMeterCounter(const std::string & meterName, const std::string & counterName) {
-  auto meter = MeterCounter();
+std::unique_ptr<MeterCounter> MeterProviderBackendOTLP::getMeterCounter(const std::string & topic, const std::string & counterName) {
+  auto meter = std::make_unique<MeterCounterOTLP>();
   auto provider = opentelemetry::metrics::Provider::GetMeterProvider();
-  meter._meter = provider->GetMeter(meterName);
-  meter._counter = meter._meter->CreateUInt64Counter(counterName);
+  meter->_meter = provider->GetMeter(topic);
+  meter->_counter = meter->_meter->CreateUInt64Counter(counterName);
+  return meter;
+}
+std::unique_ptr<MeterHistogram> MeterProviderBackendOTLP::getMeterHistogram(const std::string & topic, const std::string & histogramName) {
+  auto meter = std::make_unique<MeterHistogramOTLP>();
+  auto provider = opentelemetry::metrics::Provider::GetMeterProvider();
+  meter->_meter = provider->GetMeter(topic);
+  meter->_histogram = meter->_meter->CreateDoubleHistogram(histogramName);
   return meter;
 }
 
-MeterHistogram MeterProvider::getMeterHistogram(const std::string & meterName, const std::string & histogramName) {
-  auto meter = MeterHistogram();
-  auto provider = opentelemetry::metrics::Provider::GetMeterProvider();
-  meter._meter = provider->GetMeter(meterName);
-  meter._histogram = meter._meter->CreateDoubleHistogram(histogramName);
-  return meter;
 }
-
-void MeterCounter::add(uint64_t value, std::map<std::string, std::string> attributes) {
-  auto labelKv = opentelemetry::common::KeyValueIterableView<decltype(attributes)>{attributes};
-  _counter->Add(value, labelKv);
-}
-
-void MeterHistogram::record(double value, std::map<std::string, std::string> attributes) {
-  auto labelKv = opentelemetry::common::KeyValueIterableView<decltype(attributes)>{attributes};
-  auto context = opentelemetry::context::Context{};
-  _histogram->Record(value, labelKv, context);
-}
-
-} // namespace cta::metric

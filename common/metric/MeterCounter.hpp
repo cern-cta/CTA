@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2022-2023 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,12 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ObjectOps.hpp"
+#pragma once
 
-namespace cta { namespace objectstore {
+#include <map>
 
-ObjectOpsBase::~ObjectOpsBase()  {
-  if (m_lockForSubObject) m_lockForSubObject->dereferenceSubObject(*this);
+namespace cta::metric {
+
+class MeterCounter {
+public:
+    virtual void add(uint64_t value, std::map<std::string, std::string> attributes) = 0;
+    virtual ~MeterCounter() = default;
+};
+
 }
-
-}} 

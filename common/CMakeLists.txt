@@ -134,7 +134,10 @@ set (COMMON_LIB_SRC_FILES
   log/StringLogger.cpp
   log/SyslogLogger.cpp
   log/TimingList.cpp
-  metric/Meter.cpp
+  metric/MeterProvider.cpp
+  metric/MeterCounterOTLP.cpp
+  metric/MeterHistogramOTLP.cpp
+  metric/MeterProviderBackendOTLP.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
