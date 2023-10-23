@@ -742,8 +742,7 @@ int DriveHandler::runChild() {
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
-    const auto cleanerSession = createCleanerSession(scheduler.get());
-    return cleanerSession->execute();
+    return executeCleanerSession(scheduler.get());
   }
   else {
     // The next session will be a normal session (no crash with a mounted tape before).
@@ -884,8 +883,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
             .add("sessionType", session::toString(m_sessionType));
       m_lc->log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
 
-      const auto cleanerSession = createCleanerSession(scheduler.get());
-      if (cleanerSession->execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
+      if (executeCleanerSession(scheduler.get()) == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
     }
@@ -894,31 +892,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   setDriveDownForShutdown("Shutdown");
   
   return exitShutdown();
-}
-
-std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::createCleanerSession(
-  cta::Scheduler* scheduler) const {
-  // Capabilities management.
-  cta::server::ProcessCap capUtils;
-  // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(
-    m_tapedConfig.rmcPort.value(),
-    m_tapedConfig.rmcNetTimeout.value(),
-    m_tapedConfig.rmcRequestAttempts.value());
-  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
-  castor::tape::System::realWrapper sWrapper;
-  return std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
-    capUtils,
-    mediaChangerFacade,
-    m_lc->logger(),
-    m_driveConfig,
-    sWrapper,
-    m_sessionVid,
-    true,
-    m_tapedConfig.tapeLoadTimeout.value(),
-    "",
-    *m_catalogue,
-    *scheduler);
 }
 
 void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
@@ -960,6 +933,33 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
           .add("message", ex.getMessageValue());
     m_lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
   }
+}
+
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(
+  cta::Scheduler* scheduler) const {
+  // Capabilities management.
+  cta::server::ProcessCap capUtils;
+  // Mounting management.
+  cta::mediachanger::RmcProxy rmcProxy(
+    m_tapedConfig.rmcPort.value(),
+    m_tapedConfig.rmcNetTimeout.value(),
+    m_tapedConfig.rmcRequestAttempts.value());
+  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
+  castor::tape::System::realWrapper sWrapper;
+  const auto cleanerSession = std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
+    capUtils,
+    mediaChangerFacade,
+    m_lc->logger(),
+    m_driveConfig,
+    sWrapper,
+    m_sessionVid,
+    true,
+    m_tapedConfig.tapeLoadTimeout.value(),
+    "",
+    *m_catalogue,
+    *scheduler);
+
+  return cleanerSession->execute();
 }
 
 std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {

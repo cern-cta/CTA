@@ -188,7 +188,7 @@ protected:
   virtual std::unique_ptr<cta::Scheduler> createScheduler(const std::string& processName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
 
-  virtual std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
     cta::Scheduler* scheduler) const;
 
   virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(

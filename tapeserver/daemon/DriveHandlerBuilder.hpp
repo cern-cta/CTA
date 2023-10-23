@@ -50,8 +50,8 @@ private:
   std::unique_ptr<cta::Scheduler> createScheduler(const std::string& prefixProcessName,
     const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount) override;
 
-  std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    Scheduler* scheduler) const override;
+  castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
+    cta::Scheduler* scheduler) const override;
 
   castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(
     cta::Scheduler* scheduler, cta::tape::daemon::DriveHandlerProxy* driveHandlerProxy) const override;

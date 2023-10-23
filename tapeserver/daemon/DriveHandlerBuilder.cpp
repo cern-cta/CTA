@@ -94,9 +94,8 @@ std::unique_ptr<cta::Scheduler> DriveHandlerBuilder::createScheduler(const std::
   return std::make_unique<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
-std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandlerBuilder::createCleanerSession(
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandlerBuilder::executeCleanerSession(
   cta::Scheduler* scheduler) const {
-  m_lc->log(log::DEBUG, "In DriveHandlerBuilder::createCleanerSession(): Creating cleaner session.");
   // Capabilities management.
   cta::server::ProcessCap capUtils;
   // Mounting management.
@@ -106,7 +105,7 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandlerBu
     m_tapedConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc->logger());
   castor::tape::System::realWrapper sWrapper;
-  return std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
+  const auto cleanerSession = std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
     capUtils,
     mediaChangerFacade,
     m_lc->logger(),
@@ -118,6 +117,8 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandlerBu
     "",
     *m_catalogue,
     *scheduler);
+
+  return cleanerSession->execute();
 }
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandlerBuilder::executeDataTransferSession(
