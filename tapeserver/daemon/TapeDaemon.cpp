@@ -25,7 +25,6 @@
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
-#include "tapeserver/daemon/DriveHandlerBuilder.hpp"
 #include "tapeserver/daemon/MaintenanceHandler.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SignalHandler.hpp"
@@ -39,7 +38,7 @@ TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     cta::server::ProcessCap& capUtils):
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
-    m_programName("cta-taped"), m_hostName(getHostName()) {
+    m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -113,15 +112,14 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
   pm.addHandler(std::move(sh));
   // Create the drive handlers
-  for (auto & d: m_globalConfiguration.driveConfigs) {
+  for (const auto &[key, driveConfig] : m_globalConfiguration.driveConfigs) {
     std::unique_ptr<SubprocessHandler> dh;
     try {
-      lc.log(log::INFO, "Creating drive handler for drive " + d.second.value().unitName);
-      auto builder = std::make_unique<DriveHandlerBuilder>(&m_globalConfiguration, &d.second.value(), &pm);
-      dh = std::move(builder);
-      lc.log(log::INFO, "Created drive handler for drive " + d.second.value().unitName);
-    } catch (cta::exception::Exception &ex) {
-      lc.log(log::CRIT, "Failed to create drive handler for drive " + d.second.value().unitName
+      lc.log(log::INFO, "Creating drive handler for drive " + driveConfig.value().unitName);
+      dh = std::make_unique<DriveHandler>(m_globalConfiguration, driveConfig.value(), pm);
+      lc.log(log::INFO, "Created drive handler for drive " + driveConfig.value().unitName);
+    } catch (cta::exception::Exception&) {
+      lc.log(log::CRIT, "Failed to create drive handler for drive " + driveConfig.value().unitName
         + ". Will not start it.");
       continue;
     }
@@ -129,7 +127,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   }
   // Create the garbage collector
   if(!isMaintenanceProcessDisabled()){
-    std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
+    auto gc = std::make_unique<MaintenanceHandler>(m_globalConfiguration, pm);
     pm.addHandler(std::move(gc));
   } else {
     lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");

@@ -28,7 +28,6 @@ add_library(ctatapedaemon
   ${WDMsgSources}
   CommandLineParams.cpp
   DriveHandler.cpp
-  DriveHandlerBuilder.cpp
   DriveHandlerProxy.cpp
   DriveHandlerStateReporter.cpp
   MaintenanceHandler.cpp
@@ -49,8 +48,10 @@ target_link_libraries(ctatapedaemon
   File)
 
 add_library(ctadaemonunittests SHARED
+  # DriveHandlerTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp)
+  TpconfigTests.cpp
+)
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
