@@ -16,13 +16,12 @@
  */
 
 #include <atomic>
-#include <fstream>
 
 #include "common/metric/Meter.hpp"
 
-#define METER_LOG_FILE "/tmp/cta-meter.log"
-
 namespace cta::metric {
+
+std::ofstream MeterProvider::_ofs;
 
 MeterProvider::MeterProvider() {
   static std::mutex setup_lock;
@@ -31,6 +30,7 @@ MeterProvider::MeterProvider() {
   if (!setup_done) {
     std::unique_lock lock(setup_lock);
     if (setup_done == false) {
+      _ofs = std::ofstream(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
       initMeterProvider();
       setup_done = true;
     }
@@ -38,10 +38,8 @@ MeterProvider::MeterProvider() {
 }
 
 void MeterProvider::initMeterProvider() {
-  std::ofstream ofs;
-  //ofs.open(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
-  //auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(ofs);
-  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
+  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(_ofs);
+  //auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
 
   // Initialize and set the global MeterProvider
   opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;
@@ -50,9 +48,12 @@ void MeterProvider::initMeterProvider() {
 
   auto reader = opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
 
-  auto u_provider = opentelemetry::sdk::metrics::MeterProviderFactory::Create();
-  auto *p = static_cast<opentelemetry::sdk::metrics::MeterProvider *>(u_provider.get());
-  p->AddMetricReader(std::move(reader));
+  auto context = opentelemetry::sdk::metrics::MeterContextFactory::Create();
+  context->AddMetricReader(std::move(reader));
+  auto u_provider = opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(context));
+  std::shared_ptr<opentelemetry::metrics::MeterProvider> provider(std::move(u_provider));
+
+  opentelemetry::metrics::Provider::SetMeterProvider(provider);
 }
 
 MeterCounter MeterProvider::getMeterCounter(const std::string & meterName, const std::string & counterName) {

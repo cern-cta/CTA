@@ -17,16 +17,21 @@
 
 #pragma once
 
+#include <fstream>
+
 #include "opentelemetry/context/context.h"
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
 #include "opentelemetry/exporters/ostream/metric_exporter.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
 #include "opentelemetry/sdk/metrics/meter.h"
+#include "opentelemetry/sdk/metrics/meter_context_factory.h"
 #include "opentelemetry/sdk/metrics/meter_provider.h"
 #include "opentelemetry/sdk/metrics/meter_provider_factory.h"
 #include "opentelemetry/sdk/metrics/push_metric_exporter.h"
 #include "opentelemetry/nostd/shared_ptr.h"
+
+#define METER_LOG_FILE "/tmp/cta-meter.log"
 
 namespace cta::metric {
 
@@ -36,10 +41,11 @@ class MeterHistogram;
 class MeterProvider {
 public:
   MeterProvider();
-  MeterCounter getMeterCounter(const std::string & meterName, const std::string & counterName);
-  MeterHistogram getMeterHistogram(const std::string & meterName, const std::string & histogramName);
+  static MeterCounter getMeterCounter(const std::string & meterName, const std::string & counterName);
+  static MeterHistogram getMeterHistogram(const std::string & meterName, const std::string & histogramName);
 private:
   void initMeterProvider();
+  static std::ofstream _ofs;
 };
 
 class MeterCounter {

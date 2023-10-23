@@ -351,8 +351,8 @@ class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock() :
       shortHostname(cta::utils::getShortHostname()),
-      countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
-      durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
+      countLockAcq(metric::MeterProvider::getMeterCounter("obj", "lock_acq_count")),
+      durationLockAcq(metric::MeterProvider::getMeterHistogram("obj", "lock_acq_duration")) {}
 
   ScopedSharedLock(ObjectOpsBase & oo) : ScopedSharedLock() {
     lock(oo);
@@ -396,8 +396,8 @@ class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() :
       shortHostname(cta::utils::getShortHostname()),
-      countLockAcq(meterProvider.getMeterCounter("obj", "lock_acq_count")),
-      durationLockAcq(meterProvider.getMeterHistogram("obj", "lock_acq_duration")) {}
+      countLockAcq(metric::MeterProvider::getMeterCounter("obj", "lock_acq_count")),
+      durationLockAcq(metric::MeterProvider::getMeterHistogram("obj", "lock_acq_duration")) {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
@@ -468,11 +468,11 @@ protected:
   ObjectOps(Backend & os):
       ObjectOpsBase(os),
       shortHostname(cta::utils::getShortHostname()),
-      countObjFetch(meterProvider.getMeterCounter("obj", "obj_fetch_count")),
-      countObjCommit(meterProvider.getMeterCounter("obj", "obj_commit_count")),
-      countObjRemove(meterProvider.getMeterCounter("obj", "obj_remove_count")),
-      countObjInsert(meterProvider.getMeterCounter("obj", "obj_insert_count")),
-      durationObjFetch(meterProvider.getMeterHistogram("obj", "obj_fetch_duration")) {
+      countObjFetch(metric::MeterProvider::getMeterCounter("obj", "obj_fetch_count")),
+      countObjCommit(metric::MeterProvider::getMeterCounter("obj", "obj_commit_count")),
+      countObjRemove(metric::MeterProvider::getMeterCounter("obj", "obj_remove_count")),
+      countObjInsert(metric::MeterProvider::getMeterCounter("obj", "obj_insert_count")),
+      durationObjFetch(metric::MeterProvider::getMeterHistogram("obj", "obj_fetch_duration")) {
 
       auto objectTypeDescriptor = serializers::ObjectType_descriptor();
       m_payloadTypeIdStr = objectTypeDescriptor->FindValueByNumber(payloadTypeId)->name();
