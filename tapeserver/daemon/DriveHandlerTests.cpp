@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include "catalogue/dummy/DummyCatalogue.hpp"
@@ -29,7 +30,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/log/StdoutLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "scheduler/IScheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
@@ -62,6 +63,15 @@ public:
   MOCK_CONST_METHOD2(executeDataTransferSession,
     castor::tape::tapeserver::daemon::Session::EndOfSessionAction(cta::IScheduler* scheduler,
     cta::tape::daemon::TapedProxy* driveHandlerProxy));
+    MOCK_METHOD1(resetToDefault, void(const std::string& methodCaller));
+
+  // Just for testing.
+  void setPreviousSession(PreviousSession previousSessionState, session::SessionState previousState,
+    std::string_view vid) {
+    m_previousSession = previousSessionState;
+    m_previousState = previousState;
+    m_previousVid = vid;
+  }
 };
 
 class TapedProxyMock : public TapedProxy {
@@ -107,7 +117,7 @@ namespace unitTests {
 class DriveHandlerTests: public ::testing::Test {
 public:
   DriveHandlerTests()
-    : m_lc(m_dummyLog), m_processManager(m_lc) {}
+    : m_lc(m_logger), m_processManager(m_lc) {}
 
   void SetUp() override {
     setUpTapedProxyMock();
@@ -157,7 +167,7 @@ protected:
   std::shared_ptr<NiceMock<cta::SchedulerMock>> m_scheduler;
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
 
-  cta::log::StdoutLogger m_dummyLog{"dummy", "dummy"};
+  cta::log::StringLogger m_logger{"dummy", "driveHandlerTests", cta::log::DEBUG};
   cta::log::LogContext m_lc;
   cta::tape::daemon::ProcessManager m_processManager;
   cta::tape::daemon::TapedConfiguration m_tapedConfig;
@@ -229,10 +239,12 @@ TEST_F(DriveHandlerTests, runChildAndExecuteDataTransferSession) {
 TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
 
+  // Methods to check the outputs of the tests
+  std::string logToCheck;
   cta::tape::session::SessionState sessionState;
   cta::tape::session::SessionType sessionType;
   std::string tapeVid;
-  EXPECT_CALL(*m_tapedProxy, reportState(_, _, _)).Times(5).WillRepeatedly(Invoke(
+  EXPECT_CALL(*m_tapedProxy, reportState(_, _, _)).WillRepeatedly(Invoke(
       [&](const cta::tape::session::SessionState state, const cta::tape::session::SessionType type,
         const std::string& vid) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting state");
@@ -241,54 +253,152 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
         tapeVid = vid;
         return;
       }));
+  auto checkReport = [&]() -> void {
+    ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+    ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+    ASSERT_EQ(tapeVid, "");
+  };
 
+  // It cannot create the scheduler instance, so it should mark the drive as down
   EXPECT_CALL(*m_driveHandler, createScheduler(_, _, _)).WillOnce(
     Throw(cta::exception::Exception("createScheduler failed to create scheduler"))).WillRepeatedly(
     Return(m_scheduler));
 
-  // It couldn't create the scheduler, so it should mark the drive as down
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
-  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
-  ASSERT_EQ(tapeVid, "");
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): failed to instantiate scheduler."));
+  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"createScheduler failed to create scheduler\""));
 
+  // It cannot ping the database or the objectstore, so it should mark the drive as down
+  // There are two reasons to fail the ping, one produced by WrongSchemaVersionException and a general exception
   EXPECT_CALL(*m_scheduler, ping(_)).WillOnce(
     Throw(cta::exception::Exception("Failed to ping scheduler"))).WillOnce(
     Throw(cta::catalogue::WrongSchemaVersionException("Catalogue MAJOR version mismatch"))).WillRepeatedly(
     Return());
-  // Frist exception
+  // Frist exception (general)
+  m_logger.clearLog();
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
-  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
-  ASSERT_EQ(tapeVid, "");
-  // Second exception
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "failed to ping central storage before session."));
+  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Failed to ping scheduler\""));
+  // Second exception (WrongSchemaVersionException)
+  m_logger.clearLog();
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
-  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
-  ASSERT_EQ(tapeVid, "");
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "catalogue MAJOR version mismatch"));
+  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Catalogue MAJOR version mismatch\""));
 
+  // It cannot create the drive status, so it should mark the drive as down
   EXPECT_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillOnce(
     Return(false)).WillRepeatedly(Return(true));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
-  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
-  ASSERT_EQ(tapeVid, "");
-
+  checkReport();
+  
+  // It cannot create the drive status because the drive doesn't exist in the catalogue
+  // This is not a critical error, so it should continue with the session
+  m_logger.clearLog();
   EXPECT_CALL(*m_scheduler, getDesiredDriveState(_, _)).WillOnce(
     Throw(cta::Scheduler::NoSuchDrive())).WillRepeatedly(
     Return(cta::common::dataStructures::DesiredDriveState()));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "the desired drive state doesn't exist in the Catalogue DB"));
 
+  // It cannot create the tape drive in the catalogue, so it should mark the drive as down, and the session
+  // cannot continue.
+  m_logger.clearLog();
   EXPECT_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _, _)).WillOnce(
     Throw(cta::exception::Exception("Failed to create tape drive status"))).WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
-  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
-  ASSERT_EQ(tapeVid, "");
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "failed to set drive down"));
+  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to create tape drive status\""));
+
+  // It cannot set desired drive state into the catalogue, so it should mark the drive as down, and the session
+  // cannot continue.
+  m_logger.clearLog();
+  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _, _)).WillOnce(
+    Throw(cta::exception::Exception("Failed to set desired drive state"))).WillRepeatedly(Return());
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "failed to set drive down"));
+  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to set desired drive state\""));
+
+  // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
+  // cannot continue.
+  m_logger.clearLog();
+  EXPECT_CALL(*m_scheduler, reportDriveConfig(_, _, _)).WillOnce(
+    Throw(cta::exception::Exception("Failed to report drive config"))).WillRepeatedly(Return());
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  checkReport();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+                                               "failed to set drive down"));
+  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to report drive config\""));
   
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
 }
 
+TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
+  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+
+  std::string logToCheck;
+
+  // Previous Vid is empty, it should have a vid of the previous session
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     std::string(""));
+  EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
+      [&](const cta::common::dataStructures::DriveInfo&,
+        const cta::common::dataStructures::MountType& type,
+        const cta::common::dataStructures::DriveStatus& status,
+        cta::log::LogContext& lc) {
+        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
+        ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
+        ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::Down);
+        return;
+      })).WillOnce(Invoke(
+      [&](const cta::common::dataStructures::DriveInfo&,
+        const cta::common::dataStructures::MountType& type,
+        const cta::common::dataStructures::DriveStatus& status,
+        cta::log::LogContext& lc) {
+        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
+        ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
+        ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::CleaningUp);
+        return;
+      }));
+
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     std::string("TAPE0001"));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+
+  logToCheck = m_logger.getLog();
+  std::cout << logToCheck << std::endl;
+  ASSERT_NE(std::string::npos, logToCheck.find("starting cleaner after crash with tape potentially loaded"));
+
+}
 
 } // namespace unitTests

@@ -57,6 +57,11 @@ public:
    */
   std::string getLog() { return m_log.str(); }
 
+  /**
+   * Clear the log.
+   */
+  void clearLog() { m_log.str(""); }
+
 protected:
 
   /**

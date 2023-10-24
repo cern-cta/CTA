@@ -95,7 +95,7 @@ public:
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
-protected:
+private:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager& m_processManager;
   /** The parameters */
@@ -105,7 +105,7 @@ protected:
   /** The log context */
   cta::log::LogContext* m_lc;
   
-private:
+public:
   /** Possible outcomes of the previous session/child process.  */
   enum class PreviousSession {
     Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
@@ -113,6 +113,8 @@ private:
     Down,       ///< The previous session tried and failed to unmount the tape, and reported such instance.
     Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
+
+protected:
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession = PreviousSession::Initiating;
   /** Representation of the last know state of the previous session (useful for crashes) */
@@ -121,6 +123,8 @@ private:
   session::SessionType m_previousType = session::SessionType::Undetermined;
   /** Previous VID, that can help the unmount process */
   std::string m_previousVid;
+
+private:
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
@@ -132,12 +136,12 @@ private:
    */
   void resetToDefault(PreviousSession previousSessionState);
 
+private:
   /** Current session's type */
   session::SessionType m_sessionType = session::SessionType::Undetermined;
-protected:
+
   /** Current session's VID */
   std::string m_sessionVid;
-private:
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
   log::LogContext m_sessionEndContext;
