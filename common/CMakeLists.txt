@@ -138,6 +138,9 @@ set (COMMON_LIB_SRC_FILES
   metric/MeterCounterOTLP.cpp
   metric/MeterHistogramOTLP.cpp
   metric/MeterProviderBackendOTLP.cpp
+  metric/MeterCounterNoOp.cpp
+  metric/MeterHistogramNoOp.cpp
+  metric/MeterProviderBackendNoOp.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
