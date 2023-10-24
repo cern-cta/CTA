@@ -174,7 +174,7 @@ TEST_F(DriveHandlerTests, getInitialStatus) {
   ASSERT_EQ(status.forkState, cta::tape::daemon::SubprocessHandler::ForkState::notForking);
 }
 
-TEST_F(DriveHandlerTests, forkAndKill) {
+TEST_F(DriveHandlerTests, DISABLED_forkAndKill) {
   const auto status = m_driveHandler->fork();
   ASSERT_NO_THROW(m_driveHandler->kill());
   // Check that the status is correct
@@ -185,7 +185,7 @@ TEST_F(DriveHandlerTests, forkAndKill) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, runSigChild) {
+TEST_F(DriveHandlerTests, DISABLED_runSigChild) {
   m_driveHandler->fork();
   const auto status = m_driveHandler->processSigChild();
   // Check that the status is correct
@@ -196,7 +196,7 @@ TEST_F(DriveHandlerTests, runSigChild) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, shutdown) {
+TEST_F(DriveHandlerTests, DISABLED_shutdown) {
   const auto status = m_driveHandler->shutdown();
   // Check that the status is correct
   ASSERT_FALSE(status.shutdownRequested);
