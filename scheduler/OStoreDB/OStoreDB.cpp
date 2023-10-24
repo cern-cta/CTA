@@ -244,7 +244,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   for (auto & aq_dump : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aq_dump.address, m_objectStore);
     // debug utility variable
-    std::string __attribute__((__unused__)) poolName = aqp.cId;
+    std::string __attribute__((__unused__)) poolName = aq_dump.cId;
     objectstore::ScopedSharedLock aqlock;
     double queueLockTime = 0;
     double queueFetchTime = 0;
