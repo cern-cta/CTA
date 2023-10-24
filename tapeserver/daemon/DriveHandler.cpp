@@ -750,7 +750,7 @@ int DriveHandler::runChild() {
         cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState;
         try {
           currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveConfig.unitName, *m_lc);
-        } catch (Scheduler::NoSuchDrive& ex) {
+        } catch (Scheduler::NoSuchDrive&) {
           m_lc->log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
         }
 

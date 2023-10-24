@@ -44,6 +44,7 @@ using ::testing::ByMove;
 using ::testing::Invoke;
 using ::testing::NiceMock;
 using ::testing::Return;
+using ::testing::Throw;
 
 namespace cta {
 namespace tape {
@@ -174,7 +175,7 @@ TEST_F(DriveHandlerTests, getInitialStatus) {
   ASSERT_EQ(status.forkState, cta::tape::daemon::SubprocessHandler::ForkState::notForking);
 }
 
-TEST_F(DriveHandlerTests, DISABLED_forkAndKill) {
+TEST_F(DriveHandlerTests, forkAndKill) {
   const auto status = m_driveHandler->fork();
   ASSERT_NO_THROW(m_driveHandler->kill());
   // Check that the status is correct
@@ -196,7 +197,7 @@ TEST_F(DriveHandlerTests, DISABLED_runSigChild) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, DISABLED_shutdown) {
+TEST_F(DriveHandlerTests, shutdown) {
   const auto status = m_driveHandler->shutdown();
   // Check that the status is correct
   ASSERT_FALSE(status.shutdownRequested);
@@ -207,15 +208,87 @@ TEST_F(DriveHandlerTests, DISABLED_shutdown) {
   ASSERT_EQ(status.forkState, cta::tape::daemon::SubprocessHandler::ForkState::notForking);
 }
 
-TEST_F(DriveHandlerTests, runChild) {
+TEST_F(DriveHandlerTests, runChildAndExecuteDataTransferSession) {
   using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
   EXPECT_CALL(*m_driveHandler, executeDataTransferSession(_, _)).WillOnce(Invoke(
-      [&](cta::IScheduler*, cta::tape::daemon::TapedProxy*) {
-        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Executing data transfer session");
+      [this](cta::IScheduler*, cta::tape::daemon::TapedProxy*) {
+        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Executing data transfer session. "
+          "And marking drive as up");
         return EndOfSessionAction::MARK_DRIVE_AS_UP;
+      })).WillOnce(Invoke(
+      [this](cta::IScheduler*, cta::tape::daemon::TapedProxy*) {
+        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Executing data transfer session. "
+          "And marking drive as down");
+        return EndOfSessionAction::MARK_DRIVE_AS_DOWN;
       }));
-  // Check that the status is correct
+
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+}
+
+TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
+  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+
+  cta::tape::session::SessionState sessionState;
+  cta::tape::session::SessionType sessionType;
+  std::string tapeVid;
+  EXPECT_CALL(*m_tapedProxy, reportState(_, _, _)).Times(5).WillRepeatedly(Invoke(
+      [&](const cta::tape::session::SessionState state, const cta::tape::session::SessionType type,
+        const std::string& vid) {
+        m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting state");
+        sessionState = state;
+        sessionType = type;
+        tapeVid = vid;
+        return;
+      }));
+
+  EXPECT_CALL(*m_driveHandler, createScheduler(_, _, _)).WillOnce(
+    Throw(cta::exception::Exception("createScheduler failed to create scheduler"))).WillRepeatedly(
+    Return(m_scheduler));
+
+  // It couldn't create the scheduler, so it should mark the drive as down
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+  ASSERT_EQ(tapeVid, "");
+
+  EXPECT_CALL(*m_scheduler, ping(_)).WillOnce(
+    Throw(cta::exception::Exception("Failed to ping scheduler"))).WillOnce(
+    Throw(cta::catalogue::WrongSchemaVersionException("Catalogue MAJOR version mismatch"))).WillRepeatedly(
+    Return());
+  // Frist exception
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+  ASSERT_EQ(tapeVid, "");
+  // Second exception
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+  ASSERT_EQ(tapeVid, "");
+
+  EXPECT_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillOnce(
+    Return(false)).WillRepeatedly(Return(true));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+  ASSERT_EQ(tapeVid, "");
+
+  EXPECT_CALL(*m_scheduler, getDesiredDriveState(_, _)).WillOnce(
+    Throw(cta::Scheduler::NoSuchDrive())).WillRepeatedly(
+    Return(cta::common::dataStructures::DesiredDriveState()));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
+
+  EXPECT_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _, _)).WillOnce(
+    Throw(cta::exception::Exception("Failed to create tape drive status"))).WillRepeatedly(Return());
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  ASSERT_EQ(sessionState, cta::tape::session::SessionState::Fatal);
+  ASSERT_EQ(sessionType, cta::tape::session::SessionType::Undetermined);
+  ASSERT_EQ(tapeVid, "");
+  
+  // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
 }
+
 
 } // namespace unitTests
