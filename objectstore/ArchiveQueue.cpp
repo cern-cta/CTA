@@ -318,6 +318,16 @@ std::string ArchiveQueue::getTapePool() {
   return m_payload.tapepool();
 }
 
+void ArchiveQueue::setContainerId(const std::string& name) {
+  checkPayloadWritable();
+  m_payload.set_tapepool(name);
+}
+
+std::string ArchiveQueue::getContainerId(){
+ checkPayloadreadable();
+ return m_payload.tapepool();
+}
+
 void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
   // Before adding the jobs, we have to decide how to lay them out in the shards.

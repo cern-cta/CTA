@@ -70,7 +70,10 @@ public:
   // Set/get tape pool
   void setTapePool(const std::string & name);
   std::string getTapePool();
-  
+
+  void setContainerId(const std::tring &name);
+  std::string getContainerId();
+
   // Archive jobs management ===================================================
   struct JobToAdd {
     ArchiveRequest::JobDump job;
@@ -148,7 +151,20 @@ public:
 };
 
 class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToReportForUser: public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+
+  void ArchiveQueueToTransferForUser::setContainerId(const std::string &name){
+    checkPayloadWriteable();
+    m_payload.set_vid(name);
+  };
+
+  std::string ArchiveQueueToTransferForUser:;getContainerId(){
+    checkPayloadReadabke();
+    return m_payload.vid();
+  };
+
+};
 class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };

@@ -198,18 +198,18 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Retr
 // This operator will be used in the following usage of the findElement
 // removeOccurences
 namespace {
-  bool operator==(const std::string &tp,
+  bool operator==(const std::string &cId,
     const serializers::ArchiveQueuePointer & tpp) {
-    return tpp.name() == tp;
+    return tpp.name() == cId;
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef,
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& cId, AgentReference& agentRef,
   common::dataStructures::JobQueueType queueType) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
-    return serializers::findElement(archiveQueuePointers(queueType), tapePool).address();
+    return serializers::findElement(archiveQueuePointers(queueType), cId).address();
   } catch (serializers::NotFound &) {}
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
@@ -222,28 +222,28 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+cId);
   // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
-  tpp->set_name(tapePool);
+  tpp->set_name(cId);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Then insert the queue object
   ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  aq.initialize(tapePool);
+  aq.initialize(cId);
   aq.setOwner(getAddressIfSet());
   aq.setBackupOwner(getAddressIfSet());
   aq.insert();
   return archiveQueueAddress;
 }
 
-void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common::dataStructures::JobQueueType queueType,
+void RootEntry::removeArchiveQueueAndCommit(const std::string& cId, common::dataStructures::JobQueueType queueType,
   log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
-    auto aqp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
+    auto aqp = serializers::findElement(archiveQueuePointers(queueType), cId);
     // Open the tape pool object
     ArchiveQueue aq (aqp.address(), m_objectStore);
     ScopedExclusiveLock aql;
@@ -265,10 +265,10 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
       }
     }
     // Verify this is the archive queue we're looking for.
-    if (aq.getTapePool() != tapePool) {
+    if (aq.getContainerId() != cId) {
       std::stringstream err;
       err << "In RootEntry::removeArchiveQueueAndCommit(): Unexpected tape pool name found in archive queue pointed to for tape pool: "
-          << tapePool << " found: " << aq.getTapePool();
+          << cId << " found: " << aq.getContainerId();
       throw WrongArchiveQueue(err.str());
     }
     // Check the archive queue is empty
@@ -285,12 +285,12 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
     }
   deleteFromRootEntry:
     // ... and remove it from our entry
-    serializers::removeOccurences(mutableArchiveQueuePointers(queueType), tapePool);
+    serializers::removeOccurences(mutableArchiveQueuePointers(queueType), cId);
     // We commit for safety and symmetry with the add operation
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", tapePool)
+      params.add("containerId", cId)
             .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
     }
@@ -300,14 +300,14 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
   }
 }
 
-void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, common::dataStructures::JobQueueType queueType) {
-  serializers::removeOccurences(mutableArchiveQueuePointers(queueType), tapePool);
+void RootEntry::removeMissingArchiveQueueReference(const std::string& cId, common::dataStructures::JobQueueType queueType) {
+  serializers::removeOccurences(mutableArchiveQueuePointers(queueType), cId);
 }
 
-std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, common::dataStructures::JobQueueType queueType) {
+std::string RootEntry::getArchiveQueueAddress(const std::string& cId, common::dataStructures::JobQueueType queueType) {
   checkPayloadReadable();
   try {
-    auto & tpp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
+    auto & tpp = serializers::findElement(archiveQueuePointers(queueType), cId);
     return tpp.address();
   } catch (serializers::NotFound &) {
     throw NoSuchArchiveQueue("In RootEntry::getArchiveQueueAddress: archive queue not allocated");
@@ -321,7 +321,7 @@ auto RootEntry::dumpArchiveQueues(common::dataStructures::JobQueueType queueType
   for (auto i = tpl.begin(); i != tpl.end(); i++) {
     ret.push_back(ArchiveQueueDump());
     ret.back().address = i->address();
-    ret.back().tapePool = i->name();
+    ret.back().cId = i->name();
   }
   return ret;
 }

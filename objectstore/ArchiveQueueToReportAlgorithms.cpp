@@ -26,7 +26,7 @@ template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::c_containerTypeName = "ArchiveQueueToReportForUser";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::c_identifierType = "vid";
 
 template<>
 void ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::PoppedElementsBatch::

@@ -76,18 +76,18 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef, common::dataStructures::JobQueueType queueType);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & cId, AgentReference & agentRef, common::dataStructures::JobQueueType queueType);
   /** This function implicitly deletes the tape pool structure.
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
-  void removeArchiveQueueAndCommit(const std::string & tapePool, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
+  void removeArchiveQueueAndCommit(const std::string & cId, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the archive queue */
-  void removeMissingArchiveQueueReference(const std::string & tapePool, common::dataStructures::JobQueueType queueType);
-  void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress,
+  void removeMissingArchiveQueueReference(const std::string & cId, common::dataStructures::JobQueueType queueType);
+  void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & cId, const std::string & archiveQueueAddress,
     common::dataStructures::JobQueueType queueType);
-  std::string getArchiveQueueAddress(const std::string & tapePool, common::dataStructures::JobQueueType queueType);
+  std::string getArchiveQueueAddress(const std::string & cId, common::dataStructures::JobQueueType queueType);
   struct ArchiveQueueDump {
-    std::string tapePool;
+    std::string cId;
     std::string address;
   };
   std::list<ArchiveQueueDump> dumpArchiveQueues(common::dataStructures::JobQueueType queueType);
