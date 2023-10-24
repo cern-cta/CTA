@@ -22,7 +22,6 @@
 namespace cta::metric {
 
 class MeterHistogramNoOp : public MeterHistogram {
-  friend class MeterProviderBackendNoOp;
 public:
     void record(double value, std::map<std::string, std::string> attributes) override;
 };

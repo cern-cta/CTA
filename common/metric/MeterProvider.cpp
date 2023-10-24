@@ -17,6 +17,11 @@
 
 #include "common/metric/MeterProvider.hpp"
 #include "common/metric/MeterProviderBackendOTLP.hpp"
+#include "common/metric/MeterProviderBackendNoOp.hpp"
+
+#define DEFAULT_METER_LOG_FILE "/tmp/cta-meter.log"
+#define DEFAULT_HOST "localhost"
+#define DEFAULT_PORT "8080"
 
 namespace cta::metric {
 
@@ -30,6 +35,66 @@ std::unique_ptr<MeterCounter> MeterProvider::getMeterCounter(const std::string &
 
 std::unique_ptr<MeterHistogram> MeterProvider::getMeterHistogram(const std::string & topic, const std::string & histogramName){
     return MeterProvider::s_backend->getMeterHistogram(topic, histogramName);
+}
+
+std::unique_ptr<MeterProviderBackend> MeterProvider::selectBackend() {
+  enum BackendOptions {
+    NOOP,
+    OTLP_NOOP,
+    OTLP_COUT,
+    OTLP_FILE,
+#ifdef USE_OTLP_EXPORTER
+    OTLP_GRPC,
+    OTLP_HTTP,
+#endif
+    OTLP_PROMETHEUS,
+  };
+  static const std::map<std::string, BackendOptions> optionToBackendOption {
+          {"NOOP", NOOP},
+          {"OTLP_NOOP", OTLP_NOOP},
+          {"OTLP_COUT", OTLP_COUT},
+          {"OTLP_FILE", OTLP_FILE},
+#ifdef USE_OTLP_EXPORTER
+          {"OTLP_GRPC", OTLP_GRPC},
+          {"OTLP_HTTP", OTLP_HTTP},
+#endif
+          {"OTLP_PROMETHEUS", OTLP_PROMETHEUS},
+  };
+  char * option = std::getenv("OTLP_BACKEND");
+  if (!option) {
+    // No option selected
+    return std::make_unique<MeterProviderBackendNoOp>();
+  }
+  if (optionToBackendOption.count(option) == 0) {
+    //TODO: Log this failure
+    return std::make_unique<MeterProviderBackendNoOp>();
+  }
+  BackendOptions backendOption = optionToBackendOption.at(option);
+  switch (backendOption) {
+  case OTLP_NOOP:
+    return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_NoOp();
+  case OTLP_COUT:
+    return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Cout();
+  case OTLP_FILE:
+    {
+      char *filePath = getenv("OTLP_FILE_PATH");
+      std::string filePathStr = filePath ? filePath : DEFAULT_METER_LOG_FILE;
+      return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_File(filePathStr);
+    }
+  case OTLP_PROMETHEUS:
+    {
+      char *host = getenv("OTLP_HOST");
+      char *port = getenv("OTLP_PORT");
+      std::string hostStr = host ? host : DEFAULT_HOST;
+      std::string portStr = port ? port : DEFAULT_PORT;
+      return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Prometheus(hostStr, portStr);
+    }
+#ifdef USE_OTLP_EXPORTER
+
+#endif
+  default:
+    return std::make_unique<MeterProviderBackendNoOp>();
+  }
 }
 
 }

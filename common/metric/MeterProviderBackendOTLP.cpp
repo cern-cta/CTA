@@ -21,6 +21,12 @@
 
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
+#ifdef USE_OTLP_EXPORTER
+  #include "opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h"
+  #include "opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h"
+#endif
+#include "opentelemetry/exporters/prometheus/exporter_factory.h"
+#include "opentelemetry/exporters/prometheus/exporter_options.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
 #include "opentelemetry/sdk/metrics/meter_context_factory.h"
 #include "opentelemetry/sdk/metrics/meter_provider_factory.h"
@@ -29,23 +35,81 @@
 
 namespace cta::metric {
 
-MeterProviderBackendOTLP::MeterProviderBackendOTLP() {
-  m_ofs = std::ofstream(METER_LOG_FILE, std::ofstream::out | std::ofstream::app);
-  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(m_ofs);
-  //auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_NoOp() {
+  // By default, a No-Op meter provider will be returned by OTLP
+  return std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+}
 
-  // Initialize and set the global MeterProvider
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Cout() {
+  auto meterProvider = std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+  meterProvider->setReader(meterProvider->getReader_Cout());
+  return meterProvider;
+}
+
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_File(const std::string & filePath) {
+  auto meterProvider = std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+  meterProvider->setReader(meterProvider->getReader_File(filePath));
+  return meterProvider;
+}
+
+#ifdef USE_OTLP_EXPORTER
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_OTLP_HTTP(const std::string & hostName, const std::string & port) {
+  auto meterProvider = std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+  meterProvider->setReader(meterProvider->getReader_OTLP_HTTP(hostName, port));
+  return meterProvider;
+}
+
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_OTLP_gRPC(const std::string & hostName, const std::string & port) {
+  auto meterProvider = std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+  meterProvider->setReader(meterProvider->getReader_OTLP_gRPC(hostName, port));
+  return meterProvider;
+}
+#endif
+
+std::unique_ptr<MeterProviderBackendOTLP> MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Prometheus(const std::string & hostName, const std::string & port) {
+  auto meterProvider = std::unique_ptr<MeterProviderBackendOTLP>(new MeterProviderBackendOTLP());
+  meterProvider->setReader(meterProvider->getReader_Prometheus(hostName, port));
+  return meterProvider;
+}
+
+std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_Cout() {
+  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
   opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;
   options.export_interval_millis = std::chrono::milliseconds(1000);
   options.export_timeout_millis = std::chrono::milliseconds(500);
+  return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
+}
 
-  auto reader = opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
+std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_File(const std::string & filePath) {
+  m_ofs = std::ofstream(filePath, std::ofstream::out | std::ofstream::app);
+  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(m_ofs);
+  opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;
+  options.export_interval_millis = std::chrono::milliseconds(1000);
+  options.export_timeout_millis = std::chrono::milliseconds(500);
+  return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
+}
 
+#ifdef USE_OTLP_EXPORTER
+std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_OTLP_HTTP(const std::string & hostName, const std::string & port) {
+  //TODO: For example, check: https://opentelemetry.io/docs/instrumentation/cpp/exporters/
+}
+
+std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_OTLP_gRPC(const std::string & hostName, const std::string & port) {
+  //TODO: For example, check: https://opentelemetry.io/docs/instrumentation/cpp/exporters/
+}
+#endif
+
+std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_Prometheus(const std::string & hostName, const std::string & port) {
+  opentelemetry::exporter::metrics::PrometheusExporterOptions prometheusOptions;
+  prometheusOptions.url = hostName + ":" + port;
+  return opentelemetry::exporter::metrics::PrometheusExporterFactory::Create(prometheusOptions);
+}
+
+void MeterProviderBackendOTLP::setReader(std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> reader) {
   auto context = opentelemetry::sdk::metrics::MeterContextFactory::Create();
   context->AddMetricReader(std::move(reader));
   auto u_provider = opentelemetry::sdk::metrics::MeterProviderFactory::Create(std::move(context));
   std::shared_ptr<opentelemetry::metrics::MeterProvider> provider(std::move(u_provider));
-
   opentelemetry::metrics::Provider::SetMeterProvider(provider);
 }
 

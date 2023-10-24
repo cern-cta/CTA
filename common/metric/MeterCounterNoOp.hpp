@@ -22,7 +22,6 @@
 namespace cta::metric {
 
 class MeterCounterNoOp : public MeterCounter {
-  friend class MeterProviderBackendNoOp;
 public:
     void add(uint64_t value, std::map<std::string, std::string> attributes) override;
 };

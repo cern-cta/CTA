@@ -31,8 +31,8 @@ public:
   static std::unique_ptr<MeterCounter> getMeterCounter(const std::string & topic, const std::string & counterName);
   static std::unique_ptr<MeterHistogram> getMeterHistogram(const std::string & topic, const std::string & histogramName);
 private:
-  //TODO: Change for no-op implementation
-  static inline std::unique_ptr<MeterProviderBackend> s_backend = std::make_unique<MeterProviderBackendOTLP>();
+  static std::unique_ptr<MeterProviderBackend> selectBackend();
+  static inline std::unique_ptr<MeterProviderBackend> s_backend = selectBackend();
 };
 
 }
