@@ -35,7 +35,6 @@ add_library(ctatapedaemon
   SignalHandler.cpp
   TapeDaemon.cpp
   TapedConfiguration.cpp
-  TapedProxy.cpp
   Tpconfig.cpp
   TpconfigLine.cpp
 )
