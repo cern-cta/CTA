@@ -242,7 +242,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
   for (auto & aq_dump : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
-    objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
+    objectstore::ArchiveQueue aqueue(aq_dump.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.cId;
     objectstore::ScopedSharedLock aqlock;
@@ -297,7 +297,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params(logContext);
     params.add("queueObject", aq_dump.address)
-          .add("containerId", aq_dump.containerId)
+          .add("containerId", aq_dump.cId)
           .add("queueType", toString(cta::common::dataStructures::MountType::ArchiveForUser))
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
