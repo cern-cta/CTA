@@ -154,12 +154,12 @@ class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::A
 class ArchiveQueueToReportForUser: public ArchiveQueue {
   using ArchiveQueue::ArchiveQueue;
 
-  void ArchiveQueueToTransferForUser::setContainerId(const std::string &name){
+  void ArchiveQueueToTransferForUser::setContainerId(const std::string &name) override {
     checkPayloadWriteable();
     m_payload.set_vid(name);
   };
 
-  std::string ArchiveQueueToTransferForUser:;getContainerId(){
+  std::string ArchiveQueueToTransferForUser::getContainerId() override {
     checkPayloadReadabke();
     return m_payload.vid();
   };

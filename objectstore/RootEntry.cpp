@@ -414,7 +414,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
     }
     // Check the retrieve queue is empty
     if (!rq.isEmpty()) {
-      throw RetrieveQueueNotEmpty("In RootEntry::removeTapePoolQueueAndCommit: trying to "
+      throw RetrieveQueueNotEmpty("In RootEntry::removeRetrieveQueueAndCommit: trying to "
           "remove a non-empty tape pool");
     }
     // We can now delete the queue

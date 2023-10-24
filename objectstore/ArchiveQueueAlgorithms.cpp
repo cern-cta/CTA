@@ -116,10 +116,10 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string aqAddress;
-  auto aql = re.dumpArchiveQueues(QueueType::LiveJobs);
-  for (auto & aqp : aql) {
-    if (aqp.tapePool == cId)
-      aqAddress = aqp.address;
+  auto aq_dump_list = re.dumpArchiveQueues(QueueType::LiveJobs);
+  for (auto & aq_dump : aq_dump_list) {
+    if (aq_dump.cId == cId)
+      aqAddress = aq_dump.address;
   }
   if (!aqAddress.size()) throw NoSuchContainer("In ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(): no such archive queue");
   // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
@@ -139,19 +139,19 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
     try {
       re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", cId)
+      params.add("containerId", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", cId)
+      params.add("containerId", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", cId)
+      params.add("containerId", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
     }
