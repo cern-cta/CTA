@@ -49,7 +49,7 @@ QueueItor(objectstore::Backend &objectStore, common::dataStructures::JobQueueTyp
   // If we specified a tape pool, advance to the correct queue
   if(m_onlyThisQueueId) {
     for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-      if(m_jobQueuesQueueIt->tapePool == queue_id) break;
+      if(m_jobQueuesQueueIt->cId == queue_id) break;
     }
     if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
       throw cta::exception::UserError("Archive queue for TapePool " + queue_id + " not found.");
@@ -70,7 +70,7 @@ template<> const std::string&
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 qid() const
 {
-  return m_jobQueuesQueueIt->tapePool;
+  return m_jobQueuesQueueIt->cId;
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 
     // Find the copy for this TapePool
     for(auto &j : osar.first.dumpJobs()) {
-      if(j.tapePool == m_jobQueuesQueueIt->tapePool) {
+      if(j.tapePool == m_jobQueuesQueueIt->cId) {
         auto job = cta::common::dataStructures::ArchiveJob();
 
         job.tapePool                 = j.tapePool;

@@ -241,10 +241,10 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
-  for (auto & aqp : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
+  for (auto & aq_dump : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
-    std::string __attribute__((__unused__)) poolName = aqp.tapePool;
+    std::string __attribute__((__unused__)) poolName = aqp.cId;
     objectstore::ScopedSharedLock aqlock;
     double queueLockTime = 0;
     double queueFetchTime = 0;
@@ -253,8 +253,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       queueFetchTime = t.secs(utils::Timer::resetCounter);
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("queueObject", aqp.address)
-            .add("tapePool", aqp.tapePool)
+      params.add("queueObject", aq_dump.address)
+            .add("containerId", aq_dump.cId)
             .add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::DEBUG, "WARNING: In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for user. Skipping it.");
       continue;
@@ -265,7 +265,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     if (aqueueJobsSummary.jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
-      m.tapePool = aqp.tapePool;
+      m.tapePool = aq_dump.cId;
       m.type = cta::common::dataStructures::MountType::ArchiveForUser;
       m.bytesQueued = aqueueJobsSummary.bytes;
       m.filesQueued = aqueueJobsSummary.jobs;
@@ -296,8 +296,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params(logContext);
-    params.add("queueObject", aqp.address)
-          .add("tapePool", aqp.tapePool)
+    params.add("queueObject", aq_dump.address)
+          .add("containerId", aq_dump.containerId)
           .add("queueType", toString(cta::common::dataStructures::MountType::ArchiveForUser))
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
@@ -307,10 +307,10 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
   }
   // Walk the archive queues for REPACK for statistics
-  for (auto & aqp : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForRepack)) {
-    objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
+  for (auto & aq_dump : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForRepack)) {
+    objectstore::ArchiveQueue aqueue(aq_dump.address, m_objectStore);
     // debug utility variable
-    std::string __attribute__((__unused__)) poolName = aqp.tapePool;
+    std::string __attribute__((__unused__)) poolName = aq_dump.cId;
     objectstore::ScopedSharedLock aqlock;
     double queueLockTime = 0;
     double queueFetchTime = 0;
@@ -319,8 +319,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       queueFetchTime = t.secs(utils::Timer::resetCounter);
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("queueObject", aqp.address)
-            .add("tapePool", aqp.tapePool)
+      params.add("queueObject", aq_dump.address)
+            .add("tapePool", aq_dump.cId)
             .add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::DEBUG, "WARNING: In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for repack. Skipping it.");
       continue;
@@ -331,7 +331,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     if (aqueueRepackJobsSummary.jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
-      m.tapePool = aqp.tapePool;
+      m.tapePool = aq_dump.cId;
       m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
       m.bytesQueued = aqueueRepackJobsSummary.bytes;
       m.filesQueued = aqueueRepackJobsSummary.jobs;
@@ -361,8 +361,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
-    params.add("queueObject", aqp.address)
-          .add("tapePool", aqp.tapePool)
+    params.add("queueObject", aq_dump.address)
+          .add("tapePool", aq_dump.cId)
           .add("queueType", toString(cta::common::dataStructures::MountType::ArchiveForRepack))
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
@@ -804,17 +804,17 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
     common::dataStructures::JobQueueType::FailedJobs} ) {
     try {
       auto archiveQueueList = re.dumpArchiveQueues(queueType);
-      for (auto & a : archiveQueueList) {
-        ArchiveQueue aq(a.address, m_objectStore);
+      for (auto & aq_dump : archiveQueueList) {
+        ArchiveQueue aq(aq_dump.address, m_objectStore);
         ScopedSharedLock aql(aq);
         aq.fetch();
         if (!aq.getJobsSummary().jobs) {
           aql.release();
-          re.removeArchiveQueueAndCommit(a.tapePool, queueType, lc);
+          re.removeArchiveQueueAndCommit(aq_dump.cId, queueType, lc);
           log::ScopedParamContainer params(lc);
-          params.add("tapePool", a.tapePool)
+          params.add("containerId", aq_dump.cId)
                 .add("queueType", toString(queueType))
-                .add("queueObject", a.address);
+                .add("queueObject", aq_dump.address);
           lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty archive queue.");
         }
       }
@@ -1104,11 +1104,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
   criteria.files = filesRequested;
   AQTRAlgo::PoppedElementsBatch jobs;
   std::string tapePool;
-  for (auto & q : queueList) {
-    jobs = aqtrAlgo.popNextBatch(q.tapePool, criteria, logContext);
+  for (auto & aq_dump : queueList) {
+    jobs = aqtrAlgo.popNextBatch(aq_dump.cId, criteria, logContext);
     if (!jobs.elements.empty()) {
       // The tapepool of all jobs are the same within the queue
-      tapePool = q.tapePool;
+      tapePool = aq_dump.cId;
       break;
     }
   }
@@ -2461,7 +2461,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrfs::PopCriteria criteria;
     criteria.files = c_repackArchiveReportBatchSize;
-    auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
+    auto jobs = algo.popNextBatch(queueList.front().cId, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveSuccessesReportBatch> privateRet;
     privateRet.reset(new RepackArchiveSuccessesReportBatch(m_objectStore, *this));
@@ -2503,7 +2503,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArc
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrff::PopCriteria criteria;
     criteria.files = c_repackArchiveReportBatchSize;
-    auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
+    auto jobs = algo.popNextBatch(queueList.front().cId, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveFailureReportBatch> privateRet;
     privateRet.reset(new RepackArchiveFailureReportBatch(m_objectStore, *this));

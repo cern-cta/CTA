@@ -71,7 +71,7 @@ public:
   void setTapePool(const std::string & name);
   std::string getTapePool();
 
-  void setContainerId(const std::tring &name);
+  void setContainerId(const std::string &name);
   std::string getContainerId();
 
   // Archive jobs management ===================================================
@@ -154,13 +154,13 @@ class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::A
 class ArchiveQueueToReportForUser: public ArchiveQueue {
   using ArchiveQueue::ArchiveQueue;
 
-  void ArchiveQueueToTransferForUser::setContainerId(const std::string &name) override {
-    checkPayloadWriteable();
+  void setContainerId(const std::string &name) override {
+    checkPayloadWritable();
     m_payload.set_vid(name);
   };
 
-  std::string ArchiveQueueToTransferForUser::getContainerId() override {
-    checkPayloadReadabke();
+  std::string getContainerId() override {
+    checkPayloadReadable();
     return m_payload.vid();
   };
 

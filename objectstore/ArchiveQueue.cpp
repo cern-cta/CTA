@@ -324,7 +324,7 @@ void ArchiveQueue::setContainerId(const std::string& name) {
 }
 
 std::string ArchiveQueue::getContainerId(){
- checkPayloadreadable();
+ checkPayloadReadable();
  return m_payload.tapepool();
 }
 

@@ -270,9 +270,9 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   ContainerTraits<ArchiveQueue,C>::QueueType queueType;
   auto aql = re.dumpArchiveQueues(queueType.value);
   tl.insertAndReset("rootEntryDumpArchiveQueueTime",t);
-  for (auto & aqp : aql) {
-    if (aqp.getContainerId() == cId)
-      aqAddress = aqp.address;
+  for (auto & aq_dump : aql) {
+    if (aq_dump.cId == cId)
+      aqAddress = aq_dump.address;
   }
   if (!aqAddress.size()) throw NoSuchContainer("In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): no such archive queue");
   // try and lock the archive queue. Any failure from here on means the end of the getting jobs.

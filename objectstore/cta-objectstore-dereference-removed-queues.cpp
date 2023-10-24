@@ -73,8 +73,8 @@ std::list<QueueIdQueueType> getAllMissingArchiveQueues(cta::objectstore::RootEnt
     std::list<cta::objectstore::RootEntry::ArchiveQueueDump> archiveQueues = re.dumpArchiveQueues(queueType);
     for (auto & aq: archiveQueues){
       if (!backend.exists(aq.address)) {
-        missingArchiveQueues.emplace_back(std::make_pair(aq.tapePool,queueType));
-        std::cout << "The archive queue " << cta::common::dataStructures::toString(queueType) << " for tape pool " << aq.tapePool << " at address " << aq.address
+        missingArchiveQueues.emplace_back(std::make_pair(aq.cId,queueType));
+        std::cout << "The archive queue " << cta::common::dataStructures::toString(queueType) << " for container id " << aq.cId << " at address " << aq.address
               << " is missing and will be dereferenced." << std::endl;
       }
     }
