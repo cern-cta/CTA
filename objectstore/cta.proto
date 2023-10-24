@@ -509,7 +509,7 @@ message ArchiveQueue {
   required uint64 oldestjobcreationtime = 10050;
   required uint64 mapsrebuildcount = 10060;
   optional uint64 youngestjobcreationtime = 10070 [default = 0];
-  option string vid = 10080;
+  optional string vid = 10080;
   // tapepool and vid fiedls should be merged together into containerId
   // or something similar.
 }
