@@ -609,30 +609,10 @@ int DriveHandler::runChild() {
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
-    log::ScopedParamContainer params(*m_lc);
-    params.add("tapeDrive", m_driveConfig.unitName);
-    int logLevel = log::ERR;
     std::string errorMsg = "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.";
-    m_lc->log(log::ERR, errorMsg);
     // Get hold of the scheduler
-    try {
-      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-        cta::common::dataStructures::DriveStatus::Down, *m_lc);
-      cta::common::dataStructures::SecurityIdentity securityIdentity;
-      cta::common::dataStructures::DesiredDriveState driveState;
-      driveState.up = false;
-      driveState.forceDown = false;
-      driveState.setReasonFromLogMsg(logLevel, errorMsg);
-      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-    } catch (cta::exception::Exception& ex) {
-      log::ScopedParamContainer param(*m_lc);
-      param.add("errorMessage", ex.getMessageValue());
-      m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-      driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-      sleep(1);
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-    }
+    puttingDriveDown(scheduler.get(), driveHandlerProxy.get(), errorMsg, driveInfo);
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
   // 2) If the previous session crashed, we might want to run a cleaner session, depending
@@ -643,27 +623,9 @@ int DriveHandler::runChild() {
     // Set session type to cleanup
     m_sessionType = SessionType::Cleanup;
     if (m_previousVid.empty()) {
-      int logLevel = log::ERR;
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
-      m_lc->log(log::ERR, errorMsg);
-      try {
-        scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-          cta::common::dataStructures::DriveStatus::Down, *m_lc);
-        cta::common::dataStructures::SecurityIdentity securityIdentity;
-        cta::common::dataStructures::DesiredDriveState driveState;
-        driveState.up = false;
-        driveState.forceDown = false;
-        driveState.setReasonFromLogMsg(logLevel, errorMsg);
-        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
-        return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-      } catch (cta::exception::Exception& ex) {
-        log::ScopedParamContainer param(*m_lc);
-        param.add("errorMessage", ex.getMessageValue());
-        m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-        driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-        sleep(1);
-        return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-      }
+      puttingDriveDown(scheduler.get(), driveHandlerProxy.get(), errorMsg, driveInfo);
+      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
     // Log the decision
     {
@@ -902,6 +864,29 @@ bool DriveHandler::schedulerPing(IScheduler* scheduler, cta::tape::daemon::Taped
   }
 }
 
+void DriveHandler::puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy,
+  std::string_view errorMsg, const cta::common::dataStructures::DriveInfo& driveInfo) {
+  log::ScopedParamContainer params(*m_lc);
+  int logLevel = log::ERR;
+  params.add("tapeDrive", m_driveConfig.unitName);
+  m_lc->log(logLevel, std::string(errorMsg));
+  try {
+    scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      cta::common::dataStructures::DriveStatus::Down, *m_lc);
+    cta::common::dataStructures::SecurityIdentity securityIdentity;
+    cta::common::dataStructures::DesiredDriveState driveState;
+    driveState.up = false;
+    driveState.forceDown = false;
+    driveState.setReasonFromLogMsg(logLevel, std::string(errorMsg));
+    scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, *m_lc);
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(*m_lc);
+    param.add("errorMessage", ex.getMessageValue());
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
+    driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    sleep(1);
+  }
+}
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(
   cta::IScheduler* scheduler) const {

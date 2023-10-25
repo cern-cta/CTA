@@ -188,6 +188,9 @@ private:
 
   bool schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy);
 
+  void puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy,
+    std::string_view errorMsg, const cta::common::dataStructures::DriveInfo& driveInfo);
+
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
 
