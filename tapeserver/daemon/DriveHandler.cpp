@@ -602,19 +602,8 @@ int DriveHandler::runChild() {
   
   // Before launching the transfer session, we validate that the scheduler is reachable.
   m_lc->log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
-  try {
-    scheduler->ping(*m_lc);
-  } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
-    log::ScopedParamContainer param(*m_lc);
-    param.add("errorMessage", ex.getMessageValue());
-    m_lc->log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
-    driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-  } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer param(*m_lc);
-    param.add("errorMessage", ex.getMessageValue());
-    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
-    driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+  if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
+    // failed to do ping
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
@@ -695,19 +684,8 @@ int DriveHandler::runChild() {
 //      sleep(1);
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 //    }
-    try {
-      scheduler->ping(*m_lc);
-    } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
-      log::ScopedParamContainer param(*m_lc);
-      param.add("errorMessage", ex.getMessageValue());
-      m_lc->log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
-      driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-    } catch (cta::exception::Exception& ex) {
-      log::ScopedParamContainer param(*m_lc);
-      param.add("errorMessage", ex.getMessageValue());
-      m_lc->log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
-      driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
+      // failed to do ping
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
@@ -904,6 +882,26 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
     m_lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
   }
 }
+
+bool DriveHandler::schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) {
+  try {
+    scheduler->ping(*m_lc);
+    return true;
+  } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
+    log::ScopedParamContainer param(*m_lc);
+    param.add("errorMessage", ex.getMessageValue());
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
+    driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    return false;
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(*m_lc);
+    param.add("errorMessage", ex.getMessageValue());
+    m_lc->log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
+    driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    return false;
+  }
+}
+
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(
   cta::IScheduler* scheduler) const {

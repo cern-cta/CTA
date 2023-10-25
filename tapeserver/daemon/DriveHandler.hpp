@@ -186,6 +186,8 @@ private:
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage& message);
 
+  bool schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy);
+
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
 
