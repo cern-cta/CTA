@@ -66,11 +66,11 @@ private:
   
 public:
   // Set/get tape pool
-  virtual void setTapePool(const std::string & name);
-  virtual std::string getTapePool();
+  void setTapePool(const std::string & name);
+  std::string getTapePool();
 
-  void setContainerId(const std::string &name);
-  std::string getContainerId();
+  virtual void setContainerId(const std::string &name);
+  virtual std::string getContainerId();
 
   // Archive jobs management ===================================================
   struct JobToAdd {
