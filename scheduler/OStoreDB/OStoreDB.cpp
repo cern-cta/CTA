@@ -4139,7 +4139,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
             .add("requestObject", castFromSchedDBJob(jobsBatchItor->get())->m_archiveRequest.getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING,
-          "In OStoreDB::RetrieveMount::setJobBatchTransferred(): async succeed transfer failed, job does not exist in the objectstore.");
+          "In OStoreDB::ArchiveMount::setJobBatchTransferred(): async succeed transfer failed, job does not exist in the objectstore.");
     }
   }
 
@@ -4170,7 +4170,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
       params.add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING,
-          "In OStoreDB::RetrieveMount::setJobBatchTransferred(): wait async succeed transfer failed, job does not exist in the objectstore.");
+          "In OStoreDB::ArchiveMMount::setJobBatchTransferred(): wait async succeed transfer failed, job does not exist in the objectstore.");
     }
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);
