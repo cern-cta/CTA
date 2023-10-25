@@ -67,9 +67,10 @@ public:
 
   // Just for testing.
   void setPreviousSession(PreviousSession previousSessionState, session::SessionState previousState,
-    std::string_view vid) {
+    session::SessionType previousType, std::string_view vid) {
     m_previousSession = previousSessionState;
     m_previousState = previousState;
+    m_previousType = previousType;
     m_previousVid = vid;
   }
 };
@@ -363,11 +364,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
 
   std::string logToCheck;
-
-  // Previous Vid is empty, it should have a vid of the previous session
-  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
-                                     cta::tape::session::SessionState::Running,
-                                     std::string(""));
+  
   EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
       [&](const cta::common::dataStructures::DriveInfo&,
         const cta::common::dataStructures::MountType& type,
@@ -377,7 +374,8 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::Down);
         return;
-      })).WillOnce(Invoke(
+      })).WillOnce(
+        Throw(cta::exception::Exception("Failed to report drive status"))).WillOnce(Invoke(
       [&](const cta::common::dataStructures::DriveInfo&,
         const cta::common::dataStructures::MountType& type,
         const cta::common::dataStructures::DriveStatus& status,
@@ -386,19 +384,66 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::CleaningUp);
         return;
-      }));
+      })).WillRepeatedly(Return());
 
-  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-
+  // Previous Vid is empty, it should have a vid of the previous session
+  m_logger.clearLog();
   m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
                                      cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
+                                     std::string(""));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"ERROR\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("Should run cleaner but VID is missing. Putting the drive down."));
+
+  // Previous Vid is empty, it should have a vid of the previous session, but some problem to report drive status
+  m_logger.clearLog();
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
+                                     std::string(""));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("Should run cleaner but VID is missing. Putting the drive down."));
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("failed to set the drive down. Reporting fatal error."));
+
+  // Correct starting of the cleaning session
+  m_logger.clearLog();
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
                                      std::string("TAPE0001"));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
-
   logToCheck = m_logger.getLog();
-  std::cout << logToCheck << std::endl;
   ASSERT_NE(std::string::npos, logToCheck.find("starting cleaner after crash with tape potentially loaded"));
+  ASSERT_NE(std::string::npos, logToCheck.find("will create cleaner session"));
 
+  // Session crashed during the cleaning session
+  m_logger.clearLog();
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Cleanup,
+                                     std::string("TAPE0001"));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"ERROR\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("the cleaner session crashed. Putting the drive down."));
+
+  // Session crashed during the cleaning session something happens with scheduler method setDesiredDriveState
+  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _, _)).WillOnce(
+    Throw(cta::exception::Exception("Failed to set desired drive state."))).WillRepeatedly(Return());
+  m_logger.clearLog();
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Cleanup,
+                                     std::string("TAPE0001"));
+  ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("failed to set the drive down. Reporting fatal error."));
+  ASSERT_NE(std::string::npos, logToCheck.find("Failed to set desired drive state."));
 }
 
 } // namespace unitTests
