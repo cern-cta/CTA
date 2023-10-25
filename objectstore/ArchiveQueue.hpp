@@ -66,8 +66,8 @@ private:
   
 public:
   // Set/get tape pool
-  void setTapePool(const std::string & name);
-  std::string getTapePool();
+  virtual void setTapePool(const std::string & name);
+  virtual std::string getTapePool();
 
   void setContainerId(const std::string &name);
   std::string getContainerId();
@@ -150,8 +150,8 @@ public:
 
 class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue;
-void setContainerId(const std::string &name);
-std::string getContainerId();
+void setContainerId(const std::string &name) override;
+std::string getContainerId() override;
 };
 class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
