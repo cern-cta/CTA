@@ -7,7 +7,7 @@ namespace cta::objectstore {
     m_payload.set_vid(name);
   };
 
-  std::string ArchiveQueueToReportForUser::setContainerId() {
+  std::string ArchiveQueueToReportForUser::getContainerId() {
     checkPayloadReadable();
     return m_payload.vid();
   };
