@@ -29,9 +29,7 @@
 #include "objectstore/cta.pb.h"
 #include <string>
 
-namespace cta {
-
-namespace objectstore {
+namespace cta::objectstore {
   
 class GenericObject;
 
@@ -151,9 +149,13 @@ public:
 };
 
 class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue;
+void setContainerId(const str::string &name);
+std::string getContainerId();
+};
 class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
   
-}}
+} // cta::objectstore

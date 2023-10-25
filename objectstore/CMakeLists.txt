@@ -44,7 +44,6 @@ set (CTAProtoDependants
   objectstore/SchedulerGlobalLock.hpp
   objectstore/TapeQueue.hpp
   objectstore/ArchiveQueue.hpp
-  objectstore/ArchiveQueueToReportForUser.hpp
   objectstore/UserIdentity.hpp
   objectstore/ValueCountMap.hpp)
 
@@ -67,6 +66,7 @@ add_library (ctaobjectstore SHARED
   ArchiveQueue.cpp
   ArchiveQueueShard.cpp
   ArchiveQueueToTransferAlgorithms.cpp
+  ArchiveQueueToReportForUser.cpp
   ArchiveQueueToReportAlgorithms.cpp
   ArchiveQueueFailedAlgorithms.cpp
   ArchiveQueueToReportToRepackForSuccessAlgorithms.cpp
