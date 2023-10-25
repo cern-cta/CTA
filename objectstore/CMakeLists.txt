@@ -44,6 +44,7 @@ set (CTAProtoDependants
   objectstore/SchedulerGlobalLock.hpp
   objectstore/TapeQueue.hpp
   objectstore/ArchiveQueue.hpp
+  objectstore/ArchiveQueueToReportForUser.hpp
   objectstore/UserIdentity.hpp
   objectstore/ValueCountMap.hpp)
 
