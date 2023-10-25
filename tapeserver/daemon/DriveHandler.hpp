@@ -124,19 +124,9 @@ protected:
   /** Previous VID, that can help the unmount process */
   std::string m_previousVid;
 
-private:
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
-  void setDriveDownForShutdown(const std::string& reason);
-
-  /**
-   * Utility function resetting all parameters to pre-fork state
-   * @param previousSessionState outcome to be considered for the next run.
-   */
-  void resetToDefault(PreviousSession previousSessionState);
-
-private:
   /** Current session's type */
   session::SessionType m_sessionType = session::SessionType::Undetermined;
 
@@ -144,6 +134,8 @@ private:
   std::string m_sessionVid;
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
+
+private:
   log::LogContext m_sessionEndContext;
   /** The current state we report to process manager */
   SubprocessHandler::ProcessingStatus m_processingStatus;
@@ -190,6 +182,14 @@ private:
 
   void puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy,
     std::string_view errorMsg, const cta::common::dataStructures::DriveInfo& driveInfo);
+
+  void setDriveDownForShutdown(const std::string& reason);
+
+  /**
+   * Utility function resetting all parameters to pre-fork state
+   * @param previousSessionState outcome to be considered for the next run.
+   */
+  void resetToDefault(PreviousSession previousSessionState);
 
 protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;

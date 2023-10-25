@@ -796,44 +796,36 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 }
 
 void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
-  try {
-    cta::common::dataStructures::DriveInfo driveInfo;
-    driveInfo.driveName = m_driveConfig.unitName;
-    driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-    driveInfo.host = cta::utils::getShortHostname();
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = m_driveConfig.unitName;
+  driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+  driveInfo.host = cta::utils::getShortHostname();
 
-    auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
-    if (!driveState) {
-      m_lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
-      return;
-    }
-
-    cta::common::dataStructures::DesiredDriveState desiredDriveState;
-    desiredDriveState.up = false;
-    desiredDriveState.forceDown = false;
-
-    // Get the drive state to see if there is a reason or not, we don't want to change the reason
-    // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
-    // it will be change for this new one.
-    if (!driveState.value().reasonUpDown) {
-      desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
-    } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
-      desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
-    } else {
-      desiredDriveState.reason = driveState.value().reasonUpDown.value();
-    }
-
-    TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
-    driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::Down, time(nullptr), *m_lc);
-    driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *m_lc);
-  } catch(const cta::exception::Exception &ex) {
-    log::ScopedParamContainer params(*m_lc);
-    params.add("tapeVid", m_sessionVid)
-          .add("tapeDrive", m_driveConfig.unitName)
-          .add("message", ex.getMessageValue());
-    m_lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+  auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
+  if (!driveState) {
+    m_lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
+    return;
   }
+
+  cta::common::dataStructures::DesiredDriveState desiredDriveState;
+  desiredDriveState.up = false;
+  desiredDriveState.forceDown = false;
+
+  // Get the drive state to see if there is a reason or not, we don't want to change the reason
+  // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
+  // it will be change for this new one.
+  if (!driveState.value().reasonUpDown) {
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
+  } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
+  } else {
+    desiredDriveState.reason = driveState.value().reasonUpDown.value();
+  }
+
+  TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
+  driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+    cta::common::dataStructures::DriveStatus::Down, time(nullptr), *m_lc);
+  driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *m_lc);
 }
 
 bool DriveHandler::schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) {

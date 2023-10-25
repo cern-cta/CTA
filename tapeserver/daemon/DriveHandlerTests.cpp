@@ -73,6 +73,10 @@ public:
     m_previousType = previousType;
     m_previousVid = vid;
   }
+
+  void setSessionVid(std::string_view vid) {
+    m_sessionVid = vid;
+  }
 };
 
 class TapedProxyMock : public TapedProxy {
@@ -209,6 +213,15 @@ TEST_F(DriveHandlerTests, DISABLED_runSigChild) {
 }
 
 TEST_F(DriveHandlerTests, shutdown) {
+  std::string logToCheck;
+
+  m_driveHandler->fork();
+  m_driveHandler->shutdown();
+  logToCheck = m_logger.getLog();
+  // This message is not generated in the log
+  ASSERT_EQ(std::string::npos, logToCheck.find("In DriveHandler::kill(): no subprocess to kill"));
+
+  m_logger.clearLog();
   const auto status = m_driveHandler->shutdown();
   // Check that the status is correct
   ASSERT_FALSE(status.shutdownRequested);
@@ -216,7 +229,36 @@ TEST_F(DriveHandlerTests, shutdown) {
   ASSERT_FALSE(status.killRequested);
   ASSERT_FALSE(status.forkRequested);
   ASSERT_FALSE(status.sigChild);
-  ASSERT_EQ(status.forkState, cta::tape::daemon::SubprocessHandler::ForkState::notForking);
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::shutdown(): simply killing the process."));
+  // Because we didn´t create a subprocess using fork
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::kill(): no subprocess to kill"));
+
+  // Fail to create scheduler
+  EXPECT_CALL(*m_driveHandler, createScheduler(_, _, _)).WillOnce(
+    Throw(cta::exception::Exception("createScheduler failed to create scheduler"))).WillRepeatedly(
+    Return(m_scheduler));
+  m_logger.clearLog();
+  m_driveHandler->shutdown();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::shutdown(): failed to instantiate scheduler."));
+
+  // Shutdown but m_sessionVid is empty
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
+                                     std::string(""));
+  m_logger.clearLog();
+  m_driveHandler->shutdown();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("Should run cleaner but VID is missing. Do nothing."));
+
+  // Shutdown but m_sessionVid is not empty and it starts cleaner
+  m_driveHandler->setSessionVid("TAPE0001");
+  m_logger.clearLog();
+  m_driveHandler->shutdown();
+  logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::shutdown(): starting cleaner."));
 }
 
 TEST_F(DriveHandlerTests, runChildAndExecuteDataTransferSession) {
