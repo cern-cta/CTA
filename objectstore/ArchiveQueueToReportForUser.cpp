@@ -1,16 +1,15 @@
 #include "ArchiveQueue.hpp"
 
-class ArchiveQueueToReportForUser: public ArchiveQueue {
-  using ArchiveQueue::ArchiveQueue;
+namespace cta::objectstore {
 
-  void setContainerId(const std::string &name) {
+  void ArchiveQueueToReportForUser::setContainerId(const std::string &name) {
     checkPayloadWritable();
     m_payload.set_vid(name);
   };
 
-  std::string getContainerId() {
+  std::string ArchiveQueueToReportForUser::setContainerId() {
     checkPayloadReadable();
     return m_payload.vid();
   };
 
-};
+} // namespace cta::objectstore

@@ -150,7 +150,7 @@ public:
 
 class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue;
-void ArchiveQueueToReportForUser::setContainerId(const str::string &name);
+void ArchiveQueueToReportForUser::setContainerId(const std::string &name);
 std::string ArchiveQueueToReportForUser::getContainerId();
 };
 class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
