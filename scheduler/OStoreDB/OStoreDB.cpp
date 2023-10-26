@@ -4013,7 +4013,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
        }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
-      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.second->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid, insertedRequests, lc);
+      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
       //rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
       // In case all goes well, we can remove ownership of all requests.
       for (auto & req: repackRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }

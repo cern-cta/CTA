@@ -448,7 +448,7 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, common::d
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
     return rqp.address();
   } catch (serializers::NotFound &) {
-    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetreveQueueAddress: retrieve queue not allocated ")+
+    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetrieveQueueAddress: retrieve queue not allocated ")+
         vid+"/"+toString(queueType));
   }
 }

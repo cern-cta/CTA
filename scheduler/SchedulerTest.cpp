@@ -2415,7 +2415,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         // The queue is named after the repack request: we need to query the repack index
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
-        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)), JobQueueType::JobsToReportToRepackForSuccess);
+        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(allVid.at(i-1), JobQueueType::JobsToReportToRepackForSuccess);
+
+        //std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)), JobQueueType::JobsToReportToRepackForSuccess);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
         //Fetch the queue so that we can get the retrieveRequests from it
