@@ -12,7 +12,7 @@ spec:
     stdin: true
     env:
     - name: OTLP_BACKEND
-      value: "OTLP_FILE"
+      value: "OTLP_NOOP"
     - name: MY_NAME
       valueFrom:
         fieldRef:

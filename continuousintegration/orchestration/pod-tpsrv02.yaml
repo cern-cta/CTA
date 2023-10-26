@@ -12,7 +12,7 @@ spec:
     stdin: true
     env:
     - name: OTLP_BACKEND
-      value: "OTLP_FILE"
+      value: "OTLP_NOOP"
     - name: MY_CONTAINER
       value: "rmcd"
     - name: MY_NAME
@@ -46,7 +46,7 @@ spec:
     stdin: true
     env:
     - name: OTLP_BACKEND
-      value: "OTLP_FILE"
+      value: "OTLP_NOOP"
     - name: MY_CONTAINER
       value: "taped"
     - name: MY_NAME
