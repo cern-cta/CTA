@@ -255,6 +255,7 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
+Requires: opentelemetry-cpp >= 1.12.0
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-common
 CERN Tape Archive:

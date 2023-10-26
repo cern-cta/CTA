@@ -72,7 +72,3 @@ if test -f "/etc/config/eos/eos4"; then
   yum-config-manager --disable cta-ci-eos-5
   yum-config-manager --enable cta-ci-eos
 fi
-
-# Installing open telemetry
-echo "Installing OpenTelemetry protocol"
-sudo yum -y install opentelemetry-cpp
