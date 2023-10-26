@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/exception/Exception.hpp"
+
 #include "common/metric/MeterProviderBackendOTLP.hpp"
 #include "common/metric/MeterCounterOTLP.hpp"
 #include "common/metric/MeterHistogramOTLP.hpp"
@@ -82,11 +84,15 @@ std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendO
 
 std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_File(const std::string & filePath) {
   m_ofs = std::ofstream(filePath, std::ofstream::out | std::ofstream::app);
-  auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(m_ofs);
-  opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;
-  options.export_interval_millis = std::chrono::milliseconds(1000);
-  options.export_timeout_millis = std::chrono::milliseconds(500);
-  return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
+  if(m_ofs.is_open()) {
+    auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(m_ofs);
+    opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions options;
+    options.export_interval_millis = std::chrono::milliseconds(1000);
+    options.export_timeout_millis = std::chrono::milliseconds(500);
+    return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
+  } else {
+    throw cta::exception::Exception(std::string("Unable to open ofstream to ") + filePath);
+  }
 }
 
 #ifdef USE_OTLP_EXPORTER
