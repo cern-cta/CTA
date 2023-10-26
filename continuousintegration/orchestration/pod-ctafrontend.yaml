@@ -11,6 +11,8 @@ spec:
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
+    - name: OTLP_BACKEND
+      value: "OTLP_FILE"
     - name: MY_NAME
       valueFrom:
         fieldRef:
