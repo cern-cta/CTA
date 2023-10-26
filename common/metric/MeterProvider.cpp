@@ -60,7 +60,7 @@ std::unique_ptr<MeterProviderBackend> MeterProvider::selectBackend() {
 #endif
           {"OTLP_PROMETHEUS", OTLP_PROMETHEUS},
   };
-  char * option = std::getenv("OTLP_BACKEND");
+  const char * option = std::getenv("OTLP_BACKEND");
   if (!option) {
     // No option selected
     return std::make_unique<MeterProviderBackendNoOp>();
@@ -77,14 +77,14 @@ std::unique_ptr<MeterProviderBackend> MeterProvider::selectBackend() {
     return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Cout();
   case OTLP_FILE:
     {
-      char *filePath = getenv("OTLP_FILE_PATH");
+      const char *filePath = getenv("OTLP_FILE_PATH");
       std::string filePathStr = filePath ? filePath : DEFAULT_METER_LOG_FILE;
       return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_File(filePathStr);
     }
   case OTLP_PROMETHEUS:
     {
-      char *host = getenv("OTLP_HOST");
-      char *port = getenv("OTLP_PORT");
+      const char *host = getenv("OTLP_HOST");
+      const char *port = getenv("OTLP_PORT");
       std::string hostStr = host ? host : DEFAULT_HOST;
       std::string portStr = port ? port : DEFAULT_PORT;
       return MeterProviderBackendOTLP::CreateMeterProviderBackendOTLP_Prometheus(hostStr, portStr);
