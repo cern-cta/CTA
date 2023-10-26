@@ -19,7 +19,7 @@
 #include "common/metric/MeterProviderBackendOTLP.hpp"
 #include "common/metric/MeterProviderBackendNoOp.hpp"
 
-#define DEFAULT_METER_LOG_FILE "/tmp/cta-meter.log"
+#define DEFAULT_METER_LOG_FILE "/var/log/cta/cta-meter.log"
 #define DEFAULT_HOST "localhost"
 #define DEFAULT_PORT "8080"
 
