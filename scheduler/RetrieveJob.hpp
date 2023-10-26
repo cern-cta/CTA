@@ -26,12 +26,9 @@
 #include <limits>
 #include <memory>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
   class TapeReadTask;
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 
 namespace cta {
 

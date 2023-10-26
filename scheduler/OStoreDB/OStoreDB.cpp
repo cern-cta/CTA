@@ -3928,16 +3928,16 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     if (osdbJob->isRepack) {
       try {
         osdbJob->m_jobSucceedForRepackReporter->wait();
+        std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
         {
           cta::log::ScopedParamContainer spc(lc);
-          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
-          spc.add("tapeVid",vid)
+           spc.add("tapeVid",vid)
              .add("mountType","RetrieveForRepack")
              .add("fileId",osdbJob->archiveFile.archiveFileID);
           lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
         }
         mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
-        jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
+        jobsToRequeueForRepackMap[vid].emplace_back(osdbJob);
       } catch (cta::exception::NoSuchObject &ex){
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
@@ -4013,7 +4013,8 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
        }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
-      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
+      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.second->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid, insertedRequests, lc);
+      //rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
       // In case all goes well, we can remove ownership of all requests.
       for (auto & req: repackRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }
     } catch (RQTRTRFSAlgo::OwnershipSwitchFailure & failure) {
