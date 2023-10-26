@@ -17,8 +17,9 @@
 
 #pragma once
 
+#include <string>
+
 #include "common/metric/MeterProviderBackend.hpp"
-#include "common/metric/MeterProviderBackendOTLP.hpp"
 #include "common/metric/MeterCounter.hpp"
 #include "common/metric/MeterHistogram.hpp"
 

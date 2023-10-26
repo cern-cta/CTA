@@ -18,6 +18,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "common/metric/MeterCounter.hpp"
 #include "common/metric/MeterHistogram.hpp"
