@@ -31,14 +31,14 @@ namespace daemon {
  */
 class ProcessManager {
 public:
-  ProcessManager(log::LogContext & log);
-  ~ProcessManager();
+  explicit ProcessManager(log::LogContext & log);
+  virtual ~ProcessManager();
   /** Function passing ownership of a subprocess handler to the manager. */
   void addHandler(std::unique_ptr<SubprocessHandler> && handler);
   /** Function allowing a SubprocessHandler to register a file descriptor to epoll */
-  void addFile(int fd, SubprocessHandler * sh);
+  virtual void addFile(int fd, SubprocessHandler * sh);
   /** Function allowing a SubprocessHandler to unregister a file descriptor from epoll */
-  void removeFile(int fd);
+  virtual void removeFile(int fd);
   /** Infinite loop of the process. This function returns and exit value for 
    * the whole process. Implements the loop described in the header file for
    * SubprocessHandler class. */
@@ -48,8 +48,8 @@ public:
   /** Get reference to the log context */
   log::LogContext & logContext();
 private:
-  int m_epollFd;   ///< The file descriptor for the epoll interface
   log::LogContext & m_logContext; ///< The log context
+  int m_epollFd;   ///< The file descriptor for the epoll interface
   /// Structure allowing the follow up of subprocesses
   struct SubprocessAndStatus {
     SubprocessHandler::ProcessingStatus status;

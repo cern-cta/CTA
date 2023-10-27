@@ -414,7 +414,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   params.add("tapeDrive", m_driveConfig.unitName);
   if (-1 == m_pid) return m_processingStatus;
   int processStatus;
+  m_lc->log(log::DEBUG, "In DriveHandler::processSigChild(): calling waitpid()");
   int rc = ::waitpid(m_pid, &processStatus, WNOHANG);
+  m_lc->log(log::DEBUG, "In DriveHandler::processSigChild(): waitpid() returned " + std::to_string(rc));
+  
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
@@ -796,6 +799,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 }
 
 void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
+  m_lc->log(cta::log::INFO, "In DriveHandler::setDriveDownForShutdown(): setting down tape drive.");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = m_driveConfig.unitName;
   driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;

@@ -89,6 +89,13 @@ public:
   MOCK_METHOD2(labelError, void(const std::string& unitName, const std::string& message));
 };
 
+class ProcessManagerMock : public cta::tape::daemon::ProcessManager {
+public:
+  using cta::tape::daemon::ProcessManager::ProcessManager;
+  MOCK_METHOD2(addFile, void(int fd, cta::tape::daemon::SubprocessHandler * sh));
+  MOCK_METHOD1(removeFile, void(int fd));
+};
+
 } // namespace daemon
 } // namespace tape
 
@@ -127,6 +134,7 @@ public:
   void SetUp() override {
     setUpTapedProxyMock();
     setUpSchedulerMock();
+    setUpProcessManagerMock();
 
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     m_driveHandler = std::make_unique<NiceMock<cta::tape::daemon::DriveHandlerMock>>(m_tapedConfig, m_driveConfig,
@@ -144,6 +152,11 @@ public:
     m_driveHandler.reset();
     m_tapedProxy.reset();
     m_catalogue.reset();
+  }
+
+  void setUpProcessManagerMock() {
+    ON_CALL(m_processManager, addFile(_, _)).WillByDefault(Return());
+    ON_CALL(m_processManager, removeFile(_)).WillByDefault(Return());
   }
 
   void setUpTapedProxyMock() {
@@ -174,9 +187,11 @@ protected:
 
   cta::log::StringLogger m_logger{"dummy", "driveHandlerTests", cta::log::DEBUG};
   cta::log::LogContext m_lc;
-  cta::tape::daemon::ProcessManager m_processManager;
+  NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
   cta::tape::daemon::TapedConfiguration m_tapedConfig;
   cta::tape::daemon::TpconfigLine m_driveConfig{"drive0", "lib0", "/dev/tape0", "smc0"};
+
+  
 };
 
 TEST_F(DriveHandlerTests, getInitialStatus) {
@@ -201,15 +216,50 @@ TEST_F(DriveHandlerTests, forkAndKill) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, DISABLED_runSigChild) {
-  m_driveHandler->fork();
-  const auto status = m_driveHandler->processSigChild();
+TEST_F(DriveHandlerTests, runSigChild) {
+  auto status = m_driveHandler->fork();
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::parent) {
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runSigChild(): Parent process");
+    m_driveHandler->shutdown();
+    auto logToCheck = m_logger.getLog();
+    ASSERT_NE(std::string::npos, logToCheck.find("Tape session finished"));
+    ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::kill(): sub process completed"));
+    ASSERT_EQ(std::string::npos, logToCheck.find("Drive subprocess exited. Will spawn a new one."));
+  }
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::child) {
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runSigChild(): Child process");
+    m_driveHandler->runChild();
+  }
+
+  status = m_driveHandler->processSigChild();
   // Check that the status is correct
   ASSERT_FALSE(status.shutdownRequested);
-  ASSERT_FALSE(status.shutdownComplete);
   ASSERT_FALSE(status.killRequested);
   ASSERT_FALSE(status.forkRequested);
+  ASSERT_TRUE(status.shutdownComplete);
   ASSERT_FALSE(status.sigChild);
+}
+
+TEST_F(DriveHandlerTests, runSigChildAfterCrash) {
+  m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
+                                     std::string("TAPE0001"));
+  auto status = m_driveHandler->fork();
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::parent) {
+    status = m_driveHandler->processSigChild();
+    m_driveHandler->shutdown();
+    auto logToCheck = m_logger.getLog();
+    std::cout << logToCheck << std::endl;
+  }
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::child) {
+    m_driveHandler->runChild();
+    auto logToCheck = m_logger.getLog();
+    std::cout << logToCheck << std::endl;
+  }
+  
+
+  m_driveHandler->processSigChild();
 }
 
 TEST_F(DriveHandlerTests, shutdown) {
