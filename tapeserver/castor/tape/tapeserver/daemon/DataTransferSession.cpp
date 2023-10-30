@@ -456,6 +456,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       writeSingleThread.setlastFseq(firstFseqFromClient - 1);
 
       // We have something to do: start the session by starting all the threads.
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeWrite: Starting all threads");
       memoryManager.startThreads();
       threadPool.startThreads();
       watchDog.startThread();
@@ -464,7 +465,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       reportPacker.startThreads();
       taskInjector.startThreads();
       reporter.startThreads();
+
       // Synchronise with end of threads
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeWrite: Waiting for all threads");
       taskInjector.waitThreads();
       writeSingleThread.waitThreads();
       threadPool.waitThreads();
@@ -472,6 +475,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       reportPacker.waitThread();
       reporter.waitThreads();
       watchDog.stopAndWaitThread();
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeWrite: Waiting for all threads completed");
 
       return writeSingleThread.getHardwareStatus();
     }

@@ -141,6 +141,7 @@ set (COMMON_LIB_SRC_FILES
   metric/MeterCounterNoOp.cpp
   metric/MeterHistogramNoOp.cpp
   metric/MeterProviderBackendNoOp.cpp
+  metric/MeterException.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
