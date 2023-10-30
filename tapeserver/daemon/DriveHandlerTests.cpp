@@ -77,6 +77,10 @@ public:
   void setSessionVid(std::string_view vid) {
     m_sessionVid = vid;
   }
+
+  void setSessionState(session::SessionState state) {
+    m_sessionState = state;
+  }
 };
 
 class TapedProxyMock : public TapedProxy {
@@ -205,17 +209,6 @@ TEST_F(DriveHandlerTests, getInitialStatus) {
   ASSERT_EQ(status.forkState, cta::tape::daemon::SubprocessHandler::ForkState::notForking);
 }
 
-TEST_F(DriveHandlerTests, forkAndKill) {
-  const auto status = m_driveHandler->fork();
-  ASSERT_NO_THROW(m_driveHandler->kill());
-  // Check that the status is correct
-  ASSERT_FALSE(status.shutdownRequested);
-  ASSERT_FALSE(status.shutdownComplete);
-  ASSERT_FALSE(status.killRequested);
-  ASSERT_FALSE(status.forkRequested);
-  ASSERT_FALSE(status.sigChild);
-}
-
 TEST_F(DriveHandlerTests, runSigChild) {
   auto status = m_driveHandler->fork();
   if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::parent) {
@@ -241,25 +234,76 @@ TEST_F(DriveHandlerTests, runSigChild) {
 }
 
 TEST_F(DriveHandlerTests, runSigChildAfterCrash) {
+  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
   m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
                                      cta::tape::session::SessionState::Running,
                                      cta::tape::session::SessionType::Undetermined,
                                      std::string("TAPE0001"));
   auto status = m_driveHandler->fork();
-  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::parent) {
-    status = m_driveHandler->processSigChild();
-    m_driveHandler->shutdown();
-    auto logToCheck = m_logger.getLog();
-    std::cout << logToCheck << std::endl;
-  }
   if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::child) {
-    m_driveHandler->runChild();
+    ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
     auto logToCheck = m_logger.getLog();
-    std::cout << logToCheck << std::endl;
+    ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::runChild(): starting cleaner after crash "
+                                                 "with tape potentially loaded."));
+    ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::runChild(): will create cleaner session."));
   }
-  
 
-  m_driveHandler->processSigChild();
+  m_logger.clearLog();
+  status = m_driveHandler->processSigChild();
+  // Check that the status is correct
+  ASSERT_FALSE(status.shutdownRequested);
+  ASSERT_FALSE(status.killRequested);
+  ASSERT_FALSE(status.forkRequested);
+  ASSERT_FALSE(status.shutdownComplete);
+  ASSERT_FALSE(status.sigChild);
+  m_driveHandler->setSessionVid("TAPE0001");
+  status = m_driveHandler->shutdown();
+  ASSERT_FALSE(status.shutdownRequested);
+  ASSERT_FALSE(status.killRequested);
+  ASSERT_FALSE(status.forkRequested);
+  ASSERT_TRUE(status.shutdownComplete);
+  ASSERT_FALSE(status.sigChild);
+  auto logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::kill(): sub process completed"));
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::shutdown(): starting cleaner."));
+
+}
+
+TEST_F(DriveHandlerTests, childTimeOut) {
+  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  m_driveHandler->setSessionState(cta::tape::session::SessionState::Running);
+  auto status = m_driveHandler->processTimeout();
+  // Check that the status is correct
+  ASSERT_FALSE(status.shutdownRequested);
+  ASSERT_FALSE(status.killRequested);
+  ASSERT_FALSE(status.forkRequested);
+  ASSERT_FALSE(status.shutdownComplete);
+  ASSERT_FALSE(status.sigChild);
+
+  auto logToCheck = m_logger.getLog();
+  ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::processTimeout(): Received timeout "
+                                               "without child process present."));
+  ASSERT_NE(std::string::npos, logToCheck.find("Re-launching child process."));
+
+  status = m_driveHandler->fork();
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::child) {
+    ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
+    m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
+                                     cta::tape::session::SessionState::Running,
+                                     cta::tape::session::SessionType::Undetermined,
+                                     std::string("TAPE0001"));
+    m_logger.clearLog();
+    ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
+    logToCheck = m_logger.getLog();
+    ASSERT_NE(std::string::npos, logToCheck.find("In DriveHandler::runChild(): will create cleaner session."));
+  }
+
+  status = m_driveHandler->shutdown();
+  ASSERT_FALSE(status.shutdownRequested);
+  ASSERT_FALSE(status.killRequested);
+  ASSERT_FALSE(status.forkRequested);
+  ASSERT_TRUE(status.shutdownComplete);
+  ASSERT_FALSE(status.sigChild);
 }
 
 TEST_F(DriveHandlerTests, shutdown) {
