@@ -1,5 +1,8 @@
 # next
 
+### Bug Fixes
+- cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
+
 ### Continuous Integration
 - cta/CTA#515 - Upgrade eos to 4.8.105/5.1.28
 
