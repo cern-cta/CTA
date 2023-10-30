@@ -156,6 +156,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
+      cta::log::ScopedParamContainer params(m_processManager.logContext());
+      m_processManager.logContext().log(log::DEBUG, "In DriveHandler::fork(): Forked process.");
       return ret;
     }
     else {
@@ -167,6 +169,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_socketPair->close(server::SocketPair::Side::child);
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // We are now ready to react to timeouts and messages from the child process.
+      cta::log::ScopedParamContainer params(m_processManager.logContext());
+      params.add("childPID", m_pid);
+      m_processManager.logContext().log(log::DEBUG, "In DriveHandler::fork(): Forking process.");
       return m_processingStatus;
     }
   } catch (cta::exception::Exception& ex) {
