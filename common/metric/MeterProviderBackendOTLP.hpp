@@ -49,7 +49,6 @@ private:
 #endif
   std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> getReader_Prometheus(const std::string & hostName, const std::string & port);
   void setReader(std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> reader);
-  std::ofstream m_ofs;
 };
 
 }
