@@ -1829,7 +1829,19 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_logical_library);
+    common::dataStructures::QueueAndMountSummary summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid,
+        vid_to_logical_library);
+    } catch (exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("vid", pm.vid);
+      params.add("tapepool", pm.tapePool);
+      params.add("errorMessage", ex.getMessage().str());
+      lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
+        "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      continue;
+    }
     switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
@@ -1879,7 +1891,18 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     }
   }
   for (auto & em: mountDecisionInfo->existingOrNextMounts) {
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_logical_library);
+    common::dataStructures::QueueAndMountSummary summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid,
+        vid_to_logical_library);
+    } catch (exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("driveName", em.driveName);
+      params.add("errorMessage", ex.getMessage().str());
+      lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
+        "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      continue;
+    }
     switch (em.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
