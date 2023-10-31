@@ -514,8 +514,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::DriveStatus::Transferring,
     (int)cta::common::dataStructures::DriveStatus::Unloading,
     (int)cta::common::dataStructures::DriveStatus::Unmounting,
-    (int)cta::common::dataStructures::DriveStatus::DrainingToDisk,
-    (int)cta::common::dataStructures::DriveStatus::CleaningUp };
+    (int)cta::common::dataStructures::DriveStatus::DrainingToDisk};
   std::set<int> activeMountTypes = {
     (int)cta::common::dataStructures::MountType::ArchiveForUser,
     (int)cta::common::dataStructures::MountType::ArchiveForRepack,
@@ -523,37 +522,43 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::MountType::Label };
   for (const auto& driveState : driveStates) {
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
+      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+        log::ScopedParamContainer params (logContext);
+        params.add("driveName", driveState.driveName);
+        params.add("mountType", common::dataStructures::toString(driveState.mountType));
+        params.add("driveStatus", common::dataStructures::toString(driveState.driveStatus));
+        logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
+        continue;
+      }
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = driveState.mountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool ? driveState.currentTapePool.value() : "";
-      tmdi.existingOrNextMounts.back().vo = driveState.currentVo ? driveState.currentVo.value() : "";
+      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.currentVo.value_or("");
       tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.currentVid ? driveState.currentVid.value() : "";
+      tmdi.existingOrNextMounts.back().vid = driveState.currentVid.value_or("");
       tmdi.existingOrNextMounts.back().currentMount = true;
-      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession
-        ? driveState.bytesTransferedInSession.value() : 0;
-      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
-        ? driveState.filesTransferedInSession.value() : 0;
+      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
+      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
       if(driveState.filesTransferedInSession && driveState.sessionElapsedTime && driveState.sessionElapsedTime.value() > 0) {
         tmdi.existingOrNextMounts.back().averageBandwidth = driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
         tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }
-      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
+      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity.value_or("");
     }
     if(driveState.nextMountType == common::dataStructures::MountType::NoMount) continue;
     if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool ? driveState.nextTapePool.value() : "";
-      tmdi.existingOrNextMounts.back().vo = driveState.nextVo ? driveState.nextVo.value() : "";
+      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.nextVo.value_or("");
       tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.nextVid ? driveState.nextVid.value() : "";
+      tmdi.existingOrNextMounts.back().vid = driveState.nextVid.value_or("");
       tmdi.existingOrNextMounts.back().currentMount = false;
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().averageBandwidth = 0;
-      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
+      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity.value_or("");
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
