@@ -135,8 +135,10 @@ std::unique_ptr<MeterHistogram> MeterProviderBackendOTLP::getMeterHistogram(cons
 }
 
 MeterProviderBackendOTLP::~MeterProviderBackendOTLP() noexcept {
+  std::cout << "~MeterProviderBackendOTLP 1" << std::endl;
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> none;
   opentelemetry::metrics::Provider::SetMeterProvider(none);
+  std::cout << "~MeterProviderBackendOTLP 2" << std::endl;
 }
 
 }

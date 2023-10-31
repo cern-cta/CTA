@@ -193,13 +193,7 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
           m_logContext.log(log::DEBUG, "In child process. Child finished running. Starting shutdown.");
           cta::metric::MeterProvider::shutdown();
           google::protobuf::ShutdownProtobufLibrary();
-          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 3");
-          sleep(5);
-          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 2");
-          sleep(5);
-          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 1");
-          sleep(5);
-          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 0");
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed");
           ::exit(ret);
         }
       case SubprocessHandler::ForkState::parent:
