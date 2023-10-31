@@ -103,7 +103,7 @@ private:
   /** This drive's parameters */
   const TpconfigLine& m_driveConfig;
   /** The log context */
-  cta::log::LogContext* m_lc;
+  cta::log::LogContext& m_lc;
   
 public:
   /** Possible outcomes of the previous session/child process.  */
