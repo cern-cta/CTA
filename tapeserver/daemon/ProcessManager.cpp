@@ -189,7 +189,15 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         m_logContext.log(log::INFO, "In child process. Running child.");
         {
           auto ret = sp.handler->runChild();
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Starting shutdown.");
           google::protobuf::ShutdownProtobufLibrary();
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 3");
+          sleep(5);
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 2");
+          sleep(5);
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 1");
+          sleep(5);
+          m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 0");
           ::exit(ret);
         }
       case SubprocessHandler::ForkState::parent:

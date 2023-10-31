@@ -320,6 +320,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     //only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
     if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeRead: Starting all threads");
       readSingleThread.setWaitForInstructionsTime(timer.secs());
       watchDog.startThread();
       readSingleThread.startThreads();
@@ -329,12 +330,14 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       reporter.startThreads();
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeRead: Waiting for all threads");
       taskInjector.waitThreads();
       threadPool.waitThreads();
       readSingleThread.waitThreads();
       reportPacker.waitThread();
       reporter.waitThreads();
       watchDog.stopAndWaitThread();
+      logContext.log(cta::log::DEBUG, "In DataTransferSession::executeRead: Waiting for all threads completed");
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
       // Return the drive back to UP state

@@ -1065,7 +1065,7 @@ int DriveHandler::runChild() {
         try {
           currentDesiredDriveState = scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
         } catch (Scheduler::NoSuchDrive& ex) {
-          lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
+          lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive doesn't exist in the Catalogue DB");
         }
 
         cta::common::dataStructures::SecurityIdentity securityIdentity;
