@@ -391,7 +391,7 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
             .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
             .add("NewTapeBytesMoved", message.totaltapebytesmoved())
             .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_lc->log(log::DEBUG, "WARNING: In DriveHandler::processBytes(): total bytes moved going backwards");
+      m_lc->log(log::WARNING, "In DriveHandler::processBytes(): total bytes moved going backwards");
     }
     m_totalTapeBytesMoved = message.totaltapebytesmoved();
     m_totalDiskBytesMoved = message.totaldiskbytesmoved();
@@ -428,8 +428,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
           .add("Message", ex.getMessageValue())
           .add("SessionState", session::toString(m_sessionState))
           .add("SessionType", toString(m_sessionType));
-    m_lc->log(log::WARNING,
-                                      "In DriveHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
+    m_lc->log(log::WARNING, "In DriveHandler::processSigChild(): failed to get child process exit code. "
+      "Doing nothing as we are unable to determine if it is still running or not.");
     return m_processingStatus;
   }
   if (rc) {

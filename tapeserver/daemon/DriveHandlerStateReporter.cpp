@@ -99,7 +99,7 @@ SessionVid DriveHandlerStateReporter::processScheduling(const serializers::Watch
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processScheduling(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processScheduling(): unexpected previous state/type.");
   }
 
   return std::string("");
@@ -117,7 +117,7 @@ SessionVid DriveHandlerStateReporter::processChecking(const serializers::Watchdo
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processChecking(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processChecking(): unexpected previous state/type.");
   }
 
   return std::string("");
@@ -137,7 +137,7 @@ SessionVid DriveHandlerStateReporter::processMounting(const serializers::Watchdo
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processMounting(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processMounting(): unexpected previous state/type.");
   }
 
   return message.vid();
@@ -159,7 +159,7 @@ SessionVid DriveHandlerStateReporter::processRunning(const serializers::Watchdog
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processMounting(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processMounting(): unexpected previous state/type.");
   }
 
   // On state change reset the data movement counter
@@ -190,7 +190,7 @@ SessionVid DriveHandlerStateReporter::processUnmounting(const serializers::Watch
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processUnmounting(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processUnmounting(): unexpected previous state/type.");
   }
 
   return message.vid();
@@ -208,7 +208,7 @@ SessionVid DriveHandlerStateReporter::processDrainingToDisk(const serializers::W
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processDrainingToDisk(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processDrainingToDisk(): unexpected previous state/type.");
   }
 
   return std::string("");
@@ -226,7 +226,7 @@ SessionVid DriveHandlerStateReporter::processShuttingDown(const serializers::Wat
           .add("PreviousType", session::toString(sessionType))
           .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_lc->log(log::DEBUG, "WARNING: In processShuttingDown(): unexpected previous state/type.");
+    m_lc->log(log::WARNING, "In processShuttingDown(): unexpected previous state/type.");
   }
 
   return std::string("");
