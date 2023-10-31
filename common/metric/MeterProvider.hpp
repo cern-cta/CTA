@@ -31,6 +31,7 @@ public:
   static void setMeterBackend(std::unique_ptr<MeterProviderBackend> backend);
   static std::unique_ptr<MeterCounter> getMeterCounter(const std::string & topic, const std::string & counterName);
   static std::unique_ptr<MeterHistogram> getMeterHistogram(const std::string & topic, const std::string & histogramName);
+  static void shutdown() noexcept;
 private:
   static std::unique_ptr<MeterProviderBackend> selectBackend();
   static inline std::unique_ptr<MeterProviderBackend> s_backend = selectBackend();

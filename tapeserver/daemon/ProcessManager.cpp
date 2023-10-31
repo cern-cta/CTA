@@ -17,6 +17,7 @@
 
 #include "ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/metric/MeterProvider.hpp"
 
 #include <google/protobuf/service.h>
 #include <sys/epoll.h>
@@ -190,6 +191,7 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         {
           auto ret = sp.handler->runChild();
           m_logContext.log(log::DEBUG, "In child process. Child finished running. Starting shutdown.");
+          cta::metric::MeterProvider::shutdown();
           google::protobuf::ShutdownProtobufLibrary();
           m_logContext.log(log::DEBUG, "In child process. Child finished running. Shutdown completed in... 3");
           sleep(5);

@@ -38,6 +38,7 @@ public:
   static std::unique_ptr<MeterProviderBackendOTLP> CreateMeterProviderBackendOTLP_Prometheus(const std::string & hostName, const std::string & port);
   std::unique_ptr<MeterCounter> getMeterCounter(const std::string & topic, const std::string & counterName) override;
   std::unique_ptr<MeterHistogram> getMeterHistogram(const std::string & topic, const std::string & histogramName) override;
+  ~MeterProviderBackendOTLP() noexcept;
 private:
   MeterProviderBackendOTLP() {}
   std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> getReader_Cout();

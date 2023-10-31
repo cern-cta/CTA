@@ -134,4 +134,9 @@ std::unique_ptr<MeterHistogram> MeterProviderBackendOTLP::getMeterHistogram(cons
   return meter;
 }
 
+MeterProviderBackendOTLP::~MeterProviderBackendOTLP() noexcept {
+  opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> none;
+  opentelemetry::metrics::Provider::SetMeterProvider(none);
+}
+
 }

@@ -26,18 +26,23 @@
 namespace cta::metric {
 
 void MeterProvider::setMeterBackend(std::unique_ptr<MeterProviderBackend> backend) {
-    s_backend = std::move(backend);
+  s_backend = std::move(backend);
 }
 
 std::unique_ptr<MeterCounter> MeterProvider::getMeterCounter(const std::string & topic, const std::string & counterName){
-    return MeterProvider::s_backend->getMeterCounter(topic, counterName);
+  return MeterProvider::s_backend->getMeterCounter(topic, counterName);
 }
 
 std::unique_ptr<MeterHistogram> MeterProvider::getMeterHistogram(const std::string & topic, const std::string & histogramName){
-    return MeterProvider::s_backend->getMeterHistogram(topic, histogramName);
+  return MeterProvider::s_backend->getMeterHistogram(topic, histogramName);
+}
+
+void MeterProvider::shutdown() noexcept {
+  return MeterProvider::s_backend.reset();
 }
 
 std::unique_ptr<MeterProviderBackend> MeterProvider::selectBackend() {
+  // TODO: Use somehting like cta::dataStructures::toString()
   enum BackendOptions {
     NOOP,
     OTLP_NOOP,
