@@ -113,14 +113,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (const auto &[key, driveConfig] : m_globalConfiguration.driveConfigs) {
-    std::unique_ptr<SubprocessHandler> dh;
-    try {
-      dh = std::make_unique<DriveHandler>(m_globalConfiguration, driveConfig.value(), pm);
-    } catch (cta::exception::Exception&) {
-      lc.log(log::CRIT, "Failed to create drive handler for drive " + driveConfig.value().unitName
-        + ". Will not start it.");
-      continue;
-    }
+    auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, driveConfig.value(), pm);
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
