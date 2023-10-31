@@ -91,7 +91,7 @@ std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendO
     options.export_timeout_millis = std::chrono::milliseconds(500);
     return opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), options);
   } else {
-    throw cta::exception::Exception(std::string("Unable to open ofstream to ") + filePath);
+    throw cta::exception::Exception(std::string("Unable to open ofstream to ") + filePath + ": " + strerror(errno));
   }
 }
 

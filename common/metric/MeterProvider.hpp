@@ -38,6 +38,8 @@ private:
   // TODO: Be careful with the "static initialization order ‘fiasco’ (problem)"
   // TODO: Do the initialization on runtime
   // TODO: Protect operations by statically initialized mutex
+  // TODO: Look into Logger::prepareForFork() = 0 for ideas
+  // TODO: Look into other fork() usages
   static std::unique_ptr<MeterProviderBackend> selectBackend();
   static bool staticInitialize() noexcept;
   static inline bool s_initialized = staticInitialize();
