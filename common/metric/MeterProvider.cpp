@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/threading/ThreadAtFork.hpp"
+
 #include "common/metric/MeterProvider.hpp"
 #include "common/metric/MeterProviderBackendOTLP.hpp"
 #include "common/metric/MeterProviderBackendNoOp.hpp"
@@ -38,7 +40,18 @@ std::unique_ptr<MeterHistogram> MeterProvider::getMeterHistogram(const std::stri
 }
 
 void MeterProvider::shutdown() noexcept {
-  return MeterProvider::s_backend.reset();
+  MeterProvider::s_backend = std::make_unique<MeterProviderBackendNoOp>();
+}
+
+void MeterProvider::restart() noexcept {
+  MeterProvider::s_backend = selectBackend();
+}
+
+bool MeterProvider::staticInitialize() noexcept {
+  cta::threading::ThreadAtFork::addHandlerBeforeFork(MeterProvider::shutdown);
+  cta::threading::ThreadAtFork::addHandlerAfterParentFork(MeterProvider::restart);
+  cta::threading::ThreadAtFork::addHandlerAfterChildFork(MeterProvider::restart);
+  return true;
 }
 
 std::unique_ptr<MeterProviderBackend> MeterProvider::selectBackend() {

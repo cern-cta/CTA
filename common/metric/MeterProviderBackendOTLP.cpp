@@ -134,11 +134,15 @@ std::unique_ptr<MeterHistogram> MeterProviderBackendOTLP::getMeterHistogram(cons
   return meter;
 }
 
+MeterProviderBackendOTLP::MeterProviderBackendOTLP() {
+  std::cout << "MeterProviderBackendOTLP constructor" << std::endl;
+}
+
 MeterProviderBackendOTLP::~MeterProviderBackendOTLP() noexcept {
-  std::cout << "~MeterProviderBackendOTLP 1" << std::endl;
+  std::cout << "~MeterProviderBackendOTLP destructor begin" << std::endl;
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> none;
   opentelemetry::metrics::Provider::SetMeterProvider(none);
-  std::cout << "~MeterProviderBackendOTLP 2" << std::endl;
+  std::cout << "~MeterProviderBackendOTLP destructor end" << std::endl;
 }
 
 }

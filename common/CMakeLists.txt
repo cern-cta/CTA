@@ -167,6 +167,7 @@ set (COMMON_LIB_SRC_FILES
   threading/SubProcess.cpp
   threading/System.cpp
   threading/Thread.cpp
+  threading/ThreadAtFork.cpp
   Timer.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp

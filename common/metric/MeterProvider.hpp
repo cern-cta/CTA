@@ -27,13 +27,20 @@ namespace cta::metric {
 
 class MeterProvider {
 public:
+  // TODO: Make all of this thread-safe!!!
   MeterProvider() = delete;
   static void setMeterBackend(std::unique_ptr<MeterProviderBackend> backend);
   static std::unique_ptr<MeterCounter> getMeterCounter(const std::string & topic, const std::string & counterName);
   static std::unique_ptr<MeterHistogram> getMeterHistogram(const std::string & topic, const std::string & histogramName);
   static void shutdown() noexcept;
+  static void restart() noexcept;
 private:
+  // TODO: Be careful with the "static initialization order ‘fiasco’ (problem)"
+  // TODO: Do the initialization on runtime
+  // TODO: Protect operations by statically initialized mutex
   static std::unique_ptr<MeterProviderBackend> selectBackend();
+  static bool staticInitialize() noexcept;
+  static inline bool s_initialized = staticInitialize();
   static inline std::unique_ptr<MeterProviderBackend> s_backend = selectBackend();
 };
 
