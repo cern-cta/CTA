@@ -523,8 +523,11 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   for (const auto& driveState : driveStates) {
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
-        logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): drive " + driveState.driveName
-          + " has an active status but no mount.");
+        log::ScopedParamContainer params (logContext);
+        params.add("driveName", driveState.driveName);
+        params.add("mountType", common::dataStructures::toString(driveState.mountType));
+        params.add("driveStatus", common::dataStructures::toString(driveState.driveStatus));
+        logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
         continue;
       }
       tmdi.existingOrNextMounts.push_back(ExistingMount());
