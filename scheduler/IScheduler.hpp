@@ -21,23 +21,19 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 class DriveInfo;
 class DesiredDriveState;
-} // namespace dataStructures
-} // namespace common
+} // namespace common::dataStructures
 
 namespace log {
 class LogContext;
 }
 
-namespace tape {
-namespace daemon {
+namespace tape::daemon {
 class TpconfigLine;
 class TapedConfiguration;
-} // namespace daemon
-} // namespace tape
+} // namespace tape::daemon
 
 class IScheduler {
 public:

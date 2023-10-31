@@ -31,21 +31,6 @@
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
-namespace castor {
-namespace tape {
-namespace System {
-class realWrapper;
-}
-namespace tapeserver {
-namespace daemon {
-class CleanerSession;
-class DataTransferSession;
-// class TapedProxy;
-}
-}
-}
-}
-
 namespace cta {
 
 class IScheduler;
@@ -62,8 +47,7 @@ namespace server {
 class ProcessCap;
 }
 
-namespace tape {
-namespace daemon {
+namespace tape::daemon {
 
 class DriveHandlerProxy;
 
@@ -211,6 +195,5 @@ protected:
 
 // TODO: remove/merge ChildProcess.
 
-}
-}
-} // namespace cta::tape::daemon
+}  // namespace tape::daemon
+}  // namespace cta
