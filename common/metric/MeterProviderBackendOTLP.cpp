@@ -140,6 +140,7 @@ MeterProviderBackendOTLP::MeterProviderBackendOTLP() {
 
 MeterProviderBackendOTLP::~MeterProviderBackendOTLP() noexcept {
   std::cout << "~MeterProviderBackendOTLP destructor begin" << std::endl;
+  if (m_ofs.is_open()) m_ofs.close();
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> none;
   opentelemetry::metrics::Provider::SetMeterProvider(none);
   std::cout << "~MeterProviderBackendOTLP destructor end" << std::endl;
