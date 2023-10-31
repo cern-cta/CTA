@@ -83,6 +83,7 @@ std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendO
 }
 
 std::unique_ptr<opentelemetry::sdk::metrics::MetricReader> MeterProviderBackendOTLP::getReader_File(const std::string & filePath) {
+  // TODO: Guarantee that this is thread-safe and fork safe
   static auto ofs = std::ofstream(filePath, std::ofstream::out | std::ofstream::app);
   if(ofs.is_open()) {
     auto exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(ofs);
@@ -134,15 +135,11 @@ std::unique_ptr<MeterHistogram> MeterProviderBackendOTLP::getMeterHistogram(cons
   return meter;
 }
 
-MeterProviderBackendOTLP::MeterProviderBackendOTLP() {
-  std::cout << "MeterProviderBackendOTLP constructor" << std::endl;
-}
+MeterProviderBackendOTLP::MeterProviderBackendOTLP() {}
 
 MeterProviderBackendOTLP::~MeterProviderBackendOTLP() noexcept {
-  std::cout << "~MeterProviderBackendOTLP destructor begin" << std::endl;
   opentelemetry::nostd::shared_ptr<opentelemetry::metrics::MeterProvider> none;
   opentelemetry::metrics::Provider::SetMeterProvider(none);
-  std::cout << "~MeterProviderBackendOTLP destructor end" << std::endl;
 }
 
 }
