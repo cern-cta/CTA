@@ -215,7 +215,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   std::string archiveQueueNameHeader = "ArchiveQueue";
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: archiveQueueNameHeader+="ToReportToRepackForFailure"; break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
   case common::dataStructures::JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReportForUser"; break;
   case common::dataStructures::JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
