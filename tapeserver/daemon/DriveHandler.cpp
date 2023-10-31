@@ -55,8 +55,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm) :
   SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
-  m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_lc(m_processManager.logContext()),
-  m_sessionEndContext(m_lc.logger()) {
+  m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_lc(m_processManager.logContext()) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
@@ -261,12 +260,13 @@ void DriveHandler::kill() {
         params.add("WIFSIGNALED", WIFSIGNALED(status));
       }
       m_lc.log(log::INFO, "In DriveHandler::kill(): sub process completed");
-      m_sessionEndContext.pushOrReplace({"Error_sessionKilled", "1"});
-      m_sessionEndContext.pushOrReplace({"killSignal", WTERMSIG(status)});
-      m_sessionEndContext.pushOrReplace({"status", "failure"});
-      m_sessionEndContext.pushOrReplace({"tapeDrive", m_driveConfig.unitName});
-      m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
-      m_sessionEndContext.clear();
+      // Log the end of session
+      log::ScopedParamContainer scoped(m_lc);
+      scoped.add("Error_sessionKilled", 1);
+      scoped.add("killSignal", WTERMSIG(status));
+      scoped.add("status", "failure");
+      scoped.add("tapeDrive", m_driveConfig.unitName);
+      m_lc.log(cta::log::INFO, "Tape session finished");
       m_pid = -1;
     } catch (exception::Exception& ex) {
       params.add("Exception", ex.getMessageValue());
@@ -367,10 +367,10 @@ void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
 void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   // Accumulate the logs added (if any)
   for (auto& log: message.addedlogparams()) {
-    m_sessionEndContext.pushOrReplace({log.name(), log.value()});
+    m_lc.pushOrReplace({log.name(), log.value()});
   }
   for (auto& log: message.deletedlogparams()) {
-    m_sessionEndContext.erase(log);
+    m_lc.erase(log);
   }
 }
 
@@ -475,15 +475,17 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
         m_lc.log(log::INFO, "Drive subprocess crashed. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested = false;
       }
-      m_sessionEndContext.pushOrReplace({"Error_sessionKilled", "1"});
-      m_sessionEndContext.pushOrReplace({"killSignal", WTERMSIG(processStatus)});
-      m_sessionEndContext.pushOrReplace({"status", "failure"});
+      log::ScopedParamContainer scoped(m_lc);
+      scoped.add("Error_sessionKilled", 1);
+      scoped.add("killSignal", WTERMSIG(processStatus));
+      scoped.add("status", "failure");
+      m_lc.log(cta::log::INFO, "Tape session finished");
     }
     // In all cases we log the end of the session.
-    m_sessionEndContext.pushOrReplace({"tapeDrive", m_driveConfig.unitName});
-    m_sessionEndContext.moveToTheEndIfPresent("status");
-    m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
-    m_sessionEndContext.clear();
+    log::ScopedParamContainer scoped(m_lc);
+    scoped.add("tapeDrive", m_driveConfig.unitName);
+    scoped.add("killSignal", WTERMSIG(processStatus));
+    m_lc.log(cta::log::INFO, "Tape session finished");
     // And record we do not have a process anymore.
     m_pid = -1;
   }
@@ -912,7 +914,7 @@ std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
   m_lc.log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
-  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
+  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
   return std::move(catalogueFactory->create());
 }

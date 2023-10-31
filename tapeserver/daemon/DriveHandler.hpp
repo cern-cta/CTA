@@ -136,7 +136,6 @@ protected:
    * and logged as session ends */
 
 private:
-  log::LogContext m_sessionEndContext;
   /** The current state we report to process manager */
   SubprocessHandler::ProcessingStatus m_processingStatus;
   /** Convenience type */
