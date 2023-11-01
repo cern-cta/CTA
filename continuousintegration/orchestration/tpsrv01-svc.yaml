@@ -6,7 +6,8 @@ metadata:
     k8s-app: tpsrv01
 spec:
   selector:
-    k8s-app: tpsrv01
+    k8s-app-idx: 1
+    k8s-app: ctataped
   clusterIP: None
   ports:
   - name: tpsrv01-rmcd-p
