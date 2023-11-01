@@ -52,7 +52,7 @@ spec:
       name: ctafrontend
       protocol: TCP
     - containerPort: 8080
-      name: ctafrontend-prometheus
+      name: ctafrontend-p
       protocol: TCP
   volumes:
   - name: shared

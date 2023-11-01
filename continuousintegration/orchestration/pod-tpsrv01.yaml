@@ -46,7 +46,7 @@ spec:
       privileged: true
     ports:
     - containerPort: 8080
-      name: tpsrv01-rmcd-prometheus
+      name: tpsrv01-rmcd-p
       protocol: TCP
 
   - name: taped
@@ -96,7 +96,7 @@ spec:
       privileged: true
     ports:
     - containerPort: 8080
-      name: tpsrv01-taped-prometheus
+      name: tpsrv01-taped-p
       protocol: TCP
 
   volumes:
