@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: tpsrv02
   labels:
-    k8s-app-idx: 2
+    k8s-app-idx: "2"
     k8s-app: ctataped
 spec:
   restartPolicy: Never
