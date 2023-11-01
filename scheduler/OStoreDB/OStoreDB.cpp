@@ -3003,7 +3003,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         rRRepackInfo.fSeq = rsr.fSeq;
         rRRepackInfo.isRepack = true;
         rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
-        rRRepackInfo.containerId = rsr.repackInfo.RepackDestinationInfo.vid;
         if(rsr.hasUserProvidedFile){
           rRRepackInfo.hasUserProvidedFile = true;
         }
@@ -4371,7 +4370,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtrtrff caAqtrtrff(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtrtrff::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtrtrff::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, std::nullopt, std::nullopt });
-      caAqtrtrff.referenceAndSwitchOwnership(repackRequestAddress, insertedElements, lc);
+      caAqtrtrff.referenceAndSwitchOwnership(m_archiveRequest.getRepackInfo().jobsDestination[tapeFile.copyNb].destination_vid, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
