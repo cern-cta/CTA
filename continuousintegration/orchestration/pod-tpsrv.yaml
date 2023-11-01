@@ -12,7 +12,11 @@ spec:
     stdin: true
     env:
     - name: OTLP_BACKEND
-      value: "OTLP_FILE"
+      value: "OTLP_PROMETHEUS"
+    - name: OTLP_HOST
+      value: "localhost"
+    - name: OTLP_PORT
+      value: "8080"
     - name: MY_CONTAINER
       value: "rmcd"
     - name: MY_NAME
@@ -38,13 +42,21 @@ spec:
       name: logstorage
     securityContext:
       privileged: true
+    ports:
+    - containerPort: 8080
+      name: tpsrv-rmcd-prometheus
+      protocol: TCP
 
   - name: taped
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
     - name: OTLP_BACKEND
-      value: "OTLP_FILE"
+      value: "OTLP_PROMETHEUS"
+    - name: OTLP_HOST
+      value: "localhost"
+    - name: OTLP_PORT
+      value: "8080"
     - name: MY_CONTAINER
       value: "taped"
     - name: MY_NAME
@@ -76,6 +88,10 @@ spec:
       name: logstorage
     securityContext:
       privileged: true
+    ports:
+    - containerPort: 8080
+      name: tpsrv-taped-prometheus
+      protocol: TCP
 
   volumes:
   - name: shared
