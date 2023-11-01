@@ -1828,58 +1828,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   const auto catalogueVidToLogicalLibraryTime = catalogueVidToLogicalLibraryTimer.secs();
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
-    try {
     // Find or create the relevant entry.
-    auto& summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid,
+    common::dataStructures::QueueAndMountSummary* summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid,
         vid_to_logical_library);
-    
-    switch (pm.type) {
-    case common::dataStructures::MountType::ArchiveForUser:
-    case common::dataStructures::MountType::ArchiveForRepack:
-      summary.mountPolicy.archivePriority = pm.priority;
-      summary.mountPolicy.archiveMinRequestAge = pm.minRequestAge;
-      summary.bytesQueued = pm.bytesQueued;
-      summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
-      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
-      if (pm.mountPolicyNames) {
-        summary.mountPolicies = pm.mountPolicyNames.value();
-      }
-      if (pm.highestPriorityMountPolicyName) {
-        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
-      }
-      if (pm.lowestRequestAgeMountPolicyName) {
-        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
-      }
-      break;
-    case common::dataStructures::MountType::Retrieve:
-      // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
-      summary.mountPolicy.retrieveMinRequestAge = pm.minRequestAge;
-      summary.mountPolicy.retrievePriority = pm.priority;
-      summary.bytesQueued = pm.bytesQueued;
-      summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
-      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
-      if (pm.mountPolicyNames) {
-        summary.mountPolicies = pm.mountPolicyNames.value();
-      }
-      if (pm.highestPriorityMountPolicyName) {
-        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
-      }
-      if (pm.lowestRequestAgeMountPolicyName) {
-        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
-      }
-      if (pm.sleepingMount) {
-        common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
-        sfsi.startTime = pm.sleepStartTime;
-        sfsi.diskSystemName = pm.diskSystemSleptFor;
-        sfsi.sleepTime = pm.sleepTime;
-        summary.sleepForSpaceInfo = sfsi;
-      }
-      break;
-    default:
-      break;
-    }
     } catch (exception::Exception & ex) {
       log::ScopedParamContainer params(lc);
       params.add("vid", pm.vid);
@@ -1894,27 +1847,59 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         }), mountDecisionInfo->potentialMounts.end());
       continue;
     }
-  }
-  for (auto & em: mountDecisionInfo->existingOrNextMounts) {
-    try {
-    auto& summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid,
-        vid_to_logical_library);
-   
-    switch (em.type) {
+    switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
+      summary->mountPolicy.archivePriority = pm.priority;
+      summary->mountPolicy.archiveMinRequestAge = pm.minRequestAge;
+      summary->bytesQueued = pm.bytesQueued;
+      summary->filesQueued = pm.filesQueued;
+      summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+      if (pm.mountPolicyNames) {
+        summary->mountPolicies = pm.mountPolicyNames.value();
+      }
+      if (pm.highestPriorityMountPolicyName) {
+        summary->highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+      }
+      if (pm.lowestRequestAgeMountPolicyName) {
+        summary->lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
+      }
+      break;
     case common::dataStructures::MountType::Retrieve:
-      if (em.currentMount)
-        summary.currentMounts++;
-      /*else
-        summary.nextMounts++;*/
-      summary.currentBytes += em.bytesTransferred;
-      summary.currentFiles += em.filesTransferred;
-      summary.averageBandwidth = em.averageBandwidth;
+      // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
+      summary->mountPolicy.retrieveMinRequestAge = pm.minRequestAge;
+      summary->mountPolicy.retrievePriority = pm.priority;
+      summary->bytesQueued = pm.bytesQueued;
+      summary->filesQueued = pm.filesQueued;
+      summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+      if (pm.mountPolicyNames) {
+        summary->mountPolicies = pm.mountPolicyNames.value();
+      }
+      if (pm.highestPriorityMountPolicyName) {
+        summary->highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+      }
+      if (pm.lowestRequestAgeMountPolicyName) {
+        summary->lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
+      }
+      if (pm.sleepingMount) {
+        common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
+        sfsi.startTime = pm.sleepStartTime;
+        sfsi.diskSystemName = pm.diskSystemSleptFor;
+        sfsi.sleepTime = pm.sleepTime;
+        summary->sleepForSpaceInfo = sfsi;
+      }
       break;
     default:
       break;
     }
+  }
+  for (auto & em: mountDecisionInfo->existingOrNextMounts) {
+    common::dataStructures::QueueAndMountSummary* summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid,
+        vid_to_logical_library);
     } catch (exception::Exception & ex) {
       log::ScopedParamContainer params(lc);
       params.add("driveName", em.driveName);
@@ -1927,6 +1912,21 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
           return e == em;
         }), mountDecisionInfo->existingOrNextMounts.end());
       continue;
+    }
+    switch (em.type) {
+    case common::dataStructures::MountType::ArchiveForUser:
+    case common::dataStructures::MountType::ArchiveForRepack:
+    case common::dataStructures::MountType::Retrieve:
+      if (em.currentMount)
+        summary->currentMounts++;
+      /*else
+        summary->nextMounts++;*/
+      summary->currentBytes += em.bytesTransferred;
+      summary->currentFiles += em.filesTransferred;
+      summary->averageBandwidth = em.averageBandwidth;
+      break;
+    default:
+      break;
     }
   }
   mountDecisionInfo.reset();
