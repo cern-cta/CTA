@@ -3003,6 +3003,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         rRRepackInfo.fSeq = rsr.fSeq;
         rRRepackInfo.isRepack = true;
         rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
+        rRRepackInfo.containerId = rsr.destinationVid;
         if(rsr.hasUserProvidedFile){
           rRRepackInfo.hasUserProvidedFile = true;
         }
@@ -4363,7 +4364,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
     case NextStep::EnqueueForReportForRepack:{
       m_archiveRequest.commit();
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      std::string repackRequestAddress = m_archiveRequest.getRepackInfo().repackRequestAddress;
+      std::string repackRequestAddress = m_archiveRequest.getRepackInfo().containerId;
       // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForFailure> CaAqtrtrff;

@@ -157,6 +157,7 @@ public:
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
     std::string repackRequestAddress;
+    std::string containerId;
     uint64_t fSeq;
     std::string fileBufferURL;
     bool hasUserProvidedFile = false;
