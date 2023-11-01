@@ -232,7 +232,7 @@ echo "creating configmaps in instance"
 
 kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
-#kubectl create -f ${config_telemetry} --namespace=${instance}
+kubectl create -f ${config_telemetry} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
 kubectl create -f ${config_eoscta} --namespace=${instance}
 
