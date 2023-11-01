@@ -60,4 +60,4 @@ data:
       - job_name: 'prometheus'
         scrape_interval: 1s
         static_configs:
-        - targets: ['ctafrontend:8080', 'tpsrv01:8080', 'tpsrv01:8081', 'tpsrv02:8080', 'tpsrv02:8081']
+        - targets: ['ctafrontend:8080', 'tpsrv01:8080', 'tpsrv02:8080']

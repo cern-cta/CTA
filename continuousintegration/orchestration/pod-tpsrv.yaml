@@ -11,12 +11,6 @@ spec:
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
-    - name: OTLP_BACKEND
-      value: "OTLP_PROMETHEUS"
-    - name: OTLP_HOST
-      value: "localhost"
-    - name: OTLP_PORT
-      value: "8080"
     - name: MY_CONTAINER
       value: "rmcd"
     - name: MY_NAME
@@ -42,10 +36,6 @@ spec:
       name: logstorage
     securityContext:
       privileged: true
-    ports:
-    - containerPort: 8080
-      name: tpsrv-rmcd-p
-      protocol: TCP
 
   - name: taped
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
@@ -56,7 +46,7 @@ spec:
     - name: OTLP_HOST
       value: "localhost"
     - name: OTLP_PORT
-      value: "8081"
+      value: "8080"
     - name: MY_CONTAINER
       value: "taped"
     - name: MY_NAME
@@ -89,7 +79,7 @@ spec:
     securityContext:
       privileged: true
     ports:
-    - containerPort: 8081
+    - containerPort: 8080
       name: tpsrv-taped-p
       protocol: TCP
 
@@ -112,21 +102,3 @@ spec:
 
   imagePullSecrets:
   - name: ctaregsecret
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tpsrv
-  labels:
-    k8s-app: tpsrv
-spec:
-  selector:
-    k8s-app: tpsrv
-  clusterIP: None
-  ports:
-    - name: rmcd-p
-      port: 8080
-      protocol: TCP
-    - name: taped-p
-      port: 8081
-      protocol: TCP
