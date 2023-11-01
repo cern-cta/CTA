@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tpsrv02
+  labels:
+    k8s-app: tpsrv02
+spec:
+  selector:
+    k8s-app: tpsrv02
+  clusterIP: None
+  ports:
+    - name: tpsrv02-rmcd-p
+      port: 8080
+      protocol: TCP
+    - name: tpsrv02-taped-p
+      port: 8081
+      protocol: TCP

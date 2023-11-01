@@ -56,7 +56,7 @@ spec:
     - name: OTLP_HOST
       value: "localhost"
     - name: OTLP_PORT
-      value: "8080"
+      value: "8081"
     - name: MY_CONTAINER
       value: "taped"
     - name: MY_NAME
@@ -89,7 +89,7 @@ spec:
     securityContext:
       privileged: true
     ports:
-    - containerPort: 8080
+    - containerPort: 8081
       name: tpsrv-taped-p
       protocol: TCP
 
@@ -112,3 +112,21 @@ spec:
 
   imagePullSecrets:
   - name: ctaregsecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tpsrv
+  labels:
+    k8s-app: tpsrv
+spec:
+  selector:
+    k8s-app: tpsrv
+  clusterIP: None
+  ports:
+    - name: rmcd-p
+      port: 8080
+      protocol: TCP
+    - name: taped-p
+      port: 8081
+      protocol: TCP

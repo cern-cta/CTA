@@ -29,6 +29,9 @@ config_eos="./eos5-config-quarkdb-https.yaml"
 # shared configmap for eoscta instance
 config_eoscta="./eoscta-config.yaml"
 
+# Configure telemetry storage service
+config_telemetry="./internal_prometheus.yaml"
+
 # EOS short instance name
 EOSINSTANCE=ctaeos
 
@@ -229,6 +232,7 @@ echo "creating configmaps in instance"
 
 kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
+#kubectl create -f ${config_telemetry} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
 kubectl create -f ${config_eoscta} --namespace=${instance}
 
