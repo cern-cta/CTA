@@ -1840,6 +1840,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       params.add("errorMessage", ex.getMessage().str());
       lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
         "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      // erase pm from mountDecisionInfo->potentialMounts
+      mountDecisionInfo->potentialMounts.erase(std::remove_if(mountDecisionInfo->potentialMounts.begin(),
+        mountDecisionInfo->potentialMounts.end(), [&pm](const SchedulerDatabase::PotentialMount & p) {
+          return p == pm;
+        }), mountDecisionInfo->potentialMounts.end());
       continue;
     }
     switch (pm.type) {
@@ -1901,6 +1906,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       params.add("errorMessage", ex.getMessage().str());
       lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
         "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      // erase em from mountDecisionInfo->existingOrNextMounts
+      mountDecisionInfo->existingOrNextMounts.erase(std::remove_if(mountDecisionInfo->existingOrNextMounts.begin(),
+        mountDecisionInfo->existingOrNextMounts.end(), [&em](const SchedulerDatabase::ExistingMount & e) {
+          return e == em;
+        }), mountDecisionInfo->existingOrNextMounts.end());
       continue;
     }
     switch (em.type) {
