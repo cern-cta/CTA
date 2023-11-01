@@ -5,7 +5,7 @@
 # - a postgres service
 # - a configmap for pod configuration and CTA configuration
 ###
-apiVersion: apps/v1
+apiVersion: v1
 kind: Deployment
 metadata:
   name: prometheus
