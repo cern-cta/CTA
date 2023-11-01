@@ -6,34 +6,27 @@
 # - a configmap for pod configuration and CTA configuration
 ###
 apiVersion: v1
-kind: Deployment
+kind: Pod
 metadata:
   name: prometheus
   labels:
-    app: prometheus
+    k8s-app: prometheus
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus
-  template:
-    metadata:
-      labels:
-        app: prometheus
-    spec:
-      serviceAccountName: prometheus
-      containers:
-        - name: prometheus
-          image: prom/prometheus
-          ports:
-            - containerPort: 9090
-          volumeMounts:
-            - name: config
-              mountPath: /etc/prometheus
-      volumes:
+  restartPolicy: Never
+  serviceAccountName: prometheus
+  containers:
+    - name: prometheus
+      image: prom/prometheus:v2.47.2
+      ports:
+        - containerPort: 9090
+      volumeMounts:
         - name: config
-          configMap:
-            name: prometheus-server-conf
+          mountPath: /etc/prometheus
+  volumes:
+    - name: config
+      configMap:
+        name: prometheus-server-conf
+
 ---
 apiVersion: v1
 kind: Service
@@ -41,7 +34,7 @@ metadata:
   name: prometheus
 spec:
   selector:
-    app: prometheus
+    k8s-app: prometheus
   ports:
     - port: 9090
 ---
