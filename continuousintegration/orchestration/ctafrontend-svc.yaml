@@ -10,8 +10,8 @@ spec:
   clusterIP: None
   ports:
   - name: ctafrontend
-    port: 10955
+    port: 18080
     protocol: TCP
   - name: ctafrontend-p
-    port: 18080
+    port: 10955
     protocol: TCP
