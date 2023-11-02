@@ -48,10 +48,10 @@ spec:
       # RW access needed to volumes
       privileged: true
     ports:
-    - containerPort: 18080
+    - containerPort: 10955
       name: ctafrontend
       protocol: TCP
-    - containerPort: 10955
+    - containerPort: 18080
       name: ctafrontend-p
       protocol: TCP
   volumes:
