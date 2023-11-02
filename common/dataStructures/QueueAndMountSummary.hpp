@@ -61,7 +61,7 @@ struct QueueAndMountSummary {
   std::string lowestRequestAgeMountPolicy;
   std::list<std::string> mountPolicies;
   
-  static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
+  static QueueAndMountSummary* getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,
     const std::map<std::string, std::string> &vid_to_logical_library);
 };

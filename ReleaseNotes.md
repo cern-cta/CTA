@@ -3,6 +3,7 @@
 ### Bug Fixes
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
 - cta/CTA#518 - Correct the naming of AQTRTRFF objects
+- cta/CTA#519 - Don't abort show queues when an unexpected mount type is found
 
 ### Continuous Integration
 - cta/CTA#515 - Upgrade eos to 4.8.105/5.1.28
