@@ -47,7 +47,7 @@ spec:
     - name: OTLP_BACKEND
       value: "OTLP_PROMETHEUS"
     - name: OTLP_HOST
-      value: "localhost"
+      value: "0.0.0.0"
     - name: OTLP_PORT
       value: "18080"
     - name: MY_CONTAINER
