@@ -753,35 +753,6 @@ class SchedulerDatabase {
 
       return false;
     }
-
-    bool operator==(const PotentialMount &other) const {
-      return (type == other.type &&
-              vid == other.vid &&
-              tapePool == other.tapePool &&
-              vo == other.vo &&
-              mediaType == other.mediaType &&
-              vendor == other.vendor &&
-              capacityInBytes == other.capacityInBytes &&
-              labelFormat == other.labelFormat &&
-              priority == other.priority &&
-              minRequestAge == other.minRequestAge &&
-              filesQueued == other.filesQueued &&
-              bytesQueued == other.bytesQueued &&
-              oldestJobStartTime == other.oldestJobStartTime &&
-              youngestJobStartTime == other.youngestJobStartTime &&
-              logicalLibrary == other.logicalLibrary &&
-              ratioOfMountQuotaUsed == other.ratioOfMountQuotaUsed &&
-              sleepingMount == other.sleepingMount &&
-              sleepStartTime == other.sleepStartTime &&
-              diskSystemSleptFor == other.diskSystemSleptFor &&
-              sleepTime == other.sleepTime &&
-              mountCount == other.mountCount &&
-              activity == other.activity &&
-              highestPriorityMountPolicyName == other.highestPriorityMountPolicyName &&
-              lowestRequestAgeMountPolicyName == other.lowestRequestAgeMountPolicyName &&
-              mountPolicyNames == other.mountPolicyNames &&
-              encryptionKeyName == other.encryptionKeyName);
-    }
   };
 
 
@@ -800,20 +771,6 @@ class SchedulerDatabase {
     double averageBandwidth;
     uint64_t priority;
     std::optional<std::string> activity;
-
-    bool operator==(const ExistingMount &other) const {
-      return (driveName == other.driveName &&
-              type == other.type &&
-              tapePool == other.tapePool &&
-              vo == other.vo &&
-              vid == other.vid &&
-              currentMount == other.currentMount &&
-              bytesTransferred == other.bytesTransferred &&
-              filesTransferred == other.filesTransferred &&
-              averageBandwidth == other.averageBandwidth &&
-              priority == other.priority &&
-              activity == other.activity);
-    }
   };
 
   /**
