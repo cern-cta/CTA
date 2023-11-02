@@ -13,5 +13,5 @@ spec:
     port: 10955
     protocol: TCP
   - name: ctafrontend-p
-    port: 8080
+    port: 18080
     protocol: TCP

@@ -16,7 +16,7 @@ spec:
     - name: OTLP_HOST
       value: "localhost"
     - name: OTLP_PORT
-      value: "8080"
+      value: "18080"
     - name: MY_NAME
       valueFrom:
         fieldRef:
@@ -51,7 +51,7 @@ spec:
     - containerPort: 10955
       name: ctafrontend
       protocol: TCP
-    - containerPort: 8080
+    - containerPort: 18080
       name: ctafrontend-p
       protocol: TCP
   volumes:

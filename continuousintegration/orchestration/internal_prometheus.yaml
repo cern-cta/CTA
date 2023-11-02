@@ -54,4 +54,4 @@ data:
       - job_name: 'other_services'
         scrape_interval: 5s
         static_configs:
-        - targets: ['ctafrontend:8080', 'tpsrv01:8080', 'tpsrv02:8080']
+        - targets: ['ctafrontend:18080', 'tpsrv01:18080', 'tpsrv02:18080']

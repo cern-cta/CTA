@@ -49,7 +49,7 @@ spec:
     - name: OTLP_HOST
       value: "localhost"
     - name: OTLP_PORT
-      value: "8080"
+      value: "18080"
     - name: MY_CONTAINER
       value: "taped"
     - name: MY_NAME
@@ -86,7 +86,7 @@ spec:
     securityContext:
       privileged: true
     ports:
-    - containerPort: 8080
+    - containerPort: 18080
       name: tpsrv01-taped-p
       protocol: TCP
 
