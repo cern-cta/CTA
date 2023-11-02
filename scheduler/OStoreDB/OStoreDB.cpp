@@ -4363,6 +4363,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       m_archiveRequest.commit();
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       std::string repackRequestAddress = m_archiveRequest.getRepackInfo().repackRequestAddress;
+      repackRequestAddress = repackRequestAddress.substr(repackRequestAddress.find_last_of("-") + 1);
       // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForFailure> CaAqtrtrff;
@@ -4370,6 +4371,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtrtrff::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtrtrff::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, std::nullopt, std::nullopt });
       caAqtrtrff.referenceAndSwitchOwnership(repackRequestAddress, insertedElements, lc);
+
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
