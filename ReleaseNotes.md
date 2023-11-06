@@ -2,6 +2,7 @@
 
 ### Features
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
+- cta/CTA#154 - Update RetrieveJob to support completion report
 
 ### Bug Fixes
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
