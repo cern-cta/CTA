@@ -37,7 +37,6 @@ install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(CtaMessageSrcs
   Constants.cpp
-  ../../../tapeserver/daemon/TapedProxy.cpp
 )
 
 add_library(ctamessages SHARED

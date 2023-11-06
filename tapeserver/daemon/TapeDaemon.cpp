@@ -19,6 +19,7 @@
 
 #include <google/protobuf/service.h>
 
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
@@ -37,7 +38,7 @@ TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     cta::server::ProcessCap& capUtils):
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
-    m_programName("cta-taped"), m_hostName(getHostName()) {
+    m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -108,16 +109,16 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   log::LogContext lc(m_log);
   // Create the process manager and signal handler
   ProcessManager pm(lc);
-  std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
+  auto sh = std::make_unique<SignalHandler>(pm);
   pm.addHandler(std::move(sh));
   // Create the drive handlers
-  for (auto & d: m_globalConfiguration.driveConfigs) {
-    std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
+  for (const auto &[key, driveConfig] : m_globalConfiguration.driveConfigs) {
+    auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, driveConfig.value(), pm);
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
   if(!isMaintenanceProcessDisabled()){
-    std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
+    auto gc = std::make_unique<MaintenanceHandler>(m_globalConfiguration, pm);
     pm.addHandler(std::move(gc));
   } else {
     lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");

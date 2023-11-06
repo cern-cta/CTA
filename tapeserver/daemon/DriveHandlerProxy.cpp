@@ -95,9 +95,4 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   m_socketPair.send(buffer);
 }
 
-
-DriveHandlerProxy::~DriveHandlerProxy() { }
-
-
-
 }}} // namespace cta::tape::daemon

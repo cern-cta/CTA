@@ -276,7 +276,7 @@ void ProcessManager::runEventLoop() {
   // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
   if (-1 == receivedEvents && EINTR == errno) receivedEvents = 0;
   cta::exception::Errnum::throwOnMinusOne(receivedEvents, 
-      "In ProcessManager::run(): failed to ::epoll_wait()");
+      "In ProcessManager::runEventLoop(): failed to ::epoll_wait()");
   for (int i=0; i< receivedEvents; i++) {
     // The subprocess handers registered themselves to epoll, so we have the 
     // pointer to it.

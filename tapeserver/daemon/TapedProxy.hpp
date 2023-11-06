@@ -38,7 +38,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~TapedProxy()  = 0;
+  virtual ~TapedProxy()  = default;
   
   /**
    * Notifies taped of a state change. Taped will validate the transition and

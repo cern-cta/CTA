@@ -29,15 +29,15 @@ add_library(ctatapedaemon
   CommandLineParams.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
+  DriveHandlerStateReporter.cpp
   MaintenanceHandler.cpp
-  SignalHandler.cpp
-  SubprocessHandler.cpp
   ProcessManager.cpp
-  TapedConfiguration.cpp
+  SignalHandler.cpp
   TapeDaemon.cpp
-  TapedProxy.cpp
+  TapedConfiguration.cpp
+  Tpconfig.cpp
   TpconfigLine.cpp
-  Tpconfig.cpp)
+)
 
 target_link_libraries(ctatapedaemon
   ctatapesession
@@ -47,12 +47,15 @@ target_link_libraries(ctatapedaemon
   File)
 
 add_library(ctadaemonunittests SHARED
+  DriveHandlerTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp)
+  TpconfigTests.cpp
+)
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadaemonunittests-multiprocess SHARED
+  DriveHandlerTests.cpp
   ProcessManagerTests.cpp
   SignalHandlerTests.cpp)
 set_property(TARGET ctadaemonunittests-multiprocess PROPERTY SOVERSION "${CTA_SOVERSION}")
