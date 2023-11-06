@@ -1,5 +1,8 @@
 # next
 
+### Features
+- cta/CTA#61 - Unit test for DriveHandler and CleanerSession
+
 ### Bug Fixes
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
 - cta/CTA#518 - Correct the naming of AQTRTRFF objects
