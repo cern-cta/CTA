@@ -16,6 +16,7 @@
 
 ### Features
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
+- cta/CTA#154 - Update RetrieveJob to support completion report
 
 ### Bug Fixes
 - cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
