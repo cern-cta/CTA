@@ -21,8 +21,6 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "RetrieveQueue.hpp"
 
-#include <iostream>
-
 namespace cta { namespace objectstore {
 
 template<typename C>
