@@ -741,7 +741,6 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
     switch(j.status()) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return common::dataStructures::JobQueueType::JobsToTransferForUser;
-      break;
     case serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer:
       return common::dataStructures::JobQueueType::JobsToReportToUser;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
