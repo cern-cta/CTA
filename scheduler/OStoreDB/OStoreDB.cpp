@@ -4050,7 +4050,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     }
   }
 
-  // 3)
+  // 3) Queue the retrieve requests for report to user 
   for (auto & reportRequestQueue: jobsToRequeueForReportToUser) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser> RQTRTRFSAlgo;
     RQTRTRFSAlgo::InsertedElement::list insertedRequests;
