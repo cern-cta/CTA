@@ -17,7 +17,6 @@ cppcheck:
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck_report:
-  allow_failure: true
   except:
     - tags
   stage: analysis
