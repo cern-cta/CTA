@@ -1165,7 +1165,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 // RetrieveRequest::asyncReportSucceed()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedReporter * RetrieveRequest::asyncReportSucceed(uint32_t copyNb) {
-  std::unique_ptr<AsyncJobSucceedReporter> ret(new AsyncJobSucceedReporter);
+  auto ret = std::make_unique<AsyncJobSucceedReporter>();
 
   ret->m_updaterCallback = [&ret, copyNb](const std::string &in)->std::string {
     // We have a locked and fetched object, so we just need to work on its representation.
