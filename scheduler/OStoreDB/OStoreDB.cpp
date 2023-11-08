@@ -4052,7 +4052,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
 
   // 3) Queue the retrieve requests for report to user 
   for (auto & reportRequestQueue: jobsToRequeueForReportToUser) {
-    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser> RQTRTRFSAlgo;
+    using RQTRTRFSAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
     RQTRTRFSAlgo::InsertedElement::list insertedRequests;
     // Keep a map of objectstore request -> sDBJob to handle errors.
     std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
@@ -5340,11 +5340,11 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
   if (isRepack) {
     // If the job is from a repack subrequest, we change its status (to report
     // for repack success). Queueing will be done in batch in
-    m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
+    m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(selectedCopyNb));
   } else {
     // else we change its status (to report for transfer success).
     // Queueing will be done in batch in
-    m_jobSucceedReporter.reset(m_retrieveRequest.asyncReportSucceed(this->selectedCopyNb));
+    m_jobSucceedReporter.reset(m_retrieveRequest.asyncReportSucceed(selectedCopyNb));
   }
 }
 
@@ -5355,7 +5355,7 @@ void OStoreDB::RetrieveJob::fail() {
   // Lock the retrieve request. Change the status of the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
-  m_retrieveRequest.setJobStatus(this->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Failed);
+  m_retrieveRequest.setJobStatus(selectedCopyNb,serializers::RetrieveJobStatus::RJS_Failed);
   m_retrieveRequest.commit();
 }
 
