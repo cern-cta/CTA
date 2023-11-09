@@ -24,9 +24,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The retrieve job contains the original request, and all data needed to queue 
@@ -57,6 +55,4 @@ struct RetrieveJob {
 
 std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures
