@@ -224,7 +224,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   }
 
   std::string tmp_tapePool = tapePool;
-  if (queueType == common::dataStructures::JobQueueType::JobsToReportToRepackForFailures)
+  if (queueType == common::dataStructures::JobQueueType::JobsToReportToRepackForFailure)
     tmp_tapePool = "qqchose";
   std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tmp_tapePool);
   // Now move create a reference the tape pool's ownership to the root entry
