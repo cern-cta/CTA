@@ -46,7 +46,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: postgres
-    image: postgres:9.6
+    image: docker.io/postgres:9.6
     stdin: true
     env:
     - name: POSTGRES_USER
