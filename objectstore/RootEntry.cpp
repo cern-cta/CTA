@@ -36,7 +36,7 @@
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 const std::string RootEntry::address("root");
 
@@ -222,7 +222,11 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& cId, Age
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+cId);
+  std::string tmp_cId;
+  if(queueType == common::dataStructures::JobQueueType::JobsToTransferToRepackForFailure)
+    tmp_cId = "qqchose";
+
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+ tmp_cId);
   // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
@@ -983,4 +987,4 @@ std::string RootEntry::dump () {
   return headerDump;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore
