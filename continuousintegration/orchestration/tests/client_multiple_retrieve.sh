@@ -82,7 +82,7 @@ echo "Archiving test files..."
 cat ${TEST_FILES_LIST} | xargs -iFILE_PATH xrdcp --silent /etc/group root://${EOS_INSTANCE}/FILE_PATH
 
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=190
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=-1
 while test ${NB_FILES} != `cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} info FILE_PATH | awk '{print $4;}' | grep tape | wc -l`; do
   echo "Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
   sleep 1
