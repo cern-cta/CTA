@@ -36,7 +36,7 @@
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 const std::string RootEntry::address("root");
 
@@ -204,34 +204,46 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef,
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& cId, AgentReference& agentRef,
   common::dataStructures::JobQueueType queueType) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
-    return serializers::findElement(archiveQueuePointers(queueType), tapePool).address();
+    return serializers::findElement(archiveQueuePointers(queueType), cId).address();
   } catch (serializers::NotFound &) {}
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
+  std::string tmp_cId = cId;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: archiveQueueNameHeader+="ToReportToRepackForFailure"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReportForUser"; break;
-  case common::dataStructures::JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
+    archiveQueueNameHeader+="ToReportToRepackForFailure";
+    tmp_cId = "RR";
+    break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
+    archiveQueueNameHeader+="ToReportToRepackForSuccess";
+    tmp_cId = "RR";
+    break;
+  case common::dataStructures::JobQueueType::JobsToReportToUser:
+    archiveQueueNameHeader+="ToReportForUser";
+    break;
+  case common::dataStructures::JobQueueType::FailedJobs:
+    archiveQueueNameHeader+="Failed";
+    break;
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
+
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+ tmp_cId);
   // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
-  tpp->set_name(tapePool);
+  tpp->set_name(cId);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Then insert the queue object
   ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  aq.initialize(tapePool);
+  aq.initialize(cId);
   aq.setOwner(getAddressIfSet());
   aq.setBackupOwner(getAddressIfSet());
   aq.insert();
@@ -350,16 +362,23 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
+  std::string tmp_vid = vid;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: retrieveQueueNameHeader+="ToTransferForUser"; break;
   case common::dataStructures::JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReportForUser"; break;
   case common::dataStructures::JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess: retrieveQueueNameHeader+="ToReportToRepackForSuccess"; break;
-  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: retrieveQueueNameHeader+="ToReportToRepackForFailure"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
+    retrieveQueueNameHeader+="ToReportToRepackForSuccess";
+    tmp_vid = "RR";
+    break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
+    retrieveQueueNameHeader+="ToReportToRepackForFailure";
+    tmp_vid = "RR";
+    break;
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: retrieveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);
+  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+tmp_vid);
   // Reference the queue to the root entry before creation
   auto * rqp = mutableRetrieveQueuePointers(queueType)->Add();
   rqp->set_address(retrieveQueueAddress);
@@ -448,7 +467,7 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, common::d
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
     return rqp.address();
   } catch (serializers::NotFound &) {
-    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetreveQueueAddress: retrieve queue not allocated ")+
+    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetrieveQueueAddress: retrieve queue not allocated ")+
         vid+"/"+toString(queueType));
   }
 }
@@ -983,4 +1002,4 @@ std::string RootEntry::dump () {
   return headerDump;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore
