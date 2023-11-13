@@ -261,7 +261,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
       std::this_thread::sleep_for (std::chrono::milliseconds(100));
       aql.lock(aq);
       aq.fetch();
-    } catch (cta::exception::Exception) {
+    } catch (cta::exception::Exception &) {
       // The archive queue seems to not be there. Make sure this is the case:
       if (aq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
@@ -411,7 +411,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
       std::this_thread::sleep_for (std::chrono::milliseconds(100));
       rql.lock(rq);
       rq.fetch();
-    } catch (cta::exception::Exception) {
+    } catch (cta::exception::Exception &) {
       // The retrieve queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
@@ -903,7 +903,7 @@ void RootEntry::removeRepackQueueAndCommit(common::dataStructures::RepackQueueTy
     try {
       rql.lock(rq);
       rq.fetch();
-    } catch (cta::exception::Exception) {
+    } catch (cta::exception::Exception &) {
       // The repack queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
