@@ -31,9 +31,7 @@
 
 #include "version.h"
 
-namespace cta {
-namespace cliTool {
-
+namespace cta::cliTool {
 
 class CatalogueFetch {
 public:
@@ -58,5 +56,4 @@ private:
   static void handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
 };
 
-} // cliTool
-} // cta
+} // namespace cta::cliTool
