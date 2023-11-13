@@ -283,5 +283,4 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
   }
 }
 
-// namespace admin
-} // namespace cta
+} // namespace cta::cliTool

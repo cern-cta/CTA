@@ -23,8 +23,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 /**
 * Enum value for each of the tools
@@ -144,5 +143,4 @@ struct CmdLineArgs {
 
 }; // class RestoreFilesCmdLineArgs
 
-} // namespace admin
-} // namespace cta
+} // namespace cta::cliTool

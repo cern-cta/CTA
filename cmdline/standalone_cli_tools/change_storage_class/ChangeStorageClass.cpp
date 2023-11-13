@@ -46,8 +46,7 @@
 extern std::atomic<bool> isHeaderSent;
 extern std::list<std::string> g_storageClasses;
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 class ChangeStorageClassError : public std::runtime_error {
 public:
@@ -280,5 +279,4 @@ bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiv
   return ((operatorProvidedInstance == diskDiskInstance) && (operatorProvidedFid == diskFileId));
 }
 
-} // namespace admin
-} // namespace cta
+} // namespace cta::cliTool
