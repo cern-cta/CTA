@@ -38,12 +38,12 @@
 
 namespace cta::objectstore {
 
-const std::string RootEntry::address("root");
+const std::string RootEntry::m_address("root");
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 RootEntry::RootEntry(Backend & os):
-  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, address) {}
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, m_address) {}
 
 RootEntry::RootEntry(GenericObject& go):
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {
@@ -198,7 +198,7 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Retr
 // This operator will be used in the following usage of the findElement
 // removeOccurences
 namespace {
-  bool operator==(const std::string &tp,
+  bool operator==(std::string_view tp,
     const serializers::ArchiveQueuePointer & tpp) {
     return tpp.name() == tp;
   }
@@ -210,7 +210,9 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   // Check the archive queue does not already exist
   try {
     return serializers::findElement(archiveQueuePointers(queueType), tapePool).address();
-  } catch (serializers::NotFound &) {}
+  } catch (serializers::NotFound &) {
+    // If we don't find the archive queue we create it.
+  }
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
   std::string tmp_tapePool = tapePool;
@@ -250,7 +252,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
-    auto aqp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
+    const auto& aqp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
     // Open the tape pool object
     ArchiveQueue aq (aqp.address(), m_objectStore);
     ScopedExclusiveLock aql;
@@ -259,7 +261,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
       std::this_thread::sleep_for (std::chrono::milliseconds(100));
       aql.lock(aq);
       aq.fetch();
-    } catch (cta::exception::Exception & ex) {
+    } catch (cta::exception::Exception) {
       // The archive queue seems to not be there. Make sure this is the case:
       if (aq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
@@ -340,7 +342,7 @@ auto RootEntry::dumpArchiveQueues(common::dataStructures::JobQueueType queueType
 // This operator will be used in the following usage of the findElement
 // removeOccurences
 namespace {
-  bool operator==(const std::string &vid,
+  bool operator==(std::string_view vid,
     const serializers::RetrieveQueuePointer & tpp) {
     return tpp.vid() == vid;
   }
@@ -352,7 +354,9 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // Check the retrieve queue does not already exist
   try {
     return serializers::findElement(retrieveQueuePointers(queueType), vid).address();
-  } catch (serializers::NotFound &) {}
+  } catch (serializers::NotFound &) {
+    // If the retrieve queue does not exist we create it.
+  }
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
@@ -398,7 +402,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
   checkPayloadWritable();
   // find the address of the retrieve queue object
   try {
-    auto rqp=serializers::findElement(retrieveQueuePointers(queueType), vid);
+    const auto & rqp=serializers::findElement(retrieveQueuePointers(queueType), vid);
     // Open the retrieve queue object
     RetrieveQueue rq(rqp.address(), m_objectStore);
     ScopedExclusiveLock rql;
@@ -407,7 +411,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
       std::this_thread::sleep_for (std::chrono::milliseconds(100));
       rql.lock(rq);
       rq.fetch();
-    } catch (cta::exception::Exception & ex) {
+    } catch (cta::exception::Exception) {
       // The retrieve queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
@@ -780,7 +784,7 @@ std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
   try {
     return getRepackIndexAddress();
   } catch (cta::exception::Exception &) {
-    // TODO: this insertion method is much simpler than the ones used for other objects.
+    // this insertion method is much simpler than the ones used for other objects.
     // It implies the only dangling pointer situation we can get is the one where
     // the object does not exist.
     // As the object never changes ownership, the garbage collection can be left
@@ -899,7 +903,7 @@ void RootEntry::removeRepackQueueAndCommit(common::dataStructures::RepackQueueTy
     try {
       rql.lock(rq);
       rq.fetch();
-    } catch (cta::exception::Exception & ex) {
+    } catch (cta::exception::Exception) {
       // The repack queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
@@ -950,7 +954,9 @@ std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, co
   // Check the repack queue does not already exist
   try {
     return getRepackQueueAddress(queueType);
-  } catch (NoSuchRepackQueue &) {}
+  } catch (NoSuchRepackQueue &) {
+    // If we don't find the repack queue we create it.
+  }
   // The queue is not there yet. Create it.
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string repackQueueNameHeader = "RepackQueue";
