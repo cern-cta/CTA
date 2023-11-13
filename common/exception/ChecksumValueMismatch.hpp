@@ -44,4 +44,4 @@ public:
   ~ChecksumValueMismatch() override {}
 }; // class ChecksumValueMismatch
 
-}} // namespace cta::excpetion
+}} // namespace cta::exception
