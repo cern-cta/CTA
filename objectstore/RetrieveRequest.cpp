@@ -689,7 +689,6 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
     }
 
     m_payload.mutable_repack_info()->set_has_user_provided_file(repackInfo.hasUserProvidedFile);
-    m_payload.mutable_repack_info()->set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
     m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
     m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
     m_payload.mutable_repack_info()->set_fseq(repackInfo.fSeq);
