@@ -27,5 +27,5 @@ UserError::UserError(const std::string &context, const bool embedBacktrace):
   Exception(context, embedBacktrace) {
 }
 
-} // namespace catalogue
+} // namespace exception
 } // namespace cta
