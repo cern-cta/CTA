@@ -31,7 +31,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class Backend;
 class Agent;
@@ -254,4 +254,4 @@ public:
   std::string  dump();
 };
 
-}}
+} // namespace cta::objectstore

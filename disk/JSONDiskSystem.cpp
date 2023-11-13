@@ -17,8 +17,8 @@
 
 #include "JSONDiskSystem.hpp"
 
-namespace cta { namespace disk {
-  
+namespace cta::disk {
+
 JSONDiskSystem::JSONDiskSystem() : JSONCObject() {
   diskInstanceSpace.refreshInterval = 0;
   targetedFreeSpace = 0;
@@ -60,4 +60,4 @@ std::string JSONDiskSystem::getJSON() {
 JSONDiskSystem::~JSONDiskSystem() {
 }
 
-}}
+} // namespace cta::disk

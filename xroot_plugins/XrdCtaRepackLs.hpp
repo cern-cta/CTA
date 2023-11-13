@@ -23,7 +23,8 @@
 
 
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
+
  /*!
  * Stream object which implements "repack ls" command.
  */
@@ -122,4 +123,4 @@ namespace cta { namespace xrd {
     static constexpr const char * const LOG_SUFFIX = "RepackLsStream";
   };
 
-}}
+} // namespace cta::xrd

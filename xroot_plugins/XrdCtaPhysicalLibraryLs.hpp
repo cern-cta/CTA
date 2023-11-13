@@ -22,7 +22,7 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
@@ -101,5 +101,4 @@ int PhysicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
   return streambuf->Size();
 }
 
-}  // namespace xrd
-}  // namespace cta
+} // namespace cta::xrd

@@ -23,7 +23,7 @@
 #include <cxxabi.h>
 #include <list>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class GenericObject;
 class AgentReference;
@@ -153,4 +153,4 @@ private:
   uint64_t m_nextId;
 };
 
-}}
+} // namespace cta::objectstore

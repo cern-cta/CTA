@@ -28,7 +28,7 @@
 #include "RetrieveRequest.hpp"
 #include "RootEntry.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue):
   m_objectStore(os), m_catalogue(catalogue), m_ourAgentReference(agentReference), m_agentRegister(os) {
@@ -799,4 +799,4 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(Agent& 
   agentReference.removeFromOwnership(agent.getAddressIfSet(), objectStore);
 }
 
-}}
+} // namespace cta::objectstore

@@ -20,7 +20,7 @@
 #include <getopt.h>
 #include <string.h>
 
-namespace cta { namespace daemon {
+namespace cta::daemon {
 
 CommandLineParams::CommandLineParams(int argc, char** argv):
   foreground(false), logToStdout(false), logToFile(false),
@@ -83,5 +83,5 @@ std::list<cta::log::Param> CommandLineParams::toLogParams() const {
   return ret;
 }
 
-}} //  namespace cta::daemon
+} // namespace cta::daemon
 

@@ -20,7 +20,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
-namespace cta {  namespace objectstore {
+namespace cta::objectstore {
 
 class GenericObject: public ObjectOps<serializers::GenericObject, serializers::GenericObject_t> {
 public:
@@ -95,5 +95,5 @@ public:
   Backend & objectStore();
 };
 
-}}
+} // namespace cta::objectstore
 

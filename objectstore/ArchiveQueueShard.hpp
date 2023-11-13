@@ -19,7 +19,7 @@
 
 #include "ArchiveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class ArchiveQueueShard: public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>  {
 public:
@@ -85,4 +85,4 @@ public:
 
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

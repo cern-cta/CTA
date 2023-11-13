@@ -20,7 +20,7 @@
 #include "RAOAlgorithm.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 class NonConfigurableRAOAlgorithmFactory;
 
@@ -42,4 +42,4 @@ private:
   RandomRAOAlgorithm();
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

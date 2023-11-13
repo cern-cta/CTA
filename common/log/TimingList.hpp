@@ -21,11 +21,12 @@
 #include <tuple>
 #include <string>
 
-namespace cta { namespace utils {
-class Timer;
-}}
+namespace cta::utils {
 
-namespace cta { namespace log {
+class Timer;
+} // namespace cta::utils
+
+namespace cta::log {
 
 class ScopedParamContainer;
 
@@ -40,4 +41,4 @@ private:
   double & at(const std::string&);
 };
 
-}} // namespace cta::log
+} // namespace cta::log

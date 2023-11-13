@@ -22,7 +22,7 @@
 
 
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 ArchiveQueueShard::ArchiveQueueShard(Backend& os):
   ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os) { }
@@ -167,4 +167,4 @@ void ArchiveQueueShard::initialize() {
   throw std::runtime_error("initialize() is not supported for ArchiveQueueShard");
 }
 
-}}
+} // namespace cta::objectstore

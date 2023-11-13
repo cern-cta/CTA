@@ -22,7 +22,7 @@
 #include <sstream>
 #include <google/protobuf/util/json_util.h>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -129,4 +129,4 @@ std::string toString(const RetrieveActivityDescription & ad) {
   return ""; //TODO
 }
 
-}} // namespace cta::objectstore.
+} // namespace cta::objectstore

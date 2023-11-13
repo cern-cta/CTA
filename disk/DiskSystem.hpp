@@ -36,11 +36,9 @@ namespace catalogue {
  */
 class Catalogue;
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace catalogue
 
-
-namespace cta { namespace disk {
+namespace disk {
 
 /**
  * Description of a disk system as defined by operators.
@@ -119,4 +117,4 @@ private:
   uint64_t fetchFreeDiskSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
 };
 
-}}  // namespace cta::common
+}} // namespace cta::disk

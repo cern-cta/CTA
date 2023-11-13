@@ -21,7 +21,7 @@
 #include "DatabaseStatisticsService.hpp"
 
 
-namespace cta { namespace statistics {
+namespace cta::statistics {
 
 DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn* databaseConnection)
   : m_conn(*databaseConnection) {
@@ -144,5 +144,4 @@ std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStati
   }
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

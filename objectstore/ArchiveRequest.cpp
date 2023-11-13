@@ -27,7 +27,7 @@
 #include "Helpers.hpp"
 #include "MountPolicySerDeser.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -1041,4 +1041,4 @@ void ArchiveRequest::setOwner(const std::string &) {
   throw std::runtime_error("setOwner() is not supported for ArchiveRequest");
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

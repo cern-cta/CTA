@@ -22,7 +22,7 @@
 #include "catalogue/MediaType.hpp"
 #include <vector>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class implements an interpolation file position estimator.
@@ -74,4 +74,4 @@ private:
   uint64_t determineEndBlockId(const cta::common::dataStructures::TapeFile & file) const;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

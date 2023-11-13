@@ -22,7 +22,7 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "failedrequest ls" command.
@@ -251,5 +251,4 @@ void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *stream
   m_isSummaryDone = true;
 }
 
-}  // namespace xrd
-}  // namespace cta
+} // namespace cta::xrd

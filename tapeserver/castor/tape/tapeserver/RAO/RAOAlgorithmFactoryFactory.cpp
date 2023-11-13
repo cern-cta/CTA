@@ -22,7 +22,7 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "ConfigurableRAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 RAOAlgorithmFactoryFactory::RAOAlgorithmFactoryFactory(RAOManager & raoManager, cta::log::LogContext & lc):m_raoManager(raoManager), m_lc(lc) {
 }
@@ -76,4 +76,4 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
 RAOAlgorithmFactoryFactory::~RAOAlgorithmFactoryFactory() {
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

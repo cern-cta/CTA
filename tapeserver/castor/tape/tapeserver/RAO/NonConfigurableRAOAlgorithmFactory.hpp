@@ -20,8 +20,8 @@
 #include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 /**
  * This factory allows to instanciate RAO algorithm that do not need any
  * parameter to work. E.G the linear algorithm just does a sort of the fseqs,
@@ -46,4 +46,4 @@ private:
   RAOParams::RAOAlgorithmType m_type;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

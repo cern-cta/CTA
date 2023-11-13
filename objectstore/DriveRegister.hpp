@@ -23,8 +23,8 @@
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/DriveNextState.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -82,4 +82,4 @@ public:
   std::string dump();
 };
 
-}}
+} // namespace cta::objectstore

@@ -26,7 +26,7 @@
 #include <string>
 #include <list>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
@@ -87,5 +87,5 @@ public:
 
 }; // class TapeserverProxy
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon
 

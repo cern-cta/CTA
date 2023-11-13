@@ -22,7 +22,7 @@
 
 #include <ostream>
 
-namespace cta { namespace server {
+namespace cta::server {
 
 /**
  * This class contains the code common to all daemon classes.
@@ -110,6 +110,4 @@ private:
 
 }; // class Daemon
 
-} // namespace server
-} // namespace cta
-
+} // namespace cta::server

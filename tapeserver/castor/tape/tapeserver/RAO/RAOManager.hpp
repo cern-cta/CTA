@@ -28,7 +28,7 @@
 #include "RAOAlgorithmFactory.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class will be used to manage everything that is linked to RAO.
@@ -144,4 +144,4 @@ private:
 
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

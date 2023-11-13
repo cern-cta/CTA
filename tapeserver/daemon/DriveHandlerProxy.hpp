@@ -20,7 +20,7 @@
 #include "common/threading/SocketPair.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 
-namespace cta  { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 /**
  * A class sending the data transfer process reports to the daemon via a
@@ -44,4 +44,4 @@ private:
   server::SocketPair & m_socketPair;
 };
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

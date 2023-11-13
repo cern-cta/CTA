@@ -19,7 +19,7 @@
 
 #include "XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tape ls" command
@@ -157,4 +157,4 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}}
+} // namespace cta::xrd

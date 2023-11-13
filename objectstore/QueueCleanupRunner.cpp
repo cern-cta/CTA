@@ -17,7 +17,7 @@
 
 #include "objectstore/QueueCleanupRunner.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 QueueCleanupRunner::QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                                        std::optional<double> heartBeatTimeout, std::optional<int> batchSize) :
@@ -221,5 +221,4 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   }
 }
 
-}
-}
+} // namespace cta::objectstore

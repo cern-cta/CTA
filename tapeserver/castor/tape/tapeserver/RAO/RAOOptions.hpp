@@ -21,7 +21,7 @@
 #include <map>
 #include <vector>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class allows to manage the RAO options given
@@ -101,4 +101,4 @@ private:
   static std::map<std::string, CostHeuristicType> c_mapStringCostHeuristicType;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

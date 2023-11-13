@@ -22,8 +22,8 @@
 
 using namespace cta::utils::json::object;
 
-namespace cta { namespace disk {
-  
+namespace cta::disk {
+
 /**
  * This class allows to transform a DiskSystem object into a JSON string
  * and to build a DiskSystem object from a JSON string
@@ -46,5 +46,5 @@ public:
 private:
 
 };
-}}
+} // namespace cta::disk
 

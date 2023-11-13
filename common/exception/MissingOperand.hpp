@@ -19,7 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * Missing operand.
@@ -35,5 +35,4 @@ namespace cta { namespace exception {
 
     }; // class MissingOperand
 
-} } // namespace cta exception
-
+} // namespace cta::exception

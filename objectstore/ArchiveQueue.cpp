@@ -28,7 +28,7 @@
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os, address) { }
@@ -665,4 +665,4 @@ auto ArchiveQueue::getCandidateSummary() -> CandidateJobList {
   return ret;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

@@ -23,7 +23,7 @@
 #include "CostHeuristicFactory.hpp"
 #include "FilePositionEstimatorFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 SLTFRAOAlgorithm::SLTFRAOAlgorithm() {}
 
@@ -149,4 +149,4 @@ std::string SLTFRAOAlgorithm::getName() const {
   return "sltf";
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

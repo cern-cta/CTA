@@ -18,7 +18,7 @@
 #include "common/Timer.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 // ArchiveQueue full specialisations for ContainerTraits.
 
@@ -77,4 +77,4 @@ getContainerSummary(Container& cont) -> ContainerSummary {
   return ret;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

@@ -17,7 +17,8 @@
 
 #include <google/protobuf/service.h>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * This singleton class will check the compatibility of the runtime library
  * with the headers it was compiled against on construction (library load)

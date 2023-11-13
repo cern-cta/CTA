@@ -21,7 +21,7 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Timer.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 EnterpriseRAOAlgorithm::EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported):m_drive(drive), m_maxFilesSupported(maxFilesSupported) {
 }
@@ -81,4 +81,4 @@ std::string EnterpriseRAOAlgorithm::getName() const {
   return "enterprise";
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

@@ -22,7 +22,7 @@
 #include "Helpers.hpp"
 #include "Sorter.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 /* SORTER CLASS */
 
@@ -473,5 +473,4 @@ bool SorterRetrieveRequestAccessor::getIsRepack() {
 
 /* END OF SorterRetrieveRequestAccessor CLASS*/
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

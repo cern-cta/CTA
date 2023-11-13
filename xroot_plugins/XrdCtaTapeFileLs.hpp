@@ -22,7 +22,7 @@
 #include "frontend/common/GrpcEndpoint.hpp"
 #include "XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapefile ls" command.
@@ -140,4 +140,4 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

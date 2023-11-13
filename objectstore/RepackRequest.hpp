@@ -24,7 +24,7 @@
 #include "common/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class Agent;
 class GenericObject;
@@ -176,4 +176,4 @@ public:
       std::optional<serializers::RepackRequestStatus> newStatus);
   };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

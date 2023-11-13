@@ -29,7 +29,7 @@
 #include <list>
 #include <set>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class Agent;
 
@@ -190,4 +190,4 @@ private:
   log::Logger &m_logger;
 };
 
-}}
+} // namespace cta::objectstore

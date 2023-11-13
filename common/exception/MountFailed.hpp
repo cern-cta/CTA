@@ -19,7 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * Failed to mount volume.
@@ -35,5 +35,4 @@ namespace cta { namespace exception {
 
     }; // class MountFailed
 
-} } // namespace castor exception
-
+} // namespace cta::exception

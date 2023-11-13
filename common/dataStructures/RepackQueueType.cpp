@@ -18,7 +18,7 @@
 #include "RepackQueueType.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace common { namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::string toString(RepackQueueType queueType) {
   switch(queueType) {
@@ -30,4 +30,4 @@ std::string toString(RepackQueueType queueType) {
   throw exception::Exception("In toString(RepackQueueType): unexpected queue type.");
 }
 
-}}} // namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

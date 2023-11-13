@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace cta::utils::json::object {
 
 /**
  * Interface that allows the objects that inherits from the implementations of this interface
@@ -48,4 +48,4 @@ private:
 
 };
 
-}}}}
+} // namespace cta::utils::json::object

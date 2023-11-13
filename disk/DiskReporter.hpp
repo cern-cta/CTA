@@ -19,7 +19,7 @@
 
 #include <future>
 
-namespace cta { namespace disk {
+namespace cta::disk {
 
 class DiskReporter {
 public:
@@ -30,4 +30,4 @@ protected:
   std::promise<void> m_promise;
 };
 
-}} // name space cta::disk
+} // namespace cta::disk

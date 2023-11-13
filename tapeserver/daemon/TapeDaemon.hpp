@@ -24,7 +24,7 @@
 #include <signal.h>
 
 
-namespace cta { namespace tape { namespace  daemon {
+namespace cta::tape::daemon {
 
 /** Daemon responsible for reading and writing data from and to one or more tape
  * drives drives connected to a tape server. */
@@ -247,4 +247,4 @@ protected:
   const std::string m_programName{"cta-taped"};
 }; // class TapeDaemon
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

@@ -20,7 +20,8 @@
 #include <google/protobuf/repeated_field.h>
 #include "objectstore/SerializersExceptions.hpp"
 
-namespace cta { namespace objectstore { namespace serializers {
+namespace cta::objectstore::serializers {
+
 void removeString(::google::protobuf::RepeatedPtrField< ::std::string>* field, 
   const std::string & value);
 
@@ -78,4 +79,4 @@ bool isElementPresent(const ::google::protobuf::RepeatedPtrField<C1>& field, con
   return false;
 }
 
-}}}
+} // namespace cta::objectstore::serializers

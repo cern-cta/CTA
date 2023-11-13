@@ -27,7 +27,7 @@
 #include "RepackQueueAlgorithms.hpp"
 #include "RepackRequest.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -826,4 +826,4 @@ std::string RepackRequest::dump() {
   return headerDump;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

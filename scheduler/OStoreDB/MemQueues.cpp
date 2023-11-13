@@ -19,7 +19,7 @@
 #include "OStoreDB.hpp"
 #include "objectstore/Helpers.hpp"
 
-namespace cta { namespace ostoredb {
+namespace cta::ostoredb {
 
 template<>
 void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobsToQueueAndCommit(
@@ -73,4 +73,4 @@ void MemQueue<objectstore::RetrieveRequest,objectstore::RetrieveQueue>::speciali
   objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes, summary.priority);
 }
 
-}} // namespac ecta::ostoredb
+} // namespace cta::ostoredb

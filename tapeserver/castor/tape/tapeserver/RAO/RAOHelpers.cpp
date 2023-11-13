@@ -18,7 +18,7 @@
 #include "RAOHelpers.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
   void RAOHelpers::improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition>& endOfWrapPositions) {
     uint64_t nbBlocksPerWrap = 0;
@@ -90,4 +90,4 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     return endOfFile1Lpos > beginningOfFile2Lpos ? endOfFile1Lpos - beginningOfFile2Lpos : beginningOfFile2Lpos - endOfFile1Lpos;
   }
   
-}}}}
+} // namespace castor::tape::tapeserver::rao

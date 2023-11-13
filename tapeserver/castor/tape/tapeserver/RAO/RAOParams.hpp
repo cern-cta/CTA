@@ -24,7 +24,7 @@
 
 #include "tapeserver/castor/tape/tapeserver/RAO/RAOOptions.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
   * This class contains the configuration of the CTA RAO Algorithm
@@ -115,4 +115,4 @@ private:
   static const std::map<std::string, RAOAlgorithmType> c_raoAlgoStringTypeMap;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

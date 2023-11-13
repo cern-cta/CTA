@@ -17,7 +17,8 @@
 
 #include "RepackQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
   template<>
   const std::string ContainerTraits<RepackQueue,RepackQueueToExpand>::c_containerTypeName = "RepackQueueToExpand";
   
@@ -32,4 +33,4 @@ namespace cta { namespace objectstore {
     return ret;
   }
   
-}}
+} // namespace cta::objectstore

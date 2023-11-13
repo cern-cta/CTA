@@ -23,13 +23,11 @@
 #include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 class Catalogue;
 }
-}
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This factory instanciates a configurable RAO algorithm
@@ -79,5 +77,4 @@ private:
   RAOParams m_raoParams;
 };
 
-}}}}
-
+} // namespace castor::tape::tapeserver::rao

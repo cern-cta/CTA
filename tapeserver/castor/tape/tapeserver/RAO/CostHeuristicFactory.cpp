@@ -19,7 +19,7 @@
 #include "CTACostHeuristic.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 CostHeuristicFactory::CostHeuristicFactory() {
 }
@@ -42,4 +42,4 @@ std::unique_ptr<CostHeuristic> CostHeuristicFactory::createCostHeuristic(const R
 CostHeuristicFactory::~CostHeuristicFactory() {
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

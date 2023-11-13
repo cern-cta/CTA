@@ -19,8 +19,8 @@
 
 #include "RetrieveQueue.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class RetrieveQueueShard: public ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t>  {
 public:
   // Constructor with undefined address
@@ -119,4 +119,4 @@ public:
   
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

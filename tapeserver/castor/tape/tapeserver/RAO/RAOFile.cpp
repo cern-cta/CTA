@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 RAOFile::RAOFile(const uint64_t index, const FilePositionInfos & filePositionInfos):m_index(index),m_filePositionInfos(filePositionInfos) {
 }
@@ -83,4 +83,4 @@ double RAOFile::DistanceToFile::getCost() const{
 uint64_t RAOFile::DistanceToFile::getDestinationFileIndex() const {
   return m_destinationFileIndex;
 }
-}}}}
+} // namespace castor::tape::tapeserver::rao

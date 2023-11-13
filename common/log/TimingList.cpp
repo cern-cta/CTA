@@ -19,7 +19,7 @@
 #include "LogContext.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace log {
+namespace cta::log {
 
 void TimingList::addToLog(ScopedParamContainer& spc) {
   for (auto & t: *this) {
@@ -76,4 +76,4 @@ TimingList& TimingList::operator+=(const TimingList& other) {
   return *this;
 }
 
-}} // namespace cta::log
+} // namespace cta::log

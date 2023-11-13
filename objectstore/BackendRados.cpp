@@ -81,7 +81,7 @@ void notifyLocked() {
 #define NOTIFYRELEASED()
 #endif
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
 
@@ -1374,4 +1374,4 @@ BackendRados::Parameters* BackendRados::getParams() {
   return ret.release();
 }
 
-}}
+} // namespace cta::objectstore

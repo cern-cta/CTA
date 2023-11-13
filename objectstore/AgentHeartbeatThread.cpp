@@ -24,7 +24,7 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // AgentHeartbeatThread::stopAndWaitThread
@@ -69,4 +69,4 @@ void AgentHeartbeatThread::run() {
 
 
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

@@ -20,8 +20,8 @@
 #include "ObjectOps.hpp"
 #include <list>
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -45,4 +45,4 @@ public:
   std::string dump();
 };
 
-}}
+} // namespace cta::objectstore

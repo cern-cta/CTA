@@ -19,8 +19,8 @@
 
 #include "JSONObjectException.hpp"
 
-namespace cta { namespace utils { namespace json { namespace object { 
-  
+namespace cta::utils::json::object {
+
 JSONCObject::JSONCObject():JSONObject() {
   initializeJSONCObject();
 }
@@ -116,4 +116,4 @@ JSONCObject::~JSONCObject() {
   }
 }
 
-}}}}
+} // namespace cta::utils::json::object

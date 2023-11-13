@@ -17,7 +17,7 @@
 
 #include "Position.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 Position::Position():m_wrap(0),m_lpos(0) {
 }
@@ -57,4 +57,4 @@ void Position::setWrap(const uint32_t wrap) {
 }
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

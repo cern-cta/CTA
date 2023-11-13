@@ -20,7 +20,7 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "diskinstancespace ls" command
@@ -89,4 +89,4 @@ int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

@@ -18,7 +18,7 @@
 #include "SessionType.hpp"
 #include <sstream>
 
-namespace cta { namespace tape { namespace session {
+namespace cta::tape::session {
 
 std::string toString(SessionType type) {
   switch(type) {
@@ -39,5 +39,5 @@ std::string toString(SessionType type) {
   }
 }
 
-}}} // namespace cta::tape::session
+} // namespace cta::tape::session
 

@@ -24,7 +24,7 @@
 #include "catalogue/SchemaVersion.hpp"
 #include "version.h"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
@@ -95,5 +95,4 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}  // namespace xrd
-}  // namespace cta
+} // namespace cta::xrd

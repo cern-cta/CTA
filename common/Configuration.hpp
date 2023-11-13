@@ -25,7 +25,7 @@
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta { namespace common {
+namespace cta::common {
 
     /**
      * represents a category from the CTA configuration file
@@ -263,5 +263,4 @@ namespace cta { namespace common {
 
     };
 
-  } // namespace common
-} // namespace castor
+} // namespace cta::common

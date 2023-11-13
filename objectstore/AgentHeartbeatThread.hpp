@@ -24,7 +24,7 @@
 #include <future>
 #include <chrono>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 /**
  * Thread handler managing a heartbeat updated for the agent object representing
@@ -72,4 +72,4 @@ private:
   log::Logger & m_logger;
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

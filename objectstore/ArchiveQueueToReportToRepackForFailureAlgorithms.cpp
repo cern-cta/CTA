@@ -16,8 +16,8 @@
  */
 #include "ArchiveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
   template<>
   const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForFailure>::c_containerTypeName = "ArchiveQueueToReportToRepackForFailure";
   
@@ -56,4 +56,4 @@ namespace cta { namespace objectstore {
     return ret;
   }
   
-}}
+} // namespace cta::objectstore

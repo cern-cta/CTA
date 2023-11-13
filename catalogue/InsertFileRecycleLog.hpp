@@ -22,7 +22,7 @@
 #include "TapeItemWritten.hpp"
 #include "TapeFileWritten.hpp"
 
-namespace cta { namespace catalogue {
+namespace cta::catalogue {
 
   class InsertFileRecycleLog {
   public:
@@ -45,5 +45,5 @@ namespace cta { namespace catalogue {
     }
   };
   
-}}
+} // namespace cta::catalogue
 

@@ -31,7 +31,7 @@
  * If there is no other queue available, the request should be aborted and reported back to the user.
  */
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class RetrieveRequest;
 
@@ -66,5 +66,4 @@ private:
   double m_heartBeatTimeout;
 };
 
-}
-}
+} // namespace cta::objectstore
