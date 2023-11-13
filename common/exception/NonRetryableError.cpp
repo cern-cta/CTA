@@ -27,5 +27,5 @@ NonRetryableError::NonRetryableError(const std::string &context, const bool embe
   Exception(context, embedBacktrace) {
 }
 
-} // namespace catalogue
+} // namespace exception
 } // namespace cta
