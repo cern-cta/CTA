@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Code Quality
+- cta/CTA#530 - Remove deprecated protobuf method from the code
+
 # v4.10.8-1
 
 ### Features
