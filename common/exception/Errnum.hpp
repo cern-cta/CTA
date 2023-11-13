@@ -18,7 +18,7 @@
 #pragma once
 
 #include "Exception.hpp"
-#include<functional>
+#include <functional>
 #include <system_error>
 
 namespace cta {
@@ -54,5 +54,5 @@ namespace exception {
     int m_errnum;
     std::string m_strerror;
   };
-}
-}
+
+}}
