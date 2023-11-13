@@ -69,6 +69,6 @@ if test -f "/etc/config/eos/eos4"; then
   # Switch to EOS-4 versionlock
   /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos4
 
-  yum-config-manager --disable cta-ci-eos-5
+  yum-config-manager --disable cta-ci-eos-5.2
   yum-config-manager --enable cta-ci-eos
 fi
