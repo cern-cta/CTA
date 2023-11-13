@@ -156,8 +156,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
 
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 std::atomic<bool> CtaAdminCmd::is_json(false);
 std::atomic<bool> CtaAdminCmd::is_first_record(true);
@@ -555,7 +554,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    throw std::runtime_error(help.str());
 }
 
-}} // namespace cta::admin
+} // namespace cta::admin
 
 
 
