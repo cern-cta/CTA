@@ -160,6 +160,10 @@ if test -f /var/log/eos/fst/cta-fst-gcd.log; then
   NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
 fi
 
+# Set EOS_FST_HTTP_PORT for EOS FST process
+# works only for 1 FST
+export EOS_FST_HTTP_PORT=$(grep libXrdHttp.so /etc/xrd.cf.fst  | sed -e 's/.*XrdHttp://;s/ .*//')
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # generate eos_env file for systemd
   cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
