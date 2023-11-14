@@ -14,7 +14,7 @@ enabled=1
 
 [cta-ci-eos-5]
 name=CTA CI repo eos cache
-baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/eos5/
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/eos5.2/
 priority=4
 gpgcheck=0
 enabled=1
