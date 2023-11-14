@@ -29,10 +29,10 @@ class ProtobufCleaner {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
   }
   
- virtual ~ProtobufCleaner() {
-   // Make protobuf cleanup memory to not trigger memory leaks detectors.
-   google::protobuf::ShutdownProtobufLibrary();
- }
+  virtual ~ProtobufCleaner() {
+    // Make protobuf cleanup not trigger memory leak detectors
+    google::protobuf::ShutdownProtobufLibrary();
+  }
 } g_protobufCleaner;
 
-}} // end of namespaces
+} // namespace cta::objectstore
