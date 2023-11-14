@@ -8,6 +8,8 @@
     expire_in: 30 days
     paths:
     - ${BUILD_PATH}
+  tags:
+    - docker
 
 .cta_srpm:
   extends:
