@@ -41,9 +41,6 @@ AgentReference::AgentReference(const std::string & clientType, log::Logger &logg
   char host[200];
   cta::exception::Errnum::throwOnMinusOne(::gethostname(host, sizeof(host)),
     "In AgentId::AgentId:  failed to gethostname");
-
-  if (sizeof(host)/sizeof(char) > 45) host[45]= '\0';
-
   // gettid is a safe system call (never fails)
   uint64_t id=g_nextAgentId++;
   aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
