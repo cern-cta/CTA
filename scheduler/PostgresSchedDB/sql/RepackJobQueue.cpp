@@ -19,4 +19,6 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+namespace cta::postgresscheddb::sql {
+
 } // namespace cta::postgresscheddb::sql

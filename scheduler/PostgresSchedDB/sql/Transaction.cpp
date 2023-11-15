@@ -64,5 +64,4 @@ rdbms::Conn &Transaction::conn() {
   return m_conn;
 }
 
-}
-}
+} // namespace cta::postgresscheddb
