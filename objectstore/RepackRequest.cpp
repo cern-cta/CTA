@@ -80,7 +80,6 @@ void RepackRequest::initialize() {
   m_payload.set_lastexpandedfseq(0);
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
-  m_payload.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
   m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
   m_payload.set_repack_finished_time(0);
