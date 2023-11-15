@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyLogicalLibraryCatalogue : public LogicalLibraryCatalogue {
 public:
@@ -50,5 +49,4 @@ public:
     const bool disabledValue) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -21,8 +21,7 @@
 
 #include <sys/types.h>
 
-namespace cta    {
-namespace exception {
+namespace cta::exception {
 
 /**
  * castor::io::acceptConnection() was interrupted.
@@ -55,6 +54,5 @@ private:
 
 }; // class AcceptConnectionInterrupted
       
-} // end of namespace exception
-} // end of namespace cta
+} // namespace cta::exception
 

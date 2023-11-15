@@ -26,9 +26,7 @@
 #include <string>
 #include <cstdint>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 class PostgresStmt;
 class PostgresRset;
@@ -298,6 +296,4 @@ private:
 }; // class PostgresConn
 
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

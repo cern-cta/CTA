@@ -18,8 +18,7 @@
 #include "SchemaChecker.hpp"
 #include "SQLiteSchemaComparer.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SchemaChecker::SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn)
   : m_databaseToCheckName(databaseToCheckName),
@@ -188,5 +187,4 @@ std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
   return schemaChecker;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

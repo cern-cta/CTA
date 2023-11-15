@@ -17,9 +17,7 @@
 
 #include "GrpcClient.hpp"
 
-namespace eos {
-namespace client {
-
+namespace eos::client {
 
 std::unique_ptr<GrpcClient>
 GrpcClient::Create(std::string endpoint, std::string token)
@@ -59,4 +57,4 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   return response;
 }
 
-}} // namespace eos::client
+} // namespace eos::client

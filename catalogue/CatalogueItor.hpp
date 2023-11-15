@@ -20,8 +20,7 @@
 #include "catalogue/CatalogueItorImpl.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A wrapper around an object that iterators over a list of items retrieved
@@ -126,5 +125,4 @@ private:
 
 }; // class CatalogueItor
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -24,8 +24,7 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 using namespace common::dataStructures;
 
@@ -781,4 +780,4 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  * This function is used on the server side
  */
 void validateCmd(const cta::admin::AdminCmd &admincmd);
-}} // namespace cta::admin
+} // namespace cta::admin

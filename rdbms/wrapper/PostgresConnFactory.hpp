@@ -21,9 +21,7 @@
 
 #include <vector>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A concrete factory of Conn objects.
@@ -60,6 +58,4 @@ private:
 
 }; // class PostgresConnFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

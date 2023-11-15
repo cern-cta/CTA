@@ -20,9 +20,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -103,6 +101,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

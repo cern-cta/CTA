@@ -19,9 +19,8 @@
 
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
+
   /**
    * This is used by both CLI and Frontend so it should work for SLC6 as well
    */  
@@ -35,7 +34,5 @@ enum FrontendReturnCode {
 
 std::string toString(FrontendReturnCode code);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures
 

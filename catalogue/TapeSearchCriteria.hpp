@@ -23,8 +23,7 @@
 
 #include "common/dataStructures/Tape.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The collection of criteria used to select a set of tapes.
@@ -102,5 +101,4 @@ struct TapeSearchCriteria {
   std::optional<common::dataStructures::Tape::State> state;
 };  // struct TapeSearchCriteria
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

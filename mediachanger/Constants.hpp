@@ -20,9 +20,8 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace cta {
-namespace mediachanger {
-  	
+namespace cta::mediachanger {
+
 const size_t HOSTNAMEBUFLEN    = 256;
 const int    LISTENBACKLOG     = 2;
 const size_t SERVICENAMEBUFLEN = 256;
@@ -85,5 +84,4 @@ const int RMC_MAX_RQST_ATTEMPTS = 10;
  */
 const uint32_t RMC_MAGIC = 0x120D0301;
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

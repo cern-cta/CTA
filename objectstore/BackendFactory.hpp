@@ -23,11 +23,10 @@
 #include "Backend.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace objectstore {
+namespace cta::objectstore {
+
 class BackendFactory {
  public:
   static std::unique_ptr<Backend> createBackend(const std::string & URL, log::Logger & logger);
 };
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

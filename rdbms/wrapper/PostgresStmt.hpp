@@ -30,9 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 class PostgresRset;
 
@@ -338,6 +336,4 @@ private:
 
 }; // class PostgresStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

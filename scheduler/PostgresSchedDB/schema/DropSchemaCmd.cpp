@@ -22,8 +22,7 @@
 
 #include <algorithm>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -204,5 +203,4 @@ void DropSchemaCmd::printUsage(std::ostream &os) {
   DropSchemaCmdLineArgs::printUsage(os);
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

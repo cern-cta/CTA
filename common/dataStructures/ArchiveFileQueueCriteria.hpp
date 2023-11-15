@@ -22,9 +22,7 @@
 
 #include <stdint.h>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The queueing criteria created after preparing for a new archive file within
@@ -61,6 +59,4 @@ struct ArchiveFileQueueCriteria {
 
 }; // struct ArchiveFileQueueCriteria
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

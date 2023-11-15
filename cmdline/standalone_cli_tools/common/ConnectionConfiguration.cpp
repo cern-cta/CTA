@@ -22,8 +22,7 @@
 #include <string>
 #include <utility>
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 std::unique_ptr<::eos::client::EndpointMap> ConnConfiguration::setNamespaceMap(const std::string &keytab_file) {
   // Open the keytab file for reading
@@ -118,5 +117,4 @@ std::tuple<std::unique_ptr<XrdSsiPbServiceType>, std::unique_ptr<::eos::client::
   }
 }
 
-} // namespace cliTool
-} // namespace cta
+} // namespace cta::cliTool

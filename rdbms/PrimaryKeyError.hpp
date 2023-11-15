@@ -22,8 +22,7 @@
 #include <string>
 
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A database constraint has been violated.
@@ -49,5 +48,4 @@ public:
   
 }; // class PrimaryKeyError
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

@@ -27,8 +27,7 @@
 #include <cstdint>
 #include <time.h>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class ArchiveJob : public SchedulerDatabase::ArchiveJob {
  friend class cta::PostgresSchedDB;
@@ -49,5 +48,4 @@ class ArchiveJob : public SchedulerDatabase::ArchiveJob {
    std::string reportType;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

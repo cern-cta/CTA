@@ -21,8 +21,7 @@
 #include "common/Constants.hpp"
 #include "Constants.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * The body of an RMC_SCSI_UNMOUNT message
@@ -50,6 +49,5 @@ struct RmcUnmountMsgBody {
   static const RequestType requestType = RMC_UNMOUNT;
 }; // struct RmcUnmountMsgBody
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

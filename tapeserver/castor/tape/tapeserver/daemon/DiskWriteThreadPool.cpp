@@ -23,10 +23,7 @@
 #include <sstream>
 #include <utility>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -224,8 +221,5 @@ logWithStat(int level, const std::string& msg) {
              m_threadStat.transferTime : 0.0);
   m_lc.log(level, msg);
 }
-}
-}
-}
-}
 
+} // namespace castor::tape::tapeserver::daemon

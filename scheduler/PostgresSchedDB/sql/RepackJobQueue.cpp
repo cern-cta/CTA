@@ -19,11 +19,4 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
-
-
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

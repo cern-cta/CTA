@@ -19,9 +19,7 @@
 
 #include <sstream>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // rcToStr
@@ -100,6 +98,4 @@ std::string Sqlite::rcToStr(const int rc) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

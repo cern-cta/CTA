@@ -22,8 +22,7 @@
 #include "RepackQueue.hpp"
 #include "GenericObject.hpp"
 
-namespace cta {
-namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // RepackQueue::RepackQueue()
@@ -165,5 +164,4 @@ std::string RepackQueue::dump() {
   return headerDump;
 }
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

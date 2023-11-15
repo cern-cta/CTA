@@ -22,9 +22,7 @@
 #include <string.h>
 #include <typeinfo>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A class to help with preparing batch inserts and updatesi with the OCCI
@@ -219,6 +217,4 @@ private:
 
 }; // OcciColumn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

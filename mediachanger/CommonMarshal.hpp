@@ -26,8 +26,7 @@
 #include <time.h>
 
 
-namespace cta    {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Marshals the specified source message header structure into the
@@ -70,7 +69,6 @@ template<int n> size_t marshal(char (&dst)[n],
  */
 void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst);
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 
 

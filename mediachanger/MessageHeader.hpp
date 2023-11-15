@@ -19,8 +19,7 @@
 
 #include <stdint.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * A message header
@@ -52,6 +51,5 @@ struct MessageHeader {
   MessageHeader();
 }; // struct MessageHeader
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

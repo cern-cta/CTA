@@ -18,8 +18,7 @@
 
 #include "DatabaseStatisticsServiceFactory.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn* databaseConnection,
   cta::rdbms::Login::DbType dbType) {
@@ -37,5 +36,4 @@ std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::cre
   }
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

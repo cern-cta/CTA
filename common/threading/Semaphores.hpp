@@ -22,8 +22,7 @@
 #include <stdint.h>
 #include "common/threading/Mutex.hpp"
 
-namespace cta {
-namespace threading {   
+namespace cta::threading {
 
 /**
    * An exception throwing wrapper to posix semaphores.
@@ -75,5 +74,4 @@ namespace threading {
   };
 #endif // ndef __APPLE__
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

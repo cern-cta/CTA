@@ -20,8 +20,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /**
  * Forward declaration of the friend class that represents a pthread condition
@@ -44,5 +43,4 @@ private:
   pthread_mutex_t m_mutex;
 };
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

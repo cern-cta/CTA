@@ -27,10 +27,8 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
   class MemBlock;
 /**
  * The DiskWriteFileTask is responsible to write a single file onto disk as part of a recall
@@ -128,4 +126,4 @@ private:
   void logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc) ;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

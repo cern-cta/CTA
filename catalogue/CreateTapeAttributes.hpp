@@ -22,8 +22,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The tape attributes required to create a new tape entry in the CTA catalogue.
@@ -90,5 +89,4 @@ struct CreateTapeAttributes {
   }
 }; // struct CreateTapeAttributes
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

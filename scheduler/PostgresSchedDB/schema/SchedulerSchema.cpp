@@ -20,8 +20,7 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -64,5 +63,4 @@ std::map<std::string, uint64_t> SchedulerSchema::getSchemaVersion() const {
   }
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

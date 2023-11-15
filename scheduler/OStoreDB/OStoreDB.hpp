@@ -674,4 +674,4 @@ class OStoreDB: public SchedulerDatabase {
   objectstore::AgentReference *m_agentReference = nullptr;
 };
 
-}  // namespace cta
+} // namespace cta

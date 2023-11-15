@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Class representing a generic tape-library slot as found in the
@@ -92,5 +91,4 @@ private:
 
 }; // class LibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

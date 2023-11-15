@@ -19,8 +19,7 @@
 
 #include "catalogue/CmdLineTool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Command-line tool that creates an admin user.
@@ -59,5 +58,4 @@ private:
   void printUsage(std::ostream &os) override;
 };  // class CreateAdminUserCmd
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -21,8 +21,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
   /**
@@ -229,5 +228,4 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesForRepackItor::
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

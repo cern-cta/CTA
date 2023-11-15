@@ -21,8 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SqlitePhysicalLibraryCatalogue::SqlitePhysicalLibraryCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -55,5 +54,4 @@ uint64_t SqlitePhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &c
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -24,8 +24,7 @@
 
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 TextFormatter::~TextFormatter() {
   try {
@@ -1271,4 +1270,4 @@ void TextFormatter::print(const PhysicalLibraryLsItem & plls_item){
   );
 }
 
-}}
+} // namespace cta::admin

@@ -31,8 +31,7 @@
 #include <set>
 #include <future>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class Helpers {
  public:
@@ -99,5 +98,4 @@ class Helpers {
                 const std::string                     &message = "");
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

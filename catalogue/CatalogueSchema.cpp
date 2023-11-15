@@ -20,8 +20,7 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -204,5 +203,4 @@ std::map<std::string, uint64_t> CatalogueSchema::getSchemaVersion() const {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

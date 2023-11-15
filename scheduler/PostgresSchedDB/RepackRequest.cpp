@@ -25,8 +25,7 @@
 // generated during build in the build tree
 #include "PostgresSchedDB/rowblobs.pb.h"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 uint64_t RepackRequest::getLastExpandedFSeq()
 {
@@ -534,5 +533,4 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
   return *this;
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

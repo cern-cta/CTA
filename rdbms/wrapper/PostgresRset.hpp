@@ -27,9 +27,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * The result set of an sql query.
@@ -178,6 +176,4 @@ private:
 
 }; // class PostgresRset
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

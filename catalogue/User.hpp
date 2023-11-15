@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
   * A fully qualified user, in other words the name of the disk instance and
@@ -60,5 +59,4 @@ struct User {
   }
 }; // struct User
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

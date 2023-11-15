@@ -22,8 +22,7 @@
 #include <string>
 
 
-namespace cta    {
-namespace exception {
+namespace cta::exception {
 
 /**
  * No port in range exception.
@@ -72,6 +71,5 @@ private:
 
 }; // class NoPortInRange
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception
 

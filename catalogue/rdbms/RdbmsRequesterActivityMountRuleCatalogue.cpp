@@ -26,8 +26,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsRequesterActivityMountRuleCatalogue::RdbmsRequesterActivityMountRuleCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
@@ -278,5 +277,4 @@ void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(
   m_rdbmsCatalogue->m_userMountPolicyCache.invalidate();
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

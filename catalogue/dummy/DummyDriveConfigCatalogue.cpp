@@ -18,8 +18,7 @@
 #include "catalogue/dummy/DummyDriveConfigCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyDriveConfigCatalogue::createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
   const std::string &keyName, const std::string &value, const std::string &source) {
@@ -47,5 +46,4 @@ void DummyDriveConfigCatalogue::deleteTapeDriveConfig(const std::string &tapeDri
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

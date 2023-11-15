@@ -84,5 +84,4 @@ private:
 
 };  // class OracleTapeFileCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

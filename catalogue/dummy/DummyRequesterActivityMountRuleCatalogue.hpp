@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/RequesterActivityMountRuleCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyRequesterActivityMountRuleCatalogue : public RequesterActivityMountRuleCatalogue {
 public:
@@ -45,5 +44,4 @@ public:
     const std::string &activityRegex) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -17,9 +17,7 @@
 
 #include "JobQueueType.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::string toString(JobQueueType queueType) {
   switch (queueType) {
@@ -40,6 +38,4 @@ std::string toString(JobQueueType queueType) {
   }
 }
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

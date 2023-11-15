@@ -20,8 +20,7 @@
 
 #include <unistd.h>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -99,5 +98,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

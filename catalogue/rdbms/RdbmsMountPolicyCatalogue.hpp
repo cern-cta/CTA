@@ -149,5 +149,4 @@ private:
     const std::string &activity) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

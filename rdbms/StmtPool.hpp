@@ -28,8 +28,7 @@
 #include <memory>
 #include <stdint.h>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 namespace wrapper {
   class ConnWrapper;
@@ -91,5 +90,4 @@ private:
 
 }; // class StmtPool
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

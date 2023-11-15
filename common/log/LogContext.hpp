@@ -21,8 +21,7 @@
 
 #include <ostream>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Container for a set of parameters to be used repetitively in logs. The
@@ -162,5 +161,4 @@ class ScopedParamContainer{
 
 std::ostream & operator << (std::ostream & os , const LogContext & lc);
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

@@ -22,8 +22,7 @@
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 uint64_t DummyArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
@@ -89,5 +88,4 @@ void DummyArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const st
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

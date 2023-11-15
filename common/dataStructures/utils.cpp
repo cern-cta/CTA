@@ -17,9 +17,7 @@
 
 #include "common/dataStructures/utils.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::ostream &operator<<(std::ostream &os, const std::list<TapeFile> &list) {
   os << "(";
@@ -62,6 +60,4 @@ std::ostream &operator<<(std::ostream &os, const std::map<std::string,std::pair<
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

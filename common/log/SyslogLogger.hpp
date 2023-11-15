@@ -27,8 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Class implementaing the API of the CASTOR logging system.
@@ -80,6 +79,5 @@ protected:
 
 }; // class SyslogLogger
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log
 

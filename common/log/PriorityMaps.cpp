@@ -22,8 +22,7 @@
 #include "Constants.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
   const std::map<int,std::string> PriorityMaps::c_priorityToTextMap = {
     {LOG_EMERG,"EMERG"},
@@ -57,5 +56,5 @@ namespace log {
     return ret;
   }
 
-}}
+} // namespace cta::log
 

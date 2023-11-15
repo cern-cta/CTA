@@ -22,8 +22,7 @@
 #include "CatalogueSchema.hpp"
 #include "SchemaCheckerResult.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * This class allows to check the catalogue schema validity running in a specific database
@@ -157,5 +156,4 @@ private:
   void checkSchemaComparerNotNull(const std::string & methodName);
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

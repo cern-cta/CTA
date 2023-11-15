@@ -18,8 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -90,5 +89,4 @@ MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryTyp
   }
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

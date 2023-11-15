@@ -19,8 +19,7 @@
 
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * An SQLite implementation of the CTA catalogue.
@@ -64,5 +63,4 @@ protected:
     const std::optional<std::vector<std::string>> &diskFileIds) const override;
 }; // class SqliteCatalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -143,4 +143,4 @@ protected:
   std::atomic<bool> m_sessionRunning;
 };  // class ArchiveMount
 
-}  // namespace cta
+} // namespace cta

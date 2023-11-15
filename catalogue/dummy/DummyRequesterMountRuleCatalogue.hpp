@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyRequesterMountRuleCatalogue : public RequesterMountRuleCatalogue {
 public:
@@ -42,5 +41,4 @@ public:
   void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -20,8 +20,7 @@
 #include "DatabaseStatisticsServiceFactory.hpp"
 #include "JsonStatisticsServiceFactory.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 /**
  * Creates a database StatisticsService corresponding to the dbType passed in parameter
@@ -43,5 +42,4 @@ std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(std::ostream
   return JsonStatisticsServiceFactory::create(&ostream);
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

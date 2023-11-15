@@ -20,8 +20,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-namespace cta {
-namespace utils {
+namespace cta::utils {
 
 /**
  * A small timing class.
@@ -74,6 +73,5 @@ private:
 
 }; // class Timer
 
-} // namespace utils
-} // namespace cta
+} // namespace cta::utils
 

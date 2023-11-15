@@ -23,10 +23,8 @@
 #include "EncryptionControl.hpp"
 #include "catalogue/TapePool.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -207,7 +205,4 @@ std::string EncryptionControl::argsToString(std::list<std::string> args, const s
   return toBeReturned.str();
 }
 
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeserver::daemon

@@ -24,6 +24,7 @@
 #include <bfd.h>
 #include <sstream>
 namespace cta {
+
   namespace exception {
     class bfdContext {
     public:
@@ -45,7 +46,7 @@ namespace cta {
       asection *m_text;
     };
   }
-}
+} // namespace cta
 
 // code dedicated to extracting more information in the backtraces, typically
 // resolving line numbers from adresses
@@ -69,14 +70,14 @@ m_abfd(nullptr), m_syms(nullptr), m_text(nullptr)
       m_text = bfd_get_section_by_name(m_abfd, ".text");
     }
   }
-}
+} // namespace cta
 
 cta::exception::bfdContext::~bfdContext() {
   free (m_syms);
   /* According the bfd documentation, closing the bfd frees everything */
   m_text=nullptr;
   bfd_close(m_abfd);
-}
+} // namespace cta
 
 std::string cta::exception::bfdContext::collectExtraInfos(const std::string& address) {
   std::ostringstream result;
@@ -102,9 +103,10 @@ std::string cta::exception::bfdContext::collectExtraInfos(const std::string& add
   }
   m_mutex.unlock();
   return result.str();
-}
+} // namespace cta
 
 namespace cta {
+
   namespace exception {
     bfdContext g_bfdContext;
   }

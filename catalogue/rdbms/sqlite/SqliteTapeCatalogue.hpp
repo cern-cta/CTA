@@ -21,9 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsTapeCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -38,5 +36,4 @@ private:
   uint64_t getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const override;
 };  // class SqliteTapeCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

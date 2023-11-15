@@ -23,9 +23,8 @@
 #include <iostream>
 #include <fstream>
 
-namespace cta {
-namespace catalogue {
-  
+namespace cta::catalogue {
+
 SQLiteSchemaInserter::SQLiteSchemaInserter(rdbms::Conn &sqliteConn): m_sqliteCatalogueConn(sqliteConn){}
 
 SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
@@ -49,4 +48,4 @@ void SQLiteSchemaInserter::executeStatements(const std::list<std::string>& sqlit
   }
 }
 
-}}
+} // namespace cta::catalogue

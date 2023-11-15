@@ -20,9 +20,8 @@
 #include "SchemaChecker.hpp"
 #include "SetProductionCmdLineArgs.hpp"
 
-namespace cta {
-namespace catalogue {
-  
+namespace cta::catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -98,4 +97,4 @@ void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) {
 }
 
 
-}}
+} // namespace cta::catalogue

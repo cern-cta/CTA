@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/MountPolicyCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyMountPolicyCatalogue : public MountPolicyCatalogue {
 public:
@@ -55,5 +54,4 @@ public:
     const std::string &comment) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

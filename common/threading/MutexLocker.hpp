@@ -21,8 +21,7 @@
 
 #include <pthread.h>
 
-namespace cta { 
-namespace threading {
+namespace cta::threading {
 
 /**
  * Forward declaration of the friend class representing a pthread condition
@@ -97,5 +96,4 @@ private:
 
 }; // class MutexLocker
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

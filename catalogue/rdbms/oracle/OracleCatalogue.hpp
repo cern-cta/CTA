@@ -22,8 +22,7 @@
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * An Oracle based implementation of the CTA catalogue.
@@ -69,5 +68,4 @@ public:
     const std::optional<std::vector<std::string>> &diskFileIds) const override;
 }; // class OracleCatalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

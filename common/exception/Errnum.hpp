@@ -21,8 +21,8 @@
 #include <functional>
 #include <system_error>
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
+
   class Errnum: public cta::exception::Exception {
   public:
     Errnum(std::string what = "");
@@ -55,4 +55,4 @@ namespace exception {
     std::string m_strerror;
   };
 
-}}
+} // namespace cta::exception

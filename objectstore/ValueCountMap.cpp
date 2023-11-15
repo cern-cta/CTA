@@ -20,8 +20,7 @@
 
 #include "ValueCountMap.hpp"
 
-namespace cta {
-namespace objectstore {
+namespace cta::objectstore {
 
 template<>
 ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCountPair>, uint64_t>::ValueCountMap(
@@ -57,5 +56,4 @@ uint64_t ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCoun
   return ret;
 }
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

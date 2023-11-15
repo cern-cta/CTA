@@ -24,8 +24,7 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -131,5 +130,4 @@ void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sq
   }
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

@@ -23,8 +23,7 @@
 #include <cstdint>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure describing a tape media type together with cfeation and last
@@ -44,5 +43,4 @@ struct MediaTypeWithLogs: public MediaType {
 
 }; // struct MediaType
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

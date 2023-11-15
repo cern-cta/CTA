@@ -19,8 +19,7 @@
 #include "GrpcUtils.hpp"
 
 
-namespace eos {
-namespace client {
+namespace eos::client {
 
 void checkPrefix(std::string &prefix)
 {
@@ -55,4 +54,4 @@ Dirname manglePathname(const std::string &remove_prefix, const std::string &add_
   return dir;
 }
 
-}} // namespace eos::client
+} // namespace eos::client

@@ -21,8 +21,7 @@
 #include "mediachanger/DummyLibrarySlot.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Creates objects representing tape library slots by parsing their string
@@ -109,5 +108,4 @@ private:
 
 }; // class LibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

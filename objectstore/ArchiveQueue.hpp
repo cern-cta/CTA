@@ -29,10 +29,8 @@
 #include "objectstore/cta.pb.h"
 #include <string>
 
-namespace cta {
+namespace cta::objectstore {
 
-namespace objectstore {
-  
 class GenericObject;
 
 class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
@@ -154,4 +152,4 @@ class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::
 class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
   
-}}
+} // namespace cta::objectstore

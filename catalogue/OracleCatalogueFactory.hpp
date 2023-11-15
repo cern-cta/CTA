@@ -96,5 +96,4 @@ private:
 
 }; // class OracleCatalogueFactory
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

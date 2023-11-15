@@ -21,9 +21,7 @@
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 using SessionVid = std::string;
 using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
@@ -82,6 +80,4 @@ private:
   void processFatal(const serializers::WatchdogMessage& message);
 };
 
-} // namespace daemon
-} // namespace tape
-} // namespace cta
+} // namespace cta::tape::daemon

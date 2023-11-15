@@ -27,10 +27,7 @@
 #include <memory>
 #include <utility>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
 public:
@@ -252,9 +249,4 @@ private:
   const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
 };
 
-}
-}
-}
-}
-
-
+} // namespace castor::tape::tapeserver::daemon

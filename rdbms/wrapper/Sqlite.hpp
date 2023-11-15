@@ -20,9 +20,7 @@
 #include <sqlite3.h>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A helper class for working with SQLite.
@@ -40,6 +38,4 @@ public:
 
 }; // class SqlLiteStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

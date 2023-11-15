@@ -26,12 +26,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 class DesiredDriveState;
 struct TapeDrive;
 struct TapeDriveStatistics;
-}
 }
 
 namespace log {
@@ -115,5 +113,4 @@ public:
     const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
 };  // class DriveStateCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

@@ -33,8 +33,7 @@
 
 #include "AllCatalogueSchema.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
@@ -192,5 +191,4 @@ std::list<std::string> CppSchemaStatementsReader::getStatements() {
   return getAllStatementsFromSchema(m_schema.sql);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

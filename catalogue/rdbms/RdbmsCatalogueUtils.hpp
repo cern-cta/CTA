@@ -26,10 +26,8 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
-}
 }
 
 namespace log {
@@ -85,5 +83,4 @@ public:
   static std::string generateTapeStateModifiedBy(const common::dataStructures::SecurityIdentity & admin);
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

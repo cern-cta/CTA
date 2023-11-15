@@ -87,5 +87,4 @@ private:
   std::optional<uint64_t> getMediaTypeId(rdbms::Conn &conn, const std::string &name) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

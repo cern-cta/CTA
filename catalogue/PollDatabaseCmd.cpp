@@ -23,8 +23,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -80,5 +79,4 @@ void PollDatabaseCmd::printUsage(std::ostream &os) {
   PollDatabaseCmdLineArgs::printUsage(os);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

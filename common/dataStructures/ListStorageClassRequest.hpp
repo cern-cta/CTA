@@ -24,9 +24,7 @@
 
 #include "common/dataStructures/RequesterIdentity.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This request tells CTA to list all storage classes 
@@ -45,6 +43,4 @@ struct ListStorageClassRequest {
 
 std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

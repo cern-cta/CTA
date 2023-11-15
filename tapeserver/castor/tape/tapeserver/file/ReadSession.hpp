@@ -23,13 +23,10 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
-namespace tapeserver {
-namespace drive {
+namespace tapeserver::drive {
 class DriveInterface;
-}
 }
 
 namespace tapeFile {
@@ -167,6 +164,4 @@ protected:
   bool m_detectedLbp;
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+}} // namespace castor::tape::tapeFile

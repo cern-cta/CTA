@@ -17,8 +17,7 @@
 
 #include "catalogue/TapeForWriting.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -51,5 +50,4 @@ std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj) {
   return os;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

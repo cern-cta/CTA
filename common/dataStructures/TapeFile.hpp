@@ -23,9 +23,7 @@
 
 #include <common/checksum/ChecksumBlob.hpp>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds location information of a specific tape file 
@@ -83,6 +81,4 @@ struct TapeFile {
 
 std::ostream &operator<<(std::ostream &os, const TapeFile &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

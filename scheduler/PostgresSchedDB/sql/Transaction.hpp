@@ -19,8 +19,7 @@
 
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class Transaction {
 public:
@@ -87,5 +86,4 @@ private:
   bool m_begin;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

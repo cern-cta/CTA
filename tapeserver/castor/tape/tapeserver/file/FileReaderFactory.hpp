@@ -25,9 +25,7 @@ namespace cta {
 class RetrieveJob;
 }
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class FileReader;
 class ReadSession;
@@ -38,6 +36,4 @@ public:
     const cta::RetrieveJob &fileToRecall);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

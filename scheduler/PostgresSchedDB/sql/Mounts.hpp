@@ -18,9 +18,7 @@
 
 #pragma once
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct MountsRow {
   uint64_t mountId;
@@ -74,6 +72,4 @@ struct MountsRow {
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

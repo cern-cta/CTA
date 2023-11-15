@@ -17,10 +17,8 @@
 
 #pragma once
 
-namespace castor {
-namespace tape {
-namespace utils {
-  
+namespace castor::tape::utils {
+
 template <class T> void suppresUnusedVariable(const T&){}
 
-}}}
+} // namespace castor::tape::utils

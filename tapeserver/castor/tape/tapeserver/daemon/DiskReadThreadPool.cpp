@@ -21,10 +21,7 @@
 #include <memory>
 #include <sstream>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // DiskReadThreadPool constructor
@@ -206,5 +203,5 @@ logWithStat(int level, const std::string& message){
               m_threadStat.transferTime?(m_threadStat.openingTime+m_threadStat.readWriteTime+m_threadStat.closingTime)/m_threadStat.transferTime:0.0);
     m_lc.log(level,message);
 }
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

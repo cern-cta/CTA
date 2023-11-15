@@ -16,8 +16,8 @@
  */
 
 #pragma once
-namespace cta{
-namespace objectstore{
+namespace cta::objectstore {
+
   class LifecycleTimingsSerDeser: public cta::common::dataStructures::LifecycleTimings{
     public:
       LifecycleTimingsSerDeser() : cta::common::dataStructures::LifecycleTimings() {}
@@ -40,4 +40,4 @@ namespace objectstore{
 	lifecycleTimings.set_first_selected_time(first_selected_time);
       }
   };
-}}
+} // namespace cta::objectstore

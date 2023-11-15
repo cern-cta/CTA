@@ -19,10 +19,8 @@
 
 #include <string>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace utils {
+namespace cta::frontend::grpc::utils {
+
 /**
  * Load the content of the file into a string
  */
@@ -36,7 +34,4 @@ void decode(const std::string& strEncoded, std::string& strDecoded);
  */
 void encode(const std::string& strDecoded, std::string& strEncoded);
 
-} // namespace utils
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::utils

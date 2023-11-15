@@ -31,11 +31,8 @@
 #include <map>
 #include <unistd.h>
 
-namespace castor {
+namespace castor::tape::tapeserver::daemon {
 
-namespace tape {
-namespace tapeserver {
-namespace daemon {
 /**
  * Virtual class for watching tape read or write operation (mostly complete)
  */
@@ -574,4 +571,4 @@ public:
   }
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

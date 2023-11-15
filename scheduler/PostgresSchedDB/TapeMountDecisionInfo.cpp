@@ -22,9 +22,7 @@
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/sql/Mounts.hpp"
 
-namespace cta {
-
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_PostgresSchedDB(pdb),
@@ -169,5 +167,4 @@ void TapeMountDecisionInfo::commit() {
   m_lockTaken = false;
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

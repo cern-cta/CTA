@@ -19,9 +19,7 @@
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -47,6 +45,4 @@ std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

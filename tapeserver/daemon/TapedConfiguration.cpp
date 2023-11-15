@@ -21,7 +21,8 @@
 
 #include <algorithm>
 
-namespace cta { 
+namespace cta {
+
 //------------------------------------------------------------------------------
 // addLogParamForValue
 //------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogC
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
   lc.pushOrReplace({"devFilename", m_value.devFilename});
   lc.pushOrReplace({"librarySlot", m_value.rawLibrarySlot});
-}
+} // namespace cta
 
 //------------------------------------------------------------------------------
 // addLogParamForValue
@@ -41,7 +42,7 @@ template<>
 void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
-}
+} // namespace cta
 
 //------------------------------------------------------------------------------
 // set
@@ -78,8 +79,8 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
   std::istringstream(files) >> m_value.maxFiles;
   m_source = source;
   m_set = true;
-}
-}
+} // namespace cta
+} // namespace cta
 
 namespace cta::tape::daemon {
 

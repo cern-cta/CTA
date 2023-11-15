@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyFileRecycleLogCatalogue: public FileRecycleLogCatalogue {
 public:
@@ -36,5 +35,4 @@ public:
   void deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

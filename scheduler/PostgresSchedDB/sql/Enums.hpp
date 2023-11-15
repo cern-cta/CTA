@@ -26,8 +26,7 @@
 // cta::from_string<T>(string). The string array is also used to define the valid values in the
 // enumerated type in the PostgreSQL schema.
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 // ============================== Archive Job Status ===========================
 
@@ -112,7 +111,6 @@ constexpr const char* const StringsRepackJobStatus[] = {
 };
 
 
-} // namespace postgresscheddb
 
 // Define to_string and from_string in cta namespace
 
@@ -121,4 +119,4 @@ TO_STRING(ArchiveJobStatus)
 TO_STRING(RetrieveJobStatus)
 TO_STRING(RepackJobStatus)
 
-} // namespace cta
+} // namespace cta::postgresscheddb

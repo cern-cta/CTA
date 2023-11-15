@@ -17,13 +17,12 @@
 
 #pragma once
 
-#include "Backend.hpp"
-#include "common/exception/Exception.hpp"
-#include "objectstore/cta.pb.h"
-#include "common/log/LogContext.hpp"
 #include <memory>
 #include <stdint.h>
 #include <cryptopp/base64.h>
+#include "Backend.hpp"
+#include "objectstore/cta.pb.h"
+#include "common/log/LogContext.hpp"
 
 namespace cta {
 
@@ -645,4 +644,4 @@ protected:
   PayloadType m_payload;
 };
 
-}}
+}} // namespace cta::objectstore

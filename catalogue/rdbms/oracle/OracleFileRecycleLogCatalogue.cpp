@@ -31,8 +31,7 @@
 #include "common/Timer.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 OracleFileRecycleLogCatalogue::OracleFileRecycleLogCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -113,5 +112,4 @@ uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

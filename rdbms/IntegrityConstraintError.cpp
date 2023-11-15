@@ -17,8 +17,7 @@
 
 #include "rdbms/IntegrityConstraintError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -37,5 +36,4 @@ IntegrityConstraintError::IntegrityConstraintError(
 IntegrityConstraintError::~IntegrityConstraintError() noexcept {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

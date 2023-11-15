@@ -18,9 +18,7 @@
 #include <map>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A map from column name to column index and type.
@@ -96,6 +94,4 @@ private:
 
 }; // class ColumnNameToIdxAndType
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

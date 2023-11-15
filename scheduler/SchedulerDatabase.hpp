@@ -57,21 +57,24 @@
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta {
+
 // Forward declarations for opaque references.
-namespace common {
-namespace admin {
+namespace common::admin {
 class AdminUser;
-}  // cta::common::admin
-namespace archiveRoute {
+}
+
+namespace common::archiveRoute {
 class ArchiveRoute;
-}  // cta::common::archiveRoute
-}  // cta::common
+}
+
 namespace log {
 class TimingList;
-}  // cta::log
+}
+
 namespace utils {
 class Timer;
-}  // cta::utils
+}
+
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
@@ -81,13 +84,11 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class RepackRequest;
+
 namespace objectstore {
 class RetrieveRequest;
 class ArchiveRequest;
 }
-}  // namespace cta
-
-namespace cta {
 
 /**
  * Abstract class defining the interface to the database of a tape resource

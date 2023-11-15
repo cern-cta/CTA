@@ -18,10 +18,7 @@
 
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace drive {
+namespace castor::tape::tapeserver::drive {
 
 CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
 /**
@@ -610,4 +607,4 @@ public:
   bool isEncryptionCapEnabled() override;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::drive

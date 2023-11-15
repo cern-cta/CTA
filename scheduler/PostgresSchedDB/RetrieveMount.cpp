@@ -20,8 +20,7 @@
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 const SchedulerDatabase::RetrieveMount::MountInfo &RetrieveMount::getMountInfo()
 {
@@ -116,5 +115,4 @@ void RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uin
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

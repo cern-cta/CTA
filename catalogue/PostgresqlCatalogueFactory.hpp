@@ -100,5 +100,4 @@ private:
 
 }; // class PostgresqlCatalogueFactory
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

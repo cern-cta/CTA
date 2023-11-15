@@ -17,9 +17,7 @@
 
 #include "FrontendReturnCode.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::string toString(FrontendReturnCode rc) {
   switch(rc) {
@@ -38,6 +36,4 @@ std::string toString(FrontendReturnCode rc) {
   }
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

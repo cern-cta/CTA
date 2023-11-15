@@ -26,8 +26,7 @@
 #include "StatisticsService.hpp"
 #include "StatisticsServiceFactory.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -102,5 +101,4 @@ void StatisticsUpdateCmd::printUsage(std::ostream &os) {
   StatisticsUpdateCmdLineArgs::printUsage(os);
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

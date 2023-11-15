@@ -33,8 +33,7 @@
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 OracleArchiveFileCatalogue::OracleArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue* rdbmsCatalogue)
@@ -340,5 +339,4 @@ std::map<uint64_t, OracleArchiveFileCatalogue::FileSizeAndChecksum>
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/TapeFileCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyTapeFileCatalogue : public TapeFileCatalogue {
 public:
@@ -37,5 +36,4 @@ public:
     const std::optional<std::string> &mountPolicyName = std::nullopt) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

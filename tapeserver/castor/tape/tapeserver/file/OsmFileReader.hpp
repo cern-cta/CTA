@@ -24,10 +24,8 @@
 
 #include <memory>
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
-  
+namespace castor::tape::tapeFile {
+
 class OsmFileReader : public FileReader {
 public:
   /**
@@ -71,6 +69,4 @@ private:
   void setBlockSize(size_t uiBlockSize);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

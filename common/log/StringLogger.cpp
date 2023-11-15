@@ -19,8 +19,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -57,5 +56,4 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   // printf ("%s\n", headerPlusBody.c_str());
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

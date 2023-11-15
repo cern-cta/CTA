@@ -17,8 +17,7 @@
 
 #include "rdbms/LoginFactory.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // destructor
@@ -26,5 +25,4 @@ namespace rdbms {
 LoginFactory::~LoginFactory() {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

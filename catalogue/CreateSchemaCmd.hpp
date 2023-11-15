@@ -20,8 +20,7 @@
 #include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Command-line tool for creating the catalogue schema.
@@ -86,5 +85,4 @@ private:
 
 }; // class CreateSchemaCmd
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -23,8 +23,7 @@
 #include <algorithm>
 #include <bfd.h>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 LogContext::LogContext(Logger& logger) throw():
 m_log(logger) {}
@@ -120,5 +119,4 @@ std::ostream & operator << (std::ostream & os,
   return os;
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

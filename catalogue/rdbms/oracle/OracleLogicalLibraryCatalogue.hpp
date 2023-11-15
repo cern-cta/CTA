@@ -21,8 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -36,5 +35,4 @@ private:
   uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) const override;
 };  // class SqliteFileRecycleLogCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

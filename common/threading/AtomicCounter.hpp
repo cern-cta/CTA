@@ -21,8 +21,8 @@
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/Thread.hpp"
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
+
 /**
 * A helper class managing a thread safe message counter
  * When C++11 will be used, just delete it to use std::atomic
@@ -56,6 +56,5 @@ template <class T> struct AtomicCounter{
       T m_val;
       mutable Mutex m_mutex;
 };
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading
 

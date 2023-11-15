@@ -18,8 +18,7 @@
 #include "catalogue/dummy/DummyArchiveRouteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName,
   const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) {
@@ -49,5 +48,4 @@ void DummyArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

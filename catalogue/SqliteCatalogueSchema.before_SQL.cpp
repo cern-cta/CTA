@@ -17,8 +17,7 @@
 
 #include "catalogue/SqliteCatalogueSchema.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -28,5 +27,4 @@ SqliteCatalogueSchema::SqliteCatalogueSchema(): CatalogueSchema(
   ) {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

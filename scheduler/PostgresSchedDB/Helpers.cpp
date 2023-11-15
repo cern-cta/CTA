@@ -20,8 +20,7 @@
 
 #include <algorithm>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // Helpers::g_tapeStatuses
@@ -327,5 +326,4 @@ void Helpers::flushRetrieveQueueStatisticsCacheForVid(const std::string & vid){
   g_tapeStatuses.erase(vid);
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

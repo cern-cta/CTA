@@ -17,8 +17,7 @@
 
 #include "scheduler/PostgresSchedDB/schema/PostgresSchedulerSchema.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -28,5 +27,4 @@ PostgresSchedulerSchema::PostgresSchedulerSchema(): SchedulerSchema(
   ) {
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

@@ -24,8 +24,7 @@
 #include "Statistics.hpp"
 #include "StatisticsService.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 /**
  * Database statistics service that perform statistics operations
@@ -80,5 +79,4 @@ class DatabaseStatisticsService: public StatisticsService {
   // virtual void saveStatisticsPerVo(const cta::statistics::Statistics & statistics);
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

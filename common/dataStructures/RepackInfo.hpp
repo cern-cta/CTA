@@ -24,9 +24,7 @@
 #include "RepackQueueType.hpp"
 #include "EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is the repack information for a given tape
@@ -94,6 +92,4 @@ RepackQueueType getQueueType();
 std::string toString(RepackInfo::Type type);
 std::string toString(RepackInfo::Status status);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

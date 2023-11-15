@@ -273,4 +273,4 @@ protected:
   cta::SchedulerDatabase *m_SchedDB;
 };  // class SchedulerDatabaseDecorator
 
-}  // namespace cta
+} // namespace cta

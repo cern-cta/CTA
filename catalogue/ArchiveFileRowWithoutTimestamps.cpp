@@ -17,8 +17,7 @@
 
 #include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -61,5 +60,4 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFileRowWithoutTimestamps
   return os;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

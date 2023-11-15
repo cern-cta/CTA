@@ -19,8 +19,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyStorageClassCatalogue::createStorageClass(
   const common::dataStructures::SecurityIdentity &admin,
@@ -60,5 +59,4 @@ void DummyStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

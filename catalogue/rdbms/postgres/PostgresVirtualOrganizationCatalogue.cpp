@@ -21,8 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresVirtualOrganizationCatalogue::PostgresVirtualOrganizationCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -46,5 +45,4 @@ uint64_t PostgresVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbm
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

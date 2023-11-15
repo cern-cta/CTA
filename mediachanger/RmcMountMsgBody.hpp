@@ -21,8 +21,7 @@
 #include "common/Constants.hpp"
 #include "Constants.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * The body of an RMC_SCSI_MOUNT message
@@ -50,6 +49,5 @@ struct RmcMountMsgBody {
   static const RequestType requestType = RMC_MOUNT;
 }; // struct RmcMountMsgBody
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

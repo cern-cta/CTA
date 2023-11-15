@@ -20,13 +20,12 @@
 #include "common/exception/Exception.hpp"
 #include <string>
 
-namespace cta { 
-namespace exception {
-  
+namespace cta::exception {
+
   class EndOfFile: public cta::exception::Exception {
   public:
     EndOfFile(const std::string & w): cta::exception::Exception(w) {}
     virtual ~EndOfFile() {}
   };
     
-}}
+} // namespace cta::exception

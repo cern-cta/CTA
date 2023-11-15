@@ -22,9 +22,7 @@
 #include "castor/tape/tapeserver/file/CtaReadSession.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class UHL1;
 
@@ -64,6 +62,4 @@ private:
   void checkTrailers();
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

@@ -28,10 +28,8 @@
 #include <memory>
 #include <optional>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
   /**
    * Class responsible for probing a tape drive to see if it empty and
    * accessible.
@@ -102,7 +100,4 @@ namespace daemon {
 
   }; // class EmptyDriveProbe
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

@@ -19,8 +19,7 @@
 
 #include "Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * Failed to dismount volume.
@@ -36,6 +35,5 @@ public:
 
 }; // class ForceDismountFailed
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception
 

@@ -25,10 +25,7 @@
 #include <unordered_map>
 #include <string>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 class ServiceAuthProcessor : public ::grpc::AuthMetadataProcessor {
 
@@ -47,7 +44,4 @@ private:
   
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

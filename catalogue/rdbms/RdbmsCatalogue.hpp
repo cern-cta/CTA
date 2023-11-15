@@ -39,6 +39,7 @@ class ConnPool;
 }
 
 namespace catalogue {
+
 /**
  * CTA catalogue implemented using a relational database backend.
  */
@@ -180,5 +181,4 @@ protected:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class RdbmsCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

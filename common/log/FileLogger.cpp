@@ -23,8 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -72,5 +71,4 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, co
       "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

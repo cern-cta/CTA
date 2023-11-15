@@ -31,10 +31,7 @@
 #include <mutex>
 #include <thread>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace client {
+namespace cta::frontend::grpc::client {
 
 template <class STUB>
 class AsyncClient {
@@ -116,7 +113,4 @@ private:
   ::grpc::CompletionQueue              m_completionQueue;
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::client

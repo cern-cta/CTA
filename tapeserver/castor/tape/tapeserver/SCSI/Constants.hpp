@@ -20,9 +20,8 @@
 #include <string>
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
-namespace SCSI {
+namespace castor::tape::SCSI {
+
   /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
    is less complete */
   class Types {
@@ -447,7 +446,7 @@ namespace SCSI {
         meta  = 3   /* Metadata Key Associated data */
       };
     };
-  }
+  } // namespace encryption
 
   class logSensePages {
   public:
@@ -736,6 +735,4 @@ namespace SCSI {
    */
   const unsigned char controlDataProtectionModePageLengthAddition = 4; 
   
-} // namespace SCSI
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::SCSI

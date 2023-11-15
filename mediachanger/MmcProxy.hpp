@@ -20,8 +20,7 @@
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Manual media changer proxy that simply logs mount and dismount requests.
@@ -75,5 +74,4 @@ private:
 
 }; // class MmcProxy
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

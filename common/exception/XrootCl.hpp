@@ -23,8 +23,8 @@
 
 #include <xrootd/XrdCl/XrdClXRootDResponses.hh>
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
+
 /**
  * A class turning the XrootCl (xroot 4 object client) error codes
  * into castor exceptions.
@@ -38,5 +38,4 @@ class XrootCl : public cta::exception::Exception {
  protected:
   XrdCl::XRootDStatus m_status;
 };
-}  // namespace exception
-}  // namespace cta
+} // namespace cta::exception

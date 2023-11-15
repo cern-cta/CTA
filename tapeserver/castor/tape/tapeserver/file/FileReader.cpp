@@ -26,9 +26,7 @@
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 FileReader::FileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
   : m_currentBlockSize(0), m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod),
@@ -70,6 +68,4 @@ void FileReader::position(const cta::RetrieveJob &fileToRecall) {
   }
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

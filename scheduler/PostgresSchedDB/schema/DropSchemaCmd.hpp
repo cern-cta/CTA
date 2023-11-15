@@ -21,8 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 /**
  * Command-line tool that drops the schema of the scheduler database.
@@ -111,5 +110,4 @@ private:
 
 }; // class DropSchemaCmd
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

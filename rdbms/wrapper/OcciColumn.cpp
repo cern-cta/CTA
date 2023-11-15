@@ -18,9 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -168,6 +166,4 @@ void OcciColumn::setFieldValueToRaw(size_t index, const std::string &blob) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

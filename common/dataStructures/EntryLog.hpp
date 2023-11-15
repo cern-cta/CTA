@@ -22,9 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct is used across almost all administrative metadata, specifying 
@@ -52,6 +50,4 @@ struct EntryLog {
 
 std::ostream &operator<<(std::ostream &os, const EntryLog &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

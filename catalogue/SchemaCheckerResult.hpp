@@ -20,8 +20,8 @@
 #include <list>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
+
   /**
    * This class holds the results of the Schema comparison against the catalogue database schema
    * It is simply composed of:
@@ -87,4 +87,4 @@ private:
   Status m_status;
 };
 
-}}
+} // namespace cta::catalogue

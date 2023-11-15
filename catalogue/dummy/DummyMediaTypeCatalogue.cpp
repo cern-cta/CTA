@@ -24,8 +24,7 @@
 #include "catalogue/dummy/DummyMediaTypeCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity &admin,
   const MediaType &mediaType) {
@@ -89,5 +88,4 @@ void DummyMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructure
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -22,9 +22,7 @@
 
 #include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -38,5 +36,4 @@ private:
   uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
 };  // class PostgresStorageClassCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

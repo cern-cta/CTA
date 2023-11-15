@@ -24,8 +24,7 @@
 #include "common/exception/UserError.hpp"
 #include "Config.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 //! Configuration option list type
 using optionlist_t = std::vector<std::string>;
@@ -143,4 +142,4 @@ T Config::stou(const std::string &strVal) const {
   return static_cast<T>(ulVal);
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

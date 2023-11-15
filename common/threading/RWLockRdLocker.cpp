@@ -19,8 +19,7 @@
 #include "common/threading/RWLock.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
 
-namespace cta { 
-namespace threading {
+namespace cta::threading {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -42,5 +41,4 @@ RWLockRdLocker::~RWLockRdLocker() {
   m_lock.unlock();
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

@@ -25,8 +25,8 @@
 #include "Backend.hpp"
 #include "common/threading/Thread.hpp"
 
-namespace cta {
-namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * An implementation of the object store primitives, using flock to lock,
  * so that several threads can compete for the same file (locks are per file
@@ -215,5 +215,4 @@ class BackendVFS: public Backend {
 };
 
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

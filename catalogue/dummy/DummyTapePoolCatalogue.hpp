@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyTapePoolCatalogue : public TapePoolCatalogue {
 public:
@@ -58,5 +57,4 @@ public:
   bool tapePoolExists(const std::string& tapePoolName) const override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

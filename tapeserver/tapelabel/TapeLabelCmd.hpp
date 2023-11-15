@@ -35,8 +35,7 @@ namespace catalogue {
 class Catalogue;
 }
 
-namespace tapeserver {
-namespace tapelabel {
+namespace tapeserver::tapelabel {
 
 /**
  * Command-line tool for pre-labeling a CTA tape.
@@ -305,6 +304,4 @@ private:
   const char *boolToStr(const bool value);
 }; // class TapeLabelCmd
 
-} // namespace tapelabel
-} // namespace tapeserver
-} // namespace cta
+}} // namespace cta::tapeserver::tapelabel

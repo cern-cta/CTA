@@ -46,8 +46,7 @@
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
 /**
@@ -616,5 +615,4 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleTapeFileCatalogue::insertO
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

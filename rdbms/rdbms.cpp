@@ -17,8 +17,7 @@
 
 #include "rdbms/rdbms.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // getSqlForException
@@ -35,5 +34,4 @@ std::string getSqlForException(const std::string &sql, const std::string::size_t
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

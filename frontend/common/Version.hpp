@@ -17,9 +17,8 @@
 
 #pragma once
 
-namespace cta {
-namespace frontend {
-  
+namespace cta::frontend {
+
   /**
    * Structure to hold CTA versions 
    */
@@ -35,4 +34,4 @@ namespace frontend {
     std::string protobufTag;
   };
   
-}} // namespace cta::frontend
+} // namespace cta::frontend

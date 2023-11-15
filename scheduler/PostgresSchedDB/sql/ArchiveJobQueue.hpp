@@ -25,9 +25,7 @@
 
 #include <vector>
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
@@ -362,6 +360,4 @@ struct ArchiveJobQueueRow {
   static void updateMountId(Transaction &txn, const std::list<ArchiveJobQueueRow>& rowList, uint64_t mountId);
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

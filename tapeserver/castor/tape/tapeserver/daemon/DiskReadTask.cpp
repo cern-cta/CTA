@@ -19,10 +19,7 @@
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "common/Timer.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -220,5 +217,5 @@ const DiskStats DiskReadTask::getTaskStats() const{
   return m_stats;
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

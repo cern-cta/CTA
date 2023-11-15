@@ -34,10 +34,8 @@
 
 #include <inttypes.h>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
 /**
  * Container for the threads that will execute the disk writes tasks in the 
  * migration.
@@ -209,7 +207,4 @@ private:
   cta::log::LogContext m_lc;
 };
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

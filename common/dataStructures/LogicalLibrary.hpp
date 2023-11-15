@@ -25,9 +25,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The logical library is an attribute of both drives and tapes, it declares
@@ -58,6 +56,4 @@ struct LogicalLibrary {
 
 std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

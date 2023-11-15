@@ -23,8 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A tape that can be written to.
@@ -113,5 +112,4 @@ struct TapeForWriting {
  */
 std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

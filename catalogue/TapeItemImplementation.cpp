@@ -19,8 +19,7 @@
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include <iostream>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -61,5 +60,4 @@ std::ostream &operator<<(std::ostream &os, const TapeItemWritten &obj) {
 bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b) { return *a < *b; }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

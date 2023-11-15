@@ -21,8 +21,7 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -106,5 +105,4 @@ void DropSchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        Prints this usage message" << std::endl;
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

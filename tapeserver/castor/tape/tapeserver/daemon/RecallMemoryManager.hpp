@@ -23,14 +23,13 @@
 
 namespace castor {
 namespace exception {
-// Forward declaration  
 class Exception;    
 }
-namespace tape {
-namespace tapeserver {
-namespace daemon {
-// Forward declaration  
+
+namespace tape::tapeserver::daemon {
+
 class MemBlock;
+
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
@@ -86,5 +85,4 @@ private:
   cta::log::LogContext&  m_lc;
 };
 
-}}}}
-
+}} // namespace castor::tape::tapeserver::daemon

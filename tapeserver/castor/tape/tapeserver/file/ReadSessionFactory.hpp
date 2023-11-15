@@ -21,13 +21,10 @@
 
 #include "common/dataStructures/LabelFormat.hpp"
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
-namespace tapeserver {
-namespace drive {
+namespace tapeserver::drive {
 class DriveInterface;
-}
 }
 
 namespace tapeFile {
@@ -39,6 +36,4 @@ public:
   static std::unique_ptr<ReadSession> create(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+}} // namespace castor::tape::tapeFile

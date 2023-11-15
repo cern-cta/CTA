@@ -19,9 +19,7 @@
 
 #include "SubprocessHandler.hpp"
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 class ProcessManager;
 
@@ -55,4 +53,4 @@ private:
   std::chrono::milliseconds m_timeoutDuration=
           std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
 };
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

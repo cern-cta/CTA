@@ -29,11 +29,9 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
 struct Tape;
-}
 }
 
 namespace log {
@@ -291,5 +289,4 @@ public:
   virtual common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

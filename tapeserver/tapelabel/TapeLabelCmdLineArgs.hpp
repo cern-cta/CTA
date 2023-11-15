@@ -20,9 +20,7 @@
 #include <string>
 #include <optional>
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -82,6 +80,4 @@ struct TapeLabelCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

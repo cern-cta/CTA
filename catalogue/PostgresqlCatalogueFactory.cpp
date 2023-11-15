@@ -22,8 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -59,5 +58,4 @@ std::unique_ptr<Catalogue> PostgresqlCatalogueFactory::create() {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

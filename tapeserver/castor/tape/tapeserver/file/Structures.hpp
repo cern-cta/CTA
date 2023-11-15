@@ -22,9 +22,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace castor {
-namespace tape {
-  namespace tapeFile {
+namespace castor::tape::tapeFile {
 
     /**
      * Helper template to fill with space a structure. 
@@ -497,6 +495,4 @@ namespace tape {
       std::copy(str.begin(), str.end(), t);
     }
 
-} //namespace tapeFile
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeFile

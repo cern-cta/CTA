@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 struct OracleVersionedCatalogueSchema: public CatalogueSchema {
   /**
@@ -38,5 +37,4 @@ struct PostgresVersionedCatalogueSchema: public CatalogueSchema {
   PostgresVersionedCatalogueSchema(std::string catalogueVersion);
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -17,8 +17,7 @@
 
 #include "mediachanger/IpAndPort.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -29,5 +28,4 @@ IpAndPort::IpAndPort(const unsigned long i, const unsigned short p) noexcept:
   // Do nothing
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

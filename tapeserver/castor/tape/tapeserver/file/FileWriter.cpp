@@ -26,9 +26,7 @@
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "scheduler/ArchiveJob.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 FileWriter::FileWriter(const std::unique_ptr<WriteSession>&  ws, const cta::ArchiveJob &fileToMigrate,
   const size_t blockSize)
@@ -137,6 +135,4 @@ std::string FileWriter::getLBPMode() {
   return m_LBPMode;
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

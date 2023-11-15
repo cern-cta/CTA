@@ -24,9 +24,7 @@
 #include <libpq-fe.h>
 #include <rdbms/Conn.hpp>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A class to help with preparing COPY FROM inserts with postgres.
@@ -136,6 +134,4 @@ private:
 
 }; // PostgresColumn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

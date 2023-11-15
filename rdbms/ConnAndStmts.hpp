@@ -23,8 +23,7 @@
 #include <iostream>
 #include <memory>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * Class to enforce prepared statements are destroyed before their corresponding
@@ -93,5 +92,4 @@ struct ConnAndStmts {
 
 }; // class ConnAndStmts
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

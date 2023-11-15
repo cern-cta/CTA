@@ -29,9 +29,8 @@
 #include "common/utils/Regex.hpp"
 #include "Constants.hpp"
 
-namespace castor {
-namespace tape {
-namespace SCSI {
+namespace castor::tape::SCSI {
+
 /**
  * Bare-bones representation of a SCSI device
  */
@@ -123,6 +122,4 @@ class DeviceVector : public std::vector<DeviceInfo> {
   DeviceInfo getDeviceInfo(const char * path);
 }; /* class DeviceVector */
 
-}  // namespace SCSI
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::SCSI

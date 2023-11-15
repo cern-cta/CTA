@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class SchemaVersion;
 
@@ -54,5 +53,4 @@ public:
   virtual void ping() = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -20,9 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -69,6 +67,4 @@ void RetrieveRequest::appendFileSizeToDstURL(const uint64_t fileSize) {
   cta::utils::appendParameterXRootFileURL(dstURL,"oss.asize",std::to_string(fileSize));
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

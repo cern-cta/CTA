@@ -23,9 +23,8 @@
 #include <stdlib.h>
 
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
+namespace castor::tape::tapeserver {
+
   /**
    * The compile-time default value of the tapebridged configuration parameter
    * named TAPEBRIDGE/MAXBYTESBEFOREFLUSH.
@@ -84,6 +83,4 @@ namespace tapeserver {
    */
   const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 500;
 
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver

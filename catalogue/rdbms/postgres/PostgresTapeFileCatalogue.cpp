@@ -42,8 +42,7 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
 /**
@@ -586,5 +585,4 @@ void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &co
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -17,8 +17,7 @@
 
 #include "common/exception/UserError.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,5 +26,4 @@ UserError::UserError(const std::string &context, const bool embedBacktrace):
   Exception(context, embedBacktrace) {
 }
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception

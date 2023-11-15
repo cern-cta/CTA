@@ -16,10 +16,8 @@
  */
 
 #include "RetrieveFileQueueCriteria.hpp"
-namespace cta {
-namespace common {
-namespace dataStructures {
-    
+namespace cta::common::dataStructures {
+
 RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFileQueueCriteria& other){
     if(this != &other){
         this->archiveFile = other.archiveFile;
@@ -34,4 +32,4 @@ RetrieveFileQueueCriteria::RetrieveFileQueueCriteria(const RetrieveFileQueueCrit
     this->mountPolicy = other.mountPolicy;
 }
 
-}}}
+} // namespace cta::common::dataStructures

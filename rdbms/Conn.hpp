@@ -25,8 +25,7 @@
 #include <list>
 #include <memory>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 class ConnPool;
 
@@ -280,5 +279,4 @@ private:
 
 }; // class Conn
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

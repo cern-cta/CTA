@@ -29,9 +29,7 @@
 #include "tapeserver/tapelabel/TapeLabelCmd.hpp"
 #include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -567,6 +565,4 @@ void TapeLabelCmd::printUsage(std::ostream &os) {
   TapeLabelCmdLineArgs::printUsage(os);
 }
 
-} // namespace tapelabel
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

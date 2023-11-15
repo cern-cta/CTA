@@ -29,6 +29,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta {
+
 namespace catalogue {
 class Catalogue;
 struct TapeItemWrittenPointer;
@@ -189,4 +190,4 @@ public:
 
 };  // class ArchiveJob
 
-}  // namespace cta
+} // namespace cta

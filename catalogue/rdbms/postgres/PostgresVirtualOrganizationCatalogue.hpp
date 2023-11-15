@@ -21,9 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -37,5 +35,4 @@ protected:
   uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) override;
 };  // class PostgresVirtualOrganizationCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

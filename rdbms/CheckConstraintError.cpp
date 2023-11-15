@@ -17,8 +17,7 @@
 
 #include "rdbms/CheckConstraintError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -31,5 +30,4 @@ CheckConstraintError::CheckConstraintError(
   ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

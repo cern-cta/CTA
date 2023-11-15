@@ -23,9 +23,7 @@
 #include <map>
 #include <stdint.h>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The queueing criteria returned by the catalogue for a file retrieve request.
@@ -50,6 +48,4 @@ struct RetrieveFileQueueCriteria {
 
 }; // struct RetrieveFileQueueCriteria
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

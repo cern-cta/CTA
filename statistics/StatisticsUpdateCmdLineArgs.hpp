@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -55,5 +54,4 @@ struct StatisticsUpdateCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

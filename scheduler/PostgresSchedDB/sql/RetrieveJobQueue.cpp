@@ -19,9 +19,7 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 void RetrieveJobQueueRow::updateMountId(Transaction &txn, const std::list<RetrieveJobQueueRow>& rowList, uint64_t mountId) {
   if(rowList.empty()) return;
@@ -63,6 +61,4 @@ void RetrieveJobQueueRow::updateMountId(Transaction &txn, const std::list<Retrie
   stmt.executeQuery();
 }
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

@@ -32,12 +32,8 @@
 #include "common/threading/Thread.hpp"
 #include "common/Timer.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
-//forward declaration
 class TapeSessionReporter;
 
 class RecallTaskInjector;
@@ -171,7 +167,4 @@ protected:
   void logSCSIMetrics() override;
 }; // class TapeReadSingleThread
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

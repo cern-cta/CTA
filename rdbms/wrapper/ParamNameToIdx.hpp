@@ -19,9 +19,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Map from SQL parameter name to parameter index.
@@ -65,6 +63,4 @@ private:
 
 }; // class ParamNameToIdx
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

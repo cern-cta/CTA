@@ -22,9 +22,7 @@
 #include <memory>
 #include <occi.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A convenience wrapper around an OCCI environment.
@@ -71,6 +69,4 @@ private:
 
 }; // class OcciEnv
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

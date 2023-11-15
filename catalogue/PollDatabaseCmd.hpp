@@ -19,8 +19,7 @@
 
 #include "catalogue/CmdLineTool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Command-line tool that simply polls the database with a simple SQL SELECT
@@ -69,5 +68,4 @@ private:
 
 }; // class PollDatabaseCmd
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

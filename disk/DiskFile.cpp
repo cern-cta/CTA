@@ -27,8 +27,7 @@
 #include <uuid/uuid.h>
 #include <algorithm>
 
-namespace cta {
-namespace disk {
+namespace cta::disk {
 
 DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool) :
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
@@ -538,4 +537,4 @@ std::set<std::string> XRootdDirectory::getFilesName(){
   return ret;
 }
 
-}} //end of namespace cta::disk
+} // namespace cta::disk

@@ -23,10 +23,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace request {
+namespace cta::frontend::grpc::request {
 
 class RequestMessage {
 public:
@@ -132,7 +129,4 @@ private:
   void importOptions(const cta::admin::AdminCmd &admincmd);
 };
 
-} // namespace request
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::request

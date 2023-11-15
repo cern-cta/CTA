@@ -35,19 +35,15 @@ namespace log {
 class LogContext;
 }
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 class DesiredDriveState;
 struct DriveInfo;
 struct TapeDrive;
 struct SecurityIdentity;
 }
-}
 
-namespace tape {
-namespace daemon {
+namespace tape::daemon {
 class TpconfigLine;
-}
 }
 
 struct ReportDriveStatusInputs {
@@ -117,4 +113,4 @@ private:
   void setDriveShutdown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;
 };
 
-}  // namespace cta
+} // namespace cta

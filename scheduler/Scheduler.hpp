@@ -456,4 +456,4 @@ private:
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };  // class Scheduler
 
-}  // namespace cta
+} // namespace cta

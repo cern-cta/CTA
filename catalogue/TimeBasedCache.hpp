@@ -25,8 +25,7 @@
 #include <map>
 #include <time.h>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 template <typename Key, typename Value> class TimeBasedCache {
 public:
@@ -133,5 +132,4 @@ private:
   std::map<Key, std::unique_ptr<TimestampedValue> > m_cache;
 }; // class TimeBasedCache
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -19,9 +19,7 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -88,6 +86,4 @@ std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

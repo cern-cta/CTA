@@ -21,8 +21,7 @@
 #include <list>
 #include <map>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure containing the common schema procedures of the CTA catalogue
@@ -91,5 +90,4 @@ struct CatalogueSchema {
   std::map<std::string, uint64_t> getSchemaVersion() const;
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

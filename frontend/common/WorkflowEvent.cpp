@@ -20,8 +20,7 @@
 #include "PbException.hpp"
 #include "WorkflowEvent.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
@@ -498,4 +497,4 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

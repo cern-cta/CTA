@@ -19,9 +19,8 @@
 
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
+
 enum DriveStatus {
   Down = 1,
   Up = 2,
@@ -38,6 +37,4 @@ enum DriveStatus {
 };
 
 std::string toString(DriveStatus type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

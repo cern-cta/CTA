@@ -37,8 +37,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsTapeFileCatalogue::RdbmsTapeFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -339,5 +338,4 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -22,8 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A row in the ArchiveFile table.
@@ -110,5 +109,4 @@ struct ArchiveFileRow {
  */
 std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -18,9 +18,7 @@
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
-
+namespace cta::catalogue {
 
 void DummyLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
@@ -61,5 +59,4 @@ void DummyLogicalLibraryCatalogue::setLogicalLibraryDisabled(
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

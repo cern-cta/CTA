@@ -35,8 +35,7 @@ private:
 };
 }
 
-namespace cta {
-namespace disk   {
+namespace cta::disk {
 
 //------------------------------------------------------------------------------
 // Accessor to next striper pool index
@@ -154,5 +153,4 @@ void RadosStriperPool::disconnectAll() {
   m_stripers.clear();
 }
 
-} // namespace disk
-} // namespace cta
+} // namespace cta::disk

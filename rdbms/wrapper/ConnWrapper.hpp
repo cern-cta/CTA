@@ -25,9 +25,7 @@
 #include <memory>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Abstract class that specifies the interface to a database connection.
@@ -199,6 +197,4 @@ public:
   
 }; // class ConnWrapper
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

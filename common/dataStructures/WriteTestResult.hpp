@@ -22,10 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is the result of a write test operation 
@@ -51,6 +48,4 @@ struct WriteTestResult {
 
 std::ostream &operator<<(std::ostream &os, const WriteTestResult &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

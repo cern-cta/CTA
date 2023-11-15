@@ -23,10 +23,8 @@
 #include <sstream>
 #include <fstream>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace utils {
+namespace cta::frontend::grpc::utils {
+
 /**
  * Load the content of the file into a string
  */
@@ -66,7 +64,4 @@ void encode(const std::string& strDecoded, std::string& strEncoded) {
   ); // StringSource
 }
 
-} // namespace utils
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::utils

@@ -24,9 +24,7 @@
 #include <unistd.h>
 #include <list>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // SignalHandler::SignalHandler
@@ -227,4 +225,4 @@ int SignalHandler::runChild() {
 
 
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

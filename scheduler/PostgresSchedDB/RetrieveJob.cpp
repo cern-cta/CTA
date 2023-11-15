@@ -18,8 +18,7 @@
 #include "RetrieveJob.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 RetrieveJob::RetrieveJob()
 {
@@ -51,5 +50,4 @@ void RetrieveJob::fail()
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

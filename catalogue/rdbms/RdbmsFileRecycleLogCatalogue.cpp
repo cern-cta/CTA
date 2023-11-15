@@ -36,8 +36,7 @@
 #include "common/Timer.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsFileRecycleLogCatalogue::RdbmsFileRecycleLogCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -385,5 +384,4 @@ std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfF
   return fileRecycleLogsToInsert;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

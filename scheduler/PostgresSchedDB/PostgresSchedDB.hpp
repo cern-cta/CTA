@@ -45,9 +45,8 @@
 #include "common/utils/utils.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 
-namespace cta {
+namespace cta::catalogue {
 
-namespace catalogue {
 class Catalogue;
 }
 
@@ -188,4 +187,4 @@ private:
    std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };
 
-}  // namespace cta
+} // namespace cta::catalogue

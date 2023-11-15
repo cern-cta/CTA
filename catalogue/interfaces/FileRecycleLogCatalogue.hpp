@@ -22,11 +22,10 @@
 #include "catalogue/RecyleTapeFileSearchCriteria.hpp"
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+
+namespace common::dataStructures {
 struct FileRecycleLog;
-}  // namespace dataStructures
-}  // namespace common
+}
 
 namespace log {
 struct LogContext;
@@ -76,5 +75,4 @@ public:
   virtual void deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) = 0;
 };  // class FileRecyleLogCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

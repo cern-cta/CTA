@@ -19,8 +19,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -50,5 +49,4 @@ void AutoRollback::cancel() {
   m_cancelled = true;
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

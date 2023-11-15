@@ -25,8 +25,7 @@
 #include "rdbms/Login.hpp"
 #include "StatisticsUpdateCmdLineArgs.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 /**
  * Command-line tool for verifying the catalogue schema.
@@ -65,5 +64,4 @@ class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
   void printUsage(std::ostream &os) override;
 };  // class VerifySchemaCmd
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

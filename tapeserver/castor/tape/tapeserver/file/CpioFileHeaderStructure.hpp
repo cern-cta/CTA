@@ -23,16 +23,8 @@
 
 #include <string>
  
-namespace castor {
-namespace tape {
-/**
- * Namespace managing the reading and writing of files to and from tape.
- */
-namespace tapeFile {
-  
-/**
- * Cpio header
- */
+namespace castor::tape::tapeFile {
+
 class CPIO {
 public:
   // Limits
@@ -79,6 +71,4 @@ private:
    
 };
      
-} /* namespace tapeFile */
-} /* namespace tape */
-}/* namespace castor */
+} // namespace castor::tape::tapeFile

@@ -19,10 +19,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -133,7 +130,4 @@ void MigrationMemoryManager::run()  {
   }
 }
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

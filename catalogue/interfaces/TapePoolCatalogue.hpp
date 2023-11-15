@@ -26,11 +26,9 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -83,5 +81,4 @@ public:
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

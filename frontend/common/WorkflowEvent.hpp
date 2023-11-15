@@ -20,8 +20,7 @@
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class WorkflowEvent {
 public:
@@ -72,4 +71,4 @@ private:
   std::string                                 m_verificationMountPolicy;    //!< Verification mount policy
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

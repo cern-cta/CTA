@@ -27,8 +27,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   
@@ -113,5 +112,4 @@ private:
   std::list<Job>                             m_jobs;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

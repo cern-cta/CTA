@@ -17,8 +17,7 @@
 
 #include "Statistics.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 Statistics::Statistics() {
 }
@@ -146,5 +145,4 @@ std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
   return stream;
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

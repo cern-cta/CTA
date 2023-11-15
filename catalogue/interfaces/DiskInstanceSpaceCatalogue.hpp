@@ -24,12 +24,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct DiskInstanceSpace;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -85,5 +83,4 @@ public:
     const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

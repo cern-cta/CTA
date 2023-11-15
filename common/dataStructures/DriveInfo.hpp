@@ -19,10 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
-
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds minimal drive info. It is used to (re-)create the
@@ -34,4 +31,4 @@ struct DriveInfo {
   std::string logicalLibrary;
 };
   
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

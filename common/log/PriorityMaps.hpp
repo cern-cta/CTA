@@ -20,8 +20,7 @@
 #include <map>
 #include <string>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 class PriorityMaps {
   
@@ -31,4 +30,4 @@ public:
   static std::string getPriorityText(const int priority);
 };
 
-}}
+} // namespace cta::log

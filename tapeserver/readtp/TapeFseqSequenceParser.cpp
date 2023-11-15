@@ -23,9 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // parseTapeFileSequence
@@ -145,6 +143,4 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char *const str)
   return tapeFseqRanges;
 }
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

@@ -20,8 +20,7 @@
 #include <string>
 #include <time.h>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 template <typename Value> struct ValueAndTimeBasedCacheInfo {
   Value value;
@@ -32,5 +31,4 @@ template <typename Value> struct ValueAndTimeBasedCacheInfo {
   }
 }; // class ValueAndTimeBasedCacheInfo
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

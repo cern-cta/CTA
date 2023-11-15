@@ -31,10 +31,7 @@
 #include "common/Timer.hpp"
 #include "scheduler/ArchiveJob.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * @brief Used when an error happens during a migration that should not result in unmounting the tape,
@@ -200,7 +197,4 @@ private:
   std::string m_srcURL;
 };
 
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeserver::daemon

@@ -27,8 +27,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDiskInstanceCatalogue::RdbmsDiskInstanceCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
   : m_log(log), m_connPool(connPool) {}
@@ -215,5 +214,4 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

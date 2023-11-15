@@ -22,8 +22,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresTapePoolCatalogue::PostgresTapePoolCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -47,5 +46,4 @@ uint64_t PostgresTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

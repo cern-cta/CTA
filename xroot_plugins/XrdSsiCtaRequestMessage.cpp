@@ -21,8 +21,7 @@
 #include "AdminCmdStream.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
-namespace cta {
-namespace xrd {
+namespace cta::xrd {
 
 void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream)
 {
@@ -55,4 +54,4 @@ void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Respons
   }
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

@@ -25,9 +25,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountType.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds status of a Tape Drive
@@ -121,6 +119,4 @@ struct TapeDrive {
 
 std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

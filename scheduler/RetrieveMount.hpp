@@ -305,4 +305,4 @@ private:
   std::string m_externalFreeDiskSpaceScript;
 };  // class RetrieveMount
 
-}  // namespace cta
+} // namespace cta

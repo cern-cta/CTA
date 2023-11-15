@@ -23,9 +23,8 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
+namespace cta::catalogue {
 
-namespace catalogue {
 class Catalogue;
 }
 
@@ -81,4 +80,4 @@ private:
 typedef PostgresSchedDBInit      SchedulerDBInit_t;
 typedef PostgresSchedDB          SchedulerDB_t;
 
-} // namespace cta
+} // namespace cta::catalogue

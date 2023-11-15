@@ -22,8 +22,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Command-line tool for verifying the catalogue schema.
@@ -84,5 +83,4 @@ private:
   bool isUpgrading(rdbms::Conn *conn);
 }; // class VerifySchemaCmd
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

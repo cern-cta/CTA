@@ -21,8 +21,7 @@
 
 #include <list>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure containing a list of requester mount-polices and a list of
@@ -47,5 +46,4 @@ struct RequesterAndGroupMountPolicies {
 
 }; // struct RequesterAndGroupMountPolicies
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

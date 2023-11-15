@@ -25,13 +25,11 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct ArchiveFile;
 struct DeleteArchiveRequest;
 struct TapeFile;
-}  // namespace dataStructures
-}  // namespace common
+}
 
 namespace log {
 class TimingList;
@@ -127,5 +125,4 @@ protected:
   void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request) const;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

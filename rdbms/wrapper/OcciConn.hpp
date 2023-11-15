@@ -23,9 +23,7 @@
 
 #include <occi.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Forward declaraion to avoid a circular dependency beween OcciConn and
@@ -245,6 +243,4 @@ private:
 
 }; // class OcciConn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

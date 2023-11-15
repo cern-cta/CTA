@@ -18,11 +18,7 @@
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 
-
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -93,7 +89,4 @@ void RecallMemoryManager::releaseBlock(MemBlock* mb) {
   m_freeBlocks.push(mb);
 }
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

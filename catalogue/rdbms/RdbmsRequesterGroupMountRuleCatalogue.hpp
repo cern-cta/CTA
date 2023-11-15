@@ -61,5 +61,4 @@ private:
   RdbmsCatalogue* m_rdbmsCatalogue;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

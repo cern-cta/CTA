@@ -19,9 +19,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace threading {
-  
+namespace cta::threading {
+
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
@@ -81,5 +80,4 @@ void RWLock::unlock()  {
   }
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

@@ -35,8 +35,7 @@
 #include <time.h>
 #include <list>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // createListenerSock
@@ -1310,5 +1309,4 @@ void unmarshalString(const char*& src, size_t& srcLen, char* dst, const size_t d
   }
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

@@ -19,8 +19,7 @@
 
 #include "common/log/SyslogLogger.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Class used to facilitate unit testing by making public one or more of the
@@ -44,6 +43,4 @@ public:
 
 }; // class TestingSyslogLogger
 
-} // namespace log
-} // namespace cta
-
+} // namespace cta::log

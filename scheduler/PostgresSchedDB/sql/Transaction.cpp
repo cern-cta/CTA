@@ -17,8 +17,7 @@
 
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 Transaction::Transaction(rdbms::ConnPool &connPool) :
   m_conn(std::move(connPool.getConn())), m_begin(false)

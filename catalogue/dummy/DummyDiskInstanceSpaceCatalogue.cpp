@@ -23,8 +23,7 @@
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 std::map<std::string, common::dataStructures::DiskInstanceSpace> DummyDiskInstanceSpaceCatalogue::m_diskInstanceSpaces;
 
@@ -68,5 +67,4 @@ void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

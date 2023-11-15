@@ -17,8 +17,7 @@
 
 #include "rdbms/ConstraintError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -40,5 +39,4 @@ std::string ConstraintError::getViolatedConstraintName() const {
   return m_violatedConstraintName;
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

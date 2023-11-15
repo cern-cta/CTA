@@ -56,8 +56,7 @@ private:
 };
 }
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv, const std::string & stdinInput) :
   m_childComplete(false),
@@ -195,4 +194,4 @@ SubProcess::~SubProcess() {
 }
 
 
-}} // namespace cta::threading
+} // namespace cta::threading

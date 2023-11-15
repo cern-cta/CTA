@@ -31,9 +31,7 @@
 #include <string>
 #include <regex>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A convenience class containing some utilities used by the postgres rdbms wrapper classes.
@@ -283,6 +281,4 @@ public:
 
 }; // class Postgres
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

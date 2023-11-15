@@ -20,9 +20,7 @@
 #include <chrono>
 #include <string>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 /** 
  * The interface to classes managing subprocesses. It allows an external loop
@@ -99,4 +97,4 @@ public:
   virtual int runChild() = 0;
 };
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

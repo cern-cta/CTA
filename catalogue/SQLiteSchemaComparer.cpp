@@ -22,8 +22,7 @@
 #include "SQLiteSchemaInserter.hpp"
 #include "common/log/DummyLogger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): SchemaComparer(databaseToCheckName,catalogueMetadataGetter) {
   log::DummyLogger dl("dummy","dummy");
@@ -175,4 +174,4 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns
   return result;
 }
 
-}}
+} // namespace cta::catalogue

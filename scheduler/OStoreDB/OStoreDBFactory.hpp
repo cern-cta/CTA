@@ -60,7 +60,7 @@ public:
   virtual void replaceAgent(objectstore::AgentReference * agentReferencePtr) = 0;
 };
 
-}
+} // namespace objectstore
 
 namespace {
 
@@ -141,7 +141,7 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
-}
+} // namespace
 
 /**
  * A concrete implementation of a scheduler database factory that creates mock

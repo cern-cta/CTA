@@ -19,8 +19,7 @@
 
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * A dummy logger class whose implementation of the API of the CTA logging
@@ -77,6 +76,5 @@ protected:
 
 }; // class DummyLogger
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log
 

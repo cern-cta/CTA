@@ -18,9 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/ColumnNameToIdxAndType.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // add
@@ -57,6 +55,4 @@ void ColumnNameToIdxAndType::clear() {
   m_nameToIdxAndType.clear();
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

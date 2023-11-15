@@ -19,8 +19,7 @@
 
 #include <pthread.h>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /**
  * A C++ wrapper around a pthdead read-write lock.
@@ -38,5 +37,4 @@ private:
   pthread_rwlock_t m_lock;
 };
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

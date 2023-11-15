@@ -21,9 +21,7 @@
 
 #include <unistd.h>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -103,6 +101,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

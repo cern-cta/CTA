@@ -23,8 +23,7 @@
 
 #include <algorithm>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -211,5 +210,4 @@ void DropSchemaCmd::printUsage(std::ostream &os) {
   DropSchemaCmdLineArgs::printUsage(os);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

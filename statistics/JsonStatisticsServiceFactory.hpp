@@ -21,8 +21,7 @@
 
 #include "JsonStatisticsService.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 class JsonStatisticsServiceFactory {
  public:
@@ -32,5 +31,4 @@ class JsonStatisticsServiceFactory {
   }
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

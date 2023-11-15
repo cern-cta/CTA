@@ -32,10 +32,7 @@
 #include <memory>
 #include <string>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -386,7 +383,5 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 const TapeSessionStats TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+
+} // namespace castor::tape::tapeserver::daemon

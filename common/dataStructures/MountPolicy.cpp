@@ -20,9 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "MountPolicy.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -100,6 +98,4 @@ std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
 
 MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack", 1, 1, 1, 1);
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

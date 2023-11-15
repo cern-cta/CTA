@@ -104,7 +104,7 @@ struct DataTransferSessionTestParam {
   }
 }; // struct DataTransferSessionTest
 
-}
+} // namespace
 
 /**
  * The data transfer test is a parameterized test.  It takes a pair of name server

@@ -23,8 +23,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
@@ -167,5 +166,4 @@ void DummyDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
   updateTapeDriveStatus(tdStatus.value());
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

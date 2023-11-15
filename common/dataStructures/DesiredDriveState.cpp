@@ -18,9 +18,7 @@
 #include "DesiredDriveState.hpp"
 #include "common/log/PriorityMaps.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 DesiredDriveState::DesiredDriveState():up(false),forceDown(false){}  
   
@@ -55,7 +53,7 @@ std::string DesiredDriveState::generateReasonFromLogMsg(const int logLevel, cons
   return localReason;
 }
 
-}}}
+} // namespace cta::common::dataStructures
 
 
 std::ostream &cta::common::dataStructures::operator<<(std::ostream& os, const DesiredDriveState& obj) {

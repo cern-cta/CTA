@@ -19,8 +19,7 @@
 
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * Abstract class specifying the interface to a factory of Login objects.
@@ -42,5 +41,4 @@ public:
 
 }; // class Login
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

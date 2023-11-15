@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Abstract class defining the interface to an iterator over a list of items
@@ -45,5 +44,4 @@ public:
 
 }; // class CatalogueItorImpl
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

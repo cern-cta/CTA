@@ -22,9 +22,7 @@
 
 #include "EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 struct VirtualOrganization {
   /**
@@ -81,4 +79,4 @@ struct VirtualOrganization {
   }
 };
 
-}}}
+} // namespace cta::common::dataStructures
