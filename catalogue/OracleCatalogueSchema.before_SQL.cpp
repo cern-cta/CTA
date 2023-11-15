@@ -17,8 +17,7 @@
 
 #include "catalogue/OracleCatalogueSchema.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -28,5 +27,4 @@ OracleCatalogueSchema::OracleCatalogueSchema(): CatalogueSchema(
   ) {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

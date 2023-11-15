@@ -23,12 +23,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct MountPolicy;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -88,5 +86,4 @@ public:
 
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

@@ -19,7 +19,7 @@
 
 #include "DiskReporter.hpp"
 
-namespace cta { namespace disk {
+namespace cta::disk {
 
 class NullReporter: public DiskReporter {
 public:
@@ -27,4 +27,4 @@ public:
   void asyncReport() override {};
 };
 
-}} // namespace cta::disk
+} // namespace cta::disk

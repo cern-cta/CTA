@@ -21,9 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -37,5 +35,4 @@ private:
   uint64_t getNextMediaTypeId(rdbms::Conn &conn) const override;
 };  // class PostgresMediaTypeCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -25,8 +25,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A tape pool is a logical grouping of tapes, it is used to separate VOs, types
@@ -158,5 +157,4 @@ struct TapePool {
  */
 std::ostream &operator<<(std::ostream &os, const TapePool &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

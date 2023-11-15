@@ -19,8 +19,7 @@
 
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class CatalogueFactory;
 
@@ -53,5 +52,4 @@ public:
 
 }; // class InMemoryCatalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -26,8 +26,7 @@
 #include <memory>
 #include <string>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * A facade to multiple types of tape media changer.
@@ -93,5 +92,4 @@ private:
 
 }; // class MediaChangerFacade
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

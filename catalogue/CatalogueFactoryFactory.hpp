@@ -69,5 +69,4 @@ public:
     const uint32_t maxTriesToConnect = 3);
 };  // class CatalogueFactoryFactory
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

@@ -45,8 +45,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -1205,5 +1204,4 @@ const std::list<std::pair<std::string, std::string>> RdbmsArchiveFileCatalogue::
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

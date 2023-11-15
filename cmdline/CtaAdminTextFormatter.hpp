@@ -19,8 +19,7 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 // Time after which a drive will be marked as STALE
 // By default it's the default global lock timeout (15 mins) + 5 extra mins
@@ -176,4 +175,4 @@ private:
   unsigned int m_driveTimeoutSec = DRIVE_TIMEOUT_S_DEFAULT;         //!< Time after which a drive will be marked as STALE
 };
 
-}}
+} // namespace cta::admin

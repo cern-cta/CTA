@@ -19,8 +19,8 @@
 
 #include "common/json/object/JSONCObject.hpp"
 
-namespace cta { namespace disk {
-  
+namespace cta::disk {
+
 /**
  * This class allows  JSON-represent a FreeSpace object that is only a uint64_t value
  * {"freeSpace",42}
@@ -35,4 +35,4 @@ public:
   uint64_t m_freeSpace = 0;
 };
 
-}}
+} // namespace cta::disk

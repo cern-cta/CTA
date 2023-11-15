@@ -20,9 +20,7 @@
 
 #include <unistd.h>
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -100,6 +98,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace tapelabel
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

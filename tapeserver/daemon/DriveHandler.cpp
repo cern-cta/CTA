@@ -44,9 +44,7 @@
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #endif
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 
@@ -1012,6 +1010,4 @@ std::shared_ptr<cta::tape::daemon::TapedProxy> DriveHandler::createDriveHandlerP
   return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair);
 }
 
-}
-}
-}  // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

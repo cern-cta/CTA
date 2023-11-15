@@ -19,9 +19,7 @@
 
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct RetrieveJobSummaryRow {
 
@@ -109,6 +107,4 @@ struct RetrieveJobSummaryRow {
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

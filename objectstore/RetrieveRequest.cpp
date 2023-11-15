@@ -31,7 +31,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <cmath>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -1376,4 +1376,4 @@ void RetrieveRequest::setJobStatus(uint32_t copyNumber, const serializers::Retri
   throw exception::Exception("In RetrieveRequest::setJobStatus(): job not found.");
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

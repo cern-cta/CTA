@@ -21,7 +21,7 @@
 #include "disk/DiskSystem.hpp"
 
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "virtualorganization ls" command
@@ -91,4 +91,4 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

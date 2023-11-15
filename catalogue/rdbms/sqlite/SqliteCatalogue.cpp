@@ -30,8 +30,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -84,5 +83,4 @@ std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

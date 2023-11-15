@@ -24,9 +24,7 @@
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface &drive,
   const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp) {
@@ -48,6 +46,4 @@ std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::Drive
   }
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

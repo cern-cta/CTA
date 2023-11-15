@@ -20,9 +20,7 @@
 #include <optional>
 #include <ostream>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * Structure describing the instructions to the drive from operators.
@@ -48,4 +46,4 @@ public:
 
 std::ostream &operator<<(std::ostream& os, const DesiredDriveState& obj);
 
-}}} // namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

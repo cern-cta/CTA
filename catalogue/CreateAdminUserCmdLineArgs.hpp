@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -65,5 +64,4 @@ struct CreateAdminUserCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

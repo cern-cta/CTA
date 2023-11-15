@@ -23,9 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct contains information about which drive was responsible for a
@@ -48,6 +46,4 @@ std::ostream &operator<<(std::ostream &os, const TapeLog &obj);
 
 std::ostream &operator<<(std::ostream &os, const std::optional<TapeLog> &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

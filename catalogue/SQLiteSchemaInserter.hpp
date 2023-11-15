@@ -19,8 +19,8 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
+
   /**
    * This class is used to create a InMemory SQLiteSchema from sql statements
    * 
@@ -49,6 +49,6 @@ namespace catalogue {
     void executeStatements(const std::list<std::string> &statements);
   };
   
-}}
+} // namespace cta::catalogue
 
 

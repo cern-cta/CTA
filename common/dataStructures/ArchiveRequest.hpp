@@ -27,9 +27,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all the command line parameters of a CTA archive command 
@@ -58,6 +56,4 @@ struct ArchiveRequest {
 
 std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -28,9 +28,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
-
+namespace cta::catalogue {
 
 RdbmsAdminUserCatalogue::RdbmsAdminUserCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
   m_log(log), m_connPool(connPool), m_isAdminCache(10) {}
@@ -282,6 +280,5 @@ bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIden
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue
 

@@ -22,8 +22,7 @@
 #include <string>
 
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A database constraint error.
@@ -56,5 +55,4 @@ private:
   std::string rawDbErrorMessage;
 }; // class DBException
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

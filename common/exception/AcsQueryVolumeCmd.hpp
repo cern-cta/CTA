@@ -20,7 +20,7 @@
 
 #include "Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * Failed to query volume.
@@ -36,5 +36,5 @@ namespace cta { namespace exception {
 
     }; // class AcsQueryVolumeCmd
 
-} } // namespace castor exception
+} // namespace cta::exception
 

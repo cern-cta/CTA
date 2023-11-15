@@ -25,12 +25,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
 struct VirtualOrganization;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -147,5 +145,4 @@ public:
     const std::string &voName, const bool isRepackVo) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

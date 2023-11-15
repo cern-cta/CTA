@@ -24,12 +24,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
 struct StorageClass;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -84,5 +82,4 @@ public:
     const std::string &currentName, const std::string &newName) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

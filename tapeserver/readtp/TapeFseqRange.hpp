@@ -20,9 +20,7 @@
 #include <string>
 #include <ostream>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 /**
  * A range of tape file sequence numbers specified by an inclusive lower
@@ -117,9 +115,7 @@ private:
   uint32_t m_upper;
 };
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp
 
 /**
  * ostream << operator for cta::tapeserver::readtp::TapeFseqRange

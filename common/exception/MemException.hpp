@@ -19,8 +19,8 @@
 #include "common/exception/Exception.hpp"
 #include <string>
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
+
 /**
  * A generic exception thrown when there is something wrong with the memory
  */
@@ -29,4 +29,4 @@ class MemException: public cta::exception::Exception {
     MemException(const std::string & what): Exception(what) {}
     virtual ~MemException() {}
 };
-}}
+} // namespace cta::exception

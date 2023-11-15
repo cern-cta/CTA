@@ -21,10 +21,7 @@
 #include <common/dataStructures/MountType.hpp>
 #include "common/dataStructures/LabelFormat.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * Struct holding the result of a Volume request
@@ -39,7 +36,4 @@ struct VolumeInfo {
   std::string tapePool;                                      //!< Name of the tape pool that contains the tape
 };
 
-} // namespace daemon
-} // namespace tapesever
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

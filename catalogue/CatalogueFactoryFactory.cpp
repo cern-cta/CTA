@@ -29,8 +29,7 @@
 #endif
 
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // create
@@ -70,5 +69,4 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

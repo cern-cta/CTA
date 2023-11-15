@@ -18,9 +18,7 @@
 #include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -68,6 +66,4 @@ void StmtWrapper::bindBool(const std::string &paramName, const std::optional<boo
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

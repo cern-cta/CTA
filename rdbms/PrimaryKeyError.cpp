@@ -17,8 +17,7 @@
 
 #include "rdbms/PrimaryKeyError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -37,5 +36,4 @@ PrimaryKeyError::PrimaryKeyError(
 PrimaryKeyError::~PrimaryKeyError() noexcept {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

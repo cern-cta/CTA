@@ -29,8 +29,7 @@
 
 #include <fstream>
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 FrontendService::FrontendService(const std::string& configFilename) : m_archiveFileMaxSize(0) {
   int logToSyslog = 0;
@@ -268,4 +267,4 @@ void FrontendService::setNamespaceMap(const std::string& keytab_file) {
   }
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

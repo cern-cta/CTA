@@ -17,8 +17,7 @@
 
 #include "common/exception/NoSupportedDB.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,5 +26,4 @@ NoSupportedDB::NoSupportedDB(const std::string &what):
   Exception(what) {
 }
 
-}  // namespace exception
-}  // namespace cta
+} // namespace cta::exception

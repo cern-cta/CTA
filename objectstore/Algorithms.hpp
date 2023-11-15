@@ -30,7 +30,7 @@
 #include "common/log/TimingList.hpp"
 #include "Helpers.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 template<typename Q,typename C>
 class ContainerAlgorithms {
@@ -471,4 +471,4 @@ private:
   AgentReference & m_agentReference;
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

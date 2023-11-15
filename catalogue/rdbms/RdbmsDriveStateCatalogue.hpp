@@ -30,10 +30,6 @@
 
 namespace cta {
 
-// namespace log {
-// class Logger;
-// }
-
 namespace rdbms {
 class ConnPool;
 class Login;
@@ -88,5 +84,4 @@ private:
   common::dataStructures::TapeDrive gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

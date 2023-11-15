@@ -21,8 +21,7 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -112,5 +111,4 @@ void CreateSchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        Version of the catalogue to be created" << std::endl;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

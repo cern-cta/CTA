@@ -29,9 +29,7 @@
 #include <stdexcept>
 
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A map from column name to column index and type.
@@ -335,6 +333,4 @@ std::optional<double> SqliteRset::columnOptionalDouble(const std::string &colNam
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

@@ -29,10 +29,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 class TapeSessionReporter : private cta::threading::Thread {
 
@@ -135,7 +132,4 @@ private:
   const pid_t m_sessionPid;
 };
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

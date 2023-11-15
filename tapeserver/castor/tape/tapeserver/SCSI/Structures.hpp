@@ -30,9 +30,7 @@
 #include "Constants.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor {
-namespace tape {
-namespace SCSI {
+namespace castor::tape::SCSI {
   const unsigned int defaultTimeout=900000; //millisecs
 
   /**
@@ -1644,6 +1642,4 @@ namespace SCSI {
       return hex.str();
     }
 } // namespace Structures
-} // namespace SCSI
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::SCSI

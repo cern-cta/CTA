@@ -27,8 +27,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsSchemaCatalogue::RdbmsSchemaCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
   m_log(log), m_connPool(connPool) {}
@@ -124,5 +123,4 @@ std::list<std::string> RdbmsSchemaCatalogue::getTableNames() const {
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

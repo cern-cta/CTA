@@ -17,9 +17,7 @@
 
 #include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 DriveHandlerStateReporter::DriveHandlerStateReporter(const std::string& driveName,
   SubprocessHandler::ProcessingStatus *processingStatus, SessionVid *sessionVid, TimePoint * lastDataMovementTime,
@@ -241,6 +239,4 @@ void DriveHandlerStateReporter::processFatal(const serializers::WatchdogMessage&
   m_lc->log(log::CRIT, "In processFatal(): shutting down after fatal failure.");
 }
 
-} // namespace daemon
-} // namespace tape
-} // namespace cta
+} // namespace cta::tape::daemon

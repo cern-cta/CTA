@@ -24,8 +24,8 @@
 #include "RetrieveRequest.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -212,5 +212,5 @@ class RetrieveQueueFailed : public RetrieveQueue { using RetrieveQueue::Retrieve
 class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 
-}}
+} // namespace cta::objectstore
 

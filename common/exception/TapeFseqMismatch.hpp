@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * Exception representing an unexpected mismatch between tape file sequence
@@ -45,4 +44,4 @@ public:
   ~TapeFseqMismatch() override {}
 }; // class TapeFseqMismatch
 
-}} // namespace cta::exception
+} // namespace cta::exception

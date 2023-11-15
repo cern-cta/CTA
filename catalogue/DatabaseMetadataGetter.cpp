@@ -20,9 +20,7 @@
 #include "catalogue/DatabaseMetadataGetter.hpp"
 #include "common/utils/Regex.hpp"
 
-namespace cta {
-namespace catalogue {
-
+namespace cta::catalogue {
 
 MetadataGetter::~MetadataGetter(){}
 
@@ -309,4 +307,4 @@ std::list<std::string> SchemaMetadataGetter::getConstraintNames(const std::strin
   return constraintNames;
 }
 
-}}
+} // namespace cta::catalogue

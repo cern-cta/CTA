@@ -18,8 +18,7 @@
 #include "RetrieveJobQueueItor.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 RetrieveJobQueueItor::RetrieveJobQueueItor()
 {
@@ -46,5 +45,4 @@ const common::dataStructures::RetrieveJob &RetrieveJobQueueItor::operator*() con
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

@@ -27,12 +27,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct DeleteArchiveRequest;
 struct MountPolicy;
 struct RequesterIdentity;
-}
 }
 
 namespace rdbms {
@@ -330,5 +328,4 @@ private:
     const uint64_t archiveFileId) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

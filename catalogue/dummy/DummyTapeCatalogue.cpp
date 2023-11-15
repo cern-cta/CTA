@@ -25,8 +25,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyTapeCatalogue::createTape(const common::dataStructures::SecurityIdentity &admin,
   const CreateTapeAttributes & tape) {
@@ -201,5 +200,4 @@ void DummyTapeCatalogue::addDisabledTape(const std::string & vid) {
   m_tapeEnabling[vid]=common::dataStructures::Tape::DISABLED;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -24,8 +24,7 @@
 #include <ostream>
 #include <string>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -95,5 +94,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

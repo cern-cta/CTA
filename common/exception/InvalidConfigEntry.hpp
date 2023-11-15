@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * Invalid configuration entry exception.
@@ -82,5 +82,4 @@ namespace cta { namespace exception {
 
     }; // class InvalidConfigEntry
 
-} } // namespace cta exception
-
+} // namespace cta::exception

@@ -24,11 +24,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace client {
-
+namespace cta::frontend::grpc::client {
 
 class TapeLsRequestHandler : public request::IHandler {
 
@@ -72,7 +68,4 @@ private:
     
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::client

@@ -23,9 +23,8 @@
 #include <scsi/sg.h>
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
-namespace System {
+namespace castor::tape::System {
+
 /**
  * A dummy class allowing simple open/read/close/ioctl interface simulating
  * different types of files (regular files, device files (like tape devices)
@@ -414,6 +413,4 @@ namespace System {
 
     virtual int ioctlInquiry(sg_io_hdr_t * sgio_h);
   };
-} // namespace System
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::System

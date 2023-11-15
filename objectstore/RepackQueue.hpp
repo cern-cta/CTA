@@ -25,7 +25,7 @@
 #include "objectstore/cta.pb.h"
 #include "RetrieveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class GenericObject;
 
@@ -85,5 +85,4 @@ class RepackQueueToExpand: public RepackQueue {
   using RepackQueue::RepackQueue;
 };
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

@@ -33,7 +33,7 @@
 #include <stdexcept>
 #include <google/protobuf/util/json_util.h>
 
-namespace cta {  namespace objectstore {
+namespace cta::objectstore {
 
 serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
@@ -215,4 +215,4 @@ std::string GenericObject::dump() {
   return std::string ("Header dump:\n") + headerDump + "Body dump:\n" + bodyDump;
 }
 
-}}
+} // namespace cta::objectstore

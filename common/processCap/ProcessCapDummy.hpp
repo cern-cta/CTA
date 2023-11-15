@@ -22,8 +22,7 @@
 #include <string>
 #include <sys/capability.h>
 
-namespace cta {
-namespace server  {
+namespace cta::server {
 
 /**
  * A dummy class that pretends to provide support for UNIX capabilities.
@@ -63,5 +62,4 @@ private:
 
 }; // class ProcessCapDummy
 
-} // namespace server
-} // namespace cta
+} // namespace cta::server

@@ -20,9 +20,8 @@
 #include "RootEntry.hpp"
 #include <google/protobuf/util/json_util.h>
 
-namespace cta { namespace objectstore { 
+namespace cta::objectstore {
 
-  
 SchedulerGlobalLock::SchedulerGlobalLock(const std::string& address, Backend& os):
   ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t>(os, address) { }
 
@@ -103,4 +102,4 @@ std::string SchedulerGlobalLock::dump() {
   return headerDump;
 }
   
-}}
+} // namespace cta::objectstore

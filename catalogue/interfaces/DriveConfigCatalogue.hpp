@@ -23,9 +23,7 @@
 #include <tuple>
 #include <utility>
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Specifies the interface to a factory Catalogue objects.
@@ -95,5 +93,4 @@ public:
   virtual void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
 };  // class TapeDriveCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

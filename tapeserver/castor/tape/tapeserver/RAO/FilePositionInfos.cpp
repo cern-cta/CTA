@@ -17,7 +17,7 @@
 
 #include "FilePositionInfos.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 FilePositionInfos::FilePositionInfos() {
 }
@@ -98,4 +98,4 @@ uint8_t FilePositionInfos::getEndLandingZone() const {
 
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

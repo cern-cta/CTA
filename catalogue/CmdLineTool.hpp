@@ -20,8 +20,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -102,5 +101,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

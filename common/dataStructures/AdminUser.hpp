@@ -24,9 +24,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is the administrative user which contains the username of the admin 
@@ -48,6 +46,4 @@ struct AdminUser {
 
 std::ostream &operator<<(std::ostream &os, const AdminUser &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

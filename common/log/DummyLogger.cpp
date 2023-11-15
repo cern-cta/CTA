@@ -17,9 +17,8 @@
 
 #include "common/log/DummyLogger.hpp"
 
-namespace cta {
-namespace log {
-  
+namespace cta::log {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -45,5 +44,4 @@ void DummyLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, c
   // Do nothing
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

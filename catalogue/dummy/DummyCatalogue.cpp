@@ -39,8 +39,7 @@
 #include "catalogue/dummy/DummyVirtualOrganizationCatalogue.hpp"
 
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 DummyCatalogue::DummyCatalogue()
   : m_schema(std::make_unique<DummySchemaCatalogue>()),
@@ -152,5 +151,4 @@ const std::unique_ptr<DriveStateCatalogue>& DummyCatalogue::DriveState() {
   return m_driveState;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

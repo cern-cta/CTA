@@ -22,9 +22,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Abstract class that specifies the interface to a factory of ConnFactory objects.
@@ -43,6 +41,4 @@ public:
 
 }; // class ConnFactoryFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

@@ -25,7 +25,8 @@
 #include <stdint.h>
 #include <limits>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
@@ -55,4 +56,4 @@ public:
   }
 };
   
-}}
+} // namespace cta::objectstore

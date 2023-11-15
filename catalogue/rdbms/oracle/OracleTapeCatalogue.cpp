@@ -22,8 +22,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 OracleTapeCatalogue::OracleTapeCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -54,5 +53,4 @@ uint64_t OracleTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::stri
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

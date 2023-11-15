@@ -21,7 +21,7 @@
 
 #include "Statistics.hpp"
 
-namespace cta { namespace statistics {
+namespace cta::statistics {
 
 /**
  * This service class allows to access CTA statistics and do operations with it
@@ -58,5 +58,4 @@ class StatisticsService {
   uint64_t m_nbUpdatedTapes = 0;
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

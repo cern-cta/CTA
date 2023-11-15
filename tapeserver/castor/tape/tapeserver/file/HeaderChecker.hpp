@@ -25,18 +25,16 @@ namespace cta {
 class RetrieveJob;
 }
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
 namespace tapeserver {
-namespace daemon {
-class VolumeInfo;
-}
-
-namespace drive {
-class DriveInterface;
-}
-}
+  namespace daemon {
+    class VolumeInfo;
+  }
+  namespace drive {
+    class DriveInterface;
+  }
+} // namespace tapeserver
 
 namespace tapeFile {
 
@@ -44,7 +42,6 @@ class HDR1;
 class UHL1;
 class UTL1;
 class VOL1;
-
 namespace osm {
 class LABEL;
 }
@@ -111,6 +108,4 @@ private:
     const uint64_t value, const HeaderBase& base = HeaderBase::decimal);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+}} // namespace castor::tape::tapeFile

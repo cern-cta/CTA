@@ -25,8 +25,7 @@
 #endif
 #include "Namespace.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class FrontendService {
 public:
@@ -106,4 +105,4 @@ private:
   cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

@@ -20,8 +20,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * The IP number and the port number of a TCP/IP address.
@@ -47,5 +46,4 @@ struct IpAndPort {
 
 }; // struct IpAndPort
   	
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

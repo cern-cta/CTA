@@ -23,8 +23,7 @@
 #include "common/exception/Exception.hpp"
 #include "disk/DiskSystem.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyDiskSystemCatalogue::createDiskSystem(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &diskInstanceName, const std::string &diskInstanceSpaceName,
@@ -78,5 +77,4 @@ bool DummyDiskSystemCatalogue::diskSystemExists(const std::string &name) const {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

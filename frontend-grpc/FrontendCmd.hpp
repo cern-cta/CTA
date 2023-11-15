@@ -21,10 +21,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 /**
  * Class to store the command-line arguments of the command-line tool
@@ -63,7 +60,4 @@ private:
 
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

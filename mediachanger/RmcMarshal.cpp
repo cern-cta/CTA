@@ -21,8 +21,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //-----------------------------------------------------------------------------
 // marshal
@@ -146,5 +145,4 @@ void unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst)  {
   }
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

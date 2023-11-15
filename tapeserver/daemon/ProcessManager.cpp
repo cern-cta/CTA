@@ -21,9 +21,7 @@
 #include <unistd.h>
 #include <algorithm>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 ProcessManager::ProcessManager(log::LogContext & log): m_logContext(log) {
   m_epollFd = ::epoll_create1(0);
@@ -292,4 +290,4 @@ void ProcessManager::runEventLoop() {
   // We now updated all statuses for the next iteration of the loop.
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

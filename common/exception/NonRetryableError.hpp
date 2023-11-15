@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * An exception class representing an application error that should not be retried.
@@ -40,5 +39,4 @@ public:
 
 }; // class UserError
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception

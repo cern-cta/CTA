@@ -21,8 +21,7 @@
 #include <list>
 #include <string>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A set of database login details.
@@ -283,5 +282,4 @@ struct Login {
   bool postgresqlHasPassword(const std::string & connectionDetails);
 };  // class Login
 
-}  // namespace rdbms
-}  // namespace cta
+} // namespace cta::rdbms

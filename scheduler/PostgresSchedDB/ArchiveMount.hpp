@@ -30,8 +30,7 @@
 #include <cstdint>
 #include <time.h>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class ArchiveMount : public SchedulerDatabase::ArchiveMount {
  friend class cta::PostgresSchedDB;
@@ -61,5 +60,4 @@ private:
    common::dataStructures::JobQueueType m_queueType;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

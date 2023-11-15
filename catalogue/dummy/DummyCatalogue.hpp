@@ -21,8 +21,7 @@
 
 #include "catalogue/Catalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * An empty implementation of the Catalogue used to populate unit tests of the scheduler database
@@ -83,6 +82,5 @@ protected:
   std::unique_ptr<DriveStateCatalogue> m_driveState;
 };
 
-}  // namespace catalogue
-}  // namespace cta.
+} // namespace cta::catalogue
 

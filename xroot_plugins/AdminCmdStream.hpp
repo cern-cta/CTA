@@ -23,8 +23,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/Version.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class AdminCmd;
 
@@ -89,4 +88,4 @@ private:
   const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

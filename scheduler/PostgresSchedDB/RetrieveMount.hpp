@@ -31,8 +31,7 @@
 #include <cstdint>
 #include <time.h>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RetrieveMount : public SchedulerDatabase::RetrieveMount {
  friend class cta::PostgresSchedDB;
@@ -72,5 +71,4 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
    const std::string m_vid;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

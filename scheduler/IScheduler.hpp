@@ -24,7 +24,7 @@ namespace cta {
 namespace common::dataStructures {
 class DriveInfo;
 class DesiredDriveState;
-} // namespace common::dataStructures
+}
 
 namespace log {
 class LogContext;
@@ -33,7 +33,7 @@ class LogContext;
 namespace tape::daemon {
 class TpconfigLine;
 class TapedConfiguration;
-} // namespace tape::daemon
+}
 
 class IScheduler {
 public:

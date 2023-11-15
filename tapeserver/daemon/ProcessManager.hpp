@@ -22,9 +22,8 @@
 #include <memory>
 #include <list>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
+
 /**
  * A class managing several subprocesses, through their handlers. The subprocess
  * handler keeps track of all handlers and owns them.
@@ -74,4 +73,4 @@ private:
   void runEventLoop();
 };
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

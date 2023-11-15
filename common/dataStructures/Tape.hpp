@@ -29,9 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all tape metadata information
@@ -134,6 +132,4 @@ struct Tape {
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

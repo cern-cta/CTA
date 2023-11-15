@@ -19,8 +19,7 @@
 
 #include "catalogue/rdbms/sqlite/SqliteCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class CatalogueFactory;
 
@@ -75,5 +74,4 @@ private:
 
 }; // class SchemaCreatingSqliteCatalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -21,9 +21,8 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
-  
+namespace cta::catalogue {
+
 class SetProductionCmd: public CmdLineTool {
 public:
   /**
@@ -68,4 +67,4 @@ private:
   void setProductionFlag(cta::rdbms::Conn & conn);
 };
 
-}}
+} // namespace cta::catalogue

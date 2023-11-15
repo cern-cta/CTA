@@ -33,9 +33,12 @@
 #include "objectstore/RetrieveRequest.hpp"
 
 namespace cta {
+
 // Forward declaration
 class OStoreDB;
-  namespace ostoredb {
+
+namespace ostoredb {
+
 /**
  * A container to which the ownership of the archive queue (and more important,
  * its lock) will be passed. This container will be passed as a shared pointer
@@ -413,4 +416,4 @@ void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queu
 typedef MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue> MemArchiveQueue;
 typedef MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue> MemRetrieveQueue;
 
-}} // namespace cta::ostoreDBUtils
+}} // namespace cta::ostoredb

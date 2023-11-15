@@ -21,7 +21,7 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "RetrieveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 template<typename C>
 struct ContainerTraits<RetrieveQueue,C>
@@ -582,4 +582,4 @@ template<>
 auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary;
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

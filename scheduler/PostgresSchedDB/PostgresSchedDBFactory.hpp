@@ -28,9 +28,8 @@
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
+namespace cta::catalogue {
 
-namespace catalogue {
 class Catalogue;
 }
 
@@ -93,4 +92,4 @@ public:
     std::string m_URL;
 };  // class PostgresSchedDBFactory
 
-} // namespace cta
+} // namespace cta::catalogue

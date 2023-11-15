@@ -19,8 +19,7 @@
 #include "catalogue/SchemaVersion.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SchemaVersion DummySchemaCatalogue::getSchemaVersion() const {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
@@ -34,5 +33,4 @@ void DummySchemaCatalogue::ping() {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -41,12 +41,12 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 }
+
 namespace common::dataStructures {
 class Tape;
 }
 
-namespace tapeserver {
-namespace readtp {
+namespace tapeserver::readtp {
 
 /**
  * Command-line tool for reading files from a CTA tape.
@@ -343,6 +343,4 @@ private:
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}} // namespace cta::tapeserver::readtp

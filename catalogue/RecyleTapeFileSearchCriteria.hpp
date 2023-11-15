@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The collection of criteria used to select a set of tape files.
@@ -61,5 +60,4 @@ struct RecycleTapeFileSearchCriteria {
 
 }; // struct TapeFileSearchCriteria
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

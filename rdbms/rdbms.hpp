@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * Returns a clipped version of the specified SQL string that has a length more
@@ -42,5 +41,4 @@ namespace rdbms {
  std::string getSqlForException(const std::string &sql,
    const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS);
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

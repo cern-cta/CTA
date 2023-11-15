@@ -21,10 +21,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /* A double fixed payload pipeline: at creation time, we know how many blocks 
  * will go through the FIFO (its size). The provide block method return true as 
@@ -163,7 +160,4 @@ private:
   cta::threading::BlockingQueue<MemBlock *> m_dataBlocks;
 };
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

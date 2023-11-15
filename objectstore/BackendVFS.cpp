@@ -43,7 +43,7 @@
 #include <valgrind/helgrind.h>
 #include <iostream>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
   // Create the directory for storage
@@ -529,4 +529,4 @@ std::string BackendVFS::Parameters::toURL() {
   return ret.str();
 }
 
-}} // end of cta::objectstore
+} // namespace cta::objectstore

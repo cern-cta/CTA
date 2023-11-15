@@ -20,7 +20,7 @@
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements the "mediatype ls" command
@@ -92,4 +92,4 @@ int MediaTypeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

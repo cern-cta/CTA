@@ -32,7 +32,7 @@
 #include "RetrieveQueue.hpp"
 #include "RootEntry.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Helpers::getLockedAndFetchedQueue <ArchiveQueue> ()
@@ -681,4 +681,4 @@ void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQue
   #endif  // HELPERS_CACHE_UPDATE_LOGGING
 }
 
-}} // namespace cta::objectstore.
+} // namespace cta::objectstore

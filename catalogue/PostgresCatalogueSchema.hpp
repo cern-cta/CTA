@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure containing the SQL to create the schema of the in memory CTA
@@ -46,5 +45,4 @@ struct PostgresCatalogueSchema: public CatalogueSchema {
   PostgresCatalogueSchema();
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

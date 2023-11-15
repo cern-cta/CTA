@@ -20,8 +20,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -77,5 +76,4 @@ void CondVar::broadcast() {
   }
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

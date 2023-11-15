@@ -21,8 +21,7 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -126,5 +125,4 @@ void CreateAdminUserCmdLineArgs::printUsage(std::ostream &os) {
     "" << std::endl;;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

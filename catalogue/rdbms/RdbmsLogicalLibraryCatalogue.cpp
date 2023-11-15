@@ -31,8 +31,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -416,5 +415,4 @@ std::optional<uint64_t> RdbmsLogicalLibraryCatalogue::getLogicalLibraryId(rdbms:
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

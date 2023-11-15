@@ -22,9 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds the information about who issued the CTA command and from which host 
@@ -59,6 +57,4 @@ struct SecurityIdentity {
 
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

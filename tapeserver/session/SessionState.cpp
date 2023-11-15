@@ -18,7 +18,7 @@
 #include "SessionState.hpp"
 #include <sstream>
 
-namespace cta { namespace tape { namespace session {
+namespace cta::tape::session {
 
 std::string toString(SessionState state) {
   switch(state) {
@@ -55,4 +55,4 @@ std::string toString(SessionState state) {
   }
 }
 
-}}} // namespace cta::tape::session
+} // namespace cta::tape::session

@@ -20,7 +20,7 @@
 #include "rdbms/Login.hpp"
 #include "CatalogueSchema.hpp"
 
-namespace cta{ namespace catalogue {
+namespace cta::catalogue {
 
 class SchemaSqlStatementsReader {
 public:
@@ -92,4 +92,4 @@ private:
   const cta::catalogue::CatalogueSchema m_schema;
 };
 
-}}
+} // namespace cta::catalogue

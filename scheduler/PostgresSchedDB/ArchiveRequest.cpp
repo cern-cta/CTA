@@ -18,8 +18,7 @@
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 void ArchiveRequest::update() {
   throw std::runtime_error("update not implemented.");
@@ -146,5 +145,4 @@ std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() {
   throw std::runtime_error("dumpJobs not implemented.");
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

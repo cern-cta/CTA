@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * An exception class representng a user as opposed to an application error.
@@ -40,7 +39,6 @@ public:
 
 }; // class UserError
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception
 
 #define CTA_GENERATE_USER_EXCEPTION_CLASS(A) class A: public cta::exception::UserError { using UserError::UserError; }

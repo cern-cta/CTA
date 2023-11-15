@@ -41,9 +41,11 @@
 #include "objectstore/SorterArchiveJob.hpp"
 
 namespace cta {
+
 namespace catalogue {
 class Catalogue;
 }
+
 namespace objectstore {
 
 // forward declarations
@@ -290,5 +292,4 @@ class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
   Sorter::SorterRetrieveRequest& m_retrieveRequest;
 };
 
-}  // namespace objectstore
-}  // namespace cta
+}} // namespace cta::objectstore

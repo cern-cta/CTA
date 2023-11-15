@@ -24,7 +24,7 @@
 #include "RepackQueue.hpp"
 #include "RepackRequest.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 // Partial specialisation of RepackQueue traits
 
@@ -441,4 +441,4 @@ template<>
 struct ContainerTraits<RepackQueue,RepackQueueToExpand>::QueueType{
   common::dataStructures::RepackQueueType value = common::dataStructures::RepackQueueType::ToExpand;
 };
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

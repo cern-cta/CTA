@@ -22,10 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * The contents of the cta.conf file to be used by a DataTransferSession.
@@ -159,7 +156,4 @@ struct DataTransferConfig {
 
 }; // DataTransferConfig
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

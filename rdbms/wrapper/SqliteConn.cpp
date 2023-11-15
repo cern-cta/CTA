@@ -29,9 +29,7 @@
 #include <string>
 #include <string.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -454,6 +452,4 @@ std::list<std::string> SqliteConn::getTypeNames() {
 }
 
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

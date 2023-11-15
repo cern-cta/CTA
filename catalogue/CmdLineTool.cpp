@@ -20,8 +20,7 @@
 
 #include <unistd.h>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -99,5 +98,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

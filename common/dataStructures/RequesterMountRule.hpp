@@ -24,9 +24,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * Rule specifying which mount policy will be used for a specific data-transfer
@@ -60,6 +58,4 @@ struct RequesterMountRule {
 
 std::ostream &operator<<(std::ostream &os, const RequesterMountRule &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -32,18 +32,17 @@
 
 #include "FileWrappers.hpp"
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
 /** 
  * Forward declaration for pointer type in virutalWrapper.
  */
-  namespace tapeserver {
-    namespace drive {
-      class DriveInterface;
-    }
-  }
+namespace tapeserver::drive {
+  class DriveInterface;
+}
+
 namespace System {
+
   /**
    * Interface class definition, allowing common ancestor between
    * realWrapper, mockWrapper and fakeWrapper
@@ -185,5 +184,4 @@ namespace System {
     fakeWrapper fake;
   };
 } // namespace System
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape

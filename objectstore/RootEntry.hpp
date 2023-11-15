@@ -28,7 +28,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "ObjectOps.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class AgentReference;
 class GenericObject;
@@ -153,4 +153,4 @@ public:
   std::string dump ();
 };
 
-}}
+} // namespace cta::objectstore

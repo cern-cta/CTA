@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The collection of criteria used to select a set of tapepools.
@@ -52,5 +51,4 @@ struct TapePoolSearchCriteria {
 
 }; // struct TapePoolSearchCriteria
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

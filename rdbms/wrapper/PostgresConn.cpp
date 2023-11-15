@@ -29,10 +29,7 @@
 #include <sstream>
 #include <exception>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
-
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -499,6 +496,4 @@ void PostgresConn::throwDBIfNotStatus(const PGresult *res,
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

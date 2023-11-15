@@ -25,10 +25,7 @@
 #include <gssapi/gssapi_generic.h>
 #include <gssapi/gssapi_krb5.h>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 class AsyncServer;
 
@@ -88,7 +85,4 @@ private:
   void acquireCreds(const std::string& strService, gss_OID mech, gss_cred_id_t *pGssServerCreds); // can throw
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

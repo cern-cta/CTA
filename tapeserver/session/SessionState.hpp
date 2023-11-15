@@ -18,7 +18,7 @@
 #pragma once
 #include <string>
 
-namespace cta { namespace tape { namespace session {
+namespace cta::tape::session {
 
 /** Possible states for the tape session. */
 enum class SessionState: uint32_t  {
@@ -38,4 +38,4 @@ enum class SessionState: uint32_t  {
 /** Session state to string */
 std::string toString(SessionState state);
 
-}}} // namespace cta::tape::session
+} // namespace cta::tape::session

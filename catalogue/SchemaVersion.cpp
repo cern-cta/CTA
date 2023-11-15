@@ -18,7 +18,7 @@
 #include "SchemaVersion.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace catalogue {
+namespace cta::catalogue {
 
 SchemaVersion::SchemaVersion() :
   m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}
@@ -162,4 +162,4 @@ SchemaVersion SchemaVersion::Builder::build() const {
   return m_schemaVersion;
 }
 
-}}
+} // namespace cta::catalogue

@@ -20,8 +20,7 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
  friend class cta::PostgresSchedDB;
@@ -33,5 +32,4 @@ class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
    void report(log::LogContext & lc) override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

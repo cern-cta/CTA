@@ -29,9 +29,7 @@
 #include <cstdint>
 #include <time.h>
 
-namespace cta {
-
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  friend class cta::PostgresSchedDB;
@@ -64,5 +62,4 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     TapeDrivesCatalogueState *m_tapeDrivesState = nullptr;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

@@ -19,9 +19,8 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
-  
+namespace castor::tape::tapeserver::rao {
+
 std::map<std::string,RAOOptions::CostHeuristicType> RAOOptions::c_mapStringCostHeuristicType = {
   {"cta",RAOOptions::CostHeuristicType::cta},
 };
@@ -109,4 +108,4 @@ std::string RAOOptions::getOptionsString() {
 }
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

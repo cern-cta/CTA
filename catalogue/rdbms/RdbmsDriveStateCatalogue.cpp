@@ -33,8 +33,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
   : m_log(log), m_connPool(connPool) {
@@ -1065,5 +1064,4 @@ void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

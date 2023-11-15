@@ -27,9 +27,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Abstract class specifying the interface to a database statement.
@@ -225,6 +223,4 @@ private:
 
 }; // class StmtWrapper
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

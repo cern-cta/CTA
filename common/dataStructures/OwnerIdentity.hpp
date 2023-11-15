@@ -23,9 +23,7 @@
 #include <string>
 
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds the username and group name of a given user 
@@ -47,6 +45,4 @@ struct OwnerIdentity {
 
 std::ostream &operator<<(std::ostream &os, const OwnerIdentity &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

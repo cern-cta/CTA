@@ -36,7 +36,7 @@
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 const std::string RootEntry::address("root");
 
@@ -983,4 +983,4 @@ std::string RootEntry::dump () {
   return headerDump;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

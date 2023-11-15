@@ -26,10 +26,8 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
-}
 }
 
 namespace rdbms {
@@ -74,5 +72,4 @@ private:
   bool diskInstanceSpaceExists(rdbms::Conn &conn, const std::string &name, const std::string &diskInstance) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

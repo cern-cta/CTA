@@ -20,7 +20,7 @@
 #include "objectstore/BackendPopulator.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -104,4 +104,4 @@ void BackendPopulator::leaveNonEmptyAgentsBehind() {
 }
 
 
-}}
+} // namespace cta::objectstore

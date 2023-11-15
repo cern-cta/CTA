@@ -25,7 +25,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 RandomRAOAlgorithm::RandomRAOAlgorithm() {
 }
@@ -46,4 +46,4 @@ std::string RandomRAOAlgorithm::getName() const {
   return "random";
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

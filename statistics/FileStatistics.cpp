@@ -18,8 +18,7 @@
 
 #include "FileStatistics.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 FileStatistics::FileStatistics() {
 }
@@ -53,5 +52,4 @@ FileStatistics& FileStatistics::operator =(const FileStatistics& other) {
   return *this;
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

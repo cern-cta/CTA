@@ -44,8 +44,7 @@
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -164,5 +163,4 @@ const std::unique_ptr<DriveStateCatalogue>& RdbmsCatalogue::DriveState() {
   return m_driveState;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

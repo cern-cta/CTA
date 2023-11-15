@@ -58,5 +58,4 @@ private:
   uint64_t getNextFileRecyleLogId(rdbms::Conn & conn) const override;
 };  // class SqliteFileRecycleLogCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

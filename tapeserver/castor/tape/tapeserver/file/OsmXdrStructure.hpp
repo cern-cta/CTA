@@ -15,24 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
- #pragma once
+#pragma once
 
-#include <rpc/xdr.h> // xdrmem_create for decode_legato
+#include <rpc/xdr.h> //!< xdrmem_create for decode_legato
 
-namespace castor {
-namespace tape {
-/**
- * Namespace managing the reading and writing of files to and from tape.
- */
-namespace tapeFile {
-/**
- * OSM tape
- */
-namespace osm {
-/**
- * XDR - external data representation
- */
-namespace xdr {
+namespace castor::tape::tapeFile::osm::xdr {
 
 struct Chunk {
 public:
@@ -56,12 +43,8 @@ public:
     }
     return (TRUE);
   }
-  
 };
 
-/**
- *
- */
 struct Record {
 public:
   char m_tcHandler[128];
@@ -110,11 +93,8 @@ private:
     }
     return (TRUE);
   }
-  
 };
-/**
- *
- */
+
 struct VolLabel {
 public:
   uint64_t m_ulMagic;
@@ -158,11 +138,6 @@ public:
     }
     return (TRUE);
   }
-  
 };
 
-} /* namespace xdr */
-} /* namespace osm */
-} /* namespace tapeFile */
-} /* namespace tape */
-}/* namespace castor */
+} // namespace castor::tape::tapeFile::osm::xdr

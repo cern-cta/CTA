@@ -20,7 +20,7 @@
 #include <string>
 #include <sys/capability.h>
 
-namespace cta { namespace server  {
+namespace cta::server {
 
 /**
  * Class providing support for UNIX capabilities.
@@ -88,5 +88,4 @@ private:
 
 }; // class ProcessCap
 
-} // namespace server
-} // namespace cta
+} // namespace cta::server

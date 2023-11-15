@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-namespace cta { namespace utils {
+namespace cta::utils {
 
 /**
  * A thread safe (but serialized) wrapper to getopt.
@@ -48,4 +48,4 @@ private:
   static threading::Mutex gMutex;
 };
 
-}} // namespace cta::utils
+} // namespace cta::utils

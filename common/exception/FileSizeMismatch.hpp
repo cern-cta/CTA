@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Exception representing an unexpected mismatch between file sizes.
@@ -45,5 +44,4 @@ public:
   ~FileSizeMismatch() override {}
 }; // class FileSizeMismatch
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

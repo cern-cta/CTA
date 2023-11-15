@@ -19,9 +19,7 @@
 
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -35,5 +33,4 @@ private:
   uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) override;
 };  // class OracleFileRecycleLogCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

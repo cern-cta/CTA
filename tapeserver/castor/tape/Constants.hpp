@@ -22,15 +22,13 @@
 #include <sys/types.h>
 
 
-namespace castor {
-namespace tape   {
+namespace castor::tape {
 
   /**
    * The full path of the TPCONFIG file which is installed on each tape server.
    */
   const char *const TPCONFIGPATH = "/etc/cta/TPCONFIG";
 
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape
 
 

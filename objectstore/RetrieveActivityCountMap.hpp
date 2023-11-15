@@ -21,7 +21,7 @@
 
 #include <list>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 struct RetrieveActivityDescription {
   std::string activity;
@@ -47,4 +47,4 @@ private:
 std::string toString(const RetrieveActivityDescription &);
 bool operator==(const serializers::RetrieveActivityCountPair &, const std::string &);
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

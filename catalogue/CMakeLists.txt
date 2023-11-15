@@ -36,7 +36,6 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 file (GLOB CATALOGUE_LIB_SRC_FILES
-  ArchiveFileBuilder.cpp
   ArchiveFileRow.cpp
   ArchiveFileRowWithoutTimestamps.cpp
   CatalogueFactory.cpp

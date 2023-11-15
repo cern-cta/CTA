@@ -24,10 +24,8 @@
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace drive {
+namespace castor::tape::tapeserver::drive {
+
 /**
  * Fake drive class used for unit testing
  */
@@ -124,7 +122,4 @@ class FakeNonRAODrive : public FakeDrive{
   virtual castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS();
 };
 
-}  // namespace drive
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeserver::drive

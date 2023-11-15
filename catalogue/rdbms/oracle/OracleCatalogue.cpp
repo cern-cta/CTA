@@ -30,8 +30,7 @@
 #include "catalogue/rdbms/oracle/OraclePhysicalLibraryCatalogue.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 OracleCatalogue::OracleCatalogue(
   log::Logger &log,
@@ -83,5 +82,4 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

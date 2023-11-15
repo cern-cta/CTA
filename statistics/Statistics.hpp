@@ -24,8 +24,7 @@
 #include "FileStatistics.hpp"
 #include "rdbms/Rset.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 /**
  * This class represents the statistics that we will get and compute from
@@ -168,5 +167,4 @@ class Statistics {
  */
 std::ostream &operator <<(std::ostream &stream, const Statistics& stats);
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

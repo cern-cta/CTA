@@ -20,9 +20,8 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-namespace cta {
-namespace threading {
-  
+namespace cta::threading {
+
 void ChildProcess::start(Cleanup & cleanup)  {
   m_pid = fork();
   if (!m_pid) {
@@ -101,5 +100,4 @@ void ChildProcess::kill()  {
   ::kill(m_pid, SIGTERM);
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

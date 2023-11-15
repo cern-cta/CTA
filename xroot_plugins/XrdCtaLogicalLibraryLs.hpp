@@ -21,7 +21,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
@@ -103,5 +103,4 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
   return streambuf->Size();
 }
 
-}  // namespace xrd
-}  // namespace cta
+} // namespace cta::xrd

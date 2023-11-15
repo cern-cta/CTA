@@ -21,8 +21,8 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "FilePositionInfos.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 class RAOHelpers {
 public:
   /**
@@ -101,4 +101,4 @@ public:
   
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

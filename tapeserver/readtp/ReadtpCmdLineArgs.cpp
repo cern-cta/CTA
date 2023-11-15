@@ -26,10 +26,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
-
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -122,6 +119,4 @@ void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
     "                                          files read will be written to file:///dev/null." << std::endl;  
 }
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

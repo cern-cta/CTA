@@ -25,9 +25,7 @@
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<ReadSession> &readSession,
                                                       const cta::RetrieveJob &fileToRecall) {
@@ -58,6 +56,4 @@ std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<Read
   return reader;
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

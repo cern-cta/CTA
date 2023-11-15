@@ -31,8 +31,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresArchiveFileCatalogue::PostgresArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue* rdbmsCatalogue)
@@ -334,5 +333,4 @@ std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

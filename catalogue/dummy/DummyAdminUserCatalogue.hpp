@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/AdminUserCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyAdminUserCatalogue : public AdminUserCatalogue {
 public:
@@ -39,5 +38,4 @@ public:
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

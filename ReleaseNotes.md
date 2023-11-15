@@ -1,7 +1,11 @@
 # v4.NEXT
 
+### Features
+### Bug Fixes
+### Continuous Integration
 ### Code Quality
 - cta/CTA#530 - Remove deprecated protobuf method from the code
+- cta/CTA#529 - Concise syntax should be used for concatenatable namespaces
 
 # v4.10.8-1
 

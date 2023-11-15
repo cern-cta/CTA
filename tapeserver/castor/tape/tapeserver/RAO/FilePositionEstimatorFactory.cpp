@@ -21,7 +21,7 @@
 #include "InterpolationFilePositionEstimator.hpp"
 #include "RAOHelpers.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
   std::unique_ptr<FilePositionEstimator> FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(const std::string & vid, cta::catalogue::Catalogue *catalogue, drive::DriveInterface *drive, cta::log::TimingList &tl){
     std::unique_ptr<FilePositionEstimator> ret;
@@ -42,4 +42,4 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     return ret;
   }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

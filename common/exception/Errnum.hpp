@@ -18,11 +18,11 @@
 #pragma once
 
 #include "Exception.hpp"
-#include<functional>
+#include <functional>
 #include <system_error>
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
+
   class Errnum: public cta::exception::Exception {
   public:
     Errnum(std::string what = "");
@@ -54,5 +54,5 @@ namespace exception {
     int m_errnum;
     std::string m_strerror;
   };
-}
-}
+
+} // namespace cta::exception

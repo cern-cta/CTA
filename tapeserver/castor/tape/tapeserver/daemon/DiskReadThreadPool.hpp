@@ -28,10 +28,8 @@
 #include <vector>
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
   class MigrationTaskInjector;
 class DiskReadThreadPool {
 public:
@@ -219,4 +217,4 @@ private:
   cta::threading::AtomicCounter<int> m_nbActiveThread;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

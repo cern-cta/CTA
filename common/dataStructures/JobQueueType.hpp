@@ -19,9 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 enum class JobQueueType {
   JobsToTransferForUser,
@@ -43,6 +41,4 @@ static const JobQueueType AllJobQueueTypes[] = {
 
 std::string toString(JobQueueType queueType);
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

@@ -21,9 +21,8 @@
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/Thread.hpp"
 
-namespace cta {
-namespace threading {
-  
+namespace cta::threading {
+
 //A 1 way flag : Once set, it can be reset
 struct AtomicFlag{
   AtomicFlag(): m_set(false) {};
@@ -40,5 +39,4 @@ struct AtomicFlag{
       mutable Mutex m_mutex;
 };
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

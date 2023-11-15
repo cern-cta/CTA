@@ -24,7 +24,7 @@
 #include <fstream>
 #include <algorithm>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // parseTpconfigFile
@@ -116,4 +116,4 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
   return ret;
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

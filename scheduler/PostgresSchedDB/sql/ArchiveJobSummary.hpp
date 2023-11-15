@@ -19,9 +19,7 @@
 
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct ArchiveJobSummaryRow {
   uint64_t mountId;
@@ -102,6 +100,4 @@ struct ArchiveJobSummaryRow {
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

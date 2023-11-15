@@ -27,8 +27,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDiskSystemCatalogue::RdbmsDiskSystemCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
   : m_log(log), m_connPool(connPool) {}
@@ -488,5 +487,4 @@ bool RdbmsDiskSystemCatalogue::diskSystemExists(const std::string &name) const {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

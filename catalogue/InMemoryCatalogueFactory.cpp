@@ -24,8 +24,7 @@
 #include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -53,5 +52,4 @@ std::unique_ptr<Catalogue> InMemoryCatalogueFactory::create() {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

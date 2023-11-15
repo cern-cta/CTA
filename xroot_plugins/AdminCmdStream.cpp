@@ -48,8 +48,7 @@
 #include "frontend/common/GrpcEndpoint.hpp"
 #include "frontend/common/AdminCmd.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
@@ -346,4 +345,4 @@ void AdminCmdStream::processVirtualOrganization_Ls(xrd::Response& response){
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

@@ -21,7 +21,7 @@
 #include "EOSReporter.hpp"
 #include "NullReporter.hpp"
 
-namespace cta { namespace disk {
+namespace cta::disk {
 
 DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
   threading::MutexLocker ml(m_mutex);
@@ -37,5 +37,4 @@ DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
       std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ")+URL);
 }
 
-}  // namespace disk
-}  // namespace cta
+} // namespace cta::disk

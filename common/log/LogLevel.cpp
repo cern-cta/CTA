@@ -18,8 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/Constants.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 //------------------------------------------------------------------------------
 // toLogLevel
@@ -41,5 +40,4 @@ int toLogLevel(const std::string &s) {
   throw exception::Exception(s + " is not a valid log level");
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

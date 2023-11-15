@@ -21,8 +21,8 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 /**
  * This class represents a LinearRAOAlgorithm 
  */
@@ -42,4 +42,4 @@ public:
   std::string getName() const override;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

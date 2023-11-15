@@ -23,7 +23,7 @@
 /*!
  * Semi-trivial wrapper to regex library, mostly useful for its destructor which will allow RAII
  */
-namespace cta { namespace utils {
+namespace cta::utils {
 
 class Regex {
   public:
@@ -50,4 +50,4 @@ class Regex {
     bool m_set;
 };
 
-}} // namespace cta::utils
+} // namespace cta::utils

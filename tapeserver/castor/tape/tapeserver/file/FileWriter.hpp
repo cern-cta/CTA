@@ -24,9 +24,7 @@ namespace cta {
 class ArchiveJob;
 }
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class WriteSession;
 
@@ -128,6 +126,4 @@ private:
   std::string m_LBPMode;
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

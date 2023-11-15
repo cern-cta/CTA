@@ -26,11 +26,8 @@
 
 #pragma once
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
-  
+namespace castor::tape::tapeserver::daemon {
+
 /**
  * Class managing a fixed size payload buffer. Some member functions also
  * allow read
@@ -172,4 +169,4 @@ private:
   size_t m_size;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

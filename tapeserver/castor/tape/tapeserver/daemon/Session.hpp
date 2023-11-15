@@ -17,10 +17,7 @@
 
 #pragma once
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * Abstract class responsible for defining the interface to a tapeserverd
@@ -71,7 +68,4 @@ public:
     
 }; // class Session
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

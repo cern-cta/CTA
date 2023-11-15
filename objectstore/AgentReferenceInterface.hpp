@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class AgentReferenceInterface {
 public:
@@ -66,7 +66,7 @@ public:
   virtual std::string getAgentAddress() = 0;
 };
 
-}}
+} // namespace cta::objectstore
 
 #endif /* AGENTREFERENCEDECORATOR_HPP */
 

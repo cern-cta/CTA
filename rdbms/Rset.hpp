@@ -24,8 +24,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 namespace wrapper {
   class RsetWrapper;
@@ -305,5 +304,4 @@ private:
 
 }; // class Rset
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

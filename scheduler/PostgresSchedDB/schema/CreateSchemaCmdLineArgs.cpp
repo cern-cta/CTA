@@ -21,8 +21,7 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -112,5 +111,4 @@ void CreateSchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        Version of the schedulerdb to be created" << std::endl;
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

@@ -17,8 +17,7 @@
 
 #include "common/exception/CommandLineNotParsed.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,5 +26,4 @@ CommandLineNotParsed::CommandLineNotParsed(const std::string &context, const boo
   Exception(context, embedBacktrace) {
 }
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception

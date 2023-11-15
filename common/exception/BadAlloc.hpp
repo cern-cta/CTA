@@ -19,7 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * BadAlloc.
@@ -35,5 +35,4 @@ namespace cta { namespace exception {
 
     }; // class BadAlloc
 
-} } // namespace cta exception
-
+} // namespace cta::exception

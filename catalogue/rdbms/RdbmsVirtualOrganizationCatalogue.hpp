@@ -111,5 +111,4 @@ private:
   bool virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn, const std::string &voName) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

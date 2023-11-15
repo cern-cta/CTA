@@ -24,10 +24,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 class AsyncServer;
 
@@ -77,7 +74,4 @@ private:
     
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

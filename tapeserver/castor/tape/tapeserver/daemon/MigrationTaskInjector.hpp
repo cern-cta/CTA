@@ -26,10 +26,7 @@
 #include "common/threading/AtomicCounter.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
-namespace castor{
-namespace tape{
-namespace tapeserver{
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * This class is responsible for creating the tasks in case of a recall job
@@ -218,7 +215,4 @@ private:
   uint64_t m_firstFseqToWrite;
 };
 
-} //end namespace daemon
-} //end namespace tapeserver
-} //end namespace tape
-} //end namespace castor
+} // namespace castor::tape::tapeserver::daemon

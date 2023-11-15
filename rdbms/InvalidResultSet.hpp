@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * Invalid result set.
@@ -45,5 +44,4 @@ public:
   virtual ~InvalidResultSet() {}
 }; // class InvalidResultSet
       
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

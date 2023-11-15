@@ -18,9 +18,7 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::string toString(cta::common::dataStructures::MountType type) {
   switch(type) {
@@ -85,4 +83,4 @@ std::ostream & operator<<(std::ostream &os,
   return os << toString(obj);
 }
 
-}}} // namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

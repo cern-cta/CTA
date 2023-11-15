@@ -26,8 +26,8 @@
 
 #include <map>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 class SLTFRAOAlgorithm : public RAOAlgorithm {
 public:
   /**
@@ -80,5 +80,5 @@ private:
   std::unique_ptr<cta::RetrieveJob> createFakeRetrieveJobForFileAtBeginningOfTape() const;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao
 

@@ -20,10 +20,7 @@
 #include <string>
 #include "MountType.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
-
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds minimal drive info. It is used to (re-)create the
@@ -36,4 +33,4 @@ struct DriveNextState {
   std::string tapepool;
 };
   
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

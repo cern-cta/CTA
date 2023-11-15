@@ -30,7 +30,7 @@
 #include "tapeserver/daemon/SignalHandler.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     log::Logger& log,
@@ -170,4 +170,4 @@ bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
   return m_globalConfiguration.useMaintenanceProcess.value() == "no";
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

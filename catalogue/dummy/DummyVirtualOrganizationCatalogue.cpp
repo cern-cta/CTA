@@ -23,8 +23,7 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyVirtualOrganizationCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::VirtualOrganization &vo) {
@@ -89,5 +88,4 @@ void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

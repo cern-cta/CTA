@@ -25,9 +25,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The attributes of a physical library
@@ -61,6 +59,4 @@ struct UpdatePhysicalLibrary {
   std::optional<std::string> comment;
 }; // struct PhysicalLibrary
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -25,8 +25,7 @@
 #include "GrpcEndpoint.hpp"
 #include "PbException.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
@@ -1638,4 +1637,4 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
   }
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

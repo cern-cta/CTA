@@ -21,7 +21,7 @@
 #include "LinearRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 LinearRAOAlgorithm::LinearRAOAlgorithm() {
 }
@@ -48,4 +48,4 @@ std::vector<uint64_t> LinearRAOAlgorithm::performRAO(const std::vector<std::uniq
 std::string LinearRAOAlgorithm::getName() const {
   return "linear";
 }
-}}}}
+} // namespace castor::tape::tapeserver::rao

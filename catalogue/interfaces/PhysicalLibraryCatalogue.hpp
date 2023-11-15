@@ -51,5 +51,4 @@ public:
    const common::dataStructures::UpdatePhysicalLibrary& pl) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

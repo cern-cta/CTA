@@ -19,8 +19,7 @@
 
 #include "SchemaCheckerResult.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SchemaCheckerResult::SchemaCheckerResult():m_status(Status::SUCCESS) {
 }
@@ -88,4 +87,4 @@ std::string SchemaCheckerResult::statusToString(const Status& status){
   }
 }
 
-}}
+} // namespace cta::catalogue

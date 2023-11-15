@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace eos {
-namespace client {
+namespace eos::client {
 
 /*!
  * Basename and pathname of a path
@@ -40,4 +39,4 @@ void checkPrefix(std::string &prefix);
  */
 Dirname manglePathname(const std::string &remove_prefix, const std::string &add_prefix, const std::string &pathname, const std::string &filename = "");
 
-}} // namespace eos::client
+} // namespace eos::client

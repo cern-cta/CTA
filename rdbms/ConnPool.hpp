@@ -28,8 +28,7 @@
 #include <list>
 #include <memory>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 class Login;
 
@@ -119,5 +118,4 @@ private:
   std::list<std::unique_ptr<ConnAndStmts> > m_connsAndStmts;
 }; // class ConnPool
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

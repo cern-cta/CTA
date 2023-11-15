@@ -16,8 +16,7 @@
  */
 #pragma once
 
-namespace cta { 
-namespace threading {
+namespace cta::threading {
 
 class RWLock;
 
@@ -52,5 +51,4 @@ private:
 
 }; // class RWLockRdLocker
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

@@ -25,7 +25,7 @@
 #include <list>
 #include <algorithm>
 
-namespace cta { namespace server {
+namespace cta::server {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -219,4 +219,4 @@ void SocketPair::send(const std::string& msg, Side destination) {
     "In SocketPair::send(): failed to send(): ");
 }
 
-}} // namespace cta::server
+} // namespace cta::server

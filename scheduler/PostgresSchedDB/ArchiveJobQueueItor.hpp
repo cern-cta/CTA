@@ -22,8 +22,7 @@
 
 #include <string>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
  friend class cta::PostgresSchedDB;
@@ -41,5 +40,4 @@ class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
    const common::dataStructures::ArchiveJob &operator*() const override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

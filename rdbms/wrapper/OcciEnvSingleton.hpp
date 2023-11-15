@@ -22,9 +22,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A singleton version of OcciEnv.
@@ -67,6 +65,4 @@ private:
 
 }; // class OcciEnvSingleton
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

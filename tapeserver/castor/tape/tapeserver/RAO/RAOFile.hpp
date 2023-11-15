@@ -22,7 +22,7 @@
 
 #include "FilePositionInfos.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class represents an RAO file. It contains the index of the file in the vector
@@ -87,4 +87,4 @@ private:
   std::list<DistanceToFile> m_distancesWithOtherFiles;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

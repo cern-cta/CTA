@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <sys/capability.h>
 
-namespace cta { namespace server {
+namespace cta::server {
 
 /**
  * A smart pointer that owns a capability state.
@@ -109,4 +109,4 @@ private:
 
 }; // class SmartCap
 
-}} // namespace cta::server
+} // namespace cta::server

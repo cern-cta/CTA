@@ -29,8 +29,7 @@
 #include "disk/JSONDiskSystem.hpp"
 #include "disk/JSONFreeSpace.hpp"
 
-namespace cta {
-namespace disk {
+namespace cta::disk {
 
 //------------------------------------------------------------------------------
 // DiskSystemList::at()
@@ -244,4 +243,4 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
   }
 }
 
-}} // namespace cta::disk
+} // namespace cta::disk

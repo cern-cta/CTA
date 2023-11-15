@@ -30,9 +30,7 @@
 #include <sstream>
 #include <utility>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -625,6 +623,4 @@ void PostgresStmt::throwDBIfNotStatus(const PGresult *res,
   }
 }
 
-} // Namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

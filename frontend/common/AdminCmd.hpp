@@ -20,8 +20,7 @@
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class AdminCmd {
 public:
@@ -236,4 +235,4 @@ private:
   std::map<admin::OptionStrList::Key, std::vector<std::string>>    m_option_str_list;    //!< String List options
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

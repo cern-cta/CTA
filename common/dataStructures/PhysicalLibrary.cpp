@@ -17,9 +17,7 @@
 
 #include "common/dataStructures/PhysicalLibrary.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -42,6 +40,4 @@ bool PhysicalLibrary::operator==(const PhysicalLibrary &rhs) const {
       && nbPhysicalDriveSlots==rhs.nbPhysicalDriveSlots;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

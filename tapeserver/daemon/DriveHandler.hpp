@@ -36,14 +36,17 @@ namespace cta {
 class IScheduler;
 
 namespace catalogue {
+
 class Catalogue;
 }
 
 namespace mediachanger {
+
 class MediaChangerFacade;
 }
 
 namespace server {
+
 class ProcessCap;
 }
 
@@ -196,4 +199,4 @@ protected:
 // TODO: remove/merge ChildProcess.
 
 }  // namespace tape::daemon
-}  // namespace cta
+} // namespace tape::daemon

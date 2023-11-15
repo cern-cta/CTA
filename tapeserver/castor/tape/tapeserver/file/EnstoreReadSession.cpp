@@ -23,9 +23,7 @@
 #include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
@@ -46,6 +44,4 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
 
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

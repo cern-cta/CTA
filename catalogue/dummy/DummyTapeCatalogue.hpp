@@ -22,8 +22,7 @@
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyTapeCatalogue : public TapeCatalogue {
 public:
@@ -116,5 +115,4 @@ private:
   std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

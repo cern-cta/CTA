@@ -30,8 +30,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsVirtualOrganizationCatalogue::RdbmsVirtualOrganizationCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
@@ -706,5 +705,4 @@ bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByTapepools(rdb
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

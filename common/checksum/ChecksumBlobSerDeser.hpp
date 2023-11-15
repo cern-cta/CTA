@@ -20,8 +20,7 @@
 #include "common/checksum/ChecksumBlob.hpp"
 #include "cta_common.pb.h"
 
-namespace cta {
-namespace checksum {
+namespace cta::checksum {
 
 inline void ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::ChecksumBlob &csb) {
   csb.clear();
@@ -58,4 +57,4 @@ inline void ChecksumBlobToProtobuf(const checksum::ChecksumBlob &csb, common::Ch
   }
 }
 
-}} // namespace cta::checksum
+} // namespace cta::checksum

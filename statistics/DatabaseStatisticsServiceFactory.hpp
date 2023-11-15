@@ -20,8 +20,7 @@
 #include <memory>
 
 #include "DatabaseStatisticsService.hpp"
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 class DatabaseStatisticsServiceFactory {
  public:
@@ -29,5 +28,4 @@ class DatabaseStatisticsServiceFactory {
     cta::rdbms::Login::DbType dbType);
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

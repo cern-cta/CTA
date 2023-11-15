@@ -20,8 +20,7 @@
 #include "ChecksumBlob.hpp"
 #include "ChecksumBlobSerDeser.hpp"
 
-namespace cta {
-namespace checksum {
+namespace cta::checksum {
 
 void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
   // Validate the length of the checksum
@@ -173,4 +172,4 @@ std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
   return os;
 }
 
-}} // namespace cta::checksum
+} // namespace cta::checksum

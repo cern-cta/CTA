@@ -29,9 +29,7 @@
 #include <map>
 #include <list>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
+namespace castor::tape::tapeserver {
 
 drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
@@ -3078,4 +3076,4 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   throw ex;
 }
 
-}}}
+} // namespace castor::tape::tapeserver

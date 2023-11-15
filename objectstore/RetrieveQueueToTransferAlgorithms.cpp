@@ -17,7 +17,7 @@
 
 #include "RetrieveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_containerTypeName = "RetrieveQueueToTransfer";
@@ -81,4 +81,4 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   return ret;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

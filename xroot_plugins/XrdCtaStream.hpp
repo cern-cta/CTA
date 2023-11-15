@@ -23,7 +23,7 @@
 
 
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Virtual stream object
@@ -117,4 +117,4 @@ private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages
 };
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

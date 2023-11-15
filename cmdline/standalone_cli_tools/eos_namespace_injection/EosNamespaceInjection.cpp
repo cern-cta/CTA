@@ -94,7 +94,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
    }
 }
 
-}
+} // namespace XrdSsiPb
 
 namespace cta::cliTool {
 

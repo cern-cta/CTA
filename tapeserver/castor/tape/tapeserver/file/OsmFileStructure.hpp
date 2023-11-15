@@ -22,16 +22,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Constants.hpp"
 
-namespace castor {
-namespace tape {
-/**
- * Namespace managing the reading and writing of files to and from tape.
- */
-namespace tapeFile {
-/**
- * OSM tape
- */
-namespace osm {
+namespace castor::tape::tapeFile::osm {
 
 struct LIMITS {
 public:
@@ -108,7 +99,4 @@ protected:
   uint64_t m_ulVolId;
 };
 
-} // namespace osm
-} // namespace tapeFile
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeFile::osm

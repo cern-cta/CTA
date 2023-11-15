@@ -24,9 +24,7 @@
 #include <occi.h>
 #include <stdint.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Forward declaration to avoid a circular dependency between OcciStmt and
@@ -234,6 +232,4 @@ private:
   }
 }; // class OcciStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

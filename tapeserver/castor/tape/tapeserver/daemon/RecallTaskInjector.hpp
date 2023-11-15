@@ -30,16 +30,18 @@
 
 #include <future>
 
-namespace castor{
-namespace tape{
-  //forward declarations
-  namespace tapegateway {
-    class FileToRecallStruct;
-  }
-namespace tapeserver{
-  namespace client {
-    class ClientInterface;
-  }
+namespace castor::tape {
+
+namespace tapegateway {
+  class FileToRecallStruct;
+}
+
+namespace tapeserver {
+
+namespace client {
+  class ClientInterface;
+}
+
 namespace daemon {
 
   //forward declaration
@@ -284,7 +286,4 @@ private:
 
 };
 
-} //end namespace daemon
-} //end namespace tapeserver
-} //end namespace tape
-} //end namespace castor
+}}} // namespace castor::tape::tapeserver::daemon

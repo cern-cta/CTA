@@ -26,7 +26,7 @@
 #include "RetrieveQueueShard.hpp"
 #include "ValueCountMap.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) { }
@@ -871,4 +871,4 @@ std::list<std::string> RetrieveQueue::getShardAddresses() {
 }
 
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

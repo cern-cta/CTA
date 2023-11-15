@@ -22,7 +22,7 @@
 #include <map>
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace server {
+namespace cta::server {
 
 /**
  * A class implementing a datagram communication between a parent process and
@@ -74,4 +74,4 @@ private:
   bool m_pollFlag = false;
 };
 
-}} // namespace cta::server
+} // namespace cta::server

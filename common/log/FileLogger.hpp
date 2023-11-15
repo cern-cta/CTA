@@ -20,8 +20,7 @@
 #include "common/log/Logger.hpp"
 #include "common/threading/Mutex.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Class implementaing the API of the CASTOR logging system.
@@ -86,5 +85,4 @@ protected:
 
 }; // class StringLogger
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

@@ -17,7 +17,7 @@
 
 #include "AgentWrapper.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 AgentWrapper::AgentWrapper(Agent& agent):m_agent(agent) {
 }
@@ -88,4 +88,4 @@ std::string AgentWrapper::getAgentAddress(){
   return m_agent.getAddressIfSet();
 }
 
-}}
+} // namespace cta::objectstore

@@ -29,9 +29,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -435,6 +433,4 @@ void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

@@ -34,8 +34,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -758,5 +757,4 @@ bool RdbmsTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) con
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

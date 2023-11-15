@@ -33,7 +33,7 @@
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class ArchiveRequest;
 class RetrieveRequest;
@@ -95,4 +95,4 @@ private:
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
 };
 
-}}
+} // namespace cta::objectstore

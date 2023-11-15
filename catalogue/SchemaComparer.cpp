@@ -21,8 +21,8 @@
 
 #include "SchemaComparer.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
+
 SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter)
   : m_databaseToCheckName(databaseToCheckName),
     m_databaseMetadataGetter(catalogueMetadataGetter),
@@ -35,5 +35,4 @@ void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlState
 SchemaComparer::~SchemaComparer() {
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

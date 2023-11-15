@@ -24,9 +24,7 @@
 #include <string>
 #include <list>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /** This structure holds all the information regarding a VID (retrieves) */
 struct QueueAndMountSummary {
@@ -66,4 +64,4 @@ struct QueueAndMountSummary {
     const std::map<std::string, std::string> &vid_to_logical_library);
 };
 
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

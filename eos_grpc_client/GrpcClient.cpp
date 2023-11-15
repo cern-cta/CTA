@@ -20,9 +20,7 @@
 #include "GrpcClient.hpp"
 #include "common/exception/GrpcError.hpp"
 
-namespace eos {
-namespace client {
-
+namespace eos::client {
 
 std::unique_ptr<GrpcClient>
 GrpcClient::Create(std::string endpoint, std::string token)
@@ -281,4 +279,4 @@ grpc::Status GrpcClient::Exec(eos::rpc::NSRequest& request) {
   return status;
 }
 
-}} // namespace eos::client
+} // namespace eos::client

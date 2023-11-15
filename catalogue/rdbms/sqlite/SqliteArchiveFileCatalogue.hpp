@@ -21,9 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogue;
 
@@ -43,5 +41,4 @@ private:
     const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) override;
 };  // class SqliteArchiveFileCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -20,7 +20,7 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "activitymountrule ls" command
@@ -88,4 +88,4 @@ int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

@@ -101,8 +101,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
 } // namespace XrdSsiPb
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
   {
@@ -184,5 +183,4 @@ void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::uniqu
   stream_future.wait();
 }
 
-} // cliTool
-} // cta
+} // namespace cta::cliTool

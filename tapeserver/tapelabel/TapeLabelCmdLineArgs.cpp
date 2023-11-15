@@ -25,9 +25,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -167,6 +165,4 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
 }
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

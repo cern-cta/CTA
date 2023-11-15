@@ -21,8 +21,7 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -106,5 +105,4 @@ void VerifySchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        Prints this usage message" << std::endl;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

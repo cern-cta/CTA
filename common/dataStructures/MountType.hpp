@@ -19,9 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 enum class MountType: uint32_t {
   ArchiveForUser = 1,
@@ -55,6 +53,4 @@ MountType strToMountType(const std::string& mountTypeStr);
 
 std::ostream &operator <<(std::ostream& os, const MountType &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

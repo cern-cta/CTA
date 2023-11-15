@@ -83,5 +83,4 @@ private:
     const common::dataStructures::SecurityIdentity& admin, const time_t now) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

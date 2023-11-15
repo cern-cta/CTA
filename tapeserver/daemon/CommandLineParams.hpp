@@ -21,7 +21,8 @@
 #include <list>
 #include "common/log/Param.hpp"
 
-namespace cta { namespace daemon {
+namespace cta::daemon {
+
 /// A class parsing the command line and turning it into a struct.
 struct CommandLineParams{
   /**
@@ -38,4 +39,4 @@ struct CommandLineParams{
   bool helpRequested;               ///< Help requested: will print out help and exit.
   std::list<cta::log::Param> toLogParams() const; ///< Convert the command line into set of parameters for logging.
 };
-}}
+} // namespace cta::daemon

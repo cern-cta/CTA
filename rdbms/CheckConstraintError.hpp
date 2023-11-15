@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta    {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A database constraint error.
@@ -49,5 +48,4 @@ public:
   
 }; // class CheckConstraintError
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

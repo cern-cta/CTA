@@ -19,7 +19,7 @@
 
 #include "Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
     /**
      * request failed.
@@ -35,5 +35,4 @@ namespace cta { namespace exception {
 
     }; // class RequestFailed
 
-} } // namespace cta exception
-
+} // namespace cta::exception

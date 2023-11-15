@@ -21,7 +21,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 class EnterpriseRAOAlgorithmFactory;
   
@@ -60,4 +60,4 @@ private:
   const uint32_t c_blockSize = 262144;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

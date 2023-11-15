@@ -27,8 +27,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDiskInstanceSpaceCatalogue::RdbmsDiskInstanceSpaceCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool)
@@ -401,5 +400,4 @@ bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn,
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

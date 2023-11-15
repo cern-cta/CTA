@@ -26,9 +26,7 @@
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
   if (vol1.getVSN().compare(volId)) {
@@ -164,6 +162,4 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &d
   return volumeLabelVSN;
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

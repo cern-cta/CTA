@@ -20,8 +20,7 @@
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * An Postgres based implementation of the CTA catalogue.
@@ -65,5 +64,4 @@ public:
     const std::optional<std::vector<std::string>> &diskFileIds) const override;
 }; // class PostgresCatalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

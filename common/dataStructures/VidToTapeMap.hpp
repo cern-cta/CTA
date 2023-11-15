@@ -22,15 +22,11 @@
 #include <map>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * Map from tape volume identifier to tape.
  */
 typedef std::map<std::string, Tape> VidToTapeMap;
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

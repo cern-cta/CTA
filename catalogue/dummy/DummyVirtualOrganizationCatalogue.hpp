@@ -22,8 +22,7 @@
 
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyVirtualOrganizationCatalogue: public VirtualOrganizationCatalogue {
 public:
@@ -68,5 +67,4 @@ public:
     const std::string &voName, const bool isRepackVo) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

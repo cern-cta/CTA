@@ -33,10 +33,7 @@
 #include <iostream>
 #include <stdio.h>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 // forward declaration
 class TapeSessionReporter;
@@ -220,7 +217,4 @@ private:
 
 }; // class TapeWriteSingleThread
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

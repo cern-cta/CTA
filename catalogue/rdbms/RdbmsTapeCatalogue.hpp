@@ -181,5 +181,4 @@ private:
   void setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq);
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

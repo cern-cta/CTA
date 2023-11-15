@@ -44,8 +44,7 @@
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
@@ -83,6 +82,5 @@ public:
   virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() = 0;
 }; // class Catalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue
 

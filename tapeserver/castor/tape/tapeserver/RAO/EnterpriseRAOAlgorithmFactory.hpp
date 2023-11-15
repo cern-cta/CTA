@@ -20,7 +20,7 @@
 #include "RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * Factory of EnterpriseRAOAlgorithm. 
@@ -44,4 +44,4 @@ private:
   uint64_t m_maxFilesSupported;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

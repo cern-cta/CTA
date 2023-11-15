@@ -21,9 +21,7 @@
 
 #include <list>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 /**
  * Generates a sequence of tape file sequence numbers from a range of tape file
@@ -95,6 +93,4 @@ private:
 
 }; // class TapeFseqRangeSequence
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

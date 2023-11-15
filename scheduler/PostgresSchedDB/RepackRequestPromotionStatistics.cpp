@@ -18,8 +18,7 @@
 #include "RepackRequestPromotionStatistics.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 {
@@ -32,5 +31,4 @@ SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult RepackRequ
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

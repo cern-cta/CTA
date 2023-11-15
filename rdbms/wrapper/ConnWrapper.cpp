@@ -19,9 +19,7 @@
 #include "common/utils/utils.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // destructor
@@ -29,6 +27,4 @@ namespace wrapper {
 ConnWrapper::~ConnWrapper() {
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

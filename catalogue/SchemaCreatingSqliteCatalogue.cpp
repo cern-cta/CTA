@@ -21,8 +21,7 @@
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -83,5 +82,4 @@ void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const s
 SchemaCreatingSqliteCatalogue::~SchemaCreatingSqliteCatalogue() {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

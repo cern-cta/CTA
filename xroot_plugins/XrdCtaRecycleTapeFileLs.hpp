@@ -22,7 +22,7 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "recycletf ls" command
@@ -149,4 +149,4 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

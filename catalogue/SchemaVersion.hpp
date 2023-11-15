@@ -22,7 +22,7 @@
 #include <optional>
 #include <string>
 
-namespace cta { namespace catalogue {
+namespace cta::catalogue {
 
 class SchemaVersion {
 public:
@@ -76,4 +76,4 @@ private:
   static std::map<std::string, SchemaVersion::Status> s_mapStringStatus;
 };
 
-}}
+} // namespace cta::catalogue

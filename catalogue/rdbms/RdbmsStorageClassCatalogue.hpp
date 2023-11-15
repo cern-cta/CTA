@@ -141,5 +141,4 @@ private:
   virtual uint64_t getNextStorageClassId(rdbms::Conn &conn) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

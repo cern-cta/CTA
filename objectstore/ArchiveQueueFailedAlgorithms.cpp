@@ -18,7 +18,7 @@
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 // ArchiveQueueFailed full specialisations for ContainerTraits.
 
@@ -36,4 +36,4 @@ const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_identifier
     return ret;
   }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

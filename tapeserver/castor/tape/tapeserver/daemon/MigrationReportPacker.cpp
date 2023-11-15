@@ -29,10 +29,8 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
@@ -476,7 +474,4 @@ void MigrationReportPacker::WorkerThread::run() {
   }
 }
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

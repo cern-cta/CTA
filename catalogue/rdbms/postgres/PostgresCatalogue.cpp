@@ -32,8 +32,7 @@
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresCatalogue::PostgresCatalogue(
   log::Logger &log,
@@ -89,5 +88,4 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   return tempTableName;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

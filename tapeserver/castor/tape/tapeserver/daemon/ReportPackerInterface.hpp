@@ -22,10 +22,7 @@
 
 #include <memory>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 namespace detail {
 //nameholder
@@ -40,7 +37,7 @@ enum ReportBatching {
   ReportInBulk,
   ReportByFile
 };
-}
+} // namespace detail
 
 // Forward declaration to avoid circular inclusions.
 class TaskWatchDog;
@@ -129,9 +126,4 @@ public:
 
 };
 
-}
-}
-}
-}
-
-
+} // namespace castor::tape::tapeserver::daemon

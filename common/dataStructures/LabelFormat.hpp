@@ -24,9 +24,7 @@
 
 #include "common/exception/InvalidArgument.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 struct Label {
   enum class Format : std::uint8_t {
@@ -61,6 +59,4 @@ protected:
   virtual ~Label() = default;
 };
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

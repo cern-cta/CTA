@@ -20,8 +20,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -95,5 +94,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace admin
-} // namespace cta
+} // namespace cta::cliTool

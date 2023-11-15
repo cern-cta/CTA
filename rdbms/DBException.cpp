@@ -17,8 +17,7 @@
 
 #include "rdbms/DBException.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -34,5 +33,4 @@ std::string DBException::getDbErrorMessage() const {
   return rawDbErrorMessage;
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

@@ -28,10 +28,7 @@
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * A class allowing the enabling and disabling of tape encryption via a script
@@ -100,7 +97,4 @@ class EncryptionControl {
   std::string argsToString(std::list<std::string> args, const std::string& delimiter);
 };
 
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeserver::daemon

@@ -86,5 +86,4 @@ private:
   mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

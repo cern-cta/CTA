@@ -27,8 +27,7 @@
 #include "common/log/Logger.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn &conn, const std::string &name) {
   try {
@@ -531,5 +530,4 @@ std::string RdbmsCatalogueUtils::generateTapeStateModifiedBy( const common::data
   return admin.username + "@" + admin.host;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -19,8 +19,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -49,5 +48,4 @@ uint32_t RmcMountMsgBody::bodyLen() const {
   return static_cast<uint32_t>(retval);
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

@@ -25,8 +25,7 @@
 #include "rdbms/Rset.hpp"
 #include "rdbms/Stmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * RdbmsCatalogue::getArchiveFilesForRepack() implementation of
@@ -116,5 +115,4 @@ private:
   ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
 }; // class RdbmsCatalogueGetArchiveFilesForRepackItor
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

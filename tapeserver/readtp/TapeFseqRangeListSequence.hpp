@@ -23,9 +23,7 @@
 #include <list>
 #include <ostream>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 /**
  * A list of tape file sequence ranges.
@@ -124,9 +122,7 @@ private:
 
 }; // class TapeFseqRangeListSequence
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp
 
 /**
  * ostream << operator for cta::tapeserver::readtp::TapeFseqRangeList

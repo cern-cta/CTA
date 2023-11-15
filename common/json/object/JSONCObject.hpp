@@ -20,7 +20,7 @@
 #include "JSONObject.hpp"
 #include <json-c/json.h>
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace cta::utils::json::object {
 
 /**
  * This class allows to build the inherited object or to generate the
@@ -96,4 +96,4 @@ protected:
   
 };
 
-}}}}
+} // namespace cta::utils::json::object

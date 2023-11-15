@@ -23,10 +23,8 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
-}
 }
 
 namespace disk {
@@ -102,5 +100,4 @@ public:
   virtual bool diskSystemExists(const std::string &name) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

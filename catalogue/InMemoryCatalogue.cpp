@@ -17,8 +17,7 @@
 
 #include "catalogue/InMemoryCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -36,5 +35,4 @@ InMemoryCatalogue::InMemoryCatalogue(
 InMemoryCatalogue::~InMemoryCatalogue() {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

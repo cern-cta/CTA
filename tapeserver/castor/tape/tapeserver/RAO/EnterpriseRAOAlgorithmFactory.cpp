@@ -18,8 +18,8 @@
 #include "EnterpriseRAOAlgorithmFactory.hpp"
 #include "EnterpriseRAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 EnterpriseRAOAlgorithmFactory::EnterpriseRAOAlgorithmFactory(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported):
 m_drive(drive), m_maxFilesSupported(maxFilesSupported) {
 }
@@ -34,4 +34,4 @@ std::unique_ptr<RAOAlgorithm> EnterpriseRAOAlgorithmFactory::createRAOAlgorithm(
 }
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

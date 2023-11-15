@@ -19,9 +19,8 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace threading {
-  
+namespace cta::threading {
+
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
@@ -68,5 +67,4 @@ void Mutex::unlock()  {
           "Error from pthread_mutex_unlock in cta::threading::Mutex::unlock()");
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

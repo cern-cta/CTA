@@ -22,8 +22,7 @@
 #include <string>
 
 
-namespace cta    {
-namespace exception {
+namespace cta::exception {
 
 /**
  * The database connection has been lost.
@@ -49,6 +48,5 @@ public:
   
 }; // class LostDatabaseConnection
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception
 

@@ -18,7 +18,7 @@
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
 
@@ -262,4 +262,4 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Scope
 
 
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

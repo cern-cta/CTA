@@ -17,9 +17,8 @@
 
 #include "common/log/StdoutLogger.hpp"
 
-namespace cta {
-namespace log {
-  
+namespace cta::log {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -51,5 +50,4 @@ void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   }
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

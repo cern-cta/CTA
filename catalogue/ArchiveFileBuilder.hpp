@@ -22,8 +22,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Builds ArchiveFile objects from a stream of tape files ordered by archive ID
@@ -192,5 +191,4 @@ void ArchiveFileBuilder<T>::clear() {
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

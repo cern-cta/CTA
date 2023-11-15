@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 const int EMERG   = 0; // system is unusable
 const int ALERT   = 1; // action must be taken immediately
@@ -37,5 +36,4 @@ const int DEBUG   = 7; // debug-level messages
  */
 const int USERERR = NOTICE;
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

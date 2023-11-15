@@ -19,10 +19,7 @@
 #include <memory>
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /*
  * Use RAII to make sure the memory block is released  
@@ -59,5 +56,5 @@ namespace daemon {
     } 
   };
   
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

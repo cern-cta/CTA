@@ -25,12 +25,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct ArchiveFile;
 struct RequesterIdentity;
 struct RetrieveFileQueueCriteria;
-}
 }
 
 namespace log {
@@ -93,5 +91,4 @@ public:
     const std::optional<std::string> &mountPolicyName =  std::nullopt) = 0;
 };  // class FileRecyleLogCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

@@ -24,9 +24,7 @@
 #include <stdint.h>
 #include <sqlite3.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Forward declaration.
@@ -161,6 +159,4 @@ private:
 
 }; // class SqlLiteRset
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

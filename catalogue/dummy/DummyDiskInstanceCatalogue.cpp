@@ -23,8 +23,7 @@
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
@@ -44,5 +43,4 @@ std::list<common::dataStructures::DiskInstance> DummyDiskInstanceCatalogue::getA
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

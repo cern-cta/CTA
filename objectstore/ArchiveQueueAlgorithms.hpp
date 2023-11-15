@@ -23,7 +23,7 @@
 
 #include <optional>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 // Partial specialisation of ArchiveQueue traits
 
@@ -571,4 +571,4 @@ template<>
 auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary;
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

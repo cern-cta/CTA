@@ -21,8 +21,7 @@
 
 #include <stdint.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Class representing a slot in a SCSI tape-library.
@@ -80,6 +79,5 @@ private:
 
 }; // class ScsiLibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

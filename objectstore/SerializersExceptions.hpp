@@ -19,6 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace objectstore { namespace serializers {
+namespace cta::objectstore::serializers {
+
 CTA_GENERATE_EXCEPTION_CLASS(NotFound);
-}}}
+} // namespace cta::objectstore::serializers

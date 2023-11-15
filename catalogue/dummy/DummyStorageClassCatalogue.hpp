@@ -22,8 +22,7 @@
 
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyStorageClassCatalogue: public StorageClassCatalogue {
 public:
@@ -52,5 +51,4 @@ public:
     const std::string &currentName, const std::string &newName) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

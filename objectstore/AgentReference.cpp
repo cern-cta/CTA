@@ -26,7 +26,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
 
@@ -255,4 +255,4 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent,
 }
 
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

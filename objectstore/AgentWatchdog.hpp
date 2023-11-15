@@ -21,7 +21,8 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 class AgentWatchdog {
 public:
   AgentWatchdog(const std::string & name, Backend & os): m_agent(name, os),
@@ -90,4 +91,4 @@ private:
   }
 };
 
-}}
+} // namespace cta::objectstore

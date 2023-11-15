@@ -20,8 +20,7 @@
 
 #include "SchemaComparer.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * This class allows to compare a catalogue schema against a InMemory SQLite catalogue schema
@@ -61,4 +60,4 @@ private:
   bool m_isSchemaInserted = false;
 };
 
-}}
+} // namespace cta::catalogue

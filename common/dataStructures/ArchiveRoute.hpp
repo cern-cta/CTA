@@ -24,9 +24,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The archive route specifies which tape pool will be used as a destination of 
@@ -63,6 +61,4 @@ struct ArchiveRoute {
 
 std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -30,8 +30,7 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -159,5 +158,4 @@ void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sq
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

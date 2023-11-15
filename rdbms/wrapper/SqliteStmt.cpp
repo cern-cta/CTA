@@ -34,9 +34,7 @@
 #include <string>
 #include <unistd.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -361,6 +359,4 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

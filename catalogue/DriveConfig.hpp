@@ -53,4 +53,4 @@ class DriveConfig {
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
 };  // class DriveConfig
 
-}  // namespace cta
+} // namespace cta

@@ -33,10 +33,7 @@
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * The main class handling a tape session. This is the main container started
@@ -151,7 +148,5 @@ private:
    */
   cta::Scheduler& m_scheduler;
 };
-}
-}
-}
-}
+
+} // namespace castor::tape::tapeserver::daemon

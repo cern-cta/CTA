@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * Exception representing an unexpected mismatch between checksum types.
@@ -42,4 +41,4 @@ public:
   ~ChecksumBlobSizeMismatch() override {}
 }; // class ChecksumTypeMismatch
 
-}} // namespace cta::exception
+} // namespace cta::exception

@@ -41,8 +41,7 @@
 #include <netdb.h>
 #include <list>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Creates a listener socket with the specified port number.
@@ -587,5 +586,4 @@ template<int n> void unmarshalString(const char * &src,
   unmarshalString(src, srcLen, dst, n);
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

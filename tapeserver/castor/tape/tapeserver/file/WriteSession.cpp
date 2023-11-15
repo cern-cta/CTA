@@ -23,9 +23,7 @@
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
   const tapeserver::daemon::VolumeInfo& volInfo,
@@ -175,6 +173,4 @@ void WriteSession::setSiteName()  {
   }
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

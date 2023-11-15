@@ -22,8 +22,7 @@
 
 #include <string>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RetrieveJobQueueItor : public SchedulerDatabase::IRetrieveJobQueueItor {
  friend class cta::PostgresSchedDB;
@@ -42,5 +41,4 @@ class RetrieveJobQueueItor : public SchedulerDatabase::IRetrieveJobQueueItor {
 
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

@@ -24,7 +24,7 @@
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * CTA Frontend Request Message class
@@ -52,4 +52,4 @@ private:
   const XrdSsiCtaServiceProvider                       &m_service;                    //!< Const reference to the XRootD SSI Service
 };
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

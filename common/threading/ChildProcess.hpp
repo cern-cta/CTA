@@ -22,8 +22,7 @@
 #include <unistd.h>
 
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
   /**
    * A class allowing forking of a child process, and subsequent follow up
@@ -96,5 +95,4 @@ namespace threading {
     void parseStatus(int status);
   };
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

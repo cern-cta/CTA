@@ -21,10 +21,7 @@
 #include <string>
 #include <mutex>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 class TokenStorage {
 
@@ -48,7 +45,4 @@ private:
   
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

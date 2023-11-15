@@ -35,9 +35,7 @@
 #include <stdexcept>
 #include <regex>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -367,6 +365,4 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
   };
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

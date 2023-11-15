@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/MediaTypeCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyMediaTypeCatalogue : public MediaTypeCatalogue {
 public:
@@ -63,5 +62,4 @@ public:
     const std::string &comment) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

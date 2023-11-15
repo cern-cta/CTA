@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace cta { namespace utils {
+namespace cta::utils {
 
 GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
   threading::MutexLocker locker(gMutex);
@@ -73,4 +73,4 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
 
 threading::Mutex GetOpThreadSafe::gMutex;
 
-}} // namespace cta::utils
+} // namespace cta::utils

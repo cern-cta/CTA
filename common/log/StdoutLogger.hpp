@@ -19,8 +19,7 @@
 
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Class implementaing the API of the CASTOR logging system.
@@ -75,5 +74,4 @@ private:
 
 }; // class StringLogger
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log
