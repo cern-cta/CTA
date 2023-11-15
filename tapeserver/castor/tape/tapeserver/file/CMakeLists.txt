@@ -19,6 +19,7 @@ find_package (xrootd REQUIRED)
 include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
+include_directories(/usr/include/tirpc) # rpc headers are now provided by libtirpc-devel 
 
 find_package(Protobuf3 REQUIRED)
 
@@ -57,6 +58,10 @@ target_link_libraries(BasicReadWriteTest
 
 add_library(File
   ${TAPESERVER_FILE_LIBRARY_SRCS})
+
+target_link_libraries(File
+  tirpc
+)
 
 add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp
