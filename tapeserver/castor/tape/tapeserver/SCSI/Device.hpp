@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include <regex.h>
-#include <sys/types.h>
 #include <dirent.h>
+#include <regex.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
 
 #include <vector>
 #include <string>
