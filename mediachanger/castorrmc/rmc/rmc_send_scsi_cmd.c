@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <linux/version.h>
 #include <sys/param.h>
 /* Impossible unless very very old kernels: */
