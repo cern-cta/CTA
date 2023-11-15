@@ -70,6 +70,9 @@ BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
 BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
+# BuildRequires: krb5-devel
+BuildRequires: cyrus-sasl-gssapi
+BuildRequires: libtirpc-devel
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
@@ -322,6 +325,7 @@ Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils
+Requires: libtirpc-devel
 Requires: xrootd-client-libs >= %{xrootdVersion}
 Requires: gtest-devel >= 1.12.0
 %description -n cta-systemtests
