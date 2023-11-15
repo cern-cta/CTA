@@ -54,4 +54,4 @@ add_library(EosCtaGrpc ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
 set_target_properties(EosCtaGrpc PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(EosCtaGrpc ${PROTOBUF3_GRPC_LIBRARIES})
+target_link_libraries(EosCtaGrpc gpr ${PROTOBUF3_GRPC_LIBRARIES})

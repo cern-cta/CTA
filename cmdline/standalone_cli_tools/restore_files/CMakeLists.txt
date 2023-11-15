@@ -28,9 +28,10 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-restore-deleted-files RestoreFilesCmdMain.cpp RestoreFilesCmd.cpp ../../CtaAdminCmdParse.cpp)
-target_link_libraries(cta-restore-deleted-files ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY} XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient ctaCmdlineToolsCommon)
+target_link_libraries(cta-restore-deleted-files
+  ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY}
+  XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient ctaCmdlineToolsCommon)
 set_property (TARGET cta-restore-deleted-files APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-
 
 install(TARGETS cta-restore-deleted-files DESTINATION usr/bin)
 install(FILES cta-restore-deleted-files.1cta DESTINATION usr/share/man/man1)
