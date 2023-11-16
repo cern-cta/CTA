@@ -57,7 +57,7 @@ BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-private-devel >= %{xrootdVersion}
 BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
-BuildRequires: gtest-devel >= 1.12.0
+BuildRequires: gtest-devel >= 1.11.0
 BuildRequires: sqlite-devel >= 3.6
 BuildRequires: libcap-devel >= 2.16
 BuildRequires: binutils-devel >= 2.20
@@ -327,7 +327,7 @@ Requires: make
 Requires: moreutils
 Requires: libtirpc-devel
 Requires: xrootd-client-libs >= %{xrootdVersion}
-Requires: gtest-devel >= 1.12.0
+Requires: gtest-devel >= 1.11.0
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
