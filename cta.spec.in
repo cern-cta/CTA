@@ -70,8 +70,7 @@ BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
 BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
-# BuildRequires: krb5-devel
-BuildRequires: cyrus-sasl-gssapi
+BuildRequires: krb5-devel
 BuildRequires: libtirpc-devel
 %{?systemd_requires}
 BuildRequires: systemd
