@@ -3,6 +3,10 @@
 ### Features
 ### Bug Fixes
 ### Continuous Integration
+
+### Building and Packaging
+- cta/CTA#532 - Remove forcing ABI in CMake
+
 ### Code Quality
 - cta/CTA#530 - Remove deprecated protobuf method from the code
 - cta/CTA#529 - Concise syntax should be used for concatenatable namespaces
