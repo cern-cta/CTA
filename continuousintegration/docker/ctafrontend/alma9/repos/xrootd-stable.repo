@@ -1,6 +1,6 @@
 [xrootd-stable]
 name=XRootD Stable Releases for Enterprise Linux $releasever
-baseurl=https://xrootd.web.cern.ch/repo/stable/el$releasever/
+baseurl=https://xrootd.web.cern.ch/repo/stable/el$releasever/x86_64/
 gpgkey=https://xrootd.web.cern.ch/sw/releases/RPM-GPG-KEY.txt
 metadata_expire=7d
 repo_gpgcheck=0

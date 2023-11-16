@@ -8,9 +8,10 @@ ENV USER="develop"
 COPY ./repos/ /etc/yum.repos.d/
 
 RUN set -ex; \
+    yum update -y; \
     yum -y install epel-release almalinux-release-devel; \
     yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils; \
-    yum update -y;
+    yum clean all;
 
 RUN set -ex; \
     wget https://download.oracle.com/otn_software/linux/instantclient/1919000/oracle-instantclient19.19-basic-19.19.0.0.0-1.el9.x86_64.rpm; \
