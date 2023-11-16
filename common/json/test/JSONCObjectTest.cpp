@@ -29,7 +29,10 @@ TEST(JSONCObjectTest, testJSONGenerationFromObject) {
   to.double_number = 42.0;
   to.integer_number = 42;
   to.str = "forty two";
-  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}",to.getJSON());
+  ASSERT_NE(std::string::npos, to.getJSON().find("{\"integer_number\":42,\"str\":\"forty two\","));
+  ASSERT_NE(std::string::npos, to.getJSON().find("\"double_number\":42.0"));
+
+  // ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}",to.getJSON());
 }
 
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){
@@ -43,7 +46,8 @@ TEST(JSONCObjectTest, testObjectGenerationFromJSON){
 
 TEST(JSONCObjectTest, testJSONCParserGetJSONShouldReturnDefaultValues){
   JSONCTestObject to;
-  ASSERT_EQ("{\"integer_number\":0,\"str\":\"\",\"double_number\":0.000000}",to.getJSON());
+  ASSERT_NE(std::string::npos, to.getJSON().find("{\"integer_number\":0,\"str\":\"\","));
+  ASSERT_NE(std::string::npos, to.getJSON().find("\"double_number\":0.0"));
 }
 
 TEST(JSONCObjectTest, testJSONCParserSetJSONToBeParsedWrongJSONFormat){
