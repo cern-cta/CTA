@@ -38,12 +38,12 @@
 
 namespace cta::objectstore {
 
-const std::string RootEntry::m_address("root");
+const std::string RootEntry::c_address("root");
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 RootEntry::RootEntry(Backend & os):
-  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, m_address) {}
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, c_address) {}
 
 RootEntry::RootEntry(GenericObject& go):
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {
@@ -215,7 +215,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   }
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
-  std::string containerId = tapePool;
+  std::string containerId = "-" + tapePool;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
@@ -235,7 +235,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+containerId);
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader + containerId);
   // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
@@ -365,7 +365,7 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
-  std::string containerId = vid;
+  std::string containerId = "-" + vid;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: retrieveQueueNameHeader+="ToTransferForUser"; break;
   case common::dataStructures::JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReportForUser"; break;
@@ -385,7 +385,7 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: retrieveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+containerId);
+  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader + containerId);
   // Reference the queue to the root entry before creation
   auto * rqp = mutableRetrieveQueuePointers(queueType)->Add();
   rqp->set_address(retrieveQueueAddress);
