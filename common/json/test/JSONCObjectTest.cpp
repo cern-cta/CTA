@@ -26,13 +26,10 @@ using namespace cta::utils;
 
 TEST(JSONCObjectTest, testJSONGenerationFromObject) {
   JSONCTestObject to;
-  to.double_number = 42.0;
+  to.double_number = 42.234567;
   to.integer_number = 42;
   to.str = "forty two";
-  ASSERT_NE(std::string::npos, to.getJSON().find("{\"integer_number\":42,\"str\":\"forty two\","));
-  ASSERT_NE(std::string::npos, to.getJSON().find("\"double_number\":42.0"));
-
-  // ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}",to.getJSON());
+  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.234567}",to.getJSON());
 }
 
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){
