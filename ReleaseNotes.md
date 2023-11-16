@@ -2,7 +2,10 @@
 
 ### Features
 ### Bug Fixes
+- cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
+
 ### Continuous Integration
+- cta/CTA#504 - Update CI scripts to use CERN's k8s infrastructure
 
 ### Building and Packaging
 - cta/CTA#532 - Remove forcing ABI in CMake
@@ -18,7 +21,6 @@
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
 
 ### Bug Fixes
-- cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
 - cta/CTA#518 - Correct the naming of AQTRTRFF objects
 - cta/CTA#519 - Don't abort show queues when an unexpected mount type is found

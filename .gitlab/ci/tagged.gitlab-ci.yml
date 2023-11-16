@@ -22,8 +22,6 @@ cta_tagged_rpm:
     expire_in: 30 days
     paths:
     - build_tagged_rpm/RPM/RPMS
-  tags:
-    - docker
 
 publish_tagged_rpm:
   stage: publish_rpm
@@ -33,8 +31,6 @@ publish_tagged_rpm:
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH=/eos/user/c/ctareg/www/cta-repo HOOK=/eos/user/c/ctareg/www/cta-repo/update_repos.sh continuousintegration/ci_helpers/deploy-eos.sh
-  tags:
-    - docker
 
 release_public_rpm:
   stage: release_rpm
@@ -45,5 +41,3 @@ release_public_rpm:
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
-  tags:
-    - docker
