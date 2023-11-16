@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python2
 
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright(C) 2015-2022 CERN
