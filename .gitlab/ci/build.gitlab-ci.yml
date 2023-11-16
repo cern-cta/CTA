@@ -134,25 +134,48 @@ cta_srpm_alma9:
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-    - ./continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh
   script:
     - yum -y install epel-release almalinux-release-devel git
     - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
     - git submodule update --init --recursive
+    - ./continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh
     - mkdir build_srpm
     - cd build_srpm
     - echo ${CMAKE_OPTIONS}
     - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_srpm
-  variables:
-    BUILD_PATH: "build_srpm/RPM/SRPMS/"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $ALMA9 == "ON"
-  artifacts:
-    expire_in: 30 days
-    paths:
-    - ${BUILD_PATH}
-  tags:
-    - docker
+
+cta_rpm_alma9:
+  stage: build
+  needs: [ cta_srpm_alma9 ]
+  retry: 1
+  extends:
+    - .cta_rpm
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  before_script:
+    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
+    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+  script:
+    - yum -y install epel-release almalinux-release-devel git
+    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+    - yum -y install yum-plugin-versionlock
+    - git submodule update --init --recursive
+    - ./continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh
+    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+    - mkdir build_rpm
+    - cd build_rpm
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - make cta_rpm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $ALMA9 == "ON"
