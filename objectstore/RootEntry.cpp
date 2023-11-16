@@ -215,23 +215,27 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   }
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
-  std::string tmp_tapePool = tapePool;
+  std::string containerId = tapePool;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     archiveQueueNameHeader+="ToReportToRepackForFailure";
-    tmp_tapePool = "RR";
+    // We set the ToReportToRepack container id to an empty string because long host names makes
+    // the new object exceed the length limit (255), as the actual value of the RepackRequest
+    // is already store in the `name` field of the pointer object we don't actually need
+    // an identifier. More info: cta/CTA#511
+    containerId = "";
     break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
     archiveQueueNameHeader+="ToReportToRepackForSuccess";
-    tmp_tapePool = "RR";
+    containerId = "";
     break;
   case common::dataStructures::JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReportForUser"; break;
   case common::dataStructures::JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tmp_tapePool);
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+containerId);
   // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
@@ -361,23 +365,27 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
-  std::string tmp_vid = vid;
+  std::string containerId = vid;
   switch (queueType) {
   case common::dataStructures::JobQueueType::JobsToTransferForUser: retrieveQueueNameHeader+="ToTransferForUser"; break;
   case common::dataStructures::JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReportForUser"; break;
   case common::dataStructures::JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
     retrieveQueueNameHeader+="ToReportToRepackForSuccess";
-    tmp_vid = "RR";
+    // We set the ToReportToRepack container id to an empty string because long host names makes
+    // the new object exceed the length limit (255), as the actual value of the RepackRequest
+    // is already store in the `name` field of the pointer object we don't actually need
+    // an identifier. More info: cta/CTA#511
+    containerId = "";
     break;
   case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     retrieveQueueNameHeader+="ToReportToRepackForFailure";
-    tmp_vid = "RR";
+    containerId = "";
     break;
   case common::dataStructures::JobQueueType::JobsToTransferForRepack: retrieveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
-  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+tmp_vid);
+  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+containerId);
   // Reference the queue to the root entry before creation
   auto * rqp = mutableRetrieveQueuePointers(queueType)->Add();
   rqp->set_address(retrieveQueueAddress);
