@@ -293,7 +293,8 @@ void AdminCmd::importOptions() {
     }
     m_option_str_list.try_emplace(std::make_pair(opt_it->key(), items));
   }
-  std::for_each(m_adminCmd.option_str_list().begin(), m_adminCmd.option_str_list().end(),
+  std::for_each(m_adminCmd.option_str_list().begin(),
+                m_adminCmd.option_str_list().end(),
                 [&m_option_str_list](opt){
                   std::vector<std::string> items;
                   std::for_each(opt->item.begin(), opt->item.end(),
@@ -309,22 +310,19 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded.";
 
   // Reverse lookup of strings corresponding to <command,subcommand> pair
-  std::for_each(admin::cmdLookup.begin(), admin::cmdLookup.end(),
-                // Return the matching long string (length > 3)
-                [&m_adminCmd, &params](cmd){
-                  if(m_adminCmd.cmd() == cmd.second && cmd.first.length() > 3) {
-                    params.add("command", cmd->first);
-                    break;
-                  }
-                });
-
-  std::for_each(admin::subcmdLookup.begin(), admin::subcmdLookup.end(),
-                [&m_adminCmd, &params](subcmd){
-                  if(m_adminCmd.subcmd() == subcmd->second){
-                    params.add("subcommand", subcmd->first);
-                    break;
-                  }
-                });
+  for(auto cmd_it = admin::cmdLookup.begin(); cmd_it != admin::cmdLookup.end(); ++cmd_it) {
+    // Return the matching long string (length > 3)
+    if(m_adminCmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
+      params.add("command", cmd_it->first);
+      break;
+    }
+  }
+  for(auto subcmd_it = admin::subcmdLookup.begin(); subcmd_it != admin::subcmdLookup.end(); ++subcmd_it) {
+    if(m_adminCmd.subcmd() == subcmd_it->second) {
+      params.add("subcommand", subcmd_it->first);
+      break;
+    }
+  }
 
   params.add("status", status);
 
