@@ -736,7 +736,7 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
     m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
   if(primaryDensityCode) {
-    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value()));
   }
   if(secondaryDensityCode) {
     m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(secondaryDensityCode.value()));
