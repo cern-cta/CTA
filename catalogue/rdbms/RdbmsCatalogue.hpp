@@ -39,6 +39,7 @@ class ConnPool;
 }
 
 namespace catalogue {
+
 /**
  * CTA catalogue implemented using a relational database backend.
  */
@@ -82,6 +83,7 @@ public:
   const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() override;
   const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() override;
   const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() override;
+  const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() override;
   const std::unique_ptr<TapeFileCatalogue>& TapeFile() override;
   const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() override;
   const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() override;
@@ -171,6 +173,7 @@ protected:
   std::unique_ptr<RequesterMountRuleCatalogue> m_requesterMountRule;
   std::unique_ptr<RequesterGroupMountRuleCatalogue> m_requesterGroupMountRule;
   std::unique_ptr<LogicalLibraryCatalogue> m_logicalLibrary;
+  std::unique_ptr<PhysicalLibraryCatalogue> m_physicalLibrary;
   std::unique_ptr<DriveConfigCatalogue> m_driveConfig;
   std::unique_ptr<DriveStateCatalogue> m_driveState;
   std::unique_ptr<TapeFileCatalogue> m_tapeFile;
@@ -178,5 +181,4 @@ protected:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class RdbmsCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

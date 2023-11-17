@@ -19,8 +19,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class Catalogue;
 
@@ -40,5 +39,4 @@ public:
   virtual std::unique_ptr<Catalogue> create() = 0;
 };  // class CatalogueFactory
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

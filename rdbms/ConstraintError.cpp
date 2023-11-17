@@ -17,14 +17,13 @@
 
 #include "rdbms/ConstraintError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConstraintError::ConstraintError(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
+ConstraintError::ConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace):
+  DBException{context, dbErrorMessage, embedBacktrace}, m_violatedConstraintName{violatedConstraintName} {
 }
 
 //------------------------------------------------------------------------------
@@ -33,5 +32,11 @@ ConstraintError::ConstraintError(const std::string &context, const bool embedBac
 ConstraintError::~ConstraintError() noexcept {
 }
 
-} // namespace rdbms
-} // namespace cta
+//------------------------------------------------------------------------------
+// getDbErrorMessage
+//------------------------------------------------------------------------------
+std::string ConstraintError::getViolatedConstraintName() const {
+  return m_violatedConstraintName;
+}
+
+} // namespace cta::rdbms

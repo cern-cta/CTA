@@ -73,5 +73,4 @@ private:
     const std::string &storageClassName, const std::string &tapePoolName) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

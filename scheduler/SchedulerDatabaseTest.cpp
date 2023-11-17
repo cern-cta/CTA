@@ -211,16 +211,18 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 
   // Then load all archive jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
+  auto mountInfo = db.getMountInfo(lc);
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
+                                         "drive", "library", "host");
   bool done = false;
   size_t count = 0;
   while (!done) {
     auto aj = am->getNextJobBatch(1,1,lc);
-    if (aj.size()) {
+    if (!aj.empty()) {
       std::list <std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> > jobBatch;
       jobBatch.emplace_back(std::move(aj.front()));
       aj.pop_front();
@@ -240,8 +242,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   }
 #endif
   ASSERT_EQ(filesToDo, count);
-  am.reset(nullptr);
-  moutInfo.reset(nullptr);
 #ifdef LOOPING_TEST
   } while (true);
 #endif
@@ -297,14 +297,16 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  moutInfo = db.getMountInfo(lc);
-  am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
+                                     "drive", "library", "host");
   done = false;
   count = 0;
 #endif
   while (!done) {
     auto aj = am->getNextJobBatch(1,1,lc);
-    if (aj.size()) {
+    if (!aj.empty()) {
       std::list <std::unique_ptr <cta::SchedulerDatabase::ArchiveJob> > jobBatch;
       jobBatch.emplace_back(std::move(aj.front()));
       aj.pop_front();
@@ -315,8 +317,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       done = true;
   }
   ASSERT_EQ(filesToDo2, count);
-  am.reset(nullptr);
-  moutInfo.reset(nullptr);
 }
 
 TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
@@ -373,13 +373,12 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
   db.waitSubthreadsComplete();
 
     // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
 
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
-  rm.reset(nullptr);
-  moutInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
@@ -407,12 +406,19 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   diskSystemList.push_back(diskSystem);
 
   // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
-
+  auto mountInfo = db.getMountInfo(lc);
+  // This potential mount will be used only to initialize values in createRetrieveMount()
+  // It will not be added to the queue
+  SchedulerDatabase::PotentialMount mount = {cta::common::dataStructures::MountType::Retrieve,
+                                             "vid", "tapePool", "vo", "mediaType", "vendor", 123456789,
+                                             cta::common::dataStructures::Label::Format::CTA,
+                                             0, 0, 0, 0, 0, 0, "library", 0.0, false, 0, "", 0, 0,
+                                             std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt};
+  auto rm = mountInfo->createRetrieveMount(mount, "drive", "library", "host");
+  ASSERT_EQ(0, mountInfo->potentialMounts.size());
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
-    // Inject a retrieve job to the db (so we can retrieve it)
+  // Inject a retrieve job to the db (so we can retrieve it)
   std::function<void()> lambda = [&db,&lc,diskSystemList](){
       cta::common::dataStructures::RetrieveRequest rr;
       cta::log::LogContext locallc=lc;
@@ -445,8 +451,6 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   jobInsertion.get();
   db.waitSubthreadsComplete();
 
-  rm.reset(nullptr);
-  moutInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
@@ -513,11 +517,13 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
 
   // Then load all archive jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
+  auto mountInfo = db.getMountInfo(lc);
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
+                                         "drive", "library", "host");
   auto ajb = am->getNextJobBatch(filesToDo, 1000 * filesToDo, lc);
   //Files with successful fetch should be popped
   ASSERT_EQ(10, ajb.size());
@@ -531,9 +537,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   for(auto &aj: pendingArchiveJobs["tapePool"]) {
     ASSERT_EQ(aj.request.creationLog.time, creationTime);
   }
-
-  am.reset(nullptr);
-  moutInfo.reset(nullptr);
 }
 
 TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
@@ -603,7 +606,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     auto rjb = rm->getNextJobBatch(10,20*1000,lc);
     //Files with successful fetch should be popped
@@ -623,8 +626,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
     }
 
   }
-  rm.reset(nullptr);
-  mountInfo.reset(nullptr);
 }
 
 
@@ -691,9 +692,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
 
   // Then load all archive jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
-  ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   auto rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
 
@@ -712,8 +713,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   rm->flushAsyncSuccessReports(jobBatch, lc);
   rjb.clear();
   ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000, lc).size());
-  rm.reset(nullptr);
-  moutInfo.reset(nullptr);
 }
 
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
@@ -784,9 +783,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
 
   // Then load all retrieve jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo(lc);
-  ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     //Batch fails and puts the queue to sleep (not enough space in disk system)
     //leave one job in the queue for the potential mount
@@ -804,8 +803,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
-  rm.reset(nullptr);
-  moutInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
@@ -879,7 +876,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     //leave one job in the queue for the potential mount
     auto rjb = rm->getNextJobBatch(9,20*1000,lc);
@@ -895,8 +892,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
     //reserving disk space will fail because the disk instance is not reachable, causing backpressure
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
-  rm.reset(nullptr);
-  mountInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)

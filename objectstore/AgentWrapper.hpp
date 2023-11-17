@@ -21,8 +21,8 @@
 #include "AgentReferenceInterface.hpp"
 #include "Agent.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class AgentWrapper: public AgentReferenceInterface {
 public:
   AgentWrapper(Agent& agent);
@@ -66,7 +66,7 @@ private:
   Agent& m_agent;
 };
 
-}}
+} // namespace cta::objectstore
 
 #endif /* AGENTWRAPPER_HPP */
 

@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 /**
  * Structure containing the SQL to create the schema of the CTA scheduler
@@ -46,5 +45,4 @@ struct PostgresSchedulerSchema: public SchedulerSchema {
   PostgresSchedulerSchema();
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

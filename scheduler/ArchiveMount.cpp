@@ -98,6 +98,15 @@ uint64_t cta::ArchiveMount::getCapacityInBytes() const {
 }
 
 //------------------------------------------------------------------------------
+// getEncryptionKeyName()
+//------------------------------------------------------------------------------
+std::optional<std::string> cta::ArchiveMount::getEncryptionKeyName() const {
+  if(!m_dbMount)
+    throw exception::Exception("In cta::RetrieveMount::getEncryptionKeyName(): got nullptr dbMount");
+  return m_dbMount->mountInfo.encryptionKeyName;
+}
+
+//------------------------------------------------------------------------------
 // getNbFiles
 //------------------------------------------------------------------------------
 uint32_t cta::ArchiveMount::getNbFiles() const {
@@ -189,12 +198,12 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(), archive job successful.");
       try {
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
-      } catch (const cta::exception::Exception& ex) {
+      } catch(const cta::exception::Exception&) {
         //We put the not validated job into this list in order to insert the job
         //into the failedToReportArchiveJobs list in the exception catching block
         failedValidationJobReportURL = job->reportURL();
         validatedSuccessfulDBArchiveJobs.emplace_back(std::move(job->m_dbJob));
-        throw ex;
+        throw;
       }
       files++;
       bytes += job->archiveFile.fileSize;

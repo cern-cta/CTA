@@ -23,8 +23,7 @@
 
 #include "common/dataStructures/Tape.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The collection of criteria used to select a set of tapes.
@@ -67,6 +66,16 @@ struct TapeSearchCriteria {
   std::optional<std::string> vo;
 
   /**
+   * The purchase order related to the tape
+   */
+  std::optional<std::string> purchaseOrder;
+
+  /**
+   * The physical library related to the tape
+   */
+  std::optional<std::string> physicalLibraryName;
+
+  /**
    * The capacity of a tape in bytes
    */
   std::optional<uint64_t> capacityInBytes;
@@ -92,5 +101,4 @@ struct TapeSearchCriteria {
   std::optional<common::dataStructures::Tape::State> state;
 };  // struct TapeSearchCriteria
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

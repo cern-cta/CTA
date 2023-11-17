@@ -23,8 +23,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
   const CreateMountPolicyAttributes & mountPolicy) {
@@ -106,5 +105,4 @@ void DummyMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStruc
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

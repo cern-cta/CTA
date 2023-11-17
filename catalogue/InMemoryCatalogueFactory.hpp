@@ -20,8 +20,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Factory of Catalogue objects.
@@ -83,5 +82,4 @@ private:
 
 }; // class InMemoryCatalogueFactory
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

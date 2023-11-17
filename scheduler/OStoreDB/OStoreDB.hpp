@@ -110,24 +110,15 @@ class OStoreDB: public SchedulerDatabase {
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape,
+      const cta::SchedulerDatabase::PotentialMount& mount,
+      const catalogue::TapeForWriting& tape,
       const std::string& driveName, const std::string& logicalLibrary,
-      const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor, uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
+      const std::string& hostName) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string& vid, const std::string& tapePool,
+      const cta::SchedulerDatabase::PotentialMount& mount,
       const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    virtual ~TapeMountDecisionInfo();
+      const std::string& logicalLibrary, const std::string& hostName) override;
+    ~TapeMountDecisionInfo() override;
 
    private:
     explicit TapeMountDecisionInfo(OStoreDB & oStoreDB);
@@ -140,24 +131,14 @@ class OStoreDB: public SchedulerDatabase {
 
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
    public:
-    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape,
-      const std::string& driveName, const std::string& logicalLibrary,
-      const std::string& hostName, const std::string& vo, const std::string& mediaType,
-      const std::string& vendor, uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string& vid, const std::string & tapePool,
-      const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    virtual ~TapeMountDecisionInfoNoLock();
+    std::unique_ptr<SchedulerDatabase::ArchiveMount>
+    createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting &tape,
+                       const std::string &driveName, const std::string &logicalLibrary,
+                       const std::string &hostName) override;
+    std::unique_ptr<SchedulerDatabase::RetrieveMount>
+      createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount, const std::string& driveName,
+                          const std::string& logicalLibrary, const std::string& hostName) override;
+    ~TapeMountDecisionInfoNoLock() override;
   };
 
  private:
@@ -384,7 +365,7 @@ class OStoreDB: public SchedulerDatabase {
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
@@ -449,7 +430,7 @@ class OStoreDB: public SchedulerDatabase {
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
 
   // typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
 
@@ -494,6 +475,7 @@ class OStoreDB: public SchedulerDatabase {
   /* === Repack requests handling =========================================== */
   std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext &logContext) override;
 
+  bool repackExists() override;
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
   void cancelRepack(const std::string& vid, log::LogContext & lc) override;
@@ -680,8 +662,6 @@ class OStoreDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
 
-  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
-
  private:
   const size_t c_repackArchiveReportBatchSize = 10000;
   const size_t c_repackRetrieveReportBatchSize = 10000;
@@ -694,4 +674,4 @@ class OStoreDB: public SchedulerDatabase {
   objectstore::AgentReference *m_agentReference = nullptr;
 };
 
-}  // namespace cta
+} // namespace cta

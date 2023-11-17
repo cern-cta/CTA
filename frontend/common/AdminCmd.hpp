@@ -20,8 +20,7 @@
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class AdminCmd {
 public:
@@ -219,6 +218,9 @@ private:
   void processVirtualOrganization_Add (xrd::Response& response);
   void processVirtualOrganization_Ch  (xrd::Response& response);
   void processVirtualOrganization_Rm  (xrd::Response& response);
+  void processPhysicalLibrary_Add     (xrd::Response& response);
+  void processPhysicalLibrary_Ch      (xrd::Response& response);
+  void processPhysicalLibrary_Rm      (xrd::Response& response);
   void processRecycleTapeFile_Restore (xrd::Response& response);
   void processModifyArchiveFile       (xrd::Response& response);
 
@@ -233,4 +235,4 @@ private:
   std::map<admin::OptionStrList::Key, std::vector<std::string>>    m_option_str_list;    //!< String List options
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

@@ -24,9 +24,7 @@
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
@@ -88,6 +86,4 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   }
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

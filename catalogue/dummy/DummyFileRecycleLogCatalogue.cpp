@@ -20,8 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 FileRecycleLogItor DummyFileRecycleLogCatalogue::getFileRecycleLogItor(
   const RecycleTapeFileSearchCriteria & searchCriteria) const {
@@ -37,5 +36,4 @@ void DummyFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& 
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

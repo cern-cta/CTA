@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A database statement can either have auto commiting mode turned on or off.
@@ -28,5 +27,4 @@ enum class AutocommitMode {
   AUTOCOMMIT_OFF
 };
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

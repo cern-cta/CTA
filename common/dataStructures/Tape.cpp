@@ -20,9 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -91,6 +89,7 @@ bool Tape::operator==(const Tape &rhs) const {
       && capacityInBytes==rhs.capacityInBytes
       && dataOnTapeInBytes==rhs.dataOnTapeInBytes
       && encryptionKeyName==rhs.encryptionKeyName
+      && purchaseOrder==rhs.purchaseOrder
       && full==rhs.full
       && state==rhs.state
       && creationLog==rhs.creationLog
@@ -185,6 +184,4 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

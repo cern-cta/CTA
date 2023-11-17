@@ -31,8 +31,7 @@
 #include "common/Timer.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresFileRecycleLogCatalogue::PostgresFileRecycleLogCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -106,5 +105,4 @@ uint64_t PostgresFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &co
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

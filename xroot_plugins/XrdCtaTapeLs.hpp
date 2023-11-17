@@ -19,7 +19,7 @@
 
 #include "XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tape ls" command
@@ -67,17 +67,19 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::cata
 
   // Get the search criteria from the optional options
 
-  searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
-  searchCriteria.fromCastor      = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,    &has_any);
-  searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
-  searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
-  searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-  searchCriteria.vo              = requestMsg.getOptional(OptionString::VO,              &has_any);
-  searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,             &has_any);
-  searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
-  searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
-  searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
-  auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,           &has_any);
+  searchCriteria.full                = requestMsg.getOptional(OptionBoolean::FULL,                       &has_any);
+  searchCriteria.fromCastor          = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,                &has_any);
+  searchCriteria.capacityInBytes     = requestMsg.getOptional(OptionUInt64::CAPACITY,                    &has_any);
+  searchCriteria.logicalLibrary      = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY,             &has_any);
+  searchCriteria.tapePool            = requestMsg.getOptional(OptionString::TAPE_POOL,                   &has_any);
+  searchCriteria.vo                  = requestMsg.getOptional(OptionString::VO,                          &has_any);
+  searchCriteria.vid                 = requestMsg.getOptional(OptionString::VID,                         &has_any);
+  searchCriteria.mediaType           = requestMsg.getOptional(OptionString::MEDIA_TYPE,                  &has_any);
+  searchCriteria.vendor              = requestMsg.getOptional(OptionString::VENDOR,                      &has_any);
+  searchCriteria.purchaseOrder       = requestMsg.getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &has_any);
+  searchCriteria.physicalLibraryName = requestMsg.getOptional(OptionString::PHYSICAL_LIBRARY,            &has_any);
+  searchCriteria.diskFileIds         = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
+  auto stateOpt                      = requestMsg.getOptional(OptionString::STATE,                       &has_any);
   if(stateOpt){
     searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
   }
@@ -139,18 +141,20 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     lastModificationLog->set_host(tape.lastModificationLog.host);
     lastModificationLog->set_time(tape.lastModificationLog.time);
     tape_item->set_comment(tape.comment);
-    
+
     tape_item->set_state(tape.getStateStr());
     tape_item->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
+    tape_item->set_purchase_order(tape.purchaseOrder ? tape.purchaseOrder.value() : "");
+    tape_item->set_physical_library(tape.physicalLibraryName ? tape.physicalLibraryName.value() : "");
     tape_item->set_state_update_time(tape.stateUpdateTime);
     tape_item->set_state_modified_by(tape.stateModifiedBy);
     if (tape.verificationStatus) {
       tape_item->set_verification_status(tape.verificationStatus.value());
     }
-    
+
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();
 }
 
-}}
+} // namespace cta::xrd

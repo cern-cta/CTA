@@ -90,6 +90,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       vo.maxFileSize = 0;
       vo.comment = "comment";
       vo.diskInstanceName = getDefaultDiskInstance().name;
+      vo.isRepackVo = false;
       return vo;
     }
 
@@ -151,6 +152,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     const std::string vendor = "vendor";
     const std::string logicalLibraryName = "logical_library_name";
     const bool logicalLibraryIsDisabled = false;
+    std::optional<std::string> physicalLibraryName;
     const std::string tapePoolName = "tape_pool_name";
     const std::optional<std::string> supply("value for the supply pool mechanism");
     const bool fullValue = false;
@@ -161,7 +163,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
     m_catalogue->VO()->createVirtualOrganization(admin,vo);
 
-    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
     m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
     createMediaType(mediaType);
 
@@ -310,6 +312,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     const std::string vendor = "vendor";
     const std::string logicalLibraryName = "logical_library_name";
     const bool logicalLibraryIsDisabled = false;
+    std::optional<std::string> physicalLibraryName;
     const std::string tapePoolName = "tape_pool_name";
     const uint64_t nbPartialTapes = 2;
     const bool isEncrypted = true;
@@ -323,7 +326,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
     m_catalogue->VO()->createVirtualOrganization(admin,vo);
 
-    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
     m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     createMediaType(mediaType);
 

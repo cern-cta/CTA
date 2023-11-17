@@ -23,7 +23,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 /**
  * Interface to the backend stores that we can use.
@@ -255,5 +255,4 @@ class Backend {
   virtual std::string typeName() = 0;
 };
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

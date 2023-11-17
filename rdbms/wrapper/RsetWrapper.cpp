@@ -17,9 +17,7 @@
 
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // destructor
@@ -27,6 +25,4 @@ namespace wrapper {
 RsetWrapper::~RsetWrapper() {
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

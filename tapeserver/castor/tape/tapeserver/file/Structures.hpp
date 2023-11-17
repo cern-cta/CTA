@@ -22,9 +22,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace castor {
-namespace tape {
-  namespace tapeFile {
+namespace castor::tape::tapeFile {
 
     /**
      * Helper template to fill with space a structure. 
@@ -456,11 +454,11 @@ namespace tape {
      */
     void setInt(char(& t)[n], const int i) {
       char format[6]; // buffer big enough to handle any size
-      sprintf(format, "%%.%dd", (int) n);
+      snprintf(format, 6, "%%.%dd", static_cast<int>(n));
       char buf[n + 1];
       long mod = 1;
       for (unsigned int j = 0; j < n; j++) mod *= 10;
-      sprintf(buf, format, i % mod);
+      snprintf(buf, n+1, format, i % mod);
 
       memcpy(t, buf, n);
     }
@@ -497,6 +495,4 @@ namespace tape {
       std::copy(str.begin(), str.end(), t);
     }
 
-} //namespace tapeFile
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeFile

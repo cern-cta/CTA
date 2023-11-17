@@ -22,8 +22,6 @@ cta_valgrind:
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
     - /usr/bin/cta-unitPlusSystemTests.sh
-  tags:
-    - docker
 
 dbunittests_postgresql:
   except:
@@ -63,5 +61,3 @@ dbunittests_postgresql:
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
-  tags:
-    - docker

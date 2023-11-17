@@ -20,7 +20,7 @@
 
 #include "XrootCl.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
 XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
   if (!what.empty()) {
@@ -38,5 +38,4 @@ void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, const std::string&
   }
 }
 
-}  // namespace exception
-}  // namespace cta
+} // namespace cta::exception

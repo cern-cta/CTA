@@ -41,8 +41,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SqliteTapeFileCatalogue::SqliteTapeFileCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue)
@@ -176,6 +175,7 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
       catalogue::FileSizeMismatch ex;
       ex.getMessage() << "File size mismatch: expected=" << archiveFileRow->size << ", actual=" << event.size << ": "
         << fileContext.str();
+      m_log(log::ALERT, ex.getMessage().str());
       throw ex;
     }
 
@@ -198,5 +198,4 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -21,7 +21,7 @@
 #include "frontend/common/GrpcClient.hpp"
 #include "Namespace.hpp"
 
-namespace cta { namespace grpc { 
+namespace cta::grpc {
 
 class Endpoint
 {
@@ -68,4 +68,4 @@ private:
   std::map<std::string, Endpoint> m_endpointMap;
 };
 
-}} // namespace cta::grpc
+} // namespace cta::grpc

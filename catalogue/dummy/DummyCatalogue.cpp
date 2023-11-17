@@ -39,8 +39,7 @@
 #include "catalogue/dummy/DummyVirtualOrganizationCatalogue.hpp"
 
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 DummyCatalogue::DummyCatalogue()
   : m_schema(std::make_unique<DummySchemaCatalogue>()),
@@ -128,6 +127,10 @@ const std::unique_ptr<LogicalLibraryCatalogue>& DummyCatalogue::LogicalLibrary()
   return m_logicalLibrary;
 }
 
+const std::unique_ptr<PhysicalLibraryCatalogue>& DummyCatalogue::PhysicalLibrary() {
+  return m_physicalLibrary;
+}
+
 const std::unique_ptr<TapeFileCatalogue>& DummyCatalogue::TapeFile() {
   return m_tapeFile;
 }
@@ -148,5 +151,4 @@ const std::unique_ptr<DriveStateCatalogue>& DummyCatalogue::DriveState() {
   return m_driveState;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

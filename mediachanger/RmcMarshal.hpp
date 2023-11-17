@@ -21,8 +21,7 @@
 #include "mediachanger/RmcMountMsgBody.hpp"
 #include "mediachanger/RmcUnmountMsgBody.hpp"
 
-namespace cta    {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -100,6 +99,5 @@ template<int n> size_t marshal(char (&dst)[n], const RmcUnmountMsgBody &src)  {
  */
 void unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst) ;
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

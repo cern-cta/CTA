@@ -19,17 +19,16 @@
 
 #include <list>
 #include <string>
+#include <optional>
 
 #include "common/exception/UserError.hpp"
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct LogicalLibrary;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -37,13 +36,12 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringLogicalLibraryName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentLogicalLibrary);
 
-
 class LogicalLibraryCatalogue {
 public:
   virtual ~LogicalLibraryCatalogue() = default;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool isDisabled, const std::string &comment) = 0;
+    const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) = 0;
 
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
 
@@ -67,7 +65,9 @@ public:
 
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool disabledValue) = 0;
+
+  virtual void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

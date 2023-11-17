@@ -18,7 +18,7 @@
 #include "DriveHandlerProxy.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
   m_socketPair.close(server::SocketPair::Side::parent);  
@@ -95,9 +95,4 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   m_socketPair.send(buffer);
 }
 
-
-DriveHandlerProxy::~DriveHandlerProxy() { }
-
-
-
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

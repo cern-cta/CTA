@@ -17,7 +17,7 @@
 
 #include "JSONFreeSpace.hpp"
 
-namespace cta { namespace disk {
+namespace cta::disk {
 
 JSONFreeSpace::JSONFreeSpace(): JSONCObject() {
 }
@@ -40,4 +40,4 @@ std::string JSONFreeSpace::getExpectedJSONToBuildObject() const {
 JSONFreeSpace::~JSONFreeSpace() {
 }
 
-}}
+} // namespace cta::disk

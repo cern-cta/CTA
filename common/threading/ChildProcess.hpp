@@ -22,8 +22,7 @@
 #include <unistd.h>
 
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
   /**
    * A class allowing forking of a child process, and subsequent follow up
@@ -63,7 +62,11 @@ namespace threading {
     
     ChildProcess() : m_started(false), m_finished(false), m_exited(false), m_wasKilled(false), m_exitCode(0) {}
     /* Clean up leftover child processes (hopefully not useful) */
-    virtual ~ChildProcess() { if (m_started && !m_finished) kill(); };
+    virtual ~ChildProcess() {
+      try {
+        if (!m_finished) kill();
+      } catch(ProcessNeverStarted&) { }
+    };
     /** start function, taking as an argument a callback for parent's
      * resources cleanup. A child process can only be fired once. */
     void start(Cleanup & cleanup) ;
@@ -92,5 +95,4 @@ namespace threading {
     void parseStatus(int status);
   };
   
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

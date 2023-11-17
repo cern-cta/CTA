@@ -22,8 +22,7 @@
 #include <string>
 
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * A database constraint has been violated.
@@ -39,7 +38,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  PrimaryKeyError(const std::string &context = "", const bool embedBacktrace = true);
+  PrimaryKeyError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
@@ -49,5 +48,4 @@ public:
   
 }; // class PrimaryKeyError
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

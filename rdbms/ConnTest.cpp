@@ -80,7 +80,6 @@ TEST_P(cta_rdbms_ConnTest, setAutocommitMode_AUTOCOMMIT_OFF) {
     break;
   case Login::DBTYPE_NONE:
     FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
-    break;
   default:
     FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
   }
@@ -120,7 +119,6 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
     break;
   case Login::DBTYPE_NONE:
     FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
-    break;
   default:
     FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
   }

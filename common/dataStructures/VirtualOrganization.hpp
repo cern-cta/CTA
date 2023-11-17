@@ -22,9 +22,7 @@
 
 #include "EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 struct VirtualOrganization {
   /**
@@ -64,10 +62,21 @@ struct VirtualOrganization {
    */
   std::string diskInstanceName;
 
+  /**
+   * True if this is the default repack VO
+   */
+  bool isRepackVo;
+
   bool operator==(const VirtualOrganization & other) const{
-    return (name == other.name && comment == other.comment && readMaxDrives == other.readMaxDrives &&
-      writeMaxDrives == other.writeMaxDrives && maxFileSize == other.maxFileSize && diskInstanceName == other.diskInstanceName);
+    return (
+            name == other.name
+            && comment == other.comment
+            && readMaxDrives == other.readMaxDrives
+            && writeMaxDrives == other.writeMaxDrives
+            && maxFileSize == other.maxFileSize
+            && diskInstanceName == other.diskInstanceName
+            && isRepackVo == other.isRepackVo);
   }
 };
 
-}}}
+} // namespace cta::common::dataStructures

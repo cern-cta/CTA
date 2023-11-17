@@ -20,12 +20,12 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
-#include "PbException.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "AdminCmd.hpp"
 #include "GrpcEndpoint.hpp"
+#include "PbException.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
@@ -221,6 +221,15 @@ xrd::Response AdminCmd::process() {
       case cmd_pair(admin::AdminCmd::CMD_VIRTUALORGANIZATION, admin::AdminCmd::SUBCMD_RM):
         processVirtualOrganization_Rm(response);
         break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_ADD):
+        processPhysicalLibrary_Add(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_CH):
+        processPhysicalLibrary_Ch(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_RM):
+        processPhysicalLibrary_Rm(response);
+        break;
       case cmd_pair(admin::AdminCmd::CMD_RECYCLETAPEFILE, admin::AdminCmd::SUBCMD_RESTORE):
         processRecycleTapeFile_Restore(response);
         break;
@@ -232,7 +241,7 @@ xrd::Response AdminCmd::process() {
               AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
               AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not implemented.");
     }
-     
+
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
   } catch(exception::PbException& ex) {
@@ -591,11 +600,12 @@ void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
 void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name      = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto isDisabled = getOptional(OptionBoolean::DISABLED);
-  auto& comment   = getRequired(OptionString::COMMENT);
+  auto& name               = getRequired(OptionString::LOGICAL_LIBRARY);
+  auto isDisabled          = getOptional(OptionBoolean::DISABLED);
+  auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
+  auto& comment            = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, physicalLibraryName, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -607,6 +617,7 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   auto  disabled         = getOptional(OptionBoolean::DISABLED);
   auto  comment          = getOptional(OptionString::COMMENT);
   auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
+  auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
 
   if(disabled) {
     m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
@@ -620,6 +631,9 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   }
   if(disabledReason) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
+  }
+  if(physicalLibrary) {
+    m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_cliIdentity, name, physicalLibrary.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -819,6 +833,11 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
 
   if(vid_list.empty()) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
+  }
+
+  // Check if there is a default repack VO
+  if (!m_catalogue.VO()->getDefaultVirtualOrganizationForRepack().has_value()) {
+    throw exception::UserError("There is no default virtual organization for repack.");
   }
 
   auto mountPolicyProvidedByUser = getRequired(OptionString::MOUNT_POLICY);
@@ -1038,6 +1057,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   auto& logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
   auto& tapepool       = getRequired(OptionString::TAPE_POOL);
   auto& full           = getRequired(OptionBoolean::FULL);
+  auto purchaseOrder   = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto state           = getOptional(OptionString::STATE);
   auto stateReason     = getOptional(OptionString::REASON);
   auto comment         = getOptional(OptionString::COMMENT);
@@ -1049,6 +1069,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.logicalLibraryName = logicallibrary;
   tape.tapePoolName = tapepool;
   tape.full = full;
+  tape.purchaseOrder = purchaseOrder;
   tape.comment = comment ? comment.value() : "";
   if(!state) {
     // By default, the state of the tape will be ACTIVE
@@ -1073,6 +1094,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto  tapepool           = getOptional(OptionString::TAPE_POOL);
   auto  comment            = getOptional(OptionString::COMMENT);
   auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto  purchaseOrder      = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto  full               = getOptional(OptionBoolean::FULL);
   auto  state              = getOptional(OptionString::STATE);
   auto  stateReason        = getOptional(OptionString::REASON);
@@ -1104,6 +1126,9 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   }
   if(encryptionkeyName) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+  }
+  if(purchaseOrder) {
+    m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, purchaseOrder.value());
   }
   if(full) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
@@ -1388,6 +1413,7 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   const auto& comment = getRequired(OptionString::COMMENT);
   const auto& maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto& diskInstanceName = getRequired(OptionString::DISK_INSTANCE);
+  const auto& isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   common::dataStructures::VirtualOrganization vo;
   vo.name = name;
@@ -1400,6 +1426,12 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
     vo.maxFileSize = maxFileSizeOpt.value();
   } else {
     vo.maxFileSize = m_archiveFileMaxSize;
+  }
+
+  if(isRepackVo) {
+    vo.isRepackVo = isRepackVo.value();
+  } else {
+    vo.isRepackVo = false;
   }
 
   m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
@@ -1416,6 +1448,7 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   const auto comment = getOptional(OptionString::COMMENT);
   const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
+  const auto isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   if(comment)
     m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -1432,6 +1465,15 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   if(diskInstanceName)
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
+  if(isRepackVo) {
+    // Don't allow unsetting repackvo while repacks are ongoing.
+    if (m_scheduler.repackExists() && !isRepackVo.value()) {
+      throw exception::UserError("Cannot remove default virtual organization "
+                                 "for repack while repacks are ongoing.");
+    }
+    m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
+  }
+
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -1440,7 +1482,64 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::VO);
 
+  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
+    throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
+  }
+
   m_catalogue.VO()->deleteVirtualOrganization(name);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
+  using namespace cta::admin;
+
+  common::dataStructures::PhysicalLibrary pl;
+  pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
+  pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
+  pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
+  pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+
+  pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
+
+  m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
+  using namespace cta::admin;
+
+  common::dataStructures::UpdatePhysicalLibrary pl;
+
+  pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
+
+  m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
+  using namespace cta::admin;
+
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  m_catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1538,4 +1637,4 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
   }
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

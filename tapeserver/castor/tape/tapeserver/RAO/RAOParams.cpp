@@ -19,8 +19,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 const std::map<std::string,RAOParams::RAOAlgorithmType> RAOParams::c_raoAlgoStringTypeMap = {
   {"linear",RAOParams::RAOAlgorithmType::linear},
   {"random",RAOParams::RAOAlgorithmType::random},
@@ -100,4 +100,4 @@ std::string RAOParams::getMountedVid() const {
 
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

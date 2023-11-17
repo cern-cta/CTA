@@ -20,9 +20,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -103,6 +101,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

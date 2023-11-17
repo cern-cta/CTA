@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyLogicalLibraryCatalogue : public LogicalLibraryCatalogue {
 public:
@@ -28,7 +27,7 @@ public:
   ~DummyLogicalLibraryCatalogue() override = default;
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool isDisabled, const std::string &comment) override;
+    const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) override;
 
   void deleteLogicalLibrary(const std::string &name) override;
 
@@ -40,6 +39,9 @@ public:
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) override;
 
+  void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) override;
+
   void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &disabledReason) override;
 
@@ -47,5 +49,4 @@ public:
     const bool disabledValue) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

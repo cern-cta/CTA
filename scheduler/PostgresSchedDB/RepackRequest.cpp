@@ -20,13 +20,12 @@
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
 #include "common/log/LogContext.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 
 // generated during build in the build tree
 #include "PostgresSchedDB/rowblobs.pb.h"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 uint64_t RepackRequest::getLastExpandedFSeq()
 {
@@ -274,7 +273,7 @@ uint64_t RepackRequest::addSubrequestsAndUpdateStats(
         try {
           rr->insert();
           nbRetrieveSubrequestsCreated++;
-        } catch (rdbms::UniqueError &objExists){
+        } catch (rdbms::UniqueConstraintError &objExists){
           //The retrieve subrequest already exists and is not deleted, we log and don't do anything
           log::ScopedParamContainer params(lc);
           params.add("copyNb",activeCopyNumber)
@@ -534,5 +533,4 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
   return *this;
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

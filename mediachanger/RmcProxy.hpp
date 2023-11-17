@@ -29,8 +29,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * A SCSI media changer proxy.
@@ -248,5 +247,4 @@ protected:
 
 }; // class RmcProxy
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

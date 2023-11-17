@@ -151,6 +151,15 @@ uint64_t cta::RetrieveMount::getCapacityInBytes() const {
 }
 
 //------------------------------------------------------------------------------
+// getEncryptionKeyName()
+//------------------------------------------------------------------------------
+std::optional<std::string> cta::RetrieveMount::getEncryptionKeyName() const {
+  if(!m_dbMount)
+    throw exception::Exception("In cta::RetrieveMount::getEncryptionKeyName(): got nullptr dbMount");
+  return m_dbMount->mountInfo.encryptionKeyName;
+}
+
+//------------------------------------------------------------------------------
 // getLabelFormat()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::Label::Format cta::RetrieveMount::getLabelFormat() const {
@@ -208,7 +217,7 @@ bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationReq
 }
 
 //------------------------------------------------------------------------------
-// requeueJobBatch()
+// putQueueToSleep()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) {
   m_dbMount->putQueueToSleep(diskSystemName, sleepTime, logContext);

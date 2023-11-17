@@ -19,8 +19,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -34,5 +33,19 @@ RmcMountMsgBody::RmcMountMsgBody():
   memset(vid, '\0', sizeof(vid));
 }
 
-} // namespace mediachanger
-} // namespace cta
+uint32_t RmcMountMsgBody::bodyLen() const {
+  const auto vidLen = strnlen(vid, CA_MAXVIDLEN+1);
+  if(*unusedLoader != '\0' || vidLen > CA_MAXVIDLEN) {
+    throw exception::Exception("Message body contains improperly-terminated strings");
+  }
+
+  auto retval = sizeof(uid) +
+                sizeof(gid) +
+                sizeof(unusedLoader) +
+                vidLen + 1 +
+                sizeof(side) +
+                sizeof(drvOrd);
+  return static_cast<uint32_t>(retval);
+}
+
+} // namespace cta::mediachanger

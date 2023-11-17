@@ -21,9 +21,7 @@
 
 #include <sstream>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -49,6 +47,4 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

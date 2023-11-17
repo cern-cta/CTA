@@ -109,7 +109,7 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   return aReq->getIdStr();
 }
 
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>> PostgresSchedDB::getArchiveJobs() const
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> PostgresSchedDB::getArchiveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -255,7 +255,7 @@ void PostgresSchedDB::deleteFailed(const std::string &objectId, log::LogContext 
    throw cta::exception::Exception("Not implemented");
 }
 
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>> PostgresSchedDB::getRetrieveJobs() const
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> PostgresSchedDB::getRetrieveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -292,6 +292,13 @@ std::string PostgresSchedDB::queueRepack(const SchedulerDatabase::QueueRepackReq
   rr->commit();
 
   return rr->getIdStr();
+}
+
+//------------------------------------------------------------------------------
+// PostgresSchedDB::repackExists()
+//------------------------------------------------------------------------------
+bool PostgresSchedDB::repackExists() {
+    throw cta::exception::Exception("Not implemented");
 }
 
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
@@ -436,11 +443,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
     logContext.log(log::INFO, "In PostgresSchedDB::getMountInfoNoLock(): success.");
   }
   return ret;
-}
-
-void PostgresSchedDB::requeueRetrieveJobs(std::list<SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext)
-{
-   throw cta::exception::Exception("Not implemented");
 }
 
 void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize)

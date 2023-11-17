@@ -22,9 +22,7 @@
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct RepackJobQueueRow {
   uint64_t repackReqId;
@@ -319,6 +317,4 @@ struct RepackJobQueueRow {
 
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

@@ -20,9 +20,7 @@
 #include <chrono>
 #include <string>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 /** 
  * The interface to classes managing subprocesses. It allows an external loop
@@ -57,9 +55,9 @@ class SubprocessHandler {
 public:
   /** The subprocess handler constructor. It will remember its index, as a helper to
    * the manager */
-  SubprocessHandler(const std::string & index);
+  SubprocessHandler(const std::string & index) : index(index) {}
   const std::string index;          ///< The index of the subprocess (as a helper to the manager)
-  virtual ~SubprocessHandler();
+  virtual ~SubprocessHandler() = default;
   /** An enum allowing the description of the environment (child or parent) */
   enum class ForkState { parent, child, notForking };
   /** The return type for the functions (getStatus, handleEvent, handleTimeout)
@@ -99,4 +97,4 @@ public:
   virtual int runChild() = 0;
 };
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

@@ -24,9 +24,7 @@
 
 #include <list>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -117,6 +115,4 @@ const TapeFseqRange
 }
 
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

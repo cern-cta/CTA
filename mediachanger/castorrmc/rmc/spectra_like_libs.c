@@ -32,12 +32,13 @@ static struct vendor_product_id_pair const spectra_like_libs[] = {
   {"IBM"    , "3573-TL"}  /*Match IBM libraries, model 3573-TL*/
 };
 
-void trim_trailing_spaces(char * str) {
-    int pos;
-    pos = strlen(str) - 1;
-    for (; pos >= 0 && isspace(str[pos]); pos--) {
-        str[pos] = '\0';
-    }
+void trim_trailing_spaces(char* str, int strSize) {
+  if(strSize == 0) return;
+  str[strSize-1] = '\0';
+  if(strSize == 1) return;
+  for(int pos = strSize-2; pos >= 0 && isspace(str[pos]); --pos) {
+    str[pos] = '\0';
+  }
 }
 
 int is_library_spectra_like(const struct robot_info *const robot_info) {
@@ -48,12 +49,10 @@ int is_library_spectra_like(const struct robot_info *const robot_info) {
 
     memcpy (vendorId, robot_info->inquiry, 8);
     memcpy (productId, robot_info->inquiry + 8, 16);
-    vendorId[8] = '\0';
-    productId[16] = '\0';
 
     /* Trim any whitespaces in excess */
-    trim_trailing_spaces(vendorId);
-    trim_trailing_spaces(productId);
+    trim_trailing_spaces(vendorId, sizeof(vendorId));
+    trim_trailing_spaces(productId, sizeof(productId));
 
     /* find if the vendor (and product) are in the list 'spectra_like_libs' */
     isSpectraLike = 0;

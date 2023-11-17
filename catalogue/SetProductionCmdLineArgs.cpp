@@ -21,9 +21,8 @@
 #include <getopt.h>
 #include <ostream>
 
-namespace cta {
-namespace catalogue {
-  
+namespace cta::catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -105,4 +104,4 @@ void SetProductionCmdLineArgs::printUsage(std::ostream &os) {
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl;
 }
-}}
+} // namespace cta::catalogue

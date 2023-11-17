@@ -22,7 +22,7 @@
 #include "TapedConfiguration.hpp"
 #include "common/threading/SocketPair.hpp"
 
-namespace cta { namespace tape { namespace  daemon {
+namespace cta::tape::daemon {
 
 /**
  * Handler for garbage collector subprocesses. This long lived process should live
@@ -35,7 +35,7 @@ public:
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
   SubprocessHandler::ProcessingStatus fork() override;
   void postForkCleanup() override;
-  int runChild() override;
+  int runChild() noexcept override;
   SubprocessHandler::ProcessingStatus shutdown() override;
   void kill() override;
   SubprocessHandler::ProcessingStatus processEvent() override;
@@ -65,4 +65,4 @@ private:
   static const time_t s_pollInterval = 10;
 };
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

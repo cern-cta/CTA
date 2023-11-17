@@ -18,8 +18,7 @@
 #include "scheduler/PostgresSchedDB/ArchiveJobQueueItor.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 ArchiveJobQueueItor::ArchiveJobQueueItor()
 {
@@ -46,5 +45,4 @@ const common::dataStructures::ArchiveJob &ArchiveJobQueueItor::operator*() const
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

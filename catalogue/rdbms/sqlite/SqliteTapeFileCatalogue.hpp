@@ -51,5 +51,4 @@ private:
   void fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event);
 };  // class SqliteTapeFileCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

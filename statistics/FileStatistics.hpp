@@ -20,8 +20,7 @@
 
 #include <stdint.h>
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 struct FileStatistics {
   FileStatistics();
@@ -38,5 +37,4 @@ struct FileStatistics {
   FileStatistics operator +=(const FileStatistics &other);
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

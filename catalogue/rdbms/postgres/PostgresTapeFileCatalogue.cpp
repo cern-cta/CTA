@@ -42,8 +42,7 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
 /**
@@ -263,6 +262,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
         catalogue::FileSizeMismatch ex;
         ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
           ", actual=" << event.size << ": " << fileContext.str();
+        m_log(log::ALERT, ex.getMessage().str());
         throw ex;
       }
 
@@ -585,5 +585,4 @@ void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &co
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

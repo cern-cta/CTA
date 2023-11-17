@@ -35,8 +35,7 @@
 #include <time.h>
 #include <list>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // createListenerSock
@@ -310,7 +309,6 @@ int acceptConnection(const int listenSocketFd,
         << " seconds whilst trying to accept a connection";
       throw ex;
     }
-    break;
   case -1: // poll() encountered an error
     // If poll() was interrupted
     if(pollErrno == EINTR) {
@@ -325,7 +323,6 @@ int acceptConnection(const int listenSocketFd,
         cta::utils::errnoToString(pollErrno);
       throw ex;
     }
-    break;
   default: // poll() found a file descriptor awaiting attention
     if(pollFd.revents & POLLERR) {
       cta::exception::Exception ex;
@@ -755,75 +752,53 @@ void writeBytes(
 // returned by getaddrinfo. This function is needed because the standard one
 // (gai_strerror) is not thread-safe on all systems.
 //------------------------------------------------------------------------------
-static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
+static std::string getAddrInfoErrorString(const int rc) {
   switch(rc) {
     case EAI_BADFLAGS:
-      strncpy(buf, "Invalid value for `ai_flags' field.", size);
-      break;
+      return "Invalid value for `ai_flags' field.";
     case EAI_NONAME:
-      strncpy(buf, "NAME or SERVICE is unknown.", size);
-      break;
+      return "NAME or SERVICE is unknown.";
     case EAI_AGAIN:
-      strncpy(buf, "Temporary failure in name resolution.", size);
-      break;
+      return "Temporary failure in name resolution.";
     case EAI_FAIL:
-      strncpy(buf, "Non-recoverable failure in name res.", size);
-      break;
+      return "Non-recoverable failure in name res.";
     case EAI_NODATA:
-      strncpy(buf, "No address associated with NAME.", size);
-      break;
+      return "No address associated with NAME.";
     case EAI_FAMILY:
-      strncpy(buf, "`ai_family' not supported.", size);
-      break;
+      return "`ai_family' not supported.";
     case EAI_SOCKTYPE:
-      strncpy(buf, "`ai_socktype' not supported.", size);
-      break;
+      return "`ai_socktype' not supported.";
     case EAI_SERVICE:
-      strncpy(buf, "SERVICE not supported for `ai_socktype'.", size);
-      break;
+      return "SERVICE not supported for `ai_socktype'.";
     case EAI_ADDRFAMILY:
-      strncpy(buf, "Address family for NAME not supported.", size);
-      break;
+      return "Address family for NAME not supported.";
     case EAI_MEMORY:
-      strncpy(buf, "Memory allocation failure.", size);
-      break;
+      return "Memory allocation failure.";
     case EAI_SYSTEM:
-      strncpy(buf, "System error returned in `errno'.", size);
-      break;
+      return "System error returned in `errno'.";
     case EAI_OVERFLOW:
-      strncpy(buf, "Argument buffer overflow.", size);
-      break;
+      return "Argument buffer overflow.";
     case EAI_INPROGRESS:
-      strncpy(buf, "Processing request in progress.", size);
-      break;
+      return "Processing request in progress.";
     case EAI_CANCELED:
-      strncpy(buf, "Request canceled.", size);
-      break;
+      return "Request canceled.";
     case EAI_NOTCANCELED:
-      strncpy(buf, "Request not canceled.", size);
-      break;
+      return "Request not canceled.";
     case EAI_ALLDONE:
-      strncpy(buf, "All requests done.", size);
-      break;
+      return "All requests done.";
     case EAI_INTR:
-      strncpy(buf, "Interrupted by a signal.", size);
-      break;
+      return "Interrupted by a signal.";
     case EAI_IDN_ENCODE:
-      strncpy(buf, "IDN encoding failed.", size);
-      break;
+      return "IDN encoding failed.";
     default:
-      strncpy(buf, "Unknown error", size);
-      break;
+      return "Unknown error";
   }
 }
 
 //------------------------------------------------------------------------------
 // connectWithTimeout
 //------------------------------------------------------------------------------
-int connectWithTimeout(
-  const std::string    &hostName,
-  const unsigned short port,
-  const int            timeout) {
+int connectWithTimeout(const std::string& hostName, const unsigned short port, const int timeout) {
   try {
     std::ostringstream portStream;
     portStream << port;
@@ -833,16 +808,10 @@ int connectWithTimeout(
     hints.ai_socktype = SOCK_STREAM;
 
     struct addrinfo *res = nullptr;
-    {
-      const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
-      // If getaddrinfo() returned a negative value
-      if (0!=rc) {
-        char errBuf[100];
-        getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
-        cta::exception::Exception ex;
-        ex.getMessage() << "getaddrinfo() failed: " << errBuf;
-        throw ex;
-      }
+    if(const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res); rc != 0) {
+      cta::exception::Exception ex;
+      ex.getMessage() << "getaddrinfo() failed: " << getAddrInfoErrorString(rc);
+      throw ex;
     }
     struct sockaddr_in s_in;
     if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
@@ -856,22 +825,18 @@ int connectWithTimeout(
     socklen_t length = res->ai_addrlen;
     freeaddrinfo(res);
 
-    return connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
-      (struct sockaddr *)(&s_in), length, timeout);
-  } catch(cta::exception::Exception &ce) {
+    return connectWithTimeout(AF_INET, SOCK_STREAM, protocol, reinterpret_cast<struct sockaddr*>(&s_in), length, timeout);
+  } catch(const cta::exception::Exception& ce) {
     cta::exception::Exception ex;
-    ex.getMessage() << ce.getMessage().str() <<
-      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
+    ex.getMessage() << ce.getMessage().str() << ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
-  } catch(std::exception &se) {
+  } catch(const std::exception& se) {
     cta::exception::Exception ex;
-    ex.getMessage() << se.what() <<
-      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
+    ex.getMessage() << se.what() << ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
   } catch(...) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to connect: Caught an unknown exception" <<
-      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
+    ex.getMessage() << "Failed to connect: Caught an unknown exception: hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
   }
 }
@@ -1003,97 +968,83 @@ int connectWithTimeout(
 //------------------------------------------------------------------------------
 // marshalUint8
 //------------------------------------------------------------------------------
-void marshalUint8(const uint8_t src, char * &dst) {
-
+size_t marshalUint8(const uint8_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint8_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint8_t: Pointer to destination buffer is nullptr");
   }
 
   *dst = src;
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalInt16
 //------------------------------------------------------------------------------
-void marshalInt16(const int16_t src, char * &dst) {
-
+size_t marshalInt16(const int16_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal int16_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal int16_t: Pointer to destination buffer is nullptr");
   }
 
   const int16_t netByteOrder = htons(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint16
 //------------------------------------------------------------------------------
-void marshalUint16(const uint16_t src, char * &dst) {
-
+size_t marshalUint16(const uint16_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint16_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint16_t: Pointer to destination buffer is nullptr");
   }
 
   const uint16_t netByteOrder = htons(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalInt32
 //------------------------------------------------------------------------------
-void marshalInt32(const int32_t src, char * &dst) {
-
+size_t marshalInt32(const int32_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal int32_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal int32_t: Pointer to destination buffer is nullptr");
   }
 
   const int32_t netByteOrder = htonl(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint32
 //------------------------------------------------------------------------------
-void marshalUint32(const uint32_t src, char * &dst) {
-
+size_t marshalUint32(const uint32_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint32_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint32_t: Pointer to destination buffer is nullptr");
   }
 
   const uint32_t netByteOrder = htonl(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint64
 //------------------------------------------------------------------------------
-void marshalUint64(const uint64_t src, char * &dst) {
-
+size_t marshalUint64(const uint64_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint64_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint64_t: Pointer to destination buffer is nullptr");
   }
 
   // Be independent of the host's byte representation of a multi-byte integer by
@@ -1108,30 +1059,30 @@ void marshalUint64(const uint64_t src, char * &dst) {
   dst[6] = src >>  8 & 0xFF;
   dst[7] = src       & 0xFF;
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalString
 //------------------------------------------------------------------------------
-void marshalString(const std::string &src, char * &dst) {
-
+void marshalString(const std::string& src, char*& dst, size_t& dstSize) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal string"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal string: Pointer to destination buffer is nullptr");
   }
-
+  if(src.size()+1 > dstSize) {
+    throw exception::Exception("Failed to marshal string: Source string is too long");
+  }
   strcpy(dst, src.c_str());
 
-  dst += strlen(src.c_str()) + 1;
+  dst     += src.size()+1;
+  dstSize -= src.size()+1;
 }
 
 //------------------------------------------------------------------------------
 // unmarshalUint8
 //------------------------------------------------------------------------------
-void unmarshalUint8(const char * &src, size_t &srcLen,
-  uint8_t &dst)  {
+void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1156,8 +1107,7 @@ void unmarshalUint8(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalInt16
 //------------------------------------------------------------------------------
-void unmarshalInt16(const char * &src, size_t &srcLen,
-  int16_t &dst)  {
+void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1184,8 +1134,7 @@ void unmarshalInt16(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalUint16
 //------------------------------------------------------------------------------
-void unmarshalUint16(const char * &src, size_t &srcLen,
-  uint16_t &dst)  {
+void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1268,8 +1217,7 @@ void unmarshalInt32(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalUint64
 //------------------------------------------------------------------------------
-void unmarshalUint64(const char * &src, size_t &srcLen,
-  uint64_t &dst)  {
+void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1301,10 +1249,7 @@ void unmarshalUint64(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalString
 //------------------------------------------------------------------------------
-void unmarshalString(const char * &src,
-  size_t &srcLen, char *dst, const size_t dstLen)
-   {
-
+void unmarshalString(const char*& src, size_t& srcLen, char* dst, const size_t dstLen) {
   if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
@@ -1364,5 +1309,4 @@ void unmarshalString(const char * &src,
   }
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

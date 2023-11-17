@@ -19,8 +19,7 @@
 #include "catalogue/AllCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -45,5 +44,4 @@ PostgresVersionedCatalogueSchema::PostgresVersionedCatalogueSchema(std::string s
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -23,7 +23,7 @@
 #include "CostHeuristicFactory.hpp"
 #include "FilePositionEstimatorFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 SLTFRAOAlgorithm::SLTFRAOAlgorithm() {}
 
@@ -83,7 +83,6 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
       std::string errorMsg = "In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() unable to instanciate an estimator to estimate the position of the files on tape "
         "because the type given in parameter is unknown ("+std::to_string(filePositionType)+").";
       throw cta::exception::Exception(errorMsg);
-      break;
   }
 }
 
@@ -150,4 +149,4 @@ std::string SLTFRAOAlgorithm::getName() const {
   return "sltf";
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

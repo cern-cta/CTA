@@ -55,18 +55,14 @@ namespace cta {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Scheduler::Scheduler(
-  catalogue::Catalogue &catalogue,
-  SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount):
-    m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount),
-    m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
-      m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
-    }
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-Scheduler::~Scheduler() throw() { }
+Scheduler::Scheduler(catalogue::Catalogue &catalogue, SchedulerDatabase &db,
+                     const uint64_t minFilesToWarrantAMount,
+                     const uint64_t minBytesToWarrantAMount)
+    : m_catalogue(catalogue), m_db(db),
+      m_minFilesToWarrantAMount(minFilesToWarrantAMount),
+      m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
+  m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+}
 
 //------------------------------------------------------------------------------
 // ping
@@ -160,10 +156,10 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
      .add("diskFileID", request.diskFileID)
      .add("fileSize", request.fileSize)
      .add("fileId", catalogueInfo.fileId);
-  for (auto & ctp: catalogueInfo.copyToPoolMap) {
+  for (const auto & [ copyNum, tapePool]: catalogueInfo.copyToPoolMap) {
     std::stringstream tp;
-    tp << "tapePool" << ctp.first;
-    spc.add(tp.str(), ctp.second);
+    tp << "tapePool" << copyNum;
+    spc.add(tp.str(), tapePool);
   }
   spc.add("policyName", catalogueInfo.mountPolicy.name)
      .add("policyArchiveMinAge", catalogueInfo.mountPolicy.archiveMinRequestAge)
@@ -220,7 +216,10 @@ std::string Scheduler::queueRetrieve(
   std::optional<std::string> diskSystemName;
   try {
     diskSystemName = diskSystemList.getDSName(request.dstURL);
-  } catch (std::out_of_range&) {}
+  } catch (std::out_of_range&) {
+    // If there is no match the function throws an out of range exception.
+    // Not a real out of range exception.
+  }
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
@@ -271,7 +270,7 @@ std::string Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request,
+void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName, const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
@@ -302,7 +301,7 @@ void Scheduler::deleteFailed(const std::string &objectId, log::LogContext & lc) 
   m_db.deleteFailed(objectId, lc);
 }
 
-void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest){
+void Scheduler::checkTapeCanBeRepacked(const std::string & vid,[[maybe_unused]] const SchedulerDatabase::QueueRepackRequest & repackRequest){
   try{
     auto vidToTapesMap = m_catalogue.Tape()->getTapesByVid(vid); //throws an exception if the vid is not found on the database
     cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
@@ -346,10 +345,9 @@ void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerD
               + vid
               + ". The current state is unknown.");
     }
-
-  } catch(const exception::UserError& userEx){
-    throw userEx;
-  } catch(const cta::exception::Exception & ex){
+  } catch(const exception::UserError&) {
+      throw;
+  } catch(const exception::Exception&) {
     throw exception::UserError("The VID provided for repacking does not exist");
   }
 }
@@ -387,8 +385,15 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
-void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc) {
+void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc) {
   m_db.cancelRepack(vid, lc);
+}
+
+//------------------------------------------------------------------------------
+// repackExists
+//------------------------------------------------------------------------------
+bool Scheduler::repackExists() {
+  return m_db.repackExists();
 }
 
 //------------------------------------------------------------------------------
@@ -420,14 +425,15 @@ bool Scheduler::isBeingRepacked(const std::string &vid) {
 //------------------------------------------------------------------------------
 // promoteRepackRequestsToToExpand
 //------------------------------------------------------------------------------
-void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
+void Scheduler::promoteRepackRequestsToToExpand(
+    log::LogContext &lc, size_t repackMaxRequestsToExpand) {
   // We target 2 fresh requests available for processing (ToExpand or Starting).
-  const size_t targetAvailableRequests = 2;
+  const size_t targetAvailableRequests = repackMaxRequestsToExpand;
   // Dry-run test to check if promotion is needed.
   auto repackStatsNL = m_db.getRepackStatisticsNoLock();
   // Statistics are supposed to be initialized for each status value. We only try to
   // expand if there are requests available in Pending status.
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   if (repackStatsNL->at(Status::Pending) &&
           (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
     // Let's try to promote a repack request. Take the lock.
@@ -463,7 +469,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
   std::unique_ptr<cta::SchedulerDatabase::RepackRequest> repackRequest;
   repackRequest = m_db.getNextRepackJobToExpand();
   if(repackRequest != nullptr){
-    std::unique_ptr<RepackRequest> ret(new RepackRequest());
+    auto ret = std::make_unique<RepackRequest>();
     ret->m_dbReq.reset(repackRequest.release());
     return ret;
   }
@@ -473,10 +479,10 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
+void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
   auto repackInfo = repackRequest->getRepackInfo();
 
-  typedef cta::common::dataStructures::RepackInfo::Type RepackType;
+  using RepackType = cta::common::dataStructures::RepackInfo::Type;
 
   //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
   //tape where the file is is located
@@ -485,7 +491,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   //To identify the routes, we need to have both the dist instance name and the storage class name
   //thus, the key of the map is a pair of string
   cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
-  for(auto route: routes){
+  for(const auto& route: routes){
     //insert the route into the map to allow a quick retrieval
     archiveRoutesMap[route.storageClassName][route.copyNb] = route;
   }
@@ -650,7 +656,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     bool createArchiveSubrequest = false;
     if(filesInDirectory.count(fileName.str())){
       cta::disk::RadosStriperPool radosStriperPool;
-      cta::disk::DiskFileFactory fileFactory("",0,radosStriperPool);
+      cta::disk::DiskFileFactory fileFactory(0,radosStriperPool);
       cta::disk::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
       if(fileReader->size() == archiveFile.fileSize){
         createArchiveSubrequest = true;
@@ -688,9 +694,9 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
     nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
-  } catch(const cta::ExpandRepackRequestException& e){
+  } catch(const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir),lc);
-    throw e;
+    throw;
   }
   timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
 
@@ -908,7 +914,7 @@ void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& d
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler::getPendingArchiveJobs(log::LogContext & lc) const {
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<> > Scheduler::getPendingArchiveJobs(log::LogContext & lc) const {
   utils::Timer t;
   auto ret = m_db.getArchiveJobs();
   auto schedulerDbTime = t.secs();
@@ -939,7 +945,7 @@ std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(c
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler::getPendingRetrieveJobs(log::LogContext & lc) const {
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<> > Scheduler::getPendingRetrieveJobs(log::LogContext & lc) const {
   utils::Timer t;
   auto ret =  m_db.getRetrieveJobs();
   auto schedulerDbTime = t.secs();
@@ -995,7 +1001,7 @@ std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const com
 void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>& mountInfo,
     const std::string& logicalLibraryName, const std::string& driveName, utils::Timer& timer,
     ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
-    ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo, std::set<std::string>& tapesInUse,
+    ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo, std::set<std::string, std::less<>>& tapesInUse,
     std::list<catalogue::TapeForWriting>& tapeList, double& getTapeInfoTime, double& candidateSortingTime,
     double& getTapeForWriteTime, log::LogContext& lc) {
   // Check if there are any potential mounts for retrieve
@@ -1008,6 +1014,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       return pm.type == common::dataStructures::MountType::Retrieve;
     });
   }
+  std::set<std::string> repackingTapeVids;
   if (anyRetr) {
     // Neither the library information nor the tape status is known for tapes involved in retrieves.
     // Build the eligible set of tapes in the library and with required status so
@@ -1022,9 +1029,14 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         eligibleTapeMap[t.vid] = t;
       }
       searchCriteria.state = common::dataStructures::Tape::REPACKING;
+      // Reset the logical libraryflag to obtain all the repacks.
+      searchCriteria.logicalLibrary = std::nullopt;
       eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
       for(auto& t : eligibleTapesList) {
-        eligibleTapeMap[t.vid] = t;
+        // Add to eligibleTapeMape only those in the tpsrv logical library.
+        if(t.logicalLibraryName == logicalLibraryName) eligibleTapeMap[t.vid] = t;
+
+        repackingTapeVids.insert(t.vid);
       }
     }
 
@@ -1053,23 +1065,53 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         m.vo              = tp.vo;
         m.capacityInBytes = tp.capacityInBytes;
         m.labelFormat     = tp.labelFormat;
+        m.encryptionKeyName = tp.encryptionKeyName;
       }
     }
   }
 
   //Get the tapepools of the potential and existing mounts
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
-  for (auto & pm: mountInfo->potentialMounts) {
+  for (const auto& pm: mountInfo->potentialMounts) {
+    if (pm.tapePool.empty()) {
+      // log an error that tapepool in PotentialMounts contained an empty string
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential Mounts, "
+        "tapePool is an empty string.");
+      // Remove elements where tapepool is empty to don't have any problem later
+      mountInfo->potentialMounts.erase(std::remove_if(mountInfo->potentialMounts.begin(),
+        mountInfo->potentialMounts.end(),
+        [](const SchedulerDatabase::PotentialMount &mount)
+        {
+          return mount.tapePool.empty();
+        }), mountInfo->potentialMounts.end());
+      continue;
+    }
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
   }
-  for (auto & em: mountInfo->existingOrNextMounts) {
+  for (const auto& em: mountInfo->existingOrNextMounts) {
+    if (em.tapePool.empty()) {
+      // log an error that tapepool in ExistingOrNextMounts contained an empty string
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Existing or Next Mounts, "
+        "tapePool is an empty string.");
+      // Remove elements where tapepool is empty to don't have any problem later
+      mountInfo->existingOrNextMounts.erase(std::remove_if(mountInfo->existingOrNextMounts.begin(),
+        mountInfo->existingOrNextMounts.end(),
+        [](const SchedulerDatabase::ExistingMount &mount)
+        {
+          return mount.tapePool.empty();
+        }), mountInfo->existingOrNextMounts.end());
+      continue;
+    }
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
-  std::map<std::string,common::dataStructures::VirtualOrganization> tapepoolVoMap;
+  std::map<std::string,std::string> tapepoolVoNameMap;
+  std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
     try {
-      tapepoolVoMap[tapepool] = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
+      auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
+      tapepoolVoNameMap[tapepool] = vo.name;
+      voNameVoMap[vo.name] = vo;
     } catch (cta::exception::Exception & ex){
       //The VO of this tapepool does not exist, abort the scheduling as we need it to know the number of allocated drives
       //the VO is allowed to use
@@ -1077,14 +1119,32 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       throw ex;
     }
   }
-
+  std::optional<common::dataStructures::VirtualOrganization> defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (defaultRepackVo.has_value()) {
+    voNameVoMap[defaultRepackVo->name] = defaultRepackVo.value();
+  }
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
+      bool isRepackingMount = false;
+      if (em.type == common::dataStructures::MountType::ArchiveForRepack) {
+        isRepackingMount = true;
+      } else if (em.type == common::dataStructures::MountType::Retrieve) {
+        isRepackingMount = (repackingTapeVids.find(em.vid) != repackingTapeVids.end());
+      }
+      if (isRepackingMount && !defaultRepackVo.has_value()) {
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", em.vid)
+              .add("mountType", common::dataStructures::toString(em.type))
+              .add("drive", em.driveName);
+        lc.log(log::ERR,"In Scheduler::sortAndGetTapesForMountInfo(): existingOrNextMounts found a repack mount while there is no default repack VO defined.");
+        continue;
+      }
+      auto voName = isRepackingMount ?  defaultRepackVo->name : tapepoolVoNameMap.at(em.tapePool);
       existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
-      existingMountsBasicTypeSummaryPerVo[VirtualOrganizationMountPair(tapepoolVoMap.at(em.tapePool).name,common::dataStructures::getMountBasicType(em.type))].totalMounts++;
+      existingMountsBasicTypeSummaryPerVo[VirtualOrganizationMountPair(voName,common::dataStructures::getMountBasicType(em.type))].totalMounts++;
       if (em.activity)
         existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)]
           .activityMounts[em.activity.value()].value++;
@@ -1099,6 +1159,59 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     }
   }
 
+  // Filter all the potential repack mounts when there is no default repack VO
+  // OR
+  // Fix the VO of repacking mounts
+  std::set<std::vector<SchedulerDatabase::PotentialMount>::iterator> toFilterRepSet;
+  for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); ++m) {
+    bool isRepackingMount = false;
+    if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
+      isRepackingMount = true;
+    } else if (m->type == common::dataStructures::MountType::Retrieve) {
+      isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
+    }
+    if (isRepackingMount) {
+      if (defaultRepackVo.has_value()) {
+        // Repacking mount, default repack VO exists
+        m->vo = defaultRepackVo->name;
+      } else {
+        // Repacking mount, no default repack VO exits
+        log::ScopedParamContainer params(lc);
+        params.add("tapePool", m->tapePool);
+        if (m->type == common::dataStructures::MountType::Retrieve) {
+          params.add("tapeVid", m->vid);
+        }
+        params.add("mountType", common::dataStructures::toString(m->type))
+                .add("bytesQueued", m->bytesQueued)
+                .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+                .add("filesQueued", m->filesQueued)
+                .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+                .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+                .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+                .add("minRequestAge", m->minRequestAge);
+        lc.log(log::ERR,
+               "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of default repack VO");
+        toFilterRepSet.insert(m);
+      }
+    } else {
+      // Non-repacking mount
+      m->vo = tapepoolVoNameMap.at(m->tapePool);
+    }
+  }
+
+  // keep those not filtered out
+  if (toFilterRepSet.size() > 0) {
+    auto &v = mountInfo->potentialMounts;
+    std::vector<SchedulerDatabase::PotentialMount> tmpPm;
+    tmpPm.swap(v);
+    v.reserve(tmpPm.size());
+    for (auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
+      if (toFilterRepSet.count(it) == 0) {
+        v.push_back(std::move(*it));
+      }
+    }
+  }
+
   // We can now filter out the potential mounts for which their mount criteria
   // is not yet met, filter out the potential mounts for which the maximum mount
   // quota is already reached, filter out the retrieve requests put to sleep for lack of disk space,
@@ -1109,7 +1222,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     uint32_t existingMountsDistinctTypesForThisTapepool = 0;
     uint32_t existingMountsBasicTypeForThisVo = 0;
     common::dataStructures::MountType basicTypeOfThisPotentialMount = common::dataStructures::getMountBasicType(m->type);
-    common::dataStructures::VirtualOrganization voOfThisPotentialMount = tapepoolVoMap.at(m->tapePool);
+    common::dataStructures::VirtualOrganization voOfThisPotentialMount = voNameVoMap.at(m->vo);
     bool sleepingMount = false;
     try {
       existingMountsDistinctTypesForThisTapepool = existingMountsDistinctTypeSummaryPerTapepool
@@ -1128,7 +1241,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     bool mountPassesACriteria = false;
     uint64_t minBytesToWarrantAMount = m_minBytesToWarrantAMount;
     uint64_t minFilesToWarrantAMount = m_minFilesToWarrantAMount;
-    if(m->type == common::dataStructures::MountType::ArchiveForRepack){
+    if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
       minBytesToWarrantAMount *= 2;
       minFilesToWarrantAMount *= 2;
     }
@@ -1153,6 +1266,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       params.add("vo",voOfThisPotentialMount.name);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
+        params.add("tapeRepacking", repackingTapeVids.find(m->vid) != repackingTapeVids.end());
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMountsDistinctTypesForThisTapepool", existingMountsDistinctTypesForThisTapepool)
@@ -1163,7 +1277,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minFilesToWarrantMount", minFilesToWarrantAMount)
             .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
             .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
-            .add("minArchiveRequestAge", m->minRequestAge)
+            .add("minRequestAge", m->minRequestAge)
             .add("voReadMaxDrives",voOfThisPotentialMount.readMaxDrives)
             .add("voWriteMaxDrives",voOfThisPotentialMount.writeMaxDrives)
             .add("maxDrives", maxDrives);
@@ -1348,7 +1462,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
-  std::set<std::string> tapesInUse;
+  std::set<std::string, std::less<>> tapesInUse;
   std::list<catalogue::TapeForWriting> tapeList;
 
   sortAndGetTapesForMountInfo(mountInfo, logicalLibraryName, driveName, timer,
@@ -1518,7 +1632,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
 
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
-  std::set<std::string> tapesInUse;
+  std::set<std::string, std::less<>> tapesInUse;
   std::list<catalogue::TapeForWriting> tapeList;
 
   sortAndGetTapesForMountInfo(mountInfo, logicalLibraryName, driveName, timer,
@@ -1542,16 +1656,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
           // Get the db side of the session
           try {
             decisionTime += timer.secs(utils::Timer::resetCounter);
-            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(m->type, t,
-                driveName,
-                logicalLibraryName,
-                utils::getShortHostname(),
-                t.vo,
-                t.mediaType,
-                t.vendor,
-                t.capacityInBytes,
-                std::nullopt,
-                t.labelFormat).release());
+            internalRet->m_dbMount =
+              mountInfo->createArchiveMount(*m, t, driveName, logicalLibraryName, utils::getShortHostname());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
             driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
@@ -1611,17 +1717,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
         // create the mount, and populate its DB side.
         decisionTime += timer.secs(utils::Timer::resetCounter);
         std::unique_ptr<RetrieveMount> internalRet(new RetrieveMount(m_catalogue));
-        internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(m->vid,
-            m->tapePool,
-            driveName,
-            logicalLibraryName,
-            utils::getShortHostname(),
-            m->vo,
-            m->mediaType,
-            m->vendor,
-            m->capacityInBytes,
-            m->activity,
-            m->labelFormat.value()).release());
+        internalRet->m_dbMount =
+          mountInfo->createRetrieveMount(*m, driveName, logicalLibraryName, utils::getShortHostname());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1704,6 +1801,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
 // getQueuesAndMountSummaries
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
+  using Tape = common::dataStructures::Tape;
   std::list<common::dataStructures::QueueAndMountSummary> ret;
 
   // Extract relevant information from the object store.
@@ -1731,49 +1829,61 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_logical_library);
+    common::dataStructures::QueueAndMountSummary* summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid,
+        vid_to_logical_library);
+    } catch (exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("vid", pm.vid);
+      params.add("tapepool", pm.tapePool);
+      params.add("errorMessage", ex.getMessage().str());
+      lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
+        "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      continue;
+    }
     switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
-      summary.mountPolicy.archivePriority = pm.priority;
-      summary.mountPolicy.archiveMinRequestAge = pm.minRequestAge;
-      summary.bytesQueued = pm.bytesQueued;
-      summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
-      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+      summary->mountPolicy.archivePriority = pm.priority;
+      summary->mountPolicy.archiveMinRequestAge = pm.minRequestAge;
+      summary->bytesQueued = pm.bytesQueued;
+      summary->filesQueued = pm.filesQueued;
+      summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
       if (pm.mountPolicyNames) {
-        summary.mountPolicies = pm.mountPolicyNames.value();
+        summary->mountPolicies = pm.mountPolicyNames.value();
       }
       if (pm.highestPriorityMountPolicyName) {
-        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+        summary->highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
       }
       if (pm.lowestRequestAgeMountPolicyName) {
-        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
+        summary->lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
       }
       break;
     case common::dataStructures::MountType::Retrieve:
       // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
-      summary.mountPolicy.retrieveMinRequestAge = pm.minRequestAge;
-      summary.mountPolicy.retrievePriority = pm.priority;
-      summary.bytesQueued = pm.bytesQueued;
-      summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
-      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+      summary->mountPolicy.retrieveMinRequestAge = pm.minRequestAge;
+      summary->mountPolicy.retrievePriority = pm.priority;
+      summary->bytesQueued = pm.bytesQueued;
+      summary->filesQueued = pm.filesQueued;
+      summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
       if (pm.mountPolicyNames) {
-        summary.mountPolicies = pm.mountPolicyNames.value();
+        summary->mountPolicies = pm.mountPolicyNames.value();
       }
       if (pm.highestPriorityMountPolicyName) {
-        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+        summary->highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
       }
       if (pm.lowestRequestAgeMountPolicyName) {
-        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
+        summary->lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
       }
       if (pm.sleepingMount) {
         common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
         sfsi.startTime = pm.sleepStartTime;
         sfsi.diskSystemName = pm.diskSystemSleptFor;
         sfsi.sleepTime = pm.sleepTime;
-        summary.sleepForSpaceInfo = sfsi;
+        summary->sleepForSpaceInfo = sfsi;
       }
       break;
     default:
@@ -1781,18 +1891,29 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     }
   }
   for (auto & em: mountDecisionInfo->existingOrNextMounts) {
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_logical_library);
+    common::dataStructures::QueueAndMountSummary* summary;
+    try {
+      summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid,
+        vid_to_logical_library);
+    } catch (exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("driveName", em.driveName);
+      params.add("errorMessage", ex.getMessage().str());
+      lc.log(log::WARNING, "In Scheduler::getQueuesAndMountSummaries(): "
+        "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
+      continue;
+    }
     switch (em.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount)
-        summary.currentMounts++;
+        summary->currentMounts++;
       /*else
-        summary.nextMounts++;*/
-      summary.currentBytes += em.bytesTransferred;
-      summary.currentFiles += em.filesTransferred;
-      summary.averageBandwidth = em.averageBandwidth;
+        summary->nextMounts++;*/
+      summary->currentBytes += em.bytesTransferred;
+      summary->currentFiles += em.filesTransferred;
+      summary->averageBandwidth = em.averageBandwidth;
       break;
     default:
       break;
@@ -1802,6 +1923,31 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   double catalogueGetTapePoolTotalTime = 0.0;
   double catalogueGetTapesTotalTime = 0.0;
   double catalogueGetVoTotalTime = 0.0;
+
+  // Get tape info all at once
+  std::set<std::string> retrieveMountVids;
+  for (auto & mountOrQueue: ret) {
+    if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
+      retrieveMountVids.insert(mountOrQueue.vid);
+    }
+  }
+  utils::Timer catalogueGetTapesTimer;
+  auto tapes = m_catalogue.Tape()->getTapesByVid(retrieveMountVids);
+  if (tapes.size() != retrieveMountVids.size()) {
+    throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
+  }
+  catalogueGetTapesTotalTime += catalogueGetTapesTimer.secs();
+
+  // Obtain the default VO for repacking
+  utils::Timer catalogueDefaultRepackVoTimer;
+  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  common::dataStructures::VirtualOrganization repackVo;
+  if (defaultRepackVo.has_value()) {
+    repackVo = defaultRepackVo.value();
+  }
+  const auto catalogueDefaultRepackVoTime = catalogueDefaultRepackVoTimer.secs();
+  int repackingTapesCount = 0;
+
   // Add the tape and VO information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
@@ -1810,7 +1956,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       catalogueGetTapePoolTotalTime += catalogueGetTapePoolTimer.secs();
       if (tapePool) {
         utils::Timer catalogueGetVoTimer;
-        const auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapePool->name);
+        bool isRepacking = (common::dataStructures::MountType::ArchiveForRepack == mountOrQueue.mountType);
+        const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapePool->name);
         catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
         mountOrQueue.vo = vo.name;
         mountOrQueue.readMaxDrives = vo.readMaxDrives;
@@ -1823,17 +1970,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
-      cta::catalogue::TapeSearchCriteria tsc;
-      tsc.vid = mountOrQueue.vid;
-      utils::Timer catalogueGetTapesTimer;
-      auto tapes=m_catalogue.Tape()->getTapes(tsc);
-      catalogueGetTapesTotalTime += catalogueGetTapesTimer.secs();
-      if (tapes.size() != 1) {
-        throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
-      }
-      auto &t=tapes.front();
+      auto &t=tapes.at(mountOrQueue.vid);
       utils::Timer catalogueGetVoTimer;
-      const auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
+      bool isRepacking = (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED || t.state == Tape::REPACKING_PENDING);
+      repackingTapesCount += (isRepacking ? 1 : 0);
+      const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
       mountOrQueue.vo = vo.name;
       mountOrQueue.readMaxDrives = vo.readMaxDrives;
@@ -1851,8 +1992,13 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
      .add("schedulerDbTime", schedulerDbTime)
      .add("catalogueGetTapePoolTotalTime", catalogueGetTapePoolTotalTime)
      .add("catalogueGetVoTotalTime",catalogueGetVoTotalTime)
-     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime);
-  lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success.");
+     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime)
+     .add("catalogueDefaultRepackVoTime", catalogueDefaultRepackVoTime);
+  if (!defaultRepackVo.has_value() && repackingTapesCount > 0) {
+    lc.log(log::ERR, "In Scheduler::getQueuesAndMountSummaries(): missing default VO for repacking.");
+  } else {
+    lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success.");
+  }
   return ret;
 }
 
@@ -1869,9 +2015,25 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   }
 
   // Validate tape state change based on previous state
-  auto prev_state = m_catalogue.Tape()->getTapesByVid(vid)[vid].state;
+  auto tape_meta_data = m_catalogue.Tape()->getTapesByVid(vid)[vid];
+  auto prev_state     = tape_meta_data.state;
+  auto prev_reason    = tape_meta_data.stateReason;
 
-  // If previous and desired states are the same, do nothing
+  // User is not allowed to select explicitly a temporary state
+  if (
+          new_state == Tape::BROKEN_PENDING
+          || new_state == Tape::EXPORTED_PENDING
+          || new_state == Tape::REPACKING_PENDING
+          ) {
+    throw cta::exception::UserError("Internal states cannot be set directly by the user");
+  }
+
+  // If previous and desired states are the same, do nothing but changing the reason if provided
+  if (prev_state == new_state && stateReason && stateReason.value() != prev_reason) {
+    m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+    return;
+  }
+
   if (prev_state == new_state) return;
 
   // If previous state is PENDING (not of the same type), user should wait for it to complete
@@ -1881,15 +2043,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
           || (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)
           ) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
-  }
-
-  // User is not allowed to select explicitly a temporary state
-  if (
-          new_state == Tape::BROKEN_PENDING
-          || new_state == Tape::EXPORTED_PENDING
-          || new_state == Tape::REPACKING_PENDING
-          ) {
-    throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
 
   // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing

@@ -56,6 +56,7 @@
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "scheduler/IScheduler.hpp"
 
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
@@ -68,11 +69,10 @@ class Catalogue;
 class ArchiveJob;
 class RetrieveJob;
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct LogicalLibrary;
 }
-}
+
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
  * for most of the operations on both the tape file catalogue and the object store for
@@ -83,26 +83,27 @@ struct LogicalLibrary;
  */
 CTA_GENERATE_EXCEPTION_CLASS(ExpandRepackRequestException);
 
-class Scheduler {
+class Scheduler : public IScheduler {
 public:
   /**
    * Constructor.
    */
-  Scheduler(
-    cta::catalogue::Catalogue &catalogue,
-    SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
-    // TODO: we have out the mount policy parameters here temporarily we will remove them once we know where to put them
+  Scheduler(cta::catalogue::Catalogue &catalogue, SchedulerDatabase &db,
+            const uint64_t minFilesToWarrantAMount,
+            const uint64_t minBytesToWarrantAMount);
+  // TODO: we have out the mount policy parameters here temporarily we will
+  // remove them once we know where to put them
 
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
+  ~Scheduler() override = default;
 
   /**
    * Validates that the underlying storages are accessible
    * Lets the exception through in case of failure.
    */
-  void ping(log::LogContext & lc);
+  void ping(log::LogContext & lc) override;
 
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
@@ -158,7 +159,7 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void deleteArchive(const std::string &instanceName,
+  void deleteArchive(std::string_view instanceName,
     const cta::common::dataStructures::DeleteArchiveRequest &request,
     log::LogContext & lc);
 
@@ -177,13 +178,14 @@ public:
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
+  bool repackExists();
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
   bool isBeingRepacked(const std::string &vid);
 
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>, std::less<> > getPendingArchiveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
-  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob>, std::less<> > getPendingRetrieveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid, log::LogContext &lc) const;
 
   /*============== Drive state management ====================================*/
@@ -194,7 +196,7 @@ public:
    * @param driveName
    * @return The structure representing the desired states
    */
-  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc);
+  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc) override;
 
   /**
    * Sets the desired drive state. This function is used by the front end to pass instructions to the
@@ -205,9 +207,9 @@ public:
    * @param desiredState, the structure that contains the desired state informations
    */
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string & driveName,
-    const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc);
+    const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc) override;
 
-  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc);
+  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc) override;
 
   /**
    * Remove drive from the drive register.
@@ -229,7 +231,7 @@ public:
    * error encountered by the drive.
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type,
-    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
+    cta::common::dataStructures::DriveStatus status, log::LogContext & lc) override;
 
   /**
    * Creates a Table in the Database for a new Tape Drives
@@ -242,14 +244,15 @@ public:
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
     const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
+    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) override;
 
   /**
    * Reports the configuration of the drive to the objectstore.
    * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
-  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,
+    const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
 
   /**
    * Dumps the state of an specifig drive
@@ -269,20 +272,20 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-  typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
-  typedef std::pair<std::string, common::dataStructures::MountType> VirtualOrganizationMountPair;
+  using TapePoolMountPair = std::pair<std::string, common::dataStructures::MountType> ;
+  using VirtualOrganizationMountPair =  std::pair<std::string, common::dataStructures::MountType>;
 
   struct MountCounts {
     uint32_t totalMounts = 0;
     struct AutoZeroUint32_t {
       uint32_t value = 0;
     };
-    std::map<std::string, AutoZeroUint32_t> activityMounts;
+    std::map<std::string, AutoZeroUint32_t, std::less<> > activityMounts;
   };
-  typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummaryPerTapepool;
-  typedef std::map<VirtualOrganizationMountPair, MountCounts> ExistingMountSummaryPerVo;
+  using ExistingMountSummaryPerTapepool = std::map<TapePoolMountPair, MountCounts>;
+  using ExistingMountSummaryPerVo = std::map<VirtualOrganizationMountPair, MountCounts>;
 
-  const std::set<std::string> c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
+  const std::set<std::string, std::less<> > c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
 
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
@@ -290,7 +293,7 @@ private:
    */
   void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo,
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
-    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string, std::less<> > & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
 
   /**
@@ -370,14 +373,14 @@ public:
 
   /*============== Repack support ===========================================*/
   // Promotion of requests
-  void promoteRepackRequestsToToExpand(log::LogContext & lc);
+  void promoteRepackRequestsToToExpand(log::LogContext &lc,
+                                       size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
-  void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
+  void expandRepackRequest(const std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {
     friend Scheduler;
-  private:
     std::unique_ptr<SchedulerDatabase::RepackReportBatch> m_DbBatch;
   public:
     void report(log::LogContext & lc);
@@ -453,4 +456,4 @@ private:
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };  // class Scheduler
 
-}  // namespace cta
+} // namespace cta

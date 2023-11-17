@@ -23,8 +23,7 @@
 #include "StatisticsService.hpp"
 #include "StatisticsServiceFactory.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -120,5 +119,4 @@ void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn* catalogueConn, ct
   }
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

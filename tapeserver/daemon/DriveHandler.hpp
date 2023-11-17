@@ -20,22 +20,39 @@
 #include <memory>
 
 #include "common/threading/SocketPair.hpp"
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
 namespace cta {
 
+class IScheduler;
+
 namespace catalogue {
+
 class Catalogue;
 }
 
-namespace tape {
-namespace daemon {
+namespace mediachanger {
+
+class MediaChangerFacade;
+}
+
+namespace server {
+
+class ProcessCap;
+}
+
+namespace tape::daemon {
+
+class DriveHandlerProxy;
 
 /**
  * Handler for tape drive session subprocesses. On process/session will handle
@@ -45,7 +62,7 @@ class DriveHandler : public SubprocessHandler {
 public:
   DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm);
 
-  ~DriveHandler() override;
+  ~DriveHandler() override = default;
 
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
 
@@ -72,6 +89,10 @@ private:
   const TapedConfiguration& m_tapedConfig;
   /** This drive's parameters */
   const TpconfigLine& m_driveConfig;
+  /** The log context */
+  cta::log::LogContext& m_lc;
+  
+public:
   /** Possible outcomes of the previous session/child process.  */
   enum class PreviousSession {
     Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
@@ -79,6 +100,8 @@ private:
     Down,       ///< The previous session tried and failed to unmount the tape, and reported such instance.
     Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
+
+protected:
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession = PreviousSession::Initiating;
   /** Representation of the last know state of the previous session (useful for crashes) */
@@ -87,48 +110,19 @@ private:
   session::SessionType m_previousType = session::SessionType::Undetermined;
   /** Previous VID, that can help the unmount process */
   std::string m_previousVid;
+
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
-  int setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc);
-
-  /**
-   * Utility function resetting all parameters to pre-fork state
-   * @param previousSessionState outcome to be considered for the next run.
-   */
-  void resetToDefault(PreviousSession previousSessionState);
-
-  /** Helper function to handle Scheduling state report */
-  SubprocessHandler::ProcessingStatus processScheduling(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Checking state report */
-  SubprocessHandler::ProcessingStatus processChecking(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Mounting state report */
-  SubprocessHandler::ProcessingStatus processMounting(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Running state report */
-  SubprocessHandler::ProcessingStatus processRunning(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Unmounting state report */
-  SubprocessHandler::ProcessingStatus processUnmounting(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle DrainingToDisk state report */
-  SubprocessHandler::ProcessingStatus processDrainingToDisk(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle ShuttingDown state report */
-  SubprocessHandler::ProcessingStatus processShuttingDown(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Fatal state report */
-  SubprocessHandler::ProcessingStatus processFatal(serializers::WatchdogMessage& message);
-
   /** Current session's type */
   session::SessionType m_sessionType = session::SessionType::Undetermined;
+
   /** Current session's VID */
   std::string m_sessionVid;
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
-  log::LogContext m_sessionEndContext;
+
+private:
   /** The current state we report to process manager */
   SubprocessHandler::ProcessingStatus m_processingStatus;
   /** Convenience type */
@@ -170,13 +164,39 @@ private:
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage& message);
 
-  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller);
+  bool schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy);
 
-  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
+  void puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy,
+    std::string_view errorMsg, const cta::common::dataStructures::DriveInfo& driveInfo);
+
+  void setDriveDownForShutdown(const std::string& reason);
+
+  /**
+   * Utility function resetting all parameters to pre-fork state
+   * @param previousSessionState outcome to be considered for the next run.
+   */
+  void resetToDefault(PreviousSession previousSessionState);
+
+protected:
+  std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
+
+  std::unique_ptr<OStoreDBInit> m_sched_db_init;
+  std::unique_ptr<SchedulerDB_t> m_sched_db;
+
+  virtual std::shared_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
+  virtual std::shared_ptr<cta::IScheduler> createScheduler(const std::string& processName,
+    const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
+
+  virtual std::shared_ptr<cta::tape::daemon::TapedProxy> createDriveHandlerProxy() const;
+
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
+    cta::IScheduler* scheduler) const;
+
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(
+    cta::IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) const;
 };
 
 // TODO: remove/merge ChildProcess.
 
-}
-}
-} // namespace cta::tape::daemon
+}  // namespace tape::daemon
+} // namespace tape::daemon

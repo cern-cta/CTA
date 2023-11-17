@@ -23,8 +23,7 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyVirtualOrganizationCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::VirtualOrganization &vo) {
@@ -46,6 +45,10 @@ common::dataStructures::VirtualOrganization DummyVirtualOrganizationCatalogue::g
 
 common::dataStructures::VirtualOrganization DummyVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(
   const std::string & tapepoolName) const {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+}
+
+std::optional<common::dataStructures::VirtualOrganization> DummyVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
@@ -80,5 +83,9 @@ void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceNam
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
+  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+}
+
+} // namespace cta::catalogue

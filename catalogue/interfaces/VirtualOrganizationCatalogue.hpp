@@ -19,17 +19,16 @@
 
 #include <list>
 #include <string>
+#include <optional>
 
 #include "common/exception/UserError.hpp"
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct SecurityIdentity;
 struct VirtualOrganization;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -74,6 +73,12 @@ public:
    */
   virtual common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(
     const std::string & tapepoolName) const = 0;
+
+  /**
+   * Get the default virtual organization for repacking.
+   * @return optional object containing default VirtualOrganization for repacking, or null value if none is defined
+   */
+  virtual std::optional<common::dataStructures::VirtualOrganization> getDefaultVirtualOrganizationForRepack() const = 0;
 
   /**
    * Modifies the name of the specified Virtual Organization.
@@ -129,7 +134,15 @@ public:
    */
   virtual void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
     const std::string &voName, const std::string &diskInstance) = 0;
+
+  /**
+   * Modifies the isRepackVo flag value of the specified Virtual Organization
+   *
+   * @param voName The name of the Virtual Organization.
+   * @param isRepackVo If this Virtual Organization should be used as default for repacking or not.
+   */
+  virtual void modifyVirtualOrganizationIsRepackVo(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &voName, const bool isRepackVo) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

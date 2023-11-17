@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummySchemaCatalogue: public SchemaCatalogue {
 public:
@@ -34,5 +33,4 @@ public:
   void ping() override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

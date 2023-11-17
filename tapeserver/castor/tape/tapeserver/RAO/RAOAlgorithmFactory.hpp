@@ -19,7 +19,7 @@
 
 #include "RAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * Abstract class that will be extended by subclasses in order
@@ -41,4 +41,4 @@ private:
 
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

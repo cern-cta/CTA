@@ -8,8 +8,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: dbupdatetest
-    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater:testing
-    imagePullPolicy: IfNotPresent
+    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater@sha256:072fbb587e7b8a5ab4f0b8e889bcf30e5d1a9bb057cdb876c4e67c2213acc064
     stdin: true
     env:
     - name: MY_NAME
@@ -32,15 +31,15 @@ spec:
       value: "COMMIT_ID_VALUE"
     - name: TERM
       value: "xterm"
-    command: ["/shared/scripts/dbupdatetest.sh"]
-    args: ["none"]
+    command: ["/usr/bin/bash"]
+    args: ["/shared/scripts/dbupdatetest.sh"]
     volumeMounts:
-    - mountPath: /etc/config/database
-      name: mydatabase
-    - mountPath: /shared/etc_yum.repos.d/
+    - mountPath: /shared/etc_yum.repos.d
       name: repos
     - mountPath: /shared/scripts
       name: scripts
+    - mountPath: /shared/etc_cta
+      name: etccta
     - mountPath: /mnt/logs
       name: logstorage
     securityContext:
@@ -48,14 +47,14 @@ spec:
 
   volumes:
   - name: repos
-    hostPath:
-      path: REPOS_PATH
-  - name: scripts
-    hostPath:
-      path: SCRIPTS_PATH
-  - name: mydatabase
     configMap:
-      name: database-config
+      name: yum.repos.d-config
+  - name: etccta
+    configMap:
+      name: cta-catalogue-config
+  - name: scripts
+    configMap:
+      name: dbupdatetestscript-config
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs

@@ -21,7 +21,7 @@
 #include "CostHeuristic.hpp"
 #include "RAOOptions.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * Factory of concrete CostHeuristic objects
@@ -40,4 +40,4 @@ private:
 
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

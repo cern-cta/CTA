@@ -23,9 +23,7 @@
 #include <string>
 
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all the data necessary to rebuild the original disk based 
@@ -49,6 +47,4 @@ struct DiskFileInfo {
 
 std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -29,8 +29,7 @@
 
 #include <fstream>
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 FrontendService::FrontendService(const std::string& configFilename) : m_archiveFileMaxSize(0) {
   int logToSyslog = 0;
@@ -171,9 +170,9 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
   // Initialise the Frontend
-  auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
+  auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
-  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  archiveFileMaxSize.value()*1024*1024*1024 : 0;
+  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1024 * 1024 * 1024 : 0;
 
   {
     // Log cta.archivefile.max_size_gb
@@ -268,4 +267,4 @@ void FrontendService::setNamespaceMap(const std::string& keytab_file) {
   }
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

@@ -21,8 +21,7 @@
 #include <optional>
 #include <sstream>
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 /*!
  * Interface to the CTA Frontend configuration file
@@ -47,6 +46,14 @@ public:
    * converted to an integer
    */
   std::optional<int> getOptionValueInt(const std::string &key) const;
+  /*!
+   * Get a single option unsigned integer value from config
+   *
+   * Throws std::invalid_argument or std::out_of_range if the key exists but the value cannot be
+   * converted to an unsigned integer
+   */
+  std::optional<uint32_t> getOptionValueUInt(const std::string &key) const;
+
 
 private:
   //! Configuration option list type
@@ -67,9 +74,18 @@ private:
    */
   optionlist_t tokenize(std::istringstream& input);
 
+  /*!
+   * Interprets an unsigned integer value in the string
+   * expected correct value is in the range [0, std::numeric_limits<T>::max()]
+   * or if std::numeric_limits<T>::max() > std::numeric_limits<int64_t>::max()
+   * [0, std::numeric_limits<int64_t>::max()]
+   */  
+  template<class T>
+  T stou(const std::string &key) const;
+
   // Member variables
   const optionlist_t                  m_nulloptionlist;    //!< Empty option list returned when key not found
   std::map<std::string, optionlist_t> m_configuration;     //!< Parsed configuration options
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

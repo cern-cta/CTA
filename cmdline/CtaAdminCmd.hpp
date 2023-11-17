@@ -20,8 +20,7 @@
 #include "CtaAdminCmdParse.hpp"
 #include "version.h"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 class CtaAdminCmd
 {
@@ -85,4 +84,4 @@ private:
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };
 
-}} // namespace cta::admin
+} // namespace cta::admin

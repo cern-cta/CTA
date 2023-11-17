@@ -26,15 +26,13 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct ArchiveFile;
 struct ArchiveFileQueueCriteria;
 struct ArchiveFileSummary;
 struct DeleteArchiveRequest;
 struct RequesterIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace log {
 struct LogContext;
@@ -226,5 +224,4 @@ public:
     log::LogContext &lc) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

@@ -25,13 +25,11 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct ArchiveFile;
 struct DeleteArchiveRequest;
 struct TapeFile;
-}  // namespace dataStructures
-}  // namespace common
+}
 
 namespace log {
 class TimingList;
@@ -174,5 +172,4 @@ private:
     const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

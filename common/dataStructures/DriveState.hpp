@@ -26,9 +26,7 @@
 #include "MountType.hpp"
 #include "DesiredDriveState.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all drive state information, used to display the equivalent
@@ -87,6 +85,4 @@ struct DriveState {
 
 std::ostream &operator<<(std::ostream &os, const DriveState &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

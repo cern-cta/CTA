@@ -26,8 +26,7 @@
 
 #include "objectstore/cta.pb.h"
 
-namespace cta {
-namespace objectstore {
+namespace cta::objectstore {
 
 /** A helper class allowing manipulation of arrays of ValueCountPairs, used as containers for running
  * counters for properties with multiple possible values. */
@@ -156,5 +155,4 @@ uint64_t ValueCountMap<Type, Key>::total() {
 typedef ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCountPair>, uint64_t> ValueCountMapUint64;
 typedef ValueCountMap<google::protobuf::RepeatedPtrField<serializers::StringCountPair>, std::string> ValueCountMapString;
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

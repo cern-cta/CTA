@@ -22,8 +22,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * The tape attributes required to create a new tape entry in the CTA catalogue.
@@ -76,6 +75,11 @@ struct CreateTapeAttributes {
   std::optional<std::string> stateReason;
 
   /**
+   * The purchase order related to the tape
+   */
+  std::optional<std::string> purchaseOrder;
+
+  /**
    * Constructor.
    *
    * Sets the value of all boolean member-variables to false.
@@ -85,5 +89,4 @@ struct CreateTapeAttributes {
   }
 }; // struct CreateTapeAttributes
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

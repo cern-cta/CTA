@@ -783,15 +783,17 @@ int System::stIBM3592DeviceFile::logSensePerformanceCharacteristicsPage(sg_io_hd
     0x00, 0x00, 0x00, 0x00 //0xd0
   };
 
-  unsigned char *output = 0;
+  unsigned char *output;
   unsigned int output_size = 0;
   if(cdb->subPageCode == 0x80 || cdb->subPageCode == 0x40) {
     output = output_80;
     output_size = sizeof(output_80);
-  }
-  else if(cdb->subPageCode == 0x91 || cdb->subPageCode == 0x51) { ;
+  } else if(cdb->subPageCode == 0x91 || cdb->subPageCode == 0x51) { ;
     output = output_91;
     output_size = sizeof(output_91);
+  } else {
+    errno = EINVAL;
+    return -1;
   }
   if (output_size > sgio_h->dxfer_len) {
     errno = EINVAL;
@@ -800,14 +802,6 @@ int System::stIBM3592DeviceFile::logSensePerformanceCharacteristicsPage(sg_io_hd
   memcpy(sgio_h->dxferp, output, output_size);
   return 0;
 }
-
-
-
-
-
-
-
-
 
 int System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h) {
   /**

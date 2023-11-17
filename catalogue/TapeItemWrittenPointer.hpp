@@ -20,8 +20,8 @@
 #include "TapeItemWritten.hpp"
 #include <memory>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
+
 /**
  * A utility struct allowing sorting unique_ptr according to content instead of pointer value
  */
@@ -33,5 +33,4 @@ struct TapeItemWrittenPointer: public std::unique_ptr<TapeItemWritten> {
 // which will define the ordering of std::set<TapeItemWritenPointer>.
 bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b);// { return *a < *b; }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

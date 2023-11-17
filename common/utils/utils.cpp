@@ -101,8 +101,7 @@ static void assertPathContainsValidChars(const std::string &path) {
 //  }
 //}
 
-namespace cta {
-namespace utils {
+namespace cta::utils {
 
 //------------------------------------------------------------------------------
 // isValidIPAddress
@@ -1029,5 +1028,4 @@ std::string decimalToHexadecimal(const std::string &decimalNumber) {
   return fxIdStream.str();
 }
 
-} // namespace utils
-} // namespace cta
+} // namespace cta::utils

@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
   * A fully qualified user group, in other words the name of the disk instance
@@ -60,5 +59,4 @@ struct Group {
   }
 }; // struct Group
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

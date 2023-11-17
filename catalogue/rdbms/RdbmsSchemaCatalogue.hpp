@@ -56,5 +56,4 @@ private:
   std::shared_ptr<rdbms::ConnPool> m_connPool;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

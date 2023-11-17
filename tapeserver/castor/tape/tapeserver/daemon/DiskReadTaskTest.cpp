@@ -132,7 +132,7 @@ namespace unitTests{
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
     cta::disk::RadosStriperPool striperPool;
-    DiskFileFactory fileFactory("", 0, striperPool);
+    DiskFileFactory fileFactory(0, striperPool);
 
     castor::messages::TapeserverProxyDummy tspd;
     cta::TapeMountDummy tmd;

@@ -17,8 +17,7 @@
 
 #include "common/exception/RetryableError.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,6 +26,5 @@ RetryableError::RetryableError(const std::string &context, const bool embedBackt
   Exception(context, embedBacktrace) {
 }
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception
 

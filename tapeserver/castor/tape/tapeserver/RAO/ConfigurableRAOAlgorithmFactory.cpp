@@ -19,7 +19,7 @@
 #include "ConfigurableRAOAlgorithmFactory.hpp"
 #include "SLTFRAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(const RAOParams & raoParams):m_raoParams(raoParams){}
 
@@ -38,7 +38,6 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
     }
     default:
       throw cta::exception::Exception("Unknown type of ConfigurableRAOAlgorithm. Existing types are : sltf");
-      break;
   }
   return ret;
 }
@@ -59,4 +58,4 @@ std::unique_ptr<ConfigurableRAOAlgorithmFactory> ConfigurableRAOAlgorithmFactory
   return std::move(m_configurableRAOAlgoFactory);
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

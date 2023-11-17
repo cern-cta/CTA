@@ -21,8 +21,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * Failed to dismount volume.
@@ -35,6 +34,5 @@ public:
   explicit NoSupportedDB(const std::string& what = "");
 };  // class NoSupportedDB
 
-}  // namespace exception
-}  // namespace cta
+} // namespace cta::exception
 

@@ -28,26 +28,23 @@
 #include <vector>
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
   class MigrationTaskInjector;
 class DiskReadThreadPool {
 public:
   /**
-   * Constructor. The constructor creates the threads for the pool, but does not
-   * start them.
-   * @param nbThread Number of thread for reading files 
-   * @param maxFilesReq maximal number of files we might require 
-   * within a single request to the task injector
-   * @param maxBytesReq maximal number of bytes we might require
-   *  within a single request a single request to the task injector
-   * @param lc log context for logging purpose
+   * The constructor creates the threads for the pool, but does not start them.
+   *
+   * @param nbThread    Number of thread for reading files 
+   * @param maxFilesReq Maximum number of files we might require within a single request to the task injector
+   * @param maxBytesReq Maximum number of bytes we might require within a single request a single request
+   *                    to the task injector
+   * @param lc          Log context for logging purpose
    */
-  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-          castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-          cta::log::LogContext lc, const std::string & xrootPrivateKeyPath, 
+  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq, 
+          castor::tape::tapeserver::daemon::MigrationWatchDog& migrationWatchDog,
+          cta::log::LogContext lc,
           uint16_t xrootTimeout);
   
   /**
@@ -140,10 +137,9 @@ private:
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
-    m_diskFileFactory(parent.m_xrootPrivateKeyPath,
-      parent.m_xrootTimeout, parent.m_striperPool){
-       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
-       m_lc.log(cta::log::INFO,"DisReadThread created");
+    m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
+      cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
+      m_lc.log(cta::log::INFO, "DiskReadThread created");
     }
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
@@ -185,11 +181,6 @@ private:
   cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
   
   /**
-   * Parameter: path to xroot private key
-   */
-  std::string m_xrootPrivateKeyPath;
-  
-  /**
    * Parameter: xroot timeout
    */
   uint16_t m_xrootTimeout;
@@ -226,4 +217,4 @@ private:
   cta::threading::AtomicCounter<int> m_nbActiveThread;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

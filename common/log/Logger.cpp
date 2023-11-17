@@ -23,8 +23,7 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -208,5 +207,4 @@ std::string Logger::createMsgBody(
   return os.str();
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

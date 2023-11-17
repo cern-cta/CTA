@@ -27,9 +27,7 @@
 #include <string>
 #include <set>
 
-namespace cta {
-namespace postgresscheddb {
-namespace sql {
+namespace cta::postgresscheddb::sql {
 
 struct RetrieveJobQueueRow {
 
@@ -367,6 +365,4 @@ struct RetrieveJobQueueRow {
   static void updateMountId(Transaction &txn, const std::list<RetrieveJobQueueRow>& rowList, uint64_t mountId);
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb::sql

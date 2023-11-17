@@ -24,8 +24,7 @@
 #include "common/utils/Regex.hpp"
 #include "DiskReporter.hpp"
 
-namespace cta {
-namespace disk {
+namespace cta::disk {
 
 class DiskReporterFactory {
  public:
@@ -41,5 +40,4 @@ class DiskReporterFactory {
   /// This mutex ensures we do not use the regexes in parallel.
   cta::threading::Mutex m_mutex;
 };
-}  // namespace disk
-}  // namespace cta
+} // namespace cta::disk

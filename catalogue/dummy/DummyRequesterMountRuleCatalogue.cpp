@@ -22,8 +22,7 @@
 #include "catalogue/dummy/DummyRequesterMountRuleCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
@@ -52,5 +51,4 @@ void DummyRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::strin
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

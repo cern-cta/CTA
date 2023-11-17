@@ -287,12 +287,19 @@ static void checkStringWasMarshalled(const char *const buf) {
 TEST_F(cta_mediachanger_IoTest, marshalString) {
   const char *const v = "Value";
   char buf[8];
-  char *ptr = buf;
 
   memset(buf, 'E', sizeof(buf));
 
-  ASSERT_NO_THROW(cta::mediachanger::marshalString(v, ptr));
+  // Test for exception when string is too long for buffer
+  char *ptr = buf;
+  size_t bufSize = strlen(v);
+  ASSERT_THROW(cta::mediachanger::marshalString(v, ptr, bufSize), cta::exception::Exception);
+
+  ptr = buf;
+  bufSize = sizeof(buf);
+  ASSERT_NO_THROW(cta::mediachanger::marshalString(v, ptr, bufSize));
   ASSERT_EQ(buf+6, ptr);
+  ASSERT_EQ(bufSize, sizeof(buf)-6);
   checkStringWasMarshalled(buf);
 }
 

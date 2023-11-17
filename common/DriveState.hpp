@@ -21,7 +21,7 @@
 #include <string>
 #include <stdint.h>
 
-namespace cta { namespace common {
+namespace cta::common {
 
   enum DriveStatusToDecommission {
     Down,
@@ -65,6 +65,6 @@ namespace cta { namespace common {
     dataStructures::DesiredDriveState desiredDriveState;
   };
   
-}} //namespace cta::common
+} // namespace cta::common
 
 #error This should have been decomissioned

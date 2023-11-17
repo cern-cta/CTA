@@ -24,10 +24,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -236,7 +233,5 @@ void MigrationTaskInjector::WorkerThread::run() {
 uint64_t MigrationTaskInjector::firstFseqToWrite() const {
   return m_firstFseqToWrite;
 }
-}  //end namespace daemon
-}  //end namespace tapeserver
-}  //end namespace tape
-}  //end namespace castor
+
+} // namespace castor::tape::tapeserver::daemon

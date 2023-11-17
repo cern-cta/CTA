@@ -26,9 +26,7 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "ArchiveFile.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is a request to delete an existing archive file or to cancel an ongoing
@@ -56,6 +54,4 @@ struct DeleteArchiveRequest {
 
 std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

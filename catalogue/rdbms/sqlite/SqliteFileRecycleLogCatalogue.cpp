@@ -31,8 +31,7 @@
 #include "common/Timer.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SqliteFileRecycleLogCatalogue::SqliteFileRecycleLogCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue)
@@ -114,5 +113,4 @@ uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

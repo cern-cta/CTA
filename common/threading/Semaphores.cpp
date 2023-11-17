@@ -23,8 +23,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 //------------------------------------------------------------------------------
 //PosixSemaphore constructor
@@ -185,5 +184,4 @@ void CondVarSemaphore::release(int n)
   }
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

@@ -23,9 +23,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -115,9 +113,7 @@ uint32_t TapeFseqRange::size() const throw() {
   return m_isEmpty || m_upper == 0 ? 0 : m_upper - m_lower + 1;
 }
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp
 
 //------------------------------------------------------------------------------
 // ostream << operator for cta::tapeserver::readtp::TapeFseqRange

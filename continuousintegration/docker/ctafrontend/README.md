@@ -8,7 +8,7 @@ The aim of this project is to provide a CTA frontend through Docker® containers
 
 ## Components
 
-* Dockerfile      - The file describing how to build the Docker image for building CASTOR, in turn.
+* Dockerfile      - The file describing how to build the Docker image for building CTA, in turn.
 * etc/yum.repos.d - directory containing yum repos for installing necessary packages.
 * etc/xrootd      - directory containing static configuration files for xrootd 
 * run.sh          - The main script to setup runtime environment.
@@ -24,7 +24,7 @@ The base image used is CERN CentOS 7 (gitlab-registry.cern.ch/linuxsupport/cc7-b
 In order to build the image, after making sure that the Docker daemon is running, run from the repository directory:
 
 ```bash
-docker build --force-rm -t ctafrontend-cc7 cc7/
+docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
 ```
 
 After the image has finished building successfully, run the following command:

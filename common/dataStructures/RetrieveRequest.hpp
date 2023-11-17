@@ -29,9 +29,7 @@
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "LifecycleTimings.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all the command line parameters of a CTA retrieve command
@@ -67,6 +65,4 @@ struct RetrieveRequest {
 
 std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

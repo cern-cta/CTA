@@ -49,18 +49,18 @@
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 
 /* Forward declaration */
-static int rmc_getreq(const int s, int *const req_type, char *const req_data,
-  char **const clienthost);
-static void rmc_procreq(const int rpfd, const int req_type, char *const req_data,
-  char *const clienthost);
-static int rmc_dispatchRqstHandler(const int req_type,
-  const struct rmc_srv_rqst_context *const rqst_context);
+static int rmc_getreq(const int s, int *const req_type, char *const req_data, char **const clienthost);
+static void rmc_procreq(const int rpfd, const int req_type, char *const req_data, char *const clienthost);
+static int rmc_dispatchRqstHandler(const int req_type, const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
 
-int jid;
-char localhost[CA_MAXHOSTNAMELEN+1];
-int maxfds;
-struct extended_robot_info extended_robot_info;
+/* extern globals */
+int g_jid;
+struct extended_robot_info g_extended_robot_info;
+
+/* globals with file scope */
+char g_localhost[CA_MAXHOSTNAMELEN+1];
+int g_maxfds;
 
 int rmc_main(const char *const robot)
 {
@@ -75,34 +75,41 @@ int rmc_main(const char *const robot)
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
 	struct timeval timeval;
-	char func[16];
+	const char* const func = "rmc_serv";
 
-	strncpy (func, "rmc_serv", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-
-	jid = getpid();
+	g_jid = getpid();
 	rmc_logit (func, "started\n");
 
-	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
-	if (strchr (localhost, '.') == NULL) {
-		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
-			rmc_logit (func, "Unable to get domainname\n");
+	char localhost[CA_MAXHOSTNAMELEN+1];
+	gethostname(localhost, CA_MAXHOSTNAMELEN+1);
+	localhost[CA_MAXHOSTNAMELEN] = '\0';
+	if(strchr(localhost, '.') != NULL) {
+		strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN+1);
+	} else {
+		if(Cdomainname(domainname, sizeof(domainname)) < 0) {
+			rmc_logit(func, "Unable to get domainname\n");
 		}
-		strcat (localhost, ".");
-		strcat (localhost, domainname);
+		if(snprintf(g_localhost, CA_MAXHOSTNAMELEN+1, "%s.%s", localhost, domainname) != 0) {
+			rmc_logit(func, "localhost.domainname exceeds maximum length\n");
+		}
 	}
 
-	if (*robot == '\0' ||
-	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
-		rmc_logit (func, RMC06, "robot");
-		exit (USERR);
+	if(*robot == '\0') {
+		rmc_logit(func, RMC06, "robot");
+		exit(USERR);
 	}
-	if (*robot == '/')
-		strcpy (extended_robot_info.smc_ldr, robot);
-	else
-		sprintf (extended_robot_info.smc_ldr, "/dev/%s", robot);
 
-	extended_robot_info.smc_fd = -1;
+	g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
+	if(*robot == '/') {
+		strncpy(g_extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN+1);
+        } else {
+		snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
+	}
+	if(g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
+		rmc_logit(func, RMC06, "robot");
+		exit(USERR);
+	}
+	g_extended_robot_info.smc_fd = -1;
 
 	/* get robot geometry */
 	{
@@ -113,9 +120,9 @@ int rmc_main(const char *const robot)
                         rmc_logit (func,
                                 "Trying to get geometry of tape library"
                                 ": attempt_nb=%d\n", attempt_nb);
-			c = smc_get_geometry (extended_robot_info.smc_fd,
-				extended_robot_info.smc_ldr,
-				&extended_robot_info.robot_info);
+			c = smc_get_geometry (g_extended_robot_info.smc_fd,
+				g_extended_robot_info.smc_ldr,
+				&g_extended_robot_info.robot_info);
 
 			if(0 == c) {
                                 rmc_logit (func,
@@ -181,7 +188,7 @@ int rmc_main(const char *const robot)
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = RMC_CHECKI;
 		timeval.tv_usec = 0;
-		if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
+		if (select (g_maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
 			FD_ZERO (&readfd);
 		}
 	}
@@ -203,39 +210,19 @@ static int run_rmcd_in_background(const int argc, char **argv) {
 }
 
 /**
- * Returns 1 if the specified command-line argument start with '-' else
- * returns 0.
- */
-static int cmdline_arg_is_an_option(const char *arg) {
-  if(strlen(arg) < 1) {
-    return 0;
-  } else {
-    if('-' == arg[0]) {
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-}
-
-/**
  * Returns the number of command-line arguments that start with '-'.
  */
 static int get_nb_cmdline_options(const int argc, char **argv) {
-  int i = 0;
   int nbOptions = 0;
-
-  for(i = 1; i < argc; i++) {
-    if(cmdline_arg_is_an_option(argv[i])) {
+  for(int i = 1; i < argc; i++) {
+    if(*argv[i] == '-') {
       nbOptions++;
     }
   }
-
   return nbOptions;
 }
 
-int main(const int argc,
-         char **argv)
+int main(const int argc, char **argv)
 {
 	const char *robot = "";
 	const int nb_cmdline_options = get_nb_cmdline_options(argc, argv);
@@ -275,8 +262,9 @@ int main(const int argc,
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-		if ((maxfds = Cinitdaemon ("rmcd", NULL)) < 0) {
-			exit (SYERR);
+		g_maxfds = Cinitdaemon("rmcd", NULL);
+		if(g_maxfds < 0) {
+			exit(SYERR);
 		}
 	}
 	exit (rmc_main (robot));
@@ -286,7 +274,7 @@ static void rmc_doit(const int rpfd)
 {
 	int c;
 	char *clienthost;
-	char req_data[RMC_REQBUFSZ-3*LONGSIZE];
+	char req_data[REQ_DATA_SIZE];
 	int req_type = 0;
 
 	if ((c = rmc_getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
@@ -312,10 +300,7 @@ static int rmc_getreq(
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
-	char func[16];
-
-	strncpy (func, "rmc_getreq", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "rmc_getreq";
 
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
@@ -359,7 +344,7 @@ static void rmc_procreq(
 {
 	struct rmc_srv_rqst_context rqst_context;
 
-	rqst_context.localhost = localhost;
+	rqst_context.localhost = g_localhost;
 	rqst_context.rpfd = rpfd;
 	rqst_context.req_data = req_data;
 	rqst_context.clienthost = clienthost;

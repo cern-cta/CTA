@@ -25,9 +25,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * Specifies the minimum criteria needed to warrant a mount
@@ -63,6 +61,4 @@ struct MountPolicy {
 
 std::ostream &operator<<(std::ostream &os, const MountPolicy &obj);
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

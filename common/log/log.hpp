@@ -30,8 +30,7 @@
 // more meaningful alias to NOTICE log level
 #define LOG_USER_ERROR LOG_NOTICE
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
   /**
    * Initialises the logging system with the specified logger which should be
@@ -113,8 +112,7 @@ namespace log {
    */
   std::string getProgramName();
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log
 
 /**
  * non-member operator to stream a Cuuid_t

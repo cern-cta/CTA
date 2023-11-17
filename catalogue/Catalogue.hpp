@@ -31,10 +31,11 @@
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
 #include "catalogue/interfaces/MediaTypeCatalogue.hpp"
 #include "catalogue/interfaces/MountPolicyCatalogue.hpp"
+#include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
 #include "catalogue/interfaces/RequesterActivityMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
-#include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
+#include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
@@ -43,8 +44,7 @@
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
@@ -74,6 +74,7 @@ public:
   virtual const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() = 0;
   virtual const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() = 0;
   virtual const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() = 0;
+  virtual const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() = 0;
   virtual const std::unique_ptr<TapeFileCatalogue>& TapeFile() = 0;
   virtual const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() = 0;
   virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() = 0;
@@ -81,6 +82,5 @@ public:
   virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() = 0;
 }; // class Catalogue
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue
 

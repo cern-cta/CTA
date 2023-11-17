@@ -47,7 +47,8 @@
 
 #define RADOS_LOCK_PERFORMANCE_LOGGING_FILE "/var/tmp/cta-rados-locking.log"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * An implementation of the object store primitives, using Rados.
  */
@@ -447,6 +448,7 @@ public:
   }
 
 private:
+  log::Logger& m_logger;
   std::string m_user;
   std::string m_pool;
   std::string m_namespace;
@@ -457,4 +459,4 @@ private:
   librados::IoCtx & getRadosCtx();
 };
 
-}} // end of cta::objectstore
+} // namespace cta::objectstore

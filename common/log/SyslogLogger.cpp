@@ -35,9 +35,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-namespace cta {
-namespace log {
-  
+namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -69,5 +67,4 @@ void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   syslog(LOG_LOCAL3|INFO, "%s", body.c_str());
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

@@ -20,8 +20,7 @@
 #include "rdbms/Rset.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -405,5 +404,4 @@ std::optional<double> Rset::columnOptionalDouble(const std::string &colName) con
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

@@ -25,9 +25,7 @@
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class TapeFileWritten;
 class RdbmsCatalogue;
@@ -67,5 +65,4 @@ private:
     const std::set<TapeFileWritten> &events);
 };  // class OracleArchiveFileCatalogue
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

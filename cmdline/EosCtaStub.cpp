@@ -18,7 +18,6 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
-#include <cryptopp/base64.h>
 
 #include <XrdSsiPbLog.hpp>
 
@@ -52,122 +51,6 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 //! Usage exception
 
 const std::runtime_error Usage("Usage: cta-wfe-test archive|retrieve|abort|deletearchive [options] [--stderr]");
-
-
-
-/*!
- * Fill a Notification message from the command-line parameters
- *
- * @param[out]    notification    The protobuf to fill
- * @param[in]     argval          A base64-encoded blob
- */
-
-void base64Decode(cta::eos::Notification &notification, const std::string &argval)
-{
-   using namespace std;
-
-   // Recovery blob is deprecated, no need to unpack it
-   return;
-
-   string base64str(argval.substr(7)); // delete "base64:" from start of string
-
-   // Decode Base64 blob
-
-   string decoded;
-   CryptoPP::StringSource ss1(base64str, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
-
-   // Split into file metadata and directory metadata parts
-
-   string fmd = decoded.substr(decoded.find("fmd={ ")+6, decoded.find(" }")-7);
-   string dmd = decoded.substr(decoded.find("dmd={ ")+6);
-   dmd.resize(dmd.size()-3); // remove closing space/brace/quote
-
-   // Process file metadata
-
-   stringstream fss(fmd);
-   while(!fss.eof())
-   {
-      string key;
-      fss >> key;
-      size_t eq_pos = key.find("=");
-      string val(key.substr(eq_pos+1));
-      key.resize(eq_pos);
-
-           if(key == "fid") notification.mutable_file()->set_fid(stoi(val));
-      else if(key == "pid") notification.mutable_file()->set_pid(stoi(val));
-      else if(key == "ctime")
-      {
-         size_t pt_pos = val.find(".");
-         notification.mutable_file()->mutable_ctime()->set_sec(stoi(val.substr(0, pt_pos)));
-         notification.mutable_file()->mutable_ctime()->set_nsec(stoi(val.substr(pt_pos+1)));
-      }
-      else if(key == "mtime")
-      {
-         size_t pt_pos = val.find(".");
-         notification.mutable_file()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
-         notification.mutable_file()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
-      }
-      else if(key == "size") notification.mutable_file()->set_size(stoi(val));
-      else if(key == "xs")
-      {
-         // In principle it's possible to set the full checksum blob with multiple checksums of different
-         // types, but this is not currently supported in eos_wfe_stub. It's only possible to set one
-         // checksum, which is assumed to be of type ADLER32.
-         auto cs = notification.mutable_file()->mutable_csb()->add_cs();
-         cs->set_type(cta::common::ChecksumBlob::Checksum::ADLER32);
-         cs->set_value(cta::checksum::ChecksumBlob::HexToByteArray(val));
-      }
-      else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
-      else if(key == "file") notification.mutable_file()->set_lpath(val);
-      else {
-         std::cerr << "base64Decode(): No match in protobuf for fmd:" << key << '=' << val << std::endl;
-      }
-   }
-
-   // Process directory metadata
-
-   string xattrn;
-
-   stringstream dss(dmd);
-   while(!dss.eof())
-   {
-      string key;
-      dss >> key;
-      size_t eq_pos = key.find("=");
-      string val(key.substr(eq_pos+1));
-      key.resize(eq_pos);
-
-           if(key == "fid") notification.mutable_directory()->set_fid(stoi(val));
-      else if(key == "pid") notification.mutable_directory()->set_pid(stoi(val));
-      else if(key == "ctime")
-      {
-         size_t pt_pos = val.find(".");
-         notification.mutable_directory()->mutable_ctime()->set_sec(stoi(val.substr(0, pt_pos)));
-         notification.mutable_directory()->mutable_ctime()->set_nsec(stoi(val.substr(pt_pos+1)));
-      }
-      else if(key == "mtime")
-      {
-         size_t pt_pos = val.find(".");
-         notification.mutable_directory()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
-         notification.mutable_directory()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
-      }
-      else if(key == "size") notification.mutable_directory()->set_size(stoi(val));
-      else if(key == "mode") notification.mutable_directory()->set_mode(stoi(val));
-      else if(key == "file") notification.mutable_directory()->set_lpath(val);
-      else if(key == "xattrn") xattrn = val;
-      else if(key == "xattrv")
-      {
-         // Insert extended attributes
-
-         notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
-      }
-      else {
-         std::cerr << "base64Decode(): No match in protobuf for dmd:" << key << '=' << val << std::endl;
-      }
-   }
-}
-
-
 
 /*!
  * Fill a Notification message from the command-line parameters

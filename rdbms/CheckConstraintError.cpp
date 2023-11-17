@@ -17,23 +17,17 @@
 
 #include "rdbms/CheckConstraintError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 CheckConstraintError::CheckConstraintError(
   const std::string &context,
+  const std::string &dbErrorMessage,
+  const std::string &violatedConstraintName,
   const bool embedBacktrace):
-  ConstraintError(context, embedBacktrace) {
+  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-CheckConstraintError::~CheckConstraintError() noexcept {
-}
-
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

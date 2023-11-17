@@ -40,7 +40,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const bool useEncryption,
   const std::string& externalEncryptionKeyScript,
   const cta::RetrieveMount& retrieveMount,
-  const uint32_t tapeLoadTimeout) :
+  const uint32_t tapeLoadTimeout,
+  cta::catalogue::Catalogue& catalogue) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mediaChanger, reporter, volInfo,
                                           capUtils, logContext, useEncryption, externalEncryptionKeyScript,
                                           tapeLoadTimeout),
@@ -49,7 +50,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_reportPacker(reportPacker),
   m_useLbp(useLbp),
   m_useRAO(useRAO),
-  m_retrieveMount(retrieveMount) {}
+  m_retrieveMount(retrieveMount),
+  m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -294,9 +296,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m_volInfo.labelFormat);
 
       cta::log::ScopedParamContainer params(m_logContext);
-      params.add("vo", m_retrieveMount.getVo());
       params.add("mediaType", m_retrieveMount.getMediaType());
-      params.add("tapePool", m_retrieveMount.getPoolName());
       params.add("logicalLibrary", m_drive.config.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
       params.add("labelFormat", ossLabelFormat.str());
@@ -326,11 +326,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // status:
         cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
         {
-          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.vid,
-                                                             EncryptionControl::SetTag::NO_SET_TAG);
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo, m_catalogue, false);
           if (encryptionStatus.on) {
             encryptionLogParams.add("encryption", "on")
-                               .add("encryptionKey", encryptionStatus.keyName)
+                               .add("encryptionKeyName", encryptionStatus.keyName)
                                .add("stdout", encryptionStatus.stdout);
             m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
           } else {

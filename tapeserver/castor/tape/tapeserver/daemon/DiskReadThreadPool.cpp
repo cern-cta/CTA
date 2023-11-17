@@ -21,22 +21,20 @@
 #include <memory>
 #include <sstream>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
 // DiskReadThreadPool constructor
 //------------------------------------------------------------------------------
-DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq,
-    castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-    cta::log::LogContext lc, const std::string & xrootPrivateKeyPath, uint16_t xrootTimeout) : 
-    m_xrootPrivateKeyPath(xrootPrivateKeyPath),
+DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq,
+    castor::tape::tapeserver::daemon::MigrationWatchDog& migrationWatchDog,
+    cta::log::LogContext lc, uint16_t xrootTimeout) :
     m_xrootTimeout(xrootTimeout),
     m_watchdog(migrationWatchDog),
-    m_lc(lc),m_maxFilesReq(maxFilesReq),
-    m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {
+    m_lc(lc),
+    m_maxFilesReq(maxFilesReq),
+    m_maxBytesReq(maxBytesReq),
+    m_nbActiveThread(0) {
   for(int i=0; i<nbThread; i++) {
     DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
     m_threads.push_back(thr);
@@ -205,5 +203,5 @@ logWithStat(int level, const std::string& message){
               m_threadStat.transferTime?(m_threadStat.openingTime+m_threadStat.readWriteTime+m_threadStat.closingTime)/m_threadStat.transferTime:0.0);
     m_lc.log(level,message);
 }
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

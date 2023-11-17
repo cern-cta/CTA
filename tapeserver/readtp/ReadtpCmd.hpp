@@ -27,6 +27,7 @@
 #include "disk/DiskFile.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/daemon/Tpconfig.hpp"
@@ -40,12 +41,12 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 }
+
 namespace common::dataStructures {
 class Tape;
 }
 
-namespace tapeserver {
-namespace readtp {
+namespace tapeserver::readtp {
 
 /**
  * Command-line tool for reading files from a CTA tape.
@@ -108,10 +109,11 @@ private:
   /**
   * Configures encryption to be able to read from an encrypted tape
   *
-  * @param vid The volume identifier of the tape to be mounted.
+  * @param volInfo The volume info of the tape to be mounted.
   * @param drive The tape drive.
   */
-  void configureEncryption(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
+  void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
+                           castor::tape::tapeserver::drive::DriveInterface &drive);
 
   /**
   * Disable encryption
@@ -196,7 +198,7 @@ private:
    * @param fSeq The tape file fSeq.
    */
   void readTapeFile(castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq,
-    cta::disk::WriteFile &wf, const cta::common::dataStructures::Label::Format &labelFormat);
+                    cta::disk::WriteFile &wf, const castor::tape::tapeserver::daemon::VolumeInfo &volInfo);
 
 
   /**
@@ -291,11 +293,6 @@ private:
   std::string m_vid;
   
   /**
-   * Path to the xroot private key file.
-   */
-  std::string m_xrootPrivateKeyPath;
-
-  /**
    * The iterator of destination urls the data read is sent to
    */
   std::list<std::string> m_destinationFiles;
@@ -346,6 +343,4 @@ private:
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}} // namespace cta::tapeserver::readtp

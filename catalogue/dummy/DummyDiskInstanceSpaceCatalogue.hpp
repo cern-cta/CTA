@@ -25,10 +25,8 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct DiskInstance;
-}
 }
 
 namespace catalogue {
@@ -66,5 +64,4 @@ private:
   static std::map<std::string, common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

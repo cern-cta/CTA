@@ -16,6 +16,9 @@
  */
 
 #include <string>
+#include <vector>
+#include <iterator>
+#include <set>
 
 #include "catalogue/rdbms/RdbmsSchemaCatalogue.hpp"
 #include "catalogue/SchemaVersion.hpp"
@@ -24,8 +27,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsSchemaCatalogue::RdbmsSchemaCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
   m_log(log), m_connPool(connPool) {}
@@ -71,15 +73,16 @@ SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
 }
 
 void RdbmsSchemaCatalogue::verifySchemaVersion() {
+  const std::set<int> supported_versions{SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED};
   try {
     SchemaVersion schemaVersion = getSchemaVersion();
-    if(auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
-      major != static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)){
+    if(const auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>(); supported_versions.count(major) == 0){
       std::ostringstream exceptionMsg;
-      exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version is "
-        << major << "." << minor
-        << ", CTA schema version is " << CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "."
-        << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
+      std::ostringstream supported_versions_os;
+      std::copy(supported_versions.begin(), supported_versions.end(), std::ostream_iterator<int>(supported_versions_os, ", "));
+      exceptionMsg << "Catalogue schema MAJOR version not supported : Database schema version is "
+                   << major << "." << minor
+                   << ", supported CTA MAJOR versions are {" << supported_versions_os.str() << "}.";
       throw WrongSchemaVersionException(exceptionMsg.str());
     }
     if(schemaVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
@@ -120,5 +123,4 @@ std::list<std::string> RdbmsSchemaCatalogue::getTableNames() const {
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

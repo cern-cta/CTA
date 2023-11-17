@@ -17,8 +17,7 @@
 
 #include "mediachanger/MessageHeader.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -29,5 +28,4 @@ MessageHeader::MessageHeader():
   lenOrStatus(0) {
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

@@ -29,6 +29,7 @@
 #include "rdbms/Login.hpp"
 
 namespace cta {
+
 namespace utils {
 class Regex;
 }
@@ -146,5 +147,4 @@ public:
   std::list<std::string> getConstraintNames(const std::string& tableName) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+}} // namespace cta::catalogue

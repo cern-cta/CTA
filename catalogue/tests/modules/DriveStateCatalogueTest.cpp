@@ -26,6 +26,7 @@
 #include "catalogue/tests/modules/DriveStateCatalogueTest.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/exception/Exception.hpp"
@@ -193,7 +194,9 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithNonExistingLogicalLibrary) 
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithDisabledLogicalLibrary) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, "comment");
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, physicalLibraryName, "comment");
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(storedTapeDrive.value().logicalLibraryDisabled);
@@ -1521,6 +1524,33 @@ TEST_P(cta_catalogue_DriveStateTest, failToDecrementAnOldMountIDAndDecrementNewA
   ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithPhysicalLibrary) {
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, physicalLibrary1.name, "comment");
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(storedTapeDrive.value().physicalLibraryName, physicalLibrary1.name);
+
+  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
+  m_catalogue->LogicalLibrary()->deleteLogicalLibrary(tapeDrive.logicalLibrary);
+}
+
+TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithoutPhysicalLibrary) {
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, physicalLibraryName, "comment");
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(storedTapeDrive.value().physicalLibraryName, std::nullopt);
+
+  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
+  m_catalogue->LogicalLibrary()->deleteLogicalLibrary(tapeDrive.logicalLibrary);
 }
 
 }  // namespace unitTests

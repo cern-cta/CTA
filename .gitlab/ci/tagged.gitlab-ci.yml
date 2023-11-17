@@ -1,20 +1,18 @@
 cta_tagged_rpm:
   only:
     - tags
-  stage: build:rpm
+  stage: build:tagged_rpm
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y devtoolset-11 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_tagged_rpm
     - cd build_tagged_rpm
@@ -24,8 +22,6 @@ cta_tagged_rpm:
     expire_in: 30 days
     paths:
     - build_tagged_rpm/RPM/RPMS
-  tags:
-    - docker
 
 publish_tagged_rpm:
   stage: publish_rpm
@@ -35,8 +31,6 @@ publish_tagged_rpm:
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH=/eos/user/c/ctareg/www/cta-repo HOOK=/eos/user/c/ctareg/www/cta-repo/update_repos.sh continuousintegration/ci_helpers/deploy-eos.sh
-  tags:
-    - docker
 
 release_public_rpm:
   stage: release_rpm
@@ -47,5 +41,3 @@ release_public_rpm:
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
-  tags:
-    - docker

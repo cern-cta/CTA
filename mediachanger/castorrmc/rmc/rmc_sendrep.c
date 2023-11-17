@@ -39,7 +39,6 @@ static const char *rep_type_to_str(const int rep_type) {
 int rmc_sendrep(const int rpfd, const int rep_type, ...)
 {
 	va_list args;
-	char func[16];
 	char *msg;
 	int n;
 	char prtbuf[RMC_PRTBUFSZ];
@@ -47,9 +46,8 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	int rc;
 	char repbuf[RMC_REPBUFSZ];
 	int repsize;
+	const char* const func = "rmc_sendrep";
 
-	strncpy (func, "rmc_sendrep", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
 	va_start (args, rep_type);

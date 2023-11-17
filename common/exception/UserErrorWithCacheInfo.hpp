@@ -19,8 +19,7 @@
 
 #include "common/exception/UserError.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 /**
  * A user error together with information about how the respective cached
@@ -46,5 +45,4 @@ public:
   }
 }; // class UserErrorWithTimeBasedCacheInfo
 
-} // namespace exception
-} // namespace cta
+} // namespace cta::exception

@@ -25,9 +25,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "VirtualOrganization.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct specifies the number of copies that a file tagged with it should 
@@ -107,6 +105,4 @@ struct StorageClass {
 
 std::ostream &operator<<(std::ostream &os, const StorageClass &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

@@ -33,9 +33,12 @@
 #include "objectstore/RetrieveRequest.hpp"
 
 namespace cta {
+
 // Forward declaration
 class OStoreDB;
-  namespace ostoredb {
+
+namespace ostoredb {
+
 /**
  * A container to which the ownership of the archive queue (and more important,
  * its lock) will be passed. This container will be passed as a shared pointer
@@ -62,12 +65,17 @@ template <class Queue, class Request>
 SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
   bool skipQueuesTrim=false;
-  if (m_lock.get() && m_lock->isLocked()) {
-    m_lock->release();
-  } else {
+  try {
+    if(m_lock.get() && m_lock->isLocked()) {
+      m_lock->release();
+    } else {
+      throw objectstore::ObjectOpsBase::NotLocked("Lock not present or not locked");
+    }
+  } catch(objectstore::ObjectOpsBase::NotLocked&) {
     m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
     skipQueuesTrim=true;
   }
+
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // The next update of the queue can now proceed
   if (m_promiseForSuccessor.get()) {
@@ -408,4 +416,4 @@ void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queu
 typedef MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue> MemArchiveQueue;
 typedef MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue> MemRetrieveQueue;
 
-}} // namespace cta::ostoreDBUtils
+}} // namespace cta::ostoredb

@@ -73,7 +73,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
-  m_log(cta::log::ERR, "Cleaner failed. Putting the drive down.", params);
+  m_log(cta::log::ERR, "Cleaner failed, the drive is going down.", params);
 
   // Putting the drive down
   try {
@@ -161,7 +161,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         using cta::common::dataStructures::Tape;
         std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;
         auto curr_state = m_catalogue.Tape()->getTapesByVid(m_vid).at(m_vid).state;
-        if (curr_state == Tape::REPACKING || curr_state == Tape::REPACKING_DISABLED) {
+        if (curr_state == Tape::REPACKING) {
           m_catalogue.Tape()->modifyTapeState(admin, m_vid, Tape::REPACKING_DISABLED, curr_state, disabledReason);
         } else if (curr_state == Tape::ACTIVE){
           m_catalogue.Tape()->modifyTapeState(admin, m_vid, Tape::DISABLED, curr_state, disabledReason);

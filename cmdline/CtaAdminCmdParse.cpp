@@ -17,8 +17,7 @@
 
 #include "CtaAdminCmdParse.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 void Option::validateCmd(const AdminCmd &admincmd) const
 {
@@ -148,5 +147,5 @@ void validateCmd(const cta::admin::AdminCmd &admincmd)
    }
 }
 
-}} // namespace cta::admin
+} // namespace cta::admin
 

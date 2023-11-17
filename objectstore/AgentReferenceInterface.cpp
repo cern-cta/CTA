@@ -17,8 +17,8 @@
 
 #include "AgentReferenceInterface.hpp"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 AgentReferenceInterface::AgentReferenceInterface()  {
   
 }
@@ -26,4 +26,4 @@ AgentReferenceInterface::AgentReferenceInterface()  {
 AgentReferenceInterface::~AgentReferenceInterface() {
 }
 
-}}
+} // namespace cta::objectstore

@@ -23,8 +23,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/Version.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 class AdminCmd;
 
@@ -67,6 +66,7 @@ private:
   void processGroupMountRule_Ls      (cta::xrd::Response& response);
   void processActivityMountRule_Ls   (cta::xrd::Response& response);
   void processLogicalLibrary_Ls      (cta::xrd::Response& response);
+  void processPhysicalLibrary_Ls     (cta::xrd::Response& response);
   void processMediaType_Ls           (cta::xrd::Response& response);
   void processMountPolicy_Ls         (cta::xrd::Response& response);
   void processRequesterMountRule_Ls  (cta::xrd::Response& response);
@@ -88,4 +88,4 @@ private:
   const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
 };
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

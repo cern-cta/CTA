@@ -23,8 +23,8 @@
 #include <memory>
 #include <radosstriper/libradosstriper.hpp>
 
-namespace cta {
-namespace disk {
+namespace cta::disk {
+
 /**
  * Utility singleton managing the rados stripers connections by name.
  * The destructor will implicitly release the pool connections.
@@ -76,5 +76,4 @@ private:
   unsigned int m_striperIdx;
 };
 
-} // namespace disk
-} // namespace cta
+} // namespace cta::disk

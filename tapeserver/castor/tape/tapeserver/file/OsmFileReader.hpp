@@ -24,10 +24,8 @@
 
 #include <memory>
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
-  
+namespace castor::tape::tapeFile {
+
 class OsmFileReader : public FileReader {
 public:
   /**
@@ -49,10 +47,9 @@ public:
   /**
    *
    */
-  inline const CPIO& getCPIOHeader() const {
+  const CPIO& getCPIOHeader() const {
     return m_cpioHeader;
   }
-
 
 private:
   const size_t PAYLOAD_BOLCK_SIZE = 262144;
@@ -72,6 +69,4 @@ private:
   void setBlockSize(size_t uiBlockSize);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

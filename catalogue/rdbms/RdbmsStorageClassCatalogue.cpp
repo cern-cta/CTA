@@ -31,8 +31,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsStorageClassCatalogue::RdbmsStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
    RdbmsCatalogue *rdbmsCatalogue):
@@ -498,5 +497,4 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn 
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

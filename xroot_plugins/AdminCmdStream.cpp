@@ -30,6 +30,7 @@
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
+#include "XrdCtaPhysicalLibraryLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaRecycleTapeFileLs.hpp"
@@ -47,8 +48,7 @@
 #include "frontend/common/GrpcEndpoint.hpp"
 #include "frontend/common/AdminCmd.hpp"
 
-namespace cta {
-namespace frontend {
+namespace cta::frontend {
 
 AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
@@ -86,6 +86,9 @@ xrd::Response AdminCmdStream::process() {
         break;
       case cmd_pair(admin::AdminCmd::CMD_LOGICALLIBRARY, admin::AdminCmd::SUBCMD_LS):
         processLogicalLibrary_Ls(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_LS):
+        processPhysicalLibrary_Ls(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_MEDIATYPE, admin::AdminCmd::SUBCMD_LS):
         processMediaType_Ls(response);
@@ -219,6 +222,13 @@ void AdminCmdStream::processLogicalLibrary_Ls(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
+void AdminCmdStream::processPhysicalLibrary_Ls(xrd::Response& response) {
+  m_stream = new xrd::PhysicalLibraryLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(admin::HeaderType::PHYSICALLIBRARY_LS);
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
 void AdminCmdStream::processMediaType_Ls(xrd::Response& response) {
   m_stream = new xrd::MediaTypeLsStream(*this, m_catalogue, m_scheduler);
 
@@ -280,15 +290,7 @@ void AdminCmdStream::processTape_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processTapeFile_Ls(xrd::Response& response) {
-  auto isLookupNamespace = getOptional(admin::OptionBoolean::LOOKUP_NAMESPACE);
-
-  if(isLookupNamespace && isLookupNamespace.value()) {
-    // Get a response stream including filename lookup in the namespace
-    m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler, m_namespaceMap);
-  } else {
-    // Get a response stream without namespace lookup
-    m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler);
-  }
+  m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::TAPEFILE_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -343,4 +345,4 @@ void AdminCmdStream::processVirtualOrganization_Ls(xrd::Response& response){
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-}} // namespace cta::frontend
+} // namespace cta::frontend

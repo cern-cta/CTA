@@ -138,6 +138,14 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --writemaxdrives 1                                                               \
     --diskinstance ${EOSINSTANCE}                                                    \
     --comment "vo"
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
+    --vo vo_repack                                                                   \
+    --readmaxdrives 1                                                                \
+    --writemaxdrives 1                                                               \
+    --diskinstance ${EOSINSTANCE}                                                    \
+    --comment "vo_repack"                                                            \
+    --isrepackvo true
   
   # add the media types of the tapes in production
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
@@ -263,12 +271,13 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --copynb 3                                                               \
     --tapepool ctasystest_C                                                  \
     --comment "ctasystest"
-  
+
   # add all tapes to default tape pool
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
       --mediatype "T10K500G"                                               \
+      --purchaseorder "order"                                              \
       --vendor vendor                                                      \
       --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
       --tapepool ctasystest                                                \

@@ -33,10 +33,7 @@
 #include <mutex>
 #include <thread>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace server {
+namespace cta::frontend::grpc::server {
 
 class AsyncServer {
 
@@ -145,7 +142,4 @@ private:
   void process(unsigned int uiId);
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::server

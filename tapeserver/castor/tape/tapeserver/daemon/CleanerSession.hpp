@@ -32,16 +32,12 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 class Catalogue;
 }
-}
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
 /**
   * Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
   */
@@ -243,7 +239,4 @@ private:
   void setDriveDownAfterCleanerFailed(const std::string & errorMsg);
 };  // class CleanerSession
 
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeserver::daemon

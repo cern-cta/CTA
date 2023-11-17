@@ -17,10 +17,8 @@
 
 #pragma once
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
   /**
    * Structure holding the timers and stats for the tape session. We use doubles, 
    * for time and all measurements are in seconds or uint64_t for bytes.
@@ -144,4 +142,4 @@ namespace daemon {
     }
   };
   
-}}}}
+} // namespace castor::tape::tapeserver::daemon

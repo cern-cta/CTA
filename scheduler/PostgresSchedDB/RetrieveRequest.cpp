@@ -21,8 +21,7 @@
 // generated during build in the build tree
 #include "PostgresSchedDB/rowblobs.pb.h"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 void RetrieveRequest::insert() {
   postgresscheddb::sql::RetrieveJobQueueRow           row;
@@ -361,5 +360,4 @@ RetrieveRequest& RetrieveRequest::operator=(const postgresscheddb::sql::Retrieve
   return *this;
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

@@ -23,9 +23,7 @@
 
 #include "common/dataStructures/ArchiveRequest.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * The archive job contains the original request, and all data needed to queue 
@@ -54,6 +52,4 @@ struct ArchiveJob {
 
 std::ostream &operator<<(std::ostream &os, const ArchiveJob &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

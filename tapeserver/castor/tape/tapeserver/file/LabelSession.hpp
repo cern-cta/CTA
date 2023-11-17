@@ -19,13 +19,10 @@
 
 #include <string>
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
-namespace tapeserver {
-namespace drive {
+namespace tapeserver::drive {
 class DriveInterface;
-}
 }
 
 namespace tapeFile {
@@ -50,6 +47,4 @@ public:
   static void label(tapeserver::drive::DriveInterface *drive, const std::string &vid, const bool lbp);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+}}  // namespace castor::tape::tapeFile

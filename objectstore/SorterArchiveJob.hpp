@@ -24,7 +24,8 @@
 #include "ArchiveRequest.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * This structure holds the necessary data to queue a job taken from the ArchiveRequest that needs to be queued.
  */
@@ -45,5 +46,4 @@ struct SorterArchiveRequest{
   std::list<SorterArchiveJob> archiveJobs;
 };
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

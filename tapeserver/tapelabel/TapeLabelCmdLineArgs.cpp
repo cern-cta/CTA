@@ -25,9 +25,7 @@
 
 #include <string.h>
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -55,7 +53,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
   while((opt = getopt_long(argc, argv, ":v:o:t:u:hdf", longopts, nullptr)) != -1) {
     switch(opt) {
     case 'v':
-      if (strlen(optarg) > CA_MAXVIDLEN) {
+      if (strnlen(optarg, CA_MAXVIDLEN+1) > CA_MAXVIDLEN) {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
         throw ex;
@@ -68,7 +66,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
       }
       break;
     case 'o':
-      if (strlen(optarg) > CA_MAXVIDLEN) {
+      if (strnlen(optarg, CA_MAXVIDLEN+1) > CA_MAXVIDLEN) {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
         throw ex;
@@ -167,6 +165,4 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
 }
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

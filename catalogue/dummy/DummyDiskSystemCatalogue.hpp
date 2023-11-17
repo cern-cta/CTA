@@ -22,9 +22,7 @@
 #include "catalogue/interfaces/DiskSystemCatalogue.hpp"
 #include "disk/DiskSystem.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyDiskSystemCatalogue: public DiskSystemCatalogue {
 public:
@@ -63,5 +61,4 @@ private:
   disk::DiskSystemList m_diskSystemList;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

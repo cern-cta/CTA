@@ -22,9 +22,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 struct TapeDriveStatistics {
 public:
@@ -36,4 +34,4 @@ public:
   EntryLog lastModificationLog;
 };
 
-}}} // namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

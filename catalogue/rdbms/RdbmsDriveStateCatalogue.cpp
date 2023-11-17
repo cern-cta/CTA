@@ -33,8 +33,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
   : m_log(log), m_connPool(connPool) {
@@ -410,6 +409,8 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   tapeDrive.reservedBytes = rset->columnOptionalUint64("RESERVED_BYTES");
   tapeDrive.reservationSessionId = rset->columnOptionalUint64("RESERVATION_SESSION_ID");
 
+  tapeDrive.physicalLibraryName = rset->columnOptionalString("PHYSICAL_LIBRARY_NAME");
+
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
   auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
     const std::string &time) -> std::optional<common::dataStructures::EntryLog> {
@@ -498,13 +499,18 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
         "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
         "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
         "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
-        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
+        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
       "FROM "
         "DRIVE_STATE "
       "LEFT JOIN "
         "LOGICAL_LIBRARY "
       "ON "
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
+      "LEFT JOIN "
+        "PHYSICAL_LIBRARY "
+      "ON "
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "ORDER BY "
         "DRIVE_NAME";
     auto conn = m_connPool->getConn();
@@ -582,13 +588,18 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
         "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
         "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
         "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
-        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
+        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
       "FROM "
         "DRIVE_STATE "
       "LEFT JOIN "
         "LOGICAL_LIBRARY "
       "ON "
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
+      "LEFT JOIN "
+        "PHYSICAL_LIBRARY "
+      "ON "
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "WHERE "
         "DRIVE_NAME = :DRIVE_NAME";
     auto conn = m_connPool->getConn();
@@ -660,7 +671,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string
 
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
       const std::optional<std::string>& optionalString) {
-      if (optionalString) {
+      if (optionalString.has_value()) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
         } else {
@@ -850,7 +861,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       }
     };
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalString) {
-      if (optionalString) {
+      if (optionalString.has_value()) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
         } else {
@@ -1053,5 +1064,4 @@ void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

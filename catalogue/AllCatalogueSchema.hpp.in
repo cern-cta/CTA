@@ -18,8 +18,7 @@
 #pragma once
 #include <map>
 
-namespace cta{
-namespace catalogue{
+namespace cta::catalogue {
 
   class AllCatalogueSchema {
     public:
@@ -28,4 +27,4 @@ namespace catalogue{
 
   std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
 
-}}
+} // namespace cta::catalogue

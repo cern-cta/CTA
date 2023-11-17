@@ -22,8 +22,7 @@
 #include <cxxabi.h>
 #include <iostream>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /* Implmentations of the threading primitives */
 //------------------------------------------------------------------------------
@@ -112,5 +111,4 @@ void * Thread::pthread_runner (void * arg) {
   return nullptr;
 }
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

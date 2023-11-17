@@ -1,7 +1,7 @@
 [cta-eos-quarkdb]
 name=EOS quarkdb releases from EOS project
 baseurl=http://storage-ci.web.cern.ch/storage-ci/quarkdb/tag/el$releasever/$basearch/
-enabled=0
+enabled=1
 gpgcheck=1
 priority=10
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-storageci

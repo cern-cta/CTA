@@ -46,8 +46,7 @@
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
 /**
@@ -341,6 +340,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
         catalogue::FileSizeMismatch ex;
         ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
           ", actual=" << event.size << ": " << fileContext.str();
+        m_log(log::ALERT, ex.getMessage().str());
         throw ex;
       }
 
@@ -615,5 +615,4 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleTapeFileCatalogue::insertO
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

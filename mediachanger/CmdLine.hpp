@@ -19,8 +19,7 @@
 
 #include <string>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Class containing the code common to the parsed command-line of the ACS
@@ -45,5 +44,4 @@ protected:
 
 }; // class CmdLine
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

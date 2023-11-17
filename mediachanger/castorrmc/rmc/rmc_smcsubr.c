@@ -37,6 +37,8 @@
 #include "spectra_like_libs.h"
 
 #define	RBT_XTRA_PROC 10
+#define ERR_MSG_BUFSZ 132
+
 static struct smc_status smc_status;
 static const char *smc_msgaddr;
 
@@ -148,14 +150,12 @@ static int get_element_info(
 	unsigned char *data;
 	int edl;
 	int element_size;
-	char func[16];
 	int i;
 	int len;
 	const char *msgaddr;
 	int nb_sense_ret;
 	unsigned char *p;
 	unsigned char *page_end, *page_start;
-	unsigned char *q;
 	int rc = 0;
 	char sense[MAXSENSE];
         int pause_mode = 1;
@@ -163,9 +163,7 @@ static int get_element_info(
 	int nbReportBytesRemaining = 0;
 	int nbElementsInReport = 0;
 
-	strncpy (func, "get_elem_info", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-	if (type) {
+	if(type != 0) {
 		element_size = get_element_size (fd, rbtdev, type);
 		if (element_size < 0) return (-1);
 	} else {
@@ -245,14 +243,14 @@ static int get_element_info(
 			    (*(p+12) == '\0') || (*(p+12) == ' '))
 				element_info[i].name[0] = '\0';
 			else {
-				q = (unsigned char *) strchr ((char *)p+12, ' ');
-				if (q) {
-					strncpy (element_info[i].name, (char *)p+12, q-p-12);
-					element_info[i].name[q-p-12] = '\0';
-				} else
-					strcpy (element_info[i].name, (char *)p+12);
-				if (strlen (element_info[i].name) > CA_MAXVIDLEN)
-					element_info[i].name[CA_MAXVIDLEN] = '\0';
+				strncpy(element_info[i].name, (char*)p+12, CA_MAXVIDLEN+1);
+				// Truncate the VID to first 6 characters
+				element_info[i].name[CA_MAXVIDLEN] = '\0';
+				// Truncate again if it contains a space
+				char *q;
+				if((q = strchr(element_info[i].name, ' '))) {
+				  *q = '\0';
+				}
 			}
 		}
 	}
@@ -267,16 +265,12 @@ int smc_get_geometry(
 {
 	unsigned char buf[36];
 	unsigned char cdb[6];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "get_geometry", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
@@ -353,12 +347,7 @@ int smc_read_elem_status(
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	char func[16];
-
-	strncpy(func, "read_elem_statu", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-
-	return get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
+	return get_element_info(0xB8, fd, rbtdev, type, start, nbelem, element_info);
 }
 
 int smc_find_cartridgeWithoutSendVolumeTag (
@@ -370,9 +359,8 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	static char err_msgbuf[132];
+	static char err_msgbuf[ERR_MSG_BUFSZ];
 	int nbFound = 0;
-	char func[16];
 	int i;
 	struct smc_element_info *inventory_info;
 	char *msgaddr;
@@ -381,14 +369,8 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	int tot_nbelem = 0;
 	int nbElementsInReport = 0;
 
-	strncpy(func, "findWithoutVT", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-
-	{
-		const int smc_get_geometry_rc = smc_get_geometry (fd, rbtdev, &robot_info);
-		if(smc_get_geometry_rc) {
-			return smc_get_geometry_rc;
-		}
+	if(smc_get_geometry (fd, rbtdev, &robot_info) != 0) {
+		return -1;
 	}
 
 	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
@@ -396,16 +378,16 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 
 	if ((inventory_info = (struct smc_element_info *)malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
 		serrno = errno;
-		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
+		snprintf(err_msgbuf, ERR_MSG_BUFSZ, "malloc error: %s", strerror(errno));
 		msgaddr = err_msgbuf;
 		save_error (-1, 0, NULL, msgaddr);
-		return (-1);
+		return -1;
 	}
 
 	nbElementsInReport = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info);
 	if(0 > nbElementsInReport) {
 		free (inventory_info);
-		return (nbElementsInReport);
+		return nbElementsInReport;
 	}
 	for (i = 0 ; i < nbElementsInReport && nbFound < nbelem; i++) {
 		if (inventory_info[i].state & 0x1) {
@@ -426,9 +408,8 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 		}
 	}
 	free (inventory_info);
-	return (nbFound);
+	return nbFound;
 }
-
 
 int smc_find_cartridge(
 	const int fd,
@@ -441,7 +422,6 @@ int smc_find_cartridge(
 	struct robot_info *const robot_info)
 {
 	unsigned char cdb[12];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	char plist[40];
@@ -449,9 +429,6 @@ int smc_find_cartridge(
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "findWithVT", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xB6;		/* send volume tag */
@@ -461,10 +438,9 @@ int smc_find_cartridge(
 	cdb[5] = 5;
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
-	strncpy (plist, find_template, sizeof(plist));
-	strncat (plist, "*", sizeof(plist) - strlen(plist));
+	snprintf(plist, sizeof(plist), "%s*", find_template);
 
-       /* IBM library in pause mode  */
+        /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
           rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
                            sense, 38, SCSI_OUT, &nb_sense_ret, &msgaddr);
@@ -557,10 +533,7 @@ int smc_lasterror(
 	const char **const msgaddr)
 {
 	unsigned int i;
-	char func[16];
-
-	strncpy (func, "lasterror", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "lasterror";
 
 	rmc_logit(func, "Function entered:"
 		" asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
@@ -606,16 +579,12 @@ int smc_move_medium(
 	const int invert)
 {
 	unsigned char cdb[12];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "move_medium", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xA5;		/* move medium */
@@ -692,12 +661,9 @@ int smc_dismount (
 	unsigned int nb_element_status_reads = 0;
 	int drive_not_unloaded = 1;
 	struct smc_element_info drive_element_info;
-	char func[16];
 	const char *msgaddr = 0;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_dismount", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_dismount";
 
 	memset(&smc_status, '\0', sizeof(smc_status));
 
@@ -770,15 +736,12 @@ int smc_export (
 	const char *const vid)
 {
         struct smc_element_info element_info;
-	char func[16];
 	int i = 0;
         struct smc_element_info *impexp_info;
 	const char *msgaddr = NULL;
 	int nbelem = 0;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_export", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_export";
 
 	{
 		const int smc_find_cartridge_rc = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info);
@@ -852,16 +815,13 @@ int smc_import (
         int c;
 	int device_start;
         struct smc_element_info *element_info;
-	char func[16];
 	int i, j;
 	const char *msgaddr;
 	int nbelem;
 	int port_start;
 	int slot_start;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_import", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_import";
 
 	nbelem = robot_info->transport_count + robot_info->slot_count +
 		 robot_info->port_count + robot_info->device_count;
@@ -939,14 +899,11 @@ int smc_mount (
 	const char *const vid,
 	const int invert)
 {
-    int c;
-    struct smc_element_info element_info;
-	char func[16];
+	int c;
+	struct smc_element_info element_info;
 	const char *msgaddr;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_mount", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_mount";
 
 	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
@@ -958,7 +915,6 @@ int smc_mount (
 		return (RBT_NORETRY);
 	}
 	if (element_info.element_type != 2) {
-
                 /* compare requested and replied vid   */
                 rmc_usrmsg ( rpfd, func, "Asked for %s, got reply for %s\n",
                         vid, element_info.name );

@@ -79,6 +79,9 @@ public:
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
     const std::string &encryptionKeyName) override;
 
+  void modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &vid, const std::string &purchaseOrder) override;
+
   void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
     const std::string &verificationStatus) override;
 
@@ -178,5 +181,4 @@ private:
   void setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq);
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

@@ -29,9 +29,7 @@
 #include "tapeserver/tapelabel/TapeLabelCmd.hpp"
 #include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
 
-namespace cta {
-namespace tapeserver {
-namespace tapelabel {
+namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -84,8 +82,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   
   readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel, cmdLineArgs.m_unitName);
    
-  const std::string capabilities("cap_sys_rawio+ep");
-  setProcessCapabilities(capabilities);
+  setProcessCapabilities("cap_sys_rawio+ep");
   
   m_catalogue->Tape()->checkTapeForLabel(m_vid);
   
@@ -568,6 +565,4 @@ void TapeLabelCmd::printUsage(std::ostream &os) {
   TapeLabelCmdLineArgs::printUsage(os);
 }
 
-} // namespace tapelabel
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::tapelabel

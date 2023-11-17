@@ -19,7 +19,6 @@ include_directories(/usr/include/shift)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
-find_package(openssl REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
@@ -38,9 +37,6 @@ install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(CtaMessageSrcs
   Constants.cpp
-  Frame.cpp
-  messages.cpp
-  ../../../tapeserver/daemon/TapedProxy.cpp
 )
 
 add_library(ctamessages SHARED
@@ -57,4 +53,4 @@ target_link_libraries(ctamessages
   ctamediachanger
   ctatapesession
   ${PROTOBUF3_LIBRARIES}
-  ssl)
+)

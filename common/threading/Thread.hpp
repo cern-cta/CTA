@@ -25,8 +25,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /**
 * An exception class thrown by the Thread class.
@@ -59,5 +58,4 @@ private:
   std::optional<size_t> m_stackSize;
 };
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

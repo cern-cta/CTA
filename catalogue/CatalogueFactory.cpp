@@ -17,8 +17,7 @@
 
 #include "catalogue/CatalogueFactory.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // destructor
@@ -26,5 +25,4 @@ namespace catalogue {
 CatalogueFactory:: ~CatalogueFactory() {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

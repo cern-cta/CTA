@@ -28,7 +28,7 @@
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os, address) { }
@@ -133,11 +133,16 @@ void ArchiveQueue::rebuild() {
   uint64_t totalBytes=0;
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
   time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
+
   while (s != shards.end()) {
-    // Each shard could be gone
+    // Each shard could be gone or be empty
+    bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
     } catch (cta::exception::NoSuchObject & ex) {
+      shardObjectNotFound = true;
+    }
+    if (shardObjectNotFound || s->dumpJobs().empty()) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_archivequeueshards()->begin();
       while (aqs != m_payload.mutable_archivequeueshards()->end()) {
@@ -217,11 +222,16 @@ void ArchiveQueue::recomputeOldestAndYoungestJobCreationTime(){
   auto sf = shardsFetchers.begin();
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
   time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
+
   while (s != shards.end()) {
-    // Each shard could be gone
+    // Each shard could be gone or be empty
+    bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
     } catch (cta::exception::NoSuchObject & ex) {
+      shardObjectNotFound = true;
+    }
+    if (shardObjectNotFound || s->dumpJobs().empty()) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_archivequeueshards()->begin();
       while (aqs != m_payload.mutable_archivequeueshards()->end()) {
@@ -415,13 +425,14 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
     }
     // We will now commit this shard (and the queue) before moving to the next.
     // Commit in the right order:
-    // 1) commit the queue so the shard is referenced in all cases (creation).
-    commit();
-    // Now get the shard on storage. Could be either insert or commit.
-    if (newShard)
+    // 1) Get the shard on storage. Could be either insert or commit.
+    if (newShard) {
       aqs.insert();
-    else
+    } else {
       aqs.commit();
+    }
+    // 2) commit the queue so the shard is referenced.
+    commit();
   } // end of loop over all objects.
 }
 
@@ -497,7 +508,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   return ret;
 }
 
-void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
+void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove, log::LogContext & lc) {
   checkPayloadWritable();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
@@ -513,15 +524,23 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
     // Get hold of the shard
     ArchiveQueueShard aqs(shardPointer->address(), m_objectStore);
     m_exclusiveLock->includeSubObject(aqs);
-    aqs.fetch();
+    try {
+      aqs.fetch();
+    } catch(const cta::exception::NoSuchObject &) {
+      // If the shard's gone, so should the pointer be gone... Push it to the end of the queue and trim it.
+      log::ScopedParamContainer params(lc);
+      params.add("archiveQueueObject", getAddressIfSet());
+      params.add("archiveQueueShardObject", shardPointer->address());
+      lc.log(log::ERR, "In ArchiveQueue::removeJobsAndCommit(): Shard object is missing. Rebuilding queue.");
+      rebuild();
+      commit();
+      continue;
+    }
     // Remove jobs from shard
     auto removalResult = aqs.removeJobs(localJobsToRemove);
-    // If the shard is drained, remove, otherwise commit. We update the pointer afterwards.
-    if (removalResult.jobsAfter) {
-      aqs.commit();
-    } else {
-      aqs.remove();
-    }
+    // Commit shard changes. If it has been drained, it will be deleted afterwards.
+    aqs.commit();
+
     // We still need to update the tracking queue side.
     // Update stats and remove the jobs from the todo list.
     for (auto & j: removalResult.removedJobs) {
@@ -564,6 +583,11 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
     // And commit the queue (once per shard should not hurt performance).
     recomputeOldestAndYoungestJobCreationTime();
     commit();
+    // Only remove the drained shard after the queue updates have been committed,
+    // in order to avoid a dangling shard address
+    if (!removalResult.jobsAfter) {
+      aqs.remove();
+    }
   }
 }
 
@@ -596,15 +620,24 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
+auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
   for (auto & aqsp: m_payload.archivequeueshards()) {
-    // We need to go through all shard poiters unconditionnaly to count what is left (see else part)
+    // We need to go through all shard pointers unconditionally to count what is left (see else part)
     if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
       // Fetch the shard
       ArchiveQueueShard aqs(aqsp.address(), m_objectStore);
-      aqs.fetchNoLock();
+      try {
+        aqs.fetchNoLock();
+      } catch(const cta::exception::NoSuchObject &) {
+        // If the shard's gone we are not getting any pointers from it...
+        log::ScopedParamContainer params(lc);
+        params.add("archiveQueueObject", getAddressIfSet());
+        params.add("archiveQueueShardObject", aqsp.address());
+        lc.log(log::ERR, "In ArchiveQueue::getCandidateList(): Shard object is missing. Ignoring shard.");
+        continue;
+      }
       auto shardCandidates = aqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles, archiveRequestsToSkip);
       ret.candidateBytes += shardCandidates.candidateBytes;
       ret.candidateFiles += shardCandidates.candidateFiles;
@@ -632,4 +665,4 @@ auto ArchiveQueue::getCandidateSummary() -> CandidateJobList {
   return ret;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

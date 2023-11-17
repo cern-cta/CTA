@@ -18,9 +18,7 @@
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 std::string toString(RepackInfo::Type type) {
   switch(type) {
@@ -70,6 +68,4 @@ RepackQueueType RepackInfo::getQueueType(){
   }
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

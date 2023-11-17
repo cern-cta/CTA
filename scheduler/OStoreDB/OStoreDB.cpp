@@ -70,13 +70,23 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, l
 //------------------------------------------------------------------------------
 // OStoreDB::~OStoreDB()
 //------------------------------------------------------------------------------
-OStoreDB::~OStoreDB() throw() {
-  while (m_taskQueueSize) sleep(1);
-  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
-  for (auto &t: m_enqueueingWorkerThreads) {
+OStoreDB::~OStoreDB() {
+  while(m_taskQueueSize) sleep(1);
+
+  for(__attribute__((unused)) auto& t : m_enqueueingWorkerThreads) {
+    try {
+      m_enqueueingTasksQueue.push(nullptr);
+    } catch(const exception::Exception& ex) {
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.what());
+      lc.log(log::ERR, "In OStoreDB::~OStoreDB(): caught unexpected exception.");
+    }
+  }
+  for(auto& t : m_enqueueingWorkerThreads) {
     t->wait();
     delete t;
-    t=nullptr;
+    t = nullptr;
   }
 }
 
@@ -473,7 +483,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
           m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
-          rqSummary.sleepInfo.value().sleepTime;
+          m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
         }
       }
     } else {
@@ -504,8 +514,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::DriveStatus::Transferring,
     (int)cta::common::dataStructures::DriveStatus::Unloading,
     (int)cta::common::dataStructures::DriveStatus::Unmounting,
-    (int)cta::common::dataStructures::DriveStatus::DrainingToDisk,
-    (int)cta::common::dataStructures::DriveStatus::CleaningUp };
+    (int)cta::common::dataStructures::DriveStatus::DrainingToDisk};
   std::set<int> activeMountTypes = {
     (int)cta::common::dataStructures::MountType::ArchiveForUser,
     (int)cta::common::dataStructures::MountType::ArchiveForRepack,
@@ -513,37 +522,43 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::MountType::Label };
   for (const auto& driveState : driveStates) {
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
+      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+        log::ScopedParamContainer params (logContext);
+        params.add("driveName", driveState.driveName);
+        params.add("mountType", common::dataStructures::toString(driveState.mountType));
+        params.add("driveStatus", common::dataStructures::toString(driveState.driveStatus));
+        logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
+        continue;
+      }
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = driveState.mountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool ? driveState.currentTapePool.value() : "";
-      tmdi.existingOrNextMounts.back().vo = driveState.currentVo ? driveState.currentVo.value() : "";
+      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.currentVo.value_or("");
       tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.currentVid ? driveState.currentVid.value() : "";
+      tmdi.existingOrNextMounts.back().vid = driveState.currentVid.value_or("");
       tmdi.existingOrNextMounts.back().currentMount = true;
-      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession
-        ? driveState.bytesTransferedInSession.value() : 0;
-      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
-        ? driveState.filesTransferedInSession.value() : 0;
+      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
+      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
       if(driveState.filesTransferedInSession && driveState.sessionElapsedTime && driveState.sessionElapsedTime.value() > 0) {
         tmdi.existingOrNextMounts.back().averageBandwidth = driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
         tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }
-      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
+      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity.value_or("");
     }
     if(driveState.nextMountType == common::dataStructures::MountType::NoMount) continue;
     if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool ? driveState.nextTapePool.value() : "";
-      tmdi.existingOrNextMounts.back().vo = driveState.nextVo ? driveState.nextVo.value() : "";
+      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.nextVo.value_or("");
       tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.nextVid ? driveState.nextVid.value() : "";
+      tmdi.existingOrNextMounts.back().vid = driveState.nextVid.value_or("");
       tmdi.existingOrNextMounts.back().currentMount = false;
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().averageBandwidth = 0;
-      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
+      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity.value_or("");
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
@@ -831,36 +846,21 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
-  common::dataStructures::MountType type,
-  const catalogue::TapeForWriting& tape,
-  const std::string& driveName,
-  const std::string& logicalLibrary,
-  const std::string& hostName,
-  const std::string& vo,
-  const std::string& mediaType,
-  const std::string& vendor,
-  const uint64_t capacityInBytes,
-  const std::optional<std::string>& activity,
-  cta::common::dataStructures::Label::Format labelFormat) {
-  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
+  const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting& tape,
+  const std::string& driveName, const std::string& logicalLibrary,
+  const std::string& hostName) {
+  throw cta::exception::Exception(
+    "In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(
-  const std::string& vid,
-  const std::string& tapePool,
-  const std::string& driveName,
-  const std::string& logicalLibrary,
-  const std::string& hostName,
-  const std::string& vo,
-  const std::string& mediaType,
-  const std::string& vendor,
-  const uint64_t capacityInBytes,
-  const std::optional<std::string> &activity,
-  cta::common::dataStructures::Label::Format labelFormat) {
-  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
+  const cta::SchedulerDatabase::PotentialMount& mount, const std::string& driveName, const std::string& logicalLibrary,
+  const std::string& hostName) {
+  throw cta::exception::Exception(
+    "In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
@@ -989,7 +989,7 @@ std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::c
         objectstore::ArchiveQueue aq(*tpa, m_objectStore);
         ScopedExclusiveLock aql(aq);
         aq.fetch();
-        aq.removeJobsAndCommit({aReq->getAddressIfSet()});
+        aq.removeJobsAndCommit({aReq->getAddressIfSet()}, logContext);
       }
       aReq->remove();
       log::ScopedParamContainer params(logContext);
@@ -1052,8 +1052,8 @@ std::list<cta::common::dataStructures::ArchiveJob> OStoreDB::getArchiveJobs(cons
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>> OStoreDB::getArchiveJobs() const {
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> OStoreDB::getArchiveJobs() const {
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> ret;
   using common::dataStructures::JobQueueType;
   for (ArchiveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
@@ -1769,7 +1769,7 @@ void OStoreDB::deleteFailed(const std::string &objectId, log::LogContext &lc)
         ArchiveQueue arq(arq_id, m_objectStore);
         ScopedExclusiveLock arq_el(arq);
         arq.fetch();
-        arq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        arq.removeJobsAndCommit(std::list<std::string>(1, objectId), lc);
         if(arq.isEmpty()) isQueueEmpty = true;
       }
       break;
@@ -1779,7 +1779,7 @@ void OStoreDB::deleteFailed(const std::string &objectId, log::LogContext &lc)
         RetrieveQueue rrq(rrq_id, m_objectStore);
         ScopedExclusiveLock rrq_el(rrq);
         rrq.fetch();
-        rrq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        rrq.removeJobsAndCommit(std::list<std::string>(1, objectId), lc);
         if(rrq.isEmpty()) isQueueEmpty = true;
       }
       break;
@@ -1811,8 +1811,8 @@ std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(co
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>> OStoreDB::getRetrieveJobs() const {
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> OStoreDB::getRetrieveJobs() const {
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> ret;
   using common::dataStructures::JobQueueType;
   for (RetrieveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
@@ -1891,6 +1891,31 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::repackExists()
+//------------------------------------------------------------------------------
+bool OStoreDB::repackExists() {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (cta::exception::Exception &) {
+    return false;
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    try {
+      objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      rr.fetchNoLock();
+      return true;
+    } catch (cta::exception::Exception &) {}
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getRepackInfo()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
@@ -1943,33 +1968,6 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
     }
   }
   throw exception::UserError("In OStoreDB::getRepackInfo(): No repack request for this VID.");
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::requeueRetrieveJobs()
-//------------------------------------------------------------------------------
-void OStoreDB::requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) {
-  objectstore::Sorter sorter(*m_agentReference, m_objectStore, m_catalogue);
-  std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
-  std::list<objectstore::ScopedExclusiveLock> locks;
-  for (auto &job: jobs) {
-    OStoreDB::RetrieveJob *oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
-    auto rr = std::make_shared<objectstore::RetrieveRequest>(oStoreJob->m_retrieveRequest.getAddressIfSet(), m_objectStore);
-    rrlist.push_back(rr);
-    try {
-      locks.emplace_back(*rr);
-      rr->fetch();
-    } catch (cta::exception::NoSuchObject &) {
-      log::ScopedParamContainer params(logContext);
-      params.add("retrieveRequestId", oStoreJob->m_retrieveRequest.getAddressIfSet());
-      logContext.log(log::INFO, "In OStoreDB::requeueRetrieveJobs(): no such retrieve request. Ignoring.");
-      continue;
-    }
-    sorter.insertRetrieveRequest(rr, *m_agentReference, std::nullopt, logContext);
-  }
-  locks.clear();
-  rrlist.clear();
-  sorter.flushAll(logContext);
 }
 
 //------------------------------------------------------------------------------
@@ -2298,27 +2296,25 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
   typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
   RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
   log::LogContext lc(m_logger);
-  while(true){
-    RQTEAlgo::PopCriteria criteria;
-    //pop request that is in the RepackQueueToExpandRequest
-    auto jobs = rqteAlgo.popNextBatch(std::nullopt,criteria,lc);
-    if(jobs.elements.empty()){
-      //If there is no request, return a nullptr
-      return nullptr;
-    }
-    //Get the first one request that is in elements
-    auto repackRequest = jobs.elements.front().repackRequest.get();
-    auto repackInfo = jobs.elements.front().repackInfo;
-    //build the repackRequest with the repack infos
-    std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
-    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
-    ret->repackInfo.vid = repackInfo.vid;
-    ret->repackInfo.type = repackInfo.type;
-    ret->repackInfo.status = repackInfo.status;
-    ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
-    ret->repackInfo.noRecall = repackInfo.noRecall;
-    return ret;
+
+  RQTEAlgo::PopCriteria criteria;
+  // pop request that is in RepackQueueToExpandRequest
+  auto jobs = rqteAlgo.popNextBatch(std::nullopt, criteria, lc);
+  if(jobs.elements.empty()) {
+    // If there is no request
+    return nullptr;
   }
+  // Get the first request that is in elements
+  auto repackRequest = jobs.elements.front().repackRequest.get();
+  auto repackInfo = jobs.elements.front().repackInfo;
+  // build the repackRequest with the repack info
+  std::unique_ptr<SchedulerDatabase::RepackRequest> ret = std::make_unique<OStoreDB::RepackRequest>(repackRequest->getAddressIfSet(), *this);
+  ret->repackInfo.vid = repackInfo.vid;
+  ret->repackInfo.type = repackInfo.type;
+  ret->repackInfo.status = repackInfo.status;
+  ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
+  ret->repackInfo.noRecall = repackInfo.noRecall;
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -3036,25 +3032,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             }
           }
         }
-        // The repack vid was not appropriate, let's try all candidates.
-        if (bestVid.empty()) {
-          std::set<std::string> candidateVids;
-          for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
-          try {
-            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
-          } catch (Helpers::NoTapeAvailableForRetrieve &) {
-            // Count the failure for this subrequest.
-            notCreatedSubrequests.emplace_back(rsr);
-            failedCreationStats.files++;
-            failedCreationStats.bytes += rsr.archiveFile.fileSize;
-            log::ScopedParamContainer params(lc);
-            params.add("fileId", rsr.archiveFile.archiveFileID)
-                  .add("repackVid", repackInfo.vid);
-            lc.log(log::ERR,
-                "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
-            goto nextSubrequest;
-          }
-        }
         for (auto &tc: rsr.archiveFile.tapeFiles)
           if (tc.vid == bestVid) {
             activeCopyNumber = tc.copyNb;
@@ -3413,15 +3390,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo::createArchiveMount(
-  common::dataStructures::MountType type,
-  const catalogue::TapeForWriting & tape, const std::string& driveName,
-  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, uint64_t capacityInBytes, const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
+  const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting& tape,
+  const std::string& driveName, const std::string& logicalLibrary, const std::string& hostName) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
   common::dataStructures::JobQueueType queueType;
-  switch (type) {
+  switch (mount.type) {
   case common::dataStructures::MountType::ArchiveForUser:
     queueType = common::dataStructures::JobQueueType::JobsToTransferForUser;
     break;
@@ -3431,8 +3406,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   default:
     throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfo::createArchiveMount(): unexpected mount type.");
   }
-  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
-    new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
+  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
   auto &am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -3446,16 +3420,17 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.vid = tape.vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
-  am.mountInfo.vo = vo;
+  am.mountInfo.vo = mount.vo;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
-  am.mountInfo.mediaType = mediaType;
-  am.mountInfo.labelFormat = labelFormat;
-  am.mountInfo.vendor = vendor;
-  am.mountInfo.capacityInBytes = capacityInBytes;
-  am.mountInfo.mountType = type;
+  am.mountInfo.mediaType = tape.mediaType;
+  am.mountInfo.labelFormat = tape.labelFormat;
+  am.mountInfo.vendor = tape.vendor;
+  am.mountInfo.capacityInBytes = tape.capacityInBytes;
+  am.mountInfo.mountType = mount.type;
+  am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
@@ -3473,11 +3448,10 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_l
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
-  const std::string& vid, const std::string& tapePool, const std::string& driveName,
-  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, const uint64_t capacityInBytes,
-  const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount>
+  OStoreDB::TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                       const std::string& driveName, const std::string& logicalLibrary,
+                                                       const std::string& hostName) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to
@@ -3486,8 +3460,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   // the drive register does not need garbage collection as it should reflect the
   // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
-  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
-    new OStoreDB::RetrieveMount(m_oStoreDB));
+  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(new OStoreDB::RetrieveMount(m_oStoreDB));
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -3498,19 +3471,22 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   // Fill up the mount info
-  rm.mountInfo.vid = vid;
+  rm.mountInfo.vid = mount.vid;
   rm.mountInfo.drive = driveName;
   rm.mountInfo.host = hostName;
-  rm.mountInfo.vo = vo;
+  rm.mountInfo.vo = mount.vo;
   rm.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
-  rm.mountInfo.tapePool = tapePool;
+  rm.mountInfo.tapePool = mount.tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
-  rm.mountInfo.mediaType = mediaType;
-  rm.mountInfo.labelFormat = labelFormat;
-  rm.mountInfo.vendor = vendor;
-  rm.mountInfo.capacityInBytes = capacityInBytes;
-  rm.mountInfo.activity = activity;
+  rm.mountInfo.mediaType = mount.mediaType;
+  // Setting a default value to Format::CTA is only to satisfy unit tests
+  // In normal workflow labelFormat value is taken from the tape catalogue after calling getNextMount()
+  rm.mountInfo.labelFormat = mount.labelFormat.value_or(cta::common::dataStructures::Label::Format::CTA);
+  rm.mountInfo.vendor = mount.vendor;
+  rm.mountInfo.capacityInBytes = mount.capacityInBytes;
+  rm.mountInfo.activity = mount.activity;
+  rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
@@ -3524,11 +3500,11 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
 // OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo()
 //------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
-  // The lock should be released before the objectstore object
-  // m_schedulerGlobalLock gets destroyed. We explicitely release the lock,
-  // and then destroy the object
-  if (m_lockTaken)
-    m_lockOnSchedulerGlobalLock.release();
+  // The lock should be released before the objectstore object m_schedulerGlobalLock gets destroyed.
+  // We explicitly release the lock, and then destroy the object.
+  try {
+    if(m_lockTaken) m_lockOnSchedulerGlobalLock.release();
+  } catch(objectstore::ObjectOpsBase::NotLocked&) { }
   m_schedulerGlobalLock.reset(nullptr);
 }
 
@@ -3680,24 +3656,28 @@ void OStoreDB::RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
 // OStoreDB::RetrieveMount::requeueJobBatch()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-      log::LogContext& logContext) {
+  log::LogContext& logContext)
+{
   objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  for (auto & j: jobBatch) {
-    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob *>(j.get());
+  for(auto& j : jobBatch) {
+    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob*>(j.get());
     auto rr = std::make_shared<objectstore::RetrieveRequest>(job->m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
     rrlist.push_back(rr);
     try {
       locks.emplace_back(*rr);
       rr->fetch();
-    } catch (cta::exception::NoSuchObject &) {
+      sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, std::nullopt, logContext);
+    } catch(exception::NoSuchObject&) {
       log::ScopedParamContainer params(logContext);
       params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
-      logContext.log(log::INFO, "In OStoreDB::RetrieveMount::requeueJobBatch(): no such retrieve request. Ignoring.");
+      logContext.log(log::INFO, "In OStoreDB::RetrieveMount::requeueJobBatch(): no such retrieve request, ignoring.");
+      continue;
+    } catch(exception::Exception& ex) {
+      job->failTransfer(ex.what(), logContext);
       continue;
     }
-    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, std::nullopt, logContext);
   }
   locks.clear();
   rrlist.clear();
@@ -5165,23 +5145,24 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failReport()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc) {
+void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
   typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
 
-  if(!m_jobOwned)
+  if(!m_jobOwned) {
     throw JobNotOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
+  }
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
 
   // Algorithms suppose the objects are not locked
-  auto  rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-  auto &af   = rfqc.archiveFile;
+  auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+  auto& af = rfqc.archiveFile;
 
   // Handle report failures for all tape copies in turn
-  for(auto &tf: af.tapeFiles) {
+  for(auto& tf : af.tapeFiles) {
     // Add a job failure and decide what to do next
     EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
 
@@ -5189,12 +5170,12 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
     m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
 
     // Apply the decision
-    switch (enQueueingNextStep.nextStep) {
+    switch(enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event
       case NextStep::EnqueueForReportForUser: {
         m_retrieveRequest.commit();
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-        // Algorithms suppose the objects are not locked.
+        // Algorithms suppose the objects are not locked
         rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -5211,13 +5192,13 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
               .add("totalReportRetries", retryStatus.totalReportRetries)
               .add("maxReportRetries", retryStatus.maxReportRetries);
         lc.log(log::INFO, "In RetrieveJob::failReport(): requeued job for report retry.");
-        return;
+        break;
       }
       default: {
         m_retrieveRequest.setFailed();
         m_retrieveRequest.commit();
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-        // Algorithms suppose the objects are not locked.
+        // Algorithms suppose the objects are not locked
         rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -5233,13 +5214,12 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
               .add("requestObject", m_retrieveRequest.getAddressIfSet())
               .add("totalReportRetries", retryStatus.totalReportRetries)
               .add("maxReportRetries", retryStatus.maxReportRetries);
-        if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer)
-          lc.log(log::INFO,
-              "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
-        else
-          lc.log(log::ERR,
-              "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
-        return;
+        if(enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer) {
+          lc.log(log::INFO, "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
+        } else {
+          lc.log(log::ERR, "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
+        }
+        break;
       }
     }
   }

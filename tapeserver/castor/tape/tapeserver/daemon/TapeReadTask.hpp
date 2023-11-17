@@ -30,14 +30,8 @@
 #include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
-  /**
-   * This class is in charge of
-   *
-   */
+namespace castor::tape::tapeserver::daemon {
+
 class TapeReadTask {
 public:
   /**
@@ -291,7 +285,5 @@ private:
    */
   RecallMemoryManager & m_mm;
 };
-}  // namespace daemon
-}  // namespace tapeserver
-}  // namespace tape
-}  // namespace castor
+
+} // namespace castor::tape::tapeserver::daemon

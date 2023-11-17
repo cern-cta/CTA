@@ -20,8 +20,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 struct CreateMountPolicyAttributes {
   std::string name;
@@ -32,4 +31,4 @@ struct CreateMountPolicyAttributes {
   std::string comment;
 };
 
-}}
+} // namespace cta::catalogue

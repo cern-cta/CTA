@@ -24,9 +24,7 @@
 #include <string>
 #include <list>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /** This structure holds all the information regarding a VID (retrieves) */
 struct QueueAndMountSummary {
@@ -61,9 +59,9 @@ struct QueueAndMountSummary {
   std::string lowestRequestAgeMountPolicy;
   std::list<std::string> mountPolicies;
   
-  static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
+  static QueueAndMountSummary* getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,
     const std::map<std::string, std::string> &vid_to_logical_library);
 };
 
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

@@ -25,21 +25,6 @@ spec:
       value: "DEVICE_NAME_VALUE"
     - name: DRIVE_DEVICE
       value: "DEVICE_PATH"
-    - name: BUILDTREE_BASE
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: base
-    - name: CTA_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: cta_subdir
-    - name: EOS_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: eos_subdir
     - name: TERM
       value: "xterm"
     - name: driveslot

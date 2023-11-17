@@ -20,8 +20,7 @@
 #include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/StmtPool.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // getStmt
@@ -84,5 +83,4 @@ void StmtPool::clear() {
   m_stmts.clear();
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

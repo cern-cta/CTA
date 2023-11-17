@@ -24,8 +24,7 @@
 #include <common/exception/ChecksumValueMismatch.hpp>
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace checksum {
+namespace cta::checksum {
 
 /*!
  * Enumeration of the supported checksum types
@@ -218,4 +217,4 @@ private:
   std::map<ChecksumType,std::string> m_cs;
 };
 
-}} // namespace cta::checksum
+} // namespace cta::checksum

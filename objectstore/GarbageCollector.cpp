@@ -28,7 +28,7 @@
 #include "RetrieveRequest.hpp"
 #include "RootEntry.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue):
   m_objectStore(os), m_catalogue(catalogue), m_ourAgentReference(agentReference), m_agentRegister(os) {
@@ -149,7 +149,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   }
 }
 
-void GarbageCollector::cleanupDeadAgent(const std::string & address, std::list<log::Param> agentDetails, log::LogContext & lc) {
+void GarbageCollector::cleanupDeadAgent(const std::string & address, const std::list<log::Param>& agentDetails, log::LogContext & lc) {
   // We detected a dead agent. Try and take ownership of it. It could already be owned
   // by another garbage collector.
   // To minimize locking, take a lock on the agent and check its ownership first.
@@ -715,7 +715,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         }
         requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
         if (requestsToDequeue.size()) {
-          rq.removeJobsAndCommit(requestsToDequeue);
+          rq.removeJobsAndCommit(requestsToDequeue, lc);
           log::ScopedParamContainer params(lc);
           params.add("retreveQueueObject", rq.getAddressIfSet());
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "
@@ -799,4 +799,4 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(Agent& 
   agentReference.removeFromOwnership(agent.getAddressIfSet(), objectStore);
 }
 
-}}
+} // namespace cta::objectstore

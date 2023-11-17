@@ -33,8 +33,7 @@
 #include <algorithm>
 #include <map>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -133,5 +132,4 @@ bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) {
   return rset.columnString("STATUS") == "UPGRADING";
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

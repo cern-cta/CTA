@@ -25,7 +25,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // DriveRegister::DriveRegister())
@@ -173,4 +173,4 @@ bool DriveRegister::isEmpty() {
   return true;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

@@ -33,7 +33,7 @@
 #include <string>
 #include <iostream>
 
-namespace cta { namespace taped {
+namespace cta::taped {
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -184,7 +184,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 //  log(log::INFO, "TPCONFIG line", params);
 //}
 
-}} // namespace cta::taped
+} // namespace cta::taped
 
 //------------------------------------------------------------------------------
 // main

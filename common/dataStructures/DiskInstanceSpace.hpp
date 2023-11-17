@@ -20,9 +20,7 @@
 #include <string>
 #include "EntryLog.hpp"
 
-namespace cta { 
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 struct DiskInstanceSpace {
   
@@ -76,4 +74,4 @@ struct DiskInstanceSpace {
   }
 };
 
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

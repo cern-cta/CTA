@@ -32,10 +32,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor{
-namespace tape{
-namespace tapeserver{
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
@@ -472,7 +469,4 @@ end_injection:
   }
 }
 
-} //end namespace daemon
-} //end namespace tapeserver
-} //end namespace tape
-} //end namespace castor
+} // namespace castor::tape::tapeserver::daemon

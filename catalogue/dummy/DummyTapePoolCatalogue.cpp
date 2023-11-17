@@ -23,8 +23,7 @@
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
@@ -78,5 +77,4 @@ bool DummyTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) con
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

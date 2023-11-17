@@ -19,9 +19,9 @@
 
 #include <common/exception/Exception.hpp>
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
+
 CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
 CTA_GENERATE_EXCEPTION_CLASS(CommentOrReasonWithMoreSizeThanMaximunAllowed);
-}
-}
+
+} // namespace cta::exception

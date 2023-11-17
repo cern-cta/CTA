@@ -18,8 +18,7 @@
 #include "mediachanger/DummyLibrarySlot.hpp"
 #include "mediachanger/DmcProxy.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -58,5 +57,4 @@ void DmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySl
   m_log(log::WARNING, "Dummy dismount", params);
 }
 
-} // namespace medichanger
-} // namespace cta
+} // namespace cta::mediachanger

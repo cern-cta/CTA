@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Enumeration of the different types of tape library.
@@ -37,5 +36,4 @@ enum TapeLibraryType {
  */
 const char *tapeLibraryTypeToString(const TapeLibraryType libraryType);
   
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

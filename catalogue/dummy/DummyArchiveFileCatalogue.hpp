@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/ArchiveFileCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyArchiveFileCatalogue : public ArchiveFileCatalogue {
 public:
@@ -65,5 +64,4 @@ public:
     log::LogContext &lc) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

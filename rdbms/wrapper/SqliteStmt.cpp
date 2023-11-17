@@ -20,7 +20,7 @@
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
@@ -34,9 +34,7 @@
 #include <string>
 #include <unistd.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -319,16 +317,16 @@ void SqliteStmt::executeNonQuery() {
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT:
-      throw ConstraintError(msg.str());
+      throw ConstraintError(msg.str(), "", "");
     case SQLITE_CONSTRAINT_CHECK:
-      throw CheckConstraintError(msg.str());
+      throw CheckConstraintError(msg.str(), "", "");
     case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw PrimaryKeyError(msg.str());
+      throw PrimaryKeyError(msg.str(), "", "");
     case SQLITE_CONSTRAINT_UNIQUE:
-      throw UniqueError(msg.str());
+      throw UniqueConstraintError(msg.str(), "", "");
     default:
       if ((stepRc & 0xFF) == SQLITE_CONSTRAINT)
-        throw ConstraintError(msg.str());
+        throw ConstraintError(msg.str(), "", "");
       else
         throw exception::Exception(msg.str());
     }
@@ -361,6 +359,4 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

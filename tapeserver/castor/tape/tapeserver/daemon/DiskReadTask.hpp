@@ -26,11 +26,8 @@
 #include "common/log/LogContext.hpp"
 #include "disk/DiskFile.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
-  
+namespace castor::tape::tapeserver::daemon {
+
 class DiskReadTask {
 public:
   /**
@@ -109,5 +106,5 @@ private:
   cta::threading::AtomicFlag& m_errorFlag;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

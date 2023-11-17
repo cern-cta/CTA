@@ -96,6 +96,22 @@ test_command () {
     log_command "$2"
 }
 
+# Wrapper to test a command - sub command combination that should fail
+# $1 - Initial message to display and log
+# $2 - command
+# $3 - subcommand
+# $4 - subcommand options
+test_command_fails () {
+    # Echo initial Message
+    log_message "$1" "${log_file}"
+
+    # Execute command
+    bash -c "admin_cta $2 $3 $4" >> "${log_file}" 2>&1 && exit 1
+
+    # Log results
+    log_command "$2"
+}
+
 LS_TIMEOUT=15
 
 # Run the test command function and check the result
@@ -182,12 +198,12 @@ test_header 'miscelaneous'
 echo -e "\tTesting cta-admin v"
 admin_cta --json v >> ${log_file} 2>&1 || exit 1
 
+test_start "tape" "ta" "--all"
 
 ########################################
 # Users - ad, vo #######################
 ########################################
 test_header 'user'
-
 
 # Admin (ad)
 test_start "admin" "ad"
@@ -204,10 +220,10 @@ test_assert || exit 1
 # Virtual Organizations (vo)
 test_start "virtual organization" "vo"
 test_and_check_cmd "Adding vo 'vo_cta'" "${command}" "add" "--vo 'vo_cta' --rmd 1 --wmd 1 --di 'ctaeos' -m 'Add vo_cta'"\
-  'select(.name=="vo_cta" and .writeMaxDrives=="1" and .readMaxDrives=="1" and .diskinstance=="ctaeos" and .comment=="Add vo_cta") | .name'\
+  'select(.name=="vo_cta" and .writeMaxDrives=="1" and .readMaxDrives=="1" and .diskinstance=="ctaeos" and .comment=="Add vo_cta" and .isRepackVo==false) | .name'\
   "1" "adding vo 'vo_cta'" || exit 1
-test_and_check_cmd "Changing 'vo_cta' rmd and mfs" "${command}" "ch" "--vo 'vo_cta' --wmd 2 --mfs 100"\
-  'select(.name=="vo_cta" and .writeMaxDrives=="2" and .maxFileSize=="100") | .name'\
+test_and_check_cmd "Changing 'vo_cta' rmd and mfs" "${command}" "ch" "--vo 'vo_cta' --wmd 2 --mfs 100 --isrepackvo false"\
+  'select(.name=="vo_cta" and .writeMaxDrives=="2" and .maxFileSize=="100" and .isRepackVo==false) | .name'\
   "1" "changing 'vo_cta'" || exit 1
 test_command "Removing vo 'vo_cta'" "${command}" "rm" "--vo 'vo_cta'" || exit 1
 test_assert || exit 1
@@ -266,10 +282,11 @@ test_header 'tape'
 
 # Tape (ta)
 test_start "tape" "ta" "--all"
-
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta ll ch --name ${lls[1]} --pl phys1
 # Set added tape to full so we can test reclaim.
-test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10K500G --ve vendor -l ${lls[1]} -t ctasystest -f true"\
-  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==true) | .vid"\
+test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10K500G --ve vendor -l ${lls[1]} -t ctasystest -f true --purchaseorder order1"\
+  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .physicalLibrary==\"phys1\" and .full==true and .purchaseOrder==\"order1\") | .vid"\
   "1" "adding tape 'V01008'" || exit 1
 test_and_check_cmd "Reclaiming tape 'V01008'" "${command}" "reclaim" "-v V01008"\
   "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==false) | .vid"\
@@ -277,9 +294,13 @@ test_and_check_cmd "Reclaiming tape 'V01008'" "${command}" "reclaim" "-v V01008"
 test_and_check_cmd "Changing tape V01008 state to REPACKING" "${command}" "ch" "-v V01008 -s 'REPACKING' -r 'Test admin-cta ta ch'"\
   "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .state==\"REPACKING\") | .vid"\
   "1" "changing tape V01008 state" || exit 1
+test_and_check_cmd "Changing tape V01008 order to order2" "${command}" "ch" "-v V01008 --purchaseorder 'order2' -r 'Test admin-cta ta ch'"\
+  "select(.vid==\"V01008\" and .purchaseOrder==\"order2\") | .vid"\
+  "1" "changing tape V01008 order" || exit 1
 test_command "Removing tape V01008" "${command}" "rm" "-v V01008" || exit 1
+admin_cta ll ch --name ${lls[1]} --pl ""
+admin_cta pl rm --name phys1
 test_assert || exit 1
-
 
 # Tape File (tf)
 test_start "tape file" "tf" "-v ${vids[0]}"
@@ -326,8 +347,10 @@ test_assert|| exit 1
 
 # Drive (dr)
 test_start "drive" "dr"
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta ll ch --name ${lls[1]} --pl phys1
 test_and_check_cmd "Setting drive '${dr_names_down[0]}' to UP" "${command}" "up" "${dr_names_down[0]} -r 'cta-admin systest up'"\
-  "select(.logicalLibrary==\"${dr_names_down[0]}\" and .driveName==\"${dr_names_down[0]}\" and .driveStatus==\"UP\" and .reason==\"cta-admin systest up\") | .driveName"\
+  "select(.logicalLibrary==\"${dr_names_down[0]}\" and .physicalLibrary==\"phys1\" and .driveName==\"${dr_names_down[0]}\" and .driveStatus==\"UP\" and .reason==\"cta-admin systest up\") | .driveName"\
   "1" "setting drive \'${dr_names_down[0]}\' to up state"|| exit 1
 test_and_check_cmd "Setting drive '${dr_names_down[0]}' to DOWN" "${command}" "down" "${dr_names_down[0]} -r 'cta-admin systest down'"\
   "select(.logicalLibrary==\"${dr_names_down[0]}\" and .driveName==\"${dr_names_down[0]}\" and .driveStatus==\"DOWN\" and .reason==\"cta-admin systest down\") | .driveName"\
@@ -336,6 +359,8 @@ test_and_check_cmd "Changing drive \'${dr_names_down[0]}\' message" "${command}"
   "select(.logicalLibrary==\"${dr_names_down[0]}\" and .comment==\"cta-admin test ch\") | .driveName"\
   "1" "changing drive \'${dr_names_down[0]}\' comment" || exit 1
 test_command "Removing drive \'${dr_names_down[0]}\'" "${command}" "rm" "${dr_names_down[0]}" || exit 1
+admin_cta ll ch --name ${lls[1]} --pl ""
+admin_cta pl rm --name phys1
 test_assert_false || exit 1
 
 
@@ -344,17 +369,44 @@ test_assert_false || exit 1
 log_message "Notify drive has been deleted."
 echo "${dr_names_down[0]}" > /root/deleted.txt
 
-# Logical Library (ll)
-test_start "logical library" "ll"
-test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false -m 'cta-admin systest add'"\
-  'select(.name=="cta_adm_systest" and .isDisabled==false and .comment=="cta-admin systest add") | .name'\
-  "1" "adding logical library 'cta_adm_systest'"|| exit 1
-test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${command}" "ch" "-n 'cta_adm_systest' -d true --dr 'cta-admin systest ch'"\
-  'select(.name=="cta_adm_systest" and .isDisabled==true and .disabledReason=="cta-admin systest ch") | .name'\
-  "1" "changing logical library 'cta_adm_systest'"|| exit 1
-test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
+
+# Physical Library (ll)
+test_start "physical library" "pl"
+test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add" "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA'\\
+   --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
+  'select(.name=="cta_adm_systest" and .manufacturer=="manA" and .model=="modA" and .type=="typeA" and .guiUrl=="urlA" and .webcamUrl=="urlA" and .location=="locA" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentA") | .name'\
+  "1" "adding physical library 'cta_adm_systest'"|| exit 1
+echo ${command}
+test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--name 'cta_adm_systest' --location 'locB'\\
+   --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
+  'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
+  "1" "adding physical library 'cta_adm_systest'"|| exit 1
+test_command_fails "Adding a duplicate physical library 'CTA_ADM_SYSTEST' should fail"\
+                   "${command}"\
+                   "add"\
+                   "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA' --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
+                   || exit 1
+test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--name 'cta_adm_systest'"
 test_assert || exit 1
 
+# Logical Library (ll)
+test_start "logical library" "ll"
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --name phys2 --ma man --mo mod --npcs 3 --npds 4
+test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false --pl phys1 -m 'cta-admin systest add'"\
+  'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
+  "1" "adding logical library 'cta_adm_systest'"|| exit 1
+test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest2' -d false --pl phys1 -m 'cta-admin systest add'"\
+  'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
+  "1" "adding logical library 'cta_adm_systest'"|| exit 1
+test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${command}" "ch" "-n 'cta_adm_systest' -d true --pl phys2 --dr 'cta-admin systest ch'"\
+  'select(.name=="cta_adm_systest" and .isDisabled==true and .physicalLibrary=="phys2" and .disabledReason=="cta-admin systest ch") | .name'\
+  "1" "changing logical library 'cta_adm_systest'"|| exit 1
+test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
+test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest2" || exit 1
+admin_cta pl rm --name phys1
+admin_cta pl rm --name phys2
+test_assert || exit 1
 
 # Media Type (mt)
 test_start "media type" "mt"
@@ -550,6 +602,7 @@ test_start "repack" "re"
 log_message "Setting tape to full"
 admin_cta ta ch -v "${vids[0]}" -f true
 sleep 3
+log_message "Adding a VO for repacking"
 log_message "Setting tape to REPACKING"
 admin_cta ta ch -v "${vids[0]}" -s REPACKING -r 'Test repack' || exit 1
 sleep 2

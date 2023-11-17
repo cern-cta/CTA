@@ -22,8 +22,7 @@
 #include <iostream>
 #include <string.h>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //-----------------------------------------------------------------------------
 // marshal
@@ -80,5 +79,4 @@ void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst)  {
   unmarshalUint32(src, srcLen, dst.lenOrStatus);
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

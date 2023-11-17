@@ -27,7 +27,7 @@
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
@@ -127,6 +127,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_raw_library_slot(dr.rawLibrarySlot ? dr.rawLibrarySlot.value() : "");
     dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
+    dr_item->set_physical_library(dr.physicalLibraryName ? dr.physicalLibraryName.value() : "");
     if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
       dr_item->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
       dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);
@@ -168,4 +169,4 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+} // namespace cta::xrd

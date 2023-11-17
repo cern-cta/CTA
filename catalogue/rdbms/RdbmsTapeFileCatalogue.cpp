@@ -37,8 +37,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsTapeFileCatalogue::RdbmsTapeFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -256,7 +255,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
           << brokenState.first;
         throw ex;
       }
-      if (mountPolicyName) {
+      if (mountPolicyName.has_value() && !mountPolicyName.value().empty()) {
           const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
           std::optional<common::dataStructures::MountPolicy> mountPolicy = mountPolicyCatalogue->getMountPolicy(conn, mountPolicyName.value());
           if (mountPolicy) {
@@ -339,5 +338,4 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

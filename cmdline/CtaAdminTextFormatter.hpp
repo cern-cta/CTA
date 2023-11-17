@@ -19,8 +19,7 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 // Time after which a drive will be marked as STALE
 // By default it's the default global lock timeout (15 mins) + 5 extra mins
@@ -42,9 +41,7 @@ public:
     m_lastColumnFlushLeft = false;
   }
 
-  ~TextFormatter() {
-    flush();
-  }
+  ~TextFormatter();
 
   // Output headers
   void printActivityMountRuleLsHeader();
@@ -74,7 +71,8 @@ public:
   void printVersionHeader();
   void printMediaTypeLsHeader();
   void printRecycleTapeFileLsHeader();
-   
+  void printPhysicalLibraryLsHeader();
+
   // Output records
   void print(const ActivityMountRuleLsItem &amrls_item);
   void print(const AdminLsItem &adls_item);
@@ -103,6 +101,7 @@ public:
   void print(const VersionItem & version_item);
   void print(const MediaTypeLsItem &mtls_item);
   void print(const RecycleTapeFileLsItem & rtfls_item);
+  void print(const PhysicalLibraryLsItem &plls_item);
 
   // Modify drive timeout
   void setDriveTimeout(unsigned int driveTimeoutSec);
@@ -176,4 +175,4 @@ private:
   unsigned int m_driveTimeoutSec = DRIVE_TIMEOUT_S_DEFAULT;         //!< Time after which a drive will be marked as STALE
 };
 
-}}
+} // namespace cta::admin

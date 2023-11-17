@@ -25,9 +25,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all the command line parameters of a CTA 
@@ -50,6 +48,4 @@ struct UpdateFileStorageClassRequest {
 
 std::ostream &operator<<(std::ostream &os, const UpdateFileStorageClassRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

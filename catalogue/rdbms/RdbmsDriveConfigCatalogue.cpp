@@ -32,8 +32,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsDriveConfigCatalogue::RdbmsDriveConfigCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
   : m_log(log), m_connPool(connPool) {
@@ -243,5 +242,4 @@ void RdbmsDriveConfigCatalogue::deleteTapeDriveConfig(const std::string &tapeDri
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

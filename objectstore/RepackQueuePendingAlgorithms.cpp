@@ -17,7 +17,7 @@
 
 #include "RepackQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 template<>
 const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_containerTypeName = "RepackQueuePending";
@@ -34,4 +34,4 @@ auto ContainerTraits<RepackQueue,RepackQueuePending>::getContainerSummary(Contai
 }
 
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

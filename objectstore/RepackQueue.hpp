@@ -25,7 +25,7 @@
 #include "objectstore/cta.pb.h"
 #include "RetrieveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class GenericObject;
 
@@ -42,7 +42,7 @@ class RepackQueue: public ObjectOps<serializers::RepackQueue, serializers::Repac
   explicit RepackQueue(GenericObject & go);
 
   // In memory initialiser
-  void initialize();
+  void initialize() override;
 
   struct RequestsSummary {
     uint64_t requests;
@@ -85,5 +85,4 @@ class RepackQueueToExpand: public RepackQueue {
   using RepackQueue::RepackQueue;
 };
 
-}  // namespace objectstore
-}  // namespace cta
+} // namespace cta::objectstore

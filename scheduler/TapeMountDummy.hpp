@@ -63,6 +63,10 @@ class TapeMountDummy: public TapeMount {
     throw exception::Exception("In DummyTapeMount::getCapacityInBytes() : not implemented");
   }
 
+  std::optional<std::string> getEncryptionKeyName() const override{
+    throw exception::Exception("In DummyTapeMount::getEncryptionKeyName() : not implemented");
+  }
+
   void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) override {}
 
   cta::common::dataStructures::Label::Format getLabelFormat() const override {

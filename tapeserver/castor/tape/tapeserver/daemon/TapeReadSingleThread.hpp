@@ -32,12 +32,8 @@
 #include "common/threading/Thread.hpp"
 #include "common/Timer.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
-//forward declaration
 class TapeSessionReporter;
 
 class RecallTaskInjector;
@@ -65,7 +61,8 @@ public:
                        const bool useEncryption,
                        const std::string& externalEncryptionKeyScript,
                        const cta::RetrieveMount& retrieveMount,
-                       const uint32_t tapeLoadTimeout);
+                       const uint32_t tapeLoadTimeout,
+                       cta::catalogue::Catalogue& catalogue);
 
   /**
    * Sets up the pointer to the task injector. This cannot be done at
@@ -153,6 +150,11 @@ private:
    */
   const cta::RetrieveMount& m_retrieveMount;
 
+  /**
+   * Reference to the catalogue. It is only used in EncryptionControl to modify tape information
+   */
+  cta::catalogue::Catalogue& m_catalogue;
+
   /// Helper virtual function to access the watchdog from parent class
   void countTapeLogError(const std::string& error) override {
     m_watchdog.addToErrorCount(error);
@@ -165,7 +167,4 @@ protected:
   void logSCSIMetrics() override;
 }; // class TapeReadSingleThread
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

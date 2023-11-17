@@ -22,9 +22,7 @@
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/sql/Mounts.hpp"
 
-namespace cta {
-
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_PostgresSchedDB(pdb),
@@ -36,21 +34,13 @@ TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPo
 {
 }
 
-std::unique_ptr<SchedulerDatabase::ArchiveMount>
-  TapeMountDecisionInfo::createArchiveMount
-(
-      common::dataStructures::MountType          mountType,
-      const catalogue::TapeForWriting           &tape,
-      const std::string                         &driveName,
-      const std::string                         &logicalLibrary,
-      const std::string                         &hostName,
-      const std::string                         &vo,
-      const std::string                         &mediaType,
-      const std::string                         &vendor,
-      const uint64_t                             capacityInBytes,
-      const std::optional<std::string>          &activity,
-      cta::common::dataStructures::Label::Format labelFormat
-)
+std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createArchiveMount(
+    const cta::SchedulerDatabase::PotentialMount &mount,
+    const catalogue::TapeForWriting              &tape,
+    const std::string                            &driveName,
+    const std::string                            &logicalLibrary,
+    const std::string                            &hostName
+  )
 {
 
   // To create the mount, we need to:
@@ -59,7 +49,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 
   common::dataStructures::JobQueueType queueType;
 
-  switch(mountType) {
+  switch(mount.type) {
     case common::dataStructures::MountType::ArchiveForUser:
       queueType = common::dataStructures::JobQueueType::JobsToTransferForUser;
       break;
@@ -94,18 +84,19 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
-  am.mountInfo.vid             = tape.vid;
+  am.mountInfo.mountType       = mount.type;
   am.mountInfo.drive           = driveName;
   am.mountInfo.host            = hostName;
-  am.mountInfo.vo              = vo;
-  am.mountInfo.mediaType       = mediaType;
-  am.mountInfo.labelFormat     = labelFormat;
-  am.mountInfo.vendor          = vendor;
   am.mountInfo.mountId         = newMount.mountId;
-  am.mountInfo.capacityInBytes = capacityInBytes;
-  am.mountInfo.mountType       = mountType;
   am.mountInfo.tapePool        = tape.tapePool;
   am.mountInfo.logicalLibrary  = logicalLibrary;
+  am.mountInfo.vid             = tape.vid;
+  am.mountInfo.vo              = tape.vo;
+  am.mountInfo.mediaType       = tape.mediaType;
+  am.mountInfo.labelFormat     = tape.labelFormat;
+  am.mountInfo.vendor          = tape.vendor;
+  am.mountInfo.capacityInBytes = tape.capacityInBytes;
+  am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // todo : check
   commit();
@@ -115,24 +106,15 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   return ret;
 }
 
-std::unique_ptr<SchedulerDatabase::RetrieveMount>
-  TapeMountDecisionInfo::createRetrieveMount
-(
-      const std::string                         &vid,
-      const std::string                         &tapePool,
-      const std::string                         &driveName,
-      const std::string                         &logicalLibrary,
-      const std::string                         &hostName,
-      const std::string                         &vo,
-      const std::string                         &mediaType,
-      const std::string                         &vendor,
-      const uint64_t                             capacityInBytes,
-      const std::optional<std::string>          &activity,
-      cta::common::dataStructures::Label::Format labelFormat
-)
+std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createRetrieveMount(
+    const cta::SchedulerDatabase::PotentialMount& mount,
+    const std::string& driveName,
+    const std::string& logicalLibrary,
+    const std::string& hostName
+  )
 {
   std::unique_ptr<postgresscheddb::RetrieveMount> privateRet(
-    new postgresscheddb::RetrieveMount(m_ownerId, m_txn, vid)
+    new postgresscheddb::RetrieveMount(m_ownerId, m_txn, mount.vid)
   );
 
   auto &rm = *privateRet;
@@ -153,18 +135,19 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   cta::postgresscheddb::sql::MountsRow newMount(newmount);
 
   // Fill up the mount info
-  rm.mountInfo.vid             = vid;
-  rm.mountInfo.drive           = driveName;
-  rm.mountInfo.host            = hostName;
-  rm.mountInfo.vo              = vo;
-  rm.mountInfo.mountId         = newMount.mountId;
-  rm.mountInfo.tapePool        = tapePool;
-  rm.mountInfo.logicalLibrary  = logicalLibrary;
-  rm.mountInfo.mediaType       = mediaType;
-  rm.mountInfo.labelFormat     = labelFormat;
-  rm.mountInfo.vendor          = vendor;
-  rm.mountInfo.capacityInBytes = capacityInBytes;
-  rm.mountInfo.activity        = activity;
+  rm.mountInfo.vid               = mount.vid;
+  rm.mountInfo.vo                = mount.vo;
+  rm.mountInfo.mediaType         = mount.mediaType;
+  rm.mountInfo.labelFormat       = mount.labelFormat.value_or(cta::common::dataStructures::Label::Format::CTA);;
+  rm.mountInfo.vendor            = mount.vendor;
+  rm.mountInfo.capacityInBytes   = mount.capacityInBytes;
+  rm.mountInfo.activity          = mount.activity;
+  rm.mountInfo.tapePool          = mount.tapePool;
+  rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
+  rm.mountInfo.mountId           = newMount.mountId;
+  rm.mountInfo.drive             = driveName;
+  rm.mountInfo.logicalLibrary    = logicalLibrary;
+  rm.mountInfo.host              = hostName;
 
   // todo: check
   commit();
@@ -184,5 +167,4 @@ void TapeMountDecisionInfo::commit() {
   m_lockTaken = false;
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

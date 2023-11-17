@@ -20,9 +20,7 @@
 
 #include <sstream>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -93,6 +91,4 @@ uint32_t ParamNameToIdx::getIdx(const std::string &paramName) const {
   return itor->second;
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

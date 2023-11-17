@@ -28,8 +28,7 @@
 #include "catalogue/interfaces/DriveStateCatalogue.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyDriveStateCatalogue : public DriveStateCatalogue {
 public:
@@ -70,5 +69,4 @@ private:
   common::dataStructures::TapeDrive m_tapeDriveStatus;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

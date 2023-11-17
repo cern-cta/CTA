@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace castor {
-namespace messages {
+namespace castor::messages {
 
 enum ProtocolType {
   PROTOCOL_TYPE_NONE,
@@ -74,5 +73,4 @@ enum ProtocolVersion {
  */
 const char *msgTypeToString(const MsgType msgType) throw();
 
-} // namespace messages
-} // namespace castor
+} // namespace castor::messages

@@ -29,9 +29,7 @@
 #include <map>
 #include <list>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
+namespace castor::tape::tapeserver {
 
 drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
@@ -858,19 +856,19 @@ SCSI::Structures::RAO::udsLimits drive::DriveGeneric::getLimitUDS() {
     return lims;
 }
 
-void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                                      int maxSupported) {
+void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) {
     SCSI::Structures::LinuxSGIO_t sgh;
     SCSI::Structures::RAO::generateRAO_t cdb;
     SCSI::Structures::senseData_t<127> senseBuff;
 
-    int udSize = std::min((int) files.size(), maxSupported);
-
-    std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]>  ud (new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
+    int udSize = std::min(static_cast<int>(files.size()), maxSupported);
+    std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]> ud(new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
 
     auto it = files.begin();
     for (int i = 0; i < udSize; ++i) {
-      strncpy((char*)ud.get()[i].udsName, (char*)it->fseq, 10);
+      // udsName and fseq are both 10 characters including terminating NULL
+      strncpy(reinterpret_cast<char*>(ud.get()[i].udsName), reinterpret_cast<char*>(it->fseq),
+        sizeof(SCSI::Structures::RAO::udsDescriptor_t::udsName));
       SCSI::Structures::setU64(ud.get()[i].beginLogicalObjID, it->begin);
       SCSI::Structures::setU64(ud.get()[i].endLogicalObjID, it->end);
       ++it;
@@ -932,21 +930,19 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
 
     files.clear();
     uint32_t desc_list_len = SCSI::Structures::toU32(params->raoDescriptorListLength);
-    int files_no = desc_list_len / sizeof(SCSI::Structures::RAO::udsDescriptor_t);
-    SCSI::Structures::RAO::udsDescriptor_t *ud = params->udsDescriptors;
-    while (files_no > 0) {
-        SCSI::Structures::RAO::blockLims bl;
-        strcpy(reinterpret_cast<char*>(bl.fseq), reinterpret_cast<char const*>(ud->udsName));
-        bl.begin = SCSI::Structures::toU64(ud->beginLogicalObjID);
-        bl.end = SCSI::Structures::toU64(ud->endLogicalObjID);
-        files.emplace_back(bl);
-        ud++;
-        files_no--;
+    const int file_cnt = desc_list_len/sizeof(SCSI::Structures::RAO::udsDescriptor_t);
+    const SCSI::Structures::RAO::udsDescriptor_t *ud = params->udsDescriptors;
+    for(int f = 0; f < file_cnt; ++f, ++ud) {
+      SCSI::Structures::RAO::blockLims bl;
+      // udsName and fseq are both 10 characters including terminating NULL
+      strncpy(reinterpret_cast<char*>(bl.fseq), reinterpret_cast<char const*>(ud->udsName), sizeof(bl.fseq));
+      bl.begin = SCSI::Structures::toU64(ud->beginLogicalObjID);
+      bl.end = SCSI::Structures::toU64(ud->endLogicalObjID);
+      files.emplace_back(bl);
     }
 }
 
-void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                                   int maxSupported) {
+void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported) {
     generateRAO(files, maxSupported);
     receiveRAO(files);
 }
@@ -1245,7 +1241,6 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
           throw cta::exception::Exception(
               "In DriveGeneric::readBlock: Failed checksum verification");
         }
-        break;
       }
     case lbpToUse::disabled:
       {
@@ -2075,6 +2070,81 @@ std::map<std::string,uint32_t> drive::DriveT10000::getVolumeStats() {
   return volumeStats;
 }
 
+std::map<std::string,uint32_t> drive::DriveLTO::getVolumeStats() {
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  std::map<std::string,uint32_t> volumeStats;
+  unsigned char dataBuff[1024]; //big enough to fit all the results
+
+  memset(dataBuff, 0, sizeof (dataBuff));
+
+  cdb.pageCode = SCSI::logSensePages::volumeStatistics;
+  cdb.subPageCode = 0x00; // 0x01 // for IBM latest revision drives
+  cdb.PC = 0x01; // Current Cumulative Values
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&dataBuff);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveLTO::getVolumeStats");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getVolumeStats");
+
+  SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
+    *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+  const unsigned char *endPage = dataBuff +
+                                 SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+  unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+  while (logParameter < endPage) {
+    SCSI::Structures::logSenseParameter_t & logPageParam =
+      *(SCSI::Structures::logSenseParameter_t *) logParameter;
+    switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+      case SCSI::volumeStatisticsPage::validityFlag:
+        volumeStats["validity"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeMounts:
+        volumeStats["lifetimeVolumeMounts"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeRecoveredWriteDataErrors:
+        volumeStats["lifetimeVolumeRecoveredWriteErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeUnrecoveredWriteDataErrors:
+        volumeStats["lifetimeVolumeUnrecoveredWriteErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeRecoveredReadErrors:
+        volumeStats["lifetimeVolumeRecoveredReadErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeUnrecoveredReadErrors:
+        volumeStats["lifetimeVolumeUnrecoveredReadErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeManufacturingDate:
+        char volumeManufacturingDate[9];
+        for (int i = 0; i < 8; ++i) {
+          volumeManufacturingDate[i] = logPageParam.parameterValue[i];
+        }
+        volumeManufacturingDate[8] = '\0';
+        volumeStats["volumeManufacturingDate"] = std::atoi(volumeManufacturingDate);
+        break;
+      case SCSI::volumeStatisticsPage::BOTPasses:
+        volumeStats["lifetimeBOTPasses"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::MOTPasses:
+        volumeStats["lifetimeMOTPasses"] = logPageParam.getU64Value();
+        break;
+    }
+    logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+  }
+  return volumeStats;
+}
+
 std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
@@ -2244,6 +2314,58 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
 
       cdb.pageCode = SCSI::logSensePages::performanceCharacteristics;
       cdb.subPageCode = 0x51;
+      cdb.PC = 0x01;  // Current Cumulative Values
+      SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+      /* Manage both system error and SCSI errors. */
+      cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+                                              "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_hostCommandsBlock");
+      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
+
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+
+      const unsigned char* endPage =
+        dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+      unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
+
+      while (logParameter < endPage) {
+        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+          case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
+            qualityStats["mountReadEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
+            break;
+          case SCSI::performanceCharacteristicsHostCommandsPage::writePerformanceEfficiency:
+            qualityStats["mountWriteEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
+            break;
+        }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+      }
+    }
+  }
+  return qualityStats;
+}
+
+std::map<std::string, float> drive::DriveLTO::getQualityStats() {
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  std::map<std::string, float> qualityStats;
+  unsigned char dataBuff[1024];  //big enough to fit all the results
+
+  // Obtain data from QualitySummarySubpage
+  {
+    // Lifetime values
+    {
+      memset(dataBuff, 0, sizeof(dataBuff));
+
+      cdb.pageCode = SCSI::logSensePages::performanceCharacteristics;
+      cdb.subPageCode = 0x80;
       cdb.PC = 0x01; // Current Cumulative Values
       SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
 
@@ -2255,14 +2377,168 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
       /* Manage both system error and SCSI errors. */
       cta::exception::Errnum::throwOnMinusOne(
         m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
-        "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_hostCommandsBlock");
-      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
+        "Failed SG_IO ioctl in DriveLTO::getQualityStats_qualitySummaryBlock");
+      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
 
       SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
         *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
       const unsigned char *endPage = dataBuff +
-        SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+                                     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+      unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+      while (logParameter < endPage) {
+        SCSI::Structures::logSenseParameter_t &logPageParam =
+          *(SCSI::Structures::logSenseParameter_t *) logParameter;
+        const int val = logPageParam.getU64Value();
+        if (val != 0)
+            switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+            case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
+              qualityStats["lifetimeDriveEfficiencyPrct"] = 100-(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::mediaEfficiency:
+              qualityStats["lifetimeMediumEfficiencyPrct"] = 100-(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::primaryInterfaceEfficiency0:
+              qualityStats["lifetimeInterfaceEfficiency0Prct"] = 100-(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::primaryInterfaceEfficiency1:
+              qualityStats["lifetimeInterfaceEfficiency1Prct"] = 100-(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::libraryInterfaceEfficiency:
+              qualityStats["lifetimeLibraryEfficiencyPrct"] = 100-(val-1)*100/254.0;
+              break;
+          }
+          logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+      }
+    }
+
+    // Mount values
+    {
+      memset(dataBuff, 0, sizeof(dataBuff));
+
+      cdb.pageCode = SCSI::logSensePages::performanceCharacteristics;
+      cdb.subPageCode = 0x40;
+      cdb.PC = 0x01; // Current Cumulative Values
+      SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+      /* Manage both system error and SCSI errors. */
+      cta::exception::Errnum::throwOnMinusOne(
+        m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+        "Failed SG_IO ioctl in DriveLTO::getQualityStats_qualitySummaryBlock");
+      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
+
+      SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
+        *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+      const unsigned char *endPage = dataBuff +
+                                     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+      unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+      while (logParameter < endPage) {
+        SCSI::Structures::logSenseParameter_t &logPageParam =
+          *(SCSI::Structures::logSenseParameter_t *) logParameter;
+        const int val = logPageParam.getU64Value();
+        if (val != 0)
+          switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+            case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
+              qualityStats["mountDriveEfficiencyPrct"] = 100-(float)(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::mediaEfficiency:
+              qualityStats["mountMediumEfficiencyPrct"] = 100-(float)(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::primaryInterfaceEfficiency0:
+              qualityStats["mountInterfaceEfficiency0Prct"] = 100-(float)(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::primaryInterfaceEfficiency1:
+              qualityStats["mountInterfaceEfficiency1Prct"] = 100-(float)(val-1)*100/254.0;
+              break;
+            case SCSI::performanceCharacteristicsQualitySummaryPage::libraryInterfaceEfficiency:
+              qualityStats["mountLibraryEfficiencyPrct"] = 100-(float)(val-1)*100/254.0;
+              break;
+          }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+      }
+    }
+  }
+
+  // Obtain data from HostCommandsSubpage
+  {
+    // lifetime values
+    {
+      memset(dataBuff, 0, sizeof(dataBuff));
+
+      cdb.pageCode = SCSI::logSensePages::performanceCharacteristics;
+      cdb.subPageCode = 0x91;
+      cdb.PC = 0x01; // Current Cumulative Values
+      SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+      /* Manage both system error and SCSI errors. */
+      cta::exception::Errnum::throwOnMinusOne(
+        m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+        "Failed SG_IO ioctl in DriveLTO::getQualityStats_hostCommandsBlock");
+      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
+
+      SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
+        *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+      const unsigned char *endPage = dataBuff +
+                                     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+      unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+      while (logParameter < endPage) {
+        SCSI::Structures::logSenseParameter_t &logPageParam =
+          *(SCSI::Structures::logSenseParameter_t *) logParameter;
+        switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+          case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
+            qualityStats["lifetimeReadEfficiencyPrct"] = (float)logPageParam.getU64Value()/65536;
+            break;
+          case SCSI::performanceCharacteristicsHostCommandsPage::writePerformanceEfficiency:
+            qualityStats["lifetimeWriteEfficiencyPrct"] = (float)logPageParam.getU64Value()/65536;
+            break;
+        }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+      }
+    }
+
+    // mount values
+    {
+      memset(dataBuff, 0, sizeof(dataBuff));
+
+      cdb.pageCode = SCSI::logSensePages::performanceCharacteristics;
+      cdb.subPageCode = 0x51;
+      cdb.PC = 0x01; // Current Cumulative Values
+      SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+      /* Manage both system error and SCSI errors. */
+      cta::exception::Errnum::throwOnMinusOne(
+        m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+        "Failed SG_IO ioctl in DriveLTO::getQualityStats_hostCommandsBlock");
+      SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
+
+      SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
+        *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+      const unsigned char *endPage = dataBuff +
+                                     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
@@ -2500,6 +2776,117 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getDriveStats() {
   return driveStats;
 }
 
+std::map<std::string,uint32_t> drive::DriveLTO::getDriveStats() {
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  std::map<std::string,uint32_t> driveStats;
+  unsigned char dataBuff[1024]; //big enough to fit all the results
+
+  // write errors (0x34)
+  {
+    memset(dataBuff, 0, sizeof(dataBuff));
+
+    cdb.pageCode = SCSI::logSensePages::driveWriteErrorsLTO;
+    cdb.PC = 0x01; // Current Cumulative Values
+    SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+    sgh.setCDB(&cdb);
+    sgh.setDataBuffer(&dataBuff);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    cta::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+      "Failed SG_IO ioctl in DriveLTO::getDriveStats_writeErrors");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getDriveStats");
+
+    SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
+      *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+    const unsigned char *endPage = dataBuff +
+                                   SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+    unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+    while (logParameter < endPage) {
+      SCSI::Structures::logSenseParameter_t &logPageParam =
+        *(SCSI::Structures::logSenseParameter_t *) logParameter;
+      switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+        case SCSI::driveWriteErrorsPage::dataTemps:
+          driveStats["mountTemps"] = logPageParam.getU64Value();
+          break;
+        case SCSI::driveWriteErrorsPage::servoTemps:
+          driveStats["mountServoTemps"] = logPageParam.getU64Value();
+          break;
+        case SCSI::driveWriteErrorsPage::servoTransients:
+          driveStats["mountServoTransients"] = logPageParam.getU64Value();
+          break;
+        case SCSI::driveWriteErrorsPage::dataTransients:
+          driveStats["mountWriteTransients"] = logPageParam.getU64Value();
+          break;
+        case SCSI::driveWriteErrorsPage::totalRetries:
+          driveStats["mountTotalWriteRetries"] = logPageParam.getU64Value();
+          break;
+      }
+      logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+    }
+  }
+
+  // read FW errors
+  {
+    memset(dataBuff, 0, sizeof(dataBuff));
+
+    cdb.pageCode = SCSI::logSensePages::driveReadForwardErrors;
+    cdb.PC = 0x01; // Current Cumulative Values
+    SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+    sgh.setCDB(&cdb);
+    sgh.setDataBuffer(&dataBuff);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    cta::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+      "Failed SG_IO ioctl in DriveLTO::getDriveStats_readFWErrors");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getDriveStats");
+
+    SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
+      *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+    const unsigned char *endPage = dataBuff +
+                                   SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+    unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+    while (logParameter < endPage) {
+      SCSI::Structures::logSenseParameter_t &logPageParam =
+        *(SCSI::Structures::logSenseParameter_t *) logParameter;
+      switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+        case SCSI::driveReadErrorsPage::dataTemps:
+          driveStats["mountTemps"] += logPageParam.getU64Value();
+          break;
+        case SCSI::driveReadErrorsPage::servoTemps:
+          driveStats["mountServoTemps"] += logPageParam.getU64Value();
+          break;
+        case SCSI::driveReadErrorsPage::servoTransients:
+          driveStats["mountServoTransients"] += logPageParam.getU64Value();
+          break;
+        case SCSI::driveReadErrorsPage::dataTransients:
+          driveStats["mountReadTransients"] = logPageParam.getU64Value();
+          break;
+        case SCSI::driveReadErrorsPage::totalRetries:
+          driveStats["mountTotalReadRetries"] = logPageParam.getU64Value();
+          break;
+      }
+      logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+    }
+  }
+  return driveStats;
+}
+
 std::map<std::string,uint32_t> drive::DriveT10000::getDriveStats() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
@@ -2689,4 +3076,4 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   throw ex;
 }
 
-}}}
+} // namespace castor::tape::tapeserver

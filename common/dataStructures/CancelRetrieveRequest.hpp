@@ -25,9 +25,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is the request to cancel and ongoing retrieval 
@@ -50,6 +48,4 @@ struct CancelRetrieveRequest {
 
 std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

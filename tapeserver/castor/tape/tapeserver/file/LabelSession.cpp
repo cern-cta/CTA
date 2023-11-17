@@ -20,9 +20,7 @@
 #include "castor/tape/tapeserver/file/LabelSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 void LabelSession::label(tapeserver::drive::DriveInterface *drive, const std::string &vid, const bool lbp)  {
   VOL1 vol1;
@@ -39,6 +37,4 @@ void LabelSession::label(tapeserver::drive::DriveInterface *drive, const std::st
   drive->writeSyncFileMarks(1);
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

@@ -20,8 +20,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -61,5 +60,4 @@ struct CreateSchemaCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

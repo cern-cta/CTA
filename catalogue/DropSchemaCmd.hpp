@@ -21,8 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Command-line tool that drops the schema of the catalogue database.
@@ -108,5 +107,4 @@ private:
   bool isProductionProtectionCheckable(rdbms::Conn & conn, const cta::rdbms::Login::DbType dbType);
 };  // class DropSchemaCmd
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

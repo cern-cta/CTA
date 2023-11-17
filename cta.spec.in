@@ -45,9 +45,9 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
 
-%define xrootdVersion 1:4.12.4-1
+%define xrootdVersion 1:4.12.8-1
 %if "%{ctaVersion}" == "5"
-%define xrootdVersion 1:5.4.2-1
+%define xrootdVersion 1:5.6.1-1
 %endif
 
 %define radosVersion 2:15.2.15
@@ -61,7 +61,6 @@ BuildRequires: gtest-devel >= 1.12.0
 BuildRequires: sqlite-devel >= 3.6
 BuildRequires: libcap-devel >= 2.16
 BuildRequires: binutils-devel >= 2.20
-BuildRequires: openssl-devel >= 1.0.1e
 BuildRequires: cryptopp-devel >= 5.6.2
 BuildRequires: libuuid-devel >= 2.17
 BuildRequires: json-c-devel >= 0.11
@@ -79,7 +78,7 @@ BuildRequires: systemd
 The CTA project is the CERN Tape Archive system.
 
 %prep
-%setup -q -n %{name}-%{ctaVersion}-%{ctaRelease}
+%setup -D -q -n %{name}-%{ctaVersion}-%{ctaRelease}
 
 %build
 
@@ -341,6 +340,7 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-osmReaderTest
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
 %{_libdir}/libctadbconfigstmtunittests.so*
@@ -425,6 +425,19 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-set-production.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-verify.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
+
+%if "%{usingObjectstore}" == "0"
+%package -n cta-scheduler-utils
+Summary: Utilities to faciliate working with the CTA scheduler database
+Group: Application/CTA
+Requires: postgresql-libs
+%description -n cta-scheduler-utils
+CERN Tape Archive:
+Scripts and utilities to faciliate working with the CTA scheduler database
+%files -n cta-scheduler-utils
+%attr(0755,root,root) %{_bindir}/cta-scheduler-schema-create
+%attr(0755,root,root) %{_bindir}/cta-scheduler-schema-drop
+%endif
 
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
@@ -582,6 +595,66 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Tue Nov 14 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.8-1
+- Various fixes and improvements to CTA
+- Updates EOS version in CI to 4.8.105/5.1.28
+- See ReleaseNotes.md for details
+
+* Wed Oct 18 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.7-1
+- Various fixes and improvements to CTA
+- Updates EOS version in CI to 4.8.105/5.1.29
+- See ReleaseNotes.md for details
+
+* Fri Oct 13 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.6-1
+- Remove critical constrain after update heartbeat
+
+* Mon Sep 25 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.5-1
+- Workaround for scheduler crashing
+
+* Mon Sep 18 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.4-1
+- Bump "filesWrittenToTape: File size mismatch" error to ALERT
+
+* Wed Sep 06 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.3-1
+- Fix device statistics from LTO drives
+
+* Tue Sep 05 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.2-1
+- Fix scheduler crashing because of empty tape pool name
+- See ReleaseNotes.md for details
+
+* Tue Aug 08 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.1-1
+- Various fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
+* Mon Aug 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.0-2
+- Removes any usage of the CTA catalogue version 13.0
+- The migration should be done directly from version 12.0 to 14.0
+
+* Mon Jul 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.0-1
+- Catalogue schema version 14.0
+
+* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4.9.0-1
+- Catalogue schema version 13.0 re-tagging
+- Same behaviour as 4.8.10-2
+
+* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.10-2
+- Fix schema verification failure for postgres migration to catalogue v13
+
+* Mon Jun 12 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.10-1
+- Do not fail CTA taped when using older catalogue schema versions
+
+* Wed Jun 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.9-1
+- Catalogue schema version 13.0
+
+* Wed May 31 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.8.8-2
+- Fix tagging release CI script for xrootd5
+- See ReleaseNotes.md for details
+
+* Wed May 31 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.8-1
+- Enabled HTTP and EOSTOKEN support on CTA CI
+- Change in tape server encryption logic
+- Various fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
 * Wed Mar 29 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.7-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details

@@ -19,8 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * An exception class representing an unexpected encounter with a nullptr database
@@ -41,5 +40,4 @@ public:
 
 }; // class NullDbValue
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

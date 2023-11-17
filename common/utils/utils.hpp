@@ -26,8 +26,7 @@
 
 #include "Regex.hpp"
 
-namespace cta {
-namespace utils {
+namespace cta::utils {
 
   /**
    * Returns true if the hostname is a valid IPv4 or IPv6 address.
@@ -501,6 +500,5 @@ namespace utils {
    */
   std::string decimalToHexadecimal(const std::string &decimalNumber);
 
-} // namespace utils
 
-} // namespace cta
+} // namespace cta::utils

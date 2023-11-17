@@ -22,8 +22,7 @@
 
 #include <cstddef>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
  friend class cta::PostgresSchedDB;
@@ -36,5 +35,4 @@ class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequest
       log::LogContext &lc) override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

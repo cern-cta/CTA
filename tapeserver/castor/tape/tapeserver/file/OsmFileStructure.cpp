@@ -35,9 +35,7 @@ castor::tape::tapeFile::osm::LABEL::LABEL() {
   m_ulRecSize = 0;
   m_ulVolId = 0;
 }
-/**
- *
- */
+
 void castor::tape::tapeFile::osm::LABEL::decode() {
   xdr::Record record;
   xdr::VolLabel volLabel, *pVolLabel;
@@ -63,21 +61,19 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
     throw cta::exception::Exception(std::string("XDR error getting vollabel"));
   }
 
-  xdr_destroy(&xdr);
-  // we're done with this now
+  xdr_destroy(&xdr); // we're done with this now
 
   if (volLabel.m_ulMagic != LIMITS::MVOLMAGIC) {
      throw cta::exception::Exception(std::string("magic number " + std::to_string(volLabel.m_ulMagic) + " not valid"));
   }
-
   if (volLabel.m_pcVolName == nullptr) {
      throw cta::exception::Exception(std::string("Invalid label format - no volume name"));
   }
-  if (strlen(volLabel.m_pcVolName) >= LIMITS::VOLNAMELEN) {
-     throw cta::exception::Exception(std::string("label " + std::string(volLabel.m_pcVolName) + " is too long"));
+  m_tcName[LIMITS::VOLNAMELEN] = 0;
+  strncpy(m_tcName, volLabel.m_pcVolName, LIMITS::VOLNAMELEN+1);
+  if(m_tcName[LIMITS::VOLNAMELEN] != 0) {
+    throw cta::exception::Exception(std::string("label ") + std::string(volLabel.m_pcVolName) + " is too long");
   }
-  
-  strcpy(m_tcName, volLabel.m_pcVolName);
   m_ulCreateTime = volLabel.m_ulCreateTime;
   m_ulExpireTime = volLabel.m_ulExpireTime;
   m_ulRecSize = volLabel.m_ulRecSize;
@@ -85,7 +81,6 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   
   memcpy(m_tcOwner, rawLabel() + LIMITS::MAXMRECSIZE, LIMITS::CIDLEN);
   memcpy(m_tcVersion, rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, LIMITS::LABELVERSIONLEN);
-
 }
 
 void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
@@ -117,7 +112,7 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   volLabel.m_ulVolId = ulVolId;
   // NSR_LENGTH = 64
   volLabel.m_pcVolName = new char[64];
-  strcpy(volLabel.m_pcVolName, strVolName.c_str());
+  strncpy(volLabel.m_pcVolName, strVolName.c_str(), LIMITS::VOLNAMELEN+1);
 
   if(!volLabel.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error encoding vollabel"));
@@ -154,7 +149,6 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
 
   xdr_destroy(&xdr);
 
-  strcpy(rawLabel() + LIMITS::MAXMRECSIZE, strOwner.c_str());
-  strcpy(rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, strVersion.c_str());
-
+  strncpy(rawLabel() + LIMITS::MAXMRECSIZE, strOwner.c_str(), LIMITS::CIDLEN+1);
+  strncpy(rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, strVersion.c_str(), LIMITS::LABELVERSIONLEN+1);
 }

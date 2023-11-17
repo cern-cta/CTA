@@ -1,7 +1,7 @@
 [cta-ceph]
 name=Ceph version 15.2.15 packages for $basearch
 baseurl=http://download.ceph.com/rpm-15.2.15/el$releasever/$basearch
-enabled=0
+enabled=1
 priority=4
 gpgcheck=1
 protect=1

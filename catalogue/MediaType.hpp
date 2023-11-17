@@ -21,8 +21,7 @@
 #include <optional>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure describing a tape media type.
@@ -86,5 +85,4 @@ struct MediaType {
 
 }; // struct MediaType
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

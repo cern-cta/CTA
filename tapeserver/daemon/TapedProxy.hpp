@@ -26,7 +26,7 @@
 #include <string>
 #include <list>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
@@ -38,7 +38,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~TapedProxy()  = 0;
+  virtual ~TapedProxy()  = default;
   
   /**
    * Notifies taped of a state change. Taped will validate the transition and
@@ -87,5 +87,5 @@ public:
 
 }; // class TapeserverProxy
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon
 

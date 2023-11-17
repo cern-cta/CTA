@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1991-2022 CERN
+ * @copyright    Copyright © 1991-2023 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -57,7 +57,7 @@ static char *getconfent_r(const char *filename,
       }
     }
 
-    strncpy (path_config, filename, CA_MAXPATHLEN);
+    strncpy(path_config, filename, CA_MAXPATHLEN+1);
     /* Who knows */
     path_config[CA_MAXPATHLEN] = '\0';
 
@@ -133,70 +133,3 @@ char *getconfent_fromfile(const char *filename,
     return(getconfent_r(filename,category,name,flags,value,BUFSIZ+1));
 }
 
-int getconfent_parser(char **conf_val,
-                      char ***result,
-                      int *count)
-{
-  char *p,*q,*last;
-  int i=0;
-
-  /* Counting the number of strings for the array */
-  if ((p = strdup(*conf_val)) == NULL) { return -1; }
-  for (q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) i++;
-  free(p);
-
-  /* Saving the index information to pass on later */
-  *count = i;
-
-  /* Allocating the necessary space and parsing the string */
-  if ((p = strdup(*conf_val)) == NULL) { return -1; }
-  if (result == NULL) { return -1; }
-  (*result) = (char **)calloc((i+1), sizeof(char *));
-
-  i = 0 ;
-  for (q = strtok(p," \t");q != NULL; q = strtok(NULL," \t")) { (*result)[i++] = strdup(q); }
-  free(p);
-
-  return 0;
-}
-
-int getconfent_multi_fromfile(const char *filename,
-                              const char *category,
-                              const char *name,
-                              int flags,
-                              char ***result,
-                              int *count)
-{
-  char *conf_val;
-
-  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){
-    *result = NULL;
-    *count = 0;
-    return 0;
-  }
-
-  if ( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
-
-  return 0;
-}
-
-
-
-int getconfent_multi(const char *category,
-                     const char *name,
-                     int flags,
-                     char ***result,
-                     int *count)
-{
-  char *conf_val;
-
-  if((conf_val = getconfent(category,name,flags)) == NULL) {
-    *result = NULL;
-    *count = 0;
-    return 0;
-  }
-
-  if( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
-
-  return 0;
-}

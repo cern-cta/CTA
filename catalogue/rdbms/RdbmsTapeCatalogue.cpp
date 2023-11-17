@@ -44,8 +44,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsTapeCatalogue::RdbmsTapeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -62,6 +61,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     std::string logicalLibraryName = tape.logicalLibraryName;
     std::string tapePoolName = tape.tapePoolName;
     bool full = tape.full;
+    const std::optional<std::string> purchaseOrder = tape.purchaseOrder ? tape.purchaseOrder : std::nullopt;
     // Translate an empty comment string to a NULL database value
     const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
@@ -146,6 +146,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         "IS_FROM_CASTOR, "
 
         "USER_COMMENT, "
+        "PURCHASE_ORDER, "
 
         "TAPE_STATE, "
         "STATE_REASON, "
@@ -159,6 +160,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         "LAST_UPDATE_USER_NAME, "
         "LAST_UPDATE_HOST_NAME, "
         "LAST_UPDATE_TIME) "
+
       "VALUES("
         ":VID, "
         ":MEDIA_TYPE_ID, "
@@ -171,6 +173,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         ":IS_FROM_CASTOR, "
 
         ":USER_COMMENT, "
+        ":PURCHASE_ORDER, "
 
         ":TAPE_STATE, "
         ":STATE_REASON, "
@@ -184,6 +187,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         ":LAST_UPDATE_USER_NAME, "
         ":LAST_UPDATE_HOST_NAME, "
         ":LAST_UPDATE_TIME"
+
       ")";
     auto stmt = conn.createStmt(sql);
 
@@ -198,6 +202,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
+    stmt.bindString(":PURCHASE_ORDER", purchaseOrder);
 
     std::string stateModifiedBy = RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin);
     stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
@@ -225,6 +230,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
        .add("isFull", full ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
+       .add("purchaseOrder", tape.purchaseOrder ? tape.purchaseOrder.value() : "")
        .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
        .add("stateReason",stateReason ? stateReason.value() : "")
        .add("stateUpdateTime",now)
@@ -303,6 +309,7 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
       "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -322,13 +329,16 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
       "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
       "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
+      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
     "FROM "
       "TAPE "
     "INNER JOIN TAPE_POOL ON "
       "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
     "INNER JOIN LOGICAL_LIBRARY ON "
       "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "LEFT JOIN PHYSICAL_LIBRARY ON "
+      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
     "INNER JOIN MEDIA_TYPE ON "
       "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
     "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -804,6 +814,52 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
   }
 }
 
+void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &purchaseOrder) {
+  try {
+    std::optional<std::string> optionalPurchaseOrder;
+    if(!purchaseOrder.empty()) {
+      optionalPurchaseOrder = purchaseOrder;
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "PURCHASE_ORDER = :PURCHASE_ORDER,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":PURCHASE_ORDER", optionalPurchaseOrder);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("optionalPurchaseOrder", optionalPurchaseOrder ? optionalPurchaseOrder.value() : "NULL")
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - optionalPurchaseOrder");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &verificationStatus) {
   try {
@@ -1061,7 +1117,8 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
         "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-        "TAPE.LABEL_FORMAT AS LABEL_FORMAT "
+        "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME "
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
@@ -1098,6 +1155,7 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
         "[RdbmsCatalogue::getTapesForWriting()]");
+      tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
 
       tapes.push_back(tape);
     }
@@ -1333,8 +1391,12 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     throw exception::UserError("Tape pool cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo))
     throw exception::UserError("Virtual organisation cannot be an empty string");
+  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder))
+    throw exception::UserError("Purchase order cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds))
     throw exception::UserError("Disk file ID list cannot be empty");
+  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName))
+    throw exception::UserError("Physical library name cannot be empty");
 
   try {
     if(searchCriteria.tapePool && !RdbmsCatalogueUtils::tapePoolExists(conn, searchCriteria.tapePool.value())) {
@@ -1360,6 +1422,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.DIRTY AS DIRTY,"
+        "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
@@ -1399,6 +1463,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "LEFT JOIN PHYSICAL_LIBRARY ON "
+        "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "INNER JOIN MEDIA_TYPE ON "
         "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -1414,7 +1480,9 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
        searchCriteria.full ||
        searchCriteria.diskFileIds ||
        searchCriteria.state ||
-       searchCriteria.fromCastor) {
+       searchCriteria.fromCastor ||
+       searchCriteria.purchaseOrder ||
+       searchCriteria.physicalLibraryName) {
       sql += " WHERE";
     }
 
@@ -1483,6 +1551,16 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.purchaseOrder) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.PURCHASE_ORDER = :PURCHASE_ORDER";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.physicalLibraryName) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+      addedAWhereConstraint = true;
+    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -1497,6 +1575,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.fromCastor) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
+    if(searchCriteria.purchaseOrder) stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
+    if(searchCriteria.physicalLibraryName) stmt.bindString(":PHYSICAL_LIBRARY_NAME", searchCriteria.physicalLibraryName.value());
     try{
       if(searchCriteria.state)
         stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
@@ -1531,6 +1611,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
         tape.vo = rset.columnString("VO");
         tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+        tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
+        tape.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
         tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
         tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
         tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
@@ -1730,6 +1812,8 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
+      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
       "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
 
@@ -1765,6 +1849,8 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
     "INNER JOIN LOGICAL_LIBRARY ON "
       "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "LEFT JOIN PHYSICAL_LIBRARY ON "
+      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
     "INNER JOIN MEDIA_TYPE ON "
       "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
     "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -1794,6 +1880,8 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
     tape.vo = rset.columnString("VO");
     tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+    tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
+    tape.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
     tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
@@ -1858,5 +1946,4 @@ std::map<std::string, std::string> &vidToLogicalLibrary) const {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

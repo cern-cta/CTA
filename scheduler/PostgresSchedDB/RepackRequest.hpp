@@ -27,8 +27,7 @@
 #include <list>
 #include <cstdint>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RepackRequest : public SchedulerDatabase::RepackRequest {
  friend class cta::PostgresSchedDB;
@@ -100,5 +99,4 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
   log::LogContext      &m_lc;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

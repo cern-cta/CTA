@@ -25,9 +25,7 @@
 #include <stdint.h>
 #include <sqlite3.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 class SqliteConn;
 class SqliteRset;
@@ -189,6 +187,4 @@ private:
 
 }; // class SqlLiteStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

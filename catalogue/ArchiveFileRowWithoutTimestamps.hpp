@@ -22,8 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A row in the ArchiveFile table without the timestamp columns, namely
@@ -101,5 +100,4 @@ struct ArchiveFileRowWithoutTimestamps {
  */
 std::ostream &operator<<(std::ostream &os, const ArchiveFileRowWithoutTimestamps &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

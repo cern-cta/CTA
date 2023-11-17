@@ -24,12 +24,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct DiskInstance;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -52,5 +50,4 @@ public:
   virtual std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

@@ -23,8 +23,7 @@
 #include <string>
 #include <unistd.h>
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -96,5 +95,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace admin
-} // namespace cta
+} // namespace cta::cliTool

@@ -22,8 +22,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -140,5 +139,4 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

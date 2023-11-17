@@ -20,8 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 const SchedulerDatabase::ArchiveMount::MountInfo &ArchiveMount::getMountInfo()
 {
@@ -95,5 +94,4 @@ void ArchiveMount::setJobBatchTransferred(
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

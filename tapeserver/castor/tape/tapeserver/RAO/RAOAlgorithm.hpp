@@ -22,8 +22,8 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "common/log/TimingList.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 /**
  * Abstract class that represents an RAO algorithm
  */
@@ -55,4 +55,4 @@ public:
   virtual std::string getName() const = 0;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

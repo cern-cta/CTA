@@ -19,11 +19,8 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
- 
+namespace castor::tape::tapeserver::daemon {
+
   /**
    * Used to signal an error has happened during the migration process 
    */
@@ -33,4 +30,4 @@ namespace daemon {
     virtual ~ErrorFlag() throw() {}
   };
 
-}}}}
+} // namespace castor::tape::tapeserver::daemon

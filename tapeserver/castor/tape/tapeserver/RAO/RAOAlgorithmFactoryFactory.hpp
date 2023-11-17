@@ -20,7 +20,7 @@
 #include "common/log/LogContext.hpp"
 #include "RAOManager.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * Factory of RAOAlgorithmFactory
@@ -49,4 +49,4 @@ private:
   cta::log::LogContext & m_lc;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

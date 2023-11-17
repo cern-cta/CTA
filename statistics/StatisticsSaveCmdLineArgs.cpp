@@ -22,8 +22,7 @@
 #include "StatisticsSaveCmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -110,5 +109,4 @@ void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
     "        Prints this usage message" << std::endl;
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

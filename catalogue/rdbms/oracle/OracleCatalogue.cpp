@@ -27,10 +27,10 @@
 #include "catalogue/rdbms/oracle/OracleTapeFileCatalogue.hpp"
 #include "catalogue/rdbms/oracle/OracleTapePoolCatalogue.hpp"
 #include "catalogue/rdbms/oracle/OracleVirtualOrganizationCatalogue.hpp"
+#include "catalogue/rdbms/oracle/OraclePhysicalLibraryCatalogue.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 OracleCatalogue::OracleCatalogue(
   log::Logger &log,
@@ -50,6 +50,7 @@ OracleCatalogue::OracleCatalogue(
   RdbmsCatalogue::m_tapePool = std::make_unique<OracleTapePoolCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_mediaType = std::make_unique<OracleMediaTypeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_logicalLibrary = std::make_unique<OracleLogicalLibraryCatalogue>(m_log, m_connPool, this);
+  RdbmsCatalogue::m_physicalLibrary = std::make_unique<OraclePhysicalLibraryCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tape = std::make_unique<OracleTapeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_archiveFile = std::make_unique<OracleArchiveFileCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tapeFile = std::make_unique<OracleTapeFileCatalogue>(m_log, m_connPool, this);
@@ -81,5 +82,4 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

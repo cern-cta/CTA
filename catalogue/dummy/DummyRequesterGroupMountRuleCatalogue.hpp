@@ -19,8 +19,7 @@
 
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyRequesterGroupMountRuleCatalogue : public RequesterGroupMountRuleCatalogue {
 public:
@@ -44,5 +43,4 @@ public:
     const std::string &requesterGroupName) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

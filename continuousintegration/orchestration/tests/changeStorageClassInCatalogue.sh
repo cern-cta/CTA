@@ -35,20 +35,9 @@ FILE_2=`uuidgen`
 echo
 echo "Creating files: ${FILE_1} ${FILE_2}"
 
-FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.podIP | tr -d '"')
-
-
 ############## CREAT TEMPORARY DIRECTORY ##############
 TMP_DIR=$(mktemp -d)
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
-
-############## ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS ##############
-kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
-kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
-touch ${TMP_DIR}/init_kerb.sh
-echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
-kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctacli -- bash -c "mkdir -p ${TMP_DIR}"
 
 ############## ADD STORAGE CLASS WITH TWO COPIES ##############
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin sc add --name ${NEW_STORAGE_CLASS_NAME} --numberofcopies 2 --virtualorganisation vo --comment "comment"
@@ -56,9 +45,9 @@ kubectl -n ${NAMESPACE} exec ctacli -- cta-admin sc ls
 
 ############## COPY REQUIRED FILES TO FRONTEND POD ##############
 echo "kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
-echo "kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf"
+echo "kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf"
 kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
-kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
+kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf
 
 ############## ARCHIVE FILES ##############
 kubectl -n ${NAMESPACE} exec client -- bash -c "mkdir -p ${TMP_DIR}"
@@ -89,8 +78,8 @@ echo '{"archiveFileId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "insta
 echo '{"archiveFileId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOSINSTANCE}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
 
 ############## RUN TOOL ##############
-kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:${IDS_FILEPATH}
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-change-storage-class-in-catalogue --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH} -t 1"
+kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctacli:${IDS_FILEPATH}
+kubectl -n ${NAMESPACE} exec ctacli -- bash -c "cta-change-storage-class-in-catalogue --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH} -t 1"
 
 ############## CHECK THAT VALUES WERE CHANGED IN THE CATALOGUE ##############
 CATALOGUE_METADATA_PATH_AFTER_CHANGE_1=$(mktemp -d).json

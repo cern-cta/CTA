@@ -17,8 +17,7 @@
 
 #include "NullDbValue.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,5 +26,4 @@ NullDbValue::NullDbValue(const std::string &context, const bool embedBacktrace):
   Exception(context, embedBacktrace) {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

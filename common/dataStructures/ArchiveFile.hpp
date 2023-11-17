@@ -25,9 +25,7 @@
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds all the CTA file metadata 
@@ -77,6 +75,4 @@ struct ArchiveFile {
 
 std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

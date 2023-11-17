@@ -22,10 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * The contents of the cta.conf file to be used by a DataTransferSession.
@@ -88,12 +85,6 @@ struct DataTransferConfig {
    * The number of disk I/O threads.
    */
   uint32_t nbDiskThreads;
-
-  /**
-   * The location of the file containing the private RSA key to be used when
-   * using XROOT as the remote transfer protocol.
-   */
-  std::string xrootPrivateKey;
 
   /**
    * The timeout for all the xroot functions. The default is 0 (no timeout)
@@ -165,7 +156,4 @@ struct DataTransferConfig {
 
 }; // DataTransferConfig
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::tapeserver::daemon

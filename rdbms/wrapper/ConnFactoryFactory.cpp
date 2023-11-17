@@ -27,9 +27,7 @@
   #include "rdbms/wrapper/OcciConnFactory.hpp"
 #endif
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // create
@@ -63,6 +61,4 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   }
 }
 
-}  // namespace wrapper
-}  // namespace rdbms
-}  // namespace cta
+} // namespace cta::rdbms::wrapper

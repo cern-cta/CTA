@@ -19,10 +19,7 @@
 
 #include <grpcpp/security/credentials.h>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace client {
+namespace cta::frontend::grpc::client {
 
 class KerberosAuthenticator : public ::grpc::MetadataCredentialsPlugin {
   
@@ -44,7 +41,4 @@ private:
   
 };
   
-} // namespace client
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::client

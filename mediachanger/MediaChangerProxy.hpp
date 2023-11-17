@@ -22,8 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Abstract class defining the interface to a proxy object representing a
@@ -69,6 +68,5 @@ public:
 
 }; // class MediaChangerProxy
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger
 

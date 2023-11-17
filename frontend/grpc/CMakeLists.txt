@@ -91,10 +91,16 @@ add_executable(cta-frontend-async-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend}
 )
 
-target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
-  ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-  ctascheduler ctacommon ctaobjectstore ctacatalogue gssapi_krb5
-)
+if(CTA_USE_PGSCHED)
+  target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
+          ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
+          ctascheduler ctacommon ctacatalogue gssapi_krb5)
+else()
+  target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
+          ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
+          ctascheduler ctacommon ctaobjectstore ctacatalogue gssapi_krb5)
+endif()
+
 
 ##
 ## cta-frontend-grpc-stream-client
@@ -111,10 +117,16 @@ add_executable(cta-admin-grpc
   ${ProtoGrpcSourcesCtaFrontend}
 )
 
-
-target_link_libraries(cta-admin-grpc
-  ${PROTOBUF3_LIBRARIES}
-  ${GRPC_GRPC++_LIBRARY}
-  ${GRPC_LIBRARY}
-  ctascheduler ctacommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5
-)
+if(CTA_USE_PGSCHED)
+  target_link_libraries(cta-admin-grpc
+          ${PROTOBUF3_LIBRARIES}
+          ${GRPC_GRPC++_LIBRARY}
+          ${GRPC_LIBRARY}
+          ctascheduler ctacommon ctacatalogue cryptopp gssapi_krb5)
+else()
+  target_link_libraries(cta-admin-grpc
+          ${PROTOBUF3_LIBRARIES}
+          ${GRPC_GRPC++_LIBRARY}
+          ${GRPC_LIBRARY}
+          ctascheduler ctacommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
+endif()

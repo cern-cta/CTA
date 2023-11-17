@@ -19,9 +19,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/OcciEnvSingleton.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // s_mutex
@@ -57,6 +55,4 @@ OcciEnvSingleton &OcciEnvSingleton::instance() {
 OcciEnvSingleton::OcciEnvSingleton() {
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

@@ -21,8 +21,7 @@
 #include "common/Constants.hpp"
 #include <stdint.h>
 
-namespace castor {
-namespace legacymsg {
+namespace castor::legacymsg {
 
 /**
  * The body of a TPLABEL message.
@@ -45,6 +44,5 @@ struct TapeLabelRqstMsgBody {
   TapeLabelRqstMsgBody() throw();
 }; // struct TapeLabelRqstMsgBody
 
-} // namespace legacymsg
-} // namespace castor
+} // namespace castor::legacymsg
 

@@ -20,8 +20,7 @@
 #include "scheduler/PostgresSchedDB/schema/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 /**
  * Command-line tool for creating the scheduler schema.
@@ -86,5 +85,4 @@ private:
 
 }; // class CreateSchemaCmd
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

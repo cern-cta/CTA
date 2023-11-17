@@ -18,6 +18,7 @@
 #pragma once
 
 #include <list>
+#include <string_view>
 
 #include "AgentReference.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -43,7 +44,7 @@ class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializer
 public:
   RetrieveRequest(const std::string & address, Backend & os);
   RetrieveRequest(GenericObject & go);
-  void initialize();
+  void initialize() override;
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   void garbageCollectRetrieveRequest(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
@@ -118,9 +119,13 @@ public:
 
   JobDump getJob(uint32_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc);
-                                                                  /**< Returns true is the request is completely failed
-                                                                   (telling wheather we should requeue or not). */
+  /**
+   * Fail the job and determine if it should be re-queued
+   *
+   * @return true     The job completely failed and should not be requeued
+   * @return false    The job should be requeued
+   */
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason, log::LogContext&);
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
     uint64_t maxRetriesWithinMount = 0;
@@ -171,7 +176,6 @@ public:
       rrri.set_file_buffer_url(fileBufferURL);
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
-      rrri.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
       rrri.set_has_user_provided_file(hasUserProvidedFile);
     }
 

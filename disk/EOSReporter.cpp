@@ -20,7 +20,7 @@
 #include "EOSReporter.hpp"
 #include "common/exception/XrootCl.hpp"
 
-namespace cta { namespace disk {
+namespace cta::disk {
 
 EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
   m_fs(hostURL), m_query(queryValue) {}
@@ -54,4 +54,4 @@ void EOSReporter::HandleResponse(XrdCl::XRootDStatus *status,
   delete response;
   delete status;
   }
-}} // namespace cta::disk
+} // namespace cta::disk

@@ -20,8 +20,7 @@
 #include <ostream>
 #include <streambuf>
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Stream buffer class used to prepend a standard preamble to debug
@@ -88,5 +87,4 @@ private:
 
 }; // class DebugBuf
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

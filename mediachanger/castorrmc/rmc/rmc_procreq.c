@@ -35,35 +35,36 @@
 #include "rmc_smcsubr2.h"
 #include "rmc_sendrep.h"
 #include <string.h>
-extern struct extended_robot_info extended_robot_info;
 
-/*	rmc_srv_export - export/eject a cartridge from the robot */
+/* set in rmc_serv.c */
+extern struct extended_robot_info g_extended_robot_info;
 
+/* rmc_srv_export - export/eject a cartridge from the robot */
 int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_export";
 
-	strncpy (func, "rmc_srv_export", 16);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "export", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -71,8 +72,8 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
 	rmc_logreq (func, logbuf);
 
-	c = smc_export (rqst_context->rpfd, extended_robot_info.smc_fd,
-          extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
+	c = smc_export (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+          g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
 	return c;
@@ -84,7 +85,6 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
-	char func[17];
 	gid_t gid;
 	int i;
 	char logbuf[CA_MAXVIDLEN+15];
@@ -98,23 +98,24 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	char template[40];
 	int type;
 	uid_t uid;
+	const char* const func = "rmc_srv_findcart";
 
-	strncpy (func, "rmc_srv_findcart", 17);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "findcart", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader fiel as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, template, 40)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, template, 40)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "template");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -135,9 +136,9 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	c = smc_find_cartridge (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, template, type, startaddr,
-	    nbelem, element_info, &extended_robot_info.robot_info);
+	c = smc_find_cartridge (g_extended_robot_info.smc_fd,
+	    g_extended_robot_info.smc_ldr, template, type, startaddr,
+	    nbelem, element_info, &g_extended_robot_info.robot_info);
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
@@ -167,23 +168,23 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 /*	rmc_srv_getgeom - get the robot geometry */
 
 int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
-	char func[16];
 	gid_t gid;
 	char logbuf[8];
 	char *rbp;
 	char repbuf[64];
 	char *sbp;
 	uid_t uid;
+	const char* const func = "rmc_srv_getgeom";
 
-	strncpy (func, "rmc_srv_getgeom", 16);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "getgeom", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
@@ -194,15 +195,15 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	rmc_logreq (func, logbuf);
 
 	sbp = repbuf;
-	marshall_STRING (sbp, extended_robot_info.robot_info.inquiry);
-	marshall_LONG (sbp, extended_robot_info.robot_info.transport_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.transport_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.slot_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.slot_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.port_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.port_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.device_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.device_count);
+	marshall_STRING (sbp, g_extended_robot_info.robot_info.inquiry);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.transport_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.transport_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.slot_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.slot_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.port_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.port_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_count);
 	rmc_sendrep (rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	rmc_logit (func, "returns %d\n", 0);
 	return 0;
@@ -212,29 +213,29 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 
 int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_import";
 
-	strncpy (func, "rmc_srv_import", 16);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "import", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -242,8 +243,8 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
 	rmc_logreq (func, logbuf);
 
-	c = smc_import (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
+	c = smc_import (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
 	return c;
@@ -254,30 +255,30 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
-	char func[16];
 	gid_t gid;
 	int invert;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_mount";
 
-	strncpy (func, "rmc_srv_mount", 16);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "mount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -287,8 +288,8 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "mount %s/%d on drive %d", vid, invert, drvord);
 	rmc_logreq (func, logbuf);
 
-	c = smc_mount (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	c = smc_mount (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  vid, invert);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
@@ -301,7 +302,6 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
-	char func[17];
 	gid_t gid;
 	int i;
 	char logbuf[21];
@@ -314,16 +314,17 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	int startaddr;
 	int type;
 	uid_t uid;
+	const char* const func = "rmc_srv_readelem";
 
-	strncpy (func, "rmc_srv_readelem", 17);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "readelem", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
@@ -351,8 +352,8 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	if ((c = smc_read_elem_status (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, type, startaddr, nbelem,
+	if ((c = smc_read_elem_status (g_extended_robot_info.smc_fd,
+	    g_extended_robot_info.smc_ldr, type, startaddr, nbelem,
 	    element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
@@ -385,29 +386,28 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
 	int force;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_unmount";
 
-	strncpy (func, "rmc_srv_unmount", 16);
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "unmount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
-				"loader");
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -417,8 +417,8 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "unmount %s %d %d", vid, drvord, force);
 	rmc_logreq (func, logbuf);
 
-	c = smc_dismount (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	c = smc_dismount (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  force == 0 ? vid : "");
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);

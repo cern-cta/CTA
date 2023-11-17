@@ -24,9 +24,7 @@
 #include <memory>
 #include <occi.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Forward declaration to avoid a circular dependency between OcciRset and
@@ -181,6 +179,4 @@ private:
 
 }; // class OcciRset
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

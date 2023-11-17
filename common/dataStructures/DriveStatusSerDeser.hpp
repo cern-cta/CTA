@@ -20,8 +20,7 @@
 #include <common/dataStructures/DriveStatus.hpp>
 #include "cta_admin.pb.h"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 common::dataStructures::DriveStatus ProtobufToDriveStatus(DriveLsItem::DriveStatus driveStatus) {
   using namespace common::dataStructures;
@@ -64,4 +63,4 @@ DriveLsItem::DriveStatus DriveStatusToProtobuf(common::dataStructures::DriveStat
   return DriveLsItem::UNKNOWN_DRIVE_STATUS;
 }
 
-}} // cta::admin
+} // namespace cta::admin

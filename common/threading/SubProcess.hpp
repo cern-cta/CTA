@@ -20,7 +20,8 @@
 #include <list>
 #include <string>
 
-namespace cta { namespace threading {
+namespace cta::threading {
+
 /**
  * A class spawning a new executable with a program path and arguments.
  * StdOut and StdErr can be recovered after execution (and calling wait()).
@@ -45,4 +46,4 @@ private:
   std::string m_stdout;
   std::string m_stderr;
 };
-}}
+} // namespace cta::threading

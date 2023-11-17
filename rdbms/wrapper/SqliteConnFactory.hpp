@@ -19,9 +19,7 @@
 
 #include "rdbms/wrapper/ConnFactory.hpp"
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A concrete factory of Conn objects.
@@ -57,6 +55,4 @@ private:
 
 }; // class SqliteConnFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

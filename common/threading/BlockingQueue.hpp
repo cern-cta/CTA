@@ -24,8 +24,7 @@
 #include "common/threading/Thread.hpp"
 #include "common/threading/Semaphores.hpp"
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /***
  * This simple class provides a thread-safe blocking queue
@@ -128,5 +127,4 @@ private:
 
 };
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

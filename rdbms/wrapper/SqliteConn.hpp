@@ -22,9 +22,7 @@
 
 #include <sqlite3.h>
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * Forward declaration to avoid a circular dependency between SqliteConn and
@@ -234,6 +232,4 @@ private:
 
 }; // class SqliteConn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

@@ -21,9 +21,7 @@
 
 #include <string>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -51,11 +49,6 @@ struct ReadtpCmdLineArgs {
   std::string m_destinationFileListURL;
 
   /**
-   * Path to the xroot private key file.
-   */
-  std::string m_xrootPrivateKeyPath;
-
-  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the
@@ -72,6 +65,4 @@ struct ReadtpCmdLineArgs {
   static void printUsage(std::ostream &os);
 }; // class ReadtpCmdLineArgs
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp

@@ -603,14 +603,14 @@ int sstrerror_r(const int n, char *const buf, const size_t buflen) {
 
   }
 
-  if ( tmpstr != NULL ) {
-    strncpy(buf,tmpstr,buflen-1);
+  if(tmpstr != NULL) {
+    strncpy(buf,tmpstr,buflen);
+    buf[buflen-1] = '\0';
   } else {
     /*
      * Unknown error message
      */
-    sprintf(buf, "%*s: %10d", (int)buflen-14,
-      sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
+    snprintf(buf, buflen, "%*s: %10d", (int)buflen-14, sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
   }
   return 0;
 }

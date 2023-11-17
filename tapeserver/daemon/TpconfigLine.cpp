@@ -19,7 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor.
@@ -74,4 +74,4 @@ TpconfigLine& TpconfigLine::operator=(const TpconfigLine& o) {
   return *this;
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

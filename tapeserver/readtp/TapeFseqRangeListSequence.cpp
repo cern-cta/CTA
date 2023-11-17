@@ -26,9 +26,7 @@
 #include <list>
 #include <errno.h>
 
-namespace cta {
-namespace tapeserver {
-namespace readtp {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -145,9 +143,7 @@ uint32_t TapeFseqRangeListSequence::totalSize()
   return m_totalSize;
 }
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+} // namespace cta::tapeserver::readtp
 
 //------------------------------------------------------------------------------
 // ostream << operator for castor::tape::tpcp::TapeFseqRangeList

@@ -22,8 +22,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger &log,
   std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
@@ -52,5 +51,4 @@ uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::stri
     throw;
   }
 }
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

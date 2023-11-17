@@ -23,9 +23,7 @@
 #include <string>
 
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This is the result of a read test operation 
@@ -51,6 +49,4 @@ struct ReadTestResult {
 
 std::ostream &operator<<(std::ostream &os, const ReadTestResult &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

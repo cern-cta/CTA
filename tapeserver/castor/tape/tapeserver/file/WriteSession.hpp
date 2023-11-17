@@ -21,13 +21,10 @@
 
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 
-namespace castor {
-namespace tape {
+namespace castor::tape {
 
-namespace tapeserver {
-namespace drive {
+namespace tapeserver::drive {
 class DriveInterface;
-}
 }
 
 namespace tapeFile {
@@ -199,6 +196,4 @@ private:
   const uint16_t MAX_UNIX_HOSTNAME_LENGTH = 256;  // 255 + 1 terminating character
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+}} // namespace castor::tape::tapeFile

@@ -22,7 +22,7 @@
 
 
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 RetrieveQueueShard::RetrieveQueueShard(Backend& os):
   ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t>(os) { }
@@ -325,4 +325,8 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
   m_payload.set_retrievejobstotalsize(totalSize);
 }
 
-}}
+void RetrieveQueueShard::initialize() {
+  throw std::runtime_error("initialize() is not supported for RetrieveQueueShard");
+}
+
+} // namespace cta::objectstore

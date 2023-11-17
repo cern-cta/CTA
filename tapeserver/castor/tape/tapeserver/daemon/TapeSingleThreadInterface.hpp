@@ -34,10 +34,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 // Forward declaration
 class TapeSessionReporter;
@@ -290,8 +287,4 @@ public:
       m_encryptionControl(useEncryption, externalEncryptionKeyScript), m_tapeLoadTimeout(tapeLoadTimeout) {}
 }; // class TapeSingleThreadInterface
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
-
+} // namespace castor::tape::tapeserver::daemon

@@ -20,8 +20,8 @@
 #include "FilePositionInfos.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 /**
  * This abstract class allows its implementations to return the position
  * of a file represented by a cta::RetrieveJob
@@ -40,4 +40,4 @@ private:
 
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

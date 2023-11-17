@@ -19,10 +19,7 @@
 
 #include <memory>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace request {
+namespace cta::frontend::grpc::request {
 
 class IHandler {
 
@@ -38,7 +35,4 @@ public:
 
 using Tag = IHandler*;
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::request

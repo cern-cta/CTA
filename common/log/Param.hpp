@@ -22,8 +22,7 @@
 #include <sstream>
 #include <string.h>
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * A name/value parameter for the CASTOR logging system.
@@ -118,5 +117,4 @@ public:
   ParamDoubleSnprintf(const std::string &name, const double value);
 }; // class ParamDoubleSnprintf
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

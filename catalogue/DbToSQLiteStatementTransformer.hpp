@@ -20,9 +20,8 @@
 #include <map>
 #include <memory>
 
-namespace cta {
-namespace catalogue {  
-  
+namespace cta::catalogue {
+
 /**
  * This class transforms a statement into a SQLite compatible one
  */
@@ -111,4 +110,4 @@ public:
   static std::unique_ptr<DbToSQLiteStatementTransformer> create(const std::string &statement);
 };
 
-}}
+} // namespace cta::catalogue

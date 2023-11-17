@@ -21,7 +21,7 @@
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/Backend.hpp"
 
-namespace cta { namespace objectstore { 
+namespace cta::objectstore {
 
 class BackendPopulator {
   
@@ -72,4 +72,4 @@ private:
   bool m_leaveNonEmptyAgentBehind = false;
 };
 
-}}
+} // namespace cta::objectstore

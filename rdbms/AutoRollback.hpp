@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * Forward declaration.
@@ -75,5 +74,4 @@ private:
 
 }; // class Login
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

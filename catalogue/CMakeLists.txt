@@ -36,7 +36,6 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 file (GLOB CATALOGUE_LIB_SRC_FILES
-  ArchiveFileBuilder.cpp
   ArchiveFileRow.cpp
   ArchiveFileRowWithoutTimestamps.cpp
   CatalogueFactory.cpp
@@ -95,11 +94,6 @@ add_custom_command(
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
-)
-
-add_custom_target(create_all_catalogue_schema_hpp ALL
-  DEPENDS
-    AllCatalogueSchema.hpp
 )
 
 add_custom_command(
@@ -204,6 +198,7 @@ install (FILES cta-catalogue.conf.example
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CREATE_SRC_FILES
+  AllCatalogueSchema.hpp
   CreateSchemaCmd.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
@@ -221,6 +216,7 @@ endif()
 add_executable(cta-catalogue-schema-create ${SCHEMA_CREATE_SRC_FILES})
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
+  AllCatalogueSchema.hpp
   SQLiteSchemaInserter.cpp
   SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp

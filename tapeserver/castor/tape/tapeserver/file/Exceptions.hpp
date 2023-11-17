@@ -21,9 +21,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class TapeFormatError: public cta::exception::Exception {
 public:
@@ -75,6 +73,4 @@ public:
   WrongBlockSize(): Exception("Trying to use a wrong block size") {}
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

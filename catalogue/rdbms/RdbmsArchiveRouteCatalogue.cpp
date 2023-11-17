@@ -30,9 +30,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
-
+namespace cta::catalogue {
 
 RdbmsArchiveRouteCatalogue::RdbmsArchiveRouteCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
   m_log(log), m_connPool(connPool) {}
@@ -406,6 +404,5 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
 }
 
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue
 

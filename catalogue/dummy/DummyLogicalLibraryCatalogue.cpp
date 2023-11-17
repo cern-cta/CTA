@@ -18,12 +18,10 @@
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
-
+namespace cta::catalogue {
 
 void DummyLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::string &comment) {
+  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
@@ -45,6 +43,11 @@ void DummyLogicalLibraryCatalogue::modifyLogicalLibraryComment(
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
+void DummyLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &physicalLibraryName) {
+  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+}
+
 void DummyLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
@@ -56,5 +59,4 @@ void DummyLogicalLibraryCatalogue::setLogicalLibraryDisabled(
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

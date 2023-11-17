@@ -28,13 +28,18 @@
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
+namespace cta::catalogue {
 
-namespace catalogue {
 class Catalogue;
 }
 
 class PostgresSchedDBWrapper: public SchedulerDatabaseDecorator {
+
+private:
+    std::unique_ptr <cta::log::Logger> m_logger;
+    cta::catalogue::Catalogue& m_catalogue;
+    PostgresSchedDB m_PostgresSchedDB;
+
 public:
   PostgresSchedDBWrapper(const std::string &ownerId,
                          std::unique_ptr<cta::log::Logger> logger,
@@ -43,18 +48,13 @@ public:
                          const uint64_t nbConns) :
       SchedulerDatabaseDecorator(m_PostgresSchedDB),
       m_logger(std::move(logger)), m_catalogue(catalogue),
-      m_PostgresSchedDB( ownerId, *logger, catalogue, login, nbConns)
+      m_PostgresSchedDB(ownerId, *logger, catalogue, login, nbConns)
    {
      // empty
    }
 
-
   ~PostgresSchedDBWrapper() throw() {}
 
-private:
-  std::unique_ptr <cta::log::Logger> m_logger;
-  cta::catalogue::Catalogue& m_catalogue;
-  PostgresSchedDB m_PostgresSchedDB;
 };
 
 /**
@@ -92,4 +92,4 @@ public:
     std::string m_URL;
 };  // class PostgresSchedDBFactory
 
-} // namespace cta
+} // namespace cta::catalogue

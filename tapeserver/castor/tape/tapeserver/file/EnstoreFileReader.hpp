@@ -23,9 +23,7 @@
 #include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class EnstoreFileReader : public FileReader {
 public:
@@ -57,6 +55,4 @@ private:
   void setBlockSize(const size_t uiBlockSize);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

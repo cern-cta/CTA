@@ -28,8 +28,7 @@
 #include "DatabaseMetadataGetter.hpp"
 #include "SchemaSqlStatementsReader.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * This class is used to compare the schema that is running against the database accessible
@@ -81,4 +80,4 @@ protected:
   bool m_compareTableConstraints;
 };
 
-}}
+} // namespace cta::catalogue

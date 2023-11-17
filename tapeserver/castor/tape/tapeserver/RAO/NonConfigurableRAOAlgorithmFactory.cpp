@@ -19,7 +19,7 @@
 #include "LinearRAOAlgorithm.hpp"
 #include "RandomRAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type) : m_type(type) {
 }
@@ -47,4 +47,4 @@ std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgor
 }
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

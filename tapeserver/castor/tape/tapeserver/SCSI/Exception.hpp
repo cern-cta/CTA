@@ -22,9 +22,8 @@
 #include "Structures.hpp"
 #include "Constants.hpp"
 
-namespace castor {
-namespace tape {
-namespace SCSI {
+namespace castor::tape::SCSI {
+
   /**
    * An exception class turning SCSI sense data into a loggable string
    */
@@ -118,6 +117,4 @@ void checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t & sgio, const
  *                message.
  */
 void checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context);
-}  // namespace SCSI
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::SCSI

@@ -23,8 +23,7 @@
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class RdbmsCatalogueGetFileRecycleLogItor : public FileRecycleLogItor::Impl {
 public:
@@ -107,5 +106,4 @@ private:
   common::dataStructures::FileRecycleLog populateFileRecycleLog();
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

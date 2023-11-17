@@ -23,7 +23,7 @@
 
 #include <map>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 /**
  * A map of lines parsed from a TPCONFIG file (key is the drive name)
@@ -42,4 +42,4 @@ public:
   static Tpconfig parseFile(const std::string &filename);
 }; // class TpconfigLines
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

@@ -26,8 +26,7 @@
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
@@ -44,5 +43,4 @@ common::dataStructures::RetrieveFileQueueCriteria DummyTapeFileCatalogue::prepar
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

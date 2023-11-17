@@ -19,7 +19,7 @@
 
 #include <cstdint>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * Represents the physical position of a block on tape
@@ -56,4 +56,4 @@ private:
   uint64_t m_lpos = 0;
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

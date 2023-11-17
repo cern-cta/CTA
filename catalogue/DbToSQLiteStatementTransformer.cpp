@@ -23,9 +23,8 @@
 #include "common/utils/utils.hpp"
 
 
-namespace cta {
-namespace catalogue {
-  
+namespace cta::catalogue {
+
 /**********************************/
 /* DbToSQLiteStatementTransformer */
 /**********************************/
@@ -137,4 +136,4 @@ std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToS
 /* DbToSQLiteStatementTransformerFactory             */
 /*****************************************************/
 
-}}
+} // namespace cta::catalogue

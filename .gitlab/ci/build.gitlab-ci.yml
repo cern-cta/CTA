@@ -8,8 +8,6 @@
     expire_in: 30 days
     paths:
     - ${BUILD_PATH}
-  tags:
-    - docker
 
 .cta_srpm:
   extends:
@@ -20,6 +18,7 @@
     - git submodule update --init --recursive
     - mkdir build_srpm
     - cd build_srpm
+    - echo ${CMAKE_OPTIONS}
     - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_srpm
   variables:
@@ -35,7 +34,6 @@
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
@@ -45,7 +43,7 @@
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
 cta_srpm_xrootd4:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -53,7 +51,8 @@ cta_srpm_xrootd4:
     - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd4:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_xrootd4 ]
   extends:
     - .cta_rpm
   rules:
@@ -62,26 +61,27 @@ cta_rpm_xrootd4:
       when: never
     - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
-cta_srpm_xrootd4_pgsched:
-  stage: build:srpm
+cta_srpm_xrootd5_pgsched:
+  stage: build
   extends:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
-cta_rpm_xrootd4_pgsched:
-  stage: build:rpm
+cta_rpm_xrootd5_pgsched:
+  stage: build
+  needs: [ cta_srpm_xrootd5_pgsched ]
   extends:
     - .cta_rpm
   rules:
     - !reference [.cta_build, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 cta_srpm_xrootd5:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -89,7 +89,8 @@ cta_srpm_xrootd5:
     - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd5:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_xrootd5 ]
   extends:
     - .cta_rpm
   rules:
@@ -99,19 +100,20 @@ cta_rpm_xrootd5:
     - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_srpm_no_oracle:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_no_oracle:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_no_oracle ]
   extends:
     - .cta_rpm
   rules:
     - !reference [.cta_build, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"

@@ -24,9 +24,7 @@
 #include "catalogue/interfaces/DiskInstanceCatalogue.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyDiskInstanceCatalogue: public DiskInstanceCatalogue {
 public:
@@ -47,5 +45,4 @@ private:
   std::map<std::string, common::dataStructures::DiskInstance> m_diskInstances;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

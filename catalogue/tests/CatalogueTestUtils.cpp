@@ -47,6 +47,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskSystem.hpp"
@@ -157,6 +158,10 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
     for(const auto &logicalLibrary: logicalLibraries) {
       catalogue->LogicalLibrary()->deleteLogicalLibrary(logicalLibrary.name);
     }
+    const auto physicalLibraries = catalogue->PhysicalLibrary()->getPhysicalLibraries();
+    for(const auto &physicalLibrary: physicalLibraries) {
+      catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
+    }
   }
   {
     const auto mountPolicies = catalogue->MountPolicy()->getMountPolicies();
@@ -209,51 +214,55 @@ void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue *catalogue
   }
 
   if(!catalogue->DiskSystem()->getAllDiskSystems().empty()) {
-    throw cta::exception::Exception("Found one of more disk systems after emptying the database");
+    throw cta::exception::Exception("Found one or more disk systems after emptying the database");
   }
 
   if (!catalogue->DiskInstance()->getAllDiskInstances().empty()) {
-    throw cta::exception::Exception("Found one of more disk instances after emptying the database");
+    throw cta::exception::Exception("Found one or more disk instances after emptying the database");
   }
 
   if(!catalogue->LogicalLibrary()->getLogicalLibraries().empty()) {
-    throw cta::exception::Exception("Found one of more logical libraries after emptying the database");
+    throw cta::exception::Exception("Found one or more logical libraries after emptying the database");
+  }
+
+  if(!catalogue->PhysicalLibrary()->getPhysicalLibraries().empty()) {
+    throw cta::exception::Exception("Found one or more physical libraries after emptying the database");
   }
 
   if(!catalogue->MediaType()->getMediaTypes().empty()) {
-    throw cta::exception::Exception("Found one of more media types after emptying the database");
+    throw cta::exception::Exception("Found one or more media types after emptying the database");
   }
 
   if(!catalogue->MountPolicy()->getMountPolicies().empty()) {
-    throw cta::exception::Exception("Found one of more mount policies after emptying the database");
+    throw cta::exception::Exception("Found one or more mount policies after emptying the database");
   }
 
   if(!catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester group mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester group mount rules after emptying the database");
   }
 
   if(!catalogue->RequesterMountRule()->getRequesterMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester mount rules after emptying the database");
   }
 
   if(!catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester activity mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester activity mount rules after emptying the database");
   }
 
   if(!catalogue->StorageClass()->getStorageClasses().empty()) {
-    throw cta::exception::Exception("Found one of more storage classes after emptying the database");
+    throw cta::exception::Exception("Found one or more storage classes after emptying the database");
   }
 
   if(!catalogue->Tape()->getTapes().empty()) {
-    throw cta::exception::Exception("Found one of more tapes after emptying the database");
+    throw cta::exception::Exception("Found one or more tapes after emptying the database");
   }
 
   if(!catalogue->TapePool()->getTapePools().empty()) {
-    throw cta::exception::Exception("Found one of more tape pools after emptying the database");
+    throw cta::exception::Exception("Found one or more tape pools after emptying the database");
   }
 
   if(!catalogue->VO()->getVirtualOrganizations().empty()) {
-    throw cta::exception::Exception("Found one of more virtual organizations after emptying the database");
+    throw cta::exception::Exception("Found one or more virtual organizations after emptying the database");
   }
 }
 
@@ -288,6 +297,7 @@ cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getVo() {
   vo.writeMaxDrives = 1;
   vo.maxFileSize = 0;
   vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = false;
   return vo;
 }
 
@@ -299,6 +309,19 @@ cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getAnotherV
   vo.writeMaxDrives = 1;
   vo.maxFileSize = 0;
   vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = false;
+  return vo;
+}
+
+cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getDefaultRepackVo() {
+  cta::common::dataStructures::VirtualOrganization vo;
+  vo.name = "repack_vo";
+  vo.comment = "Creation of virtual organization vo for repacking";
+  vo.readMaxDrives = 1;
+  vo.writeMaxDrives = 1;
+  vo.maxFileSize = 0;
+  vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = true;
   return vo;
 }
 
@@ -336,6 +359,49 @@ cta::common::dataStructures::StorageClass CatalogueTestUtils::getStorageClassTri
   storageClass.vo.name = getVo().name;
   storageClass.comment = "Creation of storage class with 3 copies on tape";
   return storageClass;
+}
+
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary1() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_1";
+  pl.manufacturer              = "manufacturer_1";
+  pl.model                     = "model_1";
+  pl.nbPhysicalCartridgeSlots  = 10;
+  pl.nbPhysicalDriveSlots      = 10;
+  pl.nbAvailableCartridgeSlots = 5;
+  return pl;
+}
+
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary2() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_2";
+  pl.manufacturer              = "manufacturer_2";
+  pl.model                     = "model_2";
+  pl.nbPhysicalCartridgeSlots  = 10;
+  pl.nbPhysicalDriveSlots      = 10;
+  pl.type                      = "type_2";
+  pl.guiUrl                    = "url_2";
+  pl.webcamUrl                 = "webcam_2";
+  pl.location                  = "location_2";
+  pl.nbAvailableCartridgeSlots = 5;
+  pl.comment                   = "comment_2";
+  return pl;
+}
+
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary3() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_3";
+  pl.manufacturer              = "manufacturer_3";
+  pl.model                     = "model_3";
+  pl.nbPhysicalCartridgeSlots  = 15;
+  pl.nbPhysicalDriveSlots      = 15;
+  pl.type                      = "type_3";
+  pl.guiUrl                    = "url_3";
+  pl.webcamUrl                 = "webcam_3";
+  pl.location                  = "location_3";
+  pl.nbAvailableCartridgeSlots = 10;
+  pl.comment                   = "comment_3";
+  return pl;
 }
 
 cta::catalogue::MediaType CatalogueTestUtils::getMediaType() {

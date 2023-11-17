@@ -19,8 +19,7 @@
 
 #include "tapeserver/daemon/TapedProxy.hpp"
 
-namespace castor {
-namespace messages {
+namespace castor::messages {
 
 /**
  * A dummy taped-proxy.
@@ -45,6 +44,5 @@ public:
 
 }; // class TapeserverProxyDummy
 
-} // namespace messages
-} // namespace castor
+} // namespace castor::messages
 

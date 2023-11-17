@@ -27,12 +27,12 @@
 #include "catalogue/rdbms/postgres/PostgresTapeFileCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresTapePoolCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.hpp"
+#include "catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "rdbms/Login.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PostgresCatalogue::PostgresCatalogue(
   log::Logger &log,
@@ -53,6 +53,7 @@ PostgresCatalogue::PostgresCatalogue(
   RdbmsCatalogue::m_tapeFile = std::make_unique<PostgresTapeFileCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<PostgresFileRecycleLogCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_logicalLibrary = std::make_unique<PostgresLogicalLibraryCatalogue>(m_log, m_connPool, this);
+  RdbmsCatalogue::m_physicalLibrary = std::make_unique<PostgresPhysicalLibraryCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_archiveFile = std::make_unique<PostgresArchiveFileCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tape = std::make_unique<PostgresTapeCatalogue>(m_log, m_connPool, this);
 }
@@ -87,5 +88,4 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   return tempTableName;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

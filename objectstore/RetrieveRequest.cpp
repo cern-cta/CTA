@@ -31,7 +31,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <cmath>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -106,7 +106,6 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
           err << (logHead + "could not find tapefile for copynb ") << j.copynb();
           throw exception::Exception(err.str());
         }
-        break;
       case RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       case RetrieveJobStatus::RJS_ToReportToRepackForFailure:
         //We don't have any vid to find, we just need to
@@ -350,25 +349,26 @@ void RetrieveRequest::addJob(uint32_t copyNb, uint16_t maxRetriesWithinMount, ui
 //------------------------------------------------------------------------------
 // addTransferFailure()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, const std::string &failureReason,
-  log::LogContext &lc) -> EnqueueingNextStep
+auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, const std::string& failureReason,
+  log::LogContext& lc) -> EnqueueingNextStep
 {
   checkPayloadWritable();
 
   // Find the job and update the number of failures
-  for(int i = 0; i < m_payload.jobs_size(); i++) {
-    auto &j = *m_payload.mutable_jobs(i);
+  for(int i = 0; i < m_payload.jobs_size(); ++i) {
+    auto& j = *m_payload.mutable_jobs(i);
 
-    if(j.copynb() == copyNumber) {
-      if(j.lastmountwithfailure() == mountId) {
-        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
-      } else {
-        j.set_retrieswithinmount(1);
-        j.set_lastmountwithfailure(mountId);
-      }
-      j.set_totalretries(j.totalretries() + 1);
-      *j.mutable_failurelogs()->Add() = failureReason;
+    if(j.copynb() != copyNumber) continue;
+
+    if(j.lastmountwithfailure() == mountId) {
+      j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+    } else {
+      j.set_retrieswithinmount(1);
+      j.set_lastmountwithfailure(mountId);
     }
+    j.set_totalretries(j.totalretries() + 1);
+    *j.mutable_failurelogs()->Add() = failureReason;
+
     if(m_payload.isverifyonly()) {
       // Don't retry verification jobs, they should fail immediately
       return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
@@ -376,38 +376,40 @@ auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, 
     if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
       ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
-      if(j.retrieswithinmount() < j.maxretrieswithinmount())
+      if(j.retrieswithinmount() < j.maxretrieswithinmount()) {
         // Job can try again within this mount
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
-      else
+      } else {
         // No more retries within this mount: job remains owned by this session and will be garbage collected
         ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
+      }
       return ret;
     } else {
       // All retries within all mounts have been exhausted
       return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
     }
   }
-  throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
+  throw NoSuchJob("In RetrieveRequest::addTransferFailure(): could not find job");
 }
 
 //------------------------------------------------------------------------------
 // addReportFailure()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason,
-  log::LogContext &lc) -> EnqueueingNextStep
+auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason,
+  log::LogContext& lc) -> EnqueueingNextStep
 {
   checkPayloadWritable();
+
   // Find the job and update the number of failures
-  for(int i = 0; i < m_payload.jobs_size(); ++i)
-  {
-    auto &j = *m_payload.mutable_jobs(i);
-    if (j.copynb() == copyNumber) {
-      j.set_totalreportretries(j.totalreportretries() + 1);
-      * j.mutable_reportfailurelogs()->Add() = failureReason;
-    }
+  for(int i = 0; i < m_payload.jobs_size(); ++i) {
+    auto& j = *m_payload.mutable_jobs(i);
+
+    if(j.copynb() != copyNumber) continue;
+
+    j.set_totalreportretries(j.totalreportretries() + 1);
+    *j.mutable_reportfailurelogs()->Add() = failureReason;
     EnqueueingNextStep ret;
-    if (j.totalreportretries() >= j.maxreportretries()) {
+    if(j.totalreportretries() >= j.maxreportretries()) {
       // Status is now failed
       ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
       ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
@@ -418,7 +420,7 @@ auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, 
     }
     return ret;
   }
-  throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
+  throw NoSuchJob("In RetrieveRequest::addReportFailure(): could not find job");
 }
 
 auto RetrieveRequest::addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string &abortReason,
@@ -635,28 +637,32 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJobFailure()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId,
-    const std::string & failureReason, log::LogContext & lc) {
+bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason,
+  log::LogContext&)
+{
   checkPayloadWritable();
-  // Find the job and update the number of failures
-  // (and return the full request status: failed (true) or to be retried (false))
-  // The request will go through a full requeueing if retried (in caller).
-  for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
+
+  // Find the job, update the number of failures, and return the full request status:
+  // failed (true) or to be retried (false). Jobs to be retried will cause the request
+  // to go through a full requeueing (in the calling function).
+  for(auto i = 0; i < m_payload.jobs_size(); ++i) {
     auto &j=*m_payload.mutable_jobs(i);
-    if (j.copynb() == copyNumber) {
-      if (j.lastmountwithfailure() == mountId) {
-        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
-      } else {
-        j.set_retrieswithinmount(1);
-        j.set_lastmountwithfailure(mountId);
-      }
-      j.set_totalretries(j.totalretries() + 1);
-      * j.mutable_failurelogs()->Add() = failureReason;
+
+    if(j.copynb() != copyNumber) continue;
+
+    if(j.lastmountwithfailure() == mountId) {
+      j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+    } else {
+      j.set_retrieswithinmount(1);
+      j.set_lastmountwithfailure(mountId);
     }
-    if (j.totalretries() >= j.maxtotalretries()) {
+    j.set_totalretries(j.totalretries() + 1);
+    *j.mutable_failurelogs()->Add() = failureReason;
+    if(j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure);
-      for (auto & j2: m_payload.jobs())
-        if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
+      for(auto& j2: m_payload.jobs()) {
+        if(j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
+      }
       return true;
     } else {
       j.set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
@@ -683,7 +689,6 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
     }
 
     m_payload.mutable_repack_info()->set_has_user_provided_file(repackInfo.hasUserProvidedFile);
-    m_payload.mutable_repack_info()->set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
     m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
     m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
     m_payload.mutable_repack_info()->set_fseq(repackInfo.fSeq);
@@ -732,17 +737,16 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
     switch(j.status()) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return common::dataStructures::JobQueueType::JobsToTransferForUser;
-      break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
-      break;
     case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
       // Else any job to report => to report.
       hasToReport=true;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
       return common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
-    default: break;
+    default:
+      break;
     }
   }
   if (hasToReport) return common::dataStructures::JobQueueType::JobsToReportToUser;
@@ -1372,4 +1376,4 @@ void RetrieveRequest::setJobStatus(uint32_t copyNumber, const serializers::Retri
   throw exception::Exception("In RetrieveRequest::setJobStatus(): job not found.");
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

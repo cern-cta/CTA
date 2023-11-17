@@ -19,7 +19,7 @@
 #include "GenericObject.hpp"
 #include <google/protobuf/util/json_util.h>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 //------------------------------------------------------------------------------
 // RepackIndex::RepackIndex()
@@ -157,4 +157,4 @@ void RepackIndex::addRepackRequestAddress(const std::string& vid,
   return;
 }
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

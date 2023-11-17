@@ -27,8 +27,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsMediaTypeCatalogue::RdbmsMediaTypeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -620,5 +619,4 @@ std::optional<uint64_t> RdbmsMediaTypeCatalogue::getMediaTypeId(rdbms::Conn &con
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

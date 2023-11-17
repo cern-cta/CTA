@@ -24,7 +24,7 @@
 #include <future>
 #include <chrono>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 /**
  * Thread handler managing a heartbeat updated for the agent object representing
@@ -66,10 +66,10 @@ private:
   std::chrono::seconds const m_heartRate = std::chrono::seconds(30);
   
   /// The heartbeat update deadline.
-  std::chrono::seconds const m_heartbeatDeadline = std::chrono::seconds(60);
+  std::chrono::seconds const m_heartbeatDeadline = std::chrono::seconds(120);
 
   /// The logging context
   log::Logger & m_logger;
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

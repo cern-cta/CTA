@@ -26,8 +26,7 @@
 #include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * RdbmsCatalogue::getArchiveFiles() implementation of ArchiveFileItorImpl.
@@ -119,5 +118,4 @@ private:
   ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
 }; // class RdbmsCatalogueGetArchiveFilesItor
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

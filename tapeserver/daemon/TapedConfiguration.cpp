@@ -21,7 +21,8 @@
 
 #include <algorithm>
 
-namespace cta { 
+namespace cta {
+
 //------------------------------------------------------------------------------
 // addLogParamForValue
 //------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogC
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
   lc.pushOrReplace({"devFilename", m_value.devFilename});
   lc.pushOrReplace({"librarySlot", m_value.rawLibrarySlot});
-}
+} // namespace cta
 
 //------------------------------------------------------------------------------
 // addLogParamForValue
@@ -41,7 +42,7 @@ template<>
 void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
-}
+} // namespace cta
 
 //------------------------------------------------------------------------------
 // set
@@ -59,7 +60,9 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
     throw ex;
   }
   // We can now split the entry
-  std::string bytes, files;
+  std::string bytes;
+  std::string files;
+
   size_t commaPos=value.find(',');
   bytes=value.substr(0, commaPos);
   files=value.substr(commaPos+1);
@@ -76,10 +79,10 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
   std::istringstream(files) >> m_value.maxFiles;
   m_source = source;
   m_set = true;
-}
-}
+} // namespace cta
+} // namespace cta
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
@@ -125,6 +128,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
   // Maintenance process configuration
   ret.useMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
+  ret.repackMaxRequestsToExpand.setFromConfigurationFile(cf, generalConfigPath);
   // External free disk space script configuration
   ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
   // Timeout for tape load action
@@ -170,6 +174,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.useRepackManagement.log(log);
   ret.useMaintenanceProcess.log(log);
+  ret.repackMaxRequestsToExpand.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);
@@ -178,8 +183,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);
 
-  for (auto & i:ret.driveConfigs) {
-    i.second.log(log);
+  for (auto & [driveName, configLine]:ret.driveConfigs) {
+    configLine.log(log);
   }
   return ret;
 }
@@ -189,4 +194,4 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
 //------------------------------------------------------------------------------
 cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

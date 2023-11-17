@@ -20,9 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -117,6 +115,7 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && nextPriority == rhs.nextPriority
       && checkOptionalString(nextActivity) == checkOptionalString(rhs.nextActivity)
       && checkOptionalString(diskSystemName) == checkOptionalString(rhs.diskSystemName)
+      && checkOptionalString(physicalLibraryName) == checkOptionalString(rhs.physicalLibraryName)
       && reservedBytes == rhs.reservedBytes
       && reservationSessionId == rhs.reservationSessionId
 
@@ -189,6 +188,4 @@ std::ostream &operator<<(std::ostream &os, const TapeDrive &obj) {
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

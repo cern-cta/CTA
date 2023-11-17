@@ -22,8 +22,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 namespace {
   /**
@@ -288,5 +287,4 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

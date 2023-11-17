@@ -29,10 +29,8 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
+
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
@@ -260,7 +258,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         }
         failedToReportArchiveJobs.pop();
       }
-      throw ex;
+      throw;
     } catch(const cta::ArchiveMount::FailedReportMoveToQueue &ex){
       while(!failedToReportArchiveJobs.empty()){
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
@@ -285,7 +283,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         }
         failedToReportArchiveJobs.pop();
       }
-      throw ex;
+      throw;
     }
   }
   else {
@@ -476,7 +474,4 @@ void MigrationReportPacker::WorkerThread::run() {
   }
 }
 
-}
-}
-}
-}
+} // namespace castor::tape::tapeserver::daemon

@@ -26,8 +26,7 @@
 
 #include "catalogue/interfaces/DriveConfigCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyDriveConfigCatalogue: public DriveConfigCatalogue {
 public:
@@ -50,5 +49,4 @@ public:
   void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

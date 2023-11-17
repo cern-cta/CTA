@@ -22,8 +22,7 @@
 #include "StatisticsService.hpp"
 #include "Statistics.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
   /**
    * This class is a JSON statistics service
@@ -60,5 +59,4 @@ class JsonStatisticsService: public StatisticsService {
   InputStream * m_input;
 };
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

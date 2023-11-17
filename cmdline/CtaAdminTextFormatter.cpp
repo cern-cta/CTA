@@ -24,8 +24,15 @@
 
 #include "common/utils/utils.hpp"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
+
+TextFormatter::~TextFormatter() {
+  try {
+    flush();
+  } catch(std::runtime_error& ex) {
+    std::cerr << ex.what() << std::endl;
+  }
+}
 
 /**
  ** Generic utility methods
@@ -549,6 +556,7 @@ void TextFormatter::printLogicalLibraryLsHeader() {
   push_back(
     "library",
     "disabled",
+    "phys.lib",
     "reason",
     "c.user",
     "c.host",
@@ -564,6 +572,7 @@ void TextFormatter::print(const LogicalLibraryLsItem &llls_item) {
   push_back(
     llls_item.name(),
     llls_item.is_disabled(),
+    llls_item.physical_library(),
     llls_item.disabled_reason(),
     llls_item.creation_log().username(),
     llls_item.creation_log().host(),
@@ -821,6 +830,7 @@ void TextFormatter::printTapeLsHeader() {
     "media type",
     "vendor",
     "library",
+    "order",
     "tapepool",
     "vo",
     "encryption key name",
@@ -856,6 +866,7 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.media_type(),
     tals_item.vendor(),
     tals_item.logical_library(),
+    tals_item.purchase_order(),
     tals_item.tapepool(),
     tals_item.vo(),
     tals_item.encryption_key_name(),
@@ -900,8 +911,7 @@ void TextFormatter::printTapeFileLsHeader() {
     "storage class",
     "owner",
     "group",
-    "creation time",
-    "path"
+    "creation time"
   );
 }
 
@@ -934,8 +944,7 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     tfls_item.af().storage_class(),
     tfls_item.df().owner_id().uid(),
     tfls_item.df().owner_id().gid(),
-    timeToStr(tfls_item.af().creation_time()),
-    tfls_item.df().path()
+    timeToStr(tfls_item.af().creation_time())
   );
 }
 
@@ -1105,6 +1114,7 @@ void TextFormatter::printVirtualOrganizationLsHeader(){
     "write max drives",
     "max file size",
     "disk instance",
+    "is repack vo",
     "c.user",
     "c.host",
     "c.time",
@@ -1122,6 +1132,7 @@ void TextFormatter::print(const VirtualOrganizationLsItem& vols_item){
     vols_item.write_max_drives(),
     dataSizeToStr(vols_item.max_file_size()),
     vols_item.diskinstance(),
+    vols_item.is_repack_vo(),
     vols_item.creation_log().username(),
     vols_item.creation_log().host(),
     timeToStr(vols_item.creation_log().time()),
@@ -1214,4 +1225,49 @@ void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
   );
 }
 
-}}
+void TextFormatter::printPhysicalLibraryLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "manufacturer",
+    "model",
+    "type",
+    "gui url",
+    "webcam url",
+    "location",
+    "physical cartridge slots",
+    "available cartridge slots",
+    "physical drive slots",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const PhysicalLibraryLsItem & plls_item){
+  push_back(
+    plls_item.name(),
+    plls_item.manufacturer(),
+    plls_item.model(),
+    plls_item.type(),
+    plls_item.gui_url(),
+    plls_item.webcam_url(),
+    plls_item.location(),
+    plls_item.nb_physical_cartridge_slots(),
+    plls_item.nb_available_cartridge_slots(),
+    plls_item.nb_physical_drive_slots(),
+    plls_item.creation_log().username(),
+    plls_item.creation_log().host(),
+    timeToStr(plls_item.creation_log().time()),
+    plls_item.last_modification_log().username(),
+    plls_item.last_modification_log().host(),
+    timeToStr(plls_item.last_modification_log().time()),
+    plls_item.comment()
+  );
+}
+
+} // namespace cta::admin

@@ -23,8 +23,7 @@
 #include "mediachanger/RmcProxy.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -180,5 +179,4 @@ std::string RmcProxy::handleMSG_ERR(const MessageHeader &header, const int fd) {
   return errorBuf;
 }
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

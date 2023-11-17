@@ -33,7 +33,7 @@
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class ArchiveRequest;
 class RetrieveRequest;
@@ -50,7 +50,7 @@ public:
 
   void checkHeartbeats(log::LogContext & lc);
 
-  void cleanupDeadAgent(const std::string & name, std::list<log::Param> agentDetails, log::LogContext & lc);
+  void cleanupDeadAgent(const std::string & name, const std::list<log::Param>& agentDetails, log::LogContext & lc);
 
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
@@ -95,4 +95,4 @@ private:
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
 };
 
-}}
+} // namespace cta::objectstore

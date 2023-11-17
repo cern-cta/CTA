@@ -20,8 +20,7 @@
 #include <map>
 #include <iostream>
 
-namespace eos {
-namespace client {
+namespace eos::client {
 
 struct Namespace
 {
@@ -36,4 +35,4 @@ std::cerr << "Created namespace endpoint " << endpoint << " with token " << toke
 
 typedef std::map<std::string, Namespace> NamespaceMap_t;
 
-}} // namespace eos::client
+} // namespace eos::client

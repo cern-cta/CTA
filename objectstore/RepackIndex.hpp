@@ -20,8 +20,8 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
-namespace cta { namespace objectstore {
-  
+namespace cta::objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -32,7 +32,7 @@ public:
   RepackIndex(Backend & os);
   RepackIndex(const std::string & address, Backend & os);
   RepackIndex(GenericObject & go);
-  void initialize();
+  void initialize() override;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
@@ -82,4 +82,4 @@ public:
   std::string dump();
 };
 
-}}
+} // namespace cta::objectstore

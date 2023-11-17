@@ -22,8 +22,7 @@
 
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DummyVirtualOrganizationCatalogue: public VirtualOrganizationCatalogue {
 public:
@@ -43,6 +42,8 @@ public:
   common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(
     const std::string & tapepoolName) const override;
 
+  std::optional<common::dataStructures::VirtualOrganization> getDefaultVirtualOrganizationForRepack() const override;
+
   void modifyVirtualOrganizationName(
     const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
     const std::string &newVoName) override;
@@ -61,7 +62,9 @@ public:
 
   void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
     const std::string &voName, const std::string &diskInstance) override;
+
+  void modifyVirtualOrganizationIsRepackVo(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &voName, const bool isRepackVo) override;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

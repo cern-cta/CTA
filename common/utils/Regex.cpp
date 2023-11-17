@@ -19,7 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include <regex.h>
 
-namespace cta { namespace utils {
+namespace cta::utils {
 
 Regex::Regex(const std::string & re_str) : m_reStr(re_str), m_set(false) {
   if (int rc = ::regcomp(&m_re, m_reStr.c_str(), REG_EXTENDED)) {
@@ -60,4 +60,4 @@ std::vector<std::string> Regex::exec(const std::string &s) const {
   return std::vector<std::string>();
 }
 
-}} // namespace cta::utils
+} // namespace cta::utils

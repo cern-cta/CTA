@@ -43,7 +43,7 @@
 #include <valgrind/helgrind.h>
 #include <iostream>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
   // Create the directory for storage
@@ -108,8 +108,7 @@ void BackendVFS::create(const std::string& name, const std::string& content) {
   bool fileCreated = false;
   bool lockCreated = false;
   try {
-    // TODO: lax permissions to get prototype going. Should be revisited
-    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
     // Create and fill up the path
     cta::exception::Errnum::throwOnMinusOne(fd,
         "In ObjectStoreVFS::create, failed to open the file");
@@ -123,8 +122,7 @@ void BackendVFS::create(const std::string& name, const std::string& content) {
     cta::exception::Errnum::throwOnMinusOne(::close(fd),
         "In ObjectStoreVFS::create, failed to close the file");
     // Create the lock file
-    // TODO: lax permissions to get prototype going. Should be revisited
-    int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+    int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
     lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
         std::string("In ObjectStoreVFS::create, failed to create the lock file: ") + name);
@@ -149,8 +147,7 @@ void BackendVFS::atomicOverwrite(const std::string& name, const std::string& con
     throw cta::exception::Exception("In BackendVFS::atomicOverwrite, trying to update a non-existing object");
   }
   // Create the new version of the file, make sure it's visible, lock it.
-  // TODO: lax permissions to get prototype going. Should be revisited
-  int fd = ::creat(tempPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  int fd = ::creat(tempPath.c_str(), S_IRWXU);
   cta::exception::Errnum::throwOnMinusOne(fd,
       "In ObjectStoreVFS::atomicOverwrite, failed to creat the pre-overwrite file");
   cta::exception::Errnum::throwOnMinusOne(
@@ -269,7 +266,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int typ
     int statResult = ::stat((m_root + '/' + name).c_str(), &sBuff);
     int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
-      int fd=::open(path.c_str(), flag | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
+      int fd=::open(path.c_str(), flag | O_CREAT, S_IRWXU);
       exception::Errnum::throwOnMinusOne(fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
       ret->set(fd, path);
     } else {
@@ -345,8 +342,7 @@ BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, 
       bool fileCreated = false;
       bool lockCreated = false;
       try {
-        // TODO: lax permissions to get prototype going. Should be revisited
-        int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+        int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
         // Create and fill up the path
         cta::exception::Errnum::throwOnMinusOne(fd,
             "In AsyncCreator::AsyncCreator::lambda, failed to open the file");
@@ -360,8 +356,7 @@ BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, 
         cta::exception::Errnum::throwOnMinusOne(::close(fd),
             "In AsyncCreator::AsyncCreator::lambda, failed to close the file");
         // Create the lock file
-        // TODO: lax permissions to get prototype going. Should be revisited
-        int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+        int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
         lockCreated = true;
         cta::exception::Errnum::throwOnMinusOne(fdLock,
             std::string("In AsyncCreator::AsyncCreator::lambda, failed to create the lock file: ") + name);
@@ -534,4 +529,4 @@ std::string BackendVFS::Parameters::toURL() {
   return ret.str();
 }
 
-}} // end of cta::objectstore
+} // namespace cta::objectstore

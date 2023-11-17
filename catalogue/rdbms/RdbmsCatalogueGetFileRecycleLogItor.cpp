@@ -21,8 +21,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -222,4 +221,4 @@ common::dataStructures::FileRecycleLog RdbmsCatalogueGetFileRecycleLogItor::popu
   return fileRecycleLog;
 }
 
-}}
+} // namespace cta::catalogue

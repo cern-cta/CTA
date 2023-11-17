@@ -17,7 +17,8 @@
 
 #include <google/protobuf/service.h>
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
+
 /**
  * This singleton class will check the compatibility of the runtime library
  * with the headers it was compiled against on construction (library load)
@@ -28,10 +29,10 @@ class ProtobufCleaner {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
   }
   
- virtual ~ProtobufCleaner() {
-   // Make protobuf cleanup memory to not trigger memory leaks detectors.
-   google::protobuf::ShutdownProtobufLibrary();
- }
+  virtual ~ProtobufCleaner() {
+    // Make protobuf cleanup not trigger memory leak detectors
+    google::protobuf::ShutdownProtobufLibrary();
+  }
 } g_protobufCleaner;
 
-}} // end of namespaces
+} // namespace cta::objectstore

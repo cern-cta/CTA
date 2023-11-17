@@ -19,8 +19,7 @@
 
 #include "CatalogueSchema.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure containing the SQL to create the schema of the CTA catalogue
@@ -44,5 +43,4 @@ struct SqliteCatalogueSchema: public CatalogueSchema {
   SqliteCatalogueSchema();
 };
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

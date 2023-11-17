@@ -213,6 +213,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.nbFiles = tapeMount->getNbFiles();
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
+  m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
+  m_volInfo.tapePool = tapeMount->getPoolName();
   tapeServerReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
@@ -220,7 +222,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeVid", m_volInfo.vid)
-        .add("mountId", m_volInfo.mountId);
+        .add("mountId", m_volInfo.mountId)
+        .add("vo", tapeMount->getVo())
+        .add("tapePool", tapeMount->getPoolName());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", m_volInfo.mountId)
@@ -277,13 +281,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                           reportPacker,
                                           m_dataTransferConfig.useLbp, m_dataTransferConfig.useRAO, m_dataTransferConfig.useEncryption,
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
-                                          m_dataTransferConfig.tapeLoadTimeout);
+                                          m_dataTransferConfig.tapeLoadTimeout,
+                                          m_scheduler.getCatalogue());
 
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
                                    watchDog,
                                    logContext,
-                                   m_dataTransferConfig.xrootPrivateKey,
                                    m_dataTransferConfig.xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager, readSingleThread, threadPool, *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
@@ -426,7 +430,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_dataTransferConfig.useEncryption,
                                             m_dataTransferConfig.externalEncryptionKeyScript,
                                             *archiveMount,
-                                            m_dataTransferConfig.tapeLoadTimeout);
+                                            m_dataTransferConfig.tapeLoadTimeout,
+                                            m_scheduler.getCatalogue());
 
 
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
@@ -434,7 +439,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                   m_dataTransferConfig.bulkRequestMigrationMaxBytes,
                                   watchDog,
                                   logContext,
-                                  m_dataTransferConfig.xrootPrivateKey,
                                   m_dataTransferConfig.xrootTimeout);
     MigrationTaskInjector taskInjector(memoryManager, threadPool, writeSingleThread, *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,

@@ -5,5 +5,8 @@ metadata:
   labels:
     config: eos
 data:
+  eos4: |
+    use_eos4
+
   xrd.cf.mgm: |
     mgmofs.nslib /usr/lib64/libEosNsInMemory.so

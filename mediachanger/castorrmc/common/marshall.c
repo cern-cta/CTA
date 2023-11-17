@@ -15,27 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
-/*
- * marshall.c - wrappers on top of marshall macros
- */
-
 #include <string.h>
 #include "marshall.h"
 #include "osdep.h"
 
-int
-_unmarshall_STRINGN(char **ptr,
-                        char *str,
-                        int n)
-{
-	char *p;
+int unmarshall_STRINGN(char** ptr, const char* ptr_end, char* str, size_t str_maxlen) {
+  if(*ptr+str_maxlen > ptr_end) {
+    str_maxlen = ptr_end-*ptr+1;
+  }
 
-	(void) strncpy (str, *ptr, n);
-	if ((p = memchr (str, 0, n)) != NULL) {
-		*ptr += (p - str + 1);
-		return (0);
-	}
-	*(str + n - 1) = '\0';
-	*ptr += strlen(*ptr) + 1;
-	return (-1);
+  strncpy(str, *ptr, str_maxlen);
+  size_t str_len = strnlen(str, str_maxlen);
+  if(str_len < str_maxlen) {
+    *ptr += str_len+1;
+    return 0;
+  } else {
+    str[str_maxlen-1] = '\0';
+    *ptr += strnlen(*ptr, ptr_end-*ptr);
+    if(**ptr == '\0') ++*ptr;
+    return -1;
+  }
 }

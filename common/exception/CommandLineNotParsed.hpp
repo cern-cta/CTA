@@ -19,7 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta::exception {
 
 /**
  * CommandLineNotParsed.
@@ -40,5 +40,4 @@ public:
 
 }; // class CommandLineNotParsed
 
-} } // namespace cta exception
-
+} // namespace cta::exception

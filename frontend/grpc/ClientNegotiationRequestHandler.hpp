@@ -26,10 +26,7 @@
 #include <gssapi/gssapi_generic.h>
 #include <gssapi/gssapi_krb5.h>
 
-namespace cta {
-namespace frontend {
-namespace grpc {
-namespace client {
+namespace cta::frontend::grpc::client {
 
 class NegotiationRequestHandler : public request::IHandler {
 
@@ -92,7 +89,4 @@ private:
     
 };
 
-} // namespace client
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+} // namespace cta::frontend::grpc::client

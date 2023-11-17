@@ -4,9 +4,9 @@
 
 ### Initial code references for release
 
-This release should be based on `<commit_id>` from branch `main`.
+This release should be based on `<commit_id>` from branch [`main`](https://gitlab.cern.ch/cta/CTA/-/tree/main).
 
-This release will be tagged as version `vX.Y.Z-R`.
+This release will be tagged as version `v4.Y.Z-R`/`v5.Y.Z-R`.
 
 ### Additional details
 
@@ -22,4 +22,4 @@ This release will be tagged as version `vX.Y.Z-R`.
 
 <!-- Add stress test screenshots for the commit_id referenced above. If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 
-/label ~release
+/label ~Release

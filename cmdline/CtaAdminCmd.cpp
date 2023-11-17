@@ -112,6 +112,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
          case Data::kMtlsItem:      std::cout << Log::DumpProtobuf(&record.mtls_item());    break;
          case Data::kRtflsItem:     std::cout << Log::DumpProtobuf(&record.rtfls_item());   break;
+         case Data::kPllsItem:      std::cout << Log::DumpProtobuf(&record.plls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -145,6 +146,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kVersionItem:   formattedText.print(record.version_item()); break;
          case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
          case Data::kRtflsItem:     formattedText.print(record.rtfls_item());   break;
+         case Data::kPllsItem:      formattedText.print(record.plls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -154,8 +156,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
 
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 std::atomic<bool> CtaAdminCmd::is_json(false);
 std::atomic<bool> CtaAdminCmd::is_first_record(true);
@@ -333,6 +334,7 @@ void CtaAdminCmd::send() const
             case HeaderType::VERSION_CMD:                  formattedText.printVersionHeader(); break;
             case HeaderType::MEDIATYPE_LS:                 formattedText.printMediaTypeLsHeader(); break;
             case HeaderType::RECYLETAPEFILE_LS:            formattedText.printRecycleTapeFileLsHeader(); break;
+            case HeaderType::PHYSICALLIBRARY_LS:           formattedText.printPhysicalLibraryLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
@@ -552,7 +554,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    throw std::runtime_error(help.str());
 }
 
-}} // namespace cta::admin
+} // namespace cta::admin
 
 
 

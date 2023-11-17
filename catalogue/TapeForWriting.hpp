@@ -23,8 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * A tape that can be written to.
@@ -89,10 +88,16 @@ struct TapeForWriting {
    * The total amount of data written to the tape in bytes.
    */
   uint64_t dataOnTapeInBytes;
+
   /**
    * The format type of the tape.
    */
   cta::common::dataStructures::Label::Format labelFormat;
+
+  /**
+   * Encryption key name to pass to external encryption script
+   */
+  std::optional<std::string> encryptionKeyName;
 
 }; // struct TapeForWriting
 
@@ -107,5 +112,4 @@ struct TapeForWriting {
  */
 std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

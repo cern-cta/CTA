@@ -22,8 +22,7 @@
 
 #include "common/exception/UserError.hpp"
 
-namespace eos {
-namespace client {
+namespace eos::client {
 
 class Endpoint
 {
@@ -112,4 +111,4 @@ private:
   std::map<std::string, Endpoint> m_endpointMap;
 };
 
-}} // namespace eos::client
+} // namespace eos::client

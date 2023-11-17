@@ -172,8 +172,9 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   tape.lastFSeq = 1;
   tape.tapePool = "Tapepool1";
   tape.vid = "tape";
-  auto mount = mountInfo->createArchiveMount(cta::common::dataStructures::MountType::ArchiveForUser,
-    tape, "drive", "library", "host", "vo", "mediaType", "vendor", 123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(),
+    tape, "drive", "library", "host");
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());

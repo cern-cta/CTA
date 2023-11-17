@@ -18,8 +18,7 @@
 #include "catalogue/dummy/DummyAdminUserCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 void DummyAdminUserCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity& admin,
   const std::string& username, const std::string& comment) {
@@ -43,5 +42,4 @@ bool DummyAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIden
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

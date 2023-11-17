@@ -42,6 +42,7 @@ std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
 std::list<std::pair<std::string,std::string>> listedTapeFiles;
 
 namespace XrdSsiPb {
+
 /*!
  * User error exception
  */
@@ -60,7 +61,7 @@ template<>
 void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
    Log::DumpProtobuf(Log::PROTOBUF, &alert);
-}
+} // namespace XrdSsiPb
 
 /*!
  * Data/Stream callback.
@@ -93,12 +94,11 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
     default:
       throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
    }
-}
+} // namespace XrdSsiPb
 
-}
+} // namespace XrdSsiPb
 
-namespace cta{
-namespace cliTool {
+namespace cta::cliTool {
 
 /*!
  * RestoreFilesCmdException
@@ -714,8 +714,8 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  if(listedTapeFiles.size() == 0) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected to be larger than 0, received=" + std::to_string(listedTapeFiles.size()));
   }
   auto listedTapeFile = listedTapeFiles.back();
   listedTapeFiles.clear();
@@ -765,4 +765,3 @@ std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFro
 }
 
 } // namespace admin
-} // namespace cta

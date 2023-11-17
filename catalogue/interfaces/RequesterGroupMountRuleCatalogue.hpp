@@ -22,12 +22,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 class SecurityIdentity;
 struct RequesterGroupMountRule;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -85,5 +83,4 @@ public:
     const std::string &requesterGroupName) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

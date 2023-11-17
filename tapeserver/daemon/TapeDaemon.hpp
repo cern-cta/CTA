@@ -24,7 +24,7 @@
 #include <signal.h>
 
 
-namespace cta { namespace tape { namespace  daemon {
+namespace cta::tape::daemon {
 
 /** Daemon responsible for reading and writing data from and to one or more tape
  * drives drives connected to a tape server. */
@@ -236,16 +236,15 @@ protected:
   cta::server::ProcessCap &m_capUtils;
 
   /**
-   * The program name of the daemon.
-   */
-  const std::string m_programName;
-
-  /**
    * The name of the host on which the daemon is running.  This name is
    * needed to fill in messages to be sent to the vdqmd daemon.
    */
   const std::string m_hostName;
 
+  /**
+   * The program name of the daemon.
+   */
+  const std::string m_programName{"cta-taped"};
 }; // class TapeDaemon
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

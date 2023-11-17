@@ -22,8 +22,7 @@
 
 #include <algorithm>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -129,7 +128,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       droppedAtLeastOneTable = false;
       auto tables = conn.getTableNames();
       tables.remove("CTA_SCHEDULER");  // Remove CTA_SCHEDULER to drop it at the end
-      for (const auto table : tables) {
+      for (const auto &table : tables) {
         try {
           conn.executeNonQuery(std::string("DROP TABLE ") + table);
           m_out << "Dropped table " << table << std::endl;
@@ -204,5 +203,4 @@ void DropSchemaCmd::printUsage(std::ostream &os) {
   DropSchemaCmdLineArgs::printUsage(os);
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

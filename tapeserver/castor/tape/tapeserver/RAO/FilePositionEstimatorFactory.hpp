@@ -25,13 +25,11 @@
 #include "common/log/TimingList.hpp"
 #include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 class Catalogue;
 }
-}
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class gathen static factory method to instanciate FilePositionEstimator
@@ -42,4 +40,4 @@ public:
   static std::unique_ptr<FilePositionEstimator> createInterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & eowp, cta::catalogue::MediaType & mediaType);
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

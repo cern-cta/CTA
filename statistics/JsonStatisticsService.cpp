@@ -17,8 +17,7 @@
 
 #include "JsonStatisticsService.hpp"
 
-namespace cta {
-namespace statistics {
+namespace cta::statistics {
 
 JsonStatisticsService::JsonStatisticsService(OutputStream * output)
   : m_output(output), m_input(nullptr) {
@@ -44,5 +43,4 @@ void JsonStatisticsService::updateStatisticsPerTape() {
 JsonStatisticsService::~JsonStatisticsService() {
 }
 
-}  // namespace statistics
-}  // namespace cta
+} // namespace cta::statistics

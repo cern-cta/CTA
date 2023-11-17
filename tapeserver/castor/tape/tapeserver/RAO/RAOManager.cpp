@@ -25,8 +25,8 @@
 #include "LinearRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor::tape::tapeserver::rao {
+
 RAOManager::RAOManager() {
 
 }
@@ -146,4 +146,4 @@ void RAOManager::logWarningAfterRAOOperationFailed(const std::string & warningMs
 }
 
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

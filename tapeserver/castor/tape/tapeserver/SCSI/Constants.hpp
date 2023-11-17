@@ -20,9 +20,8 @@
 #include <string>
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
-namespace SCSI {
+namespace castor::tape::SCSI {
+
   /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
    is less complete */
   class Types {
@@ -447,7 +446,7 @@ namespace SCSI {
         meta  = 3   /* Metadata Key Associated data */
       };
     };
-  }
+  } // namespace encryption
 
   class logSensePages {
   public:
@@ -460,7 +459,8 @@ namespace SCSI {
       tapeAlert                  = 0x2e,
       dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
       driveWriteErrors           = 0x32, // IBM specific page
-      driveReadForwardErrors     = 0x34, // IBM specific page
+      driveWriteErrorsLTO        = 0x33, // LTO SCSI specific page
+      driveReadForwardErrors     = 0x34, // IBM and LTO specific page
       driveReadBackwardErrors    = 0x36, // IBM specific page
       performanceCharacteristics = 0x37, // IBM specific page
       vendorUniqueDriveStatistics= 0x3d, // Oracle T1000D/E specific page
@@ -735,6 +735,4 @@ namespace SCSI {
    */
   const unsigned char controlDataProtectionModePageLengthAddition = 4; 
   
-} // namespace SCSI
-} // namespace tape
-} // namespace castor
+} // namespace castor::tape::SCSI

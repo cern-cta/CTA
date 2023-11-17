@@ -24,8 +24,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -73,5 +72,4 @@ void CreateAdminUserCmd::printUsage(std::ostream &os) {
   CreateAdminUserCmdLineArgs::printUsage(os);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

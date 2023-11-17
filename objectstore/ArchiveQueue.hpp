@@ -29,10 +29,8 @@
 #include "objectstore/cta.pb.h"
 #include <string>
 
-namespace cta {
+namespace cta::objectstore {
 
-namespace objectstore {
-  
 class GenericObject;
 
 class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
@@ -55,7 +53,7 @@ public:
   void initialize(const std::string & name);
   
   // Commit with sanity checks (overload from ObjectOps)
-  void commit();
+  void commit() override;
 private:
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();
@@ -108,7 +106,7 @@ public:
   };
   JobsSummary getJobsSummary();
   
-  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove, log::LogContext & lc);
   struct JobDump {
     uint64_t size;
     std::string address;
@@ -124,7 +122,7 @@ public:
   };
   // The set of archive requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
-  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip);
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc);
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
@@ -154,4 +152,4 @@ class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::
 class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
 class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
   
-}}
+} // namespace cta::objectstore

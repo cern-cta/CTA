@@ -16,9 +16,7 @@
  */
 
 #include "LifecycleTimings.hpp"
-namespace cta{
-namespace common{
-namespace dataStructures{
+namespace cta::common::dataStructures {
 
 LifecycleTimings::LifecycleTimings() : creation_time(0), first_selected_time(0), completed_time(0) {}
 
@@ -50,4 +48,4 @@ time_t LifecycleTimings::getTimeForCompletion(){
   return 0;
 }
 
-}}}
+} // namespace cta::common::dataStructures

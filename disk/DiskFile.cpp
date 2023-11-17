@@ -26,94 +26,16 @@
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
 #include <algorithm>
-#include <cryptopp/base64.h>
-#include <cryptopp/osrng.h>
 
-namespace cta {
-namespace disk {
+namespace cta::disk {
 
-DiskFileFactory::DiskFileFactory(const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
-  cta::disk::RadosStriperPool & striperPool):
+DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool) :
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
-  m_NoURLRemoteFile("^([^:]*:)(.*)$"),
-  m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
-  m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootPrivateKeyLoaded(false),
   m_xrootTimeout(xrootTimeout),
   m_striperPool(striperPool) {}
-
-const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
-  if(!m_xrootPrivateKeyLoaded) {
-    // There is one DiskFactory per disk thread, so this function is called
-    // in a single thread. Nevertheless, we experience errors from double
-    // deletes in the CryptoPP functions called from here.
-    // As this function portion of the code is called once per disk thread,
-    // serialising them will have little effect in performance.
-    // This is an experimental workaround.
-    static cta::threading::Mutex mutex;
-    cta::threading::MutexLocker ml(mutex);
-    // The loading of a PEM-style key is described in
-    // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
-    std::string key;
-    std::ifstream keyFile(m_xrootPrivateKeyFile.c_str());
-    if (!keyFile) {
-      // We should get the detailed error from errno.
-      throw cta::exception::Errnum(
-        std::string("Failed to open xroot key file: ")+m_xrootPrivateKeyFile);
-    }
-    char buff[200];
-    while(!keyFile.eof()) {
-      keyFile.read(buff, sizeof(buff));
-      key.append(buff,keyFile.gcount());
-    }
-    const std::string HEADER = "-----BEGIN RSA PRIVATE KEY-----";
-    const std::string FOOTER = "-----END RSA PRIVATE KEY-----";
-
-    size_t pos1, pos2;
-    pos1 = key.find(HEADER);
-    if(pos1 == std::string::npos)
-        throw cta::exception::Exception(
-          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
-
-    pos2 = key.find(FOOTER, pos1+1);
-    if(pos2 == std::string::npos)
-        throw cta::exception::Exception(
-          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
-
-    // Start position and length
-    pos1 = pos1 + HEADER.length();
-    pos2 = pos2 - pos1;
-    std::string keystr = key.substr(pos1, pos2);
-
-    // Base64 decode, place in a ByteQueue
-    CryptoPP::ByteQueue queue;
-    CryptoPP::Base64Decoder decoder;
-
-    decoder.Attach(new CryptoPP::Redirector(queue));
-    decoder.Put((const byte*)keystr.data(), keystr.length());
-    decoder.MessageEnd();
-
-    m_xrootPrivateKey.BERDecodePrivateKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
-
-    // BERDecodePrivateKey is a void function. Here's the only check
-    // we have regarding the DER bytes consumed.
-    if(!queue.IsEmpty())
-      throw cta::exception::Exception(
-        "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
-
-    CryptoPP::AutoSeededRandomPool prng;
-    bool valid = m_xrootPrivateKey.Validate(prng, 3);
-    if(!valid)
-      throw cta::exception::Exception(
-        "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
-
-    m_xrootPrivateKeyLoaded = true;
-  }
-  return m_xrootPrivateKey;
-}
 
 ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
@@ -140,21 +62,6 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_NoURLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalReadFile(regexResult[2]);
-  }
-  // Do we have a remote file?
-  regexResult = m_NoURLRemoteFile.exec(path);
-  if (regexResult.size()) {
-    // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-    return new XrootC2FSReadFile(
-      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout);
-  }
-  // Do we have a radosStriper file?
-  regexResult = m_NoURLRadosStriperFile.exec(path);
-  if (regexResult.size()) {
-    return new XrootC2FSReadFile(
-      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
   throw cta::exception::Exception(
       std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
@@ -185,21 +92,6 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_NoURLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalWriteFile(regexResult[2]);
-  }
-  // Do we have a remote file?
-  regexResult = m_NoURLRemoteFile.exec(path);
-  if (regexResult.size()) {
-    // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-    return new XrootC2FSWriteFile(
-      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout);
-  }
-  // Do we have a radosStriper file?
-  regexResult = m_NoURLRadosStriperFile.exec(path);
-  if (regexResult.size()) {
-    return new XrootC2FSWriteFile(
-      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
   throw cta::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
@@ -272,90 +164,8 @@ LocalWriteFile::~LocalWriteFile() throw() {
 }
 
 //==============================================================================
-// CRYPTOPP SIGNER
-//==============================================================================
-cta::threading::Mutex CryptoPPSigner::s_mutex;
-
-std::string CryptoPPSigner::sign(const std::string msg,
-  const CryptoPP::RSA::PrivateKey& privateKey) {
-  // Global lock as Crypto++ seems not to be thread safe (helgrind complains)
-  cta::threading::MutexLocker ml(s_mutex);
-  // Create a signer object
-  CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
-  // Return value
-  std::string ret;
-  // Random number generator (not sure it's really used)
-  CryptoPP::AutoSeededRandomPool rng;
-  // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
-  const bool noNewLineInBase64Output = false;
-  CryptoPP::StringSource ss1(msg, true,
-      new CryptoPP::SignerFilter(rng, signer,
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(ret), noNewLineInBase64Output)));
-  // That's all job's already done.
-  return ret;
-}
-
-//==============================================================================
 // XROOT READ FILE
 //==============================================================================
-XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
-  const std::string & pool): XrootBaseReadFile(timeout) {
-  // Setup parent's members
-  m_readPosition = 0;
-  m_URL = url;
-  // And start opening
-  using XrdCl::OpenFlags;
-  m_signedURL = m_URL;
-  // Turn the bare URL into a Castor URL, by adding opaque tags:
-  // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
-  // ?castor.pfn2=0:moverHandlerPort:transferId
-  // ?castor.pool=xxx optional ceph pool
-  // ?castor.exptime=(unix time)
-  // ?castor.txtype=tape
-  // ?castor.signature=
-  //Find the path part of the url. It is the first occurence of "//"
-  // after the inital [x]root://
-  const std::string scheme = "root://";
-  size_t schemePos = url.find(scheme);
-  if (std::string::npos == schemePos)
-    throw cta::exception::Exception(
-      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not find the scheme[x]root:// in URL "+
-        url));
-  size_t pathPos = url.find("/", schemePos + scheme.size());
-  if (std::string::npos == pathPos)
-    throw cta::exception::Exception(
-      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL "+
-        url));
-  // Build signature block
-  std::string path = url.substr(pathPos + 1);
-  time_t expTime = time(nullptr)+3600;
-  uuid_t uuid;
-  char suuid[100];
-  uuid_generate(uuid);
-  uuid_unparse(uuid, suuid);
-  std::stringstream signatureBlock;
-  signatureBlock << path << "0:" << suuid << "0" << expTime << "tape";
-  // Sign the block
-  std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
-  // Build URL parameters
-  std::stringstream opaqueBloc;
-  opaqueBloc << "?castor.pfn1=" << path;
-  opaqueBloc << "&castor.pfn2=0:" << suuid;
-  if (pool.size())
-    opaqueBloc << "&castor.pool=" << pool;
-  opaqueBloc << "&castor.exptime=" << expTime;
-  opaqueBloc << "&castor.txtype=tape";
-  opaqueBloc << "&castor.signature=" << signature;
-  m_signedURL = m_URL + opaqueBloc.str();
-
-  // ... and finally open the file
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-    std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")
-    +m_URL+" opaqueBlock="+opaqueBloc.str());
-}
-
 XrootReadFile::XrootReadFile(const std::string &xrootUrl, uint16_t timeout):
   XrootBaseReadFile(timeout) {
   // Setup parent's variables
@@ -400,63 +210,6 @@ XrootBaseReadFile::~XrootBaseReadFile() throw() {
 //==============================================================================
 // XROOT WRITE FILE
 //==============================================================================
-XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
-  const std::string & pool):
-  XrootBaseWriteFile(timeout) {
-  // Start opening
-  using XrdCl::OpenFlags;
-  m_URL=url;
-  m_signedURL = m_URL;
-  // Turn the bare URL into a Castor URL, by adding opaque tags:
-  // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
-  // ?castor.pfn2=0:moverHandlerPort:transferId
-  // ?castor.pool=xxx optional ceph pool
-  // ?castor.exptime=(unix time)
-  // ?castor.txtype=tape
-  // ?castor.signature=
-  //Find the path part of the url. It is the first occurence of "//"
-  // after the inital [x]root://
-  const std::string scheme = "root://";
-  size_t schemePos = url.find(scheme);
-  if (std::string::npos == schemePos)
-    throw cta::exception::Exception(
-      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL "+
-        url));
-  size_t pathPos = url.find("/", schemePos + scheme.size());
-  if (std::string::npos == pathPos)
-    throw cta::exception::Exception(
-      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL "+
-        url));
-  // Build signature block
-  std::string path = url.substr(pathPos + 1);
-  time_t expTime = time(nullptr)+3600;
-  uuid_t uuid;
-  char suuid[100];
-  uuid_generate(uuid);
-  uuid_unparse(uuid, suuid);
-  std::stringstream signatureBlock;
-  signatureBlock << path << "0:" << suuid << "0" << expTime << "tape";
-  // Sign the block
-  std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
-  // Build URL parameters
-  std::stringstream opaqueBloc;
-  opaqueBloc << "?castor.pfn1=" << path;
-  opaqueBloc << "&castor.pfn2=0:" << suuid;
-  if (pool.size())
-    opaqueBloc << "&castor.pool=" << pool;
-  opaqueBloc << "&castor.exptime=" << expTime;
-  opaqueBloc << "&castor.txtype=tape";
-  opaqueBloc << "&castor.signature=" << signature;
-  m_signedURL = m_URL + opaqueBloc.str();
-
-  // ... and finally open the file for write (deleting any existing one in case)
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write,
-    XrdCl::Access::None, m_timeout),
-    std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ")
-    +m_URL);
-}
-
 XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout):
   XrootBaseWriteFile(timeout) {
   using XrdCl::OpenFlags;
@@ -784,4 +537,4 @@ std::set<std::string> XRootdDirectory::getFilesName(){
   return ret;
 }
 
-}} //end of namespace cta::disk
+} // namespace cta::disk

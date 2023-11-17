@@ -49,12 +49,6 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 endif()
 
-# CTA continue using the old ABI, so we should force it. This command only works on cmake3,
-# so we should update the requeriments of CMakeLists
-# see: https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
-#      https://docs.ceph.com/en/latest/dev/cxx/
-add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
-
 # To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
 if (ENABLE_STDOUT_LOGGING)
   add_definitions (-DSTDOUT_LOGGING)
@@ -147,7 +141,8 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(cmdline)
   add_subdirectory(xroot_plugins)
-  add_subdirectory(frontend/grpc)
+  add_subdirectory(frontend-grpc)
+  add_subdirectory(frontend/common)
 
   add_subdirectory(catalogue)
   add_subdirectory(common)

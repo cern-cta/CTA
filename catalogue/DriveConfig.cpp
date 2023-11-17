@@ -56,6 +56,7 @@ void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfigurat
   setConfigToDB(&config->authenticationSSSKeytab, catalogue, tapeDriveName);
   setConfigToDB(&config->useRepackManagement, catalogue, tapeDriveName);
   setConfigToDB(&config->useMaintenanceProcess, catalogue, tapeDriveName);
+  setConfigToDB(&config->repackMaxRequestsToExpand, catalogue, tapeDriveName);
   setConfigToDB(&config->externalFreeDiskSpaceScript, catalogue, tapeDriveName);
   setConfigToDB(&config->tapeLoadTimeout, catalogue, tapeDriveName);
   setConfigToDB(&config->wdGlobalLockAcqMaxSecs, catalogue, tapeDriveName);

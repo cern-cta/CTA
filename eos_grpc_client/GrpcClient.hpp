@@ -21,8 +21,7 @@
 #include <grpc++/grpc++.h>
 #include "Rpc.grpc.pb.h"
 
-namespace eos {
-namespace client {
+namespace eos::client {
 
 class GrpcClient
 {
@@ -80,4 +79,4 @@ private:
   uint64_t m_eos_fid;   //!< EOS current file ID
 };
 
-}} // namespace eos::client
+} // namespace eos::client

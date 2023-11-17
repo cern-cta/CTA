@@ -21,11 +21,8 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/Timer.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
-  
+namespace castor::tape::tapeserver::daemon {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -124,7 +121,6 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         m_stats.closingTime +=localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
         break;
-        currentErrorToCount = "";
       }
     } //end of while(1)
     m_retrieveJob->transferredSize = m_stats.dataVolume;
@@ -267,5 +263,5 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,cta::log::LogCo
            .add("dstURL",m_stats.dstURL);
     lc.log(level,msg);
 }
-}}}}
+} // namespace castor::tape::tapeserver::daemon
 

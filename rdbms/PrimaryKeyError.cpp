@@ -17,14 +17,17 @@
 
 #include "rdbms/PrimaryKeyError.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PrimaryKeyError::PrimaryKeyError(const std::string &context, const bool embedBacktrace):
-  ConstraintError(context, embedBacktrace) {
+PrimaryKeyError::PrimaryKeyError(
+        const std::string &context,
+        const std::string &dbErrorMessage,
+        const std::string &violatedConstraintName,
+        const bool embedBacktrace):
+  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------
@@ -33,5 +36,4 @@ PrimaryKeyError::PrimaryKeyError(const std::string &context, const bool embedBac
 PrimaryKeyError::~PrimaryKeyError() noexcept {
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

@@ -44,8 +44,7 @@
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -140,6 +139,10 @@ const std::unique_ptr<LogicalLibraryCatalogue>& RdbmsCatalogue::LogicalLibrary()
   return m_logicalLibrary;
 }
 
+const std::unique_ptr<PhysicalLibraryCatalogue>& RdbmsCatalogue::PhysicalLibrary() {
+  return m_physicalLibrary;
+}
+
 const std::unique_ptr<TapeFileCatalogue>& RdbmsCatalogue::TapeFile() {
   return m_tapeFile;
 }
@@ -160,5 +163,4 @@ const std::unique_ptr<DriveStateCatalogue>& RdbmsCatalogue::DriveState() {
   return m_driveState;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

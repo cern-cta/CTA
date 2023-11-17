@@ -25,8 +25,7 @@
 #include <mutex>
 #include <optional>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 namespace wrapper {
   class StmtWrapper;
@@ -218,5 +217,4 @@ private:
 
 }; // class Stmt
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

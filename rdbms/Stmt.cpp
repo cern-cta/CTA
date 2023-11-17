@@ -20,8 +20,7 @@
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -317,5 +316,4 @@ wrapper::StmtWrapper &Stmt::getStmt() {
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

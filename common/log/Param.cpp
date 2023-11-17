@@ -19,9 +19,8 @@
 
 #include <cstdio>
 
-namespace cta {
-namespace log {
-  
+namespace cta::log {
+
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
@@ -43,5 +42,4 @@ void Param::setValue<uint8_t>(const uint8_t& value) throw(){
     m_value = oss.str();
 }
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log

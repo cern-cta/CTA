@@ -32,49 +32,57 @@
     - kubernetes
     - mhvtl
 
-.eos5:
+.eos4:
   extends:
     - .kubernetes_test
   rules:
     - !reference [.manual_rules, rules]
   variables:
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos5-config-quarkdb-http.yaml"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
 client:
   stage: test
   extends:
-    - .kubernetes_test
-  except:
-    - tags
+    - .eos4
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
 client-eos5:
   stage: test
   extends:
-    - .eos5
+    - .kubernetes_test
+  except:
+    - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
 client-gfal2:
   stage: test
   extends:
-    - .kubernetes_test
-  rules:
-    - !reference [.manual_rules, rules]
+    - .eos4
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
 
 client-gfal2-eos5:
   stage: test
   extends:
-    - .eos5
+    - .kubernetes_test
+  except:
+    - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
 repack:
+  stage: test
+  extends:
+    - .eos4
+  variables:
+    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
+
+repack-eos5:
   stage: test
   extends:
     - .kubernetes_test
@@ -83,13 +91,6 @@ repack:
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
-
-repack-eos5:
-  stage: test
-  extends:
-    - .eos5
-  variables:
-    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
 
 dbunittests-oracle:
   stage: test

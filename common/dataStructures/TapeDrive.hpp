@@ -25,9 +25,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountType.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * This struct holds status of a Tape Drive
@@ -112,6 +110,8 @@ struct TapeDrive {
   std::optional<uint64_t> reservedBytes;
   std::optional<uint64_t> reservationSessionId;
 
+  std::optional<std::string> physicalLibraryName;
+
   std::optional<std::string> userComment;
   std::optional<EntryLog> creationLog;
   std::optional<EntryLog> lastModificationLog;
@@ -119,6 +119,4 @@ struct TapeDrive {
 
 std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
 
-}  // namespace dataStructures
-}  // namespace common
-}  // namespace cta
+} // namespace cta::common::dataStructures

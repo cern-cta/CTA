@@ -27,8 +27,7 @@
 #include "common/utils/utils.hpp"
 #include "Login.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // s_fileFormat
@@ -279,5 +278,4 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   return true;
 }
 
-}  // namespace rdbms
-}  // namespace cta
+} // namespace cta::rdbms

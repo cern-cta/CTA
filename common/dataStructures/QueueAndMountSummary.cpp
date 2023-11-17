@@ -15,38 +15,44 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "QueueAndMountSummary.hpp"
+#include "common/dataStructures/QueueAndMountSummary.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <set>
+namespace cta::common::dataStructures {
 
-namespace cta {
-namespace common {
-namespace dataStructures {
-
-QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
-    MountType mountType, const std::string &tapePool, const std::string &vid,
-    const std::map<std::string, std::string> &vid_to_logical_library)
-{
-  for (auto & summary: summaryList) {
-    if((summary.tapePool == tapePool && summary.mountType == mountType && (getMountBasicType(mountType) == MountType::ArchiveAllTypes)) || (summary.vid == vid && mountType == MountType::Retrieve)) {
-      return summary;
+QueueAndMountSummary* QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary>& summaryList,
+    MountType mountType, const std::string& tapePool, const std::string& vid,
+    const std::map<std::string, std::string>& vid_to_logical_library) {
+  for(auto& summary : summaryList) {
+    if((summary.tapePool == tapePool && summary.mountType == mountType && getMountBasicType(mountType) == MountType::ArchiveAllTypes) ||
+       (summary.vid == vid && mountType == MountType::Retrieve)) {
+      return &summary;
     }
   }
-  if (std::set<MountType>({MountType::ArchiveForUser, MountType::Retrieve, MountType::ArchiveForRepack}).count(mountType)) {
-    summaryList.push_back(QueueAndMountSummary());
-    summaryList.back().mountType=mountType;
-    summaryList.back().tapePool=tapePool;
-    if (MountType::ArchiveForUser==mountType || MountType::ArchiveForRepack == mountType) {
-      summaryList.back().vid="-";
-      summaryList.back().logicalLibrary="-";
-    } else {
-      summaryList.back().vid=vid;
-      summaryList.back().logicalLibrary=vid_to_logical_library.at(vid);
-    }
-    return summaryList.back();
+  switch(mountType) {
+    case MountType::ArchiveForUser:
+    case MountType::Retrieve:
+    case MountType::ArchiveForRepack:
+      summaryList.push_back(QueueAndMountSummary());
+      summaryList.back().mountType=mountType;
+      summaryList.back().tapePool=tapePool;
+      if (MountType::ArchiveForUser==mountType || MountType::ArchiveForRepack == mountType) {
+        summaryList.back().vid="-";
+        summaryList.back().logicalLibrary="-";
+      } else {
+        summaryList.back().vid=vid;
+        summaryList.back().logicalLibrary=vid_to_logical_library.at(vid);
+      }
+      return &summaryList.back();
+
+    case MountType::Label:
+    case MountType::NoMount:
+    case MountType::ArchiveAllTypes:
+      throw exception::Exception("In QueueAndMountSummary::getOrCreateEntry(): Unexpected mount type " + toString(mountType));
   }
-  throw cta::exception::Exception ("In QueueAndMountSummary::getOrCreateEntry(): Unexpected mount type.");
+  // This exception indicates possible memory corruption
+  throw exception::Exception("In QueueAndMountSummary::getOrCreateEntry(): Invalid enum value, mountType="
+    + std::to_string(static_cast<uint32_t>(mountType)));
 }
 
-}}} //namespace cta::common::dataStructures
+} // namespace cta::common::dataStructures

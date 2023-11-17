@@ -17,8 +17,7 @@
 
 #include "common/exception/NonRetryableError.hpp"
 
-namespace cta {
-namespace exception {
+namespace cta::exception {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -27,5 +26,4 @@ NonRetryableError::NonRetryableError(const std::string &context, const bool embe
   Exception(context, embedBacktrace) {
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::exception

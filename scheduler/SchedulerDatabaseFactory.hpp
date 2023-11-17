@@ -81,11 +81,11 @@ public:
     return m_SchedDB->getRetrieveJobs(tapePoolName);
   }
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > getRetrieveJobs() const override {
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<> > getRetrieveJobs() const override {
     return m_SchedDB->getRetrieveJobs();
   }
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<> > getArchiveJobs() const override {
     return m_SchedDB->getArchiveJobs();
   }
 
@@ -241,6 +241,10 @@ public:
     return m_SchedDB->queueRepack(repackRequest, lc);
   }
 
+  bool repackExists() override {
+    return m_SchedDB->repackExists();
+  }
+
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
     return m_SchedDB->getRepackInfo();
   }
@@ -265,12 +269,8 @@ public:
     return m_SchedDB->getNextRepackJobToExpand();
   }
 
-  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override {
-    return m_SchedDB->requeueRetrieveJobs(jobs, logContext);
-  }
-
 protected:
   cta::SchedulerDatabase *m_SchedDB;
 };  // class SchedulerDatabaseDecorator
 
-}  // namespace cta
+} // namespace cta

@@ -18,8 +18,7 @@
 #include "RepackReportBatch.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 RepackReportBatch::RepackReportBatch()
 {
@@ -31,5 +30,4 @@ void RepackReportBatch::report(log::LogContext & lc)
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

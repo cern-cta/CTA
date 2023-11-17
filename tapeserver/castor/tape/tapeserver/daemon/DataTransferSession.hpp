@@ -33,10 +33,7 @@
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace castor::tape::tapeserver::daemon {
 
 /**
  * The main class handling a tape session. This is the main container started
@@ -107,7 +104,7 @@ private:
    * The configuration of the tape drive to be used by this session.
    */
   const cta::tape::daemon::TpconfigLine m_driveConfig;
-  const DataTransferConfig& m_dataTransferConfig;
+  const DataTransferConfig m_dataTransferConfig;
   /**
    * The drive information bundle allowing drive register update.
    * Filled up at construction time.
@@ -151,7 +148,5 @@ private:
    */
   cta::Scheduler& m_scheduler;
 };
-}
-}
-}
-}
+
+} // namespace castor::tape::tapeserver::daemon

@@ -30,8 +30,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SqliteArchiveFileCatalogue::SqliteArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue* rdbmsCatalogue)
@@ -236,5 +235,4 @@ void SqliteArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

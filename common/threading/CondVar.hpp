@@ -20,8 +20,7 @@
 #include <memory>
 #include <pthread.h>
 
-namespace cta {
-namespace threading {
+namespace cta::threading {
 
 /**
  * Forward declaration of the class representing a mutex locker.
@@ -87,5 +86,4 @@ private:
   pthread_cond_t m_cond;
 }; // class CondVar
 
-} // namespace threading
-} // namespace cta
+} // namespace cta::threading

@@ -20,8 +20,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Structure describing the event of having written a file to tape.
@@ -90,5 +89,4 @@ struct TapeItemWritten {
  */
 std::ostream &operator<<(std::ostream &os, const TapeItemWritten &obj);
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

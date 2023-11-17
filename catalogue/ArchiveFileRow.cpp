@@ -17,8 +17,7 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -63,5 +62,4 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj) {
   return os;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -37,8 +37,7 @@
  */
 #define LOG_USERERR LOG_NOTICE
 
-namespace cta {
-namespace log {
+namespace cta::log {
 
 /**
  * Abstract class representing the API of the CASTOR logging system.
@@ -256,6 +255,5 @@ private:
 
 }; // class Logger
 
-} // namespace log
-} // namespace cta
+} // namespace cta::log
 

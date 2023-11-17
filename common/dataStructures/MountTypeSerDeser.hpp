@@ -20,8 +20,7 @@
 #include <common/dataStructures/MountType.hpp>
 #include "cta_admin.pb.h"
 
-namespace cta {
-namespace admin {
+namespace cta::admin {
 
 common::dataStructures::MountType ProtobufToMountType(MountType mountType) {
   using namespace common::dataStructures;
@@ -53,4 +52,4 @@ MountType MountTypeToProtobuf(common::dataStructures::MountType mountType) {
   return UNKNOWN_MOUNT_TYPE;
 }
 
-}} // cta::admin
+} // namespace cta::admin

@@ -21,8 +21,7 @@
 #include <list>
 #include <map>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 /**
  * Structure containing the common schema procedures of the CTA schedulerdb
@@ -58,5 +57,4 @@ struct SchedulerSchema {
   std::map<std::string, uint64_t> getSchemaVersion() const;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

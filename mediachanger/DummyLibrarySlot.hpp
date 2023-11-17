@@ -19,8 +19,7 @@
 
 #include "mediachanger/LibrarySlot.hpp"
 
-namespace cta {
-namespace mediachanger {
+namespace cta::mediachanger {
 
 /**
  * Class representing a dummy slot for the tests.
@@ -59,5 +58,4 @@ public:
 
 }; // class DummyLibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+} // namespace cta::mediachanger

@@ -18,8 +18,7 @@
 #include "catalogue/TapePool.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -73,5 +72,4 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   return os;
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

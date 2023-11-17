@@ -19,7 +19,7 @@
 
 #include "CostHeuristic.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 /**
  * This class implements the CTA CostHeuristic that is documented here:
@@ -38,4 +38,4 @@ public:
 
 };
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

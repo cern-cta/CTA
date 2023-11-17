@@ -21,7 +21,7 @@
 #include "mediachanger/LibrarySlot.hpp"
 #include <memory>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 /**
  * The data stored in a data-line (as opposed to a comment-line) from a
@@ -97,4 +97,4 @@ public:
   static const size_t maxNameLen = 100;
 }; // struct TpconfigLine
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

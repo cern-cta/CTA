@@ -21,9 +21,7 @@
 #include <unistd.h>
 #include <algorithm>
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 
 ProcessManager::ProcessManager(log::LogContext & log): m_logContext(log) {
   m_epollFd = ::epoll_create1(0);
@@ -186,16 +184,13 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         // We are in the child side: run the subprocess and exit.
         m_logContext.log(log::INFO, "In child process. Running child.");
         ::exit(sp.handler->runChild());
-        break;
       case SubprocessHandler::ForkState::parent:
         // We are parent side. Record the new state for this handler
         newStatus.forkState = SubprocessHandler::ForkState::notForking;
         sp.status = newStatus;
         break;
       case SubprocessHandler::ForkState::notForking:
-        throw cta::exception::Exception("In ProcessManager::runForkManagement(): "
-            "unexpected for state (notForking)");
-        break;
+        throw cta::exception::Exception("In ProcessManager::runForkManagement(): unexpected for state (notForking)");
       }
     }
   }
@@ -279,7 +274,7 @@ void ProcessManager::runEventLoop() {
   // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
   if (-1 == receivedEvents && EINTR == errno) receivedEvents = 0;
   cta::exception::Errnum::throwOnMinusOne(receivedEvents, 
-      "In ProcessManager::run(): failed to ::epoll_wait()");
+      "In ProcessManager::runEventLoop(): failed to ::epoll_wait()");
   for (int i=0; i< receivedEvents; i++) {
     // The subprocess handers registered themselves to epoll, so we have the 
     // pointer to it.
@@ -295,4 +290,4 @@ void ProcessManager::runEventLoop() {
   // We now updated all statuses for the next iteration of the loop.
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

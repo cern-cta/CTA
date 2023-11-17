@@ -27,9 +27,7 @@
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 EnstoreFileReader::EnstoreFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
   : FileReader(rs, fileToRecall) {
@@ -125,7 +123,11 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
 
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
-      bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+      if(bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
+	    bytes_read = 0;
+      } else {
+    	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+      }
     }
   }
 
@@ -140,6 +142,4 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
   return bytes_read;
 }
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

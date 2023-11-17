@@ -57,21 +57,24 @@
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta {
+
 // Forward declarations for opaque references.
-namespace common {
-namespace admin {
+namespace common::admin {
 class AdminUser;
-}  // cta::common::admin
-namespace archiveRoute {
+}
+
+namespace common::archiveRoute {
 class ArchiveRoute;
-}  // cta::common::archiveRoute
-}  // cta::common
+}
+
 namespace log {
 class TimingList;
-}  // cta::log
+}
+
 namespace utils {
 class Timer;
-}  // cta::utils
+}
+
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
@@ -81,13 +84,11 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class RepackRequest;
+
 namespace objectstore {
 class RetrieveRequest;
 class ArchiveRequest;
 }
-}  // namespace cta
-
-namespace cta {
 
 /**
  * Abstract class defining the interface to the database of a tape resource
@@ -134,7 +135,7 @@ class SchedulerDatabase {
    *
    * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
+  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<> >
     getArchiveJobs() const = 0;
 
   /**
@@ -188,6 +189,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::optional<std::string> encryptionKeyName;
       uint64_t mountId;
       uint64_t capacityInBytes;
       cta::common::dataStructures::Label::Format labelFormat;
@@ -417,7 +419,7 @@ class SchedulerDatabase {
    *
    * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob> >
+  virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<> >
     getRetrieveJobs() const = 0;
 
   /**
@@ -451,6 +453,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::optional<std::string> encryptionKeyName;
       uint64_t capacityInBytes;
       uint64_t mountId;
       std::optional<std::string> activity;
@@ -525,6 +528,7 @@ class SchedulerDatabase {
   /*============ Repack management: user side ================================*/
   virtual std::string queueRepack(const cta::SchedulerDatabase::QueueRepackRequest & repackRequest,
     log::LogContext & lc) = 0;
+  virtual bool repackExists() = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
@@ -712,6 +716,8 @@ class SchedulerDatabase {
     
     std::optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
+    std::optional<std::string> encryptionKeyName; // The optional name of the encryption key.
+
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
         return true;
@@ -792,29 +798,21 @@ class SchedulerDatabase {
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape, const std::string& driveName,
-      const std::string & logicalLibrary, const std::string & hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) = 0;
+    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                             const catalogue::TapeForWriting& tape,
+                                                             const std::string& driveName,
+                                                             const std::string& logicalLibrary,
+                                                             const std::string& hostName) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string & tapePool, const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) = 0;
+    virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                               const std::string& driveName,
+                                                               const std::string& logicalLibrary,
+                                                               const std::string& hostName) = 0;
     /** Destructor: releases the global lock if not already done */
-    virtual ~TapeMountDecisionInfo() {};
+    virtual ~TapeMountDecisionInfo() = default;
   };
 
   // Enum to change the behaviour of the getMountInfoNoLock method
@@ -844,12 +842,6 @@ class SchedulerDatabase {
    * status. It is identical to getMountInfo, yet does not take the global lock.
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
-
-  /**
-   * A function to reinsert Retrieve jobs that were previously removed from 
-   * the scheduler database
-   */
-  virtual void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob*> &jobs, log::LogContext& logContext) = 0;
 
 }; // class SchedulerDatabase
 

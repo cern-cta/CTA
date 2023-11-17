@@ -28,7 +28,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "ObjectOps.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class AgentReference;
 class GenericObject;
@@ -36,7 +36,7 @@ class GenericObject;
 class RootEntry: public ObjectOps<serializers::RootEntry, serializers::RootEntry_t> {
 public:
   // The conventional address of the root entry
-  static const std::string address; // = "root"
+  static const std::string c_address; // = "root"
 
   // Constructor
   RootEntry(Backend & os);
@@ -47,7 +47,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
 
   // In memory initialiser
-  void initialize();
+  void initialize() override;
 
   // Emptyness checker
   bool isEmpty();
@@ -153,4 +153,4 @@ public:
   std::string dump ();
 };
 
-}}
+} // namespace cta::objectstore

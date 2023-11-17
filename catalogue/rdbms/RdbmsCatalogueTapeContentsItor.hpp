@@ -26,8 +26,7 @@
 #include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Iteratess across the tape files that make up the contents of a given tape.
@@ -111,5 +110,4 @@ private:
 
 }; // class RdbmsCatalogueTapeContentsItor
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

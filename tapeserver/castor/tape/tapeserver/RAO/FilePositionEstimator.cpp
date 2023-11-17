@@ -17,7 +17,7 @@
 
 #include "FilePositionEstimator.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor::tape::tapeserver::rao {
 
 FilePositionEstimator::FilePositionEstimator() {
 }
@@ -25,4 +25,4 @@ FilePositionEstimator::FilePositionEstimator() {
 FilePositionEstimator::~FilePositionEstimator() {
 }
 
-}}}}
+} // namespace castor::tape::tapeserver::rao

@@ -36,8 +36,7 @@
 #include <set>
 #include <vector>
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 class RetrieveRequest {
   friend class cta::PostgresSchedDB;
@@ -149,5 +148,4 @@ public:
   log::LogContext &m_lc;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+} // namespace cta::postgresscheddb

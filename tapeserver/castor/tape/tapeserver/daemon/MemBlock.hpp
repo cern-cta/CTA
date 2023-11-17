@@ -22,11 +22,8 @@
 #include "common/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/Payload.hpp"
 
+namespace castor::tape::tapeserver::daemon {
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
 /**
  * Individual memory block with metadata
  */
@@ -184,8 +181,4 @@ public:
   
 };
 
-}
-}
-}
-}
-
+} // namespace castor::tape::tapeserver::daemon

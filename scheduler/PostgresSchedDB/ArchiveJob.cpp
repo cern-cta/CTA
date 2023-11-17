@@ -18,8 +18,7 @@
 #include "ArchiveJob.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace cta {
-namespace postgresscheddb {
+namespace cta::postgresscheddb {
 
 ArchiveJob::ArchiveJob()
 {
@@ -40,5 +39,4 @@ void ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount)
    throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+} // namespace cta::postgresscheddb

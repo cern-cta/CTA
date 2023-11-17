@@ -26,9 +26,7 @@
 #include "FetchReportOrFlushLimits.hpp"
 #include "Tpconfig.hpp"
 
-namespace cta {
-namespace tape {
-namespace daemon {
+namespace cta::tape::daemon {
 /**
  * Class containing all the parameters needed by the watchdog process
  * to spawn a transfer session per drive.
@@ -60,7 +58,7 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // Memory management
   //----------------------------------------------------------------------------
-  /// Memory buffer size in bytes (with a default of 5MB). TODO-switch to 32MB once validated in CASTOR.
+  /// Memory buffer size in bytes (with a default of 5MB).
   cta::SourcedParameter<uint64_t> bufferSizeBytes{
     "taped", "BufferSizeBytes", 5*1024*1024, "Compile time default"};
   /// Memory buffer count per drive. Default 5000.
@@ -170,6 +168,11 @@ struct TapedConfiguration {
     "taped","UseMaintenanceProcess","yes","Compile time default"
   };
   
+
+  /// Max number of repacks to promote to ToExpand state.
+  cta::SourcedParameter<std::uint64_t> repackMaxRequestsToExpand{
+      "taped", "RepackMaxRequestsToExpand", 2, "Compile time default"};
+
   //----------------------------------------------------------------------------
   // Tape load actions
   //----------------------------------------------------------------------------
@@ -209,6 +212,4 @@ private:
    * functions (just unconditionally log things). */
   static cta::log::DummyLogger gDummyLogger;
 } ;
-}
-}
 } // namespace cta::tape::daemon

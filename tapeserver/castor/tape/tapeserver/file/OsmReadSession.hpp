@@ -23,9 +23,7 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 /**
   * Class keeping track of a whole tape read session over an AUL formatted
@@ -49,6 +47,4 @@ public:
   ~OsmReadSession() override = default;
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

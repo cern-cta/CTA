@@ -19,13 +19,11 @@
 
 #include <string>
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 /**
  * The maximum length an SQL statement can have in exception error message.
  */
 const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 80;
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

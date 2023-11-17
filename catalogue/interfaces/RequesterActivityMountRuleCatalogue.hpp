@@ -19,12 +19,10 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct RequesterActivityMountRule;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}
 
 namespace catalogue {
 
@@ -86,5 +84,4 @@ public:
     const std::string &activityRegex) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}} // namespace cta::catalogue

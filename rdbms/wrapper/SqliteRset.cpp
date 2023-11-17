@@ -29,9 +29,7 @@
 #include <stdexcept>
 
 
-namespace cta {
-namespace rdbms {
-namespace wrapper {
+namespace cta::rdbms::wrapper {
 
 /**
  * A map from column name to column index and type.
@@ -157,9 +155,9 @@ bool SqliteRset::next() {
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw PrimaryKeyError(msg.str());
+      throw PrimaryKeyError(msg.str(), "", "");
     case SQLITE_CONSTRAINT:
-      throw ConstraintError(msg.str());
+      throw ConstraintError(msg.str(), "", "");
     default:
       throw exception::Exception(msg.str());
     }
@@ -335,6 +333,4 @@ std::optional<double> SqliteRset::columnOptionalDouble(const std::string &colNam
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms::wrapper

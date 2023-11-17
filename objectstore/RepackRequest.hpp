@@ -24,7 +24,7 @@
 #include "common/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class Agent;
 class GenericObject;
@@ -34,7 +34,7 @@ public:
   RepackRequest(const std::string & address, Backend & os);
   RepackRequest(Backend & os);
   RepackRequest(GenericObject & go);
-  void initialize();
+  void initialize() override;
 
   // Parameters interface
   void setVid(const std::string & vid);
@@ -176,4 +176,4 @@ public:
       std::optional<serializers::RepackRequestStatus> newStatus);
   };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore

@@ -26,13 +26,11 @@ namespace cta {
 class RetrieveJob;
 }
 
-namespace castor {
-namespace tape {
-namespace tapeFile {
+namespace castor::tape::tapeFile {
 
 class ReadSession;
 
-class FileReader{
+class FileReader {
 public:
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
@@ -115,6 +113,4 @@ private:
   void position(const cta::RetrieveJob &fileToRecall);
 };
 
-}  // namespace tapeFile
-}  // namespace tape
-}  // namespace castor
+} // namespace castor::tape::tapeFile

@@ -21,8 +21,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/rdbms.hpp"
 
-namespace cta {
-namespace rdbms {
+namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -294,5 +293,4 @@ std::list<std::string> Conn::getTypeNames() {
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+} // namespace cta::rdbms

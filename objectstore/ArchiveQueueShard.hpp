@@ -19,7 +19,7 @@
 
 #include "ArchiveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta::objectstore {
 
 class ArchiveQueueShard: public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>  {
 public:
@@ -33,7 +33,7 @@ public:
   ArchiveQueueShard(GenericObject & go);
 
   // Forbid/hide base initializer
-  void initialize() = delete;
+  void initialize() override;
 
   // Initializer
   void initialize(const std::string & owner);
@@ -85,4 +85,4 @@ public:
 
 };
 
-}} // namespace cta::objectstore
+} // namespace cta::objectstore
