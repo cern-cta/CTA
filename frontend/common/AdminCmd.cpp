@@ -442,10 +442,10 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
 
   if(auto comment = getOptional(OptionString::COMMENT); comment) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>cn, comment.value());
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), comment.value());
   }
   if(auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>cn, tapepool.value());
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), tapepool.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -457,7 +457,7 @@ void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
   auto& cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
-  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>cn);
+  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn));
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -738,10 +738,10 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
     m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
   if(primaryDensityCode) {
-    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value());
   }
   if(secondaryDensityCode) {
-    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(secondaryDensityCode.value()));
   }
   if(nbWraps) {
     std::optional<uint32_t> newNbWraps = nbWraps.value();
