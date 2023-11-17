@@ -43,8 +43,7 @@ TEST(JSONCObjectTest, testObjectGenerationFromJSON){
 
 TEST(JSONCObjectTest, testJSONCParserGetJSONShouldReturnDefaultValues){
   JSONCTestObject to;
-  ASSERT_NE(std::string::npos, to.getJSON().find("{\"integer_number\":0,\"str\":\"\","));
-  ASSERT_NE(std::string::npos, to.getJSON().find("\"double_number\":0.0"));
+  ASSERT_EQ("{\"integer_number\":0,\"str\":\"\",\"double_number\":0.000000}",to.getJSON());
 }
 
 TEST(JSONCObjectTest, testJSONCParserSetJSONToBeParsedWrongJSONFormat){
@@ -52,4 +51,4 @@ TEST(JSONCObjectTest, testJSONCParserSetJSONToBeParsedWrongJSONFormat){
   ASSERT_THROW(to.buildFromJSON("WRONG_JSON_STRING"),cta::exception::JSONObjectException);
 }
 
-}
+} // namespace unitTests
