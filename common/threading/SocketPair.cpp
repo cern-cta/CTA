@@ -120,7 +120,7 @@ int SocketPair::getFdForAccess(Side sourceOrDestination) {
   // Validate state. sourceOrDestination must be Side::current, Side::parent, or Side::child.
   // If it is Side::Current, m_currentSide must be Side::parent or Side::child.
   Side sideToValidate = sourceOrDestination == Side::current ? m_currentSide : sourceOrDestination;
-  ::set<Side> validSides = {Side::parent, Side::child};
+  const ::set<Side> validSides = {Side::parent, Side::child};
   if(!validSides.count(sideToValidate)) {
     throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid state")
   }
