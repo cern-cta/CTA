@@ -12,7 +12,7 @@ stages:
 variables:
   XROOTD_VERSION: 5
   SCHED_TYPE: "objectstore"
-  ORACLE_SUPPORT: "OFF"
+  ORACLE_SUPPORT: "ON"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
