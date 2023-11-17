@@ -131,8 +131,8 @@ int SocketPair::getFdForAccess(Side sourceOrDestination) {
   // Otherwise, return the fd matching opposite of the side specified
   // (sourceOrDestination == Side::parent returns child fd)
   int accessFd = (
-    (sourceOrDestination == Side::parent) ||
-    (sourceOrDestination == Side::current && m_currentSide == Side::child)
+    (sourceOrDestination == Side::current && m_currentSide == Side::child) ||
+    (sourceOrDestination == Side::parent)
   ) ? m_childFd : m_parentFd;
  
   if (accessFd == -1)
