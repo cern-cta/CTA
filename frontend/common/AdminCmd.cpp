@@ -617,7 +617,7 @@ void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
   auto& comment            = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, physicalLibraryName, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled.value_or(false), physicalLibraryName, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1081,7 +1081,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.tapePoolName = tapepool;
   tape.full = full;
   tape.purchaseOrder = purchaseOrder;
-  tape.comment = comment ? comment.value() : "";
+  tape.comment = comment.value_or("");
   if(!state) {
     // By default, the state of the tape will be ACTIVE
     tape.state = common::dataStructures::Tape::ACTIVE;
@@ -1433,17 +1433,8 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   vo.comment = comment;
   vo.diskInstanceName = diskInstanceName;
 
-  if(maxFileSizeOpt) {
-    vo.maxFileSize = maxFileSizeOpt.value();
-  } else {
-    vo.maxFileSize = m_archiveFileMaxSize;
-  }
-
-  if(isRepackVo) {
-    vo.isRepackVo = isRepackVo.value();
-  } else {
-    vo.isRepackVo = false;
-  }
+  vo.maxFileSize = maxFileSizeOpt.value_or(m_archiveFileMaxSize);
+  vo.isRepackVo = isRepackVo.value_or(false);
 
   m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
 
