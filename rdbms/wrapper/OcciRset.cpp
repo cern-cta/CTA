@@ -55,12 +55,7 @@ void OcciRset::populateColNameToIdxMap() {
     for (unsigned int i = 0; i < columns.size(); i++) {
       // Column indices start at 1
       const unsigned int colIdx = i + 1;
-      /*
-        This is a way to get the column name without having to use the Oracle-specific code, it has problems for ABI=1
-        I leave the old code here for reference:
-        const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
-      */
-      const auto name = m_rset->getString(colIdx);
+      const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
       m_colNameToIdx.add(name, colIdx);
     }
   } catch(exception::Exception &ne) {
