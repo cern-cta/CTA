@@ -293,15 +293,6 @@ void AdminCmd::importOptions() {
     }
     m_option_str_list.try_emplace(std::make_pair(opt_it->key(), items));
   }
-  std::for_each(m_adminCmd.option_str_list().begin(),
-                m_adminCmd.option_str_list().end(),
-                [&m_option_str_list](opt){
-                  std::vector<std::string> items;
-                  std::for_each(opt->item.begin(), opt->item.end(),
-                                [&items, &m_option_str_list](item){items.push_back(*item)});
-                  m_options_str_list.try_emplace(std::make_pair(opt->key(), items));
-                });
-
 }
 
 void AdminCmd::logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t) {
