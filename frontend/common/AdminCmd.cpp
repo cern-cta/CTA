@@ -1618,7 +1618,7 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
 
     // call is from cta-change-storageclass
     if(newStorageClassName) {
-      for(auto& id : archiveFileIds) {
+      for(const auto& id : archiveFileIds) {
         const uint64_t archiveFileId = utils::toUint64(id);
         m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName.value());
       }
