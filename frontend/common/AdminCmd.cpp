@@ -267,22 +267,22 @@ void AdminCmd::importOptions() {
   // Import Boolean options
   std::for_each(m_adminCmd.option_bool().begin(),
                 m_adminCmd.option_bool().end(),
-                [&m_option_bool](opt){
-                  m_option_bool.insert(std::make_pair(opt->key(), opt->value()));
+                [this](auto opt){
+                  m_option_bool.insert(std::make_pair(opt.key(), opt.value()));
                 });
 
   // Import UInt64 options
-  std::for_each(m_adminCmd.option_uint64.begin(),
-                m_adminCmd.option_uint64.end(),
-                [&m_option_uint64](opt){
-                  m_option_uint64.insert(std::make_pair(opt->key(), opt->value()));
+  std::for_each(m_adminCmd.option_uint64().begin(),
+                m_adminCmd.option_uint64().end(),
+                [this](auto opt){
+                  m_option_uint64.insert(std::make_pair(opt.key(), opt.value()));
                 });
 
   // Import String options
   std::for_each(m_adminCmd.option_str().begin(),
                 m_adminCmd.option_str().end(),
-                [&m_option_str](opt){
-                  m_option_str.insert(std::make_pair(opt->key(), opt->value()));
+                [this](auto opt){
+                  m_option_str.insert(std::make_pair(opt.key(), opt.value()));
                 });
 
   // Import String List options
@@ -291,7 +291,7 @@ void AdminCmd::importOptions() {
     for(auto item_it = opt_it->item().begin(); item_it != opt_it->item().end(); ++item_it) {
       items.push_back(*item_it);
     }
-    m_option_str_list.try_emplace(std::make_pair(opt_it->key(), items));
+    m_option_str_list.try_emplace(opt_it->key(), items);
   }
 }
 
@@ -845,7 +845,7 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
 
   //Get the mountpolicy from the catalogue
   common::dataStructures::MountPolicy mountPolicy;
-  using std::list<common::dataStructures::MountPolicy> MountPolicyList;
+  using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
   MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
   MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
     return mp.name == mountPolicyProvidedByUser;
