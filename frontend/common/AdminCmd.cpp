@@ -441,10 +441,10 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   auto& scn      = getRequired(OptionString::STORAGE_CLASS);
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
 
-  if(getOptional(OptionString::COMMENT)) {
+  if(auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
   }
-  if(getOptional(OptionString::TAPE_POOL)) {
+  if(auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
   }
 
@@ -533,12 +533,11 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if(!regexResult.empty())
     {
-      const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
-
-      if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down     ||
-         tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown ||
-         tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
-         has_flag(OptionBoolean::FORCE))
+      if(const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down     ||
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown ||
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
+        has_flag(OptionBoolean::FORCE))
       {
         m_scheduler.removeDrive(m_cliIdentity, tapeDriveName, m_lc);
         cmdlineOutput << "Drive " << tapeDriveName << " removed"
@@ -588,13 +587,11 @@ void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
 
   auto& in          = getRequired(OptionString::INSTANCE);
   auto& name        = getRequired(OptionString::USERNAME);
-  auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
-  auto  comment     = getOptional(OptionString::COMMENT);
 
-  if(comment) {
+  if(auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
-  if(mountpolicy) {
+  if(auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
   }
 
@@ -841,10 +838,10 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   std::vector<std::string> vid_list;
   std::string bufferURL;
 
-  auto vidl = getOptional(OptionStrList::VID);
-  if(vidl) vid_list = vidl.value();
-  auto vid = getOptional(OptionString::VID);
-  if(vid) vid_list.push_back(vid.value());
+  if(auto vidl = getOptional(OptionStrList::VID); vidl)
+    vid_list = vidl.value();
+  if(auto vid = getOptional(OptionString::VID); vid)
+    vid_list.push_back(vid.value());
 
   if(vid_list.empty()) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
@@ -872,8 +869,7 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
   }
 
-  auto buff = getOptional(OptionString::BUFFERURL);
-  if(buff) {
+  if(auto buff = getOptional(OptionString::BUFFERURL); buff) {
     //The buffer is provided by the user
     bufferURL = buff.value();
   } else {
@@ -1351,7 +1347,7 @@ void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
   const auto& name              = getRequired(OptionString::DISK_INSTANCE);
   const auto comment            = getOptional(OptionString::COMMENT);
 
-  if(comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
   }
 
@@ -1497,8 +1493,8 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::VO);
 
-  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
-  if (defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
+  if (auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+      defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
     throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
   }
 
