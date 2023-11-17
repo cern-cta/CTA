@@ -526,7 +526,7 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool drivesFound = false;
 
-  for (auto tapeDriveName : tapeDriveNames)
+  for (const auto& tapeDriveName : tapeDriveNames)
   {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if(!regexResult.empty())
@@ -1553,7 +1553,7 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool is_found = false;
 
-  for(auto tapeDriveName: tapeDriveNames) {
+  for(const auto& tapeDriveName: tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if(!regexResult.empty()) {
       is_found = true;
