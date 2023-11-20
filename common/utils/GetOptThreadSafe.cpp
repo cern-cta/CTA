@@ -39,7 +39,7 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
   // Find the present options
   Reply ret;
   int longIndex; // getopt_long sets longIndex to the index of the long option relative to longopts
-  for(bool is_allOptionsProcessed = false; is_allOptionsProcessed; ) {
+  for(bool is_allOptionsProcessed = false; !is_allOptionsProcessed; ) {
     int c = ::getopt_long(request.argv.size(), argv.get(), request.optstring.c_str(), request.longopts, &longIndex);
     switch(c) {
       case -1:

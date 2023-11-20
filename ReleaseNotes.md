@@ -14,6 +14,7 @@
 - cta/CTA#530 - Remove deprecated protobuf method from the code
 - cta/CTA#529 - Concise syntax should be used for concatenatable namespaces
 - cta/CTA#533 - Upgrade SonarCloud runtime to Java 17
+- cta/CTA#538 - Fix bugs reported by SonarCloud
 
 # v4.10.8-1
 
