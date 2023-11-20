@@ -1,0 +1,7 @@
+[dbclients9el-stable]
+name=IT-DB database client tools [stable]
+baseurl=http://linuxsoft.cern.ch/internal/repos/dbclients9el-stable/x86_64/os
+enabled=1
+gpgcheck=True
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kojiv2
+priority=5
