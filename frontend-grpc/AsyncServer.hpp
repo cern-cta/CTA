@@ -54,7 +54,7 @@ public:
     std::lock_guard<std::mutex> lck(m_mtxLockService);
    
     std::unique_ptr<::grpc::Service> upService; // Empty
-    upService = std::make_unique<SERVICE>(std::forward<ARGS>(args)...);
+    upService = std::make_unique<SERVICE>(std::move(args)...);
     /*
      * Register a service.
      * This call does not take ownership of the service.

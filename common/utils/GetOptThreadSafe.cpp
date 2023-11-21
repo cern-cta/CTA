@@ -38,25 +38,22 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
 
   // Find the present options
   Reply ret;
-  int longIndex; // getopt_long sets longIndex to the index of the long option relative to longopts
+  int longIndex(0); // getopt_long sets longIndex to the index of the long option relative to longopts
   for(bool is_allOptionsProcessed = false; !is_allOptionsProcessed; ) {
     int c = ::getopt_long(request.argv.size(), argv.get(), request.optstring.c_str(), request.longopts, &longIndex);
     switch(c) {
       case -1:
         is_allOptionsProcessed = true;
         break;
-
       case 0:
         // We received a long option
         ret.options.push_back(FoundOption());
         ret.options.back().option = request.longopts[longIndex].name;
         if (::optarg) ret.options.back().parameter = ::optarg;
         break;
-
       case 1:
         // We received a non-option
         break;
-
       case '?':
       case ':': {
         // getopt is unhappy
@@ -64,7 +61,6 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
         e.getMessage() << argv[::optind];
         throw e;
       }
-
       default:
         // We received a character option
         ret.options.push_back(FoundOption());
