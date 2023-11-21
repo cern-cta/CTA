@@ -265,19 +265,25 @@ void AdminCmd::importOptions() {
   validateCmd(m_adminCmd);
 
   // Import Boolean options
-  for(auto opt_it = m_adminCmd.option_bool().begin(); opt_it != m_adminCmd.option_bool().end(); ++opt_it) {
-    m_option_bool.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_bool().begin(),
+                m_adminCmd.option_bool().end(),
+                [this](auto opt){
+                  m_option_bool.insert(std::make_pair(opt.key(), opt.value()));
+                });
 
   // Import UInt64 options
-  for(auto opt_it = m_adminCmd.option_uint64().begin(); opt_it != m_adminCmd.option_uint64().end(); ++opt_it) {
-    m_option_uint64.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_uint64().begin(),
+                m_adminCmd.option_uint64().end(),
+                [this](auto opt){
+                  m_option_uint64.insert(std::make_pair(opt.key(), opt.value()));
+                });
 
   // Import String options
-  for(auto opt_it = m_adminCmd.option_str().begin(); opt_it != m_adminCmd.option_str().end(); ++opt_it) {
-    m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_str().begin(),
+                m_adminCmd.option_str().end(),
+                [this](auto opt){
+                  m_option_str.insert(std::make_pair(opt.key(), opt.value()));
+                });
 
   // Import String List options
   for(auto opt_it = m_adminCmd.option_str_list().begin(); opt_it != m_adminCmd.option_str_list().end(); ++opt_it) {
@@ -285,7 +291,7 @@ void AdminCmd::importOptions() {
     for(auto item_it = opt_it->item().begin(); item_it != opt_it->item().end(); ++item_it) {
       items.push_back(*item_it);
     }
-    m_option_str_list.insert(std::make_pair(opt_it->key(), items));
+    m_option_str_list.try_emplace(opt_it->key(), items);
   }
 }
 
@@ -319,9 +325,9 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   std::pair<admin::AdminCmd::Cmd, admin::AdminCmd::SubCmd> cmd_key(m_adminCmd.cmd(), m_adminCmd.subcmd());
   std::vector<admin::Option> cmd_options = admin::cmdOptions.at(cmd_key);
 
-  for(auto &cmd_option: cmd_options) {
+  for(const auto &cmd_option: cmd_options) {
     bool has_option = false;
-    auto lookup_key = cmd_option.get_key();
+    const auto& lookup_key = cmd_option.get_key();
     // Lookup if command line option was used in the command
     switch(cmd_option.get_type()) {
       case admin::Option::option_t::OPT_FLAG: // Treat flag options as bool options
@@ -413,7 +419,7 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
   auto& tapepool = getRequired(OptionString::TAPE_POOL);
   auto& comment  = getRequired(OptionString::COMMENT);
 
-  m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
+  m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, static_cast<uint32_t>(cn), tapepool, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -423,14 +429,12 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
 
   auto& scn      = getRequired(OptionString::STORAGE_CLASS);
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
-  auto  tapepool = getOptional(OptionString::TAPE_POOL);
-  auto  comment  = getOptional(OptionString::COMMENT);
 
-  if(comment) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), comment.value());
   }
-  if(tapepool) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
+  if(const auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), tapepool.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -442,7 +446,7 @@ void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
   auto& cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
-  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, cn);
+  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn));
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -513,17 +517,16 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool drivesFound = false;
 
-  for (auto tapeDriveName : tapeDriveNames)
+  for (const auto& tapeDriveName : tapeDriveNames)
   {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if(!regexResult.empty())
     {
-      const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
-
-      if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down     ||
-         tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown ||
-         tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
-         has_flag(OptionBoolean::FORCE))
+      if(const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down     ||
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown ||
+        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
+        has_flag(OptionBoolean::FORCE))
       {
         m_scheduler.removeDrive(m_cliIdentity, tapeDriveName, m_lc);
         cmdlineOutput << "Drive " << tapeDriveName << " removed"
@@ -573,13 +576,11 @@ void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
 
   auto& in          = getRequired(OptionString::INSTANCE);
   auto& name        = getRequired(OptionString::USERNAME);
-  auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
-  auto  comment     = getOptional(OptionString::COMMENT);
 
-  if(comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
-  if(mountpolicy) {
+  if(const auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
   }
 
@@ -605,7 +606,7 @@ void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
   auto& comment            = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, physicalLibraryName, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled.value_or(false), physicalLibraryName, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -726,10 +727,10 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
     m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
   if(primaryDensityCode) {
-    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value()));
   }
   if(secondaryDensityCode) {
-    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(secondaryDensityCode.value()));
   }
   if(nbWraps) {
     std::optional<uint32_t> newNbWraps = nbWraps.value();
@@ -826,10 +827,10 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   std::vector<std::string> vid_list;
   std::string bufferURL;
 
-  auto vidl = getOptional(OptionStrList::VID);
-  if(vidl) vid_list = vidl.value();
-  auto vid = getOptional(OptionString::VID);
-  if(vid) vid_list.push_back(vid.value());
+  if(const auto vidl = getOptional(OptionStrList::VID); vidl)
+    vid_list = vidl.value();
+  if(const auto vid = getOptional(OptionString::VID); vid)
+    vid_list.push_back(vid.value());
 
   if(vid_list.empty()) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
@@ -844,9 +845,9 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
 
   //Get the mountpolicy from the catalogue
   common::dataStructures::MountPolicy mountPolicy;
-  typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
+  using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
   MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
-  MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
+  MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
     return mp.name == mountPolicyProvidedByUser;
   });
   if(repackMountPolicyItor != mountPolicies.end()) {
@@ -857,8 +858,7 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
   }
 
-  auto buff = getOptional(OptionString::BUFFERURL);
-  if(buff) {
+  if(const auto buff = getOptional(OptionString::BUFFERURL); buff) {
     //The buffer is provided by the user
     bufferURL = buff.value();
   } else {
@@ -1070,7 +1070,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.tapePoolName = tapepool;
   tape.full = full;
   tape.purchaseOrder = purchaseOrder;
-  tape.comment = comment ? comment.value() : "";
+  tape.comment = comment.value_or("");
   if(!state) {
     // By default, the state of the tape will be ACTIVE
     tape.state = common::dataStructures::Tape::ACTIVE;
@@ -1336,7 +1336,7 @@ void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
   const auto& name              = getRequired(OptionString::DISK_INSTANCE);
   const auto comment            = getOptional(OptionString::COMMENT);
 
-  if(comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
   }
 
@@ -1422,17 +1422,8 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   vo.comment = comment;
   vo.diskInstanceName = diskInstanceName;
 
-  if(maxFileSizeOpt) {
-    vo.maxFileSize = maxFileSizeOpt.value();
-  } else {
-    vo.maxFileSize = m_archiveFileMaxSize;
-  }
-
-  if(isRepackVo) {
-    vo.isRepackVo = isRepackVo.value();
-  } else {
-    vo.isRepackVo = false;
-  }
+  vo.maxFileSize = maxFileSizeOpt.value_or(m_archiveFileMaxSize);
+  vo.isRepackVo = isRepackVo.value_or(false);
 
   m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
 
@@ -1482,8 +1473,8 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::VO);
 
-  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
-  if (defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
+  if (const auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+      defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
     throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
   }
 
@@ -1553,7 +1544,7 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool is_found = false;
 
-  for(auto tapeDriveName: tapeDriveNames) {
+  for(const auto& tapeDriveName: tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if(!regexResult.empty()) {
       is_found = true;
@@ -1618,7 +1609,7 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
 
     // call is from cta-change-storageclass
     if(newStorageClassName) {
-      for(auto& id : archiveFileIds) {
+      for(const auto& id : archiveFileIds) {
         const uint64_t archiveFileId = utils::toUint64(id);
         m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName.value());
       }
