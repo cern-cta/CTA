@@ -313,6 +313,8 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--nbavailablecartridgeslots", OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS },
    { "--nbphysicaldriveslots",      OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS },
    { "--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND }
+   { "--logunixtimemin",            OptionUInt64::LOG_UNIXTIME_MIN },
+   { "--logunixtimemax",            OptionUInt64::LOG_UNIXTIME_MAX },
 };
 
 
@@ -578,6 +580,8 @@ const Option opt_nb_available_cartridge_slots { Option::OPT_UINT,     "--nbavail
 const Option opt_nb_physical_drive_slots      { Option::OPT_UINT,     "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
 const Option opt_isrepackvo                   { Option::OPT_BOOL,     "--isrepackvo",                "--irvo", " <\"true\" or \"false\">" };
 const Option opt_max_files_to_select          { Option::OPT_UINT,     "--maxfilestoselect",          "--mfts", " <max_files_to_select>" };
+const Option opt_log_unixtime_min             { Option::OPT_UINT,     "--logunixtimemin",            "--ltmin", " <min_recycle_log_unixtime>" };
+const Option opt_log_unixtime_max             { Option::OPT_UINT,     "--logunixtimemax",            "--ltmax", " <max_recycle_log_unixtime>" };
 
 /*!
  * Subset of commands that return streaming output
@@ -738,7 +742,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
 
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(), opt_isrepackvo.optional() }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),                                             opt_isrepackvo.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
       { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
@@ -747,7 +751,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS },
-   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
+   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional(),                opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional() }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE },
    { opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
       /*----------------------------------------------------------------------------------------------------*/
