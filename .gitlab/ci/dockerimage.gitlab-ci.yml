@@ -10,6 +10,8 @@ ctageneric_docker:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+    - if [ "$ALMA9" == "ON" ]; then export DOCKERFILE=$DOCKERFILE_ALMA9; else export DOCKERFILE=$DOCKERFILE_CC7; fi
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
   variables:
-    DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
+    DOCKERFILE_CC7: continuousintegration/docker/ctafrontend/cc7/Dockerfile
+    DOCKERFILE_ALMA9: continuousintegration/docker/ctafrontend/alma9/Dockerfile
