@@ -160,23 +160,32 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
 uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpace(const std::string& instanceAddress, const std::string &spaceName, log::LogContext & lc) {
-  threading::SubProcess sp("/usr/bin/eos", {"/usr/bin/eos", std::string("root://")+instanceAddress, "space", "ls", "-m"});
-  sp.wait();
+  std::unique_ptr<threading::SubProcess> sp;
   try {
-    exception::Errnum::throwOnNonZero(sp.exitValue(),
+    std::list<std::string> argv = {"/usr/bin/eos", std::string("root://")+instanceAddress, "space", "ls", "-m"};
+    sp = std::make_unique<threading::SubProcess>("/usr/bin/eos", argv);
+  } catch (exception::Exception & ex) {
+    // Failed to instantiate subprocess
+    ex.getMessage() << "It failed to instatiate the subprocess to run \"eos root://" << instanceAddress
+      << " space ls -m\"";
+    throw cta::disk::FreeDiskSpaceException(ex.getMessage().str());
+  }
+  try {
+    sp->wait();
+    exception::Errnum::throwOnNonZero(sp->exitValue(),
         std::string("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(), failed to call \"eos root://") + 
         instanceAddress + " space ls -m\"");
   } catch (exception::Exception & ex) {
-    ex.getMessage() << " instanceAddress: " << instanceAddress << " stderr: " << sp.stderr();
+    ex.getMessage() << " instanceAddress: " << instanceAddress << " stderr: " << sp->stderr();
     throw cta::disk::FreeDiskSpaceException(ex.getMessage().str());
   }
-  if (sp.wasKilled()) {
+  if (sp->wasKilled()) {
     exception::Exception ex("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(): eos space ls -m killed by signal: ");
-    ex.getMessage() << utils::toString(sp.killSignal());
+    ex.getMessage() << utils::toString(sp->killSignal());
     throw cta::disk::FreeDiskSpaceException(ex.getMessage().str());
   }
   // Look for the result line for default space.
-  std::istringstream spStdoutIss(sp.stdout());
+  std::istringstream spStdoutIss(sp->stdout());
   std::string defaultSpaceLine;
   utils::Regex defaultSpaceRe("^.*name="+spaceName+" .*$");
   do {
