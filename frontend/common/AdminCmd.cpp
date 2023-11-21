@@ -430,10 +430,10 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   auto& scn      = getRequired(OptionString::STORAGE_CLASS);
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
 
-  if(auto comment = getOptional(OptionString::COMMENT); comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), comment.value());
   }
-  if(auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
+  if(const auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), tapepool.value());
   }
 
@@ -577,10 +577,10 @@ void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
   auto& in          = getRequired(OptionString::INSTANCE);
   auto& name        = getRequired(OptionString::USERNAME);
 
-  if(auto comment = getOptional(OptionString::COMMENT); comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
-  if(auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
+  if(const auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
     m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
   }
 
@@ -827,9 +827,9 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   std::vector<std::string> vid_list;
   std::string bufferURL;
 
-  if(auto vidl = getOptional(OptionStrList::VID); vidl)
+  if(const auto vidl = getOptional(OptionStrList::VID); vidl)
     vid_list = vidl.value();
-  if(auto vid = getOptional(OptionString::VID); vid)
+  if(const auto vid = getOptional(OptionString::VID); vid)
     vid_list.push_back(vid.value());
 
   if(vid_list.empty()) {
@@ -858,7 +858,7 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
   }
 
-  if(auto buff = getOptional(OptionString::BUFFERURL); buff) {
+  if(const auto buff = getOptional(OptionString::BUFFERURL); buff) {
     //The buffer is provided by the user
     bufferURL = buff.value();
   } else {
@@ -1473,7 +1473,7 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::VO);
 
-  if (auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (const auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
       defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
     throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
   }
