@@ -1,0 +1,141 @@
+diff --git a/cmake/FindProtobuf3.cmake b/cmake/FindProtobuf3.cmake
+index bbb25ecc72..7e6db8f294 100644
+--- a/cmake/FindProtobuf3.cmake
++++ b/cmake/FindProtobuf3.cmake
+@@ -18,20 +18,20 @@
+ set(PROTOBUF3_ROOT /usr)
+ #set(PROTOBUF3_ROOT /opt/eos)
+ 
+-set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64/protobuf3)
++set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64)
+ message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
+ 
+ set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+ 
+ find_program(PROTOBUF3_PROTOC3_EXECUTABLE
+-    NAMES ${PROTOBUF3_ROOT}/bin/protoc3
++    NAMES ${PROTOBUF3_ROOT}/bin/protoc
+     DOC "Version 3 of The Google Protocol Buffers Compiler"
+ )
+-message(STATUS "protoc3 is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
++message(STATUS "protoc is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
+ 
+ find_path(PROTOBUF3_INCLUDE_DIRS
+   google/protobuf/message.h
+-  PATHS ${PROTOBUF3_ROOT}/include/protobuf3
++  PATHS ${PROTOBUF3_ROOT}/include
+   NO_DEFAULT_PATH)
+ message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
+ 
+diff --git a/cmake/Findoracle-instantclient.cmake b/cmake/Findoracle-instantclient.cmake
+index 1c2508ea8a..3192f3746c 100644
+--- a/cmake/Findoracle-instantclient.cmake
++++ b/cmake/Findoracle-instantclient.cmake
+@@ -19,7 +19,7 @@
+ #     ORACLE-INSTANTCLIENT_LIBRARIES
+ #     ORACLE-INSTANTCLIENT_RPATH
+ 
+-set(ORACLE-INSTANTCLIENT_VERSION 19.3)
++set(ORACLE-INSTANTCLIENT_VERSION 19.19)
+ 
+ set(ORACLE-INSTANTCLIENT_RPATH /usr/lib/oracle/${ORACLE-INSTANTCLIENT_VERSION}/client64/lib)
+ message(STATUS "ORACLE-INSTANTCLIENT_RPATH=${ORACLE-INSTANTCLIENT_RPATH}")
+@@ -35,7 +35,7 @@ find_library(ORACLE-INSTANTCLIENT_CLNTSH_LIBRARY
+   NO_DEFAULT_PATH)
+ 
+ find_library(ORACLE-INSTANTCLIENT_OCCI_LIBRARY
+-  NAME libocci.so.19.1
++  NAME libocci_gcc53.so.19.1
+   PATHS ${ORACLE-INSTANTCLIENT_RPATH}
+   NO_DEFAULT_PATH)
+ 
+diff --git a/cta.spec.in b/cta.spec.in
+index 2e71df3266..3a31e1550f 100644
+--- a/cta.spec.in
++++ b/cta.spec.in
+@@ -50,13 +50,13 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
+ %define xrootdVersion 1:5.6.1-1
+ %endif
+ 
+-%define radosVersion 2:15.2.15
++%define radosVersion 2:16.2.4
+ BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
+ BuildRequires: xrootd-devel         >= %{xrootdVersion}
+ BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
+ BuildRequires: xrootd-private-devel >= %{xrootdVersion}
+ BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
+-BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
++BuildRequires: protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1
+ BuildRequires: gtest-devel >= 1.11.0
+ BuildRequires: sqlite-devel >= 3.6
+ BuildRequires: libcap-devel >= 2.16
+@@ -65,11 +65,11 @@ BuildRequires: cryptopp-devel >= 5.6.2
+ BuildRequires: libuuid-devel >= 2.17
+ BuildRequires: json-c-devel >= 0.11
+ BuildRequires: libattr-devel >= 2.4.44
+-BuildRequires: oracle-instantclient19.3-devel
++BuildRequires: oracle-instantclient19.19-devel
+ BuildRequires: postgresql-devel
+ BuildRequires: valgrind
+ BuildRequires: valgrind-devel
+-BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
++BuildRequires: grpc, grpc-devel, grpc-plugins
+ BuildRequires: krb5-devel
+ BuildRequires: libtirpc-devel
+ %{?systemd_requires}
+@@ -254,8 +254,8 @@ fi
+ %package -n cta-lib-common
+ Summary: CERN Tape Archive libraries
+ Group: Application/CTA
+-# Explicity require protobuf3 to avoid clash with eos-protobuf3
+-Requires: protobuf3
++# Explicity require protobuf to avoid clash with eos-protobuf
++Requires: protobuf
+ Requires: xrootd-client-libs >= %{xrootdVersion}
+ %description -n cta-lib-common
+ CERN Tape Archive:
+@@ -267,9 +267,9 @@ The shared libraries base
+ %package -n cta-lib-catalogue
+ Summary: CERN Tape Archive libraries
+ Group: Application/CTA
+-# Explicity require protobuf3 to avoid clash with eos-protobuf3
++# Explicity require protobuf to avoid clash with eos-protobuf
+ Requires: cta-lib-common
+-Requires: oracle-instantclient19.3-basic
++Requires: oracle-instantclient19.19-basic
+ Requires: postgresql-libs
+ Requires: xrootd-client-libs >= %{xrootdVersion}
+ %description -n cta-lib-catalogue
+@@ -292,8 +292,8 @@ Requires: librados2 = %{radosVersion}
+ Requires: postgresql-libs
+ %endif
+ Requires: xrootd-client-libs >= %{xrootdVersion}
+-# Explicity require protobuf3 to avoid clash with eos-protobuf3
+-Requires: protobuf3
++# Explicity require protobuf to avoid clash with eos-protobuf
++Requires: protobuf
+ Requires: cta-lib-common = %{version}-%{release}
+ %description -n cta-lib
+ CERN Tape Archive:
+diff --git a/eos_cta/CMakeLists.txt b/eos_cta/CMakeLists.txt
+index 66f3a07ce5..9ee05dfd78 100644
+--- a/eos_cta/CMakeLists.txt
++++ b/eos_cta/CMakeLists.txt
+@@ -54,4 +54,4 @@ add_library(EosCtaGrpc ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
+ set_target_properties(EosCtaGrpc PROPERTIES
+   LINKER_LANGUAGE CXX
+   POSITION_INDEPENDENT_CODE TRUE)
+-target_link_libraries(EosCtaGrpc gpr ${PROTOBUF3_GRPC_LIBRARIES})
++target_link_libraries(EosCtaGrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})
+diff --git a/rdbms/StmtTest.cpp b/rdbms/StmtTest.cpp
+index cdc3c3c2c1..552afa210d 100644
+--- a/rdbms/StmtTest.cpp
++++ b/rdbms/StmtTest.cpp
+@@ -1043,7 +1043,6 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
+     auto stmt = m_conn.createStmt(sql);
+     stmt.bindUint64(":ID", insertValue);
+     switch(m_login.dbType) {
+-    case Login::DBTYPE_IN_MEMORY:
+     case Login::DBTYPE_ORACLE:
+     case Login::DBTYPE_POSTGRESQL:
+       ASSERT_THROW(stmt.executeNonQuery(), UniqueConstraintError);
