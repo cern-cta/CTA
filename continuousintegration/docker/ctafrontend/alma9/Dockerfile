@@ -23,6 +23,7 @@ RUN set -ex; \
     git submodule update --init --recursive
 
 COPY ./cc7toalma9.sh /Project/CTA/continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh
+COPY ./code.patch /Project/CTA/continuousintegration/docker/ctafrontend/alma9/code.patch
 
 RUN set -ex; \
     cd CTA; \
