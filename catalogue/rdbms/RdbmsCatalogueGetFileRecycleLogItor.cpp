@@ -66,11 +66,13 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
         "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID";
 
     const bool thereIsAtLeastOneSearchCriteria =
-      searchCriteria.vid            ||
-      searchCriteria.diskFileIds    ||
-      searchCriteria.archiveFileId  ||
-      searchCriteria.copynb         ||
-      searchCriteria.diskInstance;
+            searchCriteria.vid ||
+            searchCriteria.diskFileIds ||
+            searchCriteria.archiveFileId ||
+            searchCriteria.copynb ||
+            searchCriteria.diskInstance ||
+            searchCriteria.recycleLogTimeMin ||
+            searchCriteria.recycleLogTimeMax;
 
     if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
@@ -104,6 +106,19 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     if (searchCriteria.copynb) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "FILE_RECYCLE_LOG.COPY_NB = :COPY_NB";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.recycleLogTimeMin) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME >= :RECYCLE_LOG_TIME_MIN";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.recycleLogTimeMax) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME <= :RECYCLE_LOG_TIME_MAX";
+      addedAWhereConstraint = true;
     }
     
     // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
@@ -130,7 +145,15 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     if (searchCriteria.copynb) {
       m_stmt.bindUint64(":COPY_NB", searchCriteria.copynb.value());
     }
-    
+
+    if (searchCriteria.recycleLogTimeMin) {
+      m_stmt.bindUint64(":RECYCLE_LOG_TIME_MIN", searchCriteria.recycleLogTimeMin.value());
+    }
+
+    if (searchCriteria.recycleLogTimeMax) {
+      m_stmt.bindUint64(":RECYCLE_LOG_TIME_MAX", searchCriteria.recycleLogTimeMax.value());
+    }
+
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
