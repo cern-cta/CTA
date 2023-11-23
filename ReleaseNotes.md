@@ -4,6 +4,7 @@
 ### Bug Fixes
 - cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
 - cta/CTA#540 - Allow optional string values to be cleared in the Physical Library catalogue
+- cta/CTA#543 - Remove misleading logging 
 
 ### Continuous Integration
 - cta/CTA#504 - Update CI scripts to use CERN's k8s infrastructure
