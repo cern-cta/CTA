@@ -23,8 +23,7 @@
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 PhysicalLibraryCatalogueRetryWrapper::PhysicalLibraryCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -52,5 +51,4 @@ void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibrary(
   return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(admin, pl);}, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

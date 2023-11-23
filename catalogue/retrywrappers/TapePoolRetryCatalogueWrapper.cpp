@@ -22,8 +22,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "catalogue/retrywrappers/TapePoolCatalogueRetryWrapper.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 TapePoolCatalogueRetryWrapper::TapePoolCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -92,5 +91,4 @@ bool TapePoolCatalogueRetryWrapper::tapePoolExists(const std::string &tapePoolNa
     m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -25,8 +25,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RequesterMountRuleCatalogueRetryWrapper::RequesterMountRuleCatalogueRetryWrapper(
   const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
@@ -69,5 +68,4 @@ void RequesterMountRuleCatalogueRetryWrapper::deleteRequesterMountRule(const std
   }, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

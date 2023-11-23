@@ -27,8 +27,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 MountPolicyCatalogueRetryWrapper::MountPolicyCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -92,5 +91,4 @@ void MountPolicyCatalogueRetryWrapper::modifyMountPolicyComment(const common::da
     comment);}, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

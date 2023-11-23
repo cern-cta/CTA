@@ -21,8 +21,7 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 DriveConfigCatalogueRetryWrapper::DriveConfigCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -67,5 +66,4 @@ void DriveConfigCatalogueRetryWrapper::deleteTapeDriveConfig(const std::string &
     m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

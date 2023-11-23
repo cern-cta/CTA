@@ -23,8 +23,7 @@
 #include "common/log/Logger.hpp"
 #include "disk/DiskSystem.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 DiskSystemCatalogueRetryWrapper::DiskSystemCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -89,5 +88,4 @@ bool DiskSystemCatalogueRetryWrapper::diskSystemExists(const std::string &name) 
     m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

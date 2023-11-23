@@ -22,8 +22,7 @@
 #include "catalogue/retrywrappers/SchemaCatalogueRetryWrapper.hpp"
 #include "catalogue/SchemaVersion.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 SchemaCatalogueRetryWrapper::SchemaCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -42,5 +41,4 @@ void SchemaCatalogueRetryWrapper::ping() {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Schema()->ping();}, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

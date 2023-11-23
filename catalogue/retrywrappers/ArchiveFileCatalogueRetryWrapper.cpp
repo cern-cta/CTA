@@ -27,8 +27,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 ArchiveFileCatalogueRetryWrapper::ArchiveFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -123,5 +122,4 @@ void ArchiveFileCatalogueRetryWrapper::moveArchiveFileToRecycleLog(
   }, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

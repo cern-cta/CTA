@@ -23,8 +23,7 @@
 #include "catalogue/TapeForWriting.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 TapeCatalogueRetryWrapper::TapeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &log,
   const uint32_t maxTriesToConnect)
@@ -185,5 +184,4 @@ common::dataStructures::Label::Format TapeCatalogueRetryWrapper::getTapeLabelFor
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->getTapeLabelFormat(vid);}, m_maxTriesToConnect);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

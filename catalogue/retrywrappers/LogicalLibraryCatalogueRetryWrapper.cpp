@@ -23,8 +23,7 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 LogicalLibraryCatalogueRetryWrapper::LogicalLibraryCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -77,5 +76,4 @@ void LogicalLibraryCatalogueRetryWrapper::setLogicalLibraryDisabled(
     name, disabledValue);}, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

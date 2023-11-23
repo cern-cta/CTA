@@ -24,8 +24,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -51,5 +50,4 @@ common::dataStructures::RetrieveFileQueueCriteria TapeFileCatalogueRetryWrapper:
     archiveFileId, user, activity, lc, mountPolicyName);}, m_maxTriesToConnect);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

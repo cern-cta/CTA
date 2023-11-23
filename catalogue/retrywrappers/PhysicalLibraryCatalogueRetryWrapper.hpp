@@ -25,11 +25,9 @@
 
 namespace cta {
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct PhysicalLibrary;
 struct SecurityIdentity;
-}
 }
 
 namespace log {

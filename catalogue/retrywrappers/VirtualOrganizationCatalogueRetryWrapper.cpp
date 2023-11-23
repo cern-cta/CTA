@@ -22,8 +22,7 @@
 #include "catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 VirtualOrganizationCatalogueRetryWrapper::VirtualOrganizationCatalogueRetryWrapper(
   const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
@@ -105,5 +104,4 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationIsRepack
     isRepackVo);}, m_maxTriesToConnect);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

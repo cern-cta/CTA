@@ -23,8 +23,7 @@
 #include "catalogue/retrywrappers/StorageClassCatalogueRetryWrapper.hpp"
 #include "common/dataStructures/StorageClass.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 StorageClassCatalogueRetryWrapper::StorageClassCatalogueRetryWrapper(
   const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
@@ -80,5 +79,4 @@ void StorageClassCatalogueRetryWrapper::modifyStorageClassName(const common::dat
     m_maxTriesToConnect);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

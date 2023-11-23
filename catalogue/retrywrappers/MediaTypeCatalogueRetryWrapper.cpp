@@ -26,8 +26,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 MediaTypeCatalogueRetryWrapper::MediaTypeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -107,5 +106,5 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeComment(const common::dataSt
   return retryOnLostConnection(m_log, [&]{return m_catalogue->MediaType()->modifyMediaTypeComment(admin, name, comment);},
     m_maxTriesToConnect);
 }
-}  // namespace catalogue
-}  // namespace cta
+
+} // namespace cta::catalogue

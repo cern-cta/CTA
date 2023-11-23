@@ -24,8 +24,7 @@
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 FileRecycleLogCatalogueRetryWrapper::FileRecycleLogCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect):
@@ -50,5 +49,4 @@ void FileRecycleLogCatalogueRetryWrapper::deleteFilesFromRecycleLog(const std::s
 }
 
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

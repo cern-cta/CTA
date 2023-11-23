@@ -24,8 +24,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 DiskInstanceSpaceCatalogueRetryWrapper::DiskInstanceSpaceCatalogueRetryWrapper(
   const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
@@ -84,5 +83,4 @@ void DiskInstanceSpaceCatalogueRetryWrapper::modifyDiskInstanceSpaceQueryURL(
     m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

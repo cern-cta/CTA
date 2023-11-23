@@ -24,8 +24,7 @@
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class Catalogue;
 
@@ -63,5 +62,4 @@ private:
   uint32_t m_maxTriesToConnect;
 };  // class StorageClassCatalogueRetryWrapper
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue
