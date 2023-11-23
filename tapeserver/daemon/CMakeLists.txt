@@ -55,7 +55,6 @@ set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadaemonunittests-multiprocess SHARED
-  DriveHandlerTests.cpp
   ProcessManagerTests.cpp
   SignalHandlerTests.cpp)
 set_property(TARGET ctadaemonunittests-multiprocess PROPERTY SOVERSION "${CTA_SOVERSION}")
