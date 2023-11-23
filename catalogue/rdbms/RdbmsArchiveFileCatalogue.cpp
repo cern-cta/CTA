@@ -549,11 +549,11 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
 common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getCachedTapeCopyToPoolMap(
   const catalogue::StorageClass &storageClass) const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this,&storageClass] {
       auto conn = m_connPool->getConn();
       return getTapeCopyToPoolMap(conn, storageClass);
     };
-    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue).value;
+    return m_tapeCopyToPoolCache.getCachedValue(storageClass, l_getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -565,11 +565,11 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getCachedTa
 uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(
   const catalogue::StorageClass &storageClass) const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this,&storageClass] {
       auto conn = m_connPool->getConn();
       return getExpectedNbArchiveRoutes(conn, storageClass);
     };
-    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue).value;
+    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, l_getNonCachedValue).value;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
@@ -582,12 +582,12 @@ uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(
 ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
   RdbmsArchiveFileCatalogue::getCachedRequesterMountPolicy(const User &user) const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this,&user] {
       auto conn = m_connPool->getConn();
       const auto mountPolicy = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
       return mountPolicy->getRequesterMountPolicy(conn, user);
     };
-    return m_rdbmsCatalogue->m_userMountPolicyCache.getCachedValue(user, getNonCachedValue);
+    return m_rdbmsCatalogue->m_userMountPolicyCache.getCachedValue(user, l_getNonCachedValue);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -602,12 +602,12 @@ ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
 ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
   RdbmsArchiveFileCatalogue::getCachedRequesterGroupMountPolicy(const Group &group) const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this,&group] {
       auto conn = m_connPool->getConn();
       const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
       return mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group);
     };
-    return m_rdbmsCatalogue->m_groupMountPolicyCache.getCachedValue(group, getNonCachedValue);
+    return m_rdbmsCatalogue->m_groupMountPolicyCache.getCachedValue(group, l_getNonCachedValue);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

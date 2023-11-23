@@ -287,14 +287,14 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 
 std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getCachedMountPolicies() const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this] {
       auto conn = m_connPool->getConn();
       return getMountPolicies(conn);
     };
-    return m_rdbmsCatalogue->m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue).value;
-  } catch(exception::UserError &) {
+    return m_rdbmsCatalogue->m_allMountPoliciesCache.getCachedValue("all",l_getNonCachedValue).value;
+  } catch(exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
