@@ -71,6 +71,8 @@ public:
   static bool isSetAndEmpty(const std::optional<std::string> &optionalStr);
   static bool isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList);
 
+  static std::optional<std::string> nulloptIfEmptyStr(const std::optional<std::string> &optionalStr);
+
   /**
    * Set the DIRTY flag to true
    * @param conn the database connection
