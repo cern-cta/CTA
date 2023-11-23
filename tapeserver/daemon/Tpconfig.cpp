@@ -85,10 +85,11 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     // Check there is not duplicate of the path
     {
       auto i = std::find_if(ret.begin(), ret.end(),
-          // https://trac.cppcheck.net/ticket/10739
-          [&](decltype(*ret.begin()) i)  // cppcheck-suppress internalAstError
-          {return i.second.value().devFilename == configLine.devFilename;});
-      if (ret.end() != i) {
+        // https://trac.cppcheck.net/ticket/10739
+        [&configLine](decltype(*ret.begin()) i) { // cppcheck-suppress internalAstError
+          return i.second.value().devFilename == configLine.devFilename;
+        });
+      if(ret.end() != i) {
         DuplicateEntry ex("In Tpconfig::parseFile(): duplicate path for unit ");
         ex.getMessage() << configLine.unitName << " at " << filename << ":" << lineNumber
            << " previous at " << i->second.source();
@@ -98,8 +99,9 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     // Check there is not duplicate of the library slot
     {
       auto i = std::find_if(ret.begin(), ret.end(),
-          [&](decltype(*ret.begin()) i)
-          {return i.second.value().rawLibrarySlot == configLine.rawLibrarySlot;});
+        [&configLine](decltype(*ret.begin()) i) {
+          return i.second.value().rawLibrarySlot == configLine.rawLibrarySlot;
+      });
       if (ret.end() != i) {
         DuplicateEntry ex("In Tpconfig::parseFile(): duplicate library slot for unit ");
         ex.getMessage() << configLine.unitName << " at " << filename << ":" << lineNumber

@@ -99,16 +99,15 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
-  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), 
-      m_subprocessHandlers.cend(), 
-      [&](const SubprocessAndStatus &i){
-        if (i.status.shutdownRequested) {
+  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+    [this](const SubprocessAndStatus &i) {
+      if(i.status.shutdownRequested) {
           cta::log::ScopedParamContainer params(m_logContext);
           params.add("SubprocessName", i.handler->index);
           m_logContext.log(log::INFO, "Subprocess requested shutdown");
-        }
-        return i.status.shutdownRequested;
-      });
+      }
+      return i.status.shutdownRequested;
+    });
   if (anyAskedShutdown) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->shutdown();
@@ -133,16 +132,15 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
 
 ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
-  bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), 
-      m_subprocessHandlers.cend(), 
-      [&](const SubprocessAndStatus &i){
-        if (i.status.killRequested) {
-          cta::log::ScopedParamContainer params(m_logContext);
-          params.add("SubprocessName", i.handler->index);
-          m_logContext.log(log::INFO, "Subprocess requested kill");
-        }
-        return i.status.killRequested;
-      });
+  bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+    [this](const SubprocessAndStatus &i) {
+      if(i.status.killRequested) {
+        cta::log::ScopedParamContainer params(m_logContext);
+        params.add("SubprocessName", i.handler->index);
+        m_logContext.log(log::INFO, "Subprocess requested kill");
+      }
+      return i.status.killRequested;
+    });
   if (anyAskedKill) {
     for(auto & sp: m_subprocessHandlers) { 
       sp.handler->kill(); 
@@ -200,16 +198,15 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
 ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   // If any process handler received sigChild, we signal it to all processes. Typically, this is 
   // done by the signal handler
-  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), 
-      m_subprocessHandlers.cend(), 
-      [&](const SubprocessAndStatus &i){
-        if (i.status.sigChild) {
-          cta::log::ScopedParamContainer params(m_logContext);
-          params.add("SubprocessName", i.handler->index);
-          m_logContext.log(log::INFO, "Handler received SIGCHILD. Propagating to all handlers.");
-        }
-        return i.status.sigChild;
-      });
+  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+    [this](const SubprocessAndStatus &i){
+      if(i.status.sigChild) {
+        cta::log::ScopedParamContainer params(m_logContext);
+        params.add("SubprocessName", i.handler->index);
+        m_logContext.log(log::INFO, "Handler received SIGCHILD. Propagating to all handlers.");
+      }
+      return i.status.sigChild;
+    });
   if (sigChild) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->processSigChild();
