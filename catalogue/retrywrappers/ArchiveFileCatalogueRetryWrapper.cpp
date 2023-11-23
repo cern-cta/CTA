@@ -105,7 +105,7 @@ void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileFxIdAndDiskInstance(cons
 
 void ArchiveFileCatalogueRetryWrapper::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
   const uint64_t archiveFileId, log::LogContext &lc) {
-  return retryOnLostConnection(m_log, [&] {
+  return retryOnLostConnection(m_log, [this,&diskInstanceName,&archiveFileId,&lc] {
     return m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName, archiveFileId, lc);
   }, m_maxTriesToConnect);
 }
