@@ -467,6 +467,14 @@ bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::vector<std::str
   return optionalStrList && optionalStrList->empty();
 }
 
+std::optional<std::string> RdbmsCatalogueUtils::nulloptIfEmptyStr(const std::optional<std::string> &optionalStr) {
+  if (optionalStr && optionalStr.value().empty()) {
+    return std::nullopt;
+  } else {
+    return optionalStr;
+  }
+}
+
 void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const std::string& vid) {
   try {
     const char * const sql =

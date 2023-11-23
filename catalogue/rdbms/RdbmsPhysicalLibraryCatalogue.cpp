@@ -99,10 +99,10 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
   stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
   stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
   stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
-  stmt.bindString(":PHYSICAL_LIBRARY_TYPE"        , pl.type);
-  stmt.bindString(":GUI_URL"                      , pl.guiUrl);
-  stmt.bindString(":WEBCAM_URL"                   , pl.webcamUrl);
-  stmt.bindString(":PHYSICAL_LOCATION"            , pl.location);
+  stmt.bindString(":PHYSICAL_LIBRARY_TYPE"        , RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.type));
+  stmt.bindString(":GUI_URL"                      , RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.guiUrl));
+  stmt.bindString(":WEBCAM_URL"                   , RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.webcamUrl));
+  stmt.bindString(":PHYSICAL_LOCATION"            , RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.location));
 
   stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
   stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
@@ -116,7 +116,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
 
-  stmt.bindString(":USER_COMMENT", pl.comment);
+  const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.comment, &m_log);
+  stmt.bindString(":USER_COMMENT", trimmedComment);
 
   try {
     stmt.executeNonQuery();
@@ -300,9 +301,9 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
 }
 
 void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) const {
-  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
-  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
-  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
+  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.guiUrl.value()));
+  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.webcamUrl.value()));
+  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.location.value()));
   if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
   if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
   if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
