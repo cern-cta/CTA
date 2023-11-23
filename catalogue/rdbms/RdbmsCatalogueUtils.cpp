@@ -460,19 +460,15 @@ bool RdbmsCatalogueUtils::requesterGroupMountRuleExists(rdbms::Conn &conn, const
 
 
 bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::string> &optionalStr) {
-  return optionalStr && optionalStr->empty();
+  return optionalStr.has_value() && optionalStr->empty();
 }
 
 bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList) {
-  return optionalStrList && optionalStrList->empty();
+  return optionalStrList.has_value() && optionalStrList->empty();
 }
 
 std::optional<std::string> RdbmsCatalogueUtils::nulloptIfEmptyStr(const std::optional<std::string> &optionalStr) {
-  if (optionalStr && optionalStr.value().empty()) {
-    return std::nullopt;
-  } else {
-    return optionalStr;
-  }
+  return RdbmsCatalogueUtils::isSetAndEmpty(optionalStr) ? std::nullopt : optionalStr;
 }
 
 void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const std::string& vid) {
