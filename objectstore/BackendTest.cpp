@@ -158,7 +158,7 @@ TEST_P(BackendAbstractTest, AsyncIOInterface) {
   try {m_os->remove(testObjectName);}catch(...){}
   m_os->create(testObjectName, testValue);
   // Launch update of object via asynchronous IO
-  std::function<std::string(const std::string &)> updaterCallback=[&](const std::string &s)->std::string{return testSecondValue;};
+  std::function<std::string(const std::string &)> updaterCallback = [&testSecondValue](const std::string& s)->std::string { return testSecondValue; };
   std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
   updater->wait();
   ASSERT_EQ(testSecondValue, m_os->read(testObjectName));
@@ -175,8 +175,8 @@ TEST_P(BackendAbstractTest, AsyncIOInterfaceRemove) {
   try {m_os->remove(testObjectName);} catch(...){}
   m_os->create(testObjectName, testValue);
   // Launch update of object via asynchronous IO
-  std::function<std::string(const std::string &)> updaterCallback=
-      [&](const std::string &s)->std::string{throw cta::objectstore::Backend::AsyncUpdateWithDelete();};
+  std::function<std::string(const std::string &)> updaterCallback =
+    [](const std::string& s)->std::string { throw cta::objectstore::Backend::AsyncUpdateWithDelete(); };
   std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
   ASSERT_NO_THROW(updater->wait());
   ASSERT_FALSE(m_os->exists(testObjectName));
@@ -187,12 +187,12 @@ TEST_P(BackendAbstractTest, AsyncIOInterfaceMultithread) {
   const std::string testValue = "1234";
   const std::string testSecondValue = "12345";
   const std::string testObjectNameRadix = "testObject";
-  std::function<std::string(size_t)> testObjectName=[&](size_t i){
+  std::function<std::string(size_t)> testObjectName = [&testObjectNameRadix](size_t i) {
     std::stringstream tom;
     tom << testObjectNameRadix << i;
     return tom.str();
   };
-  std::function<std::string(size_t)> value=[&](size_t i){
+  std::function<std::string(size_t)> value=[&testSecondValue](size_t i) {
     std::stringstream val;
     val << testSecondValue << i;
     return val.str();

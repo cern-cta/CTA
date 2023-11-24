@@ -24,8 +24,7 @@
 
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class Catalogue;
 
@@ -71,5 +70,4 @@ private:
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

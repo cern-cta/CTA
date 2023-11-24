@@ -42,9 +42,7 @@
 #include "catalogue/retrywrappers/TapePoolCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 CatalogueRetryWrapper::CatalogueRetryWrapper(log::Logger &log, std::unique_ptr<Catalogue> catalogue,
   const uint32_t maxTriesToConnect):
@@ -165,5 +163,4 @@ const std::unique_ptr<DriveStateCatalogue>& CatalogueRetryWrapper::DriveState() 
   return m_driveState;
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

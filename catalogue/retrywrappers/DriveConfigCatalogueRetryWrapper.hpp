@@ -27,8 +27,7 @@
 #include "catalogue/interfaces/DriveConfigCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DriveConfigCatalogueRetryWrapper: public DriveConfigCatalogue {
 public:
@@ -58,5 +57,4 @@ private:
   uint32_t m_maxTriesToConnect;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

@@ -35,7 +35,7 @@ namespace cta::disk {
 // DiskSystemList::at()
 //------------------------------------------------------------------------------
 const DiskSystem& DiskSystemList::at(const std::string& name) const {
-  auto dsi = std::find_if(begin(), end(), [&](const DiskSystem& ds){ return ds.name == name;});
+  auto dsi = std::find_if(begin(), end(), [&name](const DiskSystem& ds){ return ds.name == name; });
   if (dsi != end()) return *dsi;
   throw std::out_of_range("In DiskSystemList::at(): name not found.");
 }
@@ -52,7 +52,7 @@ std::string DiskSystemList::getDSName(const std::string& fileURL) const {
   }
   // Try and find the fileURL
   auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
-      [&](const PointerAndRegex & pr){ return !pr.regex.exec(fileURL).empty(); });
+    [&fileURL](const PointerAndRegex& pr){ return !pr.regex.exec(fileURL).empty(); });
   if (pri != m_pointersAndRegexes.end()) {
     // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
     if (pri != m_pointersAndRegexes.begin())

@@ -24,8 +24,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -33,23 +32,25 @@ TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_p
 }
 
 void TapeFileCatalogueRetryWrapper::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->filesWrittenToTape(event);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&event] {
+    return m_catalogue->TapeFile()->filesWrittenToTape(event);
+  }, m_maxTriesToConnect);
 }
 
 void TapeFileCatalogueRetryWrapper::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file,
   const std::string &reason) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->deleteTapeFileCopy(file, reason);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&file,&reason] {
+    return m_catalogue->TapeFile()->deleteTapeFileCopy(file, reason);
+  }, m_maxTriesToConnect);
 }
 
 common::dataStructures::RetrieveFileQueueCriteria TapeFileCatalogueRetryWrapper::prepareToRetrieveFile(
   const std::string &diskInstanceName, const uint64_t archiveFileId,
   const common::dataStructures::RequesterIdentity &user, const std::optional<std::string> & activity,
   log::LogContext &lc, const std::optional<std::string> &mountPolicyName) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->prepareToRetrieveFile(diskInstanceName,
-    archiveFileId, user, activity, lc, mountPolicyName);}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&diskInstanceName,&archiveFileId,&user,&activity,&lc,&mountPolicyName] {
+    return m_catalogue->TapeFile()->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc, mountPolicyName);
+  }, m_maxTriesToConnect);
 }
 
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue

@@ -22,8 +22,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 AdminUserCatalogueRetryWrapper::AdminUserCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
   log::Logger &log, const uint32_t maxTriesToConnect)
@@ -31,29 +30,34 @@ AdminUserCatalogueRetryWrapper::AdminUserCatalogueRetryWrapper(const std::unique
 
 void AdminUserCatalogueRetryWrapper::createAdminUser(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->AdminUser()->createAdminUser(admin, username, comment);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&admin,&username,&comment] {
+    return m_catalogue->AdminUser()->createAdminUser(admin, username, comment);
+  }, m_maxTriesToConnect);
 }
 
 void AdminUserCatalogueRetryWrapper::deleteAdminUser(const std::string &username) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->AdminUser()->deleteAdminUser(username);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&username] {
+    return m_catalogue->AdminUser()->deleteAdminUser(username);
+  }, m_maxTriesToConnect);
 }
 
 std::list<common::dataStructures::AdminUser> AdminUserCatalogueRetryWrapper::getAdminUsers() const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->AdminUser()->getAdminUsers();}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->AdminUser()->getAdminUsers();
+  }, m_maxTriesToConnect);
 }
 
 void AdminUserCatalogueRetryWrapper::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->AdminUser()->modifyAdminUserComment(admin, username,
-    comment);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&admin,&username,&comment] {
+    return m_catalogue->AdminUser()->modifyAdminUserComment(admin, username, comment);
+  }, m_maxTriesToConnect);
 }
 
 bool AdminUserCatalogueRetryWrapper::isAdmin(const common::dataStructures::SecurityIdentity &identity) const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->AdminUser()->isAdmin(identity);}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&identity] {
+    return m_catalogue->AdminUser()->isAdmin(identity);
+  }, m_maxTriesToConnect);
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

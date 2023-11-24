@@ -336,7 +336,7 @@ BackendVFS::ScopedLock * BackendVFS::lockShared(const std::string& name, uint64_
 BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, const std::string& value):
   m_backend(be), m_name(name), m_value(value),
   m_job(std::async(std::launch::async,
-    [&](){
+    [this, &name]() {
       std::string path = m_backend.m_root + "/" + m_name;
       std::string lockPath = m_backend.m_root + "/." + m_name + ".lock";
       bool fileCreated = false;
@@ -384,7 +384,7 @@ void BackendVFS::AsyncCreator::wait() {
 BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name, std::function<std::string(const std::string&)>& update):
   m_backend(be), m_name(name), m_update(update),
   m_job(std::async(std::launch::async,
-    [&](){
+    [this]() {
       std::unique_ptr<ScopedLock> sl;
       try { // locking already throws proper exceptions for no such file.
         sl.reset(m_backend.lockExclusive(m_name));
@@ -453,7 +453,7 @@ void BackendVFS::AsyncUpdater::wait() {
 BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name):
   m_backend(be), m_name(name),
   m_job(std::async(std::launch::async,
-    [&](){
+    [this]() {
       std::unique_ptr<ScopedLock> sl;
       try { // locking already throws proper exceptions for no such file.
         sl.reset(m_backend.lockExclusive(m_name));

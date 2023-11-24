@@ -25,8 +25,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Retries calling the specified callable if it throws a LostDatabaseConnection
@@ -66,5 +65,4 @@ typename std::result_of<T()>::type retryOnLostConnection(log::Logger &log, const
   }
 }
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

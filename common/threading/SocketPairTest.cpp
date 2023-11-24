@@ -71,15 +71,15 @@ TEST(cta_threading_SocketPair, Multimessages) {
 }
 
 TEST(cta_threading_SocketPair, MaxLength) {
-  // Try to send and receive messages up to 100kB
+  // 1) Try to send and receive messages up to 100 kB
   std::string smallMessage = "Hello!";
   std::string bigMessage;
   int i = 0;
   bigMessage.resize(10*1024, '.');
-  std::for_each(bigMessage.begin(), bigMessage.end(), [&](char &c){ c='A' + (i++ % 26);});
+  std::for_each(bigMessage.begin(), bigMessage.end(), [&i](char &c){ c = 'A' + (i++ % 26); });
   std::string hugeMessage;
   hugeMessage.resize(100*1024, '.');
-  std::for_each(hugeMessage.begin(), hugeMessage.end(), [&](char &c){ c='Z' - (i++ % 26);});
+  std::for_each(hugeMessage.begin(), hugeMessage.end(), [&i](char &c){ c = 'Z' - (i++ % 26); });
   // 2) send/receive them
   using cta::server::SocketPair;
   cta::server::SocketPair sp;

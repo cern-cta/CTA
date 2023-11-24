@@ -307,16 +307,16 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
 }
 
 common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(
-  const std::string & tapepoolName) const {
+  const std::string& tapepoolName) const {
   try {
-    auto getNonCachedValue = [&] {
+    auto l_getNonCachedValue = [this,&tapepoolName] {
       auto conn = m_connPool->getConn();
       return getVirtualOrganizationOfTapepool(conn,tapepoolName);
     };
-    return m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue).value;
-  } catch(exception::UserError &) {
+    return m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,l_getNonCachedValue).value;
+  } catch(exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

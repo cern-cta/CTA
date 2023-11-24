@@ -28,8 +28,7 @@
 #include "catalogue/interfaces/DriveStateCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 class DriveStateCatalogueRetryWrapper: public DriveStateCatalogue {
 public:
@@ -74,5 +73,4 @@ private:
   uint32_t m_maxTriesToConnect;
 };
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue

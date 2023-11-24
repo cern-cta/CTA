@@ -257,13 +257,11 @@ bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::Sec
 bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentity &admin)
   const {
   try {
-    auto getNonCachedValue = [&] {
-      return isNonCachedAdmin(admin);
-    };
-    return m_isAdminCache.getCachedValue(admin, getNonCachedValue).value;
-  } catch(exception::UserError &) {
+    auto l_getNonCachedValue = [this,&admin] { return isNonCachedAdmin(admin); };
+    return m_isAdminCache.getCachedValue(admin, l_getNonCachedValue).value;
+  } catch(exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

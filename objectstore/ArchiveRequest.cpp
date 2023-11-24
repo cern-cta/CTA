@@ -791,7 +791,7 @@ std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
   auto jl = m_payload.jobs();
   // https://trac.cppcheck.net/ticket/10739
   // cppcheck-suppress internalAstError
-  auto j=std::find_if(jl.begin(), jl.end(), [&](decltype(*jl.begin())& j2){ return j2.copynb() == copyNumber; });
+  auto j = std::find_if(jl.begin(), jl.end(), [&copyNumber](decltype(*jl.begin())& j2) { return j2.copynb() == copyNumber; });
   if (jl.end() == j)
     throw NoSuchJob("In ArchiveRequest::getJobOwner: no such job");
   return j->owner();

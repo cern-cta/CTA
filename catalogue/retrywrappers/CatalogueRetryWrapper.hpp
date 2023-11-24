@@ -22,9 +22,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace cta {
-
-namespace catalogue {
+namespace cta::catalogue {
 
 /**
  * Wrapper around a CTA catalogue object that retries a method if a
@@ -114,5 +112,4 @@ private:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class CatalogueRetryWrapper
 
-}  // namespace catalogue
-}  // namespace cta
+} // namespace cta::catalogue
