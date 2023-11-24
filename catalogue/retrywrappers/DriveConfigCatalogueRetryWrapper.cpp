@@ -30,40 +30,43 @@ DriveConfigCatalogueRetryWrapper::DriveConfigCatalogueRetryWrapper(const std::un
 
 void DriveConfigCatalogueRetryWrapper::createTapeDriveConfig(const std::string &driveName, const std::string &category,
   const std::string &keyName, const std::string &value, const std::string &source) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->createTapeDriveConfig(driveName, category,
-    keyName, value, source);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&driveName,&category,&keyName,&value,&source] {
+    return m_catalogue->DriveConfig()->createTapeDriveConfig(driveName, category, keyName, value, source);
+  }, m_maxTriesToConnect);
 }
 
 std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> DriveConfigCatalogueRetryWrapper::getTapeDriveConfigs() const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->getTapeDriveConfigs();},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->DriveConfig()->getTapeDriveConfigs();
+  }, m_maxTriesToConnect);
 }
 
 std::list<std::pair<std::string, std::string>> DriveConfigCatalogueRetryWrapper::getTapeDriveConfigNamesAndKeys() const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->getTapeDriveConfigNamesAndKeys();},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->DriveConfig()->getTapeDriveConfigNamesAndKeys();
+  }, m_maxTriesToConnect);
 }
 
 void DriveConfigCatalogueRetryWrapper::modifyTapeDriveConfig(const std::string &driveName, const std::string &category,
   const std::string &keyName, const std::string &value, const std::string &source) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->modifyTapeDriveConfig(driveName, category,
-    keyName, value, source);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&driveName,&category,&keyName,&value,&source] {
+    return m_catalogue->DriveConfig()->modifyTapeDriveConfig(driveName, category, keyName, value, source);
+  }, m_maxTriesToConnect);
 }
 
 std::optional<std::tuple<std::string, std::string, std::string>> DriveConfigCatalogueRetryWrapper::getTapeDriveConfig(
   const std::string &tapeDriveName,
   const std::string &keyName) const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, keyName);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&tapeDriveName,&keyName] {
+    return m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, keyName);
+  }, m_maxTriesToConnect);
 }
 
 void DriveConfigCatalogueRetryWrapper::deleteTapeDriveConfig(const std::string &tapeDriveName,
   const std::string &keyName) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->DriveConfig()->deleteTapeDriveConfig(tapeDriveName,
-    keyName);},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this,&tapeDriveName,&keyName] {
+    return m_catalogue->DriveConfig()->deleteTapeDriveConfig(tapeDriveName, keyName);
+  }, m_maxTriesToConnect);
 }
 
 } // namespace cta::catalogue

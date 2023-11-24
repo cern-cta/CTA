@@ -30,15 +30,21 @@ SchemaCatalogueRetryWrapper::SchemaCatalogueRetryWrapper(const std::unique_ptr<C
 }
 
 SchemaVersion SchemaCatalogueRetryWrapper::getSchemaVersion() const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->Schema()->getSchemaVersion();}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->Schema()->getSchemaVersion();
+  }, m_maxTriesToConnect);
 }
 
 void SchemaCatalogueRetryWrapper::verifySchemaVersion() {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->Schema()->verifySchemaVersion();}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->Schema()->verifySchemaVersion();
+  }, m_maxTriesToConnect);
 }
 
 void SchemaCatalogueRetryWrapper::ping() {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->Schema()->ping();}, m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->Schema()->ping();
+  }, m_maxTriesToConnect);
 }
 
 } // namespace cta::catalogue
