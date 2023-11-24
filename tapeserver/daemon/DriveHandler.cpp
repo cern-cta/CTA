@@ -382,7 +382,7 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
   // Record data moved totals if needed.
   if (m_totalTapeBytesMoved != message.totaltapebytesmoved() ||
       m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
-        if (message.totaltapebytesmoved() < m_totalTapeBytesMoved ||
+    if (message.totaltapebytesmoved() < m_totalTapeBytesMoved ||
         message.totaldiskbytesmoved() < m_totalDiskBytesMoved) {
       log::ScopedParamContainer params(m_lc);
       params.add("PreviousTapeBytesMoved", m_totalTapeBytesMoved)
