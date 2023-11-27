@@ -306,9 +306,9 @@ TEST_F(DriveHandlerTests, childTimeOut) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, DISABLED_shutdown) {
+TEST_F(DriveHandlerTests, shutdown) {
   std::string logToCheck;
-  // // Fork and shutdown
+  // Fork and shutdown
   // m_driveHandler->fork();
   // m_driveHandler->shutdown();
   // logToCheck = m_logger.getLog();
