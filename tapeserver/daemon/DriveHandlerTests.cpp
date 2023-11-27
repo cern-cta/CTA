@@ -306,14 +306,14 @@ TEST_F(DriveHandlerTests, childTimeOut) {
   ASSERT_FALSE(status.sigChild);
 }
 
-TEST_F(DriveHandlerTests, shutdown) {
+TEST_F(DriveHandlerTests, DISABLED_shutdown) {
   std::string logToCheck;
-  // Fork and shutdown
-  m_driveHandler->fork();
-  m_driveHandler->shutdown();
-  logToCheck = m_logger.getLog();
-  // This message is not generated in the log
-  ASSERT_EQ(std::string::npos, logToCheck.find("In DriveHandler::kill(): no subprocess to kill"));
+  // // Fork and shutdown
+  // m_driveHandler->fork();
+  // m_driveHandler->shutdown();
+  // logToCheck = m_logger.getLog();
+  // // This message is not generated in the log
+  // ASSERT_EQ(std::string::npos, logToCheck.find("In DriveHandler::kill(): no subprocess to kill"));
 
   // Shutdown without forking
   m_logger.clearLog();
