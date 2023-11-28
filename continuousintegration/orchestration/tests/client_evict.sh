@@ -18,10 +18,11 @@
 
 echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 
+TO_EVICT=$((${NB_FILES}*${NB_DIRS}))
 echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"
 # We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
 for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
-  seq -w 0 $((${NB_FILES} - 1)) | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs -I{} --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -e ${EOS_DIR}/{} > /dev/null
+  seq -w 0 $((${NB_FILES} - 1)) | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -e ${EOS_DIR}/${subdir}/TEST_FILE_NAME > /dev/null
 done
 
 sleep 1
