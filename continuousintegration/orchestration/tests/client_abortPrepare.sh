@@ -71,7 +71,7 @@ done
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ?? process (prepare2)..."
 
-    xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME --process-slot-var=index bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
+    seq -w 0 $((${NB_DIRS} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME --process-slot-var=index bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
 done
 
 # Ensure all requests files are queued
@@ -86,7 +86,7 @@ fi
 # Abort prepare -s requests
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ??  process (prepare_abort)..."
-  ls reqid_* | xargs --max-procs=${NB_PROCS} abortFile {}
+  ls reqid_* | xargs -I{} --max-procs=${NB_PROCS} abortFile {}
   echo Done.
 done
 rm -f reqid_*

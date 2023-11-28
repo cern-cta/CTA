@@ -17,7 +17,7 @@
 
 
 # Get list of files currently on tape.
-INITIALFILESONTAPE=$((${NB_FILES}*${NB_dirs}))
+INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
 
 # We can now delete the files
 echo "$(date +%s): Waiting for files to be removed from EOS and tapes"

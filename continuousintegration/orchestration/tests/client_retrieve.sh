@@ -31,7 +31,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   command_str="${xrdfs_call} || ${xrdfs_error}"
 
-  seq -w 0 $((${NB_FILES}- 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
 
   echo Done.
 
@@ -41,7 +41,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   command_str="${xrdfs_call} || ${xrdfs_error}"
 
-  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
 
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
@@ -51,7 +51,7 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
 
-TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
+TO_BE_RETRIEVED=$(( ${NB_FILES} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
 # Wait for the copy to appear on disk
@@ -60,8 +60,7 @@ SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 
 while test 0 -lt ${RETRIEVING}; do
-    echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
-
+  echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
