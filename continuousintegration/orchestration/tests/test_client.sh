@@ -115,7 +115,7 @@ echo
 echo "Launching client_archive.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PREPRUN} && /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
