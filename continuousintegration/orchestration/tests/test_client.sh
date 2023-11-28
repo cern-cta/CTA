@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2023 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -49,10 +49,6 @@ if [ $? -ne 0 ]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
 fi
-
-echo "Installing parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel" || exit 1
-kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex" || exit 1
 
 echo
 echo "Copying test scripts to client pod."
@@ -109,13 +105,25 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+#echo
+#echo "Track progress of test"
+#kubectl -n ${NAMESPACE} exec client -- bash -c ""
+
+
 
 echo
-echo "Launching client_ar.sh on client pod"
+echo "Launching client_archive.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
-echo " Retrieving them as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_ar.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PREPRUN} && /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Launching client_retrieve.sh on client pod"
+echo " Retrieving files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 

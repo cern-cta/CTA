@@ -44,30 +44,6 @@ BATCH_SIZE=20    # number of files per batch process
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
-# Setup sqlite3 DB.
-# Table client_tests
-#   filename
-#   archived     - amount of time a file has been archived
-#   staged       - amount of times a file has been evicted
-#   evicted      - amount of times the evict call has been called for the file.
-#   deleted      - deleted files.
-cat <<EOF > /opt/run/bin/tracker.schema
-
-CREATE TABLE client_tests_${TESTID}(
-       filename TEXT PRIMARY KEY,
-       archived INTEGER DEFAULT 0,
-       staged   INTEGER DEFAULT 0,
-       evicted  INTEGER DEFAULT 0,
-       aborted  INTEGER DEFAULT 0,
-       deleted  INTEGER DEFAULT 0
-);
-EOF
-
-export DB_NAME="/root/trackerdb.db"
-export TEST_TABLE="client_tests_${TESTID}"
-
-sqlite3 /root/trackerdb.db < /opt/run/bin/tracker.schema
-
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -77,14 +53,14 @@ die() {
 
 usage() { cat <<EOF 1>&2
 Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
-  -v		Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
-  -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
-  -a		Archiveonly mode: exits after file archival
-  -g		Tape aware GC?
+  -v    Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
+  -r    Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
+  -a    Archiveonly mode: exits after file archival
+  -g    Tape aware GC?
+  -t    Track progress in SQLite?
 EOF
 exit 1
 }
-
 
 # Send annotations to Influxdb
 annotate() {
