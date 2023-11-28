@@ -82,6 +82,7 @@ done
 # Wait for requests to be generated
 sleep 1
 
+
 # Ensure all requests files are queued
 requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
 echo "Retrieve requests count: ${requestsTotal}"

@@ -29,6 +29,7 @@ done
 
 sleep 1
 
+
 LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))

@@ -21,6 +21,7 @@ INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
 
 echo "$(date +%s): Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
 
+
 #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
 eval $delete
 EOSRMPID=$!
