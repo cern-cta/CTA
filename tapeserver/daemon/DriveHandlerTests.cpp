@@ -308,6 +308,24 @@ TEST_F(DriveHandlerTests, childTimeOut) {
 
 TEST_F(DriveHandlerTests, shutdown) {
   std::string logToCheck;
+  // Fork and shutdown
+  auto status = m_driveHandler->fork();
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::parent) {
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTests::shutdown(): Parent process");
+    m_driveHandler->shutdown();
+    logToCheck = m_logger.getLog();
+    // This message is not generated in the log
+    ASSERT_EQ(std::string::npos, logToCheck.find("In DriveHandler::kill(): no subprocess to kill"));
+  }
+  if (status.forkState == cta::tape::daemon::SubprocessHandler::ForkState::child) {
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTests::shutdown(): Child process");
+    m_driveHandler->runChild();
+    m_driveHandler->shutdown();
+  }
+}
+
+TEST_F(DriveHandlerTests, shutdownWithoutForking) {
+  std::string logToCheck;
   // Shutdown without forking
   m_logger.clearLog();
   const auto status = m_driveHandler->shutdown();
