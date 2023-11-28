@@ -389,7 +389,7 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
             .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
             .add("NewTapeBytesMoved", message.totaltapebytesmoved())
             .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_lc.log(log::WARNING, "In DriveHandler::processBytes(): total bytes moved going backwards");
+      m_lc.log(log::DEBUG, "In DriveHandler::processBytes(): the amount of total bytes moved decreased");
     }
     m_totalTapeBytesMoved = message.totaltapebytesmoved();
     m_totalDiskBytesMoved = message.totaldiskbytesmoved();
