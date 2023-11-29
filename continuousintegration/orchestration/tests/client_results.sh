@@ -19,39 +19,11 @@
 
 RC=0
 
-TOTAL_FILES=$((${NB_FILES} * ${NB_DIRS}))
-IFS='|' read -a results_array <<< $(db_results)
-
-ARCHIVED=${results_array[0]}
-RETRIEVED=${results_array[1]}
-EVICTED=${results_array[2]}
-ABORTED=${results_array[3]}
-DELETED=${results_array[4]}
-
-names_arr=("ARCHIVED" "RETRIEVED" "EVICTED" "ABORTED" "DELETED")
-
-echo "###"
-echo "$(date +%s): Results:"
-echo "NB FILES / ARCHIVED / RETRIEVED / EVICTED / ABORTED / DELETED"
-echo "${TOTAL_FILES} / ${ARCHIVED} / ${RETRIEVED} / ${EVICTED} / ${ABORTED} / ${DELETED}"
-echo "###"
-
-test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}</br>EVICTED: ${EVICTED}<br/>DELETED: ${DELETED}" 'test,end'
-
-TOTAL_FILES=$(( ${NB_FILES} * ${NB_DIRS} ))
-for i in "${!resuls_array[@]}"; do
-  if [[ ${TOTAL_FILES} -ne ${results_array[$i]} ]]; then
-    echo "ERROR: ${names_arr[${i}]} count value ${results_arr[${i}]} does not match the expected value ${TOTAL_FILES}."
-  fi
-done
-
-
 if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
   # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
   # ((RC++))
   echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
 fi
-
 
 # This one does not change the return code
 # WARNING if everything else was OK

@@ -19,21 +19,9 @@
 # Get list of files currently on tape.
 INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
 
-# We can now delete the files
-echo "$(date +%s): Waiting for files to be removed from EOS and tapes"
-admin_kdestroy &>/dev/null
-admin_kinit &>/dev/null
-if $(admin_cta admin ls &>/dev/null); then
-  echo "$(date +%s): Got cta admin privileges, can proceed with the workflow"
-else
-  # displays what failed and fail
-  admin_cta admin ls
-  die "$(date +%s): Could not launch cta-admin command."
-fi
-
 echo "$(date +%s): Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
 #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+eval $delete
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...
 sleep 1
