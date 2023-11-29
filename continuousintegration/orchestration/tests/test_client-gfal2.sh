@@ -62,7 +62,7 @@ NB_FILES=10000
 FILE_SIZE_KB=15
 NB_PROCS=100
 
-TEST_PRERUN=". /root/client_env && CLI_TARGET='gfal2' && . /root/cli_calls.sh"
+TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
 VERBOSE=1
@@ -81,7 +81,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-xrootd"
 
     echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
-    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL} -c gfal2"
 
     echo
     echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
