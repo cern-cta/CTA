@@ -73,7 +73,7 @@ annotate() {
   eval ${curlcmd}
 }
 
-while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:" o; do
+while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:c:" o; do
     case "${o}" in
         c)
             CLI_TARGET=${OPTARG}
