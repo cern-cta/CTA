@@ -77,7 +77,7 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FI
 # before every related script and kill it a the end. Another way to do this would
 # require to change the stdin/out/err of the tail process and set//reset it
 # at the beginning and end of each kubectl exec command.
-TEST_PRERUN=". /root/client_env && CLI_TARGET='xrd' && . /root/cli_calls.sh"
+TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
 VERBOSE=1

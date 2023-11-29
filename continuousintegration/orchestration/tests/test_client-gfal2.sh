@@ -62,7 +62,7 @@ NB_FILES=10000
 FILE_SIZE_KB=15
 NB_PROCS=100
 
-TEST_PRERUN=". /root/client_env && CLI_TARGET='gfal2' && . /root/cli_calls.sh"
+TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
 VERBOSE=1
