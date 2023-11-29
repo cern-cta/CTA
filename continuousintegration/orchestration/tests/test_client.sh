@@ -61,7 +61,7 @@ NB_PROCS=100
 
 echo
 echo "Setting up environment for tests."
-kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c xrd" || exit 1
 
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file
@@ -71,7 +71,7 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FI
 # before every related script and kill it a the end. Another way to do this would
 # require to change the stdin/out/err of the tail process and set//reset it
 # at the beginning and end of each kubectl exec command.
-TEST_PRERUN=". /root/client_env && CLI_TARGET='xrd' && . /root/cli_calls.sh"
+TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
 VERBOSE=1

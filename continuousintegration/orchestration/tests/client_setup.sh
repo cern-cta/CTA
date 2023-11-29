@@ -57,7 +57,8 @@ Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parall
   -r    Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
   -a    Archiveonly mode: exits after file archival
   -g    Tape aware GC?
-  -t    Track progress in SQLite?
+  -S    Track progress in SQLite?
+  -c    CLI tool to execute
 EOF
 exit 1
 }
@@ -74,6 +75,9 @@ annotate() {
 
 while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:" o; do
     case "${o}" in
+        c)
+            CLI_TARGET=${OPTARG}
+            ;;
         e)
             EOSINSTANCE=${OPTARG}
             ;;
@@ -141,6 +145,10 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+if [[ ! "${CLI_TARGET}" = @(xrd|gfal2) ]]; then
+  echo "Error: cli target $CLI_TARGET not supported. Valid options: xrd, gfal2"
+  exit 1
+fi
 if [ "x${COMMENT}" = "x" ]; then
     echo "No annotation will be pushed to Influxdb"
 fi
