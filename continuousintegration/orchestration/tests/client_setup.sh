@@ -26,6 +26,7 @@ ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
 LOGDIR='/var/log'
+CLI_TARGET="xrd"
 
 COMMENT=''
 # id of the test so that we can track it
