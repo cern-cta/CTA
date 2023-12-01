@@ -123,7 +123,7 @@ size_t LocalReadFile::size() const {
   return statbuf.st_size;
 }
 
-LocalReadFile::~LocalReadFile() throw() {
+LocalReadFile::~LocalReadFile() noexcept {
   ::close(m_fd);
 }
 
@@ -157,7 +157,7 @@ void LocalWriteFile::close()  {
       std::string("In LocalWriteFile::close failed close() on ")+m_URL);
 }
 
-LocalWriteFile::~LocalWriteFile() throw() {
+LocalWriteFile::~LocalWriteFile() noexcept {
   if(!m_closeTried){
     ::close(m_fd);
   }
@@ -197,7 +197,7 @@ size_t XrootBaseReadFile::size() const {
   return ret;
 }
 
-XrootBaseReadFile::~XrootBaseReadFile() throw() {
+XrootBaseReadFile::~XrootBaseReadFile() noexcept {
   try{
     // Use the result of Close() to avoid gcc >= 7 generating an unused-result
     // warning (casting the result to void is not good enough for gcc >= 7)
@@ -238,7 +238,7 @@ void XrootBaseWriteFile::close()  {
     std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ")+m_URL);
 }
 
-XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
+XrootBaseWriteFile::~XrootBaseWriteFile() noexcept {
   if(!m_closeTried){
     // Use the result of Close() to avoid gcc >= 7 generating an unused-result
     // warning (casting the result to void is not good enough for gcc >= 7)
@@ -279,7 +279,7 @@ size_t RadosStriperReadFile::size() const {
   return size;
 }
 
-RadosStriperReadFile::~RadosStriperReadFile() throw() {}
+RadosStriperReadFile::~RadosStriperReadFile() noexcept {}
 
 //==============================================================================
 // RADOS STRIPER WRITE FILE
@@ -335,7 +335,7 @@ void RadosStriperWriteFile::close()  {
   // Nothing to do as writes are synchronous
 }
 
-RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
+RadosStriperWriteFile::~RadosStriperWriteFile() noexcept {}
 
 //==============================================================================
 // AsyncDiskFileRemover FACTORY

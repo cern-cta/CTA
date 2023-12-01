@@ -54,7 +54,7 @@ public:
    */
   class Builder {
   public:
-    Builder(const RAOParams & data);
+    explicit Builder(const RAOParams& data);
     void setCatalogue(cta::catalogue::Catalogue * catalogue);
     void setDrive(drive::DriveInterface * drive);
     std::unique_ptr<SLTFRAOAlgorithm> build();

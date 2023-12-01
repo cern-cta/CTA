@@ -76,10 +76,8 @@ class ObjectOpsBase {
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:
-  ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os),
-    m_headerInterpreted(false), m_payloadInterpreted(false),
-    m_existingObject(false), m_locksCount(0),
-    m_locksForWriteCount(0) {}
+  explicit ObjectOpsBase(Backend& os): m_nameSet(false), m_objectStore(os), m_headerInterpreted(false),
+    m_payloadInterpreted(false), m_existingObject(false), m_locksCount(0), m_locksForWriteCount(0) {}
 
   virtual ~ObjectOpsBase();
 public:
@@ -344,7 +342,7 @@ protected:
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock() {}
-  ScopedSharedLock(ObjectOpsBase & oo) {
+  explicit ScopedSharedLock(ObjectOpsBase& oo) {
     lock(oo);
   }
 
@@ -432,7 +430,7 @@ protected:
     setAddress(name);
   }
 
-  ObjectOps(Backend & os): ObjectOpsBase(os) {}
+  explicit ObjectOps(Backend& os) : ObjectOpsBase(os) {}
 
   virtual ~ObjectOps() {}
 
@@ -459,7 +457,7 @@ public:
 
   class AsyncLockfreeFetcher {
     friend class ObjectOps;
-    AsyncLockfreeFetcher(ObjectOps & obj): m_obj(obj) {}
+    explicit AsyncLockfreeFetcher(ObjectOps& obj): m_obj(obj) {}
   public:
     void wait() {
       // Current simplification: the parsing of the header/payload is synchronous.
@@ -485,7 +483,7 @@ public:
 
   class AsyncInserter {
     friend class ObjectOps;
-    AsyncInserter(ObjectOps & obj): m_obj(obj) {}
+    explicit AsyncInserter(ObjectOps& obj) : m_obj(obj) {}
   public:
     void wait() {
       m_asyncCreator->wait();

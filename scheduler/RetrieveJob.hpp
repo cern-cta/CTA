@@ -75,7 +75,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~RetrieveJob() throw();
+  virtual ~RetrieveJob() noexcept;
   
   /**
    * Asynchronously indicates to the backend that the job was successful. 

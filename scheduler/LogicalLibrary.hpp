@@ -37,7 +37,7 @@ struct LogicalLibrary  {
   /**
    * Destructor.
    */
-  ~LogicalLibrary() throw();
+  ~LogicalLibrary() noexcept;
 
   /**
    * Constructor.

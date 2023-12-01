@@ -30,17 +30,16 @@ CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char *const *co
   help(false) {
 
   static struct option longopts[] = {
-    {"help", no_argument, NULL, 'h'},
-    {"version" , required_argument, NULL, 'v'},
-    {NULL  ,           0, NULL,   0}
+    { "help",    no_argument,       nullptr, 'h' },
+    { "version", required_argument, nullptr, 'v' },
+    { nullptr,                   0, nullptr, 0 }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
 
-  int opt = 0;
-  while((opt = getopt_long(argc, argv, ":hv:", longopts, NULL)) != -1) {
+  for(int opt = 0; (opt = getopt_long(argc, argv, ":hv:", longopts, nullptr)) != -1; ) {
     switch(opt) {
     case 'h':
       help = true;

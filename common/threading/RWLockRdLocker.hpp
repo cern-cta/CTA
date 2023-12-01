@@ -21,34 +21,31 @@ namespace cta::threading {
 class RWLock;
 
 /**
- * A scoped read lock on an RWLock.
+ * A scoped read lock on an RWLock
  */
 class RWLockRdLocker {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * Takes a read lock on the specified read-write lock.
+   * Takes a read lock on the specified read-write lock
    *
-   * @param lock The read-write lock on which to take a read-lock.
+   * @param lock The read-write lock on which to take a read-lock
    */
-  RWLockRdLocker(RWLock &lock);
+  explicit RWLockRdLocker(RWLock& lock);
   
   /**
-   * Destructor.
+   * Destructor
    *
-   * Releases the read lock.
+   * Releases the read lock
    */
   ~RWLockRdLocker();
 
 private:
-
   /**
-   * The read-write lock.
+   * The read-write lock
    */
-  RWLock &m_lock;
-
-}; // class RWLockRdLocker
+  RWLock& m_lock;
+};
   
 } // namespace cta::threading

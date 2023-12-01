@@ -24,19 +24,19 @@ namespace cta::objectstore {
 class ArchiveQueueShard: public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>  {
 public:
   // Constructor with undefined address
-  ArchiveQueueShard(Backend & os);
+  explicit ArchiveQueueShard(Backend& os);
 
   // Constructor
-  ArchiveQueueShard(const std::string & address, Backend & os);
+  ArchiveQueueShard(const std::string& address, Backend& os);
 
   // Upgrader form generic object
-  ArchiveQueueShard(GenericObject & go);
+  explicit ArchiveQueueShard(GenericObject& go);
 
   // Forbid/hide base initializer
   void initialize() override;
 
   // Initializer
-  void initialize(const std::string & owner);
+  void initialize(const std::string& owner);
 
   // dumper
   std::string dump();

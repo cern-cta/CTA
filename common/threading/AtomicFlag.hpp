@@ -23,20 +23,20 @@
 
 namespace cta::threading {
 
-//A 1 way flag : Once set, it can be reset
-struct AtomicFlag{
-  AtomicFlag(): m_set(false) {};
-     void set()  {
-        MutexLocker ml(m_mutex);
-        m_set=true;
-      }
-     operator bool() const {
-        MutexLocker ml(m_mutex);
-        return m_set;
-      }
-    private:
-      bool m_set;
-      mutable Mutex m_mutex;
+// A one-way flag: once set, it cannot be reset
+struct AtomicFlag {
+  explicit AtomicFlag() : m_set(false) {};
+  void set() {
+    MutexLocker ml(m_mutex);
+    m_set = true;
+  }
+  operator bool() const {
+    MutexLocker ml(m_mutex);
+    return m_set;
+  }
+private:
+  bool m_set;
+  mutable Mutex m_mutex;
 };
 
 } // namespace cta::threading

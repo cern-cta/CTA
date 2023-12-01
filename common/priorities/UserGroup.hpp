@@ -41,7 +41,7 @@ public:
   /**
    * Destructor.
    */
-  ~UserGroup() throw();
+  ~UserGroup() noexcept;
 
   /**
    * Constructor.
@@ -75,7 +75,7 @@ public:
    *
    * @return The name of the user group.
    */
-  const std::string &getName() const throw();
+  const std::string &getName() const noexcept;
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -84,7 +84,7 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file archive.
    */
-  const DriveQuota &getArchiveDriveQuota() const throw();
+  const DriveQuota &getArchiveDriveQuota() const noexcept;
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -93,19 +93,19 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file retrieve.
    */
-  const DriveQuota &getRetrieveDriveQuota() const throw();
+  const DriveQuota &getRetrieveDriveQuota() const noexcept;
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file archive.
    */
-  const MountCriteria &getArchiveMountCriteria() const throw();
+  const MountCriteria &getArchiveMountCriteria() const noexcept;
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file retrieve.
    */
-  const MountCriteria &getRetrieveMountCriteria() const throw();
+  const MountCriteria &getRetrieveMountCriteria() const noexcept;
 
 private:
 

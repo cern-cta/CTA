@@ -401,5 +401,5 @@ void cta::RetrieveMount::addDiskSystemToSkip(const cta::SchedulerDatabase::Retri
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrieveMount::~RetrieveMount() throw() {
+cta::RetrieveMount::~RetrieveMount() noexcept {
 }

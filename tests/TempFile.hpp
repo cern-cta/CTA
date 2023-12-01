@@ -27,7 +27,7 @@ namespace unitTests {
 class TempFile {
 public:
   TempFile();
-  TempFile(const std::string& path);
+  explicit TempFile(const std::string& path);
   std::string path();
   void randomFill(size_t size);
   uint32_t adler32();

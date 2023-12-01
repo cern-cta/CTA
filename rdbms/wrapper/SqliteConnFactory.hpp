@@ -28,11 +28,11 @@ class SqliteConnFactory: public ConnFactory {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param filename The filename to be passed to the sqlite3_open() function.
+   * @param filename The filename to be passed to the sqlite3_open() function
    */
-  SqliteConnFactory(const std::string &filename);
+  explicit SqliteConnFactory(const std::string& filename);
 
   /**
    * Destructor.

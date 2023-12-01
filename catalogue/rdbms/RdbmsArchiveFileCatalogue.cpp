@@ -457,7 +457,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileByI
     if(nullptr == archiveFile.get()) {
       exception::Exception ex;
       ex.getMessage() << "No such archive file with ID " << id;
-      throw (ex);
+      throw ex;
     }
 
     return *archiveFile;

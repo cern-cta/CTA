@@ -51,13 +51,13 @@ class FakeDrive : public DriveInterface {
   lbpToUse m_lbpToUse;
 
  public:
-  std::string contentToString() throw();
+  std::string contentToString() noexcept;
 
   FakeDrive(uint64_t capacity = std::numeric_limits<uint64_t>::max(),
     enum FailureMoment failureMoment = OnWrite,
-    bool failOnMount = false) throw();
-  explicit FakeDrive(bool failOnMount) throw();
-  virtual ~FakeDrive() throw() {}
+    bool failOnMount = false) noexcept;
+  explicit FakeDrive(bool failOnMount) noexcept;
+  virtual ~FakeDrive() noexcept {}
   virtual compressionStats getCompression();
   virtual void clearCompressionStats();
   virtual std::map<std::string, uint64_t> getTapeWriteErrors();

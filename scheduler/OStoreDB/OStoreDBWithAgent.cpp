@@ -28,6 +28,6 @@ cta::OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend & be, cta::o
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-cta::OStoreDBWithAgent::~OStoreDBWithAgent() throw () {
+cta::OStoreDBWithAgent::~OStoreDBWithAgent() noexcept {
   cta::OStoreDB::setAgentReference(nullptr);
 }

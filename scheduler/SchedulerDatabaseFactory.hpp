@@ -42,7 +42,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SchedulerDatabaseFactory() throw() = 0;
+  virtual ~SchedulerDatabaseFactory() noexcept = 0;
 
   /**
    * Returns a newly created scheduler database object.

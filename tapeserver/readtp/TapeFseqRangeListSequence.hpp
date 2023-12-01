@@ -47,13 +47,11 @@ public:
   TapeFseqRangeListSequence() ;
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param list The list of tape file sequence ranges from which the sequence
-   * of tape file sequence numbers is to be generated.
+   * @param list    The list of tape file sequence ranges from which the sequence of tape file sequence numbers is to be generated.
    */
-  TapeFseqRangeListSequence(const TapeFseqRangeList *const list)
-    ;
+  explicit TapeFseqRangeListSequence(const TapeFseqRangeList* const list);
 
   /**
    * Resets the sequence.
@@ -68,7 +66,7 @@ public:
    * Returns true if there is another tape file sequence number in the
    * sequence.
    */
-  bool hasMore() const throw();
+  bool hasMore() const noexcept;
 
   /**
    * Returns the next  tape file sequence number in the sequence, or throws an
@@ -79,7 +77,7 @@ public:
   /**
    * Returns true if the sequence is finite, else false if it is infinite.
    */
-  bool isFinite() const throw();
+  bool isFinite() const noexcept;
 
   /**
    * Returns the total number of values the sequence could ever generate.  The
@@ -87,7 +85,7 @@ public:
    * method returns 0 if the total number of values is 0 or infinity.  The
    * isFinite() method can be used to distinguish between the two cases.
    */
-  uint32_t totalSize() const throw();
+  uint32_t totalSize() const noexcept;
 
 
 private:

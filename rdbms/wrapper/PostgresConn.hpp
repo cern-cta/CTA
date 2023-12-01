@@ -43,12 +43,12 @@ public:
   friend PostgresColumn;
 
   /**
-   * Constructor.
+   * Constructor
    *
    * @param conninfo The conninfo string to pass to PQconnectdb. This is a postgres URI or a series of key=value pairs separated by white space.
    * 
    */
-  PostgresConn(const std::string &conninfo);
+  explicit PostgresConn(const std::string& conninfo);
 
   /**
    * Destructor.

@@ -42,21 +42,21 @@ namespace cta::threading {
     /**
      * Exceptions for wrong usage.
      */
-    class ProcessStillRunning: public cta::exception::Exception {
+    class ProcessStillRunning : public exception::Exception {
     public:
-      ProcessStillRunning(const std::string & what = "Process still running"):
+      explicit ProcessStillRunning(const std::string& what = "Process still running"):
       cta::exception::Exception::Exception(what) {}
     };
     
-    class ProcessNeverStarted: public cta::exception::Exception {
+    class ProcessNeverStarted : public exception::Exception {
     public:
-      ProcessNeverStarted(const std::string & what = "Process never started"):
+      explicit ProcessNeverStarted(const std::string& what = "Process never started"):
       cta::exception::Exception::Exception(what) {}
     };
     
-    class ProcessWasKilled: public cta::exception::Exception {
+    class ProcessWasKilled : public exception::Exception {
     public:
-      ProcessWasKilled(const std::string & what = "Process was killed"):
+      explicit ProcessWasKilled(const std::string& what = "Process was killed"):
       cta::exception::Exception::Exception(what) {}
     };
     

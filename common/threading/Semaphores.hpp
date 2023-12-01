@@ -30,7 +30,7 @@ namespace cta::threading {
   class PosixSemaphore {
   public:
     class Timeout{};
-    PosixSemaphore(int initial = 0) ;
+    explicit PosixSemaphore(int initial = 0);
     ~PosixSemaphore();
     void acquire() ;
     void acquireWithTimeout(uint64_t timeout_us); /**< Throws an exception (Timeout) in case of timeout */
@@ -49,7 +49,7 @@ namespace cta::threading {
    */
   class CondVarSemaphore {
   public:
-    CondVarSemaphore(int initial = 0) ;
+    explicit CondVarSemaphore(int initial = 0);
     ~CondVarSemaphore();
     void acquire() ;
     bool tryAcquire() ;
@@ -60,18 +60,9 @@ namespace cta::threading {
     int m_value;
   };
 
-#ifndef __APPLE__
   class Semaphore: public PosixSemaphore {
   public:
-    Semaphore(int initial=0): PosixSemaphore(initial) {}
+    explicit Semaphore(int initial = 0) : PosixSemaphore(initial) {}
   };
-#else
-  /* Apple does not like posix semaphores :((
-     We have to roll our own. */
-  class Semaphore: public CondVarSemaphore {
-  public:
-    Semaphore(int initial=0): CondVarSemaphore(initial) {}
-  };
-#endif // ndef __APPLE__
-  
+
 } // namespace cta::threading

@@ -36,13 +36,13 @@ cta::DriveQuota::DriveQuota(const uint32_t minDrives, const uint32_t maxDrives):
 //------------------------------------------------------------------------------
 // getMinDrives
 //------------------------------------------------------------------------------
-uint32_t cta::DriveQuota::getMinDrives() const throw() {
+uint32_t cta::DriveQuota::getMinDrives() const noexcept {
   return m_minDrives;
 }
 
 //------------------------------------------------------------------------------
 // getMaxDrives
 //------------------------------------------------------------------------------
-uint32_t cta::DriveQuota::getMaxDrives() const throw() {
+uint32_t cta::DriveQuota::getMaxDrives() const noexcept {
   return m_maxDrives;
 }

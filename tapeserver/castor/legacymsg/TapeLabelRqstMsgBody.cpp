@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() throw():
+castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() noexcept :
   lbp(0),
   force(0),
   uid(0),

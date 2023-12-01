@@ -55,7 +55,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
 // execute
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::CleanerSession::execute() throw() {
+  castor::tape::tapeserver::daemon::CleanerSession::execute() noexcept {
   std::string errorMessage;
 
   try {
@@ -216,7 +216,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
 //------------------------------------------------------------------------------
 // logAndClearTapeAlerts
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface &drive) throw() {
+void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface &drive) noexcept {
   std::string errorMessage;
   try {
     std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes();

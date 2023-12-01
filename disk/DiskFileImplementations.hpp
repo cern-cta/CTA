@@ -40,21 +40,21 @@ namespace cta {
       //==============================================================================
       class LocalReadFile: public ReadFile {
       public:
-        LocalReadFile(const std::string &path);
+        explicit LocalReadFile(const std::string& path);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~LocalReadFile() throw();
+        virtual ~LocalReadFile() noexcept;
       private:
         int m_fd;
       };
      
       class LocalWriteFile: public WriteFile {
       public:
-        LocalWriteFile(const std::string &path);
+        explicit LocalWriteFile(const std::string& path);
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~LocalWriteFile() throw();
+        virtual ~LocalWriteFile() noexcept;
       private:
         int m_fd;
         bool m_closeTried;
@@ -74,10 +74,10 @@ namespace cta {
       //==============================================================================  
       class XrootBaseReadFile: public ReadFile {
       public:
-        XrootBaseReadFile(uint16_t timeout): m_timeout(timeout) {}
+        explicit XrootBaseReadFile(uint16_t timeout) : m_timeout(timeout) {}
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~XrootBaseReadFile() throw();
+        virtual ~XrootBaseReadFile() noexcept;
       protected:
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
@@ -99,18 +99,18 @@ namespace cta {
           const CryptoPP::RSA::PrivateKey & privateKey,
           uint16_t timeout = 0,
           const std::string & cephPool = "");
-        virtual ~XrootC2FSReadFile() throw () {}
+        virtual ~XrootC2FSReadFile() noexcept {}
       private:
         std::string m_signedURL;
       };
       
       class XrootBaseWriteFile: public WriteFile {
       public:
-        XrootBaseWriteFile(uint16_t timeout): m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
+        explicit XrootBaseWriteFile(uint16_t timeout) : m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~XrootBaseWriteFile() throw();        
+        virtual ~XrootBaseWriteFile() noexcept;        
       protected:
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
@@ -132,7 +132,7 @@ namespace cta {
           const CryptoPP::RSA::PrivateKey & privateKey,
           uint16_t timeout = 0,
           const std::string & cephPool = "");
-        virtual ~XrootC2FSWriteFile() throw () {}
+        virtual ~XrootC2FSWriteFile() noexcept {}
       private:
         std::string m_signedURL;
       };     
@@ -150,7 +150,7 @@ namespace cta {
           const std::string &osd);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~RadosStriperReadFile() throw();
+        virtual ~RadosStriperReadFile() noexcept;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;
@@ -165,7 +165,7 @@ namespace cta {
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~RadosStriperWriteFile() throw();
+        virtual ~RadosStriperWriteFile() noexcept;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;
@@ -185,7 +185,7 @@ namespace cta {
 	 * Constructor of the LocalDiskFileRemover
 	 * @param path the path of the file to be removed
 	 */
-	LocalDiskFileRemover(const std::string& path);
+	explicit LocalDiskFileRemover(const std::string& path);
 	void remove() override;
       };
 
@@ -198,7 +198,7 @@ namespace cta {
 	 * Constructor of the asynchronous remover
 	 * @param diskFileRemover the instance of the LocalDiskFileRemover that will delete the file
 	 */
-	AsyncLocalDiskFileRemover(const std::string &path);
+	explicit AsyncLocalDiskFileRemover(const std::string& path);
 	void asyncDelete() override;
 	void wait() override;
       private:
@@ -211,7 +211,7 @@ namespace cta {
       class AsyncXRootdDiskFileRemover: public AsyncDiskFileRemover{
       public:
 	friend class XRootdDiskFileRemover;
-	AsyncXRootdDiskFileRemover(const std::string &path);
+	explicit AsyncXRootdDiskFileRemover(const std::string& path);
 	void asyncDelete() override;
 	void wait() override;
       private:
@@ -230,7 +230,7 @@ namespace cta {
        */
       class XRootdDiskFileRemover: public DiskFileRemover{
       public:
-	XRootdDiskFileRemover(const std::string &path);
+	explicit XRootdDiskFileRemover(const std::string& path);
 	/**
 	 * Remove the file in a synchronous way
 	 * @throws an exception if the XRootD call status is an Error
@@ -251,7 +251,7 @@ namespace cta {
 
       class LocalDirectory: public Directory {
       public:
-	LocalDirectory(const std::string& path);
+	explicit LocalDirectory(const std::string& path);
 	void mkdir() override;
 	bool exist() override;
 	std::set<std::string> getFilesName() override;
@@ -260,7 +260,7 @@ namespace cta {
 
       class XRootdDirectory: public Directory{
       public:
-	XRootdDirectory(const std::string& path);
+	explicit XRootdDirectory(const std::string& path);
 	void mkdir() override;
 	bool exist() override;
 	std::set<std::string> getFilesName() override;

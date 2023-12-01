@@ -83,7 +83,7 @@ namespace cta {
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
-        virtual ~ReadFile() throw() {}
+        virtual ~ReadFile() noexcept {}
         
         /**
          * File protocol and path for logging
@@ -119,7 +119,7 @@ namespace cta {
         /**
          * Destructor of the WriteFile class.
          */
-        virtual ~WriteFile() throw() {}
+        virtual ~WriteFile() noexcept {}
         
         /**
          * File protocol and path for logging
@@ -163,7 +163,7 @@ namespace cta {
       class DiskFileRemover{
       public:
 	virtual void remove() = 0;
-	virtual ~DiskFileRemover() throw() {}
+	virtual ~DiskFileRemover() noexcept {}
       protected:
 	std::string m_URL;
       };
@@ -219,7 +219,7 @@ namespace cta {
       return m_URL;
     }
 
-    virtual ~Directory() throw() {}
+    virtual ~Directory() noexcept {}
   protected:
     /**
     * Storage for the URL

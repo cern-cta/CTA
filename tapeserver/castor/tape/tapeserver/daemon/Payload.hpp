@@ -38,7 +38,7 @@ class Payload
   Payload(const Payload&);
   Payload& operator=(const Payload&);
 public:
-  Payload(uint32_t capacity) : m_data(new(std::nothrow) unsigned char[capacity]), m_totalCapacity(capacity), m_size(0) {
+  explicit Payload(uint32_t capacity) : m_data(new(std::nothrow) unsigned char[capacity]), m_totalCapacity(capacity), m_size(0) {
     if (nullptr == m_data) {
       throw cta::exception::MemException("Failed to allocate memory for a new MemBlock!");
     }

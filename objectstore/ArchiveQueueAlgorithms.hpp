@@ -66,12 +66,12 @@ struct ContainerTraits<ArchiveQueue,C>
   struct PoppedElementsSummary;
   struct PopCriteria {
     uint64_t files;
-    PopCriteria(uint64_t f = 0) : files(f) {}
+    explicit PopCriteria(uint64_t f = 0) : files(f) {}
     PopCriteria& operator-=(const PoppedElementsSummary&);
   };
   struct PoppedElementsSummary {
     uint64_t files;
-    PoppedElementsSummary(uint64_t f = 0) : files(f) {}
+    explicit PoppedElementsSummary(uint64_t f = 0) : files(f) {}
     bool operator< (const PopCriteria & pc) {
       return files < pc.files;
     }
@@ -117,7 +117,7 @@ struct ContainerTraits<ArchiveQueue,C>
   };
 
   struct OwnershipSwitchFailure: public cta::exception::Exception {
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    explicit OwnershipSwitchFailure(const std::string& message) : cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
 

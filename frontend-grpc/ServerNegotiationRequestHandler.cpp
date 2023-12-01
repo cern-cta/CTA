@@ -130,7 +130,7 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
     gssMechs = &gssMechlist;
   }
   gssMajStat = gss_acquire_cred(&gssMinStat, gssServerName, 0, gssMechs, GSS_C_ACCEPT,
-                              pGssServerCreds, NULL, NULL);
+                              pGssServerCreds, nullptr, nullptr);
 
   releaseName("In grpc::server::NegotiationRequestHandler::acquireCreds():", &gssServerName);
   
@@ -205,8 +205,8 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
                                           GSS_C_NO_CHANNEL_BINDINGS,
                                           &gssSrcName, &gssOidMechType, &gssSendToken,
                                           &gssRetFlags,
-                                          NULL,  /* time_rec */
-                                          NULL); /* del_cred_handle */
+                                          nullptr,  /* time_rec */
+                                          nullptr); /* del_cred_handle */
         
         switch (gssMajStat) {
           // https://www.ietf.org/archive/id/draft-perez-krb-wg-gss-preauth-03.html

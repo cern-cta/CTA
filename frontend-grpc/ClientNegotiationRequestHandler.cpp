@@ -173,10 +173,10 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
                         GSS_C_NO_CHANNEL_BINDINGS, // channel bindings
                         // GSS_C_NO_BUFFER, // input token
                         &m_gssRecvToken, // input token
-                        NULL, // actual_mech_type
+                        nullptr, // actual_mech_type
                         &m_gssSendToken, // output token 
-                        NULL, // ret_flags
-                        NULL // time_req
+                        nullptr, // ret_flags
+                        nullptr // time_req
                     );
                     
           switch (m_gssMajStat) {

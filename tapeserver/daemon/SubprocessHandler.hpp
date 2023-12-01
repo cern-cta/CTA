@@ -53,9 +53,8 @@ namespace cta::tape::daemon {
  */
 class SubprocessHandler {
 public:
-  /** The subprocess handler constructor. It will remember its index, as a helper to
-   * the manager */
-  SubprocessHandler(const std::string & index) : index(index) {}
+  /** The subprocess handler constructor. It will remember its index, as a helper to the manager */
+  explicit SubprocessHandler(const std::string& index) : index(index) {}
   const std::string index;          ///< The index of the subprocess (as a helper to the manager)
   virtual ~SubprocessHandler() = default;
   /** An enum allowing the description of the environment (child or parent) */

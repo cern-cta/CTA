@@ -63,7 +63,7 @@ protected:
   /** Return the string representation of the specified tape-daemon state.
    * @param The tape-daemon state.
    * @return The string representation. */
-  static const char *stateToStr(const State state) throw();
+  static const char *stateToStr(const State state) noexcept;
 
   /** The current state of the tape-server daemon. */
   State m_state;
@@ -164,7 +164,7 @@ protected:
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleIOEvents() throw();
+  bool handleIOEvents() noexcept;
 
   /**
    * Handles a tick in time.  Time driven actions such as alarms should be
@@ -176,14 +176,14 @@ protected:
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleTick() throw();
+  bool handleTick() noexcept;
 
   /**
    * Handles any pending signals.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handlePendingSignals() throw();
+  bool handlePendingSignals() noexcept;
 
   /**
    * Handles the specified signals.
@@ -224,8 +224,7 @@ protected:
    * @param pid The process ID of the child process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void logChildProcessTerminated(const pid_t pid, const int waitpidStat)
-    throw();
+  void logChildProcessTerminated(const pid_t pid, const int waitpidStat) noexcept;
   
   /** The tape server's configuration */
   const TapedConfiguration& m_globalConfiguration;

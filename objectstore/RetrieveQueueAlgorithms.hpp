@@ -28,9 +28,9 @@ struct ContainerTraits<RetrieveQueue,C>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
-    ContainerSummary(const RetrieveQueue::JobsSummary &c) :
+    explicit ContainerSummary(const RetrieveQueue::JobsSummary& c) :
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.youngestJobStartTime,c.priority,
-          c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,std::nullopt}) {}
+      c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,std::nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
 
@@ -64,12 +64,12 @@ struct ContainerTraits<RetrieveQueue,C>
   struct PoppedElementsSummary;
   struct PopCriteria {
     uint64_t files;
-    PopCriteria(uint64_t f = 0) : files(f) {}
+    explicit PopCriteria(uint64_t f = 0) : files(f) {}
     PopCriteria& operator-=(const PoppedElementsSummary&);
   };
   struct PoppedElementsSummary {
     uint64_t files;
-    PoppedElementsSummary(uint64_t f = 0) : files(f) {}
+    explicit PoppedElementsSummary(uint64_t f = 0) : files(f) {}
     bool operator==(const PoppedElementsSummary &pes) const {
       return files == pes.files;
     }
@@ -118,7 +118,7 @@ struct ContainerTraits<RetrieveQueue,C>
   };
 
   struct OwnershipSwitchFailure: public cta::exception::Exception {
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    explicit OwnershipSwitchFailure(const std::string& message) : cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
 

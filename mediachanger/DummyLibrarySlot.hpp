@@ -26,26 +26,25 @@ namespace cta::mediachanger {
  */
 class DummyLibrarySlot: public LibrarySlot {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
    * Sets all string member-variables to the empty string.
    */
   DummyLibrarySlot();
 
   /**
-   * Constructor.
+   * Constructor
    *
    * Initialises the member variables based on the result of parsing the
    * specified string representation of the library slot.
    *
    * @param str The string representation of the library slot.
    */
-  DummyLibrarySlot(const std::string &str);
+  explicit DummyLibrarySlot(const std::string& str);
 
   /**
-   * Destructor.
+   * Destructor
    */
   ~DummyLibrarySlot();
 
@@ -55,7 +54,6 @@ public:
    * @return The clone.
    */
   LibrarySlot *clone();
-
-}; // class DummyLibrarySlot
+};
 
 } // namespace cta::mediachanger

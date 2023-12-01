@@ -38,13 +38,11 @@ class MutexLocker {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param m pointer to Mutex to be owned.
+   * @param m pointer to Mutex to be owned
    */
-  MutexLocker(Mutex & m): m_mutex(m) {
-    m.lock();
-  }
+  explicit MutexLocker(Mutex& m) : m_mutex(m) { m.lock(); }
   
   /**
    * Unlocker

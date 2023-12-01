@@ -46,8 +46,8 @@ class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class Sorter;
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
-  Agent(GenericObject & go);
-  Agent(const std::string & name, Backend & os);
+  explicit Agent(GenericObject& go);
+  Agent(const std::string& name, Backend& os);
 
   void initialize() override;
 

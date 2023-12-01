@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 // msgTypeToString
 //------------------------------------------------------------------------------
-const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
+const char *castor::messages::msgTypeToString(const MsgType msgType) noexcept {
   switch(msgType) {
   case MSG_TYPE_NONE:
     return "None";

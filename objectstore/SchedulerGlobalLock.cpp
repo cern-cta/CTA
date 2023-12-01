@@ -66,7 +66,7 @@ void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner, Agent
   }
   // 2) The tape pool is not referenced in the root entry. We can just clean it up.
   if (!isEmpty()) {
-    throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
+    throw NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error");
   }
   remove();
   log::ScopedParamContainer params(lc);

@@ -32,7 +32,7 @@ castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
 //------------------------------------------------------------------------------
 // driveIsEmpty()
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
+bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() noexcept {
   std::string errorMessage;
 
   try {

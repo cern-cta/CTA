@@ -39,20 +39,20 @@ cta::MountCriteria::MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles
 //------------------------------------------------------------------------------
 // getNbBytes
 //------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getNbBytes() const throw() {
+uint64_t cta::MountCriteria::getNbBytes() const noexcept {
   return m_nbBytes;
 }
 
 //------------------------------------------------------------------------------
 // getNbFiles
 //------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getNbFiles() const throw() {
+uint64_t cta::MountCriteria::getNbFiles() const noexcept {
   return m_nbFiles;
 }
 
 //------------------------------------------------------------------------------
 // getAgeInSecs
 //------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getAgeInSecs() const throw() {
+uint64_t cta::MountCriteria::getAgeInSecs() const noexcept {
   return m_ageInSecs;
 }

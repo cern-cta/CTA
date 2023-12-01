@@ -45,11 +45,11 @@ public:
   Rset();
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param impl The object actually implementing this result set.
+   * @param impl The object actually implementing this result set
    */
-  Rset(std::unique_ptr<wrapper::RsetWrapper> impl);
+  explicit Rset(std::unique_ptr<wrapper::RsetWrapper> impl);
 
   /**
    * Destructor.

@@ -35,7 +35,7 @@ public:
    *                       (Not used for JSON output which does not need to be formatted
    *                        so can be streamed directly)
    */
-  TextFormatter(unsigned int bufLines = 1000) :
+  explicit TextFormatter(unsigned int bufLines = 1000) :
     m_bufLines(bufLines) {
     m_outputBuffer.reserve(bufLines);
     m_lastColumnFlushLeft = false;

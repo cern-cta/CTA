@@ -61,7 +61,7 @@ class OStoreDB: public SchedulerDatabase {
   friend class cta::ostoredb::MemQueue;
  public:
   OStoreDB(objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger);
-  virtual ~OStoreDB() throw();
+  virtual ~OStoreDB() noexcept;
 
   /* === Object store and agent handling ==================================== */
   void setAgentReference(objectstore::AgentReference *agentReference);
@@ -526,7 +526,7 @@ class OStoreDB: public SchedulerDatabase {
     friend class OStoreDB;
    public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {
-      throw (SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion"));
+      throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
     }
     virtual ~RepackRequestPromotionStatisticsNoLock() {}
   };

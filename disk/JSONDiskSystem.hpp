@@ -31,20 +31,18 @@ namespace cta::disk {
 class JSONDiskSystem : public DiskSystem, public JSONCObject {
 public:
   JSONDiskSystem();
-  JSONDiskSystem(const DiskSystem & diskSystem);
+  explicit JSONDiskSystem(const DiskSystem& diskSystem);
   /**
    * Builds the DiskSystem object with the json passed in parameter
-   * @param json
    */
-  void buildFromJSON(const std::string & json) override;
+  void buildFromJSON(const std::string& json) override;
   /**
    * Get the json string representation of the inherited DiskSystem object
-   * @return 
    */
   std::string getJSON() override;
   virtual ~JSONDiskSystem();
 private:
 
 };
-} // namespace cta::disk
 
+} // namespace cta::disk

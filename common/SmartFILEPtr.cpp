@@ -25,21 +25,21 @@ namespace cta {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-SmartFILEPtr::SmartFILEPtr() throw() :
+SmartFILEPtr::SmartFILEPtr() noexcept :
   m_file(nullptr) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
+SmartFILEPtr::SmartFILEPtr(FILE *const file) noexcept :
   m_file(file) {
 }
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void SmartFILEPtr::reset(FILE *const file) throw() {
+void SmartFILEPtr::reset(FILE *const file) noexcept {
   // If the new pointer is not the one already owned
   if(file != m_file) {
 
@@ -65,14 +65,14 @@ SmartFILEPtr &SmartFILEPtr::operator=(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-SmartFILEPtr::~SmartFILEPtr() throw() {
+SmartFILEPtr::~SmartFILEPtr() noexcept {
   reset();
 }
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *SmartFILEPtr::get() const throw() {
+FILE *SmartFILEPtr::get() const noexcept {
   return m_file;
 }
 

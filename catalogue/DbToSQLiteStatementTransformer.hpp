@@ -31,7 +31,7 @@ public:
    * Constructs a DbToSQLiteStatementTransformer
    * @param statement the statement to transform into a SQLite compatible one
    */
-  DbToSQLiteStatementTransformer(const std::string &statement);
+  explicit DbToSQLiteStatementTransformer(const std::string& statement);
   virtual ~DbToSQLiteStatementTransformer();
   /**
    * Transform the statement as a SQLite compatible one
@@ -48,7 +48,7 @@ protected:
  */
 class CreateGlobalTempTableToSQLiteStatementTransformer: public DbToSQLiteStatementTransformer {
 public:
-  CreateGlobalTempTableToSQLiteStatementTransformer(const std::string &statement);
+  explicit CreateGlobalTempTableToSQLiteStatementTransformer(const std::string& statement);
   std::string transform() override;
 };
 
@@ -60,7 +60,7 @@ public:
  */
 class IndexStatementTransformer: public DbToSQLiteStatementTransformer {
 public:
-  IndexStatementTransformer(const std::string &statement);
+  explicit IndexStatementTransformer(const std::string& statement);
   std::string transform() override;
 };
 
@@ -70,7 +70,7 @@ public:
  */
 class DeleteStatementTransformer :public DbToSQLiteStatementTransformer {
 public:
-  DeleteStatementTransformer(const std::string &statement);
+  explicit DeleteStatementTransformer(const std::string& statement);
   std::string transform() override;
 };
 

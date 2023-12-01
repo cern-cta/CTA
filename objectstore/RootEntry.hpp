@@ -39,8 +39,8 @@ public:
   static const std::string c_address; // = "root"
 
   // Constructor
-  RootEntry(Backend & os);
-  RootEntry(GenericObject & go);
+  explicit RootEntry(Backend& os);
+  explicit RootEntry(GenericObject& go);
 
   CTA_GENERATE_EXCEPTION_CLASS(NotAllocated);
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);

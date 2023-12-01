@@ -29,7 +29,7 @@ namespace cta::tapeserver::readtp {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
+TapeFseqRangeSequence::TapeFseqRangeSequence() noexcept {
   reset();
 }
 
@@ -38,7 +38,7 @@ TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
 // constructor
 //------------------------------------------------------------------------------
 TapeFseqRangeSequence::TapeFseqRangeSequence(
-  const TapeFseqRange &range) throw() {
+  const TapeFseqRange &range) noexcept {
   reset(range);
 }
 
@@ -46,7 +46,7 @@ TapeFseqRangeSequence::TapeFseqRangeSequence(
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void TapeFseqRangeSequence::reset() throw() {
+void TapeFseqRangeSequence::reset() noexcept {
 
   // Reset the range to be empty
   m_range.reset();
@@ -59,7 +59,7 @@ void TapeFseqRangeSequence::reset() throw() {
 // reset
 //------------------------------------------------------------------------------
 void TapeFseqRangeSequence::reset(
-  const TapeFseqRange &range) throw() {
+  const TapeFseqRange &range) noexcept {
   m_range = range;
 
   if(range.isEmpty()) {
@@ -73,7 +73,7 @@ void TapeFseqRangeSequence::reset(
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool TapeFseqRangeSequence::hasMore() const throw() {
+bool TapeFseqRangeSequence::hasMore() const noexcept {
 
   if(m_range.isEmpty()) {
 
@@ -110,7 +110,7 @@ uint32_t TapeFseqRangeSequence::next()
 // range
 //------------------------------------------------------------------------------
 const TapeFseqRange
-  &TapeFseqRangeSequence::range() const throw() {
+  &TapeFseqRangeSequence::range() const noexcept {
   return m_range;
 }
 

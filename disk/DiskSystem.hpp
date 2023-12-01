@@ -107,7 +107,7 @@ public:
 
 class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {
 public:
-  DiskSystemFreeSpaceList(DiskSystemList &diskSystemList): m_systemList(diskSystemList) {}
+  explicit DiskSystemFreeSpaceList(DiskSystemList& diskSystemList) : m_systemList(diskSystemList) {}
   void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc);
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:

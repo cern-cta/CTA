@@ -37,8 +37,8 @@ public:
 
   RetrieveQueue(const std::string & address, Backend & os);
   // Undefined object constructor
-  RetrieveQueue(Backend & os);
-  RetrieveQueue(GenericObject & go);
+  explicit RetrieveQueue(Backend& os);
+  explicit RetrieveQueue(GenericObject& go);
   void initialize(const std::string & vid);
   void commit() override;
   void getPayloadFromHeader() override;

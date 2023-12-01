@@ -36,7 +36,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~BackendPopulator() throw();
+  virtual ~BackendPopulator() noexcept;
 
   /**
    * Returns the agent

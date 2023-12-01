@@ -20,6 +20,7 @@
 - cta/CTA#533 - Upgrade SonarCloud runtime to Java 17
 - cta/CTA#538 - Fix bugs reported by SonarCloud
 - cta/CTA#539 - Explicitly capture scope variables in lambdas
+- cta/CTA#544 - Fix default special member functions
 
 # v4.10.8-1
 

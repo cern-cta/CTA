@@ -24,13 +24,13 @@ namespace cta::objectstore {
 class RetrieveQueueShard: public ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t>  {
 public:
   // Constructor with undefined address
-  RetrieveQueueShard(Backend & os);
+  explicit RetrieveQueueShard(Backend& os);
   
   // Constructor
   RetrieveQueueShard(const std::string & address, Backend & os);
   
   // Upgrader form generic object
-  RetrieveQueueShard(GenericObject & go);
+  explicit RetrieveQueueShard(GenericObject& go);
   
   // Forbid/hide base initializer
   void initialize() override;

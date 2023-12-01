@@ -17,28 +17,19 @@
 
 #pragma once
 
-// Include Files
 #include "common/exception/Exception.hpp"
 
-namespace cta {
+namespace cta::exception {
 
-  namespace exception {
+/**
+ * Invalid argument exception
+ */
+class InvalidArgument : public Exception {
+public:
+  /**
+   * default constructor
+   */
+  explicit InvalidArgument(const std::string& what = "");
+};
 
-    /**
-     * Invalid argument exception
-     */
-    class InvalidArgument : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * default constructor
-       */
-      InvalidArgument(const std::string& what="");
-
-    };
-      
-  } // end of namespace exception
-
-} // end of namespace cta
-
+} // namespace cta::exception

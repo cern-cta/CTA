@@ -40,9 +40,9 @@ class EntryLogSerDeser;
 
 class ArchiveRequest: public ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t> {
 public:
-  ArchiveRequest(const std::string & address, Backend & os);
-  ArchiveRequest(Backend & os);
-  ArchiveRequest(GenericObject & go);
+  ArchiveRequest(const std::string& address, Backend& os);
+  explicit ArchiveRequest(Backend& os);
+  explicit ArchiveRequest(GenericObject& go);
   void initialize() override;
   void commit() override;
   // Ownership of archive requests is managed per job. Object level owner has no meaning.

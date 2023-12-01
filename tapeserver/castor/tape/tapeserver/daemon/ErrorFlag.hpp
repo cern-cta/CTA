@@ -27,7 +27,7 @@ namespace castor::tape::tapeserver::daemon {
   class ErrorFlag : public cta::exception::Exception {
   public:
     ErrorFlag(): cta::exception::Exception("Internal exception, should not be seen") {}
-    virtual ~ErrorFlag() throw() {}
+    virtual ~ErrorFlag() noexcept {}
   };
 
 } // namespace castor::tape::tapeserver::daemon

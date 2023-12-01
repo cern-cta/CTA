@@ -66,12 +66,12 @@ class SchedulerDatabaseTest: public
   ::testing::TestWithParam<SchedulerDatabaseTestParam> {
 public:
 
-  SchedulerDatabaseTest() throw() {
+  SchedulerDatabaseTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get scheduler database";
     }
   };

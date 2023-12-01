@@ -29,11 +29,11 @@ class DmcProxy: public MediaChangerProxy {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param log Object representing the API to the CTA logging system.
+   * @param log Object representing the API to the CTA logging system
    */
-  DmcProxy(log::Logger &log);
+  explicit DmcProxy(log::Logger& log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only

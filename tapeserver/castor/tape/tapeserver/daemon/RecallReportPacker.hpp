@@ -180,11 +180,8 @@ private:
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
   public:
-    ReportEndofSessionWithErrors(std::string msg) :
-      m_message(std::move(msg)) {}
-
+    explicit ReportEndofSessionWithErrors(std::string msg) : m_message(std::move(msg)) {}
     void execute(RecallReportPacker& reportPacker) override;
-
     bool goingToEnd() override;
   };
 

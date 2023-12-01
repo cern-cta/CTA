@@ -38,12 +38,11 @@ public:
   /**
    * Constructor
    *
-   * @param stdOut Stream representing standard out.
-   * @param stdErr Stream representing standard error.
-   * @param log Object representing the API of the CASTOR logging system.
+   * @param stdOut Stream representing standard out
+   * @param stdErr Stream representing standard error
+   * @param log Object representing the API of the logging system
    */
-  Daemon(cta::log::Logger &log)
-    throw();
+  explicit Daemon(cta::log::Logger& log) noexcept;
 
   /**
    * Destructor.
@@ -53,7 +52,7 @@ public:
   /**
    * Returns this server's name as used by the CASTOR logging system.
    */
-  const std::string &getServerName() const throw();
+  const std::string &getServerName() const noexcept;
 
   /**
    * Returns true if the daemon is configured to run in the foreground.
@@ -70,7 +69,7 @@ protected:
    *
    * @param foreground Set to true if the daemon should run in the foreground.
    */
-  void setCommandLineHasBeenParsed(const bool foreground) throw();
+  void setCommandLineHasBeenParsed(const bool foreground) noexcept;
 
   /**
    * Daemonizes the daemon if it has not been configured to run in the

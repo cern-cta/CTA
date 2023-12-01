@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(cta::log::Logger &log) throw():
+cta::server::Daemon::Daemon(cta::log::Logger &log) noexcept :
   m_log(log),
   m_foreground(false),
   m_commandLineHasBeenParsed(false) {
@@ -43,7 +43,7 @@ cta::server::Daemon::~Daemon() {
 //------------------------------------------------------------------------------
 // getServerName
 //------------------------------------------------------------------------------
-const std::string &cta::server::Daemon::getServerName() const throw() {
+const std::string &cta::server::Daemon::getServerName() const noexcept {
   return m_log.getProgramName();
 }
 
@@ -66,8 +66,7 @@ bool cta::server::Daemon::getForeground() const
 //-----------------------------------------------------------------------------
 // setCommandLineParsed
 //-----------------------------------------------------------------------------
-void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
-  throw() {
+void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground) noexcept {
   m_foreground = foreground;
   m_commandLineHasBeenParsed = true;
 }

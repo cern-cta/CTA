@@ -124,7 +124,7 @@ public:
   /**
     * Destructor.
     */
-  virtual ~LabelMount() throw();
+  virtual ~LabelMount() noexcept;
 
 protected:
   /**

@@ -26,7 +26,7 @@ cta::UserGroup::UserGroup() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::UserGroup::~UserGroup() throw() {
+cta::UserGroup::~UserGroup() noexcept {
 }
 
 //------------------------------------------------------------------------------
@@ -50,36 +50,34 @@ cta::UserGroup::UserGroup(
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &cta::UserGroup::getName() const throw() {
+const std::string &cta::UserGroup::getName() const noexcept {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getArchiveDriveQuota() const throw() {
+const cta::DriveQuota &cta::UserGroup::getArchiveDriveQuota() const noexcept {
   return m_archiveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getRetrieveDriveQuota() const throw() {
+const cta::DriveQuota &cta::UserGroup::getRetrieveDriveQuota() const noexcept {
   return m_retrieveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getArchiveMountCriteria() const
-  throw() {
+const cta::MountCriteria &cta::UserGroup::getArchiveMountCriteria() const noexcept {
   return m_archiveMountCriteria;
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getRetrieveMountCriteria() const
-  throw() {
+const cta::MountCriteria &cta::UserGroup::getRetrieveMountCriteria() const noexcept {
   return m_retrieveMountCriteria;
 }

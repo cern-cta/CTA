@@ -30,9 +30,7 @@ namespace cta::frontend::grpc::server {
 class ServiceAuthProcessor : public ::grpc::AuthMetadataProcessor {
 
 public:
-  ServiceAuthProcessor(const TokenStorage& tokenStorage) : m_tokenStorage(tokenStorage) {
-    
-  }
+  explicit ServiceAuthProcessor(const TokenStorage& tokenStorage) : m_tokenStorage(tokenStorage) {}
   
   ::grpc::Status Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* pAuthCtx,
                  ::grpc::AuthMetadataProcessor::OutputMetadata* pConsumedAuthMetadata,

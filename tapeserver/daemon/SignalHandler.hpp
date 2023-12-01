@@ -23,11 +23,11 @@ namespace cta::tape::daemon {
 
 class ProcessManager;
 
-/// A virtual process handler managing the signals via signalfd.
+//! A virtual process handler managing the signals via signalfd
 
-class SignalHandler: public SubprocessHandler {
+class SignalHandler : public SubprocessHandler {
 public:
-  SignalHandler(ProcessManager & pm);
+  explicit SignalHandler(ProcessManager& pm);
   ~SignalHandler() override;
   SubprocessHandler::ProcessingStatus fork() override;
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
@@ -53,4 +53,5 @@ private:
   std::chrono::milliseconds m_timeoutDuration=
           std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
 };
+
 } // namespace cta::tape::daemon

@@ -35,18 +35,19 @@ struct JsonFileDataObject {
 class JsonFileData : public cta::utils::json::object::JSONCObject{
   public:
     /**
-    * Constructor
-    */
-    JsonFileData(const std::filesystem::path &jsonPath);
+     * Constructor
+     */
+    explicit JsonFileData(const std::filesystem::path& jsonPath);
 
     /**
-    * List of argument objects
-    */
+     * List of argument objects
+     */
     std::list<JsonFileDataObject> m_jsonArgumentsCollection;
   private:
     /**
-    * Reads the provided json file
-    */
-    void readJson(const std::filesystem::path &path);
- };
- } // namespace cta::cliTool
+     * Reads the provided json file
+     */
+    void readJson(const std::filesystem::path& path);
+  };
+
+} // namespace cta::cliTool

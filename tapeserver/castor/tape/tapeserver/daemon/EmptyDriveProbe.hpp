@@ -54,7 +54,7 @@ namespace castor::tape::tapeserver::daemon {
      *
      * @return True if the drive is empty and accessible.
      */
-    bool driveIsEmpty() throw();
+    bool driveIsEmpty() noexcept;
 
     /**
      * Returns the eventual probe error message

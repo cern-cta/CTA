@@ -34,17 +34,17 @@ class DebugBuf : public std::streambuf {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
    * Initialises the the debug mode to be off.
    *
    * @param os The output stream to which each debug message-line togther with
    * its standard preamble shall be written.
    */
-  DebugBuf(std::ostream &os);
+  explicit DebugBuf(std::ostream& os);
 
   /**
-   * Destructor.
+   * Destructor
    */
   ~DebugBuf();
 

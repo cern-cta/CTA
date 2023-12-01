@@ -60,7 +60,7 @@ RecallMemoryManager::~RecallMemoryManager() {
 //------------------------------------------------------------------------------
 // RecallMemoryManager::~RecallMemoryManager
 //------------------------------------------------------------------------------
-bool RecallMemoryManager::areBlocksAllBack() throw() {
+bool RecallMemoryManager::areBlocksAllBack() noexcept {
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 

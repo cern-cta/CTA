@@ -130,14 +130,13 @@ public:
     Result& operator=( const Result& ) = delete; // non copyable
 
     /**
-     * Constructor.
-     * The Result object will manage a single result.
-     * A single result may contain 0 or more rows.
+     * Constructor
      *
-     * @param res A libpq result.
+     * The Result object will manage a single result. A single result may contain 0 or more rows.
+     *
+     * @param res A libpq result
      */
-    Result(PGresult *res) : m_res(res), m_rcode(PQresultStatus(res)) {
-    }
+    explicit Result(PGresult* res) : m_res(res), m_rcode(PQresultStatus(res)) { }
 
    /**
     * Destructor.
@@ -196,15 +195,14 @@ public:
     ResultItr& operator=( const ResultItr& ) = delete; // non copyable
 
     /**
-     * Constructor.
-     * The ResultItr object will manage a sequence of results, the first of which
-     * is only available after calling next().
+     * Constructor
      *
-     * @param conn A libpq connection.
+     * The ResultItr object will manage a sequence of results, the first of which is only available after calling next().
+     *
+     * @param conn A libpq connection
      */
-    ResultItr(PGconn *conn) :
-      m_conn(conn), m_res(nullptr), m_finished(false), m_rcode(PGRES_FATAL_ERROR) {
-    }
+    explicit ResultItr(PGconn* conn) :
+      m_conn(conn), m_res(nullptr), m_finished(false), m_rcode(PGRES_FATAL_ERROR) { }
 
    /**
     * Destructor.

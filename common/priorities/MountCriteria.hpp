@@ -50,14 +50,14 @@ public:
    *
    * @return The minimum number of queued bytes required to justify a mount.
    */
-  uint64_t getNbBytes() const throw();
+  uint64_t getNbBytes() const noexcept;
 
   /**
    * Returns the minimum number of queued files required to justify a mount.
    *
    * @return The minimum number of queued files required to justify a mount.
    */
-  uint64_t getNbFiles() const throw();
+  uint64_t getNbFiles() const noexcept;
 
   /**
    * Returns the minimum age in seconds of queued data required to justify a
@@ -66,7 +66,7 @@ public:
    * @return The minimum age in seconds of queued data required to justify a
    * mount.
    */
-  uint64_t getAgeInSecs() const throw();
+  uint64_t getAgeInSecs() const noexcept;
 
 private:
 

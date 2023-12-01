@@ -46,11 +46,10 @@ namespace XrdSsiPb {
 /*!
  * User error exception
  */
-class UserException : public std::runtime_error
-{
+class UserException : public std::runtime_error {
 public:
-  UserException(const std::string &err_msg) : std::runtime_error(err_msg) {}
-}; // class UserException
+  explicit UserException(const std::string& err_msg) : std::runtime_error(err_msg) {}
+};
 
 /*!
  * Alert callback.
@@ -103,13 +102,10 @@ namespace cta::cliTool {
 /*!
  * RestoreFilesCmdException
  */
-class RestoreFilesCmdException : public std::runtime_error
-{
+class RestoreFilesCmdException : public std::runtime_error {
 public:
-  RestoreFilesCmdException(const std::string &err_msg) : std::runtime_error(err_msg) {}
-}; // class UserException
-
-
+  explicit RestoreFilesCmdException(const std::string& err_msg) : std::runtime_error(err_msg) {}
+};
 
 //------------------------------------------------------------------------------
 // constructor

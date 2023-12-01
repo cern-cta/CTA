@@ -28,11 +28,10 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
-                                         RecallReportPacker& report,
-                                         RecallWatchDog& recallWatchDog,
-                                         const cta::log::LogContext& lc,
-                                         uint16_t xrootTimeout) :
+DiskWriteThreadPool::DiskWriteThreadPool(int nbThread, RecallReportPacker& report,
+  RecallWatchDog& recallWatchDog, const cta::log::LogContext& lc, uint16_t xrootTimeout) :
+  m_nbActiveThread(0),
+  m_failedWriteCount(0),
   m_xrootTimeout(xrootTimeout),
   m_reporter(report),
   m_watchdog(recallWatchDog),

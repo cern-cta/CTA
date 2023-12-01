@@ -24,7 +24,6 @@
 namespace cta {
 
 class OStoreDBWithAgent: public cta::OStoreDB {
-  
 public:  
   /**
    * Constructor
@@ -38,7 +37,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~OStoreDBWithAgent() throw ();
+  virtual ~OStoreDBWithAgent() noexcept;
 };
 
-}
+} // namespace cta

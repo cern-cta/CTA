@@ -19,7 +19,6 @@
 
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
-#include "common/threading/AtomicCounter.hpp"
 #include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
@@ -89,10 +88,10 @@ public:
   void finish();
 
 private:
-  /** Running counter active threads, used to determine which thread is the last. */
-  cta::threading::AtomicCounter<int> m_nbActiveThread;
-  /** Thread safe counter for failed tasks */
-  cta::threading::AtomicCounter<int> m_failedWriteCount;
+  /** Running counter active threads, used to determine which thread is the last */
+  std::atomic<int> m_nbActiveThread;
+  /** Thread-safe counter for failed tasks */
+  std::atomic<int> m_failedWriteCount;
 
   /**
    * Private class implementing the worker threads.

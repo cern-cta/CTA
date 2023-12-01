@@ -204,7 +204,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   threading/ThreadingMTTests.cpp
   threading/ThreadingTests.cpp
   threading/AsyncTests.cpp
-  threading/AtomicCounterTest.cpp
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
   utils/UtilsTest.cpp

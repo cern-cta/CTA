@@ -37,7 +37,7 @@ FileReader::FileReader(const std::unique_ptr<ReadSession> &rs, const cta::Retrie
   m_session->lock();
 }
 
-FileReader::~FileReader() throw() {
+FileReader::~FileReader() noexcept {
   if (cta::PositioningMethod::ByFSeq == m_positionCommandCode
     && m_session->getCurrentFilePart() != PartOfFile::Header) {
     m_session->setCorrupted();

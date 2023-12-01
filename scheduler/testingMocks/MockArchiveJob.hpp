@@ -33,7 +33,7 @@ namespace cta {
         "", cta::common::dataStructures::TapeFile()),
         completes(0), failures(0) {} 
       
-    ~MockArchiveJob() throw() {} 
+    ~MockArchiveJob() noexcept {} 
 
     void transferFailed(const std::string& failureReason, log::LogContext& lc) override {
       failures++;

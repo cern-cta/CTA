@@ -44,15 +44,14 @@ public:
    * Constructor.
    *
    */
-  SmartFd() throw();
+  SmartFd() noexcept;
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param fd The file descriptor to be owned by the smart file
-   *           descriptor.
+   * @param fd The file descriptor to be owned by the smart file descriptor
    */
-  SmartFd(const int fd) throw();
+  explicit SmartFd(int fd) noexcept;
 
   /**
    * Sets the function to be called back by the SmartFd immediately after
@@ -71,7 +70,7 @@ public:
    *                       function will be ignored because this function
    *                       maybe called by the destructor of SmartFd.
    */
-  void setClosedCallback(ClosedCallback closedCallback) throw();
+  void setClosedCallback(ClosedCallback closedCallback) noexcept;
 
   /**
    * Take ownership of the specified file descriptor, closing the previously
@@ -82,7 +81,7 @@ public:
    *           specified, where a negative number means this SmartFd does not
    *           own a file descriptor.
    */
-  void reset(const int fd) throw();
+  void reset(const int fd) noexcept;
 
   /**
    * SmartFd assignment operator.
@@ -110,7 +109,7 @@ public:
    *
    * @return The owned file desccriptor.
    */
-  int get() const throw();
+  int get() const noexcept;
 
   /**
    * Releases the owned file descriptor.
@@ -138,7 +137,7 @@ private:
    * copy of an object of this class.
    * Not implemented so that it cannot be called
    */
-  SmartFd(const SmartFd &obj) throw();
+  SmartFd(const SmartFd &obj) noexcept;
 
 }; // class SmartFd
 

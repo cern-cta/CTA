@@ -46,7 +46,7 @@ namespace XrdSsiPb {
 class UserException : public std::runtime_error
 {
 public:
-  UserException(const std::string &err_msg) : std::runtime_error(err_msg) {}
+  explicit UserException(const std::string& err_msg) : std::runtime_error(err_msg) {}
 };
 
 

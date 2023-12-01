@@ -25,10 +25,10 @@
 
 namespace cta::log {
 
-LogContext::LogContext(Logger& logger) throw():
+LogContext::LogContext(Logger& logger) noexcept:
 m_log(logger) {}
 
-void LogContext::pushOrReplace(const Param& param) throw() {
+void LogContext::pushOrReplace(const Param& param) noexcept {
   ParamNameMatcher match(param.getName());
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -39,7 +39,7 @@ void LogContext::pushOrReplace(const Param& param) throw() {
   }
 }
 
-void LogContext::moveToTheEndIfPresent(const std::string& paramName) throw() {
+void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
   ParamNameMatcher match(paramName);
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -50,7 +50,7 @@ void LogContext::moveToTheEndIfPresent(const std::string& paramName) throw() {
   }
 }
 
-void LogContext::erase(const std::string& paramName) throw() {
+void LogContext::erase(const std::string& paramName) noexcept {
   ParamNameMatcher match(paramName);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
@@ -59,12 +59,12 @@ void LogContext::clear() {
   m_params.clear();
 }
 
-void LogContext::log(const int priority, const std::string& msg) throw() {
+void LogContext::log(const int priority, const std::string& msg) noexcept {
   m_log(priority, msg, m_params);
 }
 
 void LogContext::logBacktrace(const int priority, 
-    const std::string& backtrace) throw() {
+    const std::string& backtrace) noexcept {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;
@@ -95,12 +95,12 @@ void LogContext::logBacktrace(const int priority,
 
 LogContext::ScopedParam::ScopedParam(
     LogContext& context, 
-    const Param& param) throw(): 
+    const Param& param) noexcept: 
     m_context(context), m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
 
-LogContext::ScopedParam::~ScopedParam() throw() {
+LogContext::ScopedParam::~ScopedParam() noexcept {
    m_context.erase(m_name);
 }
 

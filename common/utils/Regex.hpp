@@ -27,8 +27,8 @@ namespace cta::utils {
 
 class Regex {
   public:
-    Regex(const std::string & re_str);
-    Regex(const Regex & o);
+    explicit Regex(const std::string& re_str);
+    Regex(const Regex& o);
     virtual ~Regex();
 
     /*!

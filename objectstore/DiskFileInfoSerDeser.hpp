@@ -31,7 +31,7 @@ namespace cta::objectstore {
  */
 struct DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
   DiskFileInfoSerDeser() : cta::common::dataStructures::DiskFileInfo() {}
-  DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo &dfi) : cta::common::dataStructures::DiskFileInfo(dfi) {}
+  explicit DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo& dfi) : cta::common::dataStructures::DiskFileInfo(dfi) {}
 
   void serialize (cta::objectstore::serializers::DiskFileInfo & osdfi) const {
     osdfi.set_path(path);

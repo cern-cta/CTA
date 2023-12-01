@@ -27,16 +27,15 @@
 
 namespace cta::catalogue {
 
-template <typename Key, typename Value> class TimeBasedCache {
+template <typename Key, typename Value>
+class TimeBasedCache {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param m Maximum age of a cached value in seconds.
+   * @param m Maximum age of a cached value in seconds
    */
-  TimeBasedCache(const time_t m): m_maxAgeSecs(m) {
-  }
+  explicit TimeBasedCache(const time_t m) : m_maxAgeSecs(m) { }
 
   /**
    * Get the cached value corresponding to the specified key.

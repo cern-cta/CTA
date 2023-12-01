@@ -29,9 +29,9 @@ class EntryLogSerDeser;
 
 class RepackIndex: public ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t> {
 public:
-  RepackIndex(Backend & os);
-  RepackIndex(const std::string & address, Backend & os);
-  RepackIndex(GenericObject & go);
+  explicit RepackIndex(Backend& os);
+  RepackIndex(const std::string& address, Backend& os);
+  explicit RepackIndex(GenericObject& go);
   void initialize() override;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

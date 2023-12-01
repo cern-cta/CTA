@@ -32,7 +32,7 @@ namespace unitTests {
       
       class FailedToGetCatalogue: public std::exception {
       public:
-        const char *what() const throw() {
+        const char *what() const noexcept {
           return "Failed to get catalogue";
         }
       };

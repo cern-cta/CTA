@@ -210,7 +210,7 @@ private:
 
   class WorkerThread: public cta::threading::Thread {
   public:
-    WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
+    explicit WorkerThread(RecallTaskInjector& rji) : m_parent(rji) {}
     virtual void run();
   private:
     RecallTaskInjector & m_parent;

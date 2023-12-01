@@ -35,7 +35,7 @@ public:
    *
    * Constructs an empty range.
    */
-  TapeFseqRange() throw();
+  TapeFseqRange() noexcept;
 
   /**
    * Constructor.
@@ -55,7 +55,7 @@ public:
   /**
    * Resets the range to be an empty range.
    */
-  void reset() throw();
+  void reset() noexcept;
 
   /**
    * Resets the range to be a finite range with the specified inclusive lower
@@ -73,12 +73,12 @@ public:
   /**
    * Returns true if the range is empty.
    */
-  bool isEmpty() const throw();
+  bool isEmpty() const noexcept;
 
   /**
    * Returns the inclusive lower bound of the range or 0 if the range is empty.
    */
-  uint32_t lower() const throw();
+  uint32_t lower() const noexcept;
 
   /**
    * Returns the inclusive upper bound of the range.  If the range is finite,
@@ -87,14 +87,14 @@ public:
    * value of 0 can be used to distinguish between the two cases when upper()
    * returns 0.
    */
-  uint32_t upper() const throw();
+  uint32_t upper() const noexcept;
 
   /**
    * Returns the size of the range.  An empty or infinite range returns 0.
    * The method isEmpty() or a lower() return value of 0 can be used to
    * distinguish between the two cases when size() returns 0.
    */
-  uint32_t size() const throw();
+  uint32_t size() const noexcept;
 
 
 private:

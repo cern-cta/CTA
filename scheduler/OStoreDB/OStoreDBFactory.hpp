@@ -75,7 +75,7 @@ class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
 public:
   OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "");
 
-  ~OStoreDBWrapper() throw () {}
+  ~OStoreDBWrapper() noexcept {}
 
   objectstore::Backend& getBackend() override { return *m_backend; }
 
@@ -158,7 +158,7 @@ public:
   /**
    * Destructor.
    */
-  ~OStoreDBFactory() throw() {}
+  ~OStoreDBFactory() noexcept {}
 
   /**
    * Returns a newly created scheduler database object.

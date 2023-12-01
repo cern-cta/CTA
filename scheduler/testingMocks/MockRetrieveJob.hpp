@@ -45,7 +45,7 @@ namespace cta {
       m_diskSystemName = diskSystemName;
     }
     
-    ~MockRetrieveJob() throw() {} 
+    ~MockRetrieveJob() noexcept {} 
   
   private:
     std::optional<std::string> m_diskSystemName;

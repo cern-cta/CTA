@@ -30,12 +30,11 @@ class PostgresConnFactory: public ConnFactory {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
    * @param conninfo The conninfo string to pass to PQconnectdb. This is a series of key=value pairs separated by white space.
-   *
    */
-  PostgresConnFactory(const std::string& conninfo);
+  explicit PostgresConnFactory(const std::string& conninfo);
 
   /**
    * Destructor.

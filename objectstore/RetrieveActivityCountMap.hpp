@@ -35,7 +35,7 @@ struct RetrieveActivityDescription {
  * expected to be a frequent occurrence. */
 class RetrieveActivityCountMap {
 public:
-  RetrieveActivityCountMap (google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>* retrieveActivityCountMap);
+  explicit RetrieveActivityCountMap(google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>* retrieveActivityCountMap);
   void incCount(const std::string &activity);
   void decCount(const std::string &activity);
   void clear();

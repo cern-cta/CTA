@@ -35,7 +35,7 @@ public:
   /**
    * Destructor.
    */
-  ~ProcessCapDummy() throw();
+  ~ProcessCapDummy() noexcept;
 
   /**
    * C++ wrapper around the C functions cap_get_proc() and cap_to_text().

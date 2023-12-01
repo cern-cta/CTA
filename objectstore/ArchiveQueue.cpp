@@ -300,7 +300,7 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReferen
   // 2) The tape pool is not referenced by the root entry. It is then effectively
   // not accessible and should be discarded.
   if (!isEmpty()) {
-    throw (NotEmpty("Trying to garbage collect a non-empty ArchiveQueue: internal error"));
+    throw NotEmpty("Trying to garbage collect a non-empty ArchiveQueue: internal error");
   }
   remove();
   log::ScopedParamContainer params(lc);

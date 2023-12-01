@@ -64,7 +64,7 @@ struct TapeFileBatch {
    *
    * @param nbRowsValue  The Number of rows to be inserted.
    */
-  TapeFileBatch(const size_t nbRowsValue):
+  explicit TapeFileBatch(const size_t nbRowsValue) :
     nbRows(nbRowsValue),
     vid("VID", nbRows),
     fSeq("FSEQ", nbRows),
@@ -99,7 +99,7 @@ struct ArchiveFileBatch {
    *
    * @param nbRowsValue  The Number of rows to be inserted.
    */
-  ArchiveFileBatch(const size_t nbRowsValue):
+  explicit ArchiveFileBatch(const size_t nbRowsValue) :
     nbRows(nbRowsValue),
     archiveFileId("ARCHIVE_FILE_ID", nbRows),
     diskInstance("DISK_INSTANCE_NAME", nbRows),
@@ -128,7 +128,7 @@ struct TempTapeFileBatch {
    *
    * @param nbRowsValue  The Number of rows to be inserted.
    */
-  TempTapeFileBatch(const size_t nbRowsValue):
+  explicit TempTapeFileBatch(const size_t nbRowsValue) :
     nbRows(nbRowsValue),
     archiveFileId("ARCHIVE_FILE_ID", nbRows) {
   }

@@ -32,7 +32,7 @@ namespace cta::catalogue {
      * Constructor
      * @param sqliteConn the connection of the InMemory SQLite schema
      */
-    SQLiteSchemaInserter(rdbms::Conn &sqliteConn);
+    explicit SQLiteSchemaInserter(rdbms::Conn& sqliteConn);
     /**
      * Transform and insert the schema statements passed in parameter into the
      * InMemory SQLite database

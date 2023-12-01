@@ -55,12 +55,11 @@ struct OStoreDBTestParams {
 class OStoreDBTest: public
   ::testing::TestWithParam<OStoreDBTestParams> {
  public:
-  OStoreDBTest() throw() {
-  }
+  OStoreDBTest() noexcept { }
 
   class FailedToGetDatabase: public std::exception {
    public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get scheduler database";
     }
   };

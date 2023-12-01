@@ -29,7 +29,7 @@ class GenericObject;
 class SchedulerGlobalLock: public ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t> {
 public:
   SchedulerGlobalLock(const std::string & address, Backend & os);
-  SchedulerGlobalLock(GenericObject & go);
+  explicit SchedulerGlobalLock(GenericObject& go);
   void initialize() override;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

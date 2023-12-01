@@ -58,7 +58,7 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-BackendPopulator::~BackendPopulator() throw() {
+BackendPopulator::~BackendPopulator() noexcept {
   try {
     Agent agent(m_agentReference.getAgentAddress(), m_backend);
     cta::objectstore::ScopedExclusiveLock agl(agent);

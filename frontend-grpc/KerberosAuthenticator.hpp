@@ -24,9 +24,7 @@ namespace cta::frontend::grpc::client {
 class KerberosAuthenticator : public ::grpc::MetadataCredentialsPlugin {
   
 public:
-  KerberosAuthenticator(const ::grpc::string& grpcstrToken) : m_grpcstrToken(grpcstrToken) {
-    
-  }
+  explicit KerberosAuthenticator(const ::grpc::string& grpcstrToken) : m_grpcstrToken(grpcstrToken) {}
 
   ::grpc::Status GetMetadata(::grpc::string_ref serviceUrl,
                              ::grpc::string_ref methodName,

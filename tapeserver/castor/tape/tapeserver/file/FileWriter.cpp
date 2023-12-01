@@ -120,7 +120,7 @@ void FileWriter::close()  {
   m_open = false;
 }
 
-FileWriter::~FileWriter() throw() {
+FileWriter::~FileWriter() noexcept {
   if(m_open) {
     m_session->setCorrupted();
   }

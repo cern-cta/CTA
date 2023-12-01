@@ -33,7 +33,7 @@ namespace cta::objectstore {
 class TapeFileSerDeser: public cta::common::dataStructures::TapeFile {
 public:
   TapeFileSerDeser (): cta::common::dataStructures::TapeFile() {}
-  TapeFileSerDeser (const cta::common::dataStructures::TapeFile & tf): cta::common::dataStructures::TapeFile(tf) {}
+  explicit TapeFileSerDeser(const cta::common::dataStructures::TapeFile& tf) : cta::common::dataStructures::TapeFile(tf) {}
 
   void serialize (cta::objectstore::serializers::TapeFile & ostf) const {
     ostf.set_vid(vid);

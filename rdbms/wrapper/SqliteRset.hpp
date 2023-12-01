@@ -38,11 +38,11 @@ class SqliteRset: public RsetWrapper {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param stmt The prepared statement.
+   * @param stmt The prepared statement
    */
-  SqliteRset(SqliteStmt &stmt);
+  explicit SqliteRset(SqliteStmt& stmt);
 
   /**
    * Destructor.

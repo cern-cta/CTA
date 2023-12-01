@@ -28,23 +28,22 @@ namespace cta::mediachanger {
  */
 class ScsiLibrarySlot: public LibrarySlot {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
    * Sets all integer member-variables to 0 and all strings to the empty string.
    */
   ScsiLibrarySlot();
 
   /**
-   * Constructor.
+   * Constructor
    *
    * @param drvOrd The drive ordinal.
    */
-  ScsiLibrarySlot(const uint16_t drvOrd);
+  explicit ScsiLibrarySlot(uint16_t drvOrd);
 
   /**
-   * Destructor.
+   * Destructor
    */
   ~ScsiLibrarySlot();
 
@@ -63,7 +62,6 @@ public:
   uint16_t getDrvOrd() const;
 
 private:
-
   /**
    * The drive ordinal.
    */

@@ -65,15 +65,15 @@ public:
   */
   const bool m_useLbp;
 
-  inline void setCorrupted() throw() {
+  inline void setCorrupted() noexcept {
     m_corrupted = true;
   }
 
-  inline bool isCorrupted() throw() {
+  inline bool isCorrupted() noexcept {
     return m_corrupted;
   }
 
-  inline bool isTapeWithLbp() throw() {
+  inline bool isTapeWithLbp() noexcept {
     return m_detectedLbp;
   }
 
@@ -87,7 +87,7 @@ public:
     m_locked = true;
   }
 
-  inline void release() throw() {
+  inline void release() noexcept {
     if (!m_locked) {
       m_corrupted = true;
     }

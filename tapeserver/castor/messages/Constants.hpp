@@ -71,6 +71,6 @@ enum ProtocolVersion {
  * throw an exception, instead is returns a string literal that explains the
  * message type is unknown.
  */
-const char *msgTypeToString(const MsgType msgType) throw();
+const char *msgTypeToString(const MsgType msgType) noexcept;
 
 } // namespace castor::messages

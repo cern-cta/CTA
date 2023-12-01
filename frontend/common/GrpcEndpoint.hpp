@@ -26,7 +26,7 @@ namespace cta::grpc {
 class Endpoint
 {
 public:
-  Endpoint(const Namespace &endpoint) :
+  explicit Endpoint(const Namespace& endpoint) :
     m_grpcClient(::eos::client::GrpcClient::Create(endpoint.endpoint, endpoint.token)) { }
 
   std::string getPath(const std::string &diskFileId) const;
@@ -40,7 +40,7 @@ private:
 class EndpointMap
 {
 public:
-  EndpointMap(NamespaceMap_t nsMap) {
+  explicit EndpointMap(NamespaceMap_t nsMap) {
     for(auto &ns : nsMap) {
       m_endpointMap.insert(std::make_pair(ns.first, Endpoint(ns.second)));
     }

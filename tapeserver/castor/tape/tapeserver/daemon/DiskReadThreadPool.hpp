@@ -22,7 +22,6 @@
 #include "disk/RadosStriperPool.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
-#include "common/threading/AtomicCounter.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include <vector>
@@ -30,7 +29,8 @@
 
 namespace castor::tape::tapeserver::daemon {
 
-  class MigrationTaskInjector;
+class MigrationTaskInjector;
+
 class DiskReadThreadPool {
 public:
   /**
@@ -135,9 +135,8 @@ private:
    */
   class DiskReadWorkerThread: private cta::threading::Thread {
   public:
-    DiskReadWorkerThread(DiskReadThreadPool & parent):
-    m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
-    m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
+    explicit DiskReadWorkerThread(DiskReadThreadPool& parent) :
+      m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc), m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskReadThread created");
     }
@@ -212,9 +211,11 @@ private:
   /** Same as m_maxFilesReq for size per request. */
   const uint64_t m_maxBytesReq;
   
-  /** An atomic (i.e. thread safe) counter of the current number of thread (they
-   are counted up at creation time and down at completion time) */
-  cta::threading::AtomicCounter<int> m_nbActiveThread;
+  /**
+   * An atomic (thread-safe) counter of the current number of threads
+   * (counted up at creation time and down at completion time)
+   */
+  std::atomic<int> m_nbActiveThread;
 };
 
 } // namespace castor::tape::tapeserver::daemon

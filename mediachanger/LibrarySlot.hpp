@@ -29,18 +29,16 @@ namespace cta::mediachanger {
  */
 class LibrarySlot {
 protected:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param libraryType The library type of the slot.
+   * @param libraryType The library type of the slot
    */
-  LibrarySlot(const TapeLibraryType libraryType);
+  explicit LibrarySlot(TapeLibraryType libraryType);
 
 public:
-
   /**
-   * Destructor.
+   * Destructor
    */
   virtual ~LibrarySlot() = 0;
 

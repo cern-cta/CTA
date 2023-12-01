@@ -81,7 +81,7 @@ public:
     * @return Returns the type of action to be performed after the session has
     * completed.
     */
-  EndOfSessionAction execute() throw();
+  EndOfSessionAction execute() noexcept;
 
 private:
   /**
@@ -161,7 +161,7 @@ private:
     *
     * @param drive The tape drive.
     */
-  void logAndClearTapeAlerts(drive::DriveInterface &drive) throw();
+  void logAndClearTapeAlerts(drive::DriveInterface &drive) noexcept;
 
   /**
     * Does the actual steps to clean the drive

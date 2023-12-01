@@ -34,29 +34,27 @@ public:
   /**
    * Constructor
    *
-   * @param programName The name of the program to be prepended to every log
-   * message.
+   * @param programName The name of the program to be prepended to every log message
    */
-  LogContext(Logger&logger)
-    throw();
+  explicit LogContext(Logger&logger) noexcept;
 
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~LogContext() throw() {};
+  virtual ~LogContext() noexcept {};
   
   /**
    * Access to the logger object.
    * @return  reference to this context's logger
    */
-  Logger & logger() const throw() { return m_log; }
+  Logger& logger() const noexcept { return m_log; }
 
   /**
    * Add a parameter to the container. Replaces any parameter going by the same
    * name. Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param & param) throw();
+  void pushOrReplace(const Param & param) noexcept;
   
   /**
    * Move a parameter with a given name to the end of the container it it 
@@ -64,13 +62,13 @@ public:
    * 
    * @param paramName  The name of the parameter to check and move.
    */
-  void moveToTheEndIfPresent(const std::string &paramName) throw();
+  void moveToTheEndIfPresent(const std::string &paramName) noexcept;
 
   /**
    * Removes a parameter from the list.
    * @param paramName value of param.getName();
    */
-  void erase(const std::string & paramName) throw();
+  void erase(const std::string & paramName) noexcept;
 
   /**
    * Clears the context content.
@@ -93,7 +91,7 @@ public:
    */
   virtual void log(
     const int priority,
-    const std::string &msg) throw();
+    const std::string &msg) noexcept;
   
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
@@ -103,7 +101,7 @@ public:
    */
   virtual void logBacktrace(
     const int priority,
-    const std::string &backtrace) throw();
+    const std::string &backtrace) noexcept;
   
   /**
    * Small introspection function to help in tests
@@ -112,12 +110,12 @@ public:
   size_t size() const { return m_params.size(); }
 
   /**
-   * Helper class to find parameters by name.
+   * Helper class to find parameters by name
    */
   class ParamNameMatcher {
   public:
-    ParamNameMatcher(const std::string & name) throw(): m_name(name) {}
-    bool operator() (const Param & p) throw() { return m_name == p.getName(); }
+    explicit ParamNameMatcher(const std::string& name) noexcept : m_name(name) {}
+    bool operator() (const Param& p) const noexcept { return m_name == p.getName(); }
   private:
     std::string m_name;
   };
@@ -128,8 +126,8 @@ public:
    */
   class ScopedParam {
   public:
-    ScopedParam(LogContext & context, const Param &param) throw();
-    ~ScopedParam() throw();
+    ScopedParam(LogContext & context, const Param &param) noexcept;
+    ~ScopedParam() noexcept;
   private:
     LogContext & m_context;
     std::string m_name;
@@ -139,26 +137,25 @@ private:
   std::list<Param> m_params;
 }; // class LogContext
 
-class ScopedParamContainer{
-  public:
-    ScopedParamContainer(LogContext & context):m_context(context) {}
-    ~ScopedParamContainer() {
-      for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
-        m_context.erase(*it);
-      }
+class ScopedParamContainer {
+public:
+  explicit ScopedParamContainer(LogContext& context):m_context(context) {}
+  ~ScopedParamContainer() {
+    for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
+      m_context.erase(*it);
     }
+  }
 
-    template <class T> ScopedParamContainer& add(const std::string& s,const T& t){
-      m_context.pushOrReplace(Param(s,t));
-      m_names.push_back(s);
-      return *this;
-    }
-  private:
-        
-    LogContext & m_context;
-    std::list<std::string> m_names;
+  template <class T> ScopedParamContainer& add(const std::string& s,const T& t) {
+    m_context.pushOrReplace(Param(s,t));
+    m_names.push_back(s);
+    return *this;
+  }
+private:
+  LogContext& m_context;
+  std::list<std::string> m_names;
 };
 
-std::ostream & operator << (std::ostream & os , const LogContext & lc);
+std::ostream& operator << (std::ostream& os, const LogContext& lc);
 
 } // namespace cta::log

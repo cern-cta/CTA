@@ -23,7 +23,6 @@
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/AtomicCounter.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
 namespace castor::tape::tapeserver::daemon {
@@ -161,13 +160,14 @@ private:
     const bool end;
   };
   
-  class WorkerThread: public cta::threading::Thread {
+  class WorkerThread : public cta::threading::Thread {
   public:
-    WorkerThread(MigrationTaskInjector & rji): m_parent(rji) {}
+    explicit WorkerThread(MigrationTaskInjector& rji) : m_parent(rji) {}
     virtual void run();
   private:
     MigrationTaskInjector & m_parent;
   } m_thread;
+
   ///The memory manager for accessing memory blocks. 
   MigrationMemoryManager & m_memManager;
   

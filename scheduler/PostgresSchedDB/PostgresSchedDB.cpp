@@ -44,9 +44,7 @@ PostgresSchedDB::PostgresSchedDB( const std::string &ownerId,
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
-PostgresSchedDB::~PostgresSchedDB() throw()
-{
-}
+PostgresSchedDB::~PostgresSchedDB() noexcept { }
 
 void PostgresSchedDB::waitSubthreadsComplete()
 {

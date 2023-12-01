@@ -45,14 +45,14 @@ public:
    *
    * @return The minimum number of drives that should be provided.
    */
-  uint32_t getMinDrives() const throw();
+  uint32_t getMinDrives() const noexcept;
 
   /**
    * Returns the maximum number of drives that should be provided.
    *
    * @return The maximum number of drives that should be provided.
    */
-  uint32_t getMaxDrives() const throw();
+  uint32_t getMaxDrives() const noexcept;
 
 private:
 

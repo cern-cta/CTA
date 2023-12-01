@@ -33,7 +33,7 @@ namespace cta::objectstore {
 class MountPolicySerDeser: public cta::common::dataStructures::MountPolicy {
 public:
   MountPolicySerDeser (): cta::common::dataStructures::MountPolicy() {}
-  MountPolicySerDeser (const cta::common::dataStructures::MountPolicy & mp): cta::common::dataStructures::MountPolicy(mp) {}
+  explicit MountPolicySerDeser(const cta::common::dataStructures::MountPolicy& mp) : cta::common::dataStructures::MountPolicy(mp) {}
 
   void serialize (cta::objectstore::serializers::MountPolicy & osmp) const {
     osmp.set_name(name);

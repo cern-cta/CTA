@@ -58,7 +58,7 @@ void TapeFseqRangeListSequence::reset(
     m_totalSize = 0;
   } else {
     m_rangeItor  = list->begin();
-    m_nbSequence = (*(list->begin()));
+    m_nbSequence = static_cast<cta::tapeserver::readtp::TapeFseqRangeSequence>(*m_rangeItor);
 
     // Determine the values of m_isFinite and m_totalSize
     m_isFinite  = true; // Initial guess
@@ -87,7 +87,7 @@ void TapeFseqRangeListSequence::reset(
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool TapeFseqRangeListSequence::hasMore() const throw() {
+bool TapeFseqRangeListSequence::hasMore() const noexcept {
   if(m_list != nullptr) {
     return m_nbSequence.hasMore();
   } else {
@@ -119,7 +119,7 @@ uint32_t TapeFseqRangeListSequence::next()
     // Move on to the next if there is one
     m_rangeItor++;
     if(m_rangeItor != m_list->end()) {
-      m_nbSequence = *m_rangeItor;
+      m_nbSequence = static_cast<cta::tapeserver::readtp::TapeFseqRangeSequence>(*m_rangeItor);
     }
   }
 
@@ -130,7 +130,7 @@ uint32_t TapeFseqRangeListSequence::next()
 //------------------------------------------------------------------------------
 // isFinite
 //------------------------------------------------------------------------------
-bool TapeFseqRangeListSequence::isFinite() const throw() {
+bool TapeFseqRangeListSequence::isFinite() const noexcept {
   return m_isFinite;
 }
 
@@ -138,8 +138,7 @@ bool TapeFseqRangeListSequence::isFinite() const throw() {
 //------------------------------------------------------------------------------
 // totalSize
 //------------------------------------------------------------------------------
-uint32_t TapeFseqRangeListSequence::totalSize()
-  const throw() {
+uint32_t TapeFseqRangeListSequence::totalSize() const noexcept {
   return m_totalSize;
 }
 

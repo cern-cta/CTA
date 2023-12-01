@@ -35,7 +35,7 @@ public:
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
     */
-  virtual ~FileReader() throw();
+  virtual ~FileReader() noexcept;
 
   /**
     * After positioning at the beginning of a file for readings, this function

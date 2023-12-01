@@ -36,14 +36,14 @@ public:
   /**
    * Constructor.
    */
-  SmartCap() throw();
+  SmartCap() noexcept;
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param cap The capability state to be owned.
+   * @param cap The capability state to be owned
    */
-  SmartCap(cap_t cap) throw();
+  explicit SmartCap(cap_t cap) noexcept;
 
   /**
    * Takes ownership of the specified capability state.  If this smart pointer
@@ -55,7 +55,7 @@ public:
    * case the smart pointer will not own a capbility state after the reset()
    * method returns.
    */
-  void reset(cap_t cap = nullptr) throw();
+  void reset(cap_t cap = nullptr) noexcept;
 
   /**
    * SmartCap assignment operator.
@@ -74,7 +74,7 @@ public:
    *
    * Resets this smart pointer with the default value of nullptr.
    */
-  ~SmartCap() throw();
+  ~SmartCap() noexcept;
 
   /**
    * Returns the owned capbility state or nullptr if this smart pointer does not
@@ -83,7 +83,7 @@ public:
    * @return The owned capbility state or nullptr if this smart pointer does not
    * own one.
    */
-  cap_t get() const throw();
+  cap_t get() const noexcept;
 
   /**
    * Releases the owned capability state.
@@ -105,7 +105,7 @@ private:
    *
    * Not implemented so that it cannot be called.
    */
-  SmartCap(const SmartCap &obj) throw();
+  SmartCap(const SmartCap &obj) noexcept;
 
 }; // class SmartCap
 

@@ -35,7 +35,7 @@ public:
   /**
    * Constructor.
    */
-  SmartArrayPtr() throw(): m_arrayPtr(nullptr) {
+  SmartArrayPtr() noexcept: m_arrayPtr(nullptr) {
   }
 
   /**
@@ -44,7 +44,7 @@ public:
    * @param arrayPtr The pointer to an array that is to be owned by the smart
    * pointer.
    */
-  SmartArrayPtr(T *const arrayPtr) throw(): m_arrayPtr(arrayPtr) {
+  SmartArrayPtr(T *const arrayPtr) noexcept: m_arrayPtr(arrayPtr) {
   }
 
   /**
@@ -56,7 +56,7 @@ public:
    * the default value of nullptr is used.  In this default case the smart pointer
    * will not own a pointer after the reset() method returns.
    */
-  void reset(T *const arrayPtr = nullptr) throw() {
+  void reset(T *const arrayPtr = nullptr) noexcept {
     // If the new pointer is not the one already owned
     if(arrayPtr != m_arrayPtr) {
 
@@ -91,7 +91,7 @@ public:
    *
    * Resets this smart pointer with the default value of nullptr.
    */
-  ~SmartArrayPtr() throw() {
+  ~SmartArrayPtr() noexcept {
     reset();
   }
 
@@ -100,7 +100,7 @@ public:
    *
    * @return The owned pointer or nullptr if this smart pointer does not own one.
    */
-  T *get() const throw() {
+  T *get() const noexcept {
     return m_arrayPtr;
   }
 
@@ -114,7 +114,7 @@ public:
     if(nullptr == m_arrayPtr) {
       cta::exception::NotAnOwner ex;
       ex.getMessage() << "Smart pointer does not own a pointer";
-      throw(ex);
+      throw ex;
     }
 
     // Assigning nullptr to m_arrayPtr indicates this smart pointer does not own a
@@ -127,7 +127,7 @@ public:
   /**
    * Subscript operator.
    */
-  T &operator[](const int i) const throw() {
+  T &operator[](const int i) const noexcept {
     return m_arrayPtr[i];
   }
 
@@ -145,7 +145,7 @@ private:
    *
    * Not implemented so that it cannot be called
    */
-  SmartArrayPtr(const SmartArrayPtr &obj) throw();
+  SmartArrayPtr(const SmartArrayPtr &obj) noexcept;
 
 }; // class SmartArrayPtr
 

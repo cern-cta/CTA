@@ -25,7 +25,7 @@ namespace cta::catalogue {
 class SchemaSqlStatementsReader {
 public:
   SchemaSqlStatementsReader();
-  SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType);
+  explicit SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType);
   SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig);
   virtual ~SchemaSqlStatementsReader();
   virtual std::list<std::string> getStatements();
@@ -86,7 +86,7 @@ private:
 
 class CppSchemaStatementsReader: public SchemaSqlStatementsReader{
 public:
-  CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
+  explicit CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
   std::list<std::string> getStatements();
 private:
   const cta::catalogue::CatalogueSchema m_schema;

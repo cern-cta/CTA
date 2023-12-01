@@ -22,8 +22,6 @@ namespace cta {
    * Enumeration class of the possible types of tape mount.
    */
   struct MountTypeToDecommission {
-  public:
-
     /**
      * Enumeration of the possible types of tape mount.
      */
@@ -31,7 +29,8 @@ namespace cta {
       NONE,
       ARCHIVE,
       RETRIEVE,
-      LABEL};
+      LABEL
+    };
 
     /**
      * Thread safe method that returns the string representation of the
@@ -40,8 +39,6 @@ namespace cta {
      * @param enumValue The enumeration value.
      * @return The string representation.
      */
-    static const char *toString(const MountTypeToDecommission::Enum enumValue) throw();
-
-  }; // struct MountType
-  
-}
+    static const char *toString(const MountTypeToDecommission::Enum enumValue) noexcept;
+  };
+} // namespace cta

@@ -33,7 +33,7 @@ namespace cta::objectstore {
 class EntryLogSerDeser: public cta::common::dataStructures::EntryLog {
 public:
   EntryLogSerDeser (): cta::common::dataStructures::EntryLog() {}
-  EntryLogSerDeser (const cta::common::dataStructures::EntryLog & el): cta::common::dataStructures::EntryLog(el) {}
+  explicit EntryLogSerDeser(const cta::common::dataStructures::EntryLog& el) : cta::common::dataStructures::EntryLog(el) {}
   EntryLogSerDeser (const std::string & un, const std::string & hn, uint64_t t): cta::common::dataStructures::EntryLog() {
     username=un;
     host=hn;

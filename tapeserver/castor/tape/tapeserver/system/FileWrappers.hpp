@@ -47,7 +47,7 @@ namespace castor::tape::System {
   class regularFile: public vfsFile {
   public:
     regularFile(): m_read_pointer(0) {};
-    regularFile(const std::string & c): m_content(c), m_read_pointer(0) {};
+    explicit regularFile(const std::string& c) : m_content(c), m_read_pointer(0) {};
     virtual void reset() { m_read_pointer = 0; };
     void operator = (const std::string & s) { m_content = s; m_read_pointer = 0; }
     virtual ssize_t read(void* buf, size_t nbytes);

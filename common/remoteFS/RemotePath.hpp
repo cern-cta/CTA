@@ -40,11 +40,11 @@ public:
   void setPath(const std::string &raw);
   
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param raw The raw path in the form "scheme:after_scheme".
+   * @param raw The raw path in the form "scheme:after_scheme"
    */
-  RemotePath(const std::string &raw);
+  explicit RemotePath(const std::string& raw);
 
   /**
    * Equals operator.

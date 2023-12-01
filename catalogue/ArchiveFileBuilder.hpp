@@ -38,7 +38,7 @@ public:
    *
    * @param log Object representing the API to the CTA logging system.
    */
-  ArchiveFileBuilder(log::Logger &log);
+  explicit ArchiveFileBuilder(log::Logger &log);
 
   /**
    * Appends the specified tape file to the ArchiveFile object currently

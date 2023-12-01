@@ -31,10 +31,11 @@ class NonConfigurableRAOAlgorithmFactory : public RAOAlgorithmFactory {
 public:
   /**
    * Constructor
-   * @param type the type given will be used by the createRAOAlgorithm() method
-   * to instanciate the correct algorithm regarding its type
+   *
+   * @param type    used by the createRAOAlgorithm() method to instantiate the correct algorithm for the type
    */
-  NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type);
+  explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type);
+
   /**
    * Returns the correct instance of RAO algorithm regarding the type
    * given while constructing this factory.

@@ -36,11 +36,11 @@ class StmtWrapper {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param sql The SQL statement.
+   * @param sql The SQL statement
    */
-  StmtWrapper(const std::string &sql);
+  explicit StmtWrapper(const std::string& sql);
 
   /**
    * Destructor.

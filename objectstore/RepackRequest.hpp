@@ -32,8 +32,8 @@ class GenericObject;
 class RepackRequest: public ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> {
 public:
   RepackRequest(const std::string & address, Backend & os);
-  RepackRequest(Backend & os);
-  RepackRequest(GenericObject & go);
+  explicit RepackRequest(Backend& os);
+  explicit RepackRequest(GenericObject& go);
   void initialize() override;
 
   // Parameters interface

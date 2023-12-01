@@ -34,7 +34,7 @@ class DriveRegister: public ObjectOps<serializers::DriveRegister, serializers::D
 public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
   DriveRegister(const std::string & address, Backend & os);
-  DriveRegister(GenericObject & go);
+  explicit DriveRegister(GenericObject& go);
   void initialize() override;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

@@ -20,8 +20,7 @@
 //------------------------------------------------------------------------------
 // positioningMethodtoString(PositioningMethod)
 //------------------------------------------------------------------------------
-const char *cta::positioningMethodToStr(const PositioningMethod enumValue)
-  throw() {
+const char *cta::positioningMethodToStr(const PositioningMethod enumValue) noexcept {
   switch(enumValue) {
     case PositioningMethod::ByBlock:
       return "ByBlock";

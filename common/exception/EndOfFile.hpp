@@ -24,7 +24,7 @@ namespace cta::exception {
 
   class EndOfFile: public cta::exception::Exception {
   public:
-    EndOfFile(const std::string & w): cta::exception::Exception(w) {}
+    explicit EndOfFile(const std::string& w) : cta::exception::Exception(w) {}
     virtual ~EndOfFile() {}
   };
     

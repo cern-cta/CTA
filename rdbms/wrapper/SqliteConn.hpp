@@ -43,11 +43,11 @@ public:
   friend SqliteStmt;
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param filename The filename to be passed to the sqlite3_open() function.
+   * @param filename The filename to be passed to the sqlite3_open() function
    */
-  SqliteConn(const std::string &filename);
+  explicit SqliteConn(const std::string& filename);
 
   /**
    * Destructor.

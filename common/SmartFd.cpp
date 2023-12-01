@@ -23,14 +23,14 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::SmartFd::SmartFd() throw():
+cta::SmartFd::SmartFd() noexcept:
   m_fd(-1), m_closedCallback(nullptr) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::SmartFd::SmartFd(const int fd) throw():
+cta::SmartFd::SmartFd(const int fd) noexcept:
   m_fd(fd), m_closedCallback(nullptr) {
 }
 
@@ -38,14 +38,14 @@ cta::SmartFd::SmartFd(const int fd) throw():
 // setClosedCallback
 //-----------------------------------------------------------------------------
 void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback)
-  throw() {
+  noexcept {
   m_closedCallback = closedCallback;
 }
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void cta::SmartFd::reset(const int fd = -1) throw() {
+void cta::SmartFd::reset(const int fd = -1) noexcept {
   // If the new file descriptor is not the one already owned
   if(fd != m_fd) {
 
@@ -86,7 +86,7 @@ cta::SmartFd::~SmartFd() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int cta::SmartFd::get() const throw() {
+int cta::SmartFd::get() const noexcept {
   return m_fd;
 }
 

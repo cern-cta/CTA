@@ -58,7 +58,7 @@ struct ContainerTraits<RepackQueue,C>
   };
   struct PoppedElementsSummary {
     uint64_t requests;
-    PoppedElementsSummary(uint64_t r = 0) : requests(r) {}
+    explicit PoppedElementsSummary(uint64_t r = 0) : requests(r) {}
     bool operator< (const PopCriteria & pc) {
       return requests < pc.requests;
     }
@@ -104,7 +104,7 @@ struct ContainerTraits<RepackQueue,C>
   };
 
   struct OwnershipSwitchFailure: public cta::exception::Exception {
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    explicit OwnershipSwitchFailure(const std::string& message) : cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
 

@@ -50,7 +50,7 @@ class SharedQueueLock {
   template <class, class>
   friend class MemQueue;
 public:
-  SharedQueueLock(log::LogContext & logContext): m_logContext(logContext) {}
+  explicit SharedQueueLock(log::LogContext& logContext) : m_logContext(logContext) {}
   ~SharedQueueLock();
 private:
   std::unique_ptr<objectstore::ScopedExclusiveLock> m_lock;

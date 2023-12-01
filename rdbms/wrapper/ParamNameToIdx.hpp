@@ -22,27 +22,27 @@
 namespace cta::rdbms::wrapper {
 
 /**
- * Map from SQL parameter name to parameter index.
+ * Map from SQL parameter name to parameter index
  */
 class ParamNameToIdx {
 public:
   /**
-   * Constructor.
+   * Constructor
    *
    * Parses the specified SQL statement to populate an internal map from SQL
    * parameter name to parameter index.
    *
-   * @param sql The SQL statement to be parsed for SQL parameter names.
+   * @param sql The SQL statement to be parsed for SQL parameter names
    */
-  ParamNameToIdx(const std::string &sql);
+  explicit ParamNameToIdx(const std::string& sql);
 
   /**
-   * Returns the index of teh specified SQL parameter.
+   * Returns the index of the specified SQL parameter
    *
-   * @param paramNAme The name of the SQL parameter.
-   * @return The index of the SQL parameter.
+   * @param paramName The name of the SQL parameter
+   * @return The index of the SQL parameter
    */
-  uint32_t getIdx(const std::string &paramName) const;
+  uint32_t getIdx(const std::string& paramName) const;
 
   /**
    * Returns true if the specified character is a valid parameter name
@@ -55,12 +55,10 @@ public:
   static bool isValidParamNameChar(const char c);
 
 private:
-
   /**
    * Map from SQL parameter name to parameter index.
    */
   std::map<std::string, uint32_t> m_nameToIdx;
-
-}; // class ParamNameToIdx
+};
 
 } // namespace cta::rdbms::wrapper

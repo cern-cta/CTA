@@ -31,7 +31,7 @@ class Exception : public cta::exception::Exception {
  public:
   Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
           const std::string& context = "");
-  virtual ~Exception() throw() {}
+  virtual ~Exception() noexcept {}
 };  // class Exception
 
 /**
@@ -69,7 +69,7 @@ class HostException: public cta::exception::Exception {
  public:
   HostException(const unsigned short int host_status,
     const std::string & context = "");
-  virtual ~HostException() throw() {}
+  virtual ~HostException() noexcept {}
 };  // class HostException
 
 /**
@@ -80,7 +80,7 @@ class DriverException: public cta::exception::Exception {
   DriverException(const unsigned short int driver_status,
     castor::tape::SCSI::Structures::senseData_t<255> * sense,
     const std::string & context = "");
-  virtual ~DriverException() throw() {}
+  virtual ~DriverException() noexcept {}
 };  // class DriverException
 
 /**

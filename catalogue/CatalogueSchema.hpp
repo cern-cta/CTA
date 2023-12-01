@@ -36,12 +36,11 @@ struct CatalogueSchema {
   CatalogueSchema();
   
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param sqlSchema The sql for the catalogue schema provided at compilation
-   *                  time.
+   * @param sqlSchema The sql for the catalogue schema provided at compilation time
    */
-  CatalogueSchema(const std::string &sqlSchema);
+  explicit CatalogueSchema(const std::string &sqlSchema);
   
   /**
    * The schema.

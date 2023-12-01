@@ -71,7 +71,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~ArchiveJob() throw();
+  virtual ~ArchiveJob() noexcept;
 
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);

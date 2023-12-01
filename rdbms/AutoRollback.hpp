@@ -32,11 +32,11 @@ class AutoRollback {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param conn The database connection.
+   * @param conn The database connection
    */
-  AutoRollback(Conn &conn);
+  explicit AutoRollback(Conn& conn);
 
   /**
    * Prevent copying.

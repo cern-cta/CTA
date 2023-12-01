@@ -33,16 +33,16 @@ class SmartFILEPtr {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    */
-  SmartFILEPtr() throw();
+  SmartFILEPtr() noexcept;
 
   /**
-   * Constructor.
+   * Constructor
    *
    * @param file The FILE pointer to be owned by the smart pointer.
    */
-  SmartFILEPtr(FILE *const file) throw();
+  explicit SmartFILEPtr(FILE* const file) noexcept;
 
   /**
    * Take ownership of the specified FILE pointer, closing the previously
@@ -53,7 +53,7 @@ public:
    *             specified, where nullptr means this smart pointer will not own a
    *             pointer after the reset() method returns.
    */
-  void reset(FILE *const file = nullptr) throw();
+  void reset(FILE *const file = nullptr) noexcept;
 
   /**
    * SmartFILEPtr assignment operator.
@@ -73,14 +73,14 @@ public:
    *
    * Closes the owned FILE pointer if there is one.
    */
-  ~SmartFILEPtr() throw();
+  ~SmartFILEPtr() noexcept;
 
   /**
    * Returns the owned pointer or nullptr if this smart pointer does not own one.
    *
    * @return The owned FILE pointer.
    */
-  FILE *get() const throw();
+  FILE *get() const noexcept;
 
   /**
    * Releases the owned FILE pointer.
@@ -102,7 +102,7 @@ private:
    * copy of an object of this class.
    * Not implemented so that it cannot be called
    */
-  SmartFILEPtr(const SmartFILEPtr &obj) throw();
+  SmartFILEPtr(const SmartFILEPtr &obj) noexcept;
 
 }; // class SmartFILEPtr
 

@@ -28,7 +28,7 @@ namespace cta::frontend::grpc::request {
 class RequestMessage {
 public:
   
-  RequestMessage(const cta::frontend::rpc::AdminRequest &request);
+  explicit RequestMessage(const cta::frontend::rpc::AdminRequest& request);
   ~RequestMessage() = default;
   
   /*!

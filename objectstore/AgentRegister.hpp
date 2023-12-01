@@ -28,9 +28,9 @@ class GenericObject;
 
 class AgentRegister: public ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t> {
 public:
-  AgentRegister(Backend & os);
-  AgentRegister(GenericObject & go);
-  AgentRegister(const std::string & name, Backend & os);
+  explicit AgentRegister(Backend& os);
+  explicit AgentRegister(GenericObject& go);
+  AgentRegister(const std::string& name, Backend& os);
   void initialize() override;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

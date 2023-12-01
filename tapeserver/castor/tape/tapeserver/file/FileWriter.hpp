@@ -74,7 +74,7 @@ public:
   /**
     * Destructor of the FileWriter object. Releases the WriteSession
     */
-  ~FileWriter() throw();
+  ~FileWriter() noexcept;
 
   /**
     * Returns the LBP access mode.

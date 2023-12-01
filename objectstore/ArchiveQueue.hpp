@@ -41,16 +41,16 @@ public:
   typedef cta::common::dataStructures::ArchiveJob job_t;
 
   // Constructor
-  ArchiveQueue(const std::string & address, Backend & os);
+  ArchiveQueue(const std::string& address, Backend& os);
   
   // Undefined object constructor
-  ArchiveQueue(Backend & os);
+  explicit ArchiveQueue(Backend& os);
   
   // Upgrader form generic object
-  ArchiveQueue(GenericObject & go);
+  explicit ArchiveQueue(GenericObject& go);
 
   // In memory initialiser
-  void initialize(const std::string & name);
+  void initialize(const std::string& name);
   
   // Commit with sanity checks (overload from ObjectOps)
   void commit() override;

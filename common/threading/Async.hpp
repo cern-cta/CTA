@@ -61,7 +61,7 @@ namespace cta {
        class ThreadWrapper: public threading::Thread{
 	 friend Async;
 	public:
-	  ThreadWrapper(std::function<void()> callable);
+	  explicit ThreadWrapper(std::function<void()> callable);
 	  void run();
 	private:
 	  std::function<void()> m_callable;

@@ -25,8 +25,7 @@ namespace cta::objectstore {
 
 class AgentWrapper: public AgentReferenceInterface {
 public:
-  AgentWrapper(Agent& agent);
-  
+  explicit AgentWrapper(Agent& agent);
   virtual ~AgentWrapper();
   
   /**

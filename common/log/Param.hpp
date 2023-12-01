@@ -38,14 +38,14 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using std::ostringstream.
    */
-  template <typename T> Param(const std::string &name, const T &value) throw():
+  template <typename T> Param(const std::string &name, const T &value) noexcept:
     m_name(name) {
     std::ostringstream oss;
     oss << value;
     m_value = oss.str();
   }
 
-  Param(const std::string & name, const uint8_t & value) throw():
+  Param(const std::string & name, const uint8_t & value) noexcept:
   m_name(name) {
     std::ostringstream oss;
     oss << static_cast<int>(value);
@@ -59,7 +59,7 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using snprintf for doubles
    */
-  Param (const std::string &name, const double value) throw():
+  Param (const std::string &name, const double value) noexcept:
   m_name(name) {
     char buf[1024];
     std::snprintf(buf, sizeof(buf), "%f", value);
@@ -68,7 +68,7 @@ public:
     m_value = buf;
   }
 
-  Param(const std::string &name, const std::nullopt_t &value) throw():
+  Param(const std::string &name, const std::nullopt_t &value) noexcept:
     m_name(name) {
     m_value = "";
   }
@@ -78,7 +78,7 @@ public:
    * @param value
    */
   template <typename T>
-  void setValue (const T &value) throw() {
+  void setValue (const T &value) noexcept {
     std::stringstream oss;
     oss << value;
     m_value = oss.str();
@@ -87,12 +87,12 @@ public:
   /**
    * Returns a const reference to the name of the parameter.
    */
-  const std::string &getName() const throw();
+  const std::string &getName() const noexcept;
 
   /**
    * Returns a const reference to the value of the parameter.
    */
-  const std::string &getValue() const throw();
+  const std::string &getValue() const noexcept;
 
 protected:
 

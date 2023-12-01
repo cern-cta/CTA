@@ -101,7 +101,7 @@ class SchedulerDatabase {
   /**
    * Destructor.
    */
-  virtual ~SchedulerDatabase() throw() = 0;
+  virtual ~SchedulerDatabase() noexcept = 0;
 
 
   /*============ Sub thread handling, mostly for unit tests =================*/

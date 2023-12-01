@@ -34,8 +34,8 @@ namespace cta::objectstore {
  */
 class ArchiveFileSerDeser: public cta::common::dataStructures::ArchiveFile {
 public:
-  ArchiveFileSerDeser (): cta::common::dataStructures::ArchiveFile() {}
-  ArchiveFileSerDeser (const cta::common::dataStructures::ArchiveFile & af): cta::common::dataStructures::ArchiveFile(af) {}
+  ArchiveFileSerDeser() : cta::common::dataStructures::ArchiveFile() {}
+  explicit ArchiveFileSerDeser(const cta::common::dataStructures::ArchiveFile& af) : cta::common::dataStructures::ArchiveFile(af) {}
 
   void serialize (cta::objectstore::serializers::ArchiveFile & osaf) const {
     osaf.set_archivefileid(archiveFileID);

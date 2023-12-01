@@ -20,5 +20,4 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::SchedulerDatabaseFactory::~SchedulerDatabaseFactory() throw() {
-}
+cta::SchedulerDatabaseFactory::~SchedulerDatabaseFactory() noexcept { }

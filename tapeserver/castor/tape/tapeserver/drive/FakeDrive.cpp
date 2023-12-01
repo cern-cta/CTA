@@ -25,15 +25,14 @@ const char filemark[] = "";
 }
 
 castor::tape::tapeserver::drive::FakeDrive::FakeDrive(uint64_t capacity,
-  FailureMoment failureMoment, bool failToMount) throw()
+  FailureMoment failureMoment, bool failToMount) noexcept
   : m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
     m_failureMoment(failureMoment), m_tapeOverflow(false),
     m_failToMount(failToMount), m_lbpToUse(lbpToUse::disabled) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 
-castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) throw()
-  : m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
+castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) noexcept : m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
     m_failureMoment(OnWrite), m_tapeOverflow(false), m_failToMount(failToMount) {
   m_tape.reserve(max_fake_drive_record_length);
 }
@@ -234,7 +233,7 @@ ssize_t castor::tape::tapeserver::drive::FakeDrive::readBlock(void *data, size_t
   m_currentPosition++;
   return bytes_copied;
 }
-std::string castor::tape::tapeserver::drive::FakeDrive::contentToString() throw() {
+std::string castor::tape::tapeserver::drive::FakeDrive::contentToString() noexcept {
   std::stringstream exc;
   exc << std::endl;
   exc << "Tape position: " << m_currentPosition << std::endl;

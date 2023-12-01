@@ -28,8 +28,7 @@ namespace cta::tapeserver::readtp {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeFseqRange::TapeFseqRange() throw() {
-
+TapeFseqRange::TapeFseqRange() noexcept {
   reset();
 }
 
@@ -44,7 +43,7 @@ TapeFseqRange::TapeFseqRange(const uint32_t lower, const uint32_t upper)  {
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void TapeFseqRange::reset() throw() {
+void TapeFseqRange::reset() noexcept {
   m_isEmpty = true;
   m_lower   = 0; // Ignored
   m_upper   = 0; // Ignored
@@ -85,14 +84,14 @@ void TapeFseqRange::reset(const uint32_t lower,
 //------------------------------------------------------------------------------
 // isEmpty
 //------------------------------------------------------------------------------
-bool TapeFseqRange::isEmpty() const throw() {
+bool TapeFseqRange::isEmpty() const noexcept {
   return m_isEmpty;
 }
 
 //------------------------------------------------------------------------------
 // lower
 //------------------------------------------------------------------------------
-uint32_t TapeFseqRange::lower() const throw() {
+uint32_t TapeFseqRange::lower() const noexcept {
 
   return m_isEmpty ? 0 : m_lower;
 }
@@ -100,7 +99,7 @@ uint32_t TapeFseqRange::lower() const throw() {
 //------------------------------------------------------------------------------
 // upper
 //------------------------------------------------------------------------------
-uint32_t TapeFseqRange::upper() const throw() {
+uint32_t TapeFseqRange::upper() const noexcept {
 
   return m_isEmpty ? 0 : m_upper;
 }
@@ -108,7 +107,7 @@ uint32_t TapeFseqRange::upper() const throw() {
 //------------------------------------------------------------------------------
 // size
 //------------------------------------------------------------------------------
-uint32_t TapeFseqRange::size() const throw() {
+uint32_t TapeFseqRange::size() const noexcept {
 
   return m_isEmpty || m_upper == 0 ? 0 : m_upper - m_lower + 1;
 }

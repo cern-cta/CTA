@@ -41,7 +41,7 @@ struct TapeLabelRqstMsgBody {
    * Sets all integer member-variables to 0 and all string member-variables to
    * the empty string.
    */
-  TapeLabelRqstMsgBody() throw();
+  TapeLabelRqstMsgBody() noexcept;
 }; // struct TapeLabelRqstMsgBody
 
 } // namespace castor::legacymsg

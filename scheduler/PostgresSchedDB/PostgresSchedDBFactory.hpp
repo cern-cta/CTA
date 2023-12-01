@@ -53,8 +53,7 @@ public:
      // empty
    }
 
-  ~PostgresSchedDBWrapper() throw() {}
-
+  ~PostgresSchedDBWrapper() noexcept {}
 };
 
 /**
@@ -71,7 +70,7 @@ public:
   /**
    * Destructor.
    */
-  ~PostgresSchedDBFactory() throw() {}
+  ~PostgresSchedDBFactory() noexcept {}
 
   /**
    * Returns a newly created scheduler database object.

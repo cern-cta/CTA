@@ -26,12 +26,12 @@ class Scheduler;
 
 class DiskReportRunner {
 public:
-  DiskReportRunner(Scheduler & scheduler): m_scheduler(scheduler) {}
-  
-  void runOnePass(log::LogContext & lc);
+  explicit DiskReportRunner(Scheduler& scheduler) : m_scheduler(scheduler) {}
+  void runOnePass(log::LogContext& lc);
   
 private:
-  Scheduler & m_scheduler;
+  Scheduler& m_scheduler;
   disk::DiskReporterFactory m_reporterFactory;
 };
+
 } // namespace cta

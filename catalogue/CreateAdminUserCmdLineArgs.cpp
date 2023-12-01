@@ -29,18 +29,16 @@ namespace cta::catalogue {
 CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
   static struct option longopts[] = {
-    {"comment"  , required_argument, NULL, 'm'},
-    {"help"     ,       no_argument, NULL, 'h'},
-    {"username" , required_argument, NULL, 'u'},
-    {NULL       ,                 0, NULL,   0}
+    { "comment",  required_argument, nullptr, 'm' },
+    { "help",           no_argument, nullptr, 'h' },
+    { "username", required_argument, nullptr, 'u' },
+    { nullptr,                    0, nullptr, 0 }
   };
 
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
+  // Prevent getopt() from printing an error message if it does not recognize an option character
   opterr = 0;
 
-  int opt = 0;
-  while((opt = getopt_long(argc, argv, ":m:hu:", longopts, NULL)) != -1) {
+  for(int opt = 0; (opt = getopt_long(argc, argv, ":m:hu:", longopts, nullptr)) != -1; ) {
     switch(opt) {
     case 'm':
       comment = optarg ? optarg : "";

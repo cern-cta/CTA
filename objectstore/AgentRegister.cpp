@@ -44,7 +44,7 @@ void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumed
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   if (!isEmpty()) {
-    throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
+    throw NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error");
   }
   remove();
   log::ScopedParamContainer params(lc);

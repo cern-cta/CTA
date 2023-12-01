@@ -49,7 +49,7 @@ public:
    * Are all sheep back to the farm?
    * @return 
    */
-  bool areBlocksAllBack() throw();
+  bool areBlocksAllBack() noexcept;
   
   /**
    * Takes back a block which has been released by one of the clients

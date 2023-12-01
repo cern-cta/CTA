@@ -217,7 +217,7 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
   }
 
   if (g_storageClasses.empty()){
-    throw(exception::UserError("The storage class " + storageClass + " has not been defined."));
+    throw exception::UserError("The storage class " + storageClass + " has not been defined.");
   }
 }
 

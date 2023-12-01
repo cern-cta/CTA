@@ -24,31 +24,28 @@
 namespace cta::exception {
 
 /**
- * castor::io::acceptConnection() was interrupted.
+ * castor::io::acceptConnection() was interrupted
  */
 class AcceptConnectionInterrupted : public cta::exception::Exception {
       
 public:
       
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param remainingTime The number of remaining seconds when
-   * castor::io::acceptConnection() was interrupted.
+   * @param remainingTime The number of remaining seconds when castor::io::acceptConnection() was interrupted
    */
-  AcceptConnectionInterrupted(const time_t remainingTime);
+  explicit AcceptConnectionInterrupted(time_t remainingTime);
 
   /**
-   * Returns the number of remaining seconds when
-   * castor::io::acceptConnection() was interrupted.
+   * @return the number of remaining seconds when castor::io::acceptConnection() was interrupted
    */
   time_t remainingTime() const;
 
 private:
 
   /**
-   * The number of remaining seconds when
-   * castor::io::acceptConnection() was interrupted.
+   * The number of remaining seconds when castor::io::acceptConnection() was interrupted
    */
   const time_t m_remainingTime;
 

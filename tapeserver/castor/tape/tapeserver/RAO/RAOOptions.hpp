@@ -50,10 +50,11 @@ public:
   RAOOptions();
   
   /**
-   * Constructor of a RAOOptions instance
-   * @param options the option string that should be under the format option1Name:value1,option2Name:value2,[...],optionNName:valueN
+   * Constructor
+   *
+   * @param options    string in the format option1Name:value1,option2Name:value2,[...],optionNName:valueN
    */
-  RAOOptions(const std::string & options);
+  explicit RAOOptions(const std::string& options);
   
   /**
    * Returns the cost heuristic type from the RAO option string passed in the constructor

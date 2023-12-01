@@ -21,21 +21,17 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::SmartCap::SmartCap() throw():
-  m_cap(nullptr) {
-}
+cta::server::SmartCap::SmartCap() noexcept : m_cap(nullptr) { }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::SmartCap::SmartCap(cap_t cap) throw():
-  m_cap(cap) {
-}
+cta::server::SmartCap::SmartCap(cap_t cap) noexcept : m_cap(cap) { }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void cta::server::SmartCap::reset(cap_t cap) throw() {
+void cta::server::SmartCap::reset(cap_t cap) noexcept {
   // If the new capability state is not the one already owned
   if(cap != m_cap) {
 
@@ -61,14 +57,14 @@ cta::server::SmartCap &cta::server::SmartCap::operator=(SmartCap& obj) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::server::SmartCap::~SmartCap() throw() {
+cta::server::SmartCap::~SmartCap() noexcept {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-cap_t cta::server::SmartCap::get() const throw() {
+cap_t cta::server::SmartCap::get() const noexcept {
   return m_cap;
 }
 
@@ -80,7 +76,7 @@ cap_t cta::server::SmartCap::release() {
   if(nullptr == m_cap) {
     cta::exception::Exception ex;
     ex.getMessage() << "Smart pointer does not own a capbility state";
-    throw(ex);
+    throw ex;
   }
 
   // Assigning nullptr to m_cap indicates this smart pointer does not own a

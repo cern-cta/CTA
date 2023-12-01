@@ -36,12 +36,9 @@ namespace threadedUnitTests {
             }
         }
     public:
-        PingThread(QueueType& q):queue(q){
-
-        }
-        
-
+      explicit PingThread(QueueType& q):queue(q) {}
     };
+
     class PongThread : public cta::threading::Thread {
         QueueType& queue;
     protected:
@@ -54,8 +51,7 @@ namespace threadedUnitTests {
             }
         }
     public:
-        PongThread(QueueType& q):queue(q){}
-       
+      explicit PongThread(QueueType& q):queue(q) {}
     };
     
     TEST(cta_threading, BlockingQ_properly_working_on_helgrind) {

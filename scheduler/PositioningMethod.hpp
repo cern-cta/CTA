@@ -33,6 +33,6 @@ namespace cta {
    * Thread safe method that returns the string representation of the
    * specified enumeration vale.
    */
-  const char *positioningMethodToStr(const PositioningMethod enumValue) throw();
+  const char *positioningMethodToStr(const PositioningMethod enumValue) noexcept;
 
 } // namespace cta
