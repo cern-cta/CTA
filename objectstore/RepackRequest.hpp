@@ -42,6 +42,7 @@ public:
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
   common::dataStructures::RepackInfo getInfo();
   void setBufferURL(const std::string & bufferURL);
+  void setMaxFilesToSelect(const uint64_t masFilesToExpand);
   void setExpandFinished(const bool expandFinished);
   bool isExpandFinished();
   void setExpandStarted(const bool expandStarted);
@@ -111,6 +112,9 @@ public:
   void setLastExpandedFSeq(uint64_t lastExpandedFSeq);
   uint64_t getLastExpandedFSeq();
 
+  void setTotalFilesOnTapeAtStart(const uint64_t nbFilesOnTapeAtStart);
+  void setTotalBytesOnTapeAtStart(const uint64_t nbBytesOnTapeAtStart);
+  void setAllFilesSelectedAtStart(const bool allFilesSelectedAtStart);
   void setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve);
   void setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve);
   void setTotalFileToArchive(const uint64_t nbFilesToArchive);

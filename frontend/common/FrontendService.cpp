@@ -190,6 +190,11 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     m_repackBufferURL = repackBufferURLConf.value();
   }
 
+  auto repackMaxFilesToSelectConf = config.getOptionValueUInt("cta.repack.repack_max_files_to_select");
+  if(repackMaxFilesToSelectConf.has_value()) {
+    m_repackMaxFilesToSelect = repackMaxFilesToSelectConf.value();
+  }
+
   // Get the verification mount policy
   const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy");
   if(verificationMountPolicy.has_value()) {

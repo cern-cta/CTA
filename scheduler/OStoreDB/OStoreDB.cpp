@@ -1862,6 +1862,7 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
   rr->setMountPolicy(mountPolicy);
   rr->setNoRecall(repackRequest.m_noRecall);
   rr->setCreationLog(repackRequest.m_creationLog);
+  rr->setMaxFilesToSelect(repackRequest.m_maxFilesToSelect);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);

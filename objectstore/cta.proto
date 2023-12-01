@@ -616,6 +616,9 @@ message RepackRequest {
   required RepackRequestStatus status = 11010;
   required bool add_copies_mode = 11400;
   required bool move_mode = 11410;
+  optional uint64 totalfilesontapeatstart = 11415;
+  optional uint64 totalbytesontapeatstart = 11416;
+  optional bool allfilesselectedatstart = 11417;
   required uint64 totalfilestoretrieve = 11420;
   required uint64 totalbytestoretrieve = 11430;
   // We can have more files to archive than we have to retrieve if we plan to also archive a missing
@@ -648,6 +651,7 @@ message RepackRequest {
   repeated RepackDestinationInfo destination_infos = 11571;
   required EntryLog creation_log = 11572;
   required uint64 repack_finished_time = 11573;
+  optional uint64 maxfilestoselect = 11574;
 }
 
 message RepackRequestIndexPointer {

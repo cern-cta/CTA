@@ -77,6 +77,9 @@ namespace cta::xrd {
         repackRequestItem->set_tapepool(tapeVidMap[repackRequest.vid].tapePoolName);
         repackRequestItem->set_repack_buffer_url(repackRequest.repackBufferBaseURL);
         repackRequestItem->set_user_provided_files(repackRequest.userProvidedFiles);
+        repackRequestItem->set_total_files_on_tape_at_start(repackRequest.totalFilesOnTapeAtStart);
+        repackRequestItem->set_total_bytes_on_tape_at_start(repackRequest.totalBytesOnTapeAtStart);
+        repackRequestItem->set_all_files_selected_at_start(repackRequest.allFilesSelectedAtStart);
         repackRequestItem->set_total_files_to_retrieve(totalFilesToRetrieve);
         repackRequestItem->set_total_bytes_to_retrieve(repackRequest.totalBytesToRetrieve);
         repackRequestItem->set_total_files_to_archive(totalFilesToArchive);

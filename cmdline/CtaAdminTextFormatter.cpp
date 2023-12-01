@@ -671,6 +671,7 @@ void TextFormatter::printRepackLsHeader() {
     "providedFiles",
     "totalFiles",
     "totalBytes",
+    "selectedFiles",
     "filesToRetrieve",
     "filesToArchive",
     "failed",
@@ -679,19 +680,24 @@ void TextFormatter::printRepackLsHeader() {
 }
 
 void TextFormatter::print(const RepackLsItem &rels_item) {
- push_back(
-   timeToStr(rels_item.creation_log().time()),
-   secondsToDayHoursMinSec(rels_item.repack_time()),
-   rels_item.creation_log().username(),
-   rels_item.vid(),
-   rels_item.tapepool(),
-   rels_item.user_provided_files(),
-   rels_item.total_files_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
-   dataSizeToStr(rels_item.total_bytes_to_archive()), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
-   rels_item.files_left_to_retrieve(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
-   rels_item.files_left_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
-   rels_item.total_failed_files(),  //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849927
-   rels_item.status()
+  auto selectedFiles = std::to_string(rels_item.total_files_to_archive());
+  if (!rels_item.all_files_selected_at_start()) {
+    selectedFiles += "*";
+  }
+  push_back(
+    timeToStr(rels_item.creation_log().time()),
+    secondsToDayHoursMinSec(rels_item.repack_time()),
+    rels_item.creation_log().username(),
+    rels_item.vid(),
+    rels_item.tapepool(),
+    rels_item.user_provided_files(),
+    rels_item.total_files_on_tape_at_start(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
+    dataSizeToStr(rels_item.total_bytes_on_tape_at_start()), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
+    selectedFiles, //https://gitlab.cern.ch/cta/CTA/-/issues/546#note_7357851
+    rels_item.files_left_to_retrieve(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
+    rels_item.files_left_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
+    rels_item.total_failed_files(),  //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849927
+    rels_item.status()
   );
 }
 

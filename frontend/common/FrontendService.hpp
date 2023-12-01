@@ -71,6 +71,11 @@ public:
   std::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
   /*!
+   * Get the repacm max files to expand
+   */
+  std::optional<std::uint64_t> getRepackMaxFilesToSelect() const { return m_repackMaxFilesToSelect; }
+
+  /*!
    * Get the verification mount policy
    */
   std::string getVerificationMountPolicy() const { return m_verificationMountPolicy; }
@@ -101,6 +106,7 @@ private:
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
+  std::optional<uint64_t>                       m_repackMaxFilesToSelect;  //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests
   cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
 };

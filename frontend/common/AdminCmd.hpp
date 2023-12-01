@@ -227,6 +227,7 @@ private:
   common::dataStructures::SecurityIdentity    m_cliIdentity;           //!< Client identity: username, host, authentication
   const uint64_t                              m_archiveFileMaxSize;    //!< Maximum allowed file size for archive requests
   const std::optional<std::string>            m_repackBufferURL;       //!< Repack buffer URL
+  const std::optional<std::uint64_t>          m_repackMaxFilesToSelect;//!< Repack max files to expand
 
   // Command options extracted from protobuf
   std::map<admin::OptionBoolean::Key, bool>                        m_option_bool;        //!< Boolean options

@@ -66,6 +66,9 @@ while getopts "v:e:b:t:r:n:ampu" o; do
     v)
       VID_TO_REPACK=${OPTARG}
       ;;
+    f)
+      MAX_FILES_TO_SELECT="--maxfilestoselect ${OPTARG}"
+      ;;
     e)
       EOSINSTANCE=${OPTARG}
       ;;
