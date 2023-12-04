@@ -109,6 +109,7 @@ echo
 echo "Track progress of test"
 (kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker 'archive retrieve evict abort delete'"
 )&
+TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod"
@@ -150,10 +151,15 @@ echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo "$(date +%s): "
+wait "${TRACKER_PID}"
+if [[ $? == 1 ]]; then
+  echo "Some files were lost during tape workflow."
+ kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+ exit 1
+fi
 
-echo
-echo "Results for base client tests."
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_results.sh ${TEST_POSTRUN}" || exit 1
+# Copy results to gitlab artifacts.
 kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
 
 echo
