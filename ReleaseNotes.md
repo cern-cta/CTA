@@ -6,6 +6,7 @@
 - cta/CTA#540 - Allow optional string values to be cleared in the Physical Library catalogue
 - cta/CTA#543 - Revert log level back to DEBUG 
 - cta/CTA#542 - Fix valgrind tests
+- cta/CTA#547 - Fix repack backpressure mechanism not requeueing repack requests
 
 ### Continuous Integration
 - cta/CTA#504 - Update CI scripts to use CERN's k8s infrastructure
