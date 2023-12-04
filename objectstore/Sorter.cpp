@@ -251,13 +251,15 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
   if(copyNb == std::nullopt) {
     // The job to queue is a ToTransfer job
     std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
+    bool isRepack = accessor.getIsRepack();
+
     if(candidateVidsToTransfer.empty()) {
       throw cta::exception::Exception("In Sorter::insertRetrieveRequest(): there are no ToTransfer jobs in the RetrieveRequest and copyNb was not provided.");
     }
 
     std::string bestVid;
     try {
-      bestVid = Helpers::selectBestRetrieveQueue(candidateVidsToTransfer, m_catalogue, m_objectstore);
+      bestVid = Helpers::selectBestRetrieveQueue(candidateVidsToTransfer, m_catalogue, m_objectstore, isRepack);
     } catch(Helpers::NoTapeAvailableForRetrieve&) {
       std::stringstream err;
       err << "In Sorter::insertRetrieveRequest(): no vid available. archiveId=" << accessor.getArchiveFile().archiveFileID;
