@@ -52,6 +52,11 @@ getFirstVidContainingFiles() {
   echo $vidToRepack
 }
 
+getNumberOfFilesOnTape() {
+  numberOfFiles=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json tf ls --vid $1 | jq -r '. | length')
+  echo $numberOfFiles
+}
+
 writeTapeSummary(){
   echo "Summary of the content of the tape $1"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls -v $1 | jq .

@@ -824,6 +824,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
       retRef.m_repackInfo.noRecall = payload.no_recall();
+      retRef.m_repackInfo.maxFilesToSelect = payload.maxfilestoselect();
       if (payload.move_mode()) {
         if (payload.add_copies_mode()) {
           retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;
