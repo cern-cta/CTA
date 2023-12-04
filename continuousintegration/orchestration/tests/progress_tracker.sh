@@ -25,6 +25,7 @@ trackArchive() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
+
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
       ts=$(date +%s)
