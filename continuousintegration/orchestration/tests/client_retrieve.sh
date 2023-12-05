@@ -25,7 +25,7 @@ echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
-  xrdfs_call=$(eval echo "${retrieve}")
+  xrdfs_call=$(echo "${retrieve}")
 
   xrdfs_success="rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
 
