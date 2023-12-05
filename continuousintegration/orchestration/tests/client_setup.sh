@@ -146,10 +146,18 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-if [[ ! "${CLI_TARGET}" = @(xrd|gfal2) ]]; then
-  echo "Error: cli target $CLI_TARGET not supported. Valid options: xrd, gfal2"
-  exit 1
-fi
+case "${CLI_TARGET}" in
+  xrd)
+    . /root/cli_calls.sh 'xrd'
+    ;;
+  gfal2)
+    . /root/cli_calls.sh 'gfal2'
+    ;;
+  *)
+    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
+    exit 1
+esac
+
 if [ "x${COMMENT}" = "x" ]; then
     echo "No annotation will be pushed to Influxdb"
 fi
