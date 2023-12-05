@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-<<<<<<< HEAD
 # @copyright    Copyright © 2024 CERN
-=======
-# @copyright    Copyright © 2023 CERN
->>>>>>> 1252aa4612 (Revert some changes)
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -53,12 +49,16 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
   
-  xrdcp_call=$(echo "${archive}")
+  xrdcp_call=$(eval echo "${archive}")
   
   xrdcp_succes=" rm ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
+<<<<<<< HEAD
   xrdcp_error="ERROR with xrootd transfer for file ${subir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 >>>>>>> 1252aa4612 (Revert some changes)
+=======
+  xrdcp_error="ERROR with xrootd transfer for file ${subdir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
+>>>>>>> 078888c096 (Fixes)
 
   command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || ${xrdcp_error}"
    

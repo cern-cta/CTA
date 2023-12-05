@@ -27,6 +27,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   xrdfs_call=$(eval echo "${retrieve}")
   xrdfs_call+=" 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME"
+
   xrdfs_success="rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
   xrdfs_error=" echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
 
