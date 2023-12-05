@@ -26,6 +26,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
   xrdfs_call=$(eval echo "${retrieve}")
+  xrdfs_call+=" 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME"
 
   xrdfs_success="rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
 
