@@ -107,7 +107,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 echo
 echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker 'archive retrieve evict abort delete'"
+(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
 )&
 TRACKER_PID=$!
 

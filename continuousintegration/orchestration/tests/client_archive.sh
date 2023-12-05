@@ -37,11 +37,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
   
-  xrdcp_call=$(echo "${archive}")
+  xrdcp_call=$(eval echo "${archive}")
   
   xrdcp_succes=" rm ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
-  xrdcp_error="ERROR with xrootd transfer for file ${subir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
+  xrdcp_error="ERROR with xrootd transfer for file ${subdir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
   command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || ${xrdcp_error}"
    
