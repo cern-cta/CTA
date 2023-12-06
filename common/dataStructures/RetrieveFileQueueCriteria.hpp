@@ -26,26 +26,18 @@
 namespace cta::common::dataStructures {
 
 /**
- * The queueing criteria returned by the catalogue for a file retrieve request.
+ * The queueing criteria returned by the catalogue for a file retrieve request
  */
 struct RetrieveFileQueueCriteria {
-
   /**
-   * The archived file.
+   * The archived file
    */
   ArchiveFile archiveFile;
 
   /**
-   * The mount policy.
+   * The mount policy
    */
   MountPolicy mountPolicy;
-
-  RetrieveFileQueueCriteria() = default;
-   
-  RetrieveFileQueueCriteria(const RetrieveFileQueueCriteria& other);
-  
-  RetrieveFileQueueCriteria &operator=(const RetrieveFileQueueCriteria& other);
-
-}; // struct RetrieveFileQueueCriteria
+};
 
 } // namespace cta::common::dataStructures

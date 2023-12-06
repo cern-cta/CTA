@@ -71,7 +71,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RequesterIdentity.cpp
   dataStructures/RequesterMountRule.cpp
   dataStructures/RequesterActivityMountRule.cpp
-  dataStructures/RetrieveFileQueueCriteria.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp
@@ -95,7 +94,6 @@ set (COMMON_LIB_SRC_FILES
   exception/Exception.cpp
   exception/ForceDismountFailed.cpp
   exception/GrpcError.cpp
-  exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
   exception/Mismatch.cpp
   exception/MissingOperand.cpp
@@ -114,7 +112,6 @@ set (COMMON_LIB_SRC_FILES
   exception/XrootCl.cpp
   exception/EncryptionException.cpp
   json/object/JSONCObject.cpp
-  log/DummyLogger.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

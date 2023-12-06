@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "common/log/Logger.hpp"
-#include "common/threading/Mutex.hpp"
-
 #include <map>
 #include <syslog.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "common/log/Logger.hpp"
+#include "common/threading/Mutex.hpp"
 
 namespace cta::log {
 
@@ -38,11 +38,10 @@ public:
    * Constructor
    *
    * @param hostName The name of the host to be prepended to every log message.
-   * @param programName The name of the program to be prepended to every log
-   * message.
+   * @param programName The name of the program to be prepended to every log message.
    * @param logMask The log mask.
    */
-  SyslogLogger(const std::string &hostName, const std::string &programName, const int logMask);
+  SyslogLogger(const std::string& hostName, const std::string& programName, const int logMask);
 
   /**
    * Destructor
@@ -55,28 +54,23 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() override { }
+  void prepareForFork() override { /* intentionally-blank override of pure virtual method */ }
 
 protected:
-
   /**
-   * Writes the specified msg to the underlying logging system.
+   * Writes the specified msg to the underlying logging system
    *
-   * This method is to be implemented by concrete sub-classes of the Logger
-   * class.
+   * This method is to be implemented by concrete sub-classes of the Logger class.
    *
    * Please note it is the responsibility of a concrete sub-class to decide
    * whether or not to use the specified log message header.  For example, the
    * SysLogLogger sub-class does not use the header.  Instead it relies on
    * rsyslog to provide a header.
    *
-   * @param header The header of the message to be logged.  It is the
-   * esponsibility of the concrete sub-class
+   * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
-
-}; // class SyslogLogger
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+};
 
 } // namespace cta::log
-

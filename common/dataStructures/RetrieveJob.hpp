@@ -32,9 +32,8 @@ namespace cta::common::dataStructures {
  */
 struct RetrieveJob {
   RetrieveJob() = default;
-
-  bool operator==(const RetrieveJob &rhs) const;
-  bool operator!=(const RetrieveJob &rhs) const;
+  bool operator==(const RetrieveJob& rhs) const;
+  bool operator!=(const RetrieveJob& rhs) const;
 
   RetrieveRequest request;
   uint64_t fileSize;

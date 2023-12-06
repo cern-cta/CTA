@@ -21,17 +21,10 @@
 
 namespace cta::log {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-StringLogger::StringLogger(const std::string &hostName, const std::string &programName,
-  const int logMask):
-  Logger(hostName, programName, logMask) {}
-
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 
@@ -39,9 +32,6 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
 
   // Append the message to the log
   m_log << headerPlusBody << std::endl;
-
-  // Uncomment this to get the logs printed to stdout during unit tests.
-  // printf ("%s\n", headerPlusBody.c_str());
 }
 
 } // namespace cta::log

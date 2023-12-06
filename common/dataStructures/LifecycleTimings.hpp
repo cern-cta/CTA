@@ -25,10 +25,10 @@ namespace cta::common::dataStructures {
  * This struct stores the lifecycle timings for a request
  */
 struct LifecycleTimings {
-  LifecycleTimings();
+  LifecycleTimings() : creation_time(0), first_selected_time(0), completed_time(0) { }
   LifecycleTimings(const LifecycleTimings& orig) = default;
   virtual ~LifecycleTimings() = default;
-  LifecycleTimings& operator=(const LifecycleTimings& orig);
+
   /**
    * Returns the elapsed time between the creation of the request
    * and the selection of the request for mounting
