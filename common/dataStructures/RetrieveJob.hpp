@@ -31,11 +31,9 @@ namespace cta::common::dataStructures {
  * the request in the system 
  */
 struct RetrieveJob {
-
-  RetrieveJob() { }
+  RetrieveJob() = default;
 
   bool operator==(const RetrieveJob &rhs) const;
-
   bool operator!=(const RetrieveJob &rhs) const;
 
   RetrieveRequest request;
@@ -44,15 +42,14 @@ struct RetrieveJob {
   std::string objectId; //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
   std::list<std::string> reportfailurelogs;
-  //Elements not needed for queueing
+  // Elements not needed for queueing
   std::string diskInstance;
   std::string storageClass;
   std::string diskFileId;
   uint64_t totalRetries;
   uint64_t totalReportRetries;
+};
 
-}; // struct RetrieveJob
-
-std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj);
+std::ostream& operator<<(std::ostream& os, const RetrieveJob& obj);
 
 } // namespace cta::common::dataStructures
