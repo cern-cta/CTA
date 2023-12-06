@@ -20,7 +20,8 @@
 trackArchive() {
   tmpFileMap=$fileMap
   count=0
-  for s in $(seq 0 90); do # 90 secs timeout
+  s=0
+  while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
@@ -38,7 +39,7 @@ trackArchive() {
 
       # Commit transaction
       transaction+='END TRANSACTION;'
-      sqlite3 "${DB_NAME}" "${transaction}"
+      if [[ $count -gt 0 ]]; then sqlite3 "${DB_NAME}" "${transaction}"; fi
 
       # Check if we are done.
       echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
@@ -58,7 +59,8 @@ trackPrepare() {
   tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict + 1))
-  for s in $(seq 0 90); do # 90 secs timeout
+  s=0;
+  while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
@@ -79,7 +81,7 @@ trackPrepare() {
       sqlite3 "${DB_NAME}" "${transaction}"
 
       # Check if we are done.
-      echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
+      echo "Staged ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
@@ -98,7 +100,8 @@ trackEvict() {
   tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict - 1))
-  for s in $(seq 0 90); do # 90 secs timeout
+  s=0
+  while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
@@ -119,7 +122,7 @@ trackEvict() {
       sqlite3 "${DB_NAME}" "${transaction}"
 
       # Check if we are done.
-      echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
+      echo "Evicted ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
@@ -137,7 +140,8 @@ trackEvict() {
 trackDelete() {
   tmpFileMap=$fileMap
   count=0
-  for s in $(seq 0 90); do # 90 secs timeout
+  s=0
+  while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
@@ -285,7 +289,7 @@ done
 ################## Results ####################
 ###############################################
 TOTAL_FILES=$((${NB_FILES} * ${NB_DIRS}))
-IFS='|' read -a results_array <<< sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(deleted) FROM ${TEST_TABLE};"
+IFS='|' read -a results_array <<< $(sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(deleted) FROM ${TEST_TABLE};")
 
 ARCHIVED=${results_array[0]}
 RETRIEVED=${results_array[1]}
