@@ -279,8 +279,6 @@ size_t RadosStriperReadFile::size() const {
   return size;
 }
 
-RadosStriperReadFile::~RadosStriperReadFile() noexcept {}
-
 //==============================================================================
 // RADOS STRIPER WRITE FILE
 //==============================================================================
@@ -334,8 +332,6 @@ void RadosStriperWriteFile::setChecksum(uint32_t checksum) {
 void RadosStriperWriteFile::close()  {
   // Nothing to do as writes are synchronous
 }
-
-RadosStriperWriteFile::~RadosStriperWriteFile() noexcept {}
 
 //==============================================================================
 // AsyncDiskFileRemover FACTORY

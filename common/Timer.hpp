@@ -31,21 +31,20 @@ namespace cta::utils {
 class Timer {
 
 public:
-        
   enum reset_t {
     keepRunning,
     resetCounter
   };
 
   /**
-   * Constructor.
+   * Constructor
    */
   Timer();
 
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~Timer() {}
+  virtual ~Timer() = default;
 
   /**
    * Gives elapsed time in microseconds with respect to the reference time

@@ -36,10 +36,6 @@ cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandle
 
 }
 
-cta::frontend::grpc::client::NegotiationRequestHandler::~NegotiationRequestHandler() {
-
-}
-
 void cta::frontend::grpc::client::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {
   
   log::LogContext lc(m_log);

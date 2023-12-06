@@ -40,14 +40,16 @@ class RAOAlgorithmFactoryFactory;
 class RAOManager {
 public:
   friend RAOAlgorithmFactoryFactory;
-  RAOManager();
+
+  RAOManager() = default;
    /**
    * Constructor of a RAO manager
    * @param config the configuration of the RAO to manage
    * @param drive the DriveInterface of the drive that is mounting.
    * @param catalogue the pointer to the CTA catalogue
    */
-  RAOManager(const RAOParams & config, castor::tape::tapeserver::drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
+  RAOManager(const RAOParams& config, drive::DriveInterface* drive, cta::catalogue::Catalogue* catalogue) :
+    m_raoParams(config), m_drive(drive), m_catalogue(catalogue) { }
 
   /**
    * Copy constructor
@@ -56,8 +58,13 @@ public:
   RAOManager(const RAOManager & manager);
 
   /**
+   * Destructor
+   */
+  virtual ~RAOManager() = default;
+
+  /**
    * Assignment operator
-   * */
+   */
   RAOManager & operator=(const RAOManager & manager);
 
   /**
@@ -98,8 +105,6 @@ public:
    */
   std::vector<uint64_t> queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc);
 
-  virtual ~RAOManager();
-
 private:
   //RAO Configuration Data
   RAOParams m_raoParams;
@@ -110,9 +115,9 @@ private:
   //The maximum number of files that will be considered for RAO
   std::optional<uint64_t> m_maxFilesSupported;
   //Pointer to the drive interface of the drive currently used by the tapeserver
-  castor::tape::tapeserver::drive::DriveInterface * m_drive;
+  castor::tape::tapeserver::drive::DriveInterface* m_drive = nullptr;
   bool m_isDriveEnterpriseEnabled = false;
-  cta::catalogue::Catalogue * m_catalogue;
+  cta::catalogue::Catalogue* m_catalogue = nullptr;
 
   /**
    * Returns true if the manager can instanciate an Enterprise RAO Algorithm
@@ -141,7 +146,6 @@ private:
    * @param lc the log context to log the warning message
    */
   void logWarningAfterRAOOperationFailed(const std::string & warningMsg, const std::string & exceptionMsg, cta::log::LogContext & lc) const;
-
 };
 
 } // namespace castor::tape::tapeserver::rao

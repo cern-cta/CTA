@@ -63,6 +63,11 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
 
   /**
+    * Destructor
+    */
+  virtual ~RetrieveMount()  = default;
+
+  /**
     * Returns The type of this tape mount.
     *
     * @return The type of this tape mount.
@@ -258,11 +263,6 @@ public:
     * @param diskSystem The disk system
     */
   virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem);
-
-  /**
-    * Destructor.
-    */
-  virtual ~RetrieveMount() noexcept;
 
 private:
   /**

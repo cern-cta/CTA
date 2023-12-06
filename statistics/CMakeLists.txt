@@ -23,7 +23,6 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 set (STATISTICS_LIB_SRC_FILES
   Statistics.cpp
   FileStatistics.cpp
-  StatisticsService.cpp
   DatabaseStatisticsService.cpp
   DatabaseStatisticsServiceFactory.cpp
   StatisticsServiceFactory.cpp

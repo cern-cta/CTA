@@ -34,7 +34,10 @@ public:
    *
    * @param type    used by the createRAOAlgorithm() method to instantiate the correct algorithm for the type
    */
-  explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type);
+  explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type) :
+    m_type(type) { }
+
+  virtual ~NonConfigurableRAOAlgorithmFactory() = default;
 
   /**
    * Returns the correct instance of RAO algorithm regarding the type
@@ -42,7 +45,7 @@ public:
    * @throws Exception if the type is unknown
    */
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
-  virtual ~NonConfigurableRAOAlgorithmFactory();
+
 private:
   RAOParams::RAOAlgorithmType m_type;
 };

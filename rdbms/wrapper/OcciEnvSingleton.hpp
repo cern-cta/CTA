@@ -49,9 +49,9 @@ private:
   static std::unique_ptr<OcciEnvSingleton> s_instance;
 
   /**
-   * Private constructor because this class is a singleton.
+   * Private constructor because this class is a singleton
    */
-  OcciEnvSingleton();
+  OcciEnvSingleton() = default;
 
   /**
    * Prevent copying.
@@ -59,9 +59,9 @@ private:
   OcciEnvSingleton(const OcciEnvSingleton &) = delete;
 
   /**
-   * Prevent assignment.
+   * Prevent assignment
    */
-  void operator=(const OcciEnvSingleton &) = delete;
+  OcciEnvSingleton& operator=(const OcciEnvSingleton&) = delete;
 
 }; // class OcciEnvSingleton
 

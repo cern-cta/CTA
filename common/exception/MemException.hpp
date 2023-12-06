@@ -27,7 +27,7 @@ namespace cta::exception {
 class MemException : public Exception {
 public:
   explicit MemException(const std::string& what) : Exception(what) {}
-  virtual ~MemException() {}
+  virtual ~MemException() = default;
 };
 
 } // namespace cta::exception

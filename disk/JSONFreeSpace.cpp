@@ -37,7 +37,4 @@ std::string JSONFreeSpace::getExpectedJSONToBuildObject() const {
   return "{\"freeSpace\":42}";
 }
 
-JSONFreeSpace::~JSONFreeSpace() {
-}
-
 } // namespace cta::disk

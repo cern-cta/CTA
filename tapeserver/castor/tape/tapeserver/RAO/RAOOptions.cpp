@@ -25,13 +25,8 @@ std::map<std::string,RAOOptions::CostHeuristicType> RAOOptions::c_mapStringCostH
   {"cta",RAOOptions::CostHeuristicType::cta},
 };
 
-RAOOptions::RAOOptions(){}  
-  
-RAOOptions::RAOOptions(const std::string & options): m_options(options){
+RAOOptions::RAOOptions(const std::string & options): m_options(options) {
   cta::utils::splitString(m_options,',',m_allOptions);
-}
-
-RAOOptions::~RAOOptions() {
 }
 
 bool RAOOptions::getBooleanValue(const std::string& name) const {

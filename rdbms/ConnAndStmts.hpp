@@ -32,25 +32,21 @@ namespace cta::rdbms {
 struct ConnAndStmts {
 
   /**
-   * Constructor.
+   * Constructor
    */
-  ConnAndStmts() {
-  }
+  ConnAndStmts() = default;
 
   /**
-   * Deletion of the copy constructor.
+   * Deletion of the copy constructor
    */
-  ConnAndStmts(ConnAndStmts &) = delete;
+  ConnAndStmts(ConnAndStmts&) = delete;
 
   /**
-   * Move constructor.
+   * Move constructor
    *
-   * @param other The other object.
+   * @param other The other object
    */
-  ConnAndStmts(ConnAndStmts &&other):
-    conn(std::move(other.conn)),
-    stmtPool(std::move(other.stmtPool)) {
-  }
+  ConnAndStmts(ConnAndStmts&& other) : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) { }
 
   /**
    * Equality operator.

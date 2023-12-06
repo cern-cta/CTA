@@ -65,7 +65,7 @@ namespace System {
     virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) = 0;
     virtual int close(int fd) = 0;
     virtual int stat(const char * path, struct stat *buf) = 0;
-    virtual ~virtualWrapper() {};
+    virtual ~virtualWrapper() = default;
     /** Hook allowing the pre-allocation of a tape drive in the test environment.
      * will  */
     virtual castor::tape::tapeserver::drive::DriveInterface *

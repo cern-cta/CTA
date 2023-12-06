@@ -22,26 +22,23 @@
 namespace cta::rdbms {
 
 /**
- * Invalid result set.
+ * Invalid result set
  */
-class InvalidResultSet : public cta::exception::Exception {
+class InvalidResultSet : public exception::Exception {
 public:
-      
   /**
    * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  InvalidResultSet(const std::string &context = "", const bool embedBacktrace = true):
+  InvalidResultSet(const std::string &context = "", const bool embedBacktrace = true) :
     Exception(context, embedBacktrace) {}
 
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~InvalidResultSet() {}
-}; // class InvalidResultSet
+  virtual ~InvalidResultSet() = default;
+};
       
 } // namespace cta::rdbms

@@ -45,7 +45,7 @@ public:
   /**
    * Destructor
    */
-  ~ScsiLibrarySlot();
+  ~ScsiLibrarySlot() = default;
 
   /**
    * Creates a clone of this object.

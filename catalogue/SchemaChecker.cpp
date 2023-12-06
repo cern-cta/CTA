@@ -27,9 +27,6 @@ SchemaChecker::SchemaChecker(const std::string& databaseToCheckName, rdbms::Logi
   m_databaseMetadataGetter.reset(DatabaseMetadataGetterFactory::create(m_dbType, m_catalogueConn));
 }
 
-SchemaChecker::~SchemaChecker() {
-}
-
 void SchemaChecker::checkSchemaComparerNotNull(const std::string& methodName){
   if(m_schemaComparer == nullptr){
     std::string exceptionMsg = "In "+methodName+", No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer()";

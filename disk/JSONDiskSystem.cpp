@@ -57,7 +57,4 @@ std::string JSONDiskSystem::getJSON() {
   return JSONCObject::getJSON();
 }
 
-JSONDiskSystem::~JSONDiskSystem() {
-}
-
 } // namespace cta::disk

@@ -23,7 +23,6 @@
 
 
 namespace cta::threading {
-
   /**
    * A class allowing forking of a child process, and subsequent follow up
    * of the child process. Status check, killing, return code collection.
@@ -37,7 +36,7 @@ namespace cta::threading {
     class Cleanup {
     public:
       virtual void operator() () = 0;
-      virtual ~Cleanup() {}
+      virtual ~Cleanup() = default;
     };
     /**
      * Exceptions for wrong usage.

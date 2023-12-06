@@ -200,7 +200,7 @@ class NotAFileMark: public cta::exception::Exception {
  */
 class DriveInterface {
  public:
-  virtual ~DriveInterface() {}
+  virtual ~DriveInterface() = default;
 
   virtual compressionStats getCompression()  = 0;
   virtual void clearCompressionStats()  = 0;

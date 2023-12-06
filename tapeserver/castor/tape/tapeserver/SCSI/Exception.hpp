@@ -24,15 +24,14 @@
 
 namespace castor::tape::SCSI {
 
-  /**
-   * An exception class turning SCSI sense data into a loggable string
-   */
+/**
+ * An exception class turning SCSI sense data into a loggable string
+ */
 class Exception : public cta::exception::Exception {
- public:
-  Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
-          const std::string& context = "");
-  virtual ~Exception() noexcept {}
-};  // class Exception
+public:
+  Exception(unsigned char status, Structures::senseData_t<255>* sense, const std::string& context = "");
+  virtual ~Exception() = default;
+};
 
 /**
  * Failed with NotReady error.
@@ -63,25 +62,22 @@ class UnitAttentionException : public castor::tape::SCSI::Exception {
 };  // class UnitAttentionException
 
 /**
- * Failed with host error.
+ * Failed with host error
  */
-class HostException: public cta::exception::Exception {
- public:
-  HostException(const unsigned short int host_status,
-    const std::string & context = "");
-  virtual ~HostException() noexcept {}
-};  // class HostException
+class HostException : public cta::exception::Exception {
+public:
+  HostException(const unsigned short int host_status, const std::string& context = "");
+  virtual ~HostException() = default;
+};
 
 /**
  * Failed with driver error.
  */
-class DriverException: public cta::exception::Exception {
- public:
-  DriverException(const unsigned short int driver_status,
-    castor::tape::SCSI::Structures::senseData_t<255> * sense,
-    const std::string & context = "");
-  virtual ~DriverException() noexcept {}
-};  // class DriverException
+class DriverException : public cta::exception::Exception {
+public:
+  DriverException(const unsigned short int driver_status, Structures::senseData_t<255>* sense, const std::string& context = "");
+  virtual ~DriverException() = default;
+};
 
 /**
  * Automated exception launcher in case of SCSI command error. Does nothing

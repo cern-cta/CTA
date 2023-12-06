@@ -31,10 +31,14 @@ namespace castor::tape::tapeserver::rao {
  */  
 class RAOFile {
 public:
-  RAOFile(const uint64_t index, const FilePositionInfos & filePositionInfos);
-  RAOFile(const RAOFile & other);
-  RAOFile &operator=(const RAOFile & other);
+  RAOFile(const uint64_t index, const FilePositionInfos& filePositionInfos) :
+    m_index(index), m_filePositionInfos(filePositionInfos) { }
+
+  RAOFile(const RAOFile& other);
+  virtual ~RAOFile() = default;
+  RAOFile& operator=(const RAOFile& other);
   uint64_t getIndex() const;
+
   /**
    * Get the position informations about this file
    * @return the position informations about this file
@@ -53,7 +57,6 @@ public:
   uint64_t getClosestFileIndex() const;
   bool operator<(const RAOFile &other) const;
   bool operator==(const RAOFile & other) const;
-  virtual ~RAOFile();
   
 private:
   uint64_t m_index;
@@ -67,7 +70,9 @@ private:
    */
   class DistanceToFile {
   public:
-    DistanceToFile(const double cost, const uint64_t destinationFileIndex);
+    DistanceToFile(const double cost, const uint64_t destinationFileIndex) :
+      m_cost(cost),m_destinationFileIndex(destinationFileIndex) { }
+
     bool operator<(const DistanceToFile &other) const;
     /**
      * Returns the cost to go to the destination file located at the destinationFileIndex

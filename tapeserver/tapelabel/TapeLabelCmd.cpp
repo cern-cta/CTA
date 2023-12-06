@@ -32,27 +32,6 @@
 namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-TapeLabelCmd::TapeLabelCmd(std::istream &inStream, std::ostream &outStream,
-  std::ostream &errStream, cta::log::StdoutLogger &log,
-  cta::mediachanger::MediaChangerFacade &mc):
-  CmdLineTool(inStream, outStream, errStream),
-  m_log(log),
-  m_encryptionControl(false, ""),
-  m_mc(mc),
-  m_useLbp(true),
-  m_driveSupportLbp(true),
-  m_force(false){
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-TapeLabelCmd::~TapeLabelCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

@@ -292,10 +292,9 @@ public:
     m_subObjectsOps.remove(&subObject);
   }
 
-  virtual ~ScopedLock() {
-    // Each child class will have to call releaseIfNeeded() in their own destructor
-    // as it relies on pure virtual members of this base class.
-  }
+  // Each child class will have to call releaseIfNeeded() in their own destructor,
+  // as it relies on pure virtual members of this base class.
+  virtual ~ScopedLock() = default;
 
   CTA_GENERATE_EXCEPTION_CLASS(AlreadyLocked);
   CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
@@ -341,7 +340,7 @@ protected:
 
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock() {}
+  ScopedSharedLock() = default;
   explicit ScopedSharedLock(ObjectOpsBase& oo) {
     lock(oo);
   }
@@ -371,7 +370,7 @@ public:
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock() {}
+  ScopedExclusiveLock() = default;
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     lock(oo, timeout_us);
   }
@@ -432,7 +431,7 @@ protected:
 
   explicit ObjectOps(Backend& os) : ObjectOpsBase(os) {}
 
-  virtual ~ObjectOps() {}
+  virtual ~ObjectOps() = default;
 
 public:
   void fetch() {

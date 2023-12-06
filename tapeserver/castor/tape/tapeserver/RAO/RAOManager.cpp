@@ -27,13 +27,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOManager::RAOManager() {
-
-}
-  
-RAOManager::RAOManager(const RAOParams & config, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_raoParams(config), 
-  m_drive(drive), m_catalogue(catalogue){}
-
 RAOManager::RAOManager(const RAOManager& manager){
   if(this != &manager){
     m_catalogue = manager.m_catalogue;
@@ -57,10 +50,6 @@ RAOManager& RAOManager::operator=(const RAOManager& manager) {
     m_raoParams = manager.m_raoParams;
   }
   return *this;
-}
-
-
-RAOManager::~RAOManager() {
 }
 
 bool RAOManager::useRAO() const{

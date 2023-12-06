@@ -36,12 +36,6 @@ DropSchemaCmd::DropSchemaCmd(
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-DropSchemaCmd::~DropSchemaCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

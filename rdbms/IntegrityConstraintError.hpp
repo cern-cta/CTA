@@ -25,27 +25,24 @@
 namespace cta::rdbms {
 
 /**
- * A database constraint has been violated.
+ * A database constraint has been violated
  */
 class IntegrityConstraintError : public ConstraintError {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was throw in the message
    */
-  IntegrityConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+  IntegrityConstraintError(const std::string& context, const std::string& dbErrorMessage,
+    const std::string& violatedConstraintName, const bool embedBacktrace = true) :
+    ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) { }
 
   /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
+   * Empty Destructor (needed for std::exception inheritance)
    */
-  ~IntegrityConstraintError() noexcept override;
-
-}; // class IntegrityConstraintError
+  ~IntegrityConstraintError() override = default;
+};
 
 } // namespace cta::rdbms

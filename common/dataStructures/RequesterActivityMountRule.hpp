@@ -32,7 +32,7 @@ namespace cta::common::dataStructures {
  */
 struct RequesterActivityMountRule {
 
-  RequesterActivityMountRule();
+  RequesterActivityMountRule() = default;
 
   bool operator==(const RequesterActivityMountRule &rhs) const;
 

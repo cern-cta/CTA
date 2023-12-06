@@ -35,16 +35,19 @@ public:
    * @param filePositionEstimator the file position estimator to determine the position of all files given to the performRAO() method
    * @param costHeuristic the cost heuristic to use to determine the cost between two files
    */
-  SLTFRAOAlgorithm(std::unique_ptr<FilePositionEstimator> & filePositionEstimator, std::unique_ptr<CostHeuristic> & costHeuristic);
+  SLTFRAOAlgorithm(std::unique_ptr<FilePositionEstimator>& filePositionEstimator, std::unique_ptr<CostHeuristic>& costHeuristic) :
+    m_filePositionEstimator(std::move(filePositionEstimator)),m_costHeuristic(std::move(costHeuristic)) { }
+
+  virtual ~SLTFRAOAlgorithm() = default;
+
   /**
    * Perform the SLTF RAO algorithm on the Retrieve jobs passed in parameter
    * @param jobs the jobs to perform the SLTF RAO algorithm
    * @return the vector of the indexes of the jobs rearranged with the SLTF method
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  std::string getName() const override;
-  virtual ~SLTFRAOAlgorithm();
-  
+  std::string getName() const override { return "sltf"; }
+
   /**
    * This builder helps to build the SLTF RAO algorithm. It initializes the file position estimator and the cost heuristic
    * according to what are the parameters of the RAO but also by asking to the drive the drive'
@@ -55,9 +58,10 @@ public:
   class Builder {
   public:
     explicit Builder(const RAOParams& data);
-    void setCatalogue(cta::catalogue::Catalogue * catalogue);
-    void setDrive(drive::DriveInterface * drive);
+    void setCatalogue(cta::catalogue::Catalogue* catalogue) { m_catalogue = catalogue; }
+    void setDrive(drive::DriveInterface* drive) { m_drive = drive; }
     std::unique_ptr<SLTFRAOAlgorithm> build();
+
   private:
     void initializeFilePositionEstimator();
     void initializeCostHeuristic();
@@ -66,14 +70,15 @@ public:
     drive::DriveInterface * m_drive = nullptr;
     cta::catalogue::Catalogue * m_catalogue = nullptr;
   };
-  
+
 private:
-  SLTFRAOAlgorithm();
+  SLTFRAOAlgorithm() = default;
+
   std::unique_ptr<FilePositionEstimator> m_filePositionEstimator;
   std::unique_ptr<CostHeuristic> m_costHeuristic;
-    
+
   typedef std::map<uint64_t,RAOFile> RAOFilesContainer;
-  
+
   RAOFilesContainer computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> > & jobs) const;
   void computeCostBetweenFileAndOthers(RAOFile & file, const RAOFilesContainer & files) const;
   std::vector<uint64_t> performSLTF(RAOFilesContainer & files) const;

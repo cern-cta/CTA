@@ -24,9 +24,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOAlgorithmFactoryFactory::RAOAlgorithmFactoryFactory(RAOManager & raoManager, cta::log::LogContext & lc):m_raoManager(raoManager), m_lc(lc) {
-}
-
 std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithmFactory() {
   std::unique_ptr<RAOAlgorithmFactory> ret;
   auto maxFilesSupported = m_raoManager.getMaxFilesSupported();
@@ -70,10 +67,6 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
     }
   }
   return ret;
-}
-
-
-RAOAlgorithmFactoryFactory::~RAOAlgorithmFactoryFactory() {
 }
 
 } // namespace castor::tape::tapeserver::rao

@@ -38,18 +38,6 @@ namespace cta::catalogue {
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-SchemaSqlStatementsReader::SchemaSqlStatementsReader() {
-}
-
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) {
-}
-
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) : m_dbType(orig.m_dbType) {
-}
-
-SchemaSqlStatementsReader::~SchemaSqlStatementsReader() {
-}
-
 std::list<std::string> SchemaSqlStatementsReader::getStatements() {
   std::unique_ptr<CatalogueSchema> schema;
   switch (m_dbType) {
@@ -129,13 +117,9 @@ DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const
   m_allSchemasVersionPath(orig.m_allSchemasVersionPath) {
 }
 
-DirectoryVersionsSqlStatementsReader::~DirectoryVersionsSqlStatementsReader() {
-}
-
 std::list<std::string> DirectoryVersionsSqlStatementsReader::getStatements() {
   return getAllStatementsFromSchema(readSchemaFromFile());
 }
-
 
 std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
   std::string schemaFilePath = getSchemaFilePath();
@@ -152,20 +136,9 @@ std::string DirectoryVersionsSqlStatementsReader::getSchemaFilePath() {
   return m_allSchemasVersionPath+m_catalogueVersion+"/"+getDatabaseType()+c_catalogueFileNameTrailer;
 }
 
-
 //////////////////////////////////////////////////////////////////
 // MapSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-MapSqlStatementsReader::MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion)
-  : SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion){}
-
-MapSqlStatementsReader::MapSqlStatementsReader(const MapSqlStatementsReader& orig)
-  : SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion) {
-}
-
-MapSqlStatementsReader::~MapSqlStatementsReader() {
-}
-
 std::list<std::string> MapSqlStatementsReader::getStatements() {
   std::map<std::string, std::string> mapVersionSchemas;
   try {

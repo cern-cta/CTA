@@ -18,9 +18,6 @@
 #include "RepackReportThread.hpp"
 namespace cta {
 
-  RepackReportThread::~RepackReportThread() {
-  }
-  
   void RepackReportThread::run() {
     utils::Timer totalTime;
     bool moreBatch = true;

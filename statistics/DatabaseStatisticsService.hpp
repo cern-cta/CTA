@@ -39,9 +39,10 @@ class DatabaseStatisticsService: public StatisticsService {
    * @param databaseConnection the database connection that will be used by this service
    */
   explicit DatabaseStatisticsService(cta::rdbms::Conn* databaseConnection);
+
+  ~DatabaseStatisticsService() override = default;
   DatabaseStatisticsService(const DatabaseStatisticsService& orig) = delete;
   DatabaseStatisticsService & operator=(const DatabaseStatisticsService &) = delete;
-  ~DatabaseStatisticsService() override;
 
   /**
    * Update the per-Tape statistics in the database used by this service

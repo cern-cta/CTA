@@ -25,17 +25,17 @@ namespace castor::tape::tapeserver::rao {
  * This class implements the CTA CostHeuristic that is documented here:
  * https://codimd.web.cern.ch/3adcp34cTqiv7tZJHpdxgA#
  */
-class CTACostHeuristic : public CostHeuristic{
+class CTACostHeuristic : public CostHeuristic {
 public:
-  CTACostHeuristic();
+  CTACostHeuristic() = default;
+  virtual ~CTACostHeuristic() = default;
+
   /**
    * 
-   * The coefficients used by this method are 
-   * documented here : https://codimd.web.cern.ch/3adcp34cTqiv7tZJHpdxgA#Cost-Coefficients-calculated-by-Germ%C3%A1n-for-LTO-7M-media
+   * The coefficients used by this method are documented here :
+   * https://codimd.web.cern.ch/3adcp34cTqiv7tZJHpdxgA#Cost-Coefficients-calculated-by-Germ%C3%A1n-for-LTO-7M-media
    */
-  double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const override;
-  virtual ~CTACostHeuristic();
-
+  double getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const override;
 };
 
 } // namespace castor::tape::tapeserver::rao

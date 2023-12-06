@@ -22,9 +22,6 @@ namespace cta::objectstore {
 AgentWrapper::AgentWrapper(Agent& agent):m_agent(agent) {
 }
 
-AgentWrapper::~AgentWrapper() {
-}
-
 /**
 * Adds an object address to the current agent. The additions and removals
 * are queued in memory so that several threads can share the same access.

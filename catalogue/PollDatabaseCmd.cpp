@@ -28,15 +28,8 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PollDatabaseCmd::PollDatabaseCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
-CmdLineTool(inStream, outStream, errStream) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-PollDatabaseCmd::~PollDatabaseCmd() noexcept {
-}
+PollDatabaseCmd::PollDatabaseCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
+  CmdLineTool(inStream, outStream, errStream) { }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

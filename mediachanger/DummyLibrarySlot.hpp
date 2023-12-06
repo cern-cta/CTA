@@ -46,7 +46,7 @@ public:
   /**
    * Destructor
    */
-  ~DummyLibrarySlot();
+  ~DummyLibrarySlot() = default;
 
   /**
    * Creates a clone of this object.

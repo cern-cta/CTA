@@ -31,13 +31,14 @@ public:
    * Constructs a DbToSQLiteStatementTransformer
    * @param statement the statement to transform into a SQLite compatible one
    */
-  explicit DbToSQLiteStatementTransformer(const std::string& statement);
-  virtual ~DbToSQLiteStatementTransformer();
+  explicit DbToSQLiteStatementTransformer(const std::string& statement) : m_statement(statement) { }
+  virtual ~DbToSQLiteStatementTransformer() = default;
   /**
    * Transform the statement as a SQLite compatible one
    * @return the statement compatible with SQLite
    */
-  virtual std::string transform();
+  virtual std::string transform() { return m_statement; }
+
 protected:
   std::string m_statement;
 };

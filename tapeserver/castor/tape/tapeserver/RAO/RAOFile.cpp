@@ -21,9 +21,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOFile::RAOFile(const uint64_t index, const FilePositionInfos & filePositionInfos):m_index(index),m_filePositionInfos(filePositionInfos) {
-}
-
 RAOFile::RAOFile(const RAOFile & other) {
   if(this != &other){
     m_index = other.m_index;
@@ -66,12 +63,6 @@ bool RAOFile::operator ==(const RAOFile& other) const {
   return m_index == other.getIndex();
 }
 
-RAOFile::~RAOFile() {
-}
-
-RAOFile::DistanceToFile::DistanceToFile(const double cost, const uint64_t destinationFileIndex):m_cost(cost),m_destinationFileIndex(destinationFileIndex){
-}
-
 bool RAOFile::DistanceToFile::operator <(const DistanceToFile& other) const {
   return m_cost < other.m_cost;
 }
@@ -83,4 +74,5 @@ double RAOFile::DistanceToFile::getCost() const{
 uint64_t RAOFile::DistanceToFile::getDestinationFileIndex() const {
   return m_destinationFileIndex;
 }
+
 } // namespace castor::tape::tapeserver::rao

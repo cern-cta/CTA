@@ -513,7 +513,7 @@ void EosNamespaceInjection::checkExistingPathHasInvalidMetadata(const uint64_t &
 // writeSkippedArchiveIdsToFile
 //------------------------------------------------------------------------------
 void EosNamespaceInjection::createTxtFileWithSkippedMetadata() const {
-  auto unix_epoch_time = std::time(0);
+  auto unix_epoch_time = std::time(nullptr);
   const std::string currentTime = std::to_string(unix_epoch_time);
   const std::filesystem::path filePath = "/tmp/skippedMetadataEosInjection" + currentTime + ".txt";
   std::ofstream archiveIdFile(filePath);

@@ -38,7 +38,7 @@ namespace catalogue {
 /**
  * Interface class to get database metadata
  */
-class MetadataGetter{
+class MetadataGetter {
 protected:
   void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
   void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
@@ -61,7 +61,6 @@ protected:
   rdbms::Conn& m_conn;
 public:
   explicit DatabaseMetadataGetter(cta::rdbms::Conn & conn);
-  virtual ~DatabaseMetadataGetter();
   SchemaVersion getCatalogueVersion();
   virtual std::list<std::string> getIndexNames();
   virtual std::list<std::string> getTableNames();
@@ -90,7 +89,6 @@ public:
 class SQLiteDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
   explicit SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn);
-  virtual ~SQLiteDatabaseMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   cta::rdbms::Login::DbType getDbType() override;
@@ -103,7 +101,6 @@ public:
 class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
   explicit OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
-  virtual ~OracleDatabaseMetadataGetter();
   cta::rdbms::Login::DbType getDbType() override;
   std::list<std::string> getTableNames() override;
   std::set<std::string> getMissingIndexes() override;
@@ -115,7 +112,6 @@ public:
 class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
   explicit PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
-  virtual ~PostgresDatabaseMetadataGetter();
   cta::rdbms::Login::DbType getDbType() override;
   std::set<std::string> getMissingIndexes() override;
 };

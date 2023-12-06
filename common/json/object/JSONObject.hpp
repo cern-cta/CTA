@@ -36,16 +36,14 @@ public:
    * @param json the json string used to set the inherited object attributes
    * @throws JSONObjectException if the json does not contain the correct key-value attributes
    */
-  virtual void buildFromJSON(const std::string & json) = 0;
+  virtual void buildFromJSON(const std::string& json) = 0;
   /**
    * Return the inherited object expected JSON structure allowing to set its attributes
    * via the buildFromJSON() method
    * @return an example of JSON allowing to build the object e.g {"freeSpace",42}
    */
   virtual std::string getExpectedJSONToBuildObject() const = 0;
-  virtual ~JSONObject();
-private:
-
+  virtual ~JSONObject() = default;
 };
 
 } // namespace cta::utils::json::object

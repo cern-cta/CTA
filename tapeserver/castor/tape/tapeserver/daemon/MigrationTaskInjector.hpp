@@ -108,7 +108,8 @@ public:
    * @return value of the error flag
    */
   bool hasErrorFlag() {
-    return m_errorFlag;
+    // AtomicFlag explicit conversion to bool prohibits copy-constructing the return value
+    return m_errorFlag ? true : false;
   }
 private:
   /**

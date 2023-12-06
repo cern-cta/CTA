@@ -46,7 +46,7 @@ public:
   /**
    * Destructor
    */
-  ~DebugBuf();
+  ~DebugBuf() = default;
 
   /**
    * Set the debug mode to be on (true) or off (false).

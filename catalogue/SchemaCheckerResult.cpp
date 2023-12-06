@@ -28,8 +28,8 @@ SchemaCheckerResult::SchemaCheckerResult(const SchemaCheckerResult& orig): m_err
   m_status = orig.m_status;
 }
 
-SchemaCheckerResult SchemaCheckerResult::operator=(const SchemaCheckerResult &other){
-  if(this != &other){
+SchemaCheckerResult& SchemaCheckerResult::operator=(const SchemaCheckerResult& other) {
+  if(this != &other) {
     m_errors = other.m_errors;
     m_warnings = other.m_warnings;
     m_status = other.m_status;
@@ -45,9 +45,6 @@ SchemaCheckerResult SchemaCheckerResult::operator +=(const SchemaCheckerResult& 
     m_status = other.m_status;
   }
   return *this;
-}
-
-SchemaCheckerResult::~SchemaCheckerResult() {
 }
 
 void SchemaCheckerResult::addError(const std::string& error){

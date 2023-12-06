@@ -27,6 +27,8 @@ namespace castor::tape::tapeserver::rao {
  */
 class RAOAlgorithmFactory {
 public:
+  virtual ~RAOAlgorithmFactory() = default;
+
   /**
    * Creates an RAO algorithm that will be used to do a Recommended Access Order
    * in order to give an optimized order to Retrieve files efficiently from a tape
@@ -35,10 +37,6 @@ public:
   virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
   
   std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
-  
-  virtual ~RAOAlgorithmFactory();
-private:
-
 };
 
 } // namespace castor::tape::tapeserver::rao

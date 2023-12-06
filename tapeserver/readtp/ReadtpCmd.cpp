@@ -44,27 +44,6 @@
 namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ReadtpCmd::ReadtpCmd(std::istream &inStream, std::ostream &outStream,
-  std::ostream &errStream, cta::log::StdoutLogger &log, cta::log::DummyLogger &dummyLog,
-  cta::mediachanger::MediaChangerFacade &mc):
-  CmdLineTool(inStream, outStream, errStream),
-  m_log(log),
-  m_dummyLog(dummyLog),
-  m_mc(mc),
-  m_useLbp(true),
-  m_nbSuccessReads(0),
-  m_nbFailedReads(0) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-ReadtpCmd::~ReadtpCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

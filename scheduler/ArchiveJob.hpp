@@ -69,9 +69,9 @@ protected:
 
 public:
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~ArchiveJob() noexcept;
+  virtual ~ArchiveJob() = default;
 
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);

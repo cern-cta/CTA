@@ -30,8 +30,6 @@ Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::
   : m_agentReference(agentReference), m_objectstore(objectstore), m_catalogue(catalogue) {
 }
 
-Sorter::~Sorter() {
-}
 /* Archive related algorithms */
 
 template <typename SpecificQueue>
@@ -383,21 +381,9 @@ void Sorter::flushAll(log::LogContext& lc){
 
 /* END OF SORTER CLASS */
 
-
-/* RetrieveRequestInfosAccessor CLASS */
-
-RetrieveRequestInfosAccessorInterface::RetrieveRequestInfosAccessorInterface(){}
-
-RetrieveRequestInfosAccessorInterface::~RetrieveRequestInfosAccessorInterface(){}
-
-/* END OF RetrieveRequestInfosAccessor CLASS */
-
-
 /* RetrieveRequestAccessor CLASS */
 
 OStoreRetrieveRequestAccessor::OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest):m_retrieveRequest(retrieveRequest){}
-
-OStoreRetrieveRequestAccessor::~OStoreRetrieveRequestAccessor(){}
 
 std::list<RetrieveRequest::JobDump> OStoreRetrieveRequestAccessor::getJobs(){
   return m_retrieveRequest->dumpJobs();
@@ -441,8 +427,6 @@ bool OStoreRetrieveRequestAccessor::getIsRepack() {
 /* SorterRetrieveRequestAccessor CLASS */
 
 SorterRetrieveRequestAccessor::SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request):m_retrieveRequest(request){}
-
-SorterRetrieveRequestAccessor::~SorterRetrieveRequestAccessor() {}
 
 std::list<RetrieveRequest::JobDump> SorterRetrieveRequestAccessor::getJobs() {
   std::list<RetrieveRequest::JobDump> ret;

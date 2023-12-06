@@ -28,12 +28,17 @@
 #include <string>
 
 namespace cta {
+
   /**
    * A placeholder class from which will derive ArchiveSession and RetrieveSession.
    * It's just here to allow RTTI.
    */
   class TapeMount {
   public:
+    /**
+     * Destructor
+     */
+    virtual ~TapeMount() = default;
 
     /**
      * Returns The type of this tape mount.
@@ -109,12 +114,6 @@ namespace cta {
      * @param LogContext
      */
     virtual void setTapeMounted(cta::log::LogContext &logContext) const = 0;
+  };
 
-    /**
-     * Destructor.
-     */
-    virtual ~TapeMount() noexcept;
-
-  }; // class TapeMount
-
-}
+} // namespace cta

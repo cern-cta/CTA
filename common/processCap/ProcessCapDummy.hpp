@@ -29,13 +29,12 @@ namespace cta::server {
  *
  * This primary goal of this class is to facilitate unit testing.
  */
-class ProcessCapDummy: public ProcessCap {
+class ProcessCapDummy : public ProcessCap {
 public:
-
   /**
-   * Destructor.
+   * Destructor
    */
-  ~ProcessCapDummy() noexcept;
+  ~ProcessCapDummy() = default;
 
   /**
    * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
@@ -54,12 +53,10 @@ public:
   void setProcText(const std::string &text);
 
 private:
-
   /**
    * The string representation of the current capability state.
    */
   std::string m_text;
-
-}; // class ProcessCapDummy
+};
 
 } // namespace cta::server

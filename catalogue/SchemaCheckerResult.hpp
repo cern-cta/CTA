@@ -42,7 +42,7 @@ public:
   
   SchemaCheckerResult();
   SchemaCheckerResult(const SchemaCheckerResult& orig);
-  SchemaCheckerResult operator=(const SchemaCheckerResult &other);
+  SchemaCheckerResult& operator=(const SchemaCheckerResult& other);
   /**
    * We can combine the SchemaComparerResult in order to add other Results to it
    * @param other the SchemaComparerResult object to add
@@ -80,7 +80,7 @@ public:
    */
   void addWarning(const std::string & warning);
   
-  virtual ~SchemaCheckerResult();
+  virtual ~SchemaCheckerResult() = default;
 private:
   std::list<std::string> m_errors;
   std::list<std::string> m_warnings;

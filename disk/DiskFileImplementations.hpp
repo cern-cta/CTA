@@ -26,8 +26,8 @@
 #include <cryptopp/rsa.h>
 #include <radosstriper/libradosstriper.hpp>
 
-namespace cta {
-  namespace disk {
+namespace cta::disk {
+
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
@@ -93,17 +93,6 @@ namespace cta {
         XrootReadFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
       
-      class XrootC2FSReadFile: public XrootBaseReadFile {
-      public:
-        XrootC2FSReadFile(const std::string &xrootUrl,
-          const CryptoPP::RSA::PrivateKey & privateKey,
-          uint16_t timeout = 0,
-          const std::string & cephPool = "");
-        virtual ~XrootC2FSReadFile() noexcept {}
-      private:
-        std::string m_signedURL;
-      };
-      
       class XrootBaseWriteFile: public WriteFile {
       public:
         explicit XrootBaseWriteFile(uint16_t timeout) : m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
@@ -125,18 +114,7 @@ namespace cta {
       public:
         XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
-      
-      class XrootC2FSWriteFile: public XrootBaseWriteFile {
-      public:
-        XrootC2FSWriteFile(const std::string &xrootUrl,
-          const CryptoPP::RSA::PrivateKey & privateKey,
-          uint16_t timeout = 0,
-          const std::string & cephPool = "");
-        virtual ~XrootC2FSWriteFile() noexcept {}
-      private:
-        std::string m_signedURL;
-      };     
-      
+
       //==============================================================================
       // RADOS STRIPER FILES
       //==============================================================================
@@ -150,7 +128,7 @@ namespace cta {
           const std::string &osd);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~RadosStriperReadFile() noexcept;
+        virtual ~RadosStriperReadFile() = default;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;
@@ -165,7 +143,7 @@ namespace cta {
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~RadosStriperWriteFile() noexcept;
+        virtual ~RadosStriperWriteFile() = default;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;
@@ -270,6 +248,5 @@ namespace cta {
 	std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
 	const uint16_t c_xrootTimeout = 15; 
       };
-      
-    } //end of namespace disk
- }
+
+} // namespace cta::disk

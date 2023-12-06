@@ -864,11 +864,6 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock()
-//------------------------------------------------------------------------------
-OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock() {}
-
-//------------------------------------------------------------------------------
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
 std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,

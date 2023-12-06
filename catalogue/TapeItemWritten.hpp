@@ -35,9 +35,9 @@ struct TapeItemWritten {
   TapeItemWritten();
   
   /**
-   * Virtual trivial destructor to make the object polymorphic.
+   * Default virtual destructor to make the object polymorphic
    */
-  virtual ~TapeItemWritten() {}
+  virtual ~TapeItemWritten() = default;
 
   /**
    * Equality operator.

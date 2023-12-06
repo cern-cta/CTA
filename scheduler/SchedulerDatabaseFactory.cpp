@@ -20,4 +20,4 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::SchedulerDatabaseFactory::~SchedulerDatabaseFactory() noexcept { }
+cta::SchedulerDatabaseFactory::~SchedulerDatabaseFactory() = default;

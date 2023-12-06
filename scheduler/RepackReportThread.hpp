@@ -24,7 +24,7 @@ namespace cta {
 class RepackReportThread: public cta::threading::Thread {
 public:
   RepackReportThread(Scheduler& scheduler, log::LogContext &lc):m_scheduler(scheduler),m_lc(lc){}
-  virtual ~RepackReportThread();
+  virtual ~RepackReportThread() = default;
   void run();
 protected:
   virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc) = 0;

@@ -33,9 +33,7 @@ public:
   void buildFromJSON(const std::string & json) override;
   std::string getExpectedJSONToBuildObject() const override;
   std::string getJSON() override;
-  virtual ~JSONCTestObject();
-private:
-
+  virtual ~JSONCTestObject() = default;
 };
 
 }

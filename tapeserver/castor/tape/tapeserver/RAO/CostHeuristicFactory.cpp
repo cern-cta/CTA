@@ -21,10 +21,7 @@
 
 namespace castor::tape::tapeserver::rao {
 
-CostHeuristicFactory::CostHeuristicFactory() {
-}
-
-std::unique_ptr<CostHeuristic> CostHeuristicFactory::createCostHeuristic(const RAOOptions::CostHeuristicType & costHeuristicType) {
+std::unique_ptr<CostHeuristic> CostHeuristicFactory::createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType) {
   std::unique_ptr<CostHeuristic> ret;
   switch(costHeuristicType){
     case RAOOptions::CostHeuristicType::cta: {
@@ -37,9 +34,6 @@ std::unique_ptr<CostHeuristic> CostHeuristicFactory::createCostHeuristic(const R
       throw cta::exception::Exception(errorMsg);
   }
   return ret;
-}
-
-CostHeuristicFactory::~CostHeuristicFactory() {
 }
 
 } // namespace castor::tape::tapeserver::rao

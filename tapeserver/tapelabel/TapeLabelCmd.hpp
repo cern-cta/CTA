@@ -42,31 +42,29 @@ namespace tapeserver::tapelabel {
  */
 class TapeLabelCmd: public CmdLineTool {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
-   * @param log The object representing the API of the CTA logging system.
-   * @param mc Interface to the media changer.
+   * @param inStream Standard input stream
+   * @param outStream Standard output stream
+   * @param errStream Standard error stream
+   * @param log The object representing the API of the CTA logging system
+   * @param mc Interface to the media changer
    */
-  TapeLabelCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, cta::log::StdoutLogger &log,
-    cta::mediachanger::MediaChangerFacade &mc);
+  TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log,
+    mediachanger::MediaChangerFacade& mc) : CmdLineTool(inStream, outStream, errStream),
+      m_log(log), m_encryptionControl(false, ""), m_mc(mc), m_useLbp(true), m_driveSupportLbp(true), m_force(false) { }
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~TapeLabelCmd() noexcept;
+  ~TapeLabelCmd() = default;
 
 private:
-  
   /**
    * The object representing the API of the CTA logging system.
    */
-  cta::log::StdoutLogger  &m_log;
+  cta::log::StdoutLogger& m_log;
   
   /**
    * Hard coded path for the catalogue login configuration.

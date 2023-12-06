@@ -27,9 +27,6 @@ DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn* databaseC
   : m_conn(*databaseConnection) {
 }
 
-DatabaseStatisticsService::~DatabaseStatisticsService() {
-}
-
 void DatabaseStatisticsService::updateStatisticsPerTape() {
   // to update the statistics, we will first select the DIRTY tapes ordered by VID and we will run an update for each row.
 

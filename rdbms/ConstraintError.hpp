@@ -29,9 +29,8 @@ namespace cta::rdbms {
  */
 class ConstraintError : public DBException {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
    * @param context optional context string added to the message
    * at initialisation time.
@@ -41,10 +40,9 @@ public:
   ConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
 
   /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
+   * Empty Destructor (needed for std::exception inheritance)
    */
-  ~ConstraintError() noexcept override;
+  ~ConstraintError() override = default;
 
   /**
    * Returns the violated constraint name, as returned by the DB

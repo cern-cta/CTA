@@ -28,16 +28,15 @@ namespace castor::tape::tapeserver::rao {
  */
 class CostHeuristicFactory {
 public:
-  CostHeuristicFactory();
+  CostHeuristicFactory() = default;
+  virtual ~CostHeuristicFactory() = default;
+
   /**
    * Returns the unique_ptr to the instance of the CostHeuristic instance according to the type given in parameter
    * @param costHeuristicType the type of CostHeuristic to instanciate
    * @return the unique_ptr to the instance of the CostHeuristic instance according to the type given in parameter
    */
-  std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType & costHeuristicType);
-  virtual ~CostHeuristicFactory();
-private:
-
+  std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType);
 };
 
 } // namespace castor::tape::tapeserver::rao

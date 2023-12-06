@@ -44,7 +44,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~SchemaComparer();
+  virtual ~SchemaComparer() = default;
   /**
    * Compare the schema to compare against the database
    * @return a SchemaComparerResult object that will contain the differences if there are some

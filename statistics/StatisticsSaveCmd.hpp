@@ -25,25 +25,26 @@
 namespace cta::statistics {
 
 /**
- * Command-line tool for verifying the catalogue schema.
+ * Command-line tool for verifying the catalogue schema
  */
-class StatisticsSaveCmd: public cta::catalogue::CmdLineTool {
- public:
+class StatisticsSaveCmd : public catalogue::CmdLineTool {
+public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
+   * @param inStream Standard input stream
+   * @param outStream Standard output stream
+   * @param errStream Standard error stream
    */
-  StatisticsSaveCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  StatisticsSaveCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
+    CmdLineTool(inStream, outStream, errStream) { }
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~StatisticsSaveCmd() noexcept;
+  ~StatisticsSaveCmd() = default;
 
- private:
+private:
   /**
    * An exception throwing version of main().
    *
@@ -74,6 +75,6 @@ class StatisticsSaveCmd: public cta::catalogue::CmdLineTool {
    * @param dbType the dbType of the Catalogue database
    */
   void checkCatalogueSchema(cta::rdbms::Conn* catalogueDatabaseConn, cta::rdbms::Login::DbType dbType);
-};  // class VerifySchemaCmd
+};
 
 } // namespace cta::statistics

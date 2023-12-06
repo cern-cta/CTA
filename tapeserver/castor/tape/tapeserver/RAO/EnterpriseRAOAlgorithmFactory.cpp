@@ -20,18 +20,10 @@
 
 namespace castor::tape::tapeserver::rao {
 
-EnterpriseRAOAlgorithmFactory::EnterpriseRAOAlgorithmFactory(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported):
-m_drive(drive), m_maxFilesSupported(maxFilesSupported) {
-}
-
-EnterpriseRAOAlgorithmFactory::~EnterpriseRAOAlgorithmFactory() {
-}
-
 std::unique_ptr<RAOAlgorithm> EnterpriseRAOAlgorithmFactory::createRAOAlgorithm() {
   //For now we only have the EnterpriseRAOAlgorithm, but we could maybe have another one,
   //this method should be modified consequently
   return std::unique_ptr<RAOAlgorithm>(new EnterpriseRAOAlgorithm(m_drive,m_maxFilesSupported));
 }
-
 
 } // namespace castor::tape::tapeserver::rao

@@ -38,7 +38,7 @@ namespace cta::catalogue {
      * InMemory SQLite database
      */
     void insert(const std::list<std::string> &schemaStatements);    
-    virtual ~SQLiteSchemaInserter();
+    virtual ~SQLiteSchemaInserter() = default;
     
   private:
     cta::rdbms::Conn & m_sqliteCatalogueConn;

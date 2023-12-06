@@ -40,20 +40,25 @@ class LabelMount: public TapeMount {
   friend class Scheduler;
 protected:
   /**
-    * Constructor.
+    * Constructor
     */
   explicit LabelMount(catalogue::Catalogue & catalogue);
 
   /**
-    * Constructor.
+    * Constructor
     *
-    * @param dbMount The database representation of this mount.
+    * @param dbMount The database representation of this mount
     */
   LabelMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount);
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+
+  /**
+    * Destructor
+    */
+  virtual ~LabelMount() = default;
 
   /**
     * Returns The type of this tape mount.
@@ -121,11 +126,6 @@ public:
     */
   uint32_t getNbFiles() const override;
 
-  /**
-    * Destructor.
-    */
-  virtual ~LabelMount() noexcept;
-
 protected:
   /**
     * The database representation of this mount.
@@ -141,6 +141,6 @@ protected:
     * Internal tracking of the session completion
     */
   std::atomic<bool> m_sessionRunning;
-};  // class ArchiveMount
+};
 
 } // namespace cta

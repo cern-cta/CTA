@@ -24,12 +24,6 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RequesterIdentity::RequesterIdentity() { }
-
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 RequesterIdentity::RequesterIdentity(const std::string& name, const std::string& group):
   name(name), group(group) {}
 

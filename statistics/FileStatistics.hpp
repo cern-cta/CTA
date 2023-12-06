@@ -23,18 +23,17 @@
 namespace cta::statistics {
 
 struct FileStatistics {
-  FileStatistics();
-  FileStatistics(const FileStatistics &other);
+  FileStatistics() = default;
+  FileStatistics(const FileStatistics& other) = default;
+  FileStatistics& operator=(const FileStatistics& other) = default;
+  FileStatistics& operator+=(const FileStatistics& other);
+
   uint64_t nbMasterFiles = 0;
   uint64_t masterDataInBytes = 0;
   uint64_t nbCopyNb1 = 0;
   uint64_t copyNb1InBytes = 0;
   uint64_t nbCopyNbGt1 = 0;
   uint64_t copyNbGt1InBytes = 0;
-
-  FileStatistics &operator=(const FileStatistics &other);
-
-  FileStatistics operator +=(const FileStatistics &other);
 };
 
 } // namespace cta::statistics

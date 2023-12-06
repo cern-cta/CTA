@@ -20,16 +20,8 @@
 
 namespace castor::tape::tapeserver::rao {
 
-CTACostHeuristic::CTACostHeuristic() {
-}
-
-CTACostHeuristic::~CTACostHeuristic() {
-}
-
 double CTACostHeuristic::getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const {
-  
   double cost = 0.0;
-  
   uint64_t distance = RAOHelpers::computeLongitudinalDistance(file1,file2);
 
   int wrapChange = RAOHelpers::doesWrapChange(file1,file2);

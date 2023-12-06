@@ -31,21 +31,20 @@ namespace cta::common::dataStructures {
  * should be used.
  */
 struct ArchiveFileQueueCriteria {
-
   /**
-   * Constructor.
+   * Constructor
    */
-  ArchiveFileQueueCriteria();
+  ArchiveFileQueueCriteria() = default;
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param copyToPoolMap The map from tape copy number to tape pool name.
-   * @param mountPolicy The mount policy.
+   * @param ctpm    The map from tape copy number to tape pool name
+   * @param mp      The mount policy
    */
-  ArchiveFileQueueCriteria(
-    const TapeCopyToPoolMap &copyToPoolMap,
-    const MountPolicy &mountPolicy);
+  ArchiveFileQueueCriteria(const TapeCopyToPoolMap& ctpm, const MountPolicy& mp) :
+    copyToPoolMap(ctpm),
+    mountPolicy(mp) { }
 
   /**
    * The map from tape copy number to tape pool name.
@@ -56,7 +55,6 @@ struct ArchiveFileQueueCriteria {
    * The mount policy.
    */
   MountPolicy mountPolicy;
-
-}; // struct ArchiveFileQueueCriteria
+};
 
 } // namespace cta::common::dataStructures

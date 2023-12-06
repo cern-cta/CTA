@@ -69,12 +69,15 @@ public:
   * we may request to the client. at once
   * @param lc  copied because of the threading mechanism
   */
-  RecallTaskInjector(RecallMemoryManager & mm,
-        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskWriteThreadPool & diskWriter,cta::RetrieveMount &retrieveMount,
-        uint64_t filesPerRequest, uint64_t bytesPerRequest,cta::log::LogContext lc);
+  RecallTaskInjector(RecallMemoryManager& mm, TapeSingleThreadInterface<TapeReadTask>& tapeReader,
+    DiskWriteThreadPool& diskWriter, cta::RetrieveMount& retrieveMount, uint64_t maxFilesPerRequest,
+    uint64_t maxBytesPerRequest,cta::log::LogContext lc) :
+      m_thread(*this), m_memManager(mm), m_tapeReader(tapeReader), m_diskWriter(diskWriter),
+      m_retrieveMount(retrieveMount), m_lc(lc), m_maxBatchFiles(maxFilesPerRequest),
+      m_maxBatchBytes(maxBytesPerRequest), m_files(0), m_bytes(0),
+      m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()) { }
 
-  virtual ~RecallTaskInjector();
+  virtual ~RecallTaskInjector() = default;
 
   /**
    * Function for a feed-back loop purpose between RecallTaskInjector and

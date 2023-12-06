@@ -35,15 +35,8 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateSchemaCmd::CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
-CmdLineTool(inStream, outStream, errStream) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-CreateSchemaCmd::~CreateSchemaCmd() noexcept {
-}
+CreateSchemaCmd::CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream) :
+  CmdLineTool(inStream, outStream, errStream) { }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

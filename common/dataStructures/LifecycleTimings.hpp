@@ -22,24 +22,24 @@
 namespace cta::common::dataStructures {
 
 /**
- * This class stores the informations about a request's lifecycle timings
+ * This struct stores the lifecycle timings for a request
  */
-class LifecycleTimings {
-public:
+struct LifecycleTimings {
   LifecycleTimings();
-  LifecycleTimings(const LifecycleTimings& orig);
-  LifecycleTimings operator=(const LifecycleTimings& orig);
+  LifecycleTimings(const LifecycleTimings& orig) = default;
   virtual ~LifecycleTimings() = default;
+  LifecycleTimings& operator=(const LifecycleTimings& orig);
   /**
    * Returns the elapsed time between the creation of the request
    * and the selection of the request for mounting
    */
-  time_t getTimeForSelection();
+  time_t getTimeForSelection() const;
   /**
    * Returns the elapsed time between the creation of the request and
    * its completion
    */
-  time_t getTimeForCompletion();
+  time_t getTimeForCompletion() const;
+
   time_t creation_time;
   time_t first_selected_time;
   time_t completed_time;

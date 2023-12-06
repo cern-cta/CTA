@@ -33,13 +33,6 @@ SetProductionCmd::SetProductionCmd(
 }
 
 //------------------------------------------------------------------------------
-// Destructor
-//------------------------------------------------------------------------------
-SetProductionCmd::~SetProductionCmd() noexcept {
-  
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

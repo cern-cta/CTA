@@ -39,9 +39,9 @@ public:
     Exception(context, embedBacktrace) {}
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~TapeFseqMismatch() override {}
-}; // class TapeFseqMismatch
+  ~TapeFseqMismatch() override = default;
+};
 
 } // namespace cta::exception

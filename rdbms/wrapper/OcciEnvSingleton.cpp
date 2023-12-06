@@ -49,10 +49,4 @@ OcciEnvSingleton &OcciEnvSingleton::instance() {
   }
 }
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-OcciEnvSingleton::OcciEnvSingleton() {
-}
-
 } // namespace cta::rdbms::wrapper

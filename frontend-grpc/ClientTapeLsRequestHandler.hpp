@@ -33,7 +33,7 @@ public:
   TapeLsRequestHandler(cta::log::Logger& log, cta::frontend::rpc::CtaRpcStream::Stub& stub, ::grpc::CompletionQueue& completionQueue,
                        cta::admin::TextFormatter& textFormatter,
                        cta::frontend::rpc::AdminRequest& request);
-  ~TapeLsRequestHandler() override;
+  ~TapeLsRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override; // can thorw

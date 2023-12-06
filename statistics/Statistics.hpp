@@ -35,7 +35,7 @@ class Statistics {
  public:
   typedef std::map<std::string, FileStatistics> StatisticsPerVo;
 
-  Statistics();
+  Statistics() = default;
   Statistics(const Statistics &other);
   Statistics &operator=(const Statistics &other);
 
@@ -99,8 +99,8 @@ class Statistics {
    * This builder class allows to build the statistics
    */
   class Builder {
-   public:
-    Builder();
+  public:
+    Builder() = default;
     /**
      * Build the statistics with the Rset returned by the Catalogue database query
      * @param rset the Rset returned by the Catalogue database query

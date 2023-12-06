@@ -24,7 +24,6 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-ConnWrapper::~ConnWrapper() {
-}
+ConnWrapper::~ConnWrapper() = default;
 
 } // namespace cta::rdbms::wrapper

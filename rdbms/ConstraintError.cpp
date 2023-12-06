@@ -27,12 +27,6 @@ ConstraintError::ConstraintError(const std::string &context, const std::string &
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-ConstraintError::~ConstraintError() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // getDbErrorMessage
 //------------------------------------------------------------------------------
 std::string ConstraintError::getViolatedConstraintName() const {

@@ -32,7 +32,7 @@ namespace cta::common::dataStructures {
  */
 struct RequesterGroupMountRule {
 
-  RequesterGroupMountRule();
+  RequesterGroupMountRule() = default;
 
   bool operator==(const RequesterGroupMountRule &rhs) const;
 

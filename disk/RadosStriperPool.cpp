@@ -47,7 +47,7 @@ unsigned int RadosStriperPool::getStriperIdxAndIncrease() {
     // initialization phase :
     //   - find out the number of objects in the ceph pool
     //   - allocate corresponding places in the vectors
-    char *value = 0;
+    char *value = nullptr;
     m_maxStriperIdx = 3;
     if ((value = getenv("CEPH_NBCONNECTIONS"))) {
       // TODO: commited for CTA   (value = getconfent("CEPH", "NbConnections", 1))) {

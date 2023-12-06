@@ -27,7 +27,6 @@ namespace cta::log {
  */
 class StringLogger: public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -39,9 +38,9 @@ public:
   StringLogger(const std::string &hostName, const std::string &programName, const int logMask);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~StringLogger();
+  ~StringLogger() = default;
 
   /**
    * Prepares the logger object for a call to fork().
@@ -49,7 +48,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() ;
+  void prepareForFork() override { }
 
   /**
    * Extractor for the resulting logs.

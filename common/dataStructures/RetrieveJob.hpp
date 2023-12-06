@@ -32,7 +32,7 @@ namespace cta::common::dataStructures {
  */
 struct RetrieveJob {
 
-  RetrieveJob();
+  RetrieveJob() { }
 
   bool operator==(const RetrieveJob &rhs) const;
 

@@ -37,12 +37,6 @@ CreateAdminUserCmd::CreateAdminUserCmd(
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-CreateAdminUserCmd::~CreateAdminUserCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

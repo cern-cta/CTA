@@ -22,7 +22,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::SchedulerDatabase::~SchedulerDatabase() noexcept { }
+cta::SchedulerDatabase::~SchedulerDatabase() = default;
 
 SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
   typedef common::dataStructures::RepackInfo::Status Status;

@@ -20,7 +20,6 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 set(CTARAO_LIBRARY_SRCS
   RAOParams.cpp
   RAOManager.cpp
-  RAOAlgorithm.cpp
   EnterpriseRAOAlgorithm.cpp
   RAOAlgorithmFactory.cpp
   EnterpriseRAOAlgorithmFactory.cpp
@@ -31,10 +30,8 @@ set(CTARAO_LIBRARY_SRCS
   RAOAlgorithmFactoryFactory.cpp
   SLTFRAOAlgorithm.cpp
   RAOOptions.cpp
-  CostHeuristic.cpp
   FilePositionInfos.cpp
   Position.cpp
-  FilePositionEstimator.cpp
   InterpolationFilePositionEstimator.cpp
   RAOHelpers.cpp
   CTACostHeuristic.cpp

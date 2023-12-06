@@ -29,24 +29,20 @@ namespace cta::exception {
  */
 class LostDatabaseConnection : public cta::exception::Exception {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  LostDatabaseConnection(const std::string &context = "", const bool embedBacktrace = true);
+  LostDatabaseConnection(const std::string& context = "", const bool embedBacktrace = true) :
+    Exception(context, embedBacktrace) { }
 
   /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
+   * Empty Destructor (needed for std::exception inheritance)
    */
-  ~LostDatabaseConnection() noexcept override;
-  
-}; // class LostDatabaseConnection
+  ~LostDatabaseConnection() noexcept override = default;
+};
 
 } // namespace cta::exception
 

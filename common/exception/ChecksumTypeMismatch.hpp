@@ -40,7 +40,7 @@ public:
   /**
    * Destructor.
    */
-  ~ChecksumTypeMismatch() override {}
-}; // class ChecksumTypeMismatch
+  ~ChecksumTypeMismatch() override = default;
+};
 
 } // namespace cta::exception

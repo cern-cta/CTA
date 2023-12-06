@@ -99,10 +99,9 @@ class SchedulerDatabase {
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
   /**
-   * Destructor.
+   * Destructor
    */
   virtual ~SchedulerDatabase() noexcept = 0;
-
 
   /*============ Sub thread handling, mostly for unit tests =================*/
   virtual void waitSubthreadsComplete() = 0;
@@ -205,7 +204,7 @@ class SchedulerDatabase {
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
-    virtual ~ArchiveMount() {}
+    virtual ~ArchiveMount() = default;
     uint32_t nbFilesCurrentlyOnTape;
   };
 
@@ -230,7 +229,7 @@ class SchedulerDatabase {
     virtual void failTransfer(const std::string & failureReason, log::LogContext & lc) = 0;
     virtual void failReport(const std::string & failureReason, log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
-    virtual ~ArchiveJob() {}
+    virtual ~ArchiveJob() = default;
   };
 
   class IArchiveJobQueueItor {
@@ -484,7 +483,7 @@ class SchedulerDatabase {
 
     virtual void addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip) = 0;
     virtual void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) = 0;
-    virtual ~RetrieveMount() {}
+    virtual ~RetrieveMount() = default;
     uint32_t nbFilesCurrentlyOnTape;
   };
 
@@ -509,7 +508,7 @@ class SchedulerDatabase {
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void abort(const std::string &abortReason, log::LogContext &lc) = 0;
     virtual void fail() = 0;
-    virtual ~RetrieveJob() {}
+    virtual ~RetrieveJob() = default;
   private:
   };
 
@@ -556,7 +555,7 @@ class SchedulerDatabase {
     };
     virtual PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
       log::LogContext &lc) = 0;
-    virtual ~RepackRequestStatistics() {}
+    virtual ~RepackRequestStatistics() = default;
     // The pending request queue could be absent. This is not a big problem as
     // there will be nothing to schedule anyway. This exception is thrown by the
     // locking version only.
@@ -605,7 +604,7 @@ class SchedulerDatabase {
     virtual void requeueInToExpandQueue(log::LogContext &lc) = 0;
     virtual void setExpandStartedAndChangeStatus() = 0;
     virtual void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) = 0;
-    virtual ~RepackRequest() {}
+    virtual ~RepackRequest() = default;
   };
 
   /***/
@@ -633,7 +632,7 @@ class SchedulerDatabase {
    */
   class RepackReportBatch {
    public:
-    virtual ~RepackReportBatch() {}
+    virtual ~RepackReportBatch() = default;
     virtual void report(log::LogContext & lc) = 0;
   };
 

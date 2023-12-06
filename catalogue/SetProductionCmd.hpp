@@ -33,9 +33,8 @@ public:
    * @param errStream Standard error stream.
    */
   SetProductionCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
-  ~SetProductionCmd() noexcept;
+
 private:
-  
   /**
    * An exception throwing version of main().
    *

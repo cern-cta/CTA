@@ -97,7 +97,7 @@ namespace castor::tape::tapeFile {
         LBPMethod.append(m_LBPMethod, sizeof (m_LBPMethod));
         unsigned char hexValue;
         try {
-          hexValue = std::stoi(LBPMethod, 0, 16);
+          hexValue = std::stoi(LBPMethod, nullptr, 16);
         } catch (std::invalid_argument &) {
           throw cta::exception::InvalidArgument(
             std::string("In VOL1::getLBPMethod(): syntax error for numeric value: ") + LBPMethod);

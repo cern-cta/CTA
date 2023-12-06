@@ -36,7 +36,7 @@ std::string cta::System::getHostName()
   int len = 64;
   char* hostname;
   hostname = (char*) calloc(len, 1);
-  if (0 == hostname) {
+  if(nullptr == hostname) {
     OutOfMemory ex;
     ex.getMessage() << "Could not allocate hostname with length " << len;
     throw ex;
@@ -55,7 +55,7 @@ std::string cta::System::getHostName()
     while (hostname[len - 1] != 0) {
       len *= 2;
       char *hostnameLonger = (char*) realloc(hostname, len);
-      if (0 == hostnameLonger) {
+      if(nullptr == hostnameLonger) {
         free(hostname);
         cta::exception::Errnum e(ENOMEM);
         e.getMessage() << "Could not allocate memory for hostname";

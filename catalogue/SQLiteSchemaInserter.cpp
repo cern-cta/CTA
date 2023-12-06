@@ -27,8 +27,6 @@ namespace cta::catalogue {
 
 SQLiteSchemaInserter::SQLiteSchemaInserter(rdbms::Conn &sqliteConn): m_sqliteCatalogueConn(sqliteConn){}
 
-SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
-
 void SQLiteSchemaInserter::insert(const std::list<std::string> &schemaStatements) {
   std::list<std::string> sqliteStatements;
   //Transform the statements in order to make them compatible with the SQLite database 

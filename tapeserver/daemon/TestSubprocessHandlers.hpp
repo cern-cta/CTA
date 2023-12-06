@@ -194,7 +194,7 @@ public:
 class ProbeSubprocess: public cta::tape::daemon::SubprocessHandler {
 public:
   ProbeSubprocess(): cta::tape::daemon::SubprocessHandler("ProbeProcessHandler") {}
-  virtual ~ProbeSubprocess() {}
+  virtual ~ProbeSubprocess() = default;
   
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
     SubprocessHandler::ProcessingStatus ret;

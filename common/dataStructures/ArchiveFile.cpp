@@ -89,11 +89,9 @@ ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint
 //------------------------------------------------------------------------------
 // ArchiveFile::TapeFilesList::removeAllVidsExcept()
 //------------------------------------------------------------------------------
-void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string &vid) {
-  remove_if([=](TapeFile& tf){ return tf.vid != vid; });
+void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string& vid) {
+  remove_if([&vid](TapeFile& tf){ return tf.vid != vid; });
 }
-
-
 
 //------------------------------------------------------------------------------
 // operator<<

@@ -31,7 +31,7 @@ namespace castor::tape::System {
  */
   class vfsFile {
   public:
-    virtual ~vfsFile() {};
+    virtual ~vfsFile() = default;
     virtual ssize_t read(void* buf, size_t nbytes);
     virtual ssize_t write(const void *buf, size_t nbytes);
     virtual int ioctl(unsigned long int request, struct mtop * mt_cmd);

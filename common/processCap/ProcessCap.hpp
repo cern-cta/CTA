@@ -34,11 +34,10 @@ namespace cta::server {
  */
 class ProcessCap {
 public:
-
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~ProcessCap();
+  virtual ~ProcessCap() = default;
 
   /**
    * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
@@ -57,7 +56,6 @@ public:
   virtual void setProcText(const std::string &text);
 
 private:
-
   /**
    * C++ wrapper around the C function cap_get_proc().
    *
@@ -85,7 +83,6 @@ private:
    * @param cap The capability state.
    */
   void setProc(const cap_t cap);
-
-}; // class ProcessCap
+};
 
 } // namespace cta::server

@@ -29,10 +29,4 @@ InMemoryCatalogue::InMemoryCatalogue(
   SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
-}
-
 } // namespace cta::catalogue

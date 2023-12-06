@@ -22,7 +22,6 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-LoginFactory::~LoginFactory() {
-}
+LoginFactory::~LoginFactory() = default;
 
 } // namespace cta::rdbms

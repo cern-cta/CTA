@@ -109,11 +109,11 @@ struct ContainerTraits<RetrieveQueue,C>
 
   template<typename Element>
   struct OpFailure {
-    Element *element;
+    Element *element = nullptr;
     std::exception_ptr failure;
     typedef std::list<OpFailure> list;
 
-    OpFailure() {}
+    OpFailure() = default;
     OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}
   };
 

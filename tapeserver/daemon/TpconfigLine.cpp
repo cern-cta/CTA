@@ -45,11 +45,6 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
 }
 
 //------------------------------------------------------------------------------
-// Trivial constructor.
-//------------------------------------------------------------------------------
-TpconfigLine::TpconfigLine() {}
-
-//------------------------------------------------------------------------------
 // Copy constructor.
 //------------------------------------------------------------------------------
 TpconfigLine::TpconfigLine(const TpconfigLine& o): TpconfigLine(o.unitName, o.logicalLibrary,

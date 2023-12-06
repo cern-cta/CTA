@@ -30,16 +30,12 @@ namespace cta::common::dataStructures {
  * This request tells CTA to list all storage classes 
  */
 struct ListStorageClassRequest {
-
-  ListStorageClassRequest();
-
+  ListStorageClassRequest() = default;
   bool operator==(const ListStorageClassRequest &rhs) const;
-
   bool operator!=(const ListStorageClassRequest &rhs) const;
 
   RequesterIdentity requester;
-
-}; // struct ListStorageClassRequest
+};
 
 std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj);
 

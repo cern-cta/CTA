@@ -40,7 +40,6 @@ set (COMMON_LIB_SRC_FILES
   CreationLog.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
-  dataStructures/ArchiveFileQueueCriteria.cpp
   dataStructures/ArchiveFileQueueCriteriaAndFileId.cpp
   dataStructures/ArchiveFileSummary.cpp
   dataStructures/ArchiveJob.cpp
@@ -98,7 +97,6 @@ set (COMMON_LIB_SRC_FILES
   exception/GrpcError.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
-  exception/LostDatabaseConnection.cpp
   exception/Mismatch.cpp
   exception/MissingOperand.cpp
   exception/MountFailed.cpp
@@ -116,7 +114,6 @@ set (COMMON_LIB_SRC_FILES
   exception/XrootCl.cpp
   exception/EncryptionException.cpp
   json/object/JSONCObject.cpp
-  json/object/JSONObject.cpp
   log/DummyLogger.cpp
   log/FileLogger.cpp
   log/LogContext.cpp

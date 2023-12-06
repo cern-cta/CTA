@@ -38,11 +38,11 @@ namespace cta::catalogue {
  */
 class SchemaChecker {
 public:
-
   /**
    * Destructor
    */
-  virtual ~SchemaChecker();
+  virtual ~SchemaChecker() = default;
+
   /**
    * Compare the schema by using a SchemaComparer and output what it is doing and errors
    * @throws Exception if no SchemaComparer has been set.

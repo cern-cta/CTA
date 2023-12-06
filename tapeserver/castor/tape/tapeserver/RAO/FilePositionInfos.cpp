@@ -19,9 +19,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-FilePositionInfos::FilePositionInfos() {
-}
-
 FilePositionInfos::FilePositionInfos(const FilePositionInfos& other){
   if(this != &other){
     m_beginningPosition = other.m_beginningPosition;
@@ -43,9 +40,6 @@ FilePositionInfos & FilePositionInfos::operator =(const FilePositionInfos& other
     m_endLandingZone = other.m_endLandingZone;
   }
   return *this;
-}
-
-FilePositionInfos::~FilePositionInfos() {
 }
 
 void FilePositionInfos::setBeginningPosition(const Position & beginningPosition) {

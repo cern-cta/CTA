@@ -19,9 +19,6 @@
 
 namespace cta::statistics {
 
-Statistics::Statistics() {
-}
-
 Statistics::Statistics(const Statistics& other) {
   if (this != &other) {
     m_statisticsPerVo = other.m_statisticsPerVo;
@@ -90,8 +87,6 @@ uint64_t Statistics::getTotalBytesCopyNbGt1() const {
 time_t Statistics::getUpdateTime() const {
   return m_updateTime;
 }
-
-Statistics::Builder::Builder() {}
 
 std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset* rset) {
   std::unique_ptr<Statistics> ret = std::make_unique<Statistics>();

@@ -23,12 +23,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-EnterpriseRAOAlgorithm::EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported):m_drive(drive), m_maxFilesSupported(maxFilesSupported) {
-}
-
-EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
-}
-
 std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   cta::utils::Timer totalTimer;
   std::vector<uint64_t> raoOrder;

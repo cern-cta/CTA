@@ -25,22 +25,6 @@
 
 namespace cta::catalogue {
 
-/**********************************/
-/* DbToSQLiteStatementTransformer */
-/**********************************/
-DbToSQLiteStatementTransformer::DbToSQLiteStatementTransformer(const std::string &statement):m_statement(statement) {
-}
-
-DbToSQLiteStatementTransformer::~DbToSQLiteStatementTransformer() {
-}
-
-std::string DbToSQLiteStatementTransformer::transform(){
-  return m_statement;
-}
-/**********************************/
-/* DbToSQLiteStatementTransformer */
-/**********************************/
-
 /*****************************************************/
 /* CreateGlobalTempTableToSQLiteStatementTransformer */
 /*****************************************************/

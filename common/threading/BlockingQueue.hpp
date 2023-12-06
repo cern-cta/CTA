@@ -32,16 +32,14 @@ namespace cta::threading {
  */
 template<class C>
 class BlockingQueue {
-
 public:
-
   typedef typename std::queue<C>::value_type value_type;
   typedef typename std::queue<C>::reference reference;
   typedef typename std::queue<C>::const_reference const_reference;
   typedef struct valueRemainingPair {C value; size_t remaining;} valueRemainingPair;
 
-  BlockingQueue(){}
-  ~BlockingQueue() {}
+  BlockingQueue() = default;
+  ~BlockingQueue() = default;
 
   /**
    * Copy the concent of e and push into the queue

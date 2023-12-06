@@ -27,26 +27,11 @@ namespace cta::common::dataStructures {
 EntryLog::EntryLog():
   time(0) { }
 
-EntryLog::EntryLog(const EntryLog & other){
-  username = other.username;
-  host = other.host;
-  time = other.time;
-}
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 EntryLog::EntryLog(const std::string & username, const std::string& host, const time_t time):
   username(username), host(host), time(time) {}
-
-//------------------------------------------------------------------------------
-// operator=
-//------------------------------------------------------------------------------
-EntryLog & EntryLog::operator=(const EntryLog& other){
-  username = other.username;
-  host = other.host;
-  time = other.time;
-  return *this;
-}
 
 //------------------------------------------------------------------------------
 // operator==

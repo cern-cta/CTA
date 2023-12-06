@@ -38,11 +38,6 @@ public:
   DropSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
   /**
-   * Destructor.
-   */
-  ~DropSchemaCmd() noexcept;
-
-  /**
    * Checks if the IS_PRODUCTION bit is set on the CTA_CATALOGUE table
    * @return true if the IS_PRODUCTION bit is set, false otherwise
    */

@@ -39,7 +39,7 @@ public:
   /**
    * Destructor.
    */
-  ~PostgresConnFactory() override;
+  ~PostgresConnFactory() override = default;
 
   /**
    * Returns a newly created database connection.

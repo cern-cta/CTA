@@ -42,9 +42,9 @@ public:
   Thread(): m_hadException(false), m_what(""), m_started(false) {}
   explicit Thread(std::optional<size_t> stackSize): m_hadException(false), m_what(""), m_started(false), m_stackSize(stackSize) {}
 
-virtual ~Thread () {}
-  void start() ;
-  void wait() ;
+  virtual ~Thread() = default;
+  void start();
+  void wait();
   void kill();
 protected:
   virtual void run () = 0;

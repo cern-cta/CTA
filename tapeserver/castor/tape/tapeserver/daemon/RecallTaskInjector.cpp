@@ -34,26 +34,9 @@ using cta::log::Param;
 
 namespace castor::tape::tapeserver::daemon {
 
-RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
-        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskWriteThreadPool & diskWriter,
-        cta::RetrieveMount &retrieveMount,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc) :
-        m_thread(*this),m_memManager(mm),
-        m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_retrieveMount(retrieveMount),
-        m_lc(lc),m_maxBatchFiles(maxFiles),m_maxBatchBytes(byteSizeThreshold),
-        m_files(0), m_bytes(0),
-        m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()){}
-//------------------------------------------------------------------------------
-//destructor
-//------------------------------------------------------------------------------
-RecallTaskInjector::~RecallTaskInjector(){
-}
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------
-
 void RecallTaskInjector::finish(){
   cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request());

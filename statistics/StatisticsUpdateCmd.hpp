@@ -28,25 +28,26 @@
 namespace cta::statistics {
 
 /**
- * Command-line tool for verifying the catalogue schema.
+ * Command-line tool for verifying the catalogue schema
  */
-class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
- public:
+class StatisticsUpdateCmd : public catalogue::CmdLineTool {
+public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
+   * @param inStream Standard input stream
+   * @param outStream Standard output stream
+   * @param errStream Standard error stream
    */
-  StatisticsUpdateCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  StatisticsUpdateCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
+    CmdLineTool(inStream, outStream, errStream) { }
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~StatisticsUpdateCmd() noexcept;
+  ~StatisticsUpdateCmd() = default;
 
- private:
+private:
   /**
    * An exception throwing version of main().
    *
@@ -62,6 +63,6 @@ class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
-};  // class VerifySchemaCmd
+};
 
 } // namespace cta::statistics

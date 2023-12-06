@@ -75,12 +75,4 @@ LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::Sch
   // TODO;
 }
 
-
-
-LabelMount::~LabelMount() {
-  //TODO
-}
-
-
-
-} // namespace cta.
+} // namespace cta

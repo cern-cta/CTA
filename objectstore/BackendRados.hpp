@@ -242,7 +242,7 @@ private:
   class AsyncJob {
   public:
     virtual void execute()=0;
-    virtual ~AsyncJob() {}
+    virtual ~AsyncJob() = default;
   };
 
   /**

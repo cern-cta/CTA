@@ -21,12 +21,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type) : m_type(type) {
-}
-
-NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {
-}
-
 std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
   switch(m_type){
@@ -45,6 +39,5 @@ std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgor
   }
   return ret;
 }
-
 
 } // namespace castor::tape::tapeserver::rao

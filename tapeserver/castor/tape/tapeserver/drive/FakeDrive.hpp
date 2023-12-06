@@ -57,7 +57,7 @@ class FakeDrive : public DriveInterface {
     enum FailureMoment failureMoment = OnWrite,
     bool failOnMount = false) noexcept;
   explicit FakeDrive(bool failOnMount) noexcept;
-  virtual ~FakeDrive() noexcept {}
+  virtual ~FakeDrive() = default;
   virtual compressionStats getCompression();
   virtual void clearCompressionStats();
   virtual std::map<std::string, uint64_t> getTapeWriteErrors();

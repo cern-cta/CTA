@@ -38,7 +38,7 @@ public:
   /**
    * Destructor
    */
-  ~ChecksumBlobSizeMismatch() override {}
-}; // class ChecksumTypeMismatch
+  ~ChecksumBlobSizeMismatch() override = default;
+};
 
 } // namespace cta::exception

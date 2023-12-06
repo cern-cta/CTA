@@ -20,9 +20,7 @@
 
 namespace unitTests {
 
-JSONCTestObject::JSONCTestObject():JSONCObject(), TestObject()  {
-  
-}
+JSONCTestObject::JSONCTestObject():JSONCObject(), TestObject()  { }
 
 void JSONCTestObject::buildFromJSON(const std::string & json){
   JSONCObject::buildFromJSON(json);
@@ -41,9 +39,6 @@ std::string JSONCTestObject::getJSON() {
 
 std::string JSONCTestObject::getExpectedJSONToBuildObject() const {
   return "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
-}
-
-JSONCTestObject::~JSONCTestObject() {
 }
 
 }

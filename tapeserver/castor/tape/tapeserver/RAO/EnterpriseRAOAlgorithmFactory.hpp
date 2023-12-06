@@ -32,13 +32,16 @@ public:
    * @param drive the DriveInterface to perform a RAO query 
    * @param maxFilesSupported the maximum number of files the drive supports to perform a RAO query
    */
-  EnterpriseRAOAlgorithmFactory(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported);
+  EnterpriseRAOAlgorithmFactory(drive::DriveInterface* drive, const uint64_t maxFilesSupported) :
+    m_drive(drive), m_maxFilesSupported(maxFilesSupported) { }
+
+  virtual ~EnterpriseRAOAlgorithmFactory() = default;
   
   /**
    * Returns an Enteprise RAO Algorithm
    */
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
-  virtual ~EnterpriseRAOAlgorithmFactory();
+
 private:
   drive::DriveInterface * m_drive;
   uint64_t m_maxFilesSupported;

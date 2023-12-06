@@ -23,9 +23,6 @@ namespace castor::tape::tapeserver::rao {
 
 ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(const RAOParams & raoParams):m_raoParams(raoParams){}
 
-ConfigurableRAOAlgorithmFactory::~ConfigurableRAOAlgorithmFactory() {
-}
-
 std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
   switch(m_raoParams.getAlgorithmType()){

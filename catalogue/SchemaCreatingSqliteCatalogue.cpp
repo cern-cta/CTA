@@ -76,10 +76,4 @@ void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const s
   }
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-SchemaCreatingSqliteCatalogue::~SchemaCreatingSqliteCatalogue() {
-}
-
 } // namespace cta::catalogue

@@ -32,7 +32,7 @@ protected:
   //Timing list to store the timings of the different steps of the RAO algorithm
   cta::log::TimingList m_raoTimings;
 public:
-  virtual ~RAOAlgorithm();
+  virtual ~RAOAlgorithm() = default;
   
   /**
    * Returns the vector of indexes of the jobs passed in parameter
@@ -46,7 +46,7 @@ public:
    * Returns the timings the RAO Algorithm took to perform each step
    * @return the timings the RAO Algorithm took to perform each step
    */
-  cta::log::TimingList getRAOTimings();
+  cta::log::TimingList getRAOTimings() { return m_raoTimings; }
   
   /**
    * Returns the name of the RAO algorithm

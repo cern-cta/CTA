@@ -29,8 +29,7 @@ cta::mediachanger::LibrarySlot::LibrarySlot(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::~LibrarySlot() {
-}
+cta::mediachanger::LibrarySlot::~LibrarySlot() = default;
 
 //------------------------------------------------------------------------------
 // getLibrarySlotType

@@ -67,10 +67,7 @@ cta::common::Configuration::~Configuration() {
 //------------------------------------------------------------------------------
 // assignment operator
 //------------------------------------------------------------------------------
-cta::common::Configuration &
-  cta::common::Configuration::operator=(
-    const cta::common::Configuration & other)
-   {
+cta::common::Configuration& cta::common::Configuration::operator=(const cta::common::Configuration& other) {
   m_fileName = other.m_fileName;
   m_lastUpdateTime = other.m_lastUpdateTime;
   m_config = other.m_config;
@@ -227,7 +224,7 @@ bool cta::common::Configuration::isStale()
     // release the lock
     pthread_rwlock_unlock(&m_lock);
     // return whether we should renew
-    return time(0) > m_lastUpdateTime + timeout;
+    return time(nullptr) > m_lastUpdateTime + timeout;
   } catch (...) {
     // release the lock
     pthread_rwlock_unlock(&m_lock);
@@ -251,7 +248,7 @@ void cta::common::Configuration::tryToRenewConfig()
   // now check that we should really renew, because someone may have done it
   // while we waited for the lock
   try {
-    if (time(0) > m_lastUpdateTime + getTimeoutNolock()) {
+    if (time(nullptr) > m_lastUpdateTime + getTimeoutNolock()) {
       // now we should really renew
       renewConfigNolock();
     }
@@ -325,5 +322,5 @@ void cta::common::Configuration::renewConfigNolock()
     value.erase(value.find_last_not_of(" \n\r\t")+1); // right trim
     m_config[category][key] = value;
   }
-  m_lastUpdateTime = time(0);
+  m_lastUpdateTime = time(nullptr);
 }

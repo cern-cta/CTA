@@ -49,12 +49,6 @@ cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd):
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot::~ScsiLibrarySlot() {
-}
-
-//------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
 cta::mediachanger::LibrarySlot *cta::mediachanger::ScsiLibrarySlot::

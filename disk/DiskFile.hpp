@@ -31,8 +31,8 @@
  * There is still a single .cpp file
  */
 
-namespace cta {
-  namespace disk {
+namespace cta::disk {
+
   // Forward declaration of RadosStriperPool
   class RadosStriperPool;
 
@@ -83,7 +83,7 @@ namespace cta {
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
-        virtual ~ReadFile() noexcept {}
+        virtual ~ReadFile() = default;
         
         /**
          * File protocol and path for logging
@@ -119,7 +119,7 @@ namespace cta {
         /**
          * Destructor of the WriteFile class.
          */
-        virtual ~WriteFile() noexcept {}
+        virtual ~WriteFile() = default;
         
         /**
          * File protocol and path for logging
@@ -143,7 +143,7 @@ namespace cta {
       public:
 	virtual void asyncDelete() = 0;
 	virtual void wait() = 0;
-	virtual ~AsyncDiskFileRemover(){}
+	virtual ~AsyncDiskFileRemover() = default;
       };
       
       /**
@@ -163,7 +163,7 @@ namespace cta {
       class DiskFileRemover{
       public:
 	virtual void remove() = 0;
-	virtual ~DiskFileRemover() noexcept {}
+	virtual ~DiskFileRemover() = default;
       protected:
 	std::string m_URL;
       };
@@ -219,7 +219,8 @@ namespace cta {
       return m_URL;
     }
 
-    virtual ~Directory() noexcept {}
+    virtual ~Directory() = default;
+
   protected:
     /**
     * Storage for the URL
@@ -227,6 +228,4 @@ namespace cta {
     std::string m_URL;
   };
 
-} //end of namespace disk  
-} //end of namespace cta
-
+} // namespace cta::disk  

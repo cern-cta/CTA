@@ -32,7 +32,4 @@ void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlState
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
 }
 
-SchemaComparer::~SchemaComparer() {
-}
-
 } // namespace cta::catalogue

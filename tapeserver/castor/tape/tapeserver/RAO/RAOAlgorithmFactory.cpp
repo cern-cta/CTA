@@ -21,14 +21,10 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOAlgorithmFactory::~RAOAlgorithmFactory() {
-}
-
 std::unique_ptr<RAOAlgorithm> RAOAlgorithmFactory::createDefaultLinearAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
   ret.reset(new LinearRAOAlgorithm());
   return ret;
 }
-
 
 } // namespace castor::tape::tapeserver::rao

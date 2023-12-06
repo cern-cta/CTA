@@ -27,9 +27,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RandomRAOAlgorithm::RandomRAOAlgorithm() {
-}
-
 std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
   cta::utils::Timer totalTimer;
@@ -37,13 +34,6 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   std::random_shuffle(raoIndices.begin(), raoIndices.end());
   m_raoTimings.insertAndReset("RAOAlgorithmTime", totalTimer);
   return raoIndices;
-}
-
-RandomRAOAlgorithm::~RandomRAOAlgorithm() {
-}
-
-std::string RandomRAOAlgorithm::getName() const {
-  return "random";
 }
 
 } // namespace castor::tape::tapeserver::rao

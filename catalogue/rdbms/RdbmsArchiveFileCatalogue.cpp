@@ -972,7 +972,7 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
     uint32_t adler32;
     try {
       std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
-      adler32 = strtoul(adler32hex.c_str(), 0, 16);
+      adler32 = strtoul(adler32hex.c_str(), nullptr, 16);
     } catch(exception::ChecksumTypeMismatch &ex) {
       adler32 = 0;
     }

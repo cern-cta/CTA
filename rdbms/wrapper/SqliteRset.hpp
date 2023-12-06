@@ -45,9 +45,9 @@ public:
   explicit SqliteRset(SqliteStmt& stmt);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~SqliteRset() override;
+  ~SqliteRset() override = default;
 
   /**
    * Returns the SQL statement.

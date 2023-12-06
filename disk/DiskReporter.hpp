@@ -25,7 +25,8 @@ class DiskReporter {
 public:
   virtual void asyncReport() = 0;
   virtual void waitReport() { m_promise.get_future().get(); }
-  virtual ~DiskReporter() {};
+  virtual ~DiskReporter() = default;
+
 protected:
   std::promise<void> m_promise;
 };

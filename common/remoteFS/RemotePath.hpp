@@ -27,11 +27,10 @@ namespace cta {
  */
 class RemotePath {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    */
-  RemotePath();
+  RemotePath() = default;
   
   /**
    * Setter

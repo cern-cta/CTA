@@ -31,7 +31,7 @@ namespace cta::objectstore {
 
 class Backend {
  public:
-  virtual ~Backend() {}
+  virtual ~Backend() = default;
   /**
    * Create an object (and possibly the necessary locking structures)
    * @param name name of the object
@@ -85,7 +85,7 @@ class Backend {
     /**
      * Destructor (implicitly releases the lock).
      */
-    virtual ~ScopedLock() {}
+    virtual ~ScopedLock() = default;
   };
 
   /**
@@ -126,7 +126,7 @@ class Backend {
     /**
      * Destructor
      */
-    virtual ~AsyncCreator() {}
+    virtual ~AsyncCreator() = default;
   };
 
   /**
@@ -151,7 +151,7 @@ class Backend {
     /**
      * Destructor
      */
-    virtual ~AsyncUpdater() {}
+    virtual ~AsyncUpdater() = default;
   };
 
   /**
@@ -179,7 +179,7 @@ class Backend {
     /**
      * Destructor
      */
-    virtual ~AsyncDeleter() {}
+    virtual ~AsyncDeleter() = default;
   };
 
   /**
@@ -207,7 +207,7 @@ class Backend {
     /**
      * Destructor
      */
-    virtual ~AsyncLockfreeFetcher() {}
+    virtual ~AsyncLockfreeFetcher() = default;
   };
 
   /**
@@ -239,7 +239,7 @@ class Backend {
     /**
      * Virtual destructor
      */
-    virtual ~Parameters() {}
+    virtual ~Parameters() = default;
   };
 
   /**

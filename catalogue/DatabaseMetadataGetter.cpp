@@ -22,7 +22,8 @@
 
 namespace cta::catalogue {
 
-MetadataGetter::~MetadataGetter(){}
+// Default destructor for abstract base class
+MetadataGetter::~MetadataGetter() = default;
 
 void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
   objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
@@ -151,10 +152,7 @@ std::list<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
   return tableNames;
 }
 
-DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
-
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
-SQLiteDatabaseMetadataGetter::~SQLiteDatabaseMetadataGetter(){}
 
 std::list<std::string> SQLiteDatabaseMetadataGetter::getIndexNames() {
   std::list<std::string> indexNames = DatabaseMetadataGetter::getIndexNames();
@@ -181,7 +179,6 @@ std::set<std::string> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
 }
 
 OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
-OracleDatabaseMetadataGetter::~OracleDatabaseMetadataGetter(){}
 
 cta::rdbms::Login::DbType OracleDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_ORACLE;
@@ -218,7 +215,7 @@ std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
 }
 
 PostgresDatabaseMetadataGetter::PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
-PostgresDatabaseMetadataGetter::~PostgresDatabaseMetadataGetter(){}
+
 cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
 }

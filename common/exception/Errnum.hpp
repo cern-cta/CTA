@@ -27,7 +27,7 @@ namespace cta::exception {
   public:
     explicit Errnum(std::string what = "");
     Errnum(int err, std::string what = "");
-    virtual ~Errnum() {};
+    virtual ~Errnum() = default;
     int errorNumber() const { return m_errnum; }
     std::string strError() const { return m_strerror; }
     static void throwOnReturnedErrno(const int err, const std::string &context = "");

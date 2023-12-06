@@ -22,11 +22,6 @@
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RequesterActivityMountRule::RequesterActivityMountRule() {}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool RequesterActivityMountRule::operator==(const RequesterActivityMountRule &rhs) const {

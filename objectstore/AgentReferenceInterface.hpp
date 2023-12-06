@@ -26,8 +26,8 @@ namespace cta::objectstore {
 
 class AgentReferenceInterface {
 public:
-  AgentReferenceInterface();
-  virtual ~AgentReferenceInterface();
+  AgentReferenceInterface() = default;
+  virtual ~AgentReferenceInterface() = default;
   /**
    * Adds an object address to the referenced agent. The additions and removals
    * are queued in memory so that several threads can share the same access.

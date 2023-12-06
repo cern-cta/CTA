@@ -32,7 +32,6 @@ namespace cta::log {
  */
 class DummyLogger: public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -43,9 +42,9 @@ public:
   DummyLogger(const std::string &hostName, const std::string &programName);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~DummyLogger();
+  virtual ~DummyLogger() = default;
 
   /**
    * Prepares the logger object for a call to fork().

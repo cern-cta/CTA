@@ -397,9 +397,3 @@ void cta::RetrieveMount::setExternalFreeDiskSpaceScript(const std::string& name)
 void cta::RetrieveMount::addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem) {
   m_dbMount->addDiskSystemToSkip(diskSystem);
 }
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::RetrieveMount::~RetrieveMount() noexcept {
-}

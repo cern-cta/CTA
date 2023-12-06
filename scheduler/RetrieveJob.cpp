@@ -23,27 +23,6 @@
 #include <future>
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::RetrieveJob::~RetrieveJob() noexcept { }
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
-  const common::dataStructures::RetrieveRequest &retrieveRequest,
-  const common::dataStructures::ArchiveFile & archiveFile,
-  const uint64_t selectedCopyNb,
-  const PositioningMethod positioningMethod):
-  m_mount(mount),
-  retrieveRequest(retrieveRequest),
-  archiveFile(archiveFile),
-  selectedCopyNb(selectedCopyNb),
-  positioningMethod(positioningMethod),
-  transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
-
-
-//------------------------------------------------------------------------------
 // diskSystemName
 //------------------------------------------------------------------------------
 std::optional<std::string> cta::RetrieveJob::diskSystemName() {

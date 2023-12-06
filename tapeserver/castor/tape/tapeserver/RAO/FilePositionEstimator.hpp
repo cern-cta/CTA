@@ -28,16 +28,15 @@ namespace castor::tape::tapeserver::rao {
  */
 class FilePositionEstimator {
 public:
-  FilePositionEstimator();
+  FilePositionEstimator() = default;
+  virtual ~FilePositionEstimator() = default;
+
   /**
    * Returns the position of the file corresponding to the RetrieveJob passed in parameter.
    * @param job the file corresponding to this job for which the position should be returned
    * @return the position of this file
    */
-  virtual FilePositionInfos getFilePosition(const cta::RetrieveJob & job) const = 0;
-  virtual ~FilePositionEstimator();
-private:
-
+  virtual FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const = 0;
 };
 
 } // namespace castor::tape::tapeserver::rao

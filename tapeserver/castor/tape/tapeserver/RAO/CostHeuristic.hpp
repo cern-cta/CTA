@@ -30,9 +30,7 @@ public:
    * @return the value it costs for going from the end of file1 to the beginning of file2
    */
   virtual double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const = 0;
-  virtual ~CostHeuristic();
-private:
-
+  virtual ~CostHeuristic() = default;
 };
 
 } // namespace castor::tape::tapeserver::rao

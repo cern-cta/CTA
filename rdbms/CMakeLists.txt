@@ -28,13 +28,11 @@ set (RDBMS_LIB_SRC_FILES
   Login.cpp
   LoginFactory.cpp
   NullDbValue.cpp
-  PrimaryKeyError.cpp
   rdbms.cpp
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp
-        UniqueConstraintError.cpp
-  IntegrityConstraintError.cpp)
+  UniqueConstraintError.cpp)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})

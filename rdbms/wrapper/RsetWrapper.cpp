@@ -22,7 +22,6 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-RsetWrapper::~RsetWrapper() {
-}
+RsetWrapper::~RsetWrapper() = default;
 
 } // namespace cta::rdbms::wrapper

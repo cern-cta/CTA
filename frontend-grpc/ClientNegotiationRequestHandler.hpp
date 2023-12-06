@@ -33,7 +33,7 @@ class NegotiationRequestHandler : public request::IHandler {
 public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log, cta::frontend::rpc::Negotiation::Stub& stub, ::grpc::CompletionQueue& completionQueue, const std::string& strSpn);
-  ~NegotiationRequestHandler() override;
+  ~NegotiationRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override; // can thorw

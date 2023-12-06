@@ -43,12 +43,6 @@ CmdLineTool(inStream, outStream, errStream) {
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-VerifySchemaCmd::~VerifySchemaCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

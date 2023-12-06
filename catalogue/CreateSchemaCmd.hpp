@@ -37,13 +37,7 @@ public:
    */
   CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
-  /**
-   * Destructor.
-   */
-  ~CreateSchemaCmd() noexcept;
-
 private:
-
   /**
    * An exception throwing version of main().
    *

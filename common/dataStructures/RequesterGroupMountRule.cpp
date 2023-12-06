@@ -22,11 +22,6 @@
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RequesterGroupMountRule::RequesterGroupMountRule() {}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool RequesterGroupMountRule::operator==(const RequesterGroupMountRule &rhs) const {

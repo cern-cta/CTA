@@ -53,28 +53,25 @@ namespace tapeserver::readtp {
  */
 class ReadtpCmd: public CmdLineTool {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
-   * @param log The object representing the API of the CTA logging system.
-   * @param mc Interface to the media changer.
+   * @param inStream Standard input stream
+   * @param outStream Standard output stream
+   * @param errStream Standard error stream
+   * @param log The object representing the API of the CTA logging system
+   * @param mc Interface to the media changer
    */
-  ReadtpCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, cta::log::StdoutLogger &log,
-    cta::log::DummyLogger &dummyLog,
-    cta::mediachanger::MediaChangerFacade &mc);
+  ReadtpCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, cta::log::StdoutLogger& log,
+    cta::log::DummyLogger& dummyLog, cta::mediachanger::MediaChangerFacade& mc) : CmdLineTool(inStream, outStream, errStream),
+      m_log(log), m_dummyLog(dummyLog), m_mc(mc), m_useLbp(true), m_nbSuccessReads(0), m_nbFailedReads(0) { }
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~ReadtpCmd() noexcept;
+  ~ReadtpCmd() = default;
 
 private:
-
   /**
    * An exception throwing version of main().
    *

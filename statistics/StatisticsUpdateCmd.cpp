@@ -29,19 +29,6 @@
 namespace cta::statistics {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-StatisticsUpdateCmd::StatisticsUpdateCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream)
-  : CmdLineTool(inStream, outStream, errStream) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-StatisticsUpdateCmd::~StatisticsUpdateCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

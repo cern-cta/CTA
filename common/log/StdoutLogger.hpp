@@ -26,7 +26,6 @@ namespace cta::log {
  */
 class StdoutLogger: public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -38,9 +37,9 @@ public:
   StdoutLogger(const std::string &hostName, const std::string &programName, bool simple = false);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~StdoutLogger();
+  ~StdoutLogger() = default;
 
   /**
    * Prepares the logger object for a call to fork().
@@ -51,7 +50,6 @@ public:
   void prepareForFork() ;
 
 protected:
-
   /**
    * Writes the specified msg to the underlying logging system.
    *
@@ -71,7 +69,6 @@ protected:
 
 private:
     bool m_simple;
-
-}; // class StringLogger
+};
 
 } // namespace cta::log

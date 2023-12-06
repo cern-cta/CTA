@@ -29,7 +29,6 @@ namespace cta::catalogue {
  */
 class VerifySchemaCmd: public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -39,15 +38,9 @@ public:
    */
   VerifySchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
-  /**
-   * Destructor.
-   */
-  ~VerifySchemaCmd() noexcept;
-  
   enum class VerifyStatus { OK, INFO, ERROR, UNKNOWN };
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -81,6 +74,6 @@ private:
    * @return True if the catalogue is upgrading
    */
   bool isUpgrading(rdbms::Conn *conn);
-}; // class VerifySchemaCmd
+};
 
 } // namespace cta::catalogue

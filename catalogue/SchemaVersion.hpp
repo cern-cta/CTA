@@ -36,7 +36,7 @@ public:
   };
 
   SchemaVersion(const SchemaVersion& orig);
-  virtual ~SchemaVersion();
+  virtual ~SchemaVersion() = default;
 
   template<typename T>
   T getSchemaVersion() const;
@@ -57,15 +57,15 @@ private:
 
 class SchemaVersion::Builder{
 public:
-  Builder();
-  Builder(const Builder& );
-  Builder & operator=(const Builder& builder);
-  Builder & schemaVersionMajor(const uint64_t schemaVersionMajor);
-  Builder & schemaVersionMinor(const uint64_t schemaVersionMinor);
-  Builder & nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);
-  Builder & nextSchemaVersionMinor(const uint64_t pNextSchemaVersionMinor);
-  Builder & status(const std::string& status);
-  Builder & status(const SchemaVersion::Status & pstatus);
+  Builder() = default;
+  Builder(const Builder&);
+  Builder& operator=(const Builder& builder);
+  Builder& schemaVersionMajor(const uint64_t schemaVersionMajor);
+  Builder& schemaVersionMinor(const uint64_t schemaVersionMinor);
+  Builder& nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);
+  Builder& nextSchemaVersionMinor(const uint64_t pNextSchemaVersionMinor);
+  Builder& status(const std::string& status);
+  Builder& status(const SchemaVersion::Status & pstatus);
   SchemaVersion build() const;
 private:
   void validate() const;

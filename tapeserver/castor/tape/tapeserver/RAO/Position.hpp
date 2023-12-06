@@ -27,10 +27,11 @@ namespace castor::tape::tapeserver::rao {
  */
 class Position {
 public:
-  Position();
-  Position(const Position & other);
-  Position &operator=(const Position &other);
-  virtual ~Position();
+  Position() = default;
+  Position(const Position& other);
+  virtual ~Position() = default;
+  Position& operator=(const Position& other);
+
   /**
    * Get the wrap number of this physical position
    * @return the wrap number of this physical position
@@ -51,6 +52,7 @@ public:
    * @param lpos this longitudinal position
    */
   void setLPos(const uint64_t lpos);
+
 private:
   uint32_t m_wrap = 0;
   uint64_t m_lpos = 0;

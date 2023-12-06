@@ -41,9 +41,6 @@ cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(cta::log
   
 }
 
-cta::frontend::grpc::server::TapeLsRequestHandler::~TapeLsRequestHandler() {
-}
-
 bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
   bool bNext = false;
   log::LogContext lc(m_log);

@@ -39,9 +39,9 @@ public:
   }
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~FileSizeMismatch() override {}
-}; // class FileSizeMismatch
+  ~FileSizeMismatch() override = default;
+};
 
 } // namespace cta::catalogue

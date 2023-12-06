@@ -19,9 +19,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-Position::Position():m_wrap(0),m_lpos(0) {
-}
-
 Position::Position(const Position& other){
   if(this != &other){
     m_wrap = other.m_wrap;
@@ -35,9 +32,6 @@ Position & Position::operator=(const Position& other){
     m_lpos = other.m_lpos;
   }
   return *this;
-}
-
-Position::~Position() {
 }
 
 uint64_t Position::getLPos() const {

@@ -28,7 +28,6 @@ class CatalogueFactory;
  */
 class InMemoryCatalogue: public SchemaCreatingSqliteCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -44,12 +43,6 @@ public:
     log::Logger &log,
     const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns);
-
-  /**
-   * Destructor.
-   */
-  virtual ~InMemoryCatalogue() override;
-
-}; // class InMemoryCatalogue
+};
 
 } // namespace cta::catalogue

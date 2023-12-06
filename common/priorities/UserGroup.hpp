@@ -32,19 +32,18 @@ namespace cta {
  */
 class UserGroup {
 public:
-
   /**
-   * Constructor.
+   * Constructor
    */
-  UserGroup();
+  UserGroup() = default;
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~UserGroup() noexcept;
+  ~UserGroup() = default;
 
   /**
-   * Constructor.
+   * Constructor
    *
    * @param name The name of the user group.
    * @param archiveDriveQuota The tape drive quota for the user group when
@@ -108,7 +107,6 @@ public:
   const MountCriteria &getRetrieveMountCriteria() const noexcept;
 
 private:
-
   /**
    * The name of the user group.
    */
@@ -142,7 +140,6 @@ private:
    * The when, who, why of the group's creation
    */
   CreationLog m_creationLog;
-  
-}; // class UserGroup
+};
 
 } // namespace cta

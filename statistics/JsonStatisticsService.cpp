@@ -39,8 +39,4 @@ void JsonStatisticsService::updateStatisticsPerTape() {
   throw cta::exception::Exception("In JsonStatistics::updateStatisticsPerTape(), method not implemented.");
 }
 
-
-JsonStatisticsService::~JsonStatisticsService() {
-}
-
 } // namespace cta::statistics

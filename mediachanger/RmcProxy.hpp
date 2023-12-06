@@ -36,7 +36,6 @@ namespace cta::mediachanger {
  */
 class RmcProxy: public MediaChangerProxy {
 public:
-
   /**
    * Constructor.
    *
@@ -52,9 +51,9 @@ public:
     const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~RmcProxy();
+  ~RmcProxy() = default;
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -87,7 +86,6 @@ public:
   void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
 protected:
-
   /**
    * The size of buffer used to marshal or unmarshal RMC messages.
    */
@@ -244,7 +242,6 @@ protected:
    * @return The message contained within the MSG_ERR reply.
    */
   std::string handleMSG_ERR(const MessageHeader &header, const int fd);
-
-}; // class RmcProxy
+};
 
 } // namespace cta::mediachanger

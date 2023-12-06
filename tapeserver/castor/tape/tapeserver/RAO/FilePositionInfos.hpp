@@ -31,9 +31,14 @@ public:
   /**
    * Default constructor
    */
-  FilePositionInfos();
-  FilePositionInfos(const FilePositionInfos & other);
-  FilePositionInfos & operator=(const FilePositionInfos & other);
+  FilePositionInfos() = default;
+  FilePositionInfos(const FilePositionInfos& other);
+  FilePositionInfos& operator=(const FilePositionInfos& other);
+
+  /**
+   * Destructor
+   */
+  virtual ~FilePositionInfos() = default;
   /**
    * Set the beginning of the file position
    * @param beginningPosition the beginning of the file position
@@ -88,7 +93,7 @@ public:
    * Get the end of the file landing zone
    */
   uint8_t getEndLandingZone() const;
-  virtual ~FilePositionInfos();
+
 private:
   Position m_beginningPosition;
   Position m_endPosition;

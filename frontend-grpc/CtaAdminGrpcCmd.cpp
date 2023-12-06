@@ -435,13 +435,13 @@ int main(const int argc,  char** argv) {
   vArgvCMD.insert(vArgvCMD.begin(), argv[0]);
   
   static struct option longOpt[] = {
-    {"cacert", required_argument, 0, 'r'},// root
-    {"key",    required_argument, 0, 'k'},
-    {"cert",   required_argument, 0, 'c'},
-    {"host",   required_argument, 0, 's'},
-    {"port",   required_argument, 0, 'p'},
-    {"help",   no_argument,       0, 'h'},
-    {0,        0,                 0, 0}
+    { "cacert", required_argument, nullptr, 'r' }, // root
+    { "key",    required_argument, nullptr, 'k' },
+    { "cert",   required_argument, nullptr, 'c' },
+    { "host",   required_argument, nullptr, 's' },
+    { "port",   required_argument, nullptr, 'p' },
+    { "help",   no_argument,       nullptr, 'h' },
+    { nullptr,  0,                 nullptr, 0 }
   };
   
   while ((c = getopt_long(vArgvSSLgRPC.size(), vArgvSSLgRPC.data(), ":r:k:c:s:p:h", longOpt, &iOptIdx)) != -1) {

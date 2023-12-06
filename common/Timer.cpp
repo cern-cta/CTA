@@ -28,7 +28,7 @@ cta::utils::Timer::Timer() {
 //------------------------------------------------------------------------------
 int64_t cta::utils::Timer::usecs(reset_t reset) {
   timeval now;
-  gettimeofday(&now, 0);
+  gettimeofday(&now, nullptr);
   int64_t ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
                  ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
   if (reset == resetCounter) {
@@ -48,6 +48,6 @@ double cta::utils::Timer::secs(reset_t reset) {
 // reset
 //------------------------------------------------------------------------------
 void cta::utils::Timer::reset() {
-  gettimeofday(&m_reference, 0);
+  gettimeofday(&m_reference, nullptr);
 }
 

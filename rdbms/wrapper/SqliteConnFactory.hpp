@@ -37,7 +37,7 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteConnFactory() override;
+  ~SqliteConnFactory() override = default;
 
   /**
    * Returns a newly created database connection.

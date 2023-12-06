@@ -27,7 +27,8 @@
 #include <spawn.h>
 
 namespace {
-class ScopedPosixSpawnFileActions{
+
+class ScopedPosixSpawnFileActions {
 public:
   ScopedPosixSpawnFileActions() {
     ::posix_spawn_file_actions_init(&m_action);
@@ -35,14 +36,12 @@ public:
   ~ScopedPosixSpawnFileActions() {
     ::posix_spawn_file_actions_destroy(&m_action);
   }
-  operator ::posix_spawn_file_actions_t * () { return &m_action; }
+  ::posix_spawn_file_actions_t* actionPtr() { return &m_action; }
 private:
   ::posix_spawn_file_actions_t m_action;
 };
-}
 
-namespace {
-class ScopedPosixSpawnAttr{
+class ScopedPosixSpawnAttr {
 public:
   ScopedPosixSpawnAttr() {
     ::posix_spawnattr_init(&m_attr);
@@ -50,63 +49,63 @@ public:
   ~ScopedPosixSpawnAttr() {
     ::posix_spawnattr_destroy(&m_attr);
   }
-  operator ::posix_spawnattr_t * () { return &m_attr; }
+  ::posix_spawnattr_t* attrPtr() { return &m_attr; }
 private:
   ::posix_spawnattr_t m_attr;
 };
-}
+
+} // translation unit local namespace
 
 namespace cta::threading {
 
-SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv, const std::string & stdinInput) :
-  m_childComplete(false),
-  m_childStatus(0) {
-  // Sanity checks
-  if (argv.size() < 1)
-    throw cta::exception::Exception(
-        "In Subprocess::Subprocess: not enough elements in argv");
+SubProcess::SubProcess(const std::string& executable, const std::list<std::string>& argv, const std::string& stdinInput) :
+  m_childComplete(false), m_childStatus(0) {
+  // Sanity check
+  if (argv.size() < 1) {
+    throw exception::Exception("In Subprocess::Subprocess: not enough elements in argv");
+  }
   // Prepare the pipes for the child's stdout and stderr (stdin will be closed)
   const size_t readSide=0;
   const size_t writeSide=1;
   int stdoutPipe[2];
   int stderrPipe[2];
   int stdinPipe[2];
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stdoutPipe, O_NONBLOCK),
+  exception::Errnum::throwOnNonZero(::pipe2(stdoutPipe, O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stdout pipe");
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK),
+  exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stderr pipe");
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stdinPipe,O_NONBLOCK),
+  exception::Errnum::throwOnNonZero(::pipe2(stdinPipe,O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stdin pipe");
   // Prepare the actions to be taken on file descriptors
   ScopedPosixSpawnFileActions fileActions;
   // We will be the child process. Close the read sides of the pipes.
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[readSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stdoutPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (1)");
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[readSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stderrPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (2)");
     // We close the write side of the stdinPipe: the child does not write in it
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdinPipe[writeSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stdinPipe[writeSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (3)");
   //Rewire the stdout and stderr to the pipes.
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stdoutPipe[writeSide], STDOUT_FILENO),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions.actionPtr(), stdoutPipe[writeSide], STDOUT_FILENO),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (1)");
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stderrPipe[writeSide], STDERR_FILENO),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions.actionPtr(), stderrPipe[writeSide], STDERR_FILENO),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (2)");
   //Rewiring the read side of the stdin pipe to stdin
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stdinPipe[readSide], STDIN_FILENO),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions.actionPtr(), stdinPipe[readSide], STDIN_FILENO),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (3)");
   // Close the now duplicated pipe file descriptors
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[writeSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stdoutPipe[writeSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (4)");
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[writeSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stderrPipe[writeSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (5)");
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdinPipe[readSide]),
+  exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions.actionPtr(), stdinPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (6)");
 
   // And finally spawn the subprocess
   // Prepare the spawn attributes (we need vfork)
   ScopedPosixSpawnAttr attr;
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawnattr_setflags(attr, POSIX_SPAWN_USEVFORK),
+  exception::Errnum::throwOnReturnedErrno(posix_spawnattr_setflags(attr.attrPtr(), POSIX_SPAWN_USEVFORK),
       "In Subprocess::Subprocess(): failed to posix_spawnattr_setflags()");
   {
     std::unique_ptr<char *[]> cargv (new char*[argv.size()+1]);
@@ -119,8 +118,8 @@ SubProcess::SubProcess(const std::string & executable, const std::list<std::stri
       index++;
     }
     cargv[argv.size()] = nullptr;
-    int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv.get(), ::environ);
-    cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
+    int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions.actionPtr(), attr.attrPtr(), cargv.get(), ::environ);
+    exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   }
   // We are the parent process.
   // close the readSide of stdin pipe as we are going to write to the subprocess stdin
@@ -143,19 +142,19 @@ void SubProcess::kill(int signal) {
 
 int SubProcess::exitValue() {
   if(!m_childComplete)
-    throw cta::exception::Exception("In Subprocess::exitValue: child process not waited for");
+    throw exception::Exception("In Subprocess::exitValue: child process not waited for");
   return WEXITSTATUS(m_childStatus);
 }
 
 bool SubProcess::wasKilled() {
   if(!m_childComplete)
-    throw cta::exception::Exception("In Subprocess::wasKilled: child process not waited for");
+    throw exception::Exception("In Subprocess::wasKilled: child process not waited for");
   return WIFSIGNALED(m_childStatus);
 }
 
 int SubProcess::killSignal() {
   if(!m_childComplete)
-    throw cta::exception::Exception("In Subprocess::killSignal: child process not waited for");
+    throw exception::Exception("In Subprocess::killSignal: child process not waited for");
   return WTERMSIG(m_childStatus);
 }
 
@@ -176,13 +175,13 @@ void SubProcess::wait() {
 
 std::string SubProcess::stdout() {
   if(!m_childComplete)
-    throw cta::exception::Exception("In Subprocess::stdout: child process not waited for");
+    throw exception::Exception("In Subprocess::stdout: child process not waited for");
   return m_stdout;
 }
 
 std::string SubProcess::stderr() {
   if(!m_childComplete)
-    throw cta::exception::Exception("In Subprocess::stderr: child process not waited for");
+    throw exception::Exception("In Subprocess::stderr: child process not waited for");
   return m_stderr;
 }
 
@@ -192,6 +191,5 @@ SubProcess::~SubProcess() {
     this->wait();
   }
 }
-
 
 } // namespace cta::threading

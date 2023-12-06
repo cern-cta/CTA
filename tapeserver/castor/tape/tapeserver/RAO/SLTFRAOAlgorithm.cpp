@@ -25,10 +25,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-SLTFRAOAlgorithm::SLTFRAOAlgorithm() {}
-
-SLTFRAOAlgorithm::SLTFRAOAlgorithm(std::unique_ptr<FilePositionEstimator> & filePositionEstimator, std::unique_ptr<CostHeuristic> & costHeuristic):m_filePositionEstimator(std::move(filePositionEstimator)),m_costHeuristic(std::move(costHeuristic)) {}
-
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> ret;
   //Determine all the files position
@@ -43,21 +39,8 @@ std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique
   return ret;
 }
 
-
-SLTFRAOAlgorithm::~SLTFRAOAlgorithm() {
-}
-
-
 SLTFRAOAlgorithm::Builder::Builder(const RAOParams& data):m_raoParams(data){
   m_algorithm.reset(new SLTFRAOAlgorithm());
-}
-
-void SLTFRAOAlgorithm::Builder::setCatalogue(cta::catalogue::Catalogue* catalogue){
-  m_catalogue = catalogue;
-}
-
-void SLTFRAOAlgorithm::Builder::setDrive(drive::DriveInterface* drive) {
-  m_drive = drive;
 }
 
 std::unique_ptr<SLTFRAOAlgorithm> SLTFRAOAlgorithm::Builder::build() {
@@ -130,7 +113,6 @@ std::vector<uint64_t> SLTFRAOAlgorithm::performSLTF(SLTFRAOAlgorithm::RAOFilesCo
   return solution;
 }
 
-
 std::unique_ptr<cta::RetrieveJob> SLTFRAOAlgorithm::createFakeRetrieveJobForFileAtBeginningOfTape() const {
   std::unique_ptr<cta::RetrieveJob> ret;
   cta::common::dataStructures::ArchiveFile archiveFile;
@@ -143,10 +125,6 @@ std::unique_ptr<cta::RetrieveJob> SLTFRAOAlgorithm::createFakeRetrieveJobForFile
   cta::common::dataStructures::RetrieveRequest retrieveRequest;
   ret.reset(new cta::RetrieveJob(nullptr,retrieveRequest,archiveFile,1,cta::PositioningMethod::ByBlock));
   return ret;
-}
-
-std::string SLTFRAOAlgorithm::getName() const {
-  return "sltf";
 }
 
 } // namespace castor::tape::tapeserver::rao

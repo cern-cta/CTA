@@ -31,12 +31,6 @@ PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-PostgresConnFactory::~PostgresConnFactory() {
-}
-
-//------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {

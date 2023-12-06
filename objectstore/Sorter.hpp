@@ -60,7 +60,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
 
   Sorter(AgentReference& agentReference, Backend &objectstore, catalogue::Catalogue& catalogue);
-  ~Sorter();
+  ~Sorter() = default;
 
   // std::string = containerIdentifier
   typedef std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>> MapArchive;
@@ -251,12 +251,12 @@ struct RetrieveJobQueueInfo{
 
 class RetrieveRequestInfosAccessorInterface{
  public:
-  RetrieveRequestInfosAccessorInterface();
+  RetrieveRequestInfosAccessorInterface() = default;
+  virtual ~RetrieveRequestInfosAccessorInterface() = default;
   virtual std::list<RetrieveRequest::JobDump> getJobs() = 0;
   virtual common::dataStructures::ArchiveFile getArchiveFile() = 0;
   virtual Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
       const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) = 0;
-  virtual ~RetrieveRequestInfosAccessorInterface();
   virtual serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) = 0;
   virtual std::string getRepackAddress() = 0;
   virtual bool getIsRepack() = 0;
@@ -265,7 +265,7 @@ class RetrieveRequestInfosAccessorInterface{
 class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
  public:
   explicit OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest);
-  ~OStoreRetrieveRequestAccessor();
+  ~OStoreRetrieveRequestAccessor() = default;
   std::list<RetrieveRequest::JobDump> getJobs();
   common::dataStructures::ArchiveFile getArchiveFile();
   Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
@@ -280,7 +280,7 @@ class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
 class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
  public:
   explicit SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request);
-  ~SorterRetrieveRequestAccessor();
+  ~SorterRetrieveRequestAccessor() = default;
   std::list<RetrieveRequest::JobDump> getJobs();
   common::dataStructures::ArchiveFile getArchiveFile();
   Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,

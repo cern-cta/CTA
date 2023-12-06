@@ -42,12 +42,6 @@ cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(const std::string& str) :
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot::~DummyLibrarySlot() {
-}
-
-//------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
 cta::mediachanger::LibrarySlot *cta::mediachanger::DummyLibrarySlot::clone() {

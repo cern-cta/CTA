@@ -35,7 +35,7 @@ public:
   TapeLsRequestHandler(cta::log::Logger& log, AsyncServer& asyncServer,
                    cta::frontend::rpc::CtaRpcStream::AsyncService& ctaRpcStreamSvc
                   );
-  ~TapeLsRequestHandler() override;
+  ~TapeLsRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override; // can thorw

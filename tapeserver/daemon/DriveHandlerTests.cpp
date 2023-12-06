@@ -394,8 +394,8 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   cta::tape::session::SessionType sessionType;
   std::string tapeVid;
   EXPECT_CALL(*m_tapedProxy, reportState(_, _, _)).WillRepeatedly(Invoke(
-      [&](const cta::tape::session::SessionState state, const cta::tape::session::SessionType type,
-        const std::string& vid) {
+      [this,&sessionState,&sessionType,&tapeVid](const cta::tape::session::SessionState state,
+        const cta::tape::session::SessionType type, const std::string& vid) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting state");
         sessionState = state;
         sessionType = type;
@@ -514,20 +514,16 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   std::string logToCheck;
   
   EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
-      [&](const cta::common::dataStructures::DriveInfo&,
-        const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status,
-        cta::log::LogContext& lc) {
+      [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::Down);
         return;
       })).WillOnce(
         Throw(cta::exception::Exception("Failed to report drive status"))).WillOnce(Invoke(
-      [&](const cta::common::dataStructures::DriveInfo&,
-        const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status,
-        cta::log::LogContext& lc) {
+      [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::CleaningUp);

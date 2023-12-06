@@ -28,11 +28,11 @@ class EnterpriseRAOAlgorithmFactory;
 /**
  * This class represents an EnterpriseRAOAlgorithm. 
  */
-class EnterpriseRAOAlgorithm : public RAOAlgorithm{
+class EnterpriseRAOAlgorithm : public RAOAlgorithm {
 public:
   friend EnterpriseRAOAlgorithmFactory;
   
-  virtual ~EnterpriseRAOAlgorithm();
+  virtual ~EnterpriseRAOAlgorithm() = default;
 
   /**
    * Asks the Enteprise drive to perform a RAO query in order to get the RAO of the 
@@ -50,8 +50,9 @@ private:
    * @param drive the drive in order to call its RAO via its DriveInterface
    * @param maxFilesSupported the maximum number of files supported by the drive to perform the RAO
    */
-  EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported);
-  
+  EnterpriseRAOAlgorithm(drive::DriveInterface* drive, const uint64_t maxFilesSupported) :
+    m_drive(drive), m_maxFilesSupported(maxFilesSupported) { }
+
   //Interface to the drive
   castor::tape::tapeserver::drive::DriveInterface * m_drive;
   //Maximum number of files supported by the drive to perform the RAO

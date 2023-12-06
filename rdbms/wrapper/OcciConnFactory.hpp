@@ -40,9 +40,9 @@ public:
     const std::string &database);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~OcciConnFactory() override;
+  ~OcciConnFactory() override = default;
 
   /**
    * Returns a newly created database connection.

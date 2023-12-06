@@ -34,7 +34,6 @@ namespace cta::log {
  */
 class SyslogLogger: public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -46,17 +45,17 @@ public:
   SyslogLogger(const std::string &hostName, const std::string &programName, const int logMask);
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~SyslogLogger() override;
+  ~SyslogLogger() override = default;
 
   /**
-   * Prepares the logger object for a call to fork().
+   * Prepares the logger object for a call to fork()
    *
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() override;
+  void prepareForFork() override { }
 
 protected:
 

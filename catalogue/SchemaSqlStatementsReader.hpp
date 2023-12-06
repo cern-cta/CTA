@@ -24,11 +24,12 @@ namespace cta::catalogue {
 
 class SchemaSqlStatementsReader {
 public:
-  SchemaSqlStatementsReader();
-  explicit SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType);
-  SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig);
-  virtual ~SchemaSqlStatementsReader();
+  SchemaSqlStatementsReader() = default;
+  explicit SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) { }
+  SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) = default;
+  virtual ~SchemaSqlStatementsReader() = default;
   virtual std::list<std::string> getStatements();
+
 protected:
   cta::rdbms::Login::DbType m_dbType;
   /**
@@ -56,12 +57,13 @@ protected:
 * |-- 1.1
 * |  |-- ...
 * */
-class DirectoryVersionsSqlStatementsReader: public SchemaSqlStatementsReader{
-  public:
-    DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion, const std::string &allSchemasVersionPath);
-    DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
-    virtual ~DirectoryVersionsSqlStatementsReader();
-    virtual std::list<std::string> getStatements();
+class DirectoryVersionsSqlStatementsReader : public SchemaSqlStatementsReader {
+public:
+  DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion, const std::string &allSchemasVersionPath);
+  DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
+  virtual ~DirectoryVersionsSqlStatementsReader() = default;
+  virtual std::list<std::string> getStatements();
+
 private:
   std::string m_catalogueVersion;
   std::string m_allSchemasVersionPath;
@@ -74,12 +76,13 @@ private:
   std::string getSchemaFilePath();
 };
 
-class MapSqlStatementsReader: public SchemaSqlStatementsReader{
-  public:
-    MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion);
-    MapSqlStatementsReader(const MapSqlStatementsReader& orig);
-    virtual ~MapSqlStatementsReader();
-    virtual std::list<std::string> getStatements();
+class MapSqlStatementsReader : public SchemaSqlStatementsReader {
+public:
+  MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion) :
+    SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion) { }
+  MapSqlStatementsReader(const MapSqlStatementsReader& orig) = default;
+  virtual ~MapSqlStatementsReader() = default;
+  virtual std::list<std::string> getStatements();
 private:
   std::string m_catalogueVersion;
 };

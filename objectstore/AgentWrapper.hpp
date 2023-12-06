@@ -26,7 +26,7 @@ namespace cta::objectstore {
 class AgentWrapper: public AgentReferenceInterface {
 public:
   explicit AgentWrapper(Agent& agent);
-  virtual ~AgentWrapper();
+  virtual ~AgentWrapper() = default;
   
   /**
    * Adds an object address to the referenced agent. The additions and removals

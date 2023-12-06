@@ -23,12 +23,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-LinearRAOAlgorithm::LinearRAOAlgorithm() {
-}
-
-LinearRAOAlgorithm::~LinearRAOAlgorithm() {
-}
-
 std::vector<uint64_t> LinearRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
   //Initialize the vector of indices
@@ -48,4 +42,5 @@ std::vector<uint64_t> LinearRAOAlgorithm::performRAO(const std::vector<std::uniq
 std::string LinearRAOAlgorithm::getName() const {
   return "linear";
 }
+
 } // namespace castor::tape::tapeserver::rao

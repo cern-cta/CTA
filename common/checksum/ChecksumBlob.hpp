@@ -60,7 +60,7 @@ public:
   /*!
    * Default constructor
    */
-  ChecksumBlob() {}
+  ChecksumBlob() = default;
 
   /*!
    * Construct and insert one checksum

@@ -26,7 +26,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveMount.cpp
   DiskReportRunner.cpp
   LabelMount.cpp
-  LogicalLibrary.cpp
   MountType.cpp
   MountType.cpp
   PositioningMethod.cpp
@@ -37,8 +36,7 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrieveMount.cpp
   Scheduler.cpp
   SchedulerDatabase.cpp
-  SchedulerDatabaseFactory.cpp
-  TapeMount.cpp)
+  SchedulerDatabaseFactory.cpp)
 
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})

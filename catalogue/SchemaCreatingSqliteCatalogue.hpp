@@ -28,7 +28,6 @@ class CatalogueFactory;
  */
 class SchemaCreatingSqliteCatalogue: public SqliteCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -47,13 +46,7 @@ public:
     const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns);
 
-  /**
-   * Destructor.
-   */
-  virtual ~SchemaCreatingSqliteCatalogue() override;
-
 private:
-
   /**
    * Creates the database schema.
    */

@@ -52,10 +52,10 @@ public:
   Exception& operator=(const Exception &rhs);
 
   /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
+   * Empty Destructor (needed for std::exception inheritance)
    */
-  virtual ~Exception();
+  virtual ~Exception() = default;
+
   /**
    * Get the value of m_message
    * A message explaining why this exception was raised

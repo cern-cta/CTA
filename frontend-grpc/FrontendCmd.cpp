@@ -84,14 +84,14 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   }
   
   static struct option longOpt[] = {
-    {"config",        required_argument, 0, 'c'},
-    {"keytab",        required_argument, 0, 'k'},
-    {"no-log-header", no_argument,       0, 'n'},
-    {"port",	        required_argument, 0, 'p'},
-    {"threads",       required_argument, 0, 't'},
-    {"version",       no_argument,       0, 'v'},
-    {"help",          no_argument,       0, 'h'},
-    {0,               0,                 0, 0}
+    { "config",        required_argument, nullptr, 'c' },
+    { "keytab",        required_argument, nullptr, 'k' },
+    { "no-log-header", no_argument,       nullptr, 'n' },
+    { "port",	       required_argument, nullptr, 'p' },
+    { "threads",       required_argument, nullptr, 't' },
+    { "version",       no_argument,       nullptr, 'v' },
+    { "help",          no_argument,       nullptr, 'h' },
+    { nullptr,         0,                 nullptr, 0 }
   };
 
   opterr = 0; // prevent the default error message printed by getopt_long

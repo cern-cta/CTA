@@ -41,7 +41,7 @@ public:
   /*!
    * No assignment constructor
    */
-  QueueItor operator=(QueueItor &rhs) = delete;
+  QueueItor& operator=(QueueItor&) = delete;
 
   // Default copy constructor is deleted in favour of move constructor
 

@@ -63,9 +63,9 @@ private:
 
 public:
   /**
-   * Trivial constructor (used in unit tests).
+   * Trivial constructor (used in unit tests)
    */
-  TpconfigLine();
+  TpconfigLine() = default;
   
   /**
    * Constructor.

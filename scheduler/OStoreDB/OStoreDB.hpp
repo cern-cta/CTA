@@ -138,7 +138,7 @@ class OStoreDB: public SchedulerDatabase {
     std::unique_ptr<SchedulerDatabase::RetrieveMount>
       createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount, const std::string& driveName,
                           const std::string& logicalLibrary, const std::string& hostName) override;
-    ~TapeMountDecisionInfoNoLock() override;
+    ~TapeMountDecisionInfoNoLock() override = default;
   };
 
  private:
@@ -512,7 +512,7 @@ class OStoreDB: public SchedulerDatabase {
     friend class OStoreDB;
    public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override;
-    virtual ~RepackRequestPromotionStatistics() {};
+    virtual ~RepackRequestPromotionStatistics() = default;
    private:
     RepackRequestPromotionStatistics(objectstore::Backend & backend,
               objectstore::AgentReference & agentReference);
@@ -522,19 +522,19 @@ class OStoreDB: public SchedulerDatabase {
     objectstore::ScopedExclusiveLock m_lockOnPendingRepackRequestsQueue;
   };
 
-  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {\
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
     friend class OStoreDB;
-   public:
+  public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {
       throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
     }
-    virtual ~RepackRequestPromotionStatisticsNoLock() {}
+    virtual ~RepackRequestPromotionStatisticsNoLock() = default;
   };
 
- private:
+private:
   void populateRepackRequestsStatistics(objectstore::RootEntry & re, SchedulerDatabase::RepackRequestStatistics &stats);
 
- public:
+public:
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
 

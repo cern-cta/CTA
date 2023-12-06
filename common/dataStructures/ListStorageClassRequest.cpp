@@ -22,11 +22,6 @@
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ListStorageClassRequest::ListStorageClassRequest() {}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {

@@ -44,9 +44,6 @@ SchemaVersion & SchemaVersion::operator =(const SchemaVersion& other){
   return *this;
 }
 
-SchemaVersion::~SchemaVersion() {
-}
-
 template<>
 std::string SchemaVersion::getSchemaVersion() const {
   return std::to_string(m_schemaVersionMajor)+"."+std::to_string(m_schemaVersionMinor);
@@ -87,8 +84,6 @@ template<>
 SchemaVersion::Status SchemaVersion::getStatus() const {
   return m_status;
 }
-
-SchemaVersion::Builder::Builder(){}
 
 SchemaVersion::Builder::Builder(const Builder& other): m_schemaVersion(other.m_schemaVersion) {
   m_schemaVersionMajorSet = other.m_schemaVersionMajorSet;

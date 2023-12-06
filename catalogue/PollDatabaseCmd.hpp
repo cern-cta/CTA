@@ -33,7 +33,6 @@ namespace cta::catalogue {
  */
 class PollDatabaseCmd: public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -43,13 +42,7 @@ public:
    */
   PollDatabaseCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
-  /**
-   * Destructor.
-   */
-  ~PollDatabaseCmd() noexcept;
-
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -65,7 +58,6 @@ private:
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
-
-}; // class PollDatabaseCmd
+};
 
 } // namespace cta::catalogue

@@ -26,19 +26,6 @@
 namespace cta::statistics {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-StatisticsSaveCmd::StatisticsSaveCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
-CmdLineTool(inStream, outStream, errStream) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-StatisticsSaveCmd::~StatisticsSaveCmd() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const argv) {

@@ -25,9 +25,6 @@ InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std
   checkMediaTypeConsistency();
 }
 
-InterpolationFilePositionEstimator::~InterpolationFilePositionEstimator() {
-}
-
 FilePositionInfos InterpolationFilePositionEstimator::getFilePosition(const cta::RetrieveJob& job) const {
   FilePositionInfos ret;
   //Get the tape file informations

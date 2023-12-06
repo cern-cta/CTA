@@ -36,8 +36,7 @@ cta::mediachanger::CmdLineTool::CmdLineTool(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::CmdLineTool::~CmdLineTool() {
-}
+cta::mediachanger::CmdLineTool::~CmdLineTool() = default;
 
 //------------------------------------------------------------------------------
 // bool2Str

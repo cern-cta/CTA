@@ -28,7 +28,9 @@ namespace castor::tape::tapeserver::rao {
  */
 class LinearRAOAlgorithm : public RAOAlgorithm {
 public:
-  LinearRAOAlgorithm();
+  LinearRAOAlgorithm() = default;
+  virtual ~LinearRAOAlgorithm() = default;
+
   /**
    * This method will return the indexes of the jobs that are reoreded in a linear way (sorted by fseq ascendant)
    * Example : if the fseqs of jobs in parameter are arranged like this [2, 3, 1, 4] the 
@@ -37,7 +39,6 @@ public:
    * @return the indexes of the jobs ordered by fseq ascendant
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  virtual ~LinearRAOAlgorithm();
   
   std::string getName() const override;
 };

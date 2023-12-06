@@ -30,7 +30,7 @@ namespace cta::common::dataStructures {
  */
 struct RequesterIdentity {
 
-  RequesterIdentity();
+  RequesterIdentity() = default;
   
   RequesterIdentity(const std::string &name, const std::string &group);
 

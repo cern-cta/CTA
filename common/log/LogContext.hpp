@@ -41,7 +41,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~LogContext() noexcept {};
+  virtual ~LogContext() = default;
   
   /**
    * Access to the logger object.

@@ -42,10 +42,9 @@ namespace cta::exception {
         const char *const entryName, const char *const entryValue);
 
       /**
-       * Trivial, but explicitely non-throwing destructor (required through
-       * inheritence from std::exception) 
+       * Trivial destructor (required through inheritence from std::exception) 
        */
-      virtual ~InvalidConfigEntry() {};
+      virtual ~InvalidConfigEntry() = default;
       
       /**
        * Returns the category of the configuration entry.

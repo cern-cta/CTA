@@ -454,7 +454,7 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       std::string adler32str;
       try {
         std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
-        uint32_t adler32 = strtoul(adler32hex.c_str(), 0, 16);
+        uint32_t adler32 = strtoul(adler32hex.c_str(), nullptr, 16);
         adler32str = std::to_string(adler32);
       } catch(exception::ChecksumTypeMismatch &ex) {
         adler32str = "0";

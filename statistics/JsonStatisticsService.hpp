@@ -24,13 +24,11 @@
 
 namespace cta::statistics {
 
-  /**
-   * This class is a JSON statistics service
-   * allowing to perform statistics operation
-   * to and from a JSON file
-   */
-class JsonStatisticsService: public StatisticsService {
- public:
+/**
+ * This class performs statistics operations to and from a JSON file
+ */
+class JsonStatisticsService : public StatisticsService {
+public:
   typedef std::ostream OutputStream;
   typedef std::istream InputStream;
 
@@ -48,15 +46,15 @@ class JsonStatisticsService: public StatisticsService {
 
   JsonStatisticsService(const JsonStatisticsService& orig) = delete;
 
+  virtual ~JsonStatisticsService() = default;
+
   void saveStatistics(const cta::statistics::Statistics& statistics) override;
   std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
   void updateStatisticsPerTape() override;
 
-  virtual ~JsonStatisticsService();
-
- private:
-  OutputStream * m_output;
-  InputStream * m_input;
+private:
+  OutputStream* m_output;
+  InputStream* m_input;
 };
 
 } // namespace cta::statistics

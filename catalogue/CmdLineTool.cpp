@@ -35,10 +35,9 @@ CmdLineTool::CmdLineTool(
 }
 
 //------------------------------------------------------------------------------
-// destructor
+// default destructor for abstract base class
 //------------------------------------------------------------------------------
-CmdLineTool::~CmdLineTool() noexcept {
-}
+CmdLineTool::~CmdLineTool() = default;
 
 //------------------------------------------------------------------------------
 // getUsername

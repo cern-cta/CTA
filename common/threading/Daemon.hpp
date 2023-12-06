@@ -30,9 +30,7 @@ namespace cta::server {
  * The code common to all daemon classes includes daemonization and logging.
  */
 class Daemon {
-
 public:
-  
   CTA_GENERATE_EXCEPTION_CLASS(CommandLineNotParsed);
 
   /**
@@ -45,9 +43,9 @@ public:
   explicit Daemon(cta::log::Logger& log) noexcept;
 
   /**
-   * Destructor.
+   * Destructor
    */
-  virtual ~Daemon();
+  virtual ~Daemon() = default;
 
   /**
    * Returns this server's name as used by the CASTOR logging system.
