@@ -18,17 +18,17 @@
 # NOTE: Tracking should not be enabled during stress tests.
 
 trackArchive() {
-  tmpFileMap=fileMap
+  tmpFileMap=$fileMap
   count=0
-  for s in seq 0 90; do # 90 secs timeout
-    for subdir in seq 0 $((NB_DIRS - 1)); do
-      transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
+  for s in $(seq 0 90); do # 90 secs timeout
+    for subdir in $(seq 0 $((NB_DIRS - 1))); do
+      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map
-      for file in tmp; do
+      for file in $tmp; do
         if [[ -z ${tmpFileMap["${file}"]} ]]; then
           tmpFileMap["${file}"]='1'
           transaction+="UPDATE ${TEST_TABLE} SET archived=1, archived_t=${ts} WHERE filename=${file};"
@@ -45,13 +45,12 @@ trackArchive() {
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
-
+      s=$((s + 1))
       sleep 1
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timeout during archive." ; fi
-
+  if [[ $s == 90 ]]; then echo "WARNING: timeout during archive."; fi
   unset tmpFileMap
 }
 
@@ -59,8 +58,8 @@ trackPrepare() {
   tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict + 1))
-  for s in seq 0 90; do # 90 secs timeout
-    for subdir in seq 0 $((NB_DIRS - 1)); do
+  for s in $(seq 0 90); do # 90 secs timeout
+    for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${evicCounter}::t1" | awk '{print $10}')
@@ -84,7 +83,7 @@ trackPrepare() {
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
-
+      s=$((s + 1))
       sleep 1
     done
   done
@@ -99,8 +98,8 @@ trackEvict() {
   tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict - 1))
-  for s in seq 0 90; do # 90 secs timeout
-    for subdir in seq 0 $((NB_DIRS - 1)); do
+  for s in $(seq 0 90); do # 90 secs timeout
+    for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
@@ -124,7 +123,7 @@ trackEvict() {
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
-
+      s=$((s + 1))
       sleep 1
     done
   done
@@ -136,12 +135,12 @@ trackEvict() {
 }
 
 trackDelete() {
-  tmpFileMap=fileMap
+  tmpFileMap=$fileMap
   count=0
-  for s in seq 0 90; do # 90 secs timeout
-    for subdir in seq 0 $((NB_DIRS - 1)); do
+  for s in $(seq 0 90); do # 90 secs timeout
+    for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
-      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir})
+      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map with files not yet deleted.
@@ -158,7 +157,7 @@ trackDelete() {
       done
 
       # Reset filemap
-      tmpFileMap=fileMap
+      tmpFileMap=$fileMap
       # Commit transaction
       transaction+='END TRANSACTION;'
       sqlite3 "${DB_NAME}" "${transaction}"
@@ -168,7 +167,7 @@ trackDelete() {
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
-
+      s=$((s + 1))
       sleep 1
     done
   done
@@ -185,7 +184,7 @@ trackDelete() {
 # of the commads is responsibility of the author otf the tests to track.
 SEQUENCE=$1
 for elem in $SEQUENCE; do
-    if [[ ! ${elem} =~ ^("archive|retrieve|evict|abort|delete") ]]; then
+    if [[ ! ${elem} == @(archive|retrieve|evict|abort|delete) ]]; then
       die "ERROR: Invalid tracking sage. ${elem} not in [abort, archive, retrieve, evict, delete]"
     fi
 done
@@ -228,19 +227,30 @@ export TEST_TABLE="client_tests_${TESTID}"
 declare -A fileMap
 
 ### Initialize database.
-INIT_STR="${QUERY_PRAGMAS}; INSERT INTO ${TEST_TABLE} ("
-for subdir in seq 0 $((NB_DIRS - 1)); do
-  for i in seq -w 0 $(((NB_FILES*NB_DIRS) -1 )); do
+sqlite3 "${DB_NAME}" < /opt/run/bin/tracker.schema
+INIT_STR="${QUERY_PRAGMAS} INSERT INTO ${TEST_TABLE} (filename) VALUES "
+compound_count=0
+for subdir in $(seq 0 $((NB_DIRS - 1))); do
+  for i in $(seq -w 0 $(((NB_FILES*NB_DIRS) -1 ))); do
     fileMap["${subdir}${i}"]=""
-    INIT_STR+="${subdir}${i}, "
+    INIT_STR+="(${subdir}${i}), "
+    compound_count=$((compound_count + 1))
+    if [[ $compound_count == 500 ]]; then
+      compound_count=0
+      INIT_STR=${INIT_STR::-2}
+      INIT_STR+=";"
+      sqlite3 "${DB_NAME}" "${INIT_STR}"
+      INIT_STR="${QUERY_PRAGMAS} INSERT INTO ${TEST_TABLE} (filename) VALUES "
+    fi
   done
 done
 INIT_STR=${INIT_STR::-2}
 INIT_STR+=");"
 
+if [[ $compound_count > 0 ]]; then
+  sqlite3 "${DB_NAME}" "${INIT_STR}"
+fi
 
-sqlite3 "${DB_NAME}" < /opt/run/bin/tracker.schema
-sqlite3 "${DB_NAME}" "${INIT_STR}"
 unset INIT_STR
 
 
@@ -275,7 +285,7 @@ done
 ################## Results ####################
 ###############################################
 TOTAL_FILES=$((${NB_FILES} * ${NB_DIRS}))
-IFS='|' read -a results_array <<< $(db_results)
+IFS='|' read -a results_array <<< sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(deleted) FROM ${TEST_TABLE};"
 
 ARCHIVED=${results_array[0]}
 RETRIEVED=${results_array[1]}
@@ -299,13 +309,3 @@ for i in "${!resuls_array[@]}"; do
     echo "ERROR: ${names_arr[${i}]} count value ${results_arr[${i}]} does not match the expected value ${TOTAL_FILES}."
   fi
 done
-
-
-
-
-## DB Helper Functions
-
-db_results() {
-  sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(deleted) FROM ${TEST_TABLE};"
-}
-
