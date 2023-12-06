@@ -129,6 +129,7 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
       cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
     }
     recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
+    recycleLogToReturn->set_virtual_organization(fileRecycleLog.vo);
     recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
     recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
     if(fileRecycleLog.collocationHint){

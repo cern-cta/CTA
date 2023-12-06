@@ -45,6 +45,7 @@ struct  FileRecycleLog {
   uint64_t sizeInBytes;
   cta::checksum::ChecksumBlob checksumBlob;
   std::string storageClassName;
+  std::string vo;
   time_t archiveFileCreationTime;
   time_t reconciliationTime;
   std::optional<std::string> collocationHint;

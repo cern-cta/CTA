@@ -1596,6 +1596,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   searchCriteria.copynb = getOptional(OptionUInt64::COPY_NUMBER);
   searchCriteria.recycleLogTimeMin = getOptional(OptionUInt64::LOG_UNIXTIME_MIN, &has_any);
   searchCriteria.recycleLogTimeMax = getOptional(OptionUInt64::LOG_UNIXTIME_MAX, &has_any);
+  searchCriteria.vo = getOptional(OptionString::VO, &has_any);
 
   if(!has_any) {
     throw exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
