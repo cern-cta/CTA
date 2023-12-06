@@ -63,7 +63,6 @@ trackArchive() {
 trackPrepare() {
   total=0
   evictCounter=$((base_evict + 1))
-
   s=0;
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
