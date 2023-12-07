@@ -29,8 +29,8 @@ trackArchive() {
 
       # Update map
       for file in $tmp; do
-        if [[ ${fileMap["${file}"]} -eq 0 ]]; then
-          fileMap["${file}"]='1'
+        if [[ ${fileMap["${file}"]} -eq "-1" ]]; then
+          fileMap["${file}"]='0'
           transaction+="UPDATE ${TEST_TABLE} SET archived=1, archived_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -66,8 +66,8 @@ trackPrepare() {
 
       # Update map
       for file in $tmp; do
-        if [[ ${fileMap["${file}"]} -eq base_evict ]]; then
-          fileMap["${file}"]=$evictCounter
+        if [[ ${fileMap["${file}"]} -eq "${base_evict}" ]]; then
+          fileMap["${file}"]="$evictCounter"
           transaction+="UPDATE ${TEST_TABLE} SET staged=${evictCounter}, staged_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -100,13 +100,13 @@ trackEvict() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
-              grep "^d0::t1" | awk '{print $10}')
+              grep "^d${evictCounter}::t1" | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map
       for file in $tmp; do
-        if [[ ${fileMap["${file}"]} -eq $base_evict ]]; then
-          fileMap["${file}"]=$evictCounter
+        if [[ ${fileMap["${file}"]} -eq "${base_evict}" ]]; then
+          fileMap["${file}"]="$evictCounter"
           transaction="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -222,7 +222,7 @@ INIT_STR="${QUERY_PRAGMAS} INSERT INTO ${TEST_TABLE} (filename) VALUES "
 compound_count=0
 for subdir in $(seq 0 $((NB_DIRS - 1))); do
   for i in $(seq -w 0 $(((NB_FILES*NB_DIRS) -1 ))); do
-    fileMap["${subdir}${i}"]=""
+    fileMap["${subdir}${i}"]="-1"
     INIT_STR+="(${subdir}${i}), "
     compound_count=$((compound_count + 1))
     if [[ $compound_count == 500 ]]; then
@@ -247,7 +247,7 @@ unset INIT_STR
 ###############################################
 ################### Run #######################
 ###############################################
-base_evict=1
+base_evict=0
 for step in $SEQUENCE; do
   case "${step}" in
     abort)
