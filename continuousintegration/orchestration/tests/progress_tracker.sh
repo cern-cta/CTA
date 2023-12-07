@@ -61,7 +61,7 @@ trackPrepare() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
-              grep "^d${evicCounter}::t1" | awk '{print $10}')
+              grep "^d${evictCounter}::t1" | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map
@@ -106,7 +106,7 @@ trackEvict() {
       # Update map
       for file in $tmp; do
         if [[ ${fileMap["${file}"]} -eq $base_evict ]]; then
-          tmpFileMap["${file}"]=$evictCounter
+          fileMap["${file}"]=$evictCounter
           transaction="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -129,7 +129,6 @@ trackEvict() {
   if [[ $s == 90 ]]; then echo "WARNING: timeout during evict." ; fi
 
   base_evict=$evictCounter
-  unset tmpFileMap
 }
 
 trackDelete() {
@@ -141,11 +140,6 @@ trackDelete() {
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
-      # Update map with files not yet deleted.
-      for file in $tmp; do
-        FileMap["${file}"]="-1"
-      done
-
       # Update deleted files in the db.
       for file in "${!fileMap[@]}"; do
         if [[ -z ${fileMap["${file}"]+x} ]]; then
@@ -155,8 +149,6 @@ trackDelete() {
         fi
       done
 
-      # Reset filemap
-      tmpFileMap=$fileMap
       # Commit transaction
       transaction+='END TRANSACTION;'
       sqlite3 "${DB_NAME}" "${transaction}"
@@ -174,7 +166,6 @@ trackDelete() {
   if [[ $s == 90 ]]; then echo "WARNING: timeout during delete." ; fi
 
   base_evict=0
-  unset tmpFileMap
 }
 
 
