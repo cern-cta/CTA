@@ -26,11 +26,9 @@
 namespace cta::rdbms {
 
 /**
- * Class to enforce prepared statements are destroyed before their corresponding
- * database connection.
+ * Class to enforce prepared statements are destroyed before their corresponding database connection
  */
 struct ConnAndStmts {
-
   /**
    * Constructor
    */
@@ -46,25 +44,25 @@ struct ConnAndStmts {
    *
    * @param other The other object
    */
-  ConnAndStmts(ConnAndStmts&& other) : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) { }
+  ConnAndStmts(ConnAndStmts&& other) noexcept : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) { }
 
   /**
-   * Equality operator.
+   * Equality operator
    *
    * @param rhs The object on the right hand side of the operator.
    * @return True if equal.
    */
-  bool operator==(const ConnAndStmts &rhs) {
+  bool operator==(const ConnAndStmts& rhs) {
     return conn.get() == rhs.conn.get();
   }
 
   /**
-   * Inequality operator.
+   * Inequality operator
    *
    * @param rhs The object on the right hand side of the operator.
    * @return True if not equal.
    */
-  bool operator!=(const ConnAndStmts &rhs) {
+  bool operator!=(const ConnAndStmts& rhs) {
     return !operator==(rhs);
   }
 
@@ -85,7 +83,6 @@ struct ConnAndStmts {
    * declared after the conn member-variable.
    */
   std::unique_ptr<StmtPool> stmtPool;
-
-}; // class ConnAndStmts
+};
 
 } // namespace cta::rdbms
