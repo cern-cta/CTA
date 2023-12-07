@@ -38,13 +38,16 @@ trackArchive() {
 
       # Commit transaction
       transaction+='END TRANSACTION;'
-      if [[ $count -gt 0 ]]; then sqlite3 "${DB_NAME}" "${transaction}"; fi
+      if [[ $count -gt 0 ]]; then
+        echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
+        sqlite3 "${DB_NAME}" "${transaction}"
+      fi
 
       # Check if we are done.
-      echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
+
       s=$((s + 1))
       sleep 1
     done
@@ -75,10 +78,11 @@ trackPrepare() {
 
       # Commit transaction
       transaction+='END TRANSACTION;'
-      sqlite3 "${DB_NAME}" "${transaction}"
-
+      if [[ $count -gt 0 ]]; then
+        echo "Staged ${count} out of $((NB_FILES*NB_DIRS))"
+        sqlite3 "${DB_NAME}" "${transaction}"
+      fi
       # Check if we are done.
-      echo "Staged ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=$evictCounter
         return
@@ -143,12 +147,19 @@ trackDelete() {
       ts=$(date +%s)
 
       # Update deleted files in the db.
-      for file in "${!fileMap[@]}"; do
-        if [[ -z ${fileMap["${file}"]+x} ]]; then
-          unset "fileMap[${fileMap}]"
-          transaction+="UPDATE ${TEST_TABLE} SET deleted=1, deleted_t=${ts} WHERE filename=${file};"
-          count=$((count + 1 ))
-        fi
+      deleted=1
+      for base_file in "${!fileMap[@]}"; do
+        for remaining_file in "$tmp"; do
+          if [[ "${base_file}" == "${remaining_file}" ]]; then
+            deleted=0
+          fi
+        done
+
+        if [[ $deleted == 1 ]]; then
+            unset "fileMap[${fileMap}]"
+            transaction+="UPDATE ${TEST_TABLE} SET deleted=1, deleted_t=${ts} WHERE filename=${file};"
+            count=$((count + 1 ))
+          fi
       done
 
       # Commit transaction
@@ -232,7 +243,7 @@ for subdir in $(seq 0 $((NB_DIRS - 1))); do
       compound_count=0
       INIT_STR=${INIT_STR::-2}
       INIT_STR+=";"
-      sqlite3 "${DB_NAME}" "${INIT_STR}"
+      sqlite3 "${DB_NAME}" "${INIT_STR}" > /dev/null 2>&1
       INIT_STR="${QUERY_PRAGMAS} INSERT INTO ${TEST_TABLE} (filename) VALUES "
     fi
   done

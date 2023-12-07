@@ -18,14 +18,13 @@
 
 # Quick function to abort the prepare of files.
 # $1: file containing even number of lines, odd lines == req id; even lines == file_name
-abortFile(){
+abortFile() {
   while read -r REQ_ID; do
     read -r FILE_PATH
     FILE_NAME=$(echo ${FILE_PATH} | cut -d/ -f2)
     XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH} 2>${ERROR_DIR}/RETRIEVE_${FILE_NAME} && rm ${ERROR_DIR}/RETRIEVE_${FILE_NAME} || echo ERROR with xrootd prepare stage for file ${FILE_NAME}, full logs in ${ERROR_DIR}/RETRIEVE_${FILE_NAME} | grep ^ERROR
   done < $1
 }
-
 export -f abortFile
 
 # Put drives down.
@@ -71,7 +70,7 @@ done
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ?? process (prepare2)..."
 
-    seq -w 0 $((${NB_DIRS} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME --process-slot-var=index bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
+    seq -w 0 $((${NB_FILES} - 1)) | xargs --process-slot-var=index --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
 done
 
 # Ensure all requests files are queued
@@ -86,7 +85,7 @@ fi
 # Abort prepare -s requests
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ??  process (prepare_abort)..."
-  ls reqid_* | xargs -I{} --max-procs=${NB_PROCS} abortFile {}
+  ls reqid_* | xargs -I{} --max-procs=${NB_PROCS} bash -c "abortFile {}"
   echo Done.
 done
 rm -f reqid_*
