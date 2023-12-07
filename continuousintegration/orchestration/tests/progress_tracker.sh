@@ -18,7 +18,6 @@
 # NOTE: Tracking should not be enabled during stress tests.
 
 trackArchive() {
-  tmpFileMap=$fileMap
   count=0
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
@@ -30,8 +29,8 @@ trackArchive() {
 
       # Update map
       for file in $tmp; do
-        if [[ -z ${tmpFileMap["${file}"]} ]]; then
-          tmpFileMap["${file}"]='1'
+        if [[ ${fileMap["${file}"]} -eq 0 ]]; then
+          fileMap["${file}"]='1'
           transaction+="UPDATE ${TEST_TABLE} SET archived=1, archived_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -52,11 +51,9 @@ trackArchive() {
   done
 
   if [[ $s == 90 ]]; then echo "WARNING: timeout during archive."; fi
-  unset tmpFileMap
 }
 
 trackPrepare() {
-  tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict + 1))
   s=0;
@@ -69,8 +66,8 @@ trackPrepare() {
 
       # Update map
       for file in $tmp; do
-        if [[ -z ${tmpFileMap["${file}"]} ]]; then
-          tmpFileMap["${file}"]='1'
+        if [[ ${fileMap["${file}"]} -eq base_evict ]]; then
+          fileMap["${file}"]=$evictCounter
           transaction+="UPDATE ${TEST_TABLE} SET staged=${evictCounter}, staged_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -93,11 +90,9 @@ trackPrepare() {
   if [[ $s == 90 ]]; then echo "WARNING: timeout during stage." ; fi
 
   base_evict=$evictCounter
-  unset tmpFileMap
 }
 
 trackEvict() {
-  tmpFileMap=fileMap
   count=0
   evictCounter=$((base_evict - 1))
   s=0
@@ -110,8 +105,8 @@ trackEvict() {
 
       # Update map
       for file in $tmp; do
-        if [[ -z ${tmpFileMap["${file}"]} ]]; then
-          tmpFileMap["${file}"]='1'
+        if [[ ${fileMap["${file}"]} -eq $base_evict ]]; then
+          tmpFileMap["${file}"]=$evictCounter
           transaction="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
@@ -138,7 +133,6 @@ trackEvict() {
 }
 
 trackDelete() {
-  tmpFileMap=$fileMap
   count=0
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
@@ -149,12 +143,13 @@ trackDelete() {
 
       # Update map with files not yet deleted.
       for file in $tmp; do
-        tmpFileMap["${file}"]="-1"
+        FileMap["${file}"]="-1"
       done
 
       # Update deleted files in the db.
-      for file in "${!tmpFileMap[@]}"; do
-        if [[ -z ${tmpFileMap["${file}"]} ]]; then
+      for file in "${!fileMap[@]}"; do
+        if [[ -z ${fileMap["${file}"]+x} ]]; then
+          unset "fileMap[${fileMap}]"
           transaction+="UPDATE ${TEST_TABLE} SET deleted=1, deleted_t=${ts} WHERE filename=${file};"
           count=$((count + 1 ))
         fi
@@ -261,7 +256,7 @@ unset INIT_STR
 ###############################################
 ################### Run #######################
 ###############################################
-base_evict=0
+base_evict=1
 for step in $SEQUENCE; do
   case "${step}" in
     abort)
