@@ -59,7 +59,7 @@ trackPrepare() {
   s=0;
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
-      transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
+      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${evictCounter}::t1" | awk '{print $10}')
       ts=$(date +%s)
@@ -80,6 +80,7 @@ trackPrepare() {
       # Check if we are done.
       echo "Staged ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+        base_evict=$evictCounter
         return
       fi
       s=$((s + 1))
@@ -98,7 +99,7 @@ trackEvict() {
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
-      transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
+      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${evictCounter}::t1" | awk '{print $10}')
       ts=$(date +%s)
@@ -107,7 +108,7 @@ trackEvict() {
       for file in $tmp; do
         if [[ ${fileMap["${file}"]} -eq "${base_evict}" ]]; then
           fileMap["${file}"]="$evictCounter"
-          transaction="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
+          transaction+="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
         fi
       done
@@ -119,6 +120,7 @@ trackEvict() {
       # Check if we are done.
       echo "Evicted ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+        base_evict=$evictCounter
         return
       fi
       s=$((s + 1))
@@ -136,7 +138,7 @@ trackDelete() {
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
-      transaction="${QUERY_PRAGMAS}; BEGIN TRANSACTION;"
+      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
@@ -154,8 +156,9 @@ trackDelete() {
       sqlite3 "${DB_NAME}" "${transaction}"
 
       # Check if we are done.
-      echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
+      echo "Deleted ${count} out of $((NB_FILES*NB_DIRS))"
       if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+        base_evict=0
         return
       fi
       s=$((s + 1))
