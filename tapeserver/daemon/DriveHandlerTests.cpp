@@ -65,22 +65,13 @@ public:
     cta::tape::daemon::TapedProxy* driveHandlerProxy));
     MOCK_METHOD1(resetToDefault, void(const std::string& methodCaller));
 
-  // Just for testing.
+  // expose protected members of the base class for the unit tests
   void setPreviousSession(PreviousSession previousSessionState, session::SessionState previousState,
     session::SessionType previousType, std::string_view vid) {
-    m_previousSession = previousSessionState;
-    m_previousState = previousState;
-    m_previousType = previousType;
-    m_previousVid = vid;
+    DriveHandler::setPreviousSession(previousSessionState, previousState, previousType, vid);
   }
-
-  void setSessionVid(std::string_view vid) {
-    m_sessionVid = vid;
-  }
-
-  void setSessionState(session::SessionState state) {
-    m_sessionState = state;
-  }
+  void setSessionVid(std::string_view vid) { DriveHandler::setSessionVid(vid); }
+  void setSessionState(session::SessionState state) { DriveHandler::setSessionState(state); }
 };
 
 class TapedProxyMock : public TapedProxy {
