@@ -53,7 +53,7 @@ public:
    */
   TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log,
     mediachanger::MediaChangerFacade& mc) : CmdLineTool(inStream, outStream, errStream),
-      m_log(log), m_encryptionControl(false, ""), m_mc(mc), m_useLbp(true), m_driveSupportLbp(true), m_force(false) { }
+      m_log(log), m_mc(mc) { }
 
   /**
    * Destructor
@@ -124,7 +124,7 @@ private:
   /** 
    * Encryption helper object 
    */
-   castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl;
+  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl { false, "" };
    
   /**
    * The object representing the media changer.
@@ -132,20 +132,19 @@ private:
   cta::mediachanger::MediaChangerFacade &m_mc;
   
   /**
-   * The boolean variable which determinate logical block protection usage by
-   * pre-labeling commands. Hard code when we create the class.
+   * Use Logical Block Protection?
    */
-  const bool m_useLbp;
+  const bool m_useLbp = true;
   
   /**
-   * The boolean variable to store if drive support LBP.
+   * Does the drive support Logical Block Protection?
    */
-  bool m_driveSupportLbp;
+  bool m_driveSupportLbp = true;
   
   /**
-   * The boolean variable to skip label checks on not-blank tapes. 
+   * Skip label checks on non-blank tapes?
    */ 
-  bool m_force;
+  bool m_force = false;
   
   /**
    * An exception throwing version of main().

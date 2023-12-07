@@ -28,7 +28,7 @@ namespace cta::threading {
  */
 class SubProcess {
 public:
-  SubProcess(const std::string & program, const std::list<std::string> &argv, const std::string & str = "");
+  SubProcess(const std::string& program, const std::list<std::string>& argv, const std::string& str = "");
   ~SubProcess();
   void wait(void);
   std::string stdout();
@@ -41,9 +41,10 @@ private:
   int m_stdoutFd;
   int m_stderrFd;
   pid_t m_child;
-  bool m_childComplete;
-  int m_childStatus;
+  bool m_childComplete = false;
+  int m_childStatus = 0;
   std::string m_stdout;
   std::string m_stderr;
 };
+
 } // namespace cta::threading
