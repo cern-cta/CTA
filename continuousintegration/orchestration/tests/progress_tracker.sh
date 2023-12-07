@@ -90,7 +90,6 @@ trackPrepare() {
       fi
 
       # Check if we are done.
-      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=$evictCounter
         return
       fi
