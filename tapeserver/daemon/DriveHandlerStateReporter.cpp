@@ -89,7 +89,9 @@ SessionVid DriveHandlerStateReporter::processScheduling(const serializers::Watch
   // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  std::set<SessionState> expectedStates = {SessionState::StartingUp, SessionState::Scheduling};
+  const std::set<SessionState> expectedStates = {
+    SessionState::StartingUp, SessionState::Scheduling
+  };
   if (!expectedStates.count(sessionState) ||
       sessionType != SessionType::Undetermined ||
       static_cast<SessionType>(message.sessiontype()) != SessionType::Undetermined) {
@@ -127,7 +129,9 @@ SessionVid DriveHandlerStateReporter::processMounting(const serializers::Watchdo
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  std::set<SessionType> expectedNewTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
+  const std::set<SessionType> expectedNewTypes = {
+    SessionType::Archive, SessionType::Retrieve, SessionType::Label
+  };
   if (sessionState != SessionState::Scheduling ||
       sessionType != SessionType::Undetermined ||
       !expectedNewTypes.count(static_cast<SessionType>(message.sessiontype()))) {
@@ -148,7 +152,9 @@ SessionVid DriveHandlerStateReporter::processRunning(const serializers::Watchdog
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  std::set<SessionState> expectedStates = {SessionState::Mounting, SessionState::Running};
+  const std::set<SessionState> expectedStates = {
+    SessionState::Mounting, SessionState::Running
+  };
   std::set<SessionType> expectedTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
   if (!expectedStates.count(sessionState) ||
       !expectedTypes.count(sessionType) ||
@@ -175,13 +181,12 @@ SessionVid DriveHandlerStateReporter::processUnmounting(const serializers::Watch
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  std::set<std::tuple<SessionState, SessionType>> expectedStateTypes =
-    {
-      std::make_tuple(SessionState::Running, SessionType::Archive),
-      std::make_tuple(SessionState::Running, SessionType::Retrieve),
-      std::make_tuple(SessionState::Running, SessionType::Label),
-      std::make_tuple(SessionState::Checking, SessionType::Cleanup)
-    };
+  const std::set<std::tuple<SessionState, SessionType>> expectedStateTypes = {
+    std::make_tuple(SessionState::Running, SessionType::Archive),
+    std::make_tuple(SessionState::Running, SessionType::Retrieve),
+    std::make_tuple(SessionState::Running, SessionType::Label),
+    std::make_tuple(SessionState::Checking, SessionType::Cleanup)
+  };
   // (all types of sessions can unmount).
   if (!expectedStateTypes.count(std::make_tuple(sessionState, sessionType))) {
     params.add("PreviousState", session::toString(sessionState))
@@ -218,7 +223,9 @@ SessionVid DriveHandlerStateReporter::processShuttingDown(const serializers::Wat
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  std::set<SessionState> expectedStates = {SessionState::Unmounting, SessionState::DrainingToDisk};
+  const std::set<SessionState> expectedStates = {
+    SessionState::Unmounting, SessionState::DrainingToDisk
+  };
   if (!expectedStates.count(sessionState)) {
     params.add("PreviousState", session::toString(sessionState))
           .add("PreviousType", session::toString(sessionType))

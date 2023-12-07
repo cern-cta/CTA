@@ -48,8 +48,7 @@ using ::testing::Return;
 using ::testing::Throw;
 
 namespace cta {
-namespace tape {
-namespace daemon {
+namespace tape::daemon {
 
 class DriveHandlerMock : public DriveHandler {
 public:
@@ -91,8 +90,7 @@ public:
   MOCK_METHOD1(removeFile, void(int fd));
 };
 
-} // namespace daemon
-} // namespace tape
+} // namespace tape::daemon
 
 class SchedulerMock : public cta::IScheduler {
 public:

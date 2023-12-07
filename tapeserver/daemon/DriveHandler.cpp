@@ -620,8 +620,9 @@ int DriveHandler::runChild() {
 
   // 2) If the previous session crashed, we might want to run a cleaner session, depending
   // on the previous state
-  std::set<SessionState> statesRequiringCleaner = {SessionState::Mounting,
-                                                   SessionState::Running, SessionState::Unmounting};
+  const std::set<SessionState> statesRequiringCleaner = {
+    SessionState::Mounting, SessionState::Running, SessionState::Unmounting
+  };
   if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
     // Set session type to cleanup
     m_sessionType = SessionType::Cleanup;
