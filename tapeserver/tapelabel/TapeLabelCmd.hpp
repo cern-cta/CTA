@@ -58,7 +58,7 @@ public:
   /**
    * Destructor
    */
-  ~TapeLabelCmd() = default;
+  ~TapeLabelCmd() final = default;
 
 private:
   /**

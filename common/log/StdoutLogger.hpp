@@ -40,7 +40,7 @@ public:
   /**
    * Destructor
    */
-  ~StdoutLogger() = default;
+  ~StdoutLogger() final = default;
 
   /**
    * Prepares the logger object for a call to fork()

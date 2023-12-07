@@ -42,7 +42,7 @@ public:
   /**
    * Destructor
    */
-  ~StatisticsSaveCmd() = default;
+  ~StatisticsSaveCmd() final = default;
 
 private:
   /**

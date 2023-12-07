@@ -44,7 +44,7 @@ namespace cta::exception {
       /**
        * Trivial destructor (required through inheritence from std::exception) 
        */
-      virtual ~InvalidConfigEntry() = default;
+      virtual ~InvalidConfigEntry() final = default;
       
       /**
        * Returns the category of the configuration entry.

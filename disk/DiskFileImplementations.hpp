@@ -128,7 +128,7 @@ namespace cta::disk {
           const std::string &osd);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
-        virtual ~RadosStriperReadFile() = default;
+        ~RadosStriperReadFile() final = default;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;
@@ -143,7 +143,7 @@ namespace cta::disk {
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~RadosStriperWriteFile() = default;
+        ~RadosStriperWriteFile() final = default;
       private:
         libradosstriper::RadosStriper * m_striper;
         std::string m_osd;

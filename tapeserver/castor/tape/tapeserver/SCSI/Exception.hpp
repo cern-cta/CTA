@@ -30,7 +30,7 @@ namespace castor::tape::SCSI {
 class Exception : public cta::exception::Exception {
 public:
   Exception(unsigned char status, Structures::senseData_t<255>* sense, const std::string& context = "");
-  virtual ~Exception() = default;
+  ~Exception() override = default;
 };
 
 /**
@@ -67,7 +67,7 @@ class UnitAttentionException : public castor::tape::SCSI::Exception {
 class HostException : public cta::exception::Exception {
 public:
   HostException(const unsigned short int host_status, const std::string& context = "");
-  virtual ~HostException() = default;
+  ~HostException() final = default;
 };
 
 /**
@@ -76,7 +76,7 @@ public:
 class DriverException : public cta::exception::Exception {
 public:
   DriverException(const unsigned short int driver_status, Structures::senseData_t<255>* sense, const std::string& context = "");
-  virtual ~DriverException() = default;
+  ~DriverException() final = default;
 };
 
 /**

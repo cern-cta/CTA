@@ -35,7 +35,7 @@ namespace castor::tape::tapeserver::rao {
  */
 class ConfigurableRAOAlgorithmFactory : public RAOAlgorithmFactory {
 public:
-  virtual ~ConfigurableRAOAlgorithmFactory() = default;
+  ~ConfigurableRAOAlgorithmFactory() final = default;
 
   /**
    * Instanciates a configurable RAO algorithm

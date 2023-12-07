@@ -65,7 +65,7 @@ public:
   /**
     * Destructor
     */
-  virtual ~RetrieveMount()  = default;
+  ~RetrieveMount() override = default;
 
   /**
     * Returns The type of this tape mount.

@@ -429,7 +429,7 @@ protected:
 
   explicit ObjectOps(Backend& os) : ObjectOpsBase(os) {}
 
-  virtual ~ObjectOps() = default;
+  ~ObjectOps() override = default;
 
 public:
   void fetch() {

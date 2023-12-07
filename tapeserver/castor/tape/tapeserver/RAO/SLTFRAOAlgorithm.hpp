@@ -38,7 +38,7 @@ public:
   SLTFRAOAlgorithm(std::unique_ptr<FilePositionEstimator>& filePositionEstimator, std::unique_ptr<CostHeuristic>& costHeuristic) :
     m_filePositionEstimator(std::move(filePositionEstimator)),m_costHeuristic(std::move(costHeuristic)) { }
 
-  virtual ~SLTFRAOAlgorithm() = default;
+  ~SLTFRAOAlgorithm() final = default;
 
   /**
    * Perform the SLTF RAO algorithm on the Retrieve jobs passed in parameter

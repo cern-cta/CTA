@@ -53,7 +53,7 @@ public:
   /**
    * Destructor
    */
-  ~RmcProxy() = default;
+  ~RmcProxy() final = default;
 
   /**
    * Requests the media changer to mount the specified tape for read-only

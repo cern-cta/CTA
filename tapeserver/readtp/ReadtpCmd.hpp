@@ -69,7 +69,7 @@ public:
   /**
    * Destructor
    */
-  ~ReadtpCmd() = default;
+  ~ReadtpCmd() final = default;
 
 private:
   /**

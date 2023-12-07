@@ -37,7 +37,7 @@ public:
   explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type) :
     m_type(type) { }
 
-  virtual ~NonConfigurableRAOAlgorithmFactory() = default;
+  ~NonConfigurableRAOAlgorithmFactory() final = default;
 
   /**
    * Returns the correct instance of RAO algorithm regarding the type

@@ -58,7 +58,7 @@ public:
   /**
     * Destructor
     */
-  virtual ~LabelMount() = default;
+  ~LabelMount() final = default;
 
   /**
     * Returns The type of this tape mount.

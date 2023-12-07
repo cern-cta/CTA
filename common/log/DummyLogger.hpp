@@ -45,7 +45,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~DummyLogger() = default;
+  ~DummyLogger() final = default;
 
   /**
    * Prepares the logger object for a call to fork()

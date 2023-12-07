@@ -45,7 +45,7 @@ public:
   /**
    * Destructor
    */
-  ~StatisticsUpdateCmd() = default;
+  ~StatisticsUpdateCmd() final = default;
 
 private:
   /**
