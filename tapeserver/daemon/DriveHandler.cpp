@@ -914,7 +914,7 @@ std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   m_lc.log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return std::move(catalogueFactory->create());
+  return catalogueFactory->create();
 }
 
 std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string& prefixProcessName,

@@ -506,7 +506,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   
   EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
       [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext&) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::Down);
@@ -514,7 +514,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
       })).WillOnce(
         Throw(cta::exception::Exception("Failed to report drive status"))).WillOnce(Invoke(
       [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext&) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::CleaningUp);

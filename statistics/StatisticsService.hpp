@@ -51,7 +51,7 @@ public:
    * Returns the number of TAPE updated by the updateStatistics() method
    * @return the number of TAPE updated by the updateStatistics() method
    */
-  uint64_t getNbUpdatedTapes() { return m_nbUpdatedTapes; }
+  uint64_t getNbUpdatedTapes() const { return m_nbUpdatedTapes; }
 
 protected:
   uint64_t m_nbUpdatedTapes = 0;

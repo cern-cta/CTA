@@ -230,7 +230,7 @@ SessionVid DriveHandlerStateReporter::processShuttingDown(const serializers::Wat
   return std::string("");
 }
 
-void DriveHandlerStateReporter::processFatal(const serializers::WatchdogMessage& message) {
+void DriveHandlerStateReporter::processFatal(const serializers::WatchdogMessage&) {
   // This status indicates that the session cannot be run and the server should
   // shut down (central storage unavailable).
   log::ScopedParamContainer params(*m_lc);

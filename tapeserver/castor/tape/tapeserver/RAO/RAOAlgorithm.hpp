@@ -46,7 +46,7 @@ public:
    * Returns the timings the RAO Algorithm took to perform each step
    * @return the timings the RAO Algorithm took to perform each step
    */
-  cta::log::TimingList getRAOTimings() { return m_raoTimings; }
+  cta::log::TimingList getRAOTimings() const { return m_raoTimings; }
   
   /**
    * Returns the name of the RAO algorithm
