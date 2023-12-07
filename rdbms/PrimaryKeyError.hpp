@@ -28,21 +28,7 @@ namespace cta::rdbms {
  * A database primary key constraint has been violated
  */
 class PrimaryKeyError : public ConstraintError {
-public:
-  /**
-   * Constructor
-   *
-   * @param context optional context string added to the message at initialisation time
-   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
-   */
-  PrimaryKeyError(const std::string& context, const std::string& dbErrorMessage, const std::string& violatedConstraintName,
-    const bool embedBacktrace = true) :
-    ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) { }
-
-  /**
-   * Empty Destructor (needed for std::exception inheritance)
-   */
-  ~PrimaryKeyError() override = default;
+  using ConstraintError::ConstraintError;
 };
 
 } // namespace cta::rdbms

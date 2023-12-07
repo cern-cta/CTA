@@ -26,7 +26,6 @@ class Backtrace {
 public:
   explicit Backtrace(bool fake = false);
   explicit operator std::string() const { return m_trace; }
-  Backtrace& operator=(const Backtrace& bt) = default;
 private:
   std::string m_trace;
   /**

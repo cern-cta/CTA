@@ -28,7 +28,7 @@ namespace castor::tape::tapeserver::rao {
 class CTACostHeuristic : public CostHeuristic {
 public:
   CTACostHeuristic() = default;
-  virtual ~CTACostHeuristic() = default;
+  ~CTACostHeuristic() final = default;
 
   /**
    * 

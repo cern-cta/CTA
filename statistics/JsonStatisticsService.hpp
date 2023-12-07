@@ -46,7 +46,7 @@ public:
 
   JsonStatisticsService(const JsonStatisticsService& orig) = delete;
 
-  virtual ~JsonStatisticsService() = default;
+  ~JsonStatisticsService() final = default;
 
   void saveStatistics(const cta::statistics::Statistics& statistics) override;
   std::unique_ptr<cta::statistics::Statistics> getStatistics() override;

@@ -48,8 +48,7 @@ using ::testing::Return;
 using ::testing::Throw;
 
 namespace cta {
-namespace tape {
-namespace daemon {
+namespace tape::daemon {
 
 class DriveHandlerMock : public DriveHandler {
 public:
@@ -65,22 +64,13 @@ public:
     cta::tape::daemon::TapedProxy* driveHandlerProxy));
     MOCK_METHOD1(resetToDefault, void(const std::string& methodCaller));
 
-  // Just for testing.
+  // expose protected members of the base class for the unit tests
   void setPreviousSession(PreviousSession previousSessionState, session::SessionState previousState,
     session::SessionType previousType, std::string_view vid) {
-    m_previousSession = previousSessionState;
-    m_previousState = previousState;
-    m_previousType = previousType;
-    m_previousVid = vid;
+    DriveHandler::setPreviousSession(previousSessionState, previousState, previousType, vid);
   }
-
-  void setSessionVid(std::string_view vid) {
-    m_sessionVid = vid;
-  }
-
-  void setSessionState(session::SessionState state) {
-    m_sessionState = state;
-  }
+  void setSessionVid(std::string_view vid) { DriveHandler::setSessionVid(vid); }
+  void setSessionState(session::SessionState state) { DriveHandler::setSessionState(state); }
 };
 
 class TapedProxyMock : public TapedProxy {
@@ -100,8 +90,7 @@ public:
   MOCK_METHOD1(removeFile, void(int fd));
 };
 
-} // namespace daemon
-} // namespace tape
+} // namespace tape::daemon
 
 class SchedulerMock : public cta::IScheduler {
 public:
@@ -515,7 +504,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   
   EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
       [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext&) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::Down);
@@ -523,7 +512,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
       })).WillOnce(
         Throw(cta::exception::Exception("Failed to report drive status"))).WillOnce(Invoke(
       [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
-        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext& lc) {
+        const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext&) {
         m_lc.log(cta::log::DEBUG, "DriveHandlerTests::runChild(): Reporting drive status");
         ASSERT_EQ(type, cta::common::dataStructures::MountType::NoMount);
         ASSERT_EQ(status, cta::common::dataStructures::DriveStatus::CleaningUp);

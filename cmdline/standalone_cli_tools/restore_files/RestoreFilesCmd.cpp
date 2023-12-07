@@ -47,8 +47,7 @@ namespace XrdSsiPb {
  * User error exception
  */
 class UserException : public std::runtime_error {
-public:
-  explicit UserException(const std::string& err_msg) : std::runtime_error(err_msg) {}
+  using std::runtime_error::runtime_error;
 };
 
 /*!
@@ -103,8 +102,7 @@ namespace cta::cliTool {
  * RestoreFilesCmdException
  */
 class RestoreFilesCmdException : public std::runtime_error {
-public:
-  explicit RestoreFilesCmdException(const std::string& err_msg) : std::runtime_error(err_msg) {}
+  using std::runtime_error::runtime_error;
 };
 
 //------------------------------------------------------------------------------

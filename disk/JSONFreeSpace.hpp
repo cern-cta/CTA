@@ -28,7 +28,7 @@ namespace cta::disk {
 class JSONFreeSpace: public cta::utils::json::object::JSONCObject {
 public:
   JSONFreeSpace();
-  virtual ~JSONFreeSpace() = default;
+  ~JSONFreeSpace() final = default;
   void buildFromJSON(const std::string & json) override;
   std::string getJSON() override;
   std::string getExpectedJSONToBuildObject() const override;

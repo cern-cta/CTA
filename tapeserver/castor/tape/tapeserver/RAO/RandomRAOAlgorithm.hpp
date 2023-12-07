@@ -32,7 +32,7 @@ class RandomRAOAlgorithm : public RAOAlgorithm{
 public:
   friend NonConfigurableRAOAlgorithmFactory;
 
-  virtual ~RandomRAOAlgorithm() = default;
+  ~RandomRAOAlgorithm() final = default;
 
   /**
    * Returns a randomly organized vector of the indexes of the jobs passed in parameter

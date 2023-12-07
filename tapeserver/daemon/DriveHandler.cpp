@@ -620,8 +620,9 @@ int DriveHandler::runChild() {
 
   // 2) If the previous session crashed, we might want to run a cleaner session, depending
   // on the previous state
-  std::set<SessionState> statesRequiringCleaner = {SessionState::Mounting,
-                                                   SessionState::Running, SessionState::Unmounting};
+  const std::set<SessionState> statesRequiringCleaner = {
+    SessionState::Mounting, SessionState::Running, SessionState::Unmounting
+  };
   if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
     // Set session type to cleanup
     m_sessionType = SessionType::Cleanup;
@@ -914,7 +915,7 @@ std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   m_lc.log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return std::move(catalogueFactory->create());
+  return catalogueFactory->create();
 }
 
 std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string& prefixProcessName,

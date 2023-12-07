@@ -38,7 +38,6 @@ namespace cta::rdbms::wrapper {
  */
 class Postgres {
 public:
-
   /**
    * A method to throw a DB related error with an informative string obtained from the connection and/or
    * request status. The exception will be a LostDatabaseConnection() if the postgres connection structure
@@ -190,10 +189,6 @@ public:
    */
   class ResultItr {
   public:
-
-    ResultItr( const ResultItr& ) = delete; // non construction-copyable
-    ResultItr& operator=( const ResultItr& ) = delete; // non copyable
-
     /**
      * Constructor
      *
@@ -201,15 +196,15 @@ public:
      *
      * @param conn A libpq connection
      */
-    explicit ResultItr(PGconn* conn) :
-      m_conn(conn), m_res(nullptr), m_finished(false), m_rcode(PGRES_FATAL_ERROR) { }
+    explicit ResultItr(PGconn* conn) : m_conn(conn) { }
 
-   /**
-    * Destructor.
-    */
-    ~ResultItr() {
-      clear();
-    }
+    ResultItr( const ResultItr& ) = delete; // non construction-copyable
+    ResultItr& operator=( const ResultItr& ) = delete; // non copyable
+
+    /**
+     * Destructor
+     */
+    ~ResultItr() { clear(); }
 
     /**
      * Relases the single result or ensures the conneciton has no pending results.
@@ -261,22 +256,20 @@ public:
     PGconn *m_conn;
 
     /**
-     * The current result as a libpq result.
+     * The current result as a libpq result
      */
-    PGresult *m_res;
+    PGresult* m_res = nullptr;
 
     /**
-     * Indicates that the end of result series has been detected on the connection.
+     * Indicates that the end of result series has been detected on the connection
      */
-    bool m_finished;
+    bool m_finished = false;
 
     /**
      * rcode of	current	result.
      */
-    ExecStatusType m_rcode;
-
+    ExecStatusType m_rcode = PGRES_FATAL_ERROR;
   }; // class ResultItr
-
 }; // class Postgres
 
 } // namespace cta::rdbms::wrapper

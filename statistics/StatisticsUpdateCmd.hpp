@@ -31,21 +31,7 @@ namespace cta::statistics {
  * Command-line tool for verifying the catalogue schema
  */
 class StatisticsUpdateCmd : public catalogue::CmdLineTool {
-public:
-  /**
-   * Constructor
-   *
-   * @param inStream Standard input stream
-   * @param outStream Standard output stream
-   * @param errStream Standard error stream
-   */
-  StatisticsUpdateCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
-    CmdLineTool(inStream, outStream, errStream) { }
-
-  /**
-   * Destructor
-   */
-  ~StatisticsUpdateCmd() = default;
+  using catalogue::CmdLineTool::CmdLineTool;
 
 private:
   /**

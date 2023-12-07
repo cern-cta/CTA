@@ -38,7 +38,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~InvalidResultSet() = default;
+  ~InvalidResultSet() final = default;
 };
       
 } // namespace cta::rdbms

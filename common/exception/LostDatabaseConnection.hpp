@@ -27,21 +27,8 @@ namespace cta::exception {
 /**
  * The database connection has been lost.
  */
-class LostDatabaseConnection : public cta::exception::Exception {
-public:
-  /**
-   * Constructor
-   *
-   * @param context optional context string added to the message at initialisation time
-   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
-   */
-  LostDatabaseConnection(const std::string& context = "", const bool embedBacktrace = true) :
-    Exception(context, embedBacktrace) { }
-
-  /**
-   * Empty Destructor (needed for std::exception inheritance)
-   */
-  ~LostDatabaseConnection() noexcept override = default;
+class LostDatabaseConnection : public Exception {
+  using Exception::Exception;
 };
 
 } // namespace cta::exception

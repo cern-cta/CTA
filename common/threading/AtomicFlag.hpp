@@ -30,7 +30,7 @@ struct AtomicFlag {
     MutexLocker ml(m_mutex);
     m_set = true;
   }
-  explicit operator bool() const {
+  operator bool() const {
     MutexLocker ml(m_mutex);
     return m_set;
   }

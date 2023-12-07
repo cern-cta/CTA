@@ -34,7 +34,7 @@ public:
   /**
    * Destructor
    */
-  ~ProcessCapDummy() = default;
+  ~ProcessCapDummy() final = default;
 
   /**
    * C++ wrapper around the C functions cap_get_proc() and cap_to_text().

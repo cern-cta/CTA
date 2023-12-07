@@ -29,7 +29,7 @@ namespace castor::tape::tapeserver::rao {
 class LinearRAOAlgorithm : public RAOAlgorithm {
 public:
   LinearRAOAlgorithm() = default;
-  virtual ~LinearRAOAlgorithm() = default;
+  ~LinearRAOAlgorithm() final = default;
 
   /**
    * This method will return the indexes of the jobs that are reoreded in a linear way (sorted by fseq ascendant)

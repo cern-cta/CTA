@@ -37,7 +37,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~OStoreDBWithAgent() noexcept;
+  ~OStoreDBWithAgent() override;
 };
 
 } // namespace cta

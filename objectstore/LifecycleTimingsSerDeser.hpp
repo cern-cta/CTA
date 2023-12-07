@@ -29,7 +29,7 @@ public:
     first_selected_time = ostoreLifecycleTimings.first_selected_time();
   }
       
-  void serialize(objectstore::serializers::LifecycleTimings& lifecycleTimings) {
+  void serialize(objectstore::serializers::LifecycleTimings& lifecycleTimings) const {
     lifecycleTimings.set_completed_time(completed_time);
     lifecycleTimings.set_creation_time(creation_time);
     lifecycleTimings.set_first_selected_time(first_selected_time);

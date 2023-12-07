@@ -77,7 +77,7 @@ public:
   void clear();
   
   /**
-   * Writes a message into the CASTOR logging system. Note that no exception
+   * Writes a message into the CTA logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *

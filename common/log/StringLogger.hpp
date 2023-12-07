@@ -23,72 +23,68 @@
 namespace cta::log {
 
 /**
- * Class implementaing the API of the CASTOR logging system.
+ * Class implementaing the API of the CTA logging system
  */
-class StringLogger: public Logger {
+class StringLogger : public Logger {
 public:
   /**
    * Constructor
    *
    * @param hostName The name of the host to be prepended to every log mesage.
-   * @param programName The name of the program to be prepended to every log
-   * message.
+   * @param programName The name of the program to be prepended to every log message.
    * @param logMask The log mask.
    */
-  StringLogger(const std::string &hostName, const std::string &programName, const int logMask);
+  StringLogger(const std::string& hostName, const std::string& programName, const int logMask) :
+    Logger(hostName, programName, logMask) { }
 
   /**
    * Destructor
    */
-  ~StringLogger() = default;
+  ~StringLogger() final = default;
 
   /**
-   * Prepares the logger object for a call to fork().
+   * Prepares the logger object for a call to fork()
    *
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() override { }
+  void prepareForFork() override { /* intentionally-blank override of pure virtual method */ }
 
   /**
-   * Extractor for the resulting logs.
+   * Extractor for the resulting logs
    */
   std::string getLog() { return m_log.str(); }
 
   /**
-   * Clear the log.
+   * Clear the log
    */
   void clearLog() { m_log.str(""); }
 
 protected:
-
   /**
-   * Mutex used to protect the critical section of the StringLogger
-   * object.
+   * Mutex used to protect the critical section of the StringLogger object
    */
   threading::Mutex m_mutex;
 
   /**
-   * The file descriptor of the socket used to send messages to syslog.
+   * The file descriptor of the socket used to send messages to syslog
    */
   std::stringstream m_log;
 
   /**
-   * Writes the specified msg to the underlying logging system.
+   * Writes the specified msg to the underlying logging system
    *
-   * This method is to be implemented by concrete sub-classes of the Logger
-   * class.
+   * This method is to be implemented by concrete sub-classes of the Logger class.
    *
    * Please note it is the responsibility of a concrete sub-class to decide
    * whether or not to use the specified log message header.  For example, the
    * SysLogLogger sub-class does not use the header.  Instead it relies on
    * rsyslog to provide a header.
    *
-   * @param header The header of the message to be logged.  It is the
-   * esponsibility of the concrete sub-class
+   * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
-}; // class StringLogger
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+};
 
 } // namespace cta::log

@@ -58,10 +58,9 @@ private:
 
 namespace cta::threading {
 
-SubProcess::SubProcess(const std::string& executable, const std::list<std::string>& argv, const std::string& stdinInput) :
-  m_childComplete(false), m_childStatus(0) {
+SubProcess::SubProcess(const std::string& executable, const std::list<std::string>& argv, const std::string& stdinInput) {
   // Sanity check
-  if (argv.size() < 1) {
+  if(argv.size() < 1) {
     throw exception::Exception("In Subprocess::Subprocess: not enough elements in argv");
   }
   // Prepare the pipes for the child's stdout and stderr (stdin will be closed)

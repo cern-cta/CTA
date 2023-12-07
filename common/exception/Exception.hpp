@@ -54,7 +54,7 @@ public:
   /**
    * Empty Destructor (needed for std::exception inheritance)
    */
-  virtual ~Exception() = default;
+  ~Exception() override = default;
 
   /**
    * Get the value of m_message

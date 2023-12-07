@@ -1333,8 +1333,7 @@ void AdminCmd::processDiskInstance_Add(xrd::Response& response) {
 void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name              = getRequired(OptionString::DISK_INSTANCE);
-  const auto comment            = getOptional(OptionString::COMMENT);
+  const auto& name = getRequired(OptionString::DISK_INSTANCE);
 
   if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());

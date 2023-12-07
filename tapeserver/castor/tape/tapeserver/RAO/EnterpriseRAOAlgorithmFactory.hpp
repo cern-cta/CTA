@@ -35,7 +35,7 @@ public:
   EnterpriseRAOAlgorithmFactory(drive::DriveInterface* drive, const uint64_t maxFilesSupported) :
     m_drive(drive), m_maxFilesSupported(maxFilesSupported) { }
 
-  virtual ~EnterpriseRAOAlgorithmFactory() = default;
+  ~EnterpriseRAOAlgorithmFactory() final = default;
   
   /**
    * Returns an Enteprise RAO Algorithm

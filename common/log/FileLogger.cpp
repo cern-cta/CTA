@@ -28,12 +28,10 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath,
-  const int logMask):
+FileLogger::FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath, const int logMask):
   Logger(hostName, programName, logMask) {
   m_fd = ::open(filePath.c_str(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
-  cta::exception::Errnum::throwOnMinusOne(m_fd, 
-      std::string("In FileLogger::FileLogger(): failed to open log file: ") + filePath);
+  cta::exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + filePath);
 }
 
 //------------------------------------------------------------------------------
@@ -45,18 +43,13 @@ FileLogger::~FileLogger() {
   }
 }
 
-//------------------------------------------------------------------------------
-// prepareForFork
-//------------------------------------------------------------------------------
-void FileLogger::prepareForFork() {
-}
-
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
 void FileLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
-  if (-1 == m_fd)
+  if (-1 == m_fd) {
     throw cta::exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
+  }
 
   const std::string headerPlusBody = header + body;
 

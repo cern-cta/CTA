@@ -27,9 +27,6 @@
 #include <syslog.h>
 #include <sys/time.h>
 
-// more meaningful alias to NOTICE log level
-#define LOG_USER_ERROR LOG_NOTICE
-
 namespace cta::log {
 
   /**

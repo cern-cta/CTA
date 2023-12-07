@@ -89,9 +89,9 @@ public:
 
 private:
   /** Running counter active threads, used to determine which thread is the last */
-  std::atomic<int> m_nbActiveThread;
+  std::atomic<int> m_nbActiveThread = 0;
   /** Thread-safe counter for failed tasks */
-  std::atomic<int> m_failedWriteCount;
+  std::atomic<int> m_failedWriteCount = 0;
 
   /**
    * Private class implementing the worker threads.

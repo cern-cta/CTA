@@ -43,12 +43,9 @@ namespace XrdSsiPb {
 /*!
  * User error exception
  */
-class UserException : public std::runtime_error
-{
-public:
-  explicit UserException(const std::string& err_msg) : std::runtime_error(err_msg) {}
+class UserException : public std::runtime_error {
+  using std::runtime_error::runtime_error;
 };
-
 
 /*!
  * Alert callback.

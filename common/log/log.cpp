@@ -19,7 +19,7 @@
 #include "castor/log/log.hpp"
 
 /**
- * The logger to be used by the CASTOR logging systsem.
+ * The logger to be used by the CTA logging systsem
  */
 static cta::log::Logger *s_logger = nullptr;
 
@@ -46,10 +46,9 @@ void cta::log::shutdown() {
 //------------------------------------------------------------------------------
 // instance
 //------------------------------------------------------------------------------
-cta::log::Logger &cta::log::instance() {
+cta::log::Logger& cta::log::instance() {
   if(nullptr == s_logger) {
-    throw cta::exception::Exception("Failed to get CASTOR logger"
-      ": Logger does not exist");
+    throw cta::exception::Exception("Failed to get CTA logger: Logger does not exist");
   }
   return *s_logger;
 }

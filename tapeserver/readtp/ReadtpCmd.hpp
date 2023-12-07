@@ -63,13 +63,13 @@ public:
    * @param mc Interface to the media changer
    */
   ReadtpCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, cta::log::StdoutLogger& log,
-    cta::log::DummyLogger& dummyLog, cta::mediachanger::MediaChangerFacade& mc) : CmdLineTool(inStream, outStream, errStream),
-      m_log(log), m_dummyLog(dummyLog), m_mc(mc), m_useLbp(true), m_nbSuccessReads(0), m_nbFailedReads(0) { }
+    cta::log::DummyLogger& dummyLog, cta::mediachanger::MediaChangerFacade& mc) :
+    CmdLineTool(inStream, outStream, errStream), m_log(log), m_dummyLog(dummyLog), m_mc(mc) { }
 
   /**
    * Destructor
    */
-  ~ReadtpCmd() = default;
+  ~ReadtpCmd() final = default;
 
 private:
   /**
@@ -305,10 +305,9 @@ private:
   cta::mediachanger::MediaChangerFacade &m_mc;
 
   /**
-   * The boolean variable which determinate logical block protection usage by
-   * readtp commands. Hard coded when we create the class.
+   * Should we use logical block protection?
    */
-  bool m_useLbp;
+  bool m_useLbp = true;
 
   /**
    * The boolean variable to store if drive support LBP.
@@ -316,14 +315,14 @@ private:
   bool m_driveSupportLbp;
 
   /**
-   * Number of files read successsfully.
+   * Number of files read successsfully
    */
-  uint64_t m_nbSuccessReads;
+  uint64_t m_nbSuccessReads = 0;
 
   /**
-   * Number of failed reads.
+   * Number of failed reads
    */
-  uint64_t m_nbFailedReads;
+  uint64_t m_nbFailedReads = 0;
 
   /**
   * Encryption helper object 

@@ -74,8 +74,7 @@ public:
     uint64_t maxBytesPerRequest,cta::log::LogContext lc) :
       m_thread(*this), m_memManager(mm), m_tapeReader(tapeReader), m_diskWriter(diskWriter),
       m_retrieveMount(retrieveMount), m_lc(lc), m_maxBatchFiles(maxFilesPerRequest),
-      m_maxBatchBytes(maxBytesPerRequest), m_files(0), m_bytes(0),
-      m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()) { }
+      m_maxBatchBytes(maxBytesPerRequest), m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()) { }
 
   virtual ~RecallTaskInjector() = default;
 
@@ -253,10 +252,10 @@ private:
   const uint64_t m_maxBatchBytes;
 
   //number of files currently held by the recall injector
-  uint64_t m_files;
+  uint64_t m_files = 0;
 
   //number of bytes currently held by the recall injector
-  uint64_t m_bytes;
+  uint64_t m_bytes = 0;
 
 
   /**

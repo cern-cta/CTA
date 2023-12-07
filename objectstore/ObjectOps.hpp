@@ -76,9 +76,7 @@ class ObjectOpsBase {
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:
-  explicit ObjectOpsBase(Backend& os): m_nameSet(false), m_objectStore(os), m_headerInterpreted(false),
-    m_payloadInterpreted(false), m_existingObject(false), m_locksCount(0), m_locksForWriteCount(0) {}
-
+  explicit ObjectOpsBase(Backend& os): m_nameSet(false), m_objectStore(os) { }
   virtual ~ObjectOpsBase();
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AddressNotSet);
@@ -198,11 +196,11 @@ protected:
   std::string m_name;
   Backend & m_objectStore;
   serializers::ObjectHeader m_header;
-  bool m_headerInterpreted;
-  bool m_payloadInterpreted;
-  bool m_existingObject;
-  int m_locksCount;
-  int m_locksForWriteCount;
+  bool m_headerInterpreted = false;
+  bool m_payloadInterpreted = false;
+  bool m_existingObject = false;
+  int m_locksCount = 0;
+  int m_locksForWriteCount = 0;
   bool m_noLock = false;
   // When locked exclusively, we will keep a reference to the lock,
   // so we can propagate it to sub objects with minimal passing through.
@@ -431,7 +429,7 @@ protected:
 
   explicit ObjectOps(Backend& os) : ObjectOpsBase(os) {}
 
-  virtual ~ObjectOps() = default;
+  ~ObjectOps() override = default;
 
 public:
   void fetch() {

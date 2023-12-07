@@ -24,12 +24,11 @@ namespace cta::exception {
 /**
  * Invalid argument exception
  */
-class InvalidArgument : public Exception {
-public:
+struct InvalidArgument : public Exception {
   /**
-   * default constructor
+   * constructor
    */
-  explicit InvalidArgument(const std::string& what = "");
+  explicit InvalidArgument(const std::string& what = "") noexcept : Exception(what) { }
 };
 
 } // namespace cta::exception

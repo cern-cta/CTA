@@ -57,9 +57,9 @@ class MemBlock {
      */
     std::string m_errorMsg;
     
-    AlterationContext(const std::string& msg, Failed_t) : m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg){}
-    explicit AlterationContext(Cancelled_t)  : m_failed(false),m_cancelled(true),m_verifyonly(false),m_errorMsg("") {}
-    explicit AlterationContext(VerifyOnly_t) : m_failed(false),m_cancelled(false),m_verifyonly(true),m_errorMsg("") {}
+    AlterationContext(const std::string& msg, Failed_t) : m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg) { }
+    explicit AlterationContext(Cancelled_t)  : m_failed(false),m_cancelled(true),m_verifyonly(false) { }
+    explicit AlterationContext(VerifyOnly_t) : m_failed(false),m_cancelled(false),m_verifyonly(true) { }
   };
   
   std::unique_ptr<AlterationContext> m_context;
