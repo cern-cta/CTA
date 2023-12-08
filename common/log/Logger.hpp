@@ -30,12 +30,19 @@
 #include <list>
 #include <map>
 
+/**
+ * It is a convention of CASTOR to use syslog level of LOG_NOTICE to label
+ * user errors.  This macro helps enforce that convention and document it in
+ * the code.
+ */
+#define LOG_USERERR LOG_NOTICE
+
 namespace cta::log {
 
 /**
- * Abstract class representing the API of the CTA logging system
+ * Abstract class representing the API of the CASTOR logging system.
  *
- * The intended way to use the CTA logging API is as follows:
+ * The intended way to use the CASTOR logging API is as follows:
  *
  * 1. Keep a reference to a Logger object, for example:
  * \code{.cpp}
@@ -221,7 +228,10 @@ private:
    * @return The message header.
    */
   static std::string createMsgHeader(
-    const struct timeval &timeStamp,
+    //const struct timeval &timeStamp,
+    //char epoch_time[],
+    const float epoch_time,
+    char* local_time,
     const std::string &hostName,
     const std::string &programName,
     const int pid);
@@ -238,6 +248,9 @@ private:
    * @return The message body;
    */
   static std::string createMsgBody(
+    //char epoch_time[],
+    const float epoch_time,
+    char* local_time,
     const int priority,
     const std::string &priorityText,
     const std::string &msg,

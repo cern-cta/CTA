@@ -23,6 +23,12 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
 
+
+#include <ctime>
+#include <iostream>
+#include <chrono>
+#include <iomanip> 
+
 namespace cta::log {
 
 //------------------------------------------------------------------------------
@@ -42,19 +48,41 @@ const std::string &Logger::getProgramName() const {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-Logger::~Logger() = default;
+Logger::~Logger() {
+}
 
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (
+
   const int priority,
   const std::string &msg,
   const std::list<Param> &params) {
+   
+  //const std::string Time1= "Time: ";
+  //const std::string Utc1= "UTC: ";
+  
+  //char epoch_time[]="1111111111111111111";//"1702006478.962950144";
+  //const float epoch_time;
+  time_t now;
+  time(&now);
+  char local_time[sizeof "2011-10-08T07:07:09Z"];
+  //strftime(local_time, sizeof local_time, "%FT%TZ", gmtime(&now));
+  strftime(local_time, sizeof local_time, "%FT%TZ", localtime(&now));
 
+  const float epoch_time_def = std::chrono::duration_cast<std::chrono::nanoseconds>
+        (std::chrono::system_clock::now().time_since_epoch()).count();
+  const float epoch_time= (epoch_time_def/1000000000.0);
+  //std::cout<<epoch_time_def << std::endl;
+  //const std::string input = epoch_time;
+  //const std::string epoch_time_formated = format("{0:.2s}.{0:2s.}",input);
+  //sprintf(epoch_time,"%f.9f",epoch_time_def);
+  //std::cout<<epoch_time << std::endl;
+  
   const std::string rawParams;
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, nullptr);
+  //struct timeval timeStamp;
+  //gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
@@ -74,8 +102,8 @@ void Logger::operator() (
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
-  const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
+  const std::string header = createMsgHeader( epoch_time, local_time, m_hostName, m_programName, pid);
+  const std::string body = createMsgBody(epoch_time, local_time, priority, priorityText, msg, params, rawParams, m_programName, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
 }
@@ -147,21 +175,27 @@ void Logger::setLogMask(const int logMask) {
 // createMsgHeader
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgHeader(
-  const struct timeval &timeStamp,
+  //const struct timeval &timeStamp,
+  //const std::string Time1,
+  //std::time_t epoch_time,
+  //char epoch_time[],
+  const float epoch_time,
+  //const std::string Utc1,
+  char* local_time,
   const std::string &hostName,
   const std::string &programName,
   const int pid) {
   std::ostringstream os;
-  char buf[80];
-  int bufLen = sizeof(buf);
-  int len = 0;
+  //char buf[80];
+  //int bufLen = sizeof(buf);
+  //int len = 0;
 
-  struct tm localTime;
-  localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%b %e %T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
-  buf[sizeof(buf) - 1] = '\0';
-  os << buf << hostName << " " << programName << ": ";
+ // struct tm localTime;
+  //localtime_r(&(timeStamp.tv_sec), &localTime);
+  //len += strftime(buf, bufLen, "%b %e %T", &localTime);
+  //len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
+  //buf[sizeof(buf) - 1] = '\0';
+  os<<"'time:' "<< std::setprecision(20)<< epoch_time <<" local_time: "<<local_time<< " hostName: "<<hostName << " programName: " << programName << ": ";
   return os.str();
 }
 
@@ -169,6 +203,10 @@ std::string Logger::createMsgHeader(
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(
+  //std::time_t epoch_time,
+  //char epoch_time[],
+  const float epoch_time,
+  char* local_time,
   const int priority,
   const std::string &priorityText,
   const std::string &msg,
@@ -181,7 +219,10 @@ std::string Logger::createMsgBody(
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
+ // os << "Time=\""<< epoch_time << "\" UTC=\""  <<local_time <<"\" LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
+  //  msg << "\" ";
+
+  os << " LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
     msg << "\" ";
 
   // Process parameters
