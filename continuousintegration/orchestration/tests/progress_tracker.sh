@@ -18,10 +18,12 @@
 # NOTE: Tracking should not be enabled during stress tests.
 
 trackArchive() {
-  count=0
+  total=0
+
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
+      count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
@@ -31,20 +33,21 @@ trackArchive() {
       for file in $tmp; do
         if [[ ${fileMap["${file}"]} -eq "-1" ]]; then
           fileMap["${file}"]='0'
-          transaction+="UPDATE ${TEST_TABLE} SET archived=1, archived_t=${ts} WHERE filename=${file};"
+          transaction+="UPDATE ${TEST_TABLE} SET archived=archived+1, archived_t=${ts} WHERE filename=${file};"
+          total=$((total + 1))
           count=$((count + 1))
         fi
       done
 
       # Commit transaction
-      transaction+='END TRANSACTION;'
       if [[ $count -gt 0 ]]; then
-        echo "Archived ${count} out of $((NB_FILES*NB_DIRS))"
-        sqlite3 "${DB_NAME}" "${transaction}"
+        echo "Archived ${total} out of $((NB_FILES*NB_DIRS))"
+        transaction+='END TRANSACTION;'
+        sqlite3 "${DB_NAME}" <<< "${transaction}"
       fi
 
       # Check if we are done.
-      if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         return
       fi
 
@@ -53,15 +56,16 @@ trackArchive() {
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timeout during archive."; fi
+  if [[ $s == 90 ]]; then echo "WARNING: timed out during archive."; fi
 }
 
 trackPrepare() {
-  count=0
+  total=0
   evictCounter=$((base_evict + 1))
   s=0;
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
+      count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${evictCounter}::t1" | awk '{print $10}')
@@ -71,19 +75,21 @@ trackPrepare() {
       for file in $tmp; do
         if [[ ${fileMap["${file}"]} -eq "${base_evict}" ]]; then
           fileMap["${file}"]="$evictCounter"
-          transaction+="UPDATE ${TEST_TABLE} SET staged=${evictCounter}, staged_t=${ts} WHERE filename=${file};"
+          transaction+="UPDATE ${TEST_TABLE} SET staged=staged+1, staged_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
+          total=$((total + 1))
         fi
       done
 
       # Commit transaction
-      transaction+='END TRANSACTION;'
       if [[ $count -gt 0 ]]; then
-        echo "Staged ${count} out of $((NB_FILES*NB_DIRS))"
-        sqlite3 "${DB_NAME}" "${transaction}"
+        echo "Staged ${total} out of $((NB_FILES*NB_DIRS))"
+        transaction+='END TRANSACTION;'
+        sqlite3 "${DB_NAME}" <<< "${transaction}"
       fi
+
       # Check if we are done.
-      if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=$evictCounter
         return
       fi
@@ -98,11 +104,12 @@ trackPrepare() {
 }
 
 trackEvict() {
-  count=0
+  total=0
   evictCounter=$((base_evict - 1))
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
+      count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${evictCounter}::t1" | awk '{print $10}')
@@ -112,21 +119,25 @@ trackEvict() {
       for file in $tmp; do
         if [[ ${fileMap["${file}"]} -eq "${base_evict}" ]]; then
           fileMap["${file}"]="$evictCounter"
-          transaction+="UPDATE ${TEST_TABLE} SET evicted=${evictCounter}, evicted_t=${ts} WHERE filename=${file};"
+          transaction+="UPDATE ${TEST_TABLE} SET evicted=evicted+1, evicted_t=${ts} WHERE filename=${file};"
           count=$((count + 1))
+          total=$((total + 1))
         fi
       done
 
       # Commit transaction
-      transaction+='END TRANSACTION;'
-      sqlite3 "${DB_NAME}" "${transaction}"
+      if [[ $count -gt 0 ]]; then
+        echo "Evicted ${total} out of $((NB_FILES*NB_DIRS))"
+        transaction+='END TRANSACTION;'
+        sqlite3 "${DB_NAME}" <<< "${transaction}"
+      fi
 
       # Check if we are done.
-      echo "Evicted ${count} out of $((NB_FILES*NB_DIRS))"
-      if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=$evictCounter
         return
       fi
+
       s=$((s + 1))
       sleep 1
     done
@@ -138,37 +149,42 @@ trackEvict() {
 }
 
 trackDelete() {
-  count=0
+  total=0
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
+      count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
       # Update deleted files in the db.
-      deleted=1
       for base_file in "${!fileMap[@]}"; do
-        for remaining_file in "$tmp"; do
+        deleted=1
+        for remaining_file in $tmp; do
           if [[ "${base_file}" == "${remaining_file}" ]]; then
             deleted=0
+            break
           fi
         done
 
         if [[ $deleted == 1 ]]; then
-            unset "fileMap[${fileMap}]"
-            transaction+="UPDATE ${TEST_TABLE} SET deleted=1, deleted_t=${ts} WHERE filename=${file};"
+            unset "fileMap[${base_file}]"
+            transaction+="UPDATE ${TEST_TABLE} SET deleted=delete+1, deleted_t=${ts} WHERE filename=${file};"
             count=$((count + 1 ))
+            total=$((total + 1))
           fi
       done
 
       # Commit transaction
-      transaction+='END TRANSACTION;'
-      sqlite3 "${DB_NAME}" "${transaction}"
+      if [[ $count -gt 0 ]]; then
+        echo "Deleted ${total} out of $((NB_FILES*NB_DIRS))"
+        transaction+='END TRANSACTION;'
+        sqlite3 "${DB_NAME}" <<< "${transaction}"
+      fi
 
       # Check if we are done.
-      echo "Deleted ${count} out of $((NB_FILES*NB_DIRS))"
-      if [[ $count == $((NB_FILES*NB_DIRS)) ]]; then
+      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=0
         return
       fi
