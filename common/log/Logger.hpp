@@ -30,12 +30,19 @@
 #include <list>
 #include <map>
 
+/**
+ * It is a convention of CASTOR to use syslog level of LOG_NOTICE to label
+ * user errors.  This macro helps enforce that convention and document it in
+ * the code.
+ */
+#define LOG_USERERR LOG_NOTICE
+
 namespace cta::log {
 
 /**
- * Abstract class representing the API of the CTA logging system
+ * Abstract class representing the API of the CASTOR logging system.
  *
- * The intended way to use the CTA logging API is as follows:
+ * The intended way to use the CASTOR logging API is as follows:
  *
  * 1. Keep a reference to a Logger object, for example:
  * \code{.cpp}
@@ -217,7 +224,9 @@ private:
    * @return The message header.
    */
   static std::string createMsgHeader(
-    const struct timeval &timeStamp,
+    //const struct timeval &timeStamp,
+    const float epoch_time,
+    char* local_time,
     std::string_view hostName,
     std::string_view programName,
     const int pid);
@@ -225,14 +234,21 @@ private:
   /**
    * Creates and returns the body of a log message
    *
-   * @param msg         the message
-   * @param params      the parameters of the message
-   * @param rawParams   preprocessed parameters of the message
-   * @param programName the program name of the log message
-   * @param pid         the pid of the log message
+   * @param epoch_time
+   * @param local_time
+   * @param priority      the priority of the message as defined by the syslog API
+   * @param priorityText
+   * @param msg           the message
+   * @param params        the parameters of the message
+   * @param rawParams     preprocessed parameters of the message
+   * @param pid           the pid of the log message
    * @return the message body
    */
-  static std::string createMsgBody(std::string_view priorityText, std::string_view msg,
+  static std::string createMsgBody(
+    const float epoch_time,
+    char* local_time,
+    const int priority,
+    std::string_view priorityText, std::string_view msg,
     const std::list<Param> &params, std::string_view rawParams, int pid);
 };
 
