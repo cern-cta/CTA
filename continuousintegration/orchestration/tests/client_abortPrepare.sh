@@ -78,11 +78,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
    `|| echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" \
      | grep ^ERROR
 
+
 done
 
 # Wait for requests to be generated
 sleep 1
-
 
 # Ensure all requests files are queued
 requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
