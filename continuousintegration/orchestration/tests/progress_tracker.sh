@@ -43,7 +43,7 @@ trackArchive() {
       if [[ $count -gt 0 ]]; then
         echo "Archived ${total} out of $((NB_FILES*NB_DIRS))"
         transaction+='END TRANSACTION;'
-        sqlite3 "${DB_NAME}" <<< "${transaction}"
+        sqlite3 "${DB_NAME}" <<< "${transaction}" > /dev/null 2>&1
       fi
 
       # Check if we are done.
@@ -85,7 +85,7 @@ trackPrepare() {
       if [[ $count -gt 0 ]]; then
         echo "Staged ${total} out of $((NB_FILES*NB_DIRS))"
         transaction+='END TRANSACTION;'
-        sqlite3 "${DB_NAME}" <<< "${transaction}"
+        sqlite3 "${DB_NAME}" <<< "${transaction}" > /dev/null 2>&1
       fi
 
       # Check if we are done.
@@ -129,7 +129,7 @@ trackEvict() {
       if [[ $count -gt 0 ]]; then
         echo "Evicted ${total} out of $((NB_FILES*NB_DIRS))"
         transaction+='END TRANSACTION;'
-        sqlite3 "${DB_NAME}" <<< "${transaction}"
+        sqlite3 "${DB_NAME}" <<< "${transaction}" > /dev/null 2>&1
       fi
 
       # Check if we are done.
@@ -268,7 +268,7 @@ INIT_STR=${INIT_STR::-2}
 INIT_STR+=");"
 
 if [[ $compound_count > 0 ]]; then
-  sqlite3 "${DB_NAME}" "${INIT_STR}"
+  sqlite3 "${DB_NAME}" <<< "${INIT_STR}"
 fi
 
 unset INIT_STR
