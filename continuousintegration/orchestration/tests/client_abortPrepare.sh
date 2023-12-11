@@ -68,10 +68,13 @@ done
 
 # Stage.
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ?? process (prepare2)..."
+  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ?? process (prepare2)..."
 
-    seq -w 0 $((${NB_FILES} - 1)) | xargs --process-slot-var=index --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
+  seq -w 0 $((${NB_FILES} - 1)) | xargs --process-slot-var=index --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && echo ${subdir}/${subdir}TEST_FILE_NAME >> reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" | grep ^ERROR
 done
+
+# Wait for requests to be generated
+sleep 1
 
 # Ensure all requests files are queued
 requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
@@ -79,21 +82,21 @@ echo "Retrieve requests count: ${requestsTotal}"
 filesCount=${NB_FILES}
 if [ ${requestsTotal} -ne ${filesCount} ]; then
     echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
-fi
+  fi
 
-# Cancel Stage
-# Abort prepare -s requests
+  # Cancel Stage
+  # Abort prepare -s requests
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ??  process (prepare_abort)..."
-  ls reqid_* | xargs -I{} --max-procs=${NB_PROCS} bash -c "abortFile {}"
+  echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
+  ls reqid_* | xargs --max-procs=${NB_PROCS} -I{} bash -c "abortFile {}"
   echo Done.
 done
 rm -f reqid_*
 
-  # Put drive(s) back up to clear the queue
-  echo -n "Will put back up those drives : "
-  echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-  for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
+# Put drive(s) back up to clear the queue
+echo -n "Will put back up those drives : "
+echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
+for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
   admin_cta dr up $d
 done
 
