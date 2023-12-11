@@ -149,52 +149,52 @@ trackEvict() {
 }
 
 trackDelete() {
-  total=0
   s=0
+
+  # Initialize deleted map to all files.
+  declare -A deleteFileMap
+  for file in ${!fileMap[@]}; do
+    deleteFileMap[$file]=''
+    fileMap[$file]=-1
+  done
+
   while [[ $s -lt 90 ]]; do # 90 secs timeout
+    # Set all files as deleted.
+    ts=$(date +%s)
+    transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
+    for file in ${!deleteFileMap[@]}; do
+     transaction+="UPDATE ${TEST_TABLE} SET deleted=1, deleted_t=${ts} WHERE filename=${file};"
+    done
+    transaction+="END TRANSACTION;"
+    sqlite3 "${DB_NAME}" <<< "${transaction}" > /dev/null 2>&1
+
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
-      count=0
-      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
-      # Update deleted files in the db.
-      for base_file in "${!fileMap[@]}"; do
-        deleted=1
-        for remaining_file in $tmp; do
-          if [[ "${base_file}" == "${remaining_file}" ]]; then
-            deleted=0
-            break
-          fi
-        done
-
-        if [[ $deleted == 1 ]]; then
-            unset "fileMap[${base_file}]"
-            transaction+="UPDATE ${TEST_TABLE} SET deleted=delete+1, deleted_t=${ts} WHERE filename=${file};"
-            count=$((count + 1 ))
-            total=$((total + 1))
-          fi
-      done
-
-      # Commit transaction
-      if [[ $count -gt 0 ]]; then
-        echo "Deleted ${total} out of $((NB_FILES*NB_DIRS))"
-        transaction+='END TRANSACTION;'
-        sqlite3 "${DB_NAME}" <<< "${transaction}"
-      fi
-
-      # Check if we are done.
-      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
+      # If the stat was null we have ended.
+      if [[ -z "$tmp" ]]; then
         base_evict=0
+        echo "Deleted all files."
         return
       fi
-      s=$((s + 1))
-      sleep 1
+
+      # Restore in the DB non deleted file.
+      unset deleteFileMap
+      declare -A deleteFileMap
+
+      # If not we have some files left
+      transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
+      for file in $tmp; do
+        deleteFileMap[$file]=''
+        transaction+="UPDATE ${TEST_TABLE} SET deleted=0, deleted_t=0 WHERE filename=${file};"
+      done
+      transaction+="END TRANSACTION;"
+      sqlite3 ${DB_NAME} <<< "${transaction}" > /dev/null 2>&1
     done
   done
 
   if [[ $s == 90 ]]; then echo "WARNING: timeout during delete." ; fi
-
   base_evict=0
 }
 
