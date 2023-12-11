@@ -4052,22 +4052,23 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
 
   // 3) Queue the retrieve requests for report to user 
   for (auto & reportRequestQueue: jobsToRequeueForReportToUser) {
-    using RQTRTRFSAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
-    RQTRTRFSAlgo::InsertedElement::list insertedRequests;
+    using RQTRFUAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
+    RQTRFUAlgo::InsertedElement::list insertedRequests;
     // Keep a map of objectstore request -> sDBJob to handle errors.
     std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
     for (auto & req: reportRequestQueue.second) {
-      insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb,
+      insertedRequests.push_back(RQTRFUAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb,
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
           mountPolicy, req->m_activity, req->m_diskSystemName});
       requestToJobMap[&req->m_retrieveRequest] = req;
     }
-    RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    RQTRFUAlgo rQTRFUAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
-      rQTRTRFSAlgo.referenceAndSwitchOwnership(reportRequestQueue.first, insertedRequests, lc);
+      //rQTRFUAlgo.referenceAndSwitchOwnership(reportRequestQueue.first, insertedRequests, lc);
+      rQTRFUAlgo.referenceAndSwitchOwnership(getMountInfo().vid, insertedRequests, lc); 
       // In case all goes well, we can remove ownership of all requests.
       for (auto & req: reportRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }
-    } catch (RQTRTRFSAlgo::OwnershipSwitchFailure & failure) {
+    } catch (RQTRFUAlgo::OwnershipSwitchFailure & failure) {
       // Some requests did not make it to the queue. Log and leave them for GC to sort out (leave them in ownership).
       std::set<std::string> failedElements;
       for (auto & fe: failure.failedElements) {
