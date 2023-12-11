@@ -30,8 +30,11 @@
 
 namespace cta::catalogue {
 
-class Catalogue;
+    class Catalogue;
+
 }
+
+namespace cta {
 
 class PostgresSchedDBWrapper: public SchedulerDatabaseDecorator {
 
@@ -81,7 +84,7 @@ public:
     auto dummylogger = std::make_unique<cta::log::DummyLogger>("","");
     auto logger = std::unique_ptr<cta::log::Logger>(std::move(dummylogger));
 
-    cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "dbname", "host", 0);
+    cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "", "host", 0);
 
     auto pgwrapper = std::make_unique<PostgresSchedDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 2);
     return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));

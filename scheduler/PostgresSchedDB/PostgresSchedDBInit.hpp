@@ -28,6 +28,8 @@ namespace cta::catalogue {
 class Catalogue;
 }
 
+namespace cta {
+
 class PostgresSchedDBQCR {
 // QueueCleanupRunner
 public:
@@ -80,4 +82,4 @@ private:
 typedef PostgresSchedDBInit      SchedulerDBInit_t;
 typedef PostgresSchedDB          SchedulerDB_t;
 
-} // namespace cta::catalogue
+} // namespace cta

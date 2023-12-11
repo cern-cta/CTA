@@ -18,8 +18,8 @@
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
-# defaults objectstore to file
-config_objectstore="./objectstore-file.yaml"
+# defaults scheduler datastore to objectstore (using a file)
+config_schedstore="./objectstore-file.yaml"
 # defaults DB to sqlite
 config_database="./database-sqlite.yaml"
 # default library model
@@ -35,7 +35,7 @@ EOSINSTANCE=ctaeos
 # By default to not use systemd to manage services inside the containers
 usesystemd=0
 
-# By default keep Database and keep Objectstore
+# By default keep Database and keep Scheduler datastore data
 # default should not make user loose data if he forgot the option
 keepdatabase=1
 keepobjectstore=1
@@ -50,7 +50,7 @@ updatedatabasetest=0
 runexternaltapetests=0
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
+Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
       [-p <gitlab pipeline ID>] [-i <docker image tag>] \
       [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U]
@@ -58,7 +58,7 @@ Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] 
 Options:
   -S    Use systemd to manage services inside containers
   -D	wipe database content during initialization phase (database content is kept by default)
-  -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
+  -O	wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)
   -a    additional kubernetes resources added to the kubernetes namespace
   -U    Run database unit test only
   -u    Prepare the pods to run the liquibase test
@@ -72,8 +72,8 @@ die() { echo "$@" 1>&2 ; exit 1; }
 while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumT" o; do
     case "${o}" in
         o)
-            config_objectstore=${OPTARG}
-            test -f ${config_objectstore} || error="${error}Objectstore configmap file ${config_objectstore} does not exist\n"
+            config_schedstore=${OPTARG}
+            test -f ${config_schedstore} || error="${error}Scheduler datastore configmap file ${config_schedstore} does not exist\n"
             ;;
         d)
             config_database=${OPTARG}
@@ -196,9 +196,9 @@ else
 fi
 
 if [ $keepobjectstore == 1 ] ; then
-    echo "objecstore content will be kept"
+    echo "scheduler data store content will be kept"
 else
-    echo "objectstore content will be wiped"
+    echo "schedule data store content will be wiped"
 fi
 
 
@@ -227,7 +227,7 @@ fi
 
 echo "creating configmaps in instance"
 
-kubectl create -f ${config_objectstore} --namespace=${instance}
+kubectl create -f ${config_schedstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
 kubectl create -f ${config_eoscta} --namespace=${instance}

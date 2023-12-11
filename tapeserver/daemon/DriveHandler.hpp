@@ -20,7 +20,11 @@
 #include <memory>
 
 #include "common/threading/SocketPair.hpp"
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#endif
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
@@ -137,7 +141,7 @@ private:
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
 
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<OStoreDBInit> m_sched_db_init;
+  std::unique_ptr<SchedulerDBInit_t> m_sched_db_init;
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
   // Computation of the next timeout (depending on the state)

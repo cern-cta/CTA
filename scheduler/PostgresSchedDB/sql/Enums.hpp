@@ -109,14 +109,14 @@ constexpr const char* const StringsRepackJobStatus[] = {
   "RRS_Complete",
   "RRS_Failed"
 };
-
+} // namespace cta::postgresscheddb
 
 
 // Define to_string and from_string in cta namespace
-
+namespace cta {
 TO_STRING(ArchiveJobStatus)
 // TO_STRING(JobQueueType)
 TO_STRING(RetrieveJobStatus)
 TO_STRING(RepackJobStatus)
 
-} // namespace cta::postgresscheddb
+} // namespace cta

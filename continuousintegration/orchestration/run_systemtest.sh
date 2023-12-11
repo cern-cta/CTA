@@ -166,6 +166,12 @@ if [ $useoracle == 1 ] ; then
     fi
 fi
 
+if [ $SCHED_TYPE == "pgsched" ] ; then
+  schedstore_configmap="internal_pgsched.yaml"
+  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_configmap}"
+  useceph=0
+fi
+
 if [ $useceph == 1 ] ; then
     objectstore_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep objectstore | head -1)
     if [ "-${objectstore_configmap}-" == "--" ]; then

@@ -31,7 +31,7 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # install needed packages
-yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils cta-scheduler-utils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
 yum clean packages
 
 echo "Using this configuration for library:"
@@ -39,9 +39,10 @@ echo "Using this configuration for library:"
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
-echo "Configuring objectstore:"
+echo "Configuring Scheduler store:"
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
+echo ${OBJECTSTOREURL} >/etc/cta/cta-scheduler.conf
 
 if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   echo "Wiping objectstore"
@@ -50,6 +51,8 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
     mkdir -p $OBJECTSTOREURL
     cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
+  elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
+    cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
       echo "Rados objectstore ${OBJECTSTOREURL} is not empty: deleting content"
@@ -93,7 +96,8 @@ if [ "$KEEP_DATABASE" == "0" ]; then
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
     cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   elif [ "$DATABASETYPE" == "postgres" ]; then
-    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
+    echo "Creating Postgres Catalogue schema"
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create Postgres database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   else
     die "ERROR: Unsupported database type: ${DATABASETYPE}"
   fi

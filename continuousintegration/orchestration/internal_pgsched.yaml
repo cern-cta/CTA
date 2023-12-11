@@ -1,0 +1,71 @@
+###
+# Internal postgres server
+# implements:
+# - a postgres server relying on official docker images
+# - a postgres service
+# - a configmap for pod configuration and CTA configuration
+###
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-sched
+  labels:
+    k8s-app: postgres-sched
+spec:
+  selector:
+    k8s-app: postgres-sched
+  clusterIP: None
+  ports:
+  - name: postgres-sched
+    port: 5433
+    protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: objectstore-config
+  labels:
+    config: database
+    type: postgres
+data:
+  database.type: postgres
+  database.postgres.username: cta
+  database.postgres.password: cta
+  database.postgres.database: postgres-sched
+  database.postgres.path: /var/lib/postgresql/data/scheddata
+  # postgres service points to the postgresql container in namespace
+  database.postgres.server: postgres-sched
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-sched
+  labels:
+    k8s-app: postgres-sched
+spec:
+  restartPolicy: Never
+  containers:
+  - name: postgres-sched
+    image: postgres:9.6
+    stdin: true
+    env:
+    - name: POSTGRES_USER
+      valueFrom:
+        configMapKeyRef:
+          name: objectstore-config
+          key: database.postgres.username
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        configMapKeyRef:
+          name: objectstore-config
+          key: database.postgres.password
+    - name: PGDATA
+      valueFrom:
+        configMapKeyRef:
+          name: objectstore-config
+          key: database.postgres.path
+    - name: POSTGRES_DB
+      valueFrom:
+        configMapKeyRef:
+          name: objectstore-config
+          key: database.postgres.database
