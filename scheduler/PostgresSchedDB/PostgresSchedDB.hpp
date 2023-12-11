@@ -166,7 +166,7 @@ class PostgresSchedDB: public SchedulerDatabase {
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
 

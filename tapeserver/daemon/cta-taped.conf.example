@@ -185,7 +185,7 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 # taped WatchdogIdleSessionTimer 10
 
 # Time to wait after which the tape server stops trying to get the next mount, in seconds.
-# taped WatchdogGlobalLockAcqMaxSecs 900
+# taped WatchdogGetNextMountMaxSecs 900
 
 #
 # RMC Connection Options

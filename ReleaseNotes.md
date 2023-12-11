@@ -22,6 +22,7 @@
 - cta/CTA#538 - Fix bugs reported by SonarCloud
 - cta/CTA#539 - Explicitly capture scope variables in lambdas
 - cta/CTA#544 - Fix default special member functions
+- cta/CTA#552 - Decouple objectstore lock timeout errors from the scheduler code
 
 # v4.10.8-1
 
