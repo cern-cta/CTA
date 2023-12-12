@@ -99,6 +99,11 @@ done
 echo "###"
 echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 echo "###"
+i
+if [[ ${ARCHIVED} -ne ${TO_BE_ARCHIVED} ]]; then
+  echo "ERROR: Some files were lost during archival."
+  exit 1
+fi
 
 echo "Archiving done."
 echo "###"
