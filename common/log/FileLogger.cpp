@@ -28,10 +28,10 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath, const int logMask):
+FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask) :
   Logger(hostName, programName, logMask) {
-  m_fd = ::open(filePath.c_str(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
-  cta::exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + filePath);
+  m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+  exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 }
 
 //------------------------------------------------------------------------------
@@ -46,15 +46,13 @@ FileLogger::~FileLogger() {
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void FileLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   if (-1 == m_fd) {
     throw cta::exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
   }
 
-  const std::string headerPlusBody = header + body;
-
   // Prepare the string to print
-  std::string m = headerPlusBody + "\n";
+  std::string m = std::string(header) + std::string(body) + "\n";
   
   // enter critical section
   threading::MutexLocker lock(m_mutex);

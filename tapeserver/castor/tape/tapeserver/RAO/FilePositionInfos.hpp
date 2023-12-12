@@ -32,9 +32,6 @@ public:
    * Default constructor
    */
   FilePositionInfos() = default;
-  FilePositionInfos(const FilePositionInfos& other);
-  FilePositionInfos& operator=(const FilePositionInfos& other);
-
   /**
    * Destructor
    */
@@ -43,56 +40,80 @@ public:
    * Set the beginning of the file position
    * @param beginningPosition the beginning of the file position
    */
-  void setBeginningPosition(const Position & beginningPosition);
+  void setBeginningPosition(const Position& beginningPosition) {
+    m_beginningPosition = beginningPosition;
+  }
   /**
    * Set the end of the file position
    * @param endPosition the end of the file position
    */
-  void setEndPosition(const Position & endPosition);
+  void setEndPosition(const Position& endPosition) {
+    m_endPosition = endPosition;
+  }
   /**
    * Set the beginning of the file band
    * @param beginningBand the beginning of the file band
    */
-  void setBeginningBand(const uint8_t beginningBand);
+  void setBeginningBand(uint8_t beginningBand) {
+    m_beginningBand = beginningBand;
+  }
   /**
    * Set the end of the file band
    * @param endBand the end of the file band
    */
-  void setEndBand(const uint8_t endBand);
+  void setEndBand(uint8_t endBand) {
+    m_endBand = endBand;
+  }
   /**
    * Set the beginning of the file landing zone
    * @param startLandingZone
    */
-  void setBeginningLandingZone(const uint8_t beginningLandingZone);
+  void setBeginningLandingZone(uint8_t beginningLandingZone) {
+    m_beginningLandingZone = beginningLandingZone;
+  }
   /**
    * Set the end of the file landing zone
    * @param endLandingZone
    */
-  void setEndLandingZone(const uint8_t endLandingZone);
+  void setEndLandingZone(const uint8_t endLandingZone) {
+    m_endLandingZone = endLandingZone;
+  }
   /**
    * Get the physical position of the beginning of the file
    */
-  Position getBeginningPosition() const;
+  Position getBeginningPosition() const {
+    return m_beginningPosition;
+  }
   /**
    * Get the physical position of the end of the file
    */
-  Position getEndPosition() const;
+  Position getEndPosition() const {
+    return m_endPosition;
+  }
   /**
    * Get the beginning of the file band
    */
-  uint8_t getBeginningBand() const;
+  uint8_t getBeginningBand() const {
+    return m_beginningBand;
+  }
   /**
    * Get the end of the file band
    */
-  uint8_t getEndBand() const;
+  uint8_t getEndBand() const {
+    return m_endBand;
+  }
   /**
    * Get the beginning of the file landing zone
    */
-  uint8_t getBeginningLandingZone() const;
+  uint8_t getBeginningLandingZone() const {
+    return m_beginningLandingZone;
+  }
   /**
    * Get the end of the file landing zone
    */
-  uint8_t getEndLandingZone() const;
+  uint8_t getEndLandingZone() const {
+    return m_endLandingZone;
+  }
 
 private:
   Position m_beginningPosition;

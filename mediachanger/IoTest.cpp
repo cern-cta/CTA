@@ -15,15 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Errnum.hpp"
-#include "common/SmartFd.hpp"
-#include "mediachanger/io.hpp"
-
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+
+#include "common/exception/Errnum.hpp"
+#include "mediachanger/SmartFd.hpp"
+#include "mediachanger/io.hpp"
 
 namespace unitTests {
 

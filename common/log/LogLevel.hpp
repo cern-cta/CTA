@@ -26,6 +26,6 @@ namespace cta::log {
 /**
  * Returns the numeric value of the specified log level.
  */
-int toLogLevel(const std::string &s);
+int toLogLevel(std::string_view s);
 
 } // namespace cta::log

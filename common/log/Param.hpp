@@ -38,14 +38,14 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using std::ostringstream.
    */
-  template <typename T> Param(const std::string &name, const T &value) noexcept:
+  template <typename T> Param(std::string_view name, const T &value) noexcept:
     m_name(name) {
     std::ostringstream oss;
     oss << value;
     m_value = oss.str();
   }
 
-  Param(const std::string & name, const uint8_t & value) noexcept:
+  Param(std::string_view name, const uint8_t & value) noexcept:
   m_name(name) {
     std::ostringstream oss;
     oss << static_cast<int>(value);
@@ -59,7 +59,7 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using snprintf for doubles
    */
-  Param (const std::string &name, const double value) noexcept:
+  Param (std::string_view name, const double value) noexcept:
   m_name(name) {
     char buf[1024];
     std::snprintf(buf, sizeof(buf), "%f", value);
@@ -68,7 +68,7 @@ public:
     m_value = buf;
   }
 
-  Param(const std::string &name, const std::nullopt_t &value) noexcept:
+  Param(std::string_view name, const std::nullopt_t &value) noexcept:
     m_name(name) {
     m_value = "";
   }
@@ -114,7 +114,7 @@ protected:
  */
 class ParamDoubleSnprintf: public Param {
 public:
-  ParamDoubleSnprintf(const std::string &name, const double value);
+  ParamDoubleSnprintf(std::string_view name, const double value);
 }; // class ParamDoubleSnprintf
 
 } // namespace cta::log

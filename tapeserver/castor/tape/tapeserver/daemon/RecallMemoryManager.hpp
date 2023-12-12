@@ -36,14 +36,13 @@ class MemBlock;
  */
 class RecallMemoryManager {
 public:
-  
   /**
    * Constructor
-   * @param numberOfBlocks: number of blocks to allocate
-   * @param blockSize: size of each block
+   *
+   * @param numberOfBlocks  number of blocks to allocate
+   * @param blockSize       size of each block
    */
-  RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize,
-          cta::log::LogContext&  lc);
+  RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc);
   
   /**
    * Are all sheep back to the farm?
@@ -82,7 +81,7 @@ private:
   /**
    * Logging. The class is not threaded, so it can be shared with its parent
    */
-  cta::log::LogContext&  m_lc;
+  cta::log::LogContext& m_lc;
 };
 
 }} // namespace castor::tape::tapeserver::daemon

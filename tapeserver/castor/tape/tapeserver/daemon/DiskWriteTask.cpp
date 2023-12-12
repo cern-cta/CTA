@@ -32,9 +32,8 @@ m_retrieveJob(retrieveJob),m_memManager(mm){}
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
-bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
-    cta::disk::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
-    const int threadID) {
+bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& lc,
+  cta::disk::DiskFileFactory& fileFactory, RecallWatchDog& watchdog, int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
   cta::utils::Timer localTime;
@@ -209,28 +208,26 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------
 // checkErrors
 //------------------------------------------------------------------------------  
-  void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc){
-    using namespace cta::log;
-    if(m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid
-            || blockId != mb->m_fileBlock  || mb->isFailed() ){
-      LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
-        LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", blockId)),
-        LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
-        LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
-      };
-      tape::utils::suppresUnusedVariable(sp);
-      std::string errorMsg;
-      if(mb->isFailed()){
-        errorMsg=mb->errorMsg();
-      }
-      else{
-        errorMsg="Mismatch between expected and received fileid or blockid";
-      }
-      lc.log(cta::log::ERR,errorMsg);
-      throw cta::exception::Exception(errorMsg);
+void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc) {
+  using namespace cta::log;
+  if(m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid || blockId != mb->m_fileBlock  || mb->isFailed()) {
+    LogContext::ScopedParam sp[]= {
+      LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
+      LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", blockId)),
+      LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
+      LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
+    };
+    tape::utils::suppresUnusedVariable(sp);
+    std::string errorMsg;
+    if(mb->isFailed()) {
+      errorMsg=mb->errorMsg();
+    } else {
+      errorMsg="Mismatch between expected and received fileid or blockid";
     }
+    lc.log(cta::log::ERR, errorMsg);
+    throw cta::exception::Exception(errorMsg);
   }
+}
 
 //------------------------------------------------------------------------------
 // getTiming
@@ -241,27 +238,25 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------  
-void DiskWriteTask::logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc){
+void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
-     params.add("readWriteTime", m_stats.readWriteTime)
-           .add("checksumingTime",m_stats.checksumingTime)
-           .add("waitDataTime",m_stats.waitDataTime)
-           .add("waitReportingTime",m_stats.waitReportingTime)
-           .add("checkingErrorTime",m_stats.checkingErrorTime)
-           .add("openingTime",m_stats.openingTime)
-           .add("closingTime",m_stats.closingTime)
-           .add("transferTime", m_stats.transferTime)
-           .add("totalTime", m_stats.totalTime)
-           .add("dataVolume", m_stats.dataVolume)
-           .add("globalPayloadTransferSpeedMBps",
-              m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
-           .add("diskPerformanceMBps",
-              m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-           .add("openRWCloseToTransferTimeRatio", 
-              m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("fileId",m_stats.fileId)
-           .add("dstURL",m_stats.dstURL);
-    lc.log(level,msg);
+  params.add("readWriteTime", m_stats.readWriteTime)
+        .add("checksumingTime",m_stats.checksumingTime)
+        .add("waitDataTime",m_stats.waitDataTime)
+        .add("waitReportingTime",m_stats.waitReportingTime)
+        .add("checkingErrorTime",m_stats.checkingErrorTime)
+        .add("openingTime",m_stats.openingTime)
+        .add("closingTime",m_stats.closingTime)
+        .add("transferTime", m_stats.transferTime)
+        .add("totalTime", m_stats.totalTime)
+        .add("dataVolume", m_stats.dataVolume)
+        .add("globalPayloadTransferSpeedMBps", m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
+        .add("diskPerformanceMBps", m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
+        .add("openRWCloseToTransferTimeRatio",
+          m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
+        .add("fileId",m_stats.fileId)
+        .add("dstURL",m_stats.dstURL);
+  lc.log(level,msg);
 }
-} // namespace castor::tape::tapeserver::daemon
 
+} // namespace castor::tape::tapeserver::daemon

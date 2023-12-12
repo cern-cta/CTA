@@ -99,7 +99,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     // Check there is not duplicate of the library slot
     {
       auto i = std::find_if(ret.begin(), ret.end(),
-        [&configLine](decltype(*ret.begin()) j) {
+        [&configLine](const decltype(*ret.begin()) j) {
           return j.second.value().rawLibrarySlot == configLine.rawLibrarySlot;
       });
       if (ret.end() != i) {

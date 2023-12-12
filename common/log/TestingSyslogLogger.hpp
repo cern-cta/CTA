@@ -35,12 +35,10 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  TestingSyslogLogger(const std::string &hostName, const std::string &programName):
-    SyslogLogger(hostName, programName, DEBUG)  {
-  }
+  TestingSyslogLogger(std::string_view hostName, std::string_view programName) :
+    SyslogLogger(hostName, programName, DEBUG) { }
 
   using SyslogLogger::cleanString;
-
-}; // class TestingSyslogLogger
+};
 
 } // namespace cta::log

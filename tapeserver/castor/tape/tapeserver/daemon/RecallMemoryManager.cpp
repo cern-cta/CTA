@@ -23,8 +23,8 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RecallMemoryManager::RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize, cta::log::LogContext&  lc)
-: m_totalNumberOfBlocks(numberOfBlocks), m_lc(lc) {
+RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc) :
+  m_totalNumberOfBlocks(numberOfBlocks), m_lc(lc) {
   for (size_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
 

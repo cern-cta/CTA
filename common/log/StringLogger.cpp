@@ -24,14 +24,12 @@ namespace cta::log {
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) {
+void StringLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 
-  const std::string headerPlusBody = header + body;
-
   // Append the message to the log
-  m_log << headerPlusBody << std::endl;
+  m_log << std::string(header) << std::string(body) << std::endl;
 }
 
 } // namespace cta::log

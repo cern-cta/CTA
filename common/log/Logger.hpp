@@ -85,7 +85,7 @@ public:
    * @param logMask The log mask.
    * message.
    */
-  Logger(const std::string &hostName, const std::string &programName, const int logMask);
+  Logger(std::string_view hostName, std::string_view programName, const int logMask);
 
   /**
    * Destructor.
@@ -117,17 +117,14 @@ public:
    * @param msg the message.
    * @param params optional parameters of the message.
    */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params = std::list<Param>());
+  virtual void operator() (int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>());
 
   /**
    * Sets the log mask.
    *
    * @param logMask The log mask.
    */
-  void setLogMask(const std::string logMask);
+  void setLogMask(std::string_view logMask);
 
   /**
    * Sets the log mask.
@@ -148,7 +145,6 @@ public:
     const bool replaceUnderscores);
 
 protected:
-
   /**
    * The name of the host to be prepended to every log message.
    */
@@ -174,7 +170,7 @@ protected:
    * esponsibility of the concrete sub-class 
    * @param body The body of the message to be logged.
    */
-  virtual void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) = 0;
+  virtual void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) = 0;
 
   /**
    * The log mask.
@@ -222,31 +218,24 @@ private:
    */
   static std::string createMsgHeader(
     const struct timeval &timeStamp,
-    const std::string &hostName,
-    const std::string &programName,
+    std::string_view hostName,
+    std::string_view programName,
     const int pid);
 
   /**
-   * Creates and returns the body of a log message.
+   * Creates and returns the body of a log message
    *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param rawParams preprocessed parameters of the message.
-   * @param programName the program name of the log message.
-   * @param pid the pid of the log message.
-   * @return The message body;
+   * @param priority    the priority of the message as defined by the syslog API
+   * @param msg         the message
+   * @param params      the parameters of the message
+   * @param rawParams   preprocessed parameters of the message
+   * @param programName the program name of the log message
+   * @param pid         the pid of the log message
+   * @return the message body
    */
-  static std::string createMsgBody(
-    const int priority,
-    const std::string &priorityText,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const std::string &rawParams,
-    const std::string &programName,
-    const int pid);
-
-}; // class Logger
+  static std::string createMsgBody(int priority, std::string_view priorityText, std::string_view msg,
+    const std::list<Param> &params, std::string_view rawParams, std::string_view programName, int pid);
+};
 
 } // namespace cta::log
 

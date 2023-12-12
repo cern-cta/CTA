@@ -17,17 +17,17 @@
 
 #pragma once
 
-#include "common/SmartFd.hpp"
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "common/utils/utils.hpp"
+#include "mediachanger/SmartFd.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/io.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MessageHeader.hpp"
 #include "mediachanger/RmcMountMsgBody.hpp"
 #include "mediachanger/RmcUnmountMsgBody.hpp"
-
-#include <unistd.h>
-#include <sys/types.h>
 
 namespace cta::mediachanger {
 

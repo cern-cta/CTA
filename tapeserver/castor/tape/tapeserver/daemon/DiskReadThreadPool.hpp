@@ -42,10 +42,8 @@ public:
    *                    to the task injector
    * @param lc          Log context for logging purpose
    */
-  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq, 
-          castor::tape::tapeserver::daemon::MigrationWatchDog& migrationWatchDog,
-          cta::log::LogContext lc,
-          uint16_t xrootTimeout);
+  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq, MigrationWatchDog& migrationWatchDog,
+    const cta::log::LogContext& lc, uint16_t xrootTimeout);
   
   /**
    * Destructor.
@@ -106,7 +104,7 @@ private:
    * it will ask the TaskInjector to get more jobs.
    * @return the next task to execute
    */
-  DiskReadTask* popAndRequestMore(cta::log::LogContext & lc);
+  DiskReadTask* popAndRequestMore(cta::log::LogContext& lc);
   
   /**
    * When a thread finishm it call this function to Add its stats to one one of the
@@ -215,7 +213,7 @@ private:
    * An atomic (thread-safe) counter of the current number of threads
    * (counted up at creation time and down at completion time)
    */
-  std::atomic<int> m_nbActiveThread;
+  std::atomic<int> m_nbActiveThread = 0;
 };
 
 } // namespace castor::tape::tapeserver::daemon

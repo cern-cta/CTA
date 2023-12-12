@@ -27,53 +27,11 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOManager::RAOManager(const RAOManager& manager){
-  if(this != &manager){
-    m_catalogue = manager.m_catalogue;
-    m_drive = manager.m_drive;
-    m_enterpriseRaoLimits = manager.m_enterpriseRaoLimits;
-    m_hasUDS = manager.m_hasUDS;
-    m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
-    m_maxFilesSupported = manager.m_maxFilesSupported;
-    m_raoParams = manager.m_raoParams;
-  }
-}
-
-RAOManager& RAOManager::operator=(const RAOManager& manager) {
-  if(this != &manager){
-    m_catalogue = manager.m_catalogue;
-    m_drive = manager.m_drive;
-    m_enterpriseRaoLimits = manager.m_enterpriseRaoLimits;
-    m_hasUDS = manager.m_hasUDS;
-    m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
-    m_maxFilesSupported = manager.m_maxFilesSupported;
-    m_raoParams = manager.m_raoParams;
-  }
-  return *this;
-}
-
 bool RAOManager::useRAO() const{
   return m_raoParams.useRAO();
 }
 
-bool RAOManager::hasUDS() const {
-  return m_hasUDS;
-}
-
-bool RAOManager::isDriveEnterpriseEnabled() const {
-  return m_isDriveEnterpriseEnabled;
-}
-
-castor::tape::tapeserver::drive::DriveInterface* RAOManager::getDrive() const {
-  return m_drive;
-}
-
-cta::catalogue::Catalogue* RAOManager::getCatalogue() const {
-  return m_catalogue;
-}
-
-
-void RAOManager::disableRAO(){
+void RAOManager::disableRAO() {
   m_raoParams.disableRAO();
 }
 
@@ -82,14 +40,6 @@ void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimit
   m_maxFilesSupported = raoLimits.maxSupported;
   m_hasUDS = true;
   m_isDriveEnterpriseEnabled = true;
-}
-
-std::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
-  return m_maxFilesSupported;
-}
-
-RAOParams RAOManager::getRAOParams() const {
-  return m_raoParams;
 }
 
 std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc){
@@ -133,6 +83,5 @@ void RAOManager::logWarningAfterRAOOperationFailed(const std::string & warningMs
      .add("vid",m_raoParams.getMountedVid());
   lc.log(cta::log::WARNING,warningMsg);
 }
-
 
 } // namespace castor::tape::tapeserver::rao

@@ -33,31 +33,30 @@ class RAOFile {
 public:
   RAOFile(const uint64_t index, const FilePositionInfos& filePositionInfos) :
     m_index(index), m_filePositionInfos(filePositionInfos) { }
-
-  RAOFile(const RAOFile& other);
   virtual ~RAOFile() = default;
-  RAOFile& operator=(const RAOFile& other);
-  uint64_t getIndex() const;
+
+  bool operator<(const RAOFile& other) const { return m_index < other.m_index; }
+  bool operator==(const RAOFile& other) const { return m_index == other.m_index; }
+
+  uint64_t getIndex() const { return m_index; }
 
   /**
    * Get the position informations about this file
    * @return the position informations about this file
    */
-  FilePositionInfos getFilePositionInfos() const;
+  FilePositionInfos getFilePositionInfos() const { return m_filePositionInfos; }
   /**
    * Add a distance between this file and another RAOFile
    * @param distance the distance to go from this file to another RAOFile
    * @param file the destination file
    */
-  void addDistanceToFile(const double distance, const RAOFile & file);
+  void addDistanceToFile(const double distance, const RAOFile& file);
   /**
    * Get the closest file index i.e the file to which the cost to go to is the lowest
    * @return the closest file index.
    */
   uint64_t getClosestFileIndex() const;
-  bool operator<(const RAOFile &other) const;
-  bool operator==(const RAOFile & other) const;
-  
+
 private:
   uint64_t m_index;
   FilePositionInfos m_filePositionInfos;
@@ -73,17 +72,18 @@ private:
     DistanceToFile(const double cost, const uint64_t destinationFileIndex) :
       m_cost(cost),m_destinationFileIndex(destinationFileIndex) { }
 
-    bool operator<(const DistanceToFile &other) const;
+    bool operator<(const DistanceToFile& other) const { return m_cost < other.m_cost; }
     /**
      * Returns the cost to go to the destination file located at the destinationFileIndex
      * @return the cost to go to the destination file
      */
-    double getCost() const;
+    double getCost() const { return m_cost; }
     /**
      * Get the destination file index
      * @return the destination file index
      */
-    uint64_t getDestinationFileIndex() const;
+    uint64_t getDestinationFileIndex() const { return m_destinationFileIndex; }
+
   private:
     double m_cost;
     uint64_t m_destinationFileIndex;

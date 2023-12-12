@@ -32,24 +32,23 @@ namespace cta::common::dataStructures {
  */
 struct ArchiveFile {
 
-  ArchiveFile();
+  ArchiveFile() = default;
   
   /**
-   * Equality operator that does NOT compare the creationTime and
-   * reconciliationTime member-variables.
+   * Equality operator
    *
-   * @param rhs The operand on the right-hand side of the operator.
-   * @return True if the compared objects are equal (ignoring the creationTime
-   * and reconciliationTime member-variables).
+   * It does NOT compare the creationTime and reconciliationTime member variables
+   *
+   * @param rhs The operand on the right-hand side of the operator
+   * @return True if the compared objects are equal (ignoring creationTime and reconciliationTime)
    */
-  bool operator==(const ArchiveFile &rhs) const;
+  bool operator==(const ArchiveFile& rhs) const;
+  bool operator!=(const ArchiveFile& rhs) const;
 
-  bool operator!=(const ArchiveFile &rhs) const;
-
-  uint64_t archiveFileID;
+  uint64_t archiveFileID = 0;
   std::string diskFileId;
   std::string diskInstance;
-  uint64_t fileSize;
+  uint64_t fileSize = 0;
   checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
@@ -61,18 +60,17 @@ struct ArchiveFile {
   class TapeFilesList: public std::list<TapeFile> {
   public:
     using std::list<TapeFile>::list;
-    TapeFile & at(uint8_t copyNb);
-    const TapeFile & at(uint8_t copyNb) const;
+    TapeFile& at(uint8_t copyNb);
+    const TapeFile& at(uint8_t copyNb) const;
     TapeFilesList::iterator find(uint8_t copyNb);
     TapeFilesList::const_iterator find(uint8_t copyNb) const;
-    void removeAllVidsExcept(const std::string &vid);
+    void removeAllVidsExcept(std::string_view vid);
   };
   TapeFilesList tapeFiles;
-  time_t creationTime;
-  time_t reconciliationTime;
+  time_t creationTime = 0;
+  time_t reconciliationTime = 0;
+};
 
-}; // struct ArchiveFile
-
-std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveFile& obj);
 
 } // namespace cta::common::dataStructures

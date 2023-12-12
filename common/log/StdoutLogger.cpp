@@ -22,12 +22,11 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void StdoutLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   if (m_simple) {
-    printf("%s\n", body.c_str());
+    printf("%s\n", body.data());
   }  else {
-    const std::string headerPlusBody = header + body;
-    printf("%s\n", headerPlusBody.c_str());
+    printf("%s%s\n", header.data(), body.data());
   }
 }
 

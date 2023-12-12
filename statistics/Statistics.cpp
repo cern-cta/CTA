@@ -19,33 +19,6 @@
 
 namespace cta::statistics {
 
-Statistics::Statistics(const Statistics& other) {
-  if (this != &other) {
-    m_statisticsPerVo = other.m_statisticsPerVo;
-    m_totalFiles = other.m_totalFiles;
-    m_totalBytes = other.m_totalBytes;
-    m_totalFilesCopyNb1 = other.m_totalFilesCopyNb1;
-    m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
-    m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
-    m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
-    m_updateTime = other.m_updateTime;
-  }
-}
-
-Statistics& Statistics::operator=(const Statistics& other) {
-  if (this != &other) {
-    m_statisticsPerVo = other.m_statisticsPerVo;
-    m_totalFiles = other.m_totalFiles;
-    m_totalBytes = other.m_totalBytes;
-    m_totalFilesCopyNb1 = other.m_totalFilesCopyNb1;
-    m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
-    m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
-    m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
-    m_updateTime = other.m_updateTime;
-  }
-  return *this;
-}
-
 void Statistics::insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics) {
   m_statisticsPerVo[vo] = fileStatistics;
   m_totalFiles += fileStatistics.nbMasterFiles;

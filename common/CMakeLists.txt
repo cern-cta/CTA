@@ -85,26 +85,20 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/VirtualOrganization.cpp
   dataStructures/WriteTestResult.cpp
   exception/AcceptConnectionInterrupted.cpp
-  exception/AcsQueryVolumeCmd.cpp
   exception/Backtrace.cpp
-  exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
   exception/DismountFailed.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/ForceDismountFailed.cpp
   exception/GrpcError.cpp
   exception/InvalidConfigEntry.cpp
   exception/Mismatch.cpp
   exception/MissingOperand.cpp
-  exception/MountFailed.cpp
   exception/NoEntry.cpp
   exception/NonRetryableError.cpp
   exception/NoPortInRange.cpp
   exception/NoSupportedDB.cpp
-  exception/NotAnOwner.cpp
   exception/OutOfMemory.cpp
-  exception/QueryVolumeFailed.cpp
   exception/RequestFailed.cpp
   exception/RetryableError.cpp
   exception/TimeOut.cpp
@@ -128,12 +122,9 @@ set (COMMON_LIB_SRC_FILES
   priorities/UserGroup.cpp
   processCap/ProcessCap.cpp
   processCap/ProcessCapDummy.cpp
-  processCap/SmartCap.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
-  SmartFd.cpp
-  SmartFILEPtr.cpp
   SourcedParameter.cpp
   threading/Async.cpp
   threading/ChildProcess.cpp
@@ -178,7 +169,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
-  processCap/SmartCapTest.cpp
   log/FileLoggerTest.cpp
   log/LogContextTest.cpp
   log/LogLevelTest.cpp
@@ -186,8 +176,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
-  SmartFdTest.cpp
-  SmartArrayPtrTest.cpp
   CRCTest.cpp
   threading/CondVarTest.cpp
   threading/DaemonTest.cpp

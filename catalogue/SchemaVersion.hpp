@@ -35,7 +35,6 @@ public:
     PRODUCTION
   };
 
-  SchemaVersion(const SchemaVersion& orig);
   virtual ~SchemaVersion() = default;
 
   template<typename T>
@@ -45,7 +44,6 @@ public:
   template<typename T>
   T getStatus() const;
 
-  SchemaVersion & operator=(const SchemaVersion &other);
 private:
   uint64_t m_schemaVersionMajor;
   uint64_t m_schemaVersionMinor;
@@ -58,8 +56,6 @@ private:
 class SchemaVersion::Builder{
 public:
   Builder() = default;
-  Builder(const Builder&);
-  Builder& operator=(const Builder& builder);
   Builder& schemaVersionMajor(const uint64_t schemaVersionMajor);
   Builder& schemaVersionMinor(const uint64_t schemaVersionMinor);
   Builder& nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);

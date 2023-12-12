@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 
-#include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"

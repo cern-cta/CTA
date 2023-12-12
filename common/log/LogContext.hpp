@@ -62,13 +62,13 @@ public:
    * 
    * @param paramName  The name of the parameter to check and move.
    */
-  void moveToTheEndIfPresent(const std::string &paramName) noexcept;
+  void moveToTheEndIfPresent(std::string_view paramName) noexcept;
 
   /**
    * Removes a parameter from the list.
    * @param paramName value of param.getName();
    */
-  void erase(const std::string & paramName) noexcept;
+  void erase(std::string_view paramName) noexcept;
 
   /**
    * Clears the context content.
@@ -89,9 +89,7 @@ public:
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  virtual void log(
-    const int priority,
-    const std::string &msg) noexcept;
+  virtual void log(int priority, std::string_view msg) noexcept;
   
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
@@ -99,9 +97,7 @@ public:
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(
-    const int priority,
-    const std::string &backtrace) noexcept;
+  virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
   
   /**
    * Small introspection function to help in tests
@@ -114,7 +110,7 @@ public:
    */
   class ParamNameMatcher {
   public:
-    explicit ParamNameMatcher(const std::string& name) noexcept : m_name(name) {}
+    explicit ParamNameMatcher(std::string_view name) noexcept : m_name(name) {}
     bool operator() (const Param& p) const noexcept { return m_name == p.getName(); }
   private:
     std::string m_name;
@@ -146,11 +142,13 @@ public:
     }
   }
 
-  template <class T> ScopedParamContainer& add(const std::string& s,const T& t) {
+  template <class T>
+  ScopedParamContainer& add(const std::string& s, const T& t) {
     m_context.pushOrReplace(Param(s,t));
     m_names.push_back(s);
     return *this;
   }
+
 private:
   LogContext& m_context;
   std::list<std::string> m_names;

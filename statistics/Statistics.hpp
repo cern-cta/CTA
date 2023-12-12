@@ -36,8 +36,6 @@ class Statistics {
   typedef std::map<std::string, FileStatistics> StatisticsPerVo;
 
   Statistics() = default;
-  Statistics(const Statistics &other);
-  Statistics &operator=(const Statistics &other);
 
   /**
    * Insert statistics per-VO

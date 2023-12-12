@@ -278,7 +278,7 @@ public:
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface& drive,
                             cta::mediachanger::MediaChangerFacade& mc, TapeSessionReporter& tsr,
                             const VolumeInfo& volInfo,
-                            cta::server::ProcessCap& capUtils, cta::log::LogContext& lc,
+                            cta::server::ProcessCap& capUtils, const cta::log::LogContext& lc,
                             const bool useEncryption,
                             const std::string& externalEncryptionKeyScript, const uint32_t tapeLoadTimeout)
     : m_capUtils(capUtils),

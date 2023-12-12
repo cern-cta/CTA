@@ -35,7 +35,7 @@ public:
    * @param filePath path to the log file.
    * @param logMask The log mask.
    */
-  FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath, const int logMask);
+  FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask);
 
   /**
    * Destructor
@@ -74,7 +74,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override;
 };
 
 } // namespace cta::log

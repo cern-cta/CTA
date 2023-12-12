@@ -39,7 +39,7 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
   }
 }
 
-void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
+void LogContext::moveToTheEndIfPresent(std::string_view paramName) noexcept {
   ParamNameMatcher match(paramName);
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -50,7 +50,7 @@ void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
   }
 }
 
-void LogContext::erase(const std::string& paramName) noexcept {
+void LogContext::erase(std::string_view paramName) noexcept {
   ParamNameMatcher match(paramName);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
@@ -59,12 +59,11 @@ void LogContext::clear() {
   m_params.clear();
 }
 
-void LogContext::log(const int priority, const std::string& msg) noexcept {
+void LogContext::log(int priority, std::string_view msg) noexcept {
   m_log(priority, msg, m_params);
 }
 
-void LogContext::logBacktrace(const int priority, 
-    const std::string& backtrace) noexcept {
+void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;

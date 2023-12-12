@@ -21,29 +21,6 @@
 
 namespace castor::tape::tapeserver::rao {
 
-RAOFile::RAOFile(const RAOFile & other) {
-  if(this != &other){
-    m_index = other.m_index;
-    m_filePositionInfos = other.m_filePositionInfos;
-  }
-}
-
-RAOFile & RAOFile::operator=(const RAOFile & other){
-  if(this != &other){
-    m_index = other.m_index;
-    m_filePositionInfos = other.m_filePositionInfos;
-  }
-  return *this;
-}
-
-uint64_t RAOFile::getIndex() const{
-  return m_index;
-}
-
-FilePositionInfos RAOFile::getFilePositionInfos() const{
-  return m_filePositionInfos;
-}
-
 void RAOFile::addDistanceToFile(const double distance, const RAOFile& file){
   m_distancesWithOtherFiles.push_back(DistanceToFile(distance,file.getIndex()));
 }
@@ -53,26 +30,6 @@ uint64_t RAOFile::getClosestFileIndex() const {
   auto minElementItor = std::min_element(m_distancesWithOtherFiles.begin(), m_distancesWithOtherFiles.end());
   //This method should never throw as there is always at least two files in a RAO batch
   return minElementItor->getDestinationFileIndex();
-}
-
-bool RAOFile::operator <(const RAOFile& other) const {
-  return m_index < other.m_index;
-}
-
-bool RAOFile::operator ==(const RAOFile& other) const {
-  return m_index == other.getIndex();
-}
-
-bool RAOFile::DistanceToFile::operator <(const DistanceToFile& other) const {
-  return m_cost < other.m_cost;
-}
-
-double RAOFile::DistanceToFile::getCost() const{
-  return m_cost;
-}
-
-uint64_t RAOFile::DistanceToFile::getDestinationFileIndex() const {
-  return m_destinationFileIndex;
 }
 
 } // namespace castor::tape::tapeserver::rao

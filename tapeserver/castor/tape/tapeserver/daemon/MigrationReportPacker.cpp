@@ -32,13 +32,10 @@ using cta::log::Param;
 namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------
-//Constructor
+// Constructor
 //------------------------------------------------------------------------------
-MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
-                                             cta::log::LogContext& lc) :
-  ReportPackerInterface<detail::Migration>(lc),
-  m_workerThread(*this), m_errorHappened(false), m_continue(true), m_archiveMount(archiveMount) {
-}
+MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc) :
+  ReportPackerInterface<detail::Migration>(lc), m_workerThread(*this), m_archiveMount(archiveMount) { }
 
 //------------------------------------------------------------------------------
 //Destructor
@@ -63,8 +60,8 @@ void MigrationReportPacker::reportCompletedJob(
 //------------------------------------------------------------------------------
 //reportSkippedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
-                                             cta::log::LogContext& lc) {
+void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
+  const std::string& failure, cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                            " " + failure;
   std::unique_ptr<Report> rep(new ReportSkipped(std::move(skippedArchiveJob), failureLog));

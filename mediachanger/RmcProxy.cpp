@@ -16,7 +16,7 @@
  */
 
 #include "common/utils/utils.hpp"
-#include "common/SmartFd.hpp"
+#include "mediachanger/SmartFd.hpp"
 #include "mediachanger/CommonMarshal.hpp"
 #include "mediachanger/io.hpp"
 #include "mediachanger/RmcMarshal.hpp"

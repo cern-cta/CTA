@@ -41,8 +41,8 @@ public:
    * @param hostname The host name of the computer
    * @param lc 
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy &tapeserverProxy, const cta::tape::daemon::TpconfigLine &driveConfig,
-                     const std::string &hostname, cta::log::LogContext lc);
+  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::TpconfigLine& driveConfig,
+    std::string_view hostname, const cta::log::LogContext& lc);
 
   /**
    * Put into the waiting list a guard value to signal the thread we want

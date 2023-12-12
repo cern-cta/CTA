@@ -18,28 +18,21 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-#include "MountPolicy.hpp"
 
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
+// private constructor (for static default repack mount policy)
 //------------------------------------------------------------------------------
-MountPolicy::MountPolicy():
-  archivePriority(0),
-  archiveMinRequestAge(0),
-  retrievePriority(0),
-  retrieveMinRequestAge(0) {}
-
-MountPolicy::MountPolicy(const std::string& name, const uint64_t archivePriority, const uint64_t archiveMinRequestAge,
-  const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge)
-  : name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge),
-    retrievePriority(retrievePriority), retrieveMinRequestAge(retrieveMinRequestAge) {}
+MountPolicy::MountPolicy(std::string_view name, uint64_t archivePriority,
+  uint64_t archiveMinRequestAge, uint64_t retrievePriority, uint64_t retrieveMinRequestAge) :
+    name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge),
+    retrievePriority(retrievePriority), retrieveMinRequestAge(retrieveMinRequestAge) { }
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool MountPolicy::operator==(const MountPolicy &rhs) const {
+bool MountPolicy::operator==(const MountPolicy& rhs) const {
   return name == rhs.name
       && archivePriority == rhs.archivePriority
       && archiveMinRequestAge == rhs.archiveMinRequestAge
@@ -53,27 +46,14 @@ bool MountPolicy::operator==(const MountPolicy &rhs) const {
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool MountPolicy::operator!=(const MountPolicy &rhs) const {
+bool MountPolicy::operator!=(const MountPolicy& rhs) const {
   return !operator==(rhs);
 }
 
-MountPolicy& MountPolicy::operator=(const MountPolicy& other) {
-  if (this != &other) {
-    this->archiveMinRequestAge = other.archiveMinRequestAge;
-    this->archivePriority = other.archivePriority;
-    this->comment = other.comment;
-    this->creationLog = other.creationLog;
-    this->lastModificationLog = other.lastModificationLog;
-    this->name = other.name;
-    this->retrieveMinRequestAge = other.retrieveMinRequestAge;
-    this->retrievePriority = other.retrievePriority;
-  }
-  return *this;
-}
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
+std::ostream& operator<<(std::ostream& os, const MountPolicy& obj) {
   os << "(name=" << obj.name
      << " archive_priority=" << obj.archivePriority
      << " archive_minRequestAge=" << obj.archiveMinRequestAge
@@ -85,6 +65,6 @@ std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
   return os;
 }
 
-MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack", 1, 1, 1, 1);
+const MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack", 1, 1, 1, 1);
 
 } // namespace cta::common::dataStructures

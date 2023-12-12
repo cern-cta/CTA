@@ -34,7 +34,7 @@ public:
    * message.
    * @param simple If true, then logging header is not included.
    */
-  StdoutLogger(const std::string& hostName, const std::string& programName, bool simple = false) :
+  StdoutLogger(std::string_view hostName, std::string_view programName, bool simple = false) :
     Logger(hostName, programName, DEBUG), m_simple(simple) { }
 
   /**
@@ -48,7 +48,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() { /* intentionally-blank override of pure virtual method */ }
+  void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
 protected:
   /**
@@ -64,7 +64,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override;
 
 private:
     bool m_simple;

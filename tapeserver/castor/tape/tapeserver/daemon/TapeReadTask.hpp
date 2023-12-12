@@ -51,9 +51,8 @@ public:
      * The main loop is :
      * Acquire a free memory block from the memory manager , fill it, push it
      */
-  void execute(const std::unique_ptr<castor::tape::tapeFile::ReadSession> &rs,
-    cta::log::LogContext &lc, RecallWatchDog &watchdog,
-    TapeSessionStats &stats, cta::utils::Timer &timer) {
+  void execute(const std::unique_ptr<castor::tape::tapeFile::ReadSession>& rs, cta::log::LogContext& lc,
+    RecallWatchDog& watchdog, TapeSessionStats& stats, cta::utils::Timer& timer) {
 
     using cta::log::Param;
 
@@ -251,9 +250,8 @@ private:
    * object.
    * @return if successful, return an unique_ptr on the FileReader we want
    */
-  std::unique_ptr<castor::tape::tapeFile::FileReader> openFileReader(
-    const std::unique_ptr<castor::tape::tapeFile::ReadSession> &session,
-    cta::log::LogContext &lc) {
+  std::unique_ptr<castor::tape::tapeFile::FileReader>
+  openFileReader(const std::unique_ptr<castor::tape::tapeFile::ReadSession>& session, cta::log::LogContext& lc) {
     using cta::log::Param;
     typedef cta::log::LogContext::ScopedParam ScopedParam;
 

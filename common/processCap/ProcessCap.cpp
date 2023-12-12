@@ -15,25 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <errno.h>
+
 #include "common/exception/Exception.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "common/processCap/SmartCap.hpp"
 #include "common/utils/utils.hpp"
-
-#include <errno.h>
 
 //------------------------------------------------------------------------------
 // getProcText
 //------------------------------------------------------------------------------
 std::string cta::server::ProcessCap::getProcText() {
+  cap_t cap;
+
   try {
-    SmartCap cap(getProc());
-    return toText((cap_t)cap.get());
-  } catch(cta::exception::Exception &ne) {
+    cap = getProc();
+    auto retval = toText(cap);
+    cap_free(cap);
+    return retval;
+  } catch(cta::exception::Exception& ne) {
+    cap_free(cap);
     cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to get text representation of the capabilities of the process: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to get text representation of the capabilities of the process: " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -85,14 +87,16 @@ std::string cta::server::ProcessCap::toText(
 //------------------------------------------------------------------------------
 // setProcText
 //------------------------------------------------------------------------------
-void cta::server::ProcessCap::setProcText(const std::string &text) {
+void cta::server::ProcessCap::setProcText(const std::string& text) {
+  cap_t cap;
   try {
-    SmartCap cap(fromText(text));
-    setProc(cap.get());
-  } catch(cta::exception::Exception &ne) {
+    cap = fromText(text);
+    setProc(cap);
+    cap_free(cap);
+  } catch(cta::exception::Exception& ne) {
+    cap_free(cap);
     cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to set capabilities of process: " << ne.getMessage().str();
+    ex.getMessage() << "Failed to set capabilities of process: " << ne.getMessage().str();
     throw ex;
   }
 }

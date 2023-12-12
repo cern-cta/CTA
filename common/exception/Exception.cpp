@@ -17,11 +17,12 @@
 
 #include "Exception.hpp"
 
+namespace cta::exception {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::Exception(const std::string &context,
-  const bool embedBacktrace) : 
+Exception::Exception(std::string_view context, const bool embedBacktrace) : 
   m_backtrace(!embedBacktrace) {
   m_message << context;
 }
@@ -29,36 +30,35 @@ cta::exception::Exception::Exception(const std::string &context,
 //------------------------------------------------------------------------------
 // copy constructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::Exception(
-  const cta::exception::Exception& rhs):
-  std::exception() {
+Exception::Exception(const Exception& rhs) : std::exception() {
   m_message << rhs.m_message.str();
   m_backtrace = rhs.m_backtrace;
 }
 
-
 //------------------------------------------------------------------------------
-// assignment operator
+// assignment constructor
 //------------------------------------------------------------------------------
-cta::exception::Exception& cta::exception::Exception::operator=(
-  const cta::exception::Exception &rhs) {
+Exception& Exception::operator=(const Exception& rhs) {
   m_message << rhs.m_message.str();
+  m_backtrace = rhs.m_backtrace;
   return *this;
 }
 
 //------------------------------------------------------------------------------
 // what operator
 //------------------------------------------------------------------------------
-const char * cta::exception::Exception::what() const noexcept {
+const char* Exception::what() const noexcept {
   m_what = getMessageValue();
   m_what += "\n";
-  m_what += (std::string) m_backtrace;
+  m_what += m_backtrace.str();
   return m_what.c_str();
 }
 
 //------------------------------------------------------------------------------
 // setWhat
 //------------------------------------------------------------------------------
-void cta::exception::Exception::setWhat(const std::string& what) {
+void Exception::setWhat(std::string_view what) {
   getMessage() << what;
 }
+
+} // namespace cta::exception::Exception

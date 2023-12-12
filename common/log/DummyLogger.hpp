@@ -39,7 +39,7 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  DummyLogger(const std::string& hostName, const std::string& programName) :
+  DummyLogger(std::string_view hostName, std::string_view programName) :
     Logger(hostName, programName, DEBUG) { }
 
   /**
@@ -69,7 +69,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override {
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override {
     // intentionally-blank override of pure virtual method
   }
 };

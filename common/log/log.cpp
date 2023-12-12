@@ -71,7 +71,7 @@ void cta::log::prepareForFork() {
 //------------------------------------------------------------------------------
 void cta::log::write(
   const int priority,
-  const std::string &msg,
+  std::string_view msg,
   const std::list<cta::log::Param> &params) {
   if(s_logger) (*s_logger)(priority, msg, params);
 }
@@ -81,10 +81,10 @@ void cta::log::write(
 //------------------------------------------------------------------------------
 void cta::log::write(
   const int priority,
-  const std::string &msg,
-  const std::string &rawParams,
+  std::string_view msg,
+  std::string_view rawParams,
   const struct timeval &timeStamp,
-  const std::string &progName,
+  std::string_view progName,
   const int pid) {
   const std::list<Param> params;
   if(s_logger) (*s_logger)(priority, msg, params, rawParams, timeStamp,

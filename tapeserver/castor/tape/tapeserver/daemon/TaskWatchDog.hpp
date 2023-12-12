@@ -48,7 +48,7 @@ protected:
    *  Number of blocks we moved since the last update. Has to be atomic because it is 
    *  updated from the outside 
    */
-  uint64_t m_TapeBytesMovedMoved;
+  uint64_t m_TapeBytesMovedMoved = 0;
   
   /**
    * Statistics of the current session
@@ -58,7 +58,7 @@ protected:
   /**
    * Did we set the stats at least once?
    */
-  bool m_statsSet;
+  bool m_statsSet = false;
   
   /**
    * A timer allowing estimation of the total timer for crashing sessions
@@ -319,25 +319,20 @@ protected:
       usleep(100*1000);
   }
   
-  public:
-    
+public:
   /**
    * Constructor
+   *
    * @param periodToReport How often should we report to the mother (in seconds)
    * @param stuckPeriod  How long do we wait before we say we are stuck on file (in seconds)
    * @param initialProcess The proxy we use for sending heartbeat 
    * @param reportPacker 
    * @param lc To log the events
    */
-  TaskWatchDog(double reportPeriod,double stuckPeriod,
-         cta::tape::daemon::TapedProxy& initialProcess,
-         cta::TapeMount & mount,
-         const std::string & driveUnitName,
-         cta::log::LogContext&  lc, double pollPeriod = 0.1):
-  m_TapeBytesMovedMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
-  m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
-  m_initialProcess(initialProcess), m_mount(mount), m_driveUnitName(driveUnitName),
-  m_fileBeingMoved(false), m_lc(lc) {
+  TaskWatchDog(double reportPeriod, double stuckPeriod, cta::tape::daemon::TapedProxy& initialProcess,
+    cta::TapeMount& mount, std::string_view driveUnitName, const cta::log::LogContext& lc, double pollPeriod = 0.1) :
+    m_pollPeriod(pollPeriod), m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), m_initialProcess(initialProcess),
+    m_mount(mount), m_driveUnitName(driveUnitName), m_fileBeingMoved(false), m_lc(lc) {
     m_lc.pushOrReplace(cta::log::Param("thread","Watchdog"));
   }
   
@@ -491,7 +486,7 @@ public:
     cta::tape::daemon::TapedProxy& initialProcess,
     cta::TapeMount & mount,
     const std::string & driveUnitName,
-    cta::log::LogContext&  lc, double pollPeriod = 0.1): 
+    const cta::log::LogContext& lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc, 
     pollPeriod) {}
   
@@ -545,7 +540,7 @@ public:
     cta::tape::daemon::TapedProxy& initialProcess,
     cta::TapeMount & mount,
     const std::string & driveUnitName,
-    cta::log::LogContext lc, double pollPeriod = 0.1): 
+    const cta::log::LogContext& lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc, 
     pollPeriod) {}
   

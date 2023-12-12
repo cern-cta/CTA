@@ -1136,7 +1136,7 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
       RadosTimeoutLogger rtl;
       au.m_radosTimeoutLogger.reset();
       int rc;
-      cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([this, &rc, &au, &aioc]() {
+      cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&rc, &au, &aioc]() {
         rc=au.m_backend.getRadosCtx().aio_write_full(au.m_name, aioc, au.m_radosBufferList);
         return 0;
       }, "In BackendRados::AsyncUpdater::UpdateJob::execute(): failed m_backend.getRadosCtx().aio_write_full()");

@@ -26,17 +26,9 @@ namespace cta::log {
  * Class implementaing the API of the CTA logging system
  */
 class StringLogger : public Logger {
-public:
-  /**
-   * Constructor
-   *
-   * @param hostName The name of the host to be prepended to every log mesage.
-   * @param programName The name of the program to be prepended to every log message.
-   * @param logMask The log mask.
-   */
-  StringLogger(const std::string& hostName, const std::string& programName, const int logMask) :
-    Logger(hostName, programName, logMask) { }
+  using Logger::Logger;
 
+public:
   /**
    * Destructor
    */
@@ -84,7 +76,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override;
 };
 
 } // namespace cta::log

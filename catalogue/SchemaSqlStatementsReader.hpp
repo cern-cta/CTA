@@ -59,21 +59,26 @@ protected:
 * */
 class DirectoryVersionsSqlStatementsReader : public SchemaSqlStatementsReader {
 public:
-  DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion, const std::string &allSchemasVersionPath);
-  DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
+  DirectoryVersionsSqlStatementsReader(const rdbms::Login::DbType dbType, const std::string& catalogueVersion, const std::string& allSchemasVersionPath) :
+    SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion), m_allSchemasVersionPath(allSchemasVersionPath) { }
   ~DirectoryVersionsSqlStatementsReader() final = default;
-  virtual std::list<std::string> getStatements();
+  virtual std::list<std::string> getStatements() {
+    return getAllStatementsFromSchema(readSchemaFromFile());
+  }
 
 private:
   std::string m_catalogueVersion;
   std::string m_allSchemasVersionPath;
-  const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
+
   /**
   * Return the schema located in SCHEMA_VERSION/dbType_catalogue_schema.sql
   * @return the string containing the sql statements for the creation of the schema
   */
   std::string readSchemaFromFile();
-  std::string getSchemaFilePath();
+  std::string getSchemaFilePath() {
+    const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
+    return m_allSchemasVersionPath + m_catalogueVersion + "/" + getDatabaseType() + c_catalogueFileNameTrailer;
+  }
 };
 
 class MapSqlStatementsReader : public SchemaSqlStatementsReader {

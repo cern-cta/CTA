@@ -15,14 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/InvalidArgument.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/SmartFd.hpp"
-#include "common/Timer.hpp"
-#include "common/utils/utils.hpp"
-#include "common/exception/Errnum.hpp"
-#include "mediachanger/io.hpp"
-
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -34,6 +26,14 @@
 #include <sys/poll.h>
 #include <time.h>
 #include <list>
+
+#include "common/exception/InvalidArgument.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
+#include "common/exception/Errnum.hpp"
+#include "mediachanger/io.hpp"
+#include "mediachanger/SmartFd.hpp"
 
 namespace cta::mediachanger {
 

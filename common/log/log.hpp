@@ -73,7 +73,7 @@ namespace cta::log {
    */
   void write(
     const int priority,
-    const std::string &msg,
+    std::string_view msg,
     const std::list<cta::log::Param> &params =
       std::list<cta::log::Param>());
 
@@ -96,10 +96,10 @@ namespace cta::log {
    */
   void write(
     const int priority,
-    const std::string &msg,
-    const std::string &rawParams,
+    std::string_view msg,
+    std::string_view rawParams,
     const struct timeval &timeStamp,
-    const std::string &progName,
+    std::string_view progName,
     const int pid);
 
   /**

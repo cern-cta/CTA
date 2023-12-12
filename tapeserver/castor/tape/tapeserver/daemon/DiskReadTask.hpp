@@ -39,14 +39,16 @@ public:
           cta::ArchiveJob *archiveJob,size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
   
-  void execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory & fileFactory,
-    MigrationWatchDog & watchdog, const int threadID);
+  void execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
+    MigrationWatchDog& watchdog, int threadID);
+
   /**
-   * Return the stats of the tasks. Should be call after execute 
-   * (otherwise, it is pointless)
-   * @return 
+   * Return the stats of the tasks
+   *
+   * Should be called after execute (otherwise, it is pointless)
    */
   const DiskStats getTaskStats() const;
+
 private:
   
   /**
@@ -65,12 +67,9 @@ private:
   }
   
   /**
-   * log into lc all m_stats parameters with the given message at the 
-   * given level
-   * @param level
-   * @param message
+   * log into lc all m_stats parameters with the given message at the given level
    */
-  void logWithStat(int level,const std::string& msg, cta::log::LogContext&  lc) ;
+  void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) ;
   
   /**
    * Circulate the remaining free blocks after an error

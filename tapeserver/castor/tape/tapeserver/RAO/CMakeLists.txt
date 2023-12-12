@@ -30,8 +30,6 @@ set(CTARAO_LIBRARY_SRCS
   RAOAlgorithmFactoryFactory.cpp
   SLTFRAOAlgorithm.cpp
   RAOOptions.cpp
-  FilePositionInfos.cpp
-  Position.cpp
   InterpolationFilePositionEstimator.cpp
   RAOHelpers.cpp
   CTACostHeuristic.cpp

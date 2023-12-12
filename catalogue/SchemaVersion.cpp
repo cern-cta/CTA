@@ -23,27 +23,6 @@ namespace cta::catalogue {
 SchemaVersion::SchemaVersion() :
   m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}
 
-SchemaVersion::SchemaVersion(const SchemaVersion& orig) {
-  if(this != &orig){
-    m_schemaVersionMajor = orig.m_schemaVersionMajor;
-    m_schemaVersionMinor = orig.m_schemaVersionMinor;
-    m_nextSchemaVersionMajor = orig.m_nextSchemaVersionMajor;
-    m_nextSchemaVersionMinor = orig.m_nextSchemaVersionMinor;
-    m_status = orig.m_status;
-  }
-}
-
-SchemaVersion & SchemaVersion::operator =(const SchemaVersion& other){
-  if(this != &other){
-    m_schemaVersionMajor = other.m_schemaVersionMajor;
-    m_schemaVersionMinor = other.m_schemaVersionMinor;
-    m_nextSchemaVersionMajor = other.m_nextSchemaVersionMajor;
-    m_nextSchemaVersionMinor = other.m_nextSchemaVersionMinor;
-    m_status = other.m_status;
-  }
-  return *this;
-}
-
 template<>
 std::string SchemaVersion::getSchemaVersion() const {
   return std::to_string(m_schemaVersionMajor)+"."+std::to_string(m_schemaVersionMinor);
@@ -83,20 +62,6 @@ std::string SchemaVersion::getStatus() const {
 template<>
 SchemaVersion::Status SchemaVersion::getStatus() const {
   return m_status;
-}
-
-SchemaVersion::Builder::Builder(const Builder& other): m_schemaVersion(other.m_schemaVersion) {
-  m_schemaVersionMajorSet = other.m_schemaVersionMajorSet;
-  m_schemaVersionMinorSet = other.m_schemaVersionMinorSet;
-}
-
-SchemaVersion::Builder & SchemaVersion::Builder::operator=(const Builder& other){
-  if(this != &other){
-    m_schemaVersion = other.m_schemaVersion;
-    m_schemaVersionMajorSet = other.m_schemaVersionMajorSet;
-    m_schemaVersionMinorSet = other.m_schemaVersionMinorSet;
-  }
-  return *this;
 }
 
 SchemaVersion::Builder& SchemaVersion::Builder::schemaVersionMajor(const uint64_t pSchemaVersionMajor){

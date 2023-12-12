@@ -23,7 +23,7 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // toLogLevel
 //------------------------------------------------------------------------------
-int toLogLevel(const std::string &s) {
+int toLogLevel(std::string_view s) {
   if(s == "EMERG")   return EMERG;
   if(s == "ALERT")   return ALERT;
   if(s == "CRIT")    return CRIT;
@@ -37,7 +37,7 @@ int toLogLevel(const std::string &s) {
   // user errors.
   if(s == "USERERR") return NOTICE;
 
-  throw exception::Exception(s + " is not a valid log level");
+  throw exception::Exception(std::string(s) + " is not a valid log level");
 }
 
 } // namespace cta::log

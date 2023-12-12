@@ -36,13 +36,13 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(cta::ArchiveMount *archiveMount, cta::log::LogContext& lc);
+  MigrationReportPacker(cta::ArchiveMount *archiveMount, const cta::log::LogContext& lc);
 
   ~MigrationReportPacker();
 
   /**
-   * Create into the MigrationReportPacker a report for the successful migration
-   * of migratedFile
+   * Create into the MigrationReportPacker a report for the successful migration of migratedFile
+   *
    * @param migratedFile the file successfully migrated
    * @param lc log context provided by the calling thread.
    */
@@ -55,16 +55,18 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure, cta::log::LogContext& lc);
+  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
+    cta::log::LogContext& lc);
 
   /**
-   * Create into the MigrationReportPacker a report for the failed migration
-   * of migratedFile
+   * Create into the MigrationReportPacker a report for the failed migration of migratedFile
+   *
    * @param migratedFile the file which failed
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex, cta::log::LogContext& lc);
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex,
+    cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report for the signaling a flushing on tape
@@ -236,12 +238,12 @@ private:
    * Sanity check variable to register if an error has happened 
    * Is set at true as soon as a ReportError has been processed.
    */
-  bool m_errorHappened;
+  bool m_errorHappened = false;
 
   /* bool to keep the inner thread running. Is set at false 
    * when an end of session (with error) is called
    */
-  bool m_continue;
+  bool m_continue = true;
 
   /**
    * The mount object used to send reports

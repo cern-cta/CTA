@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "common/log/Logger.hpp"
-
 #include <stdint.h>
 #include <string>
 

@@ -33,7 +33,6 @@ namespace cta::statistics {
 class StatisticsUpdateCmd : public catalogue::CmdLineTool {
   using catalogue::CmdLineTool::CmdLineTool;
 
-private:
   /**
    * An exception throwing version of main().
    *

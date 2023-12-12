@@ -48,9 +48,8 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
    */
-  virtual bool execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
-    cta::disk::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
-    const int threadID);
+  virtual bool execute(RecallReportPacker& reporter, cta::log::LogContext& lc,
+    cta::disk::DiskFileFactory& fileFactory, RecallWatchDog& watchdog, int threadID);
   
   /**
    * Allows client code to return a reusable memory block. Should not been called
@@ -118,12 +117,9 @@ private:
   cta::threading::Mutex m_producerProtection;
   
   /**
-   * log into lc all m_stats parameters with the given message at the 
-   * given level
-   * @param level
-   * @param message
+   * log into lc all m_stats parameters with the given message at the given level
    */
-  void logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc) ;
+  void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc);
 };
 
 } // namespace castor::tape::tapeserver::daemon

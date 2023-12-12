@@ -24,19 +24,9 @@
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ArchiveFile::ArchiveFile():
-  archiveFileID(0),
-  fileSize(0),
-  creationTime(0),
-  reconciliationTime(0) {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
+bool ArchiveFile::operator==(const ArchiveFile& rhs) const {
   return archiveFileID == rhs.archiveFileID
       && diskFileId    == rhs.diskFileId
       && diskInstance  == rhs.diskInstance
@@ -50,7 +40,7 @@ bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
+bool ArchiveFile::operator!=(const ArchiveFile& rhs) const {
   return !operator==(rhs);
 }
 
@@ -89,14 +79,14 @@ ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint
 //------------------------------------------------------------------------------
 // ArchiveFile::TapeFilesList::removeAllVidsExcept()
 //------------------------------------------------------------------------------
-void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string& vid) {
+void ArchiveFile::TapeFilesList::removeAllVidsExcept(std::string_view vid) {
   remove_if([&vid](TapeFile& tf){ return tf.vid != vid; });
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
+std::ostream& operator<<(std::ostream& os, const ArchiveFile& obj) {
   os <<
     "{"
     "archiveFileID="      << obj.archiveFileID      << ","

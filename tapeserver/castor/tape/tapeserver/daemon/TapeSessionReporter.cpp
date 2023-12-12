@@ -27,10 +27,8 @@ namespace castor::tape::tapeserver::daemon {
 //-----------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy &tapeserverProxy,
-                                       const cta::tape::daemon::TpconfigLine &driveConfig, const std::string &hostname,
-                                       cta::log::LogContext lc)
-:
+TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
+  const cta::tape::daemon::TpconfigLine& driveConfig, std::string_view hostname, const cta::log::LogContext& lc) :
   m_threadRunning(false),
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),

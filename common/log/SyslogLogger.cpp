@@ -40,19 +40,19 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SyslogLogger::SyslogLogger(const std::string &hostName, const std::string &programName, const int logMask):
+SyslogLogger::SyslogLogger(std::string_view hostName, std::string_view programName, const int logMask):
   Logger(hostName, programName, logMask) {
   const int option = 0;
   const int facility = 0;
-  openlog(m_programName.c_str(), option, facility);
+  openlog(m_programName.data(), option, facility);
 }
 
 //-----------------------------------------------------------------------------
 // writeMsgToLoggingSystem
 //-----------------------------------------------------------------------------
-void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void SyslogLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   // Explicitly ignore the message header as this will be provided by rsyslog
-  syslog(LOG_LOCAL3|INFO, "%s", body.c_str());
+  syslog(LOG_LOCAL3|INFO, "%s", body.data());
 }
 
 } // namespace cta::log

@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"

@@ -26,97 +26,95 @@
 namespace cta::exception {
 
 /**
- * class Exception
- * A simple exception used for error handling in cts
+ * Exception class used for error handling in CTA
  */
 class Exception : public std::exception {
 public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context        optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown
    */
-  Exception(const std::string &context = "", const bool embedBacktrace = true);
+  Exception(std::string_view context = "", bool embedBacktrace = true);
 
   /**
-   * Copy Constructor
+   * Copy constructor
+   *
+   * Default copy constructor is implicitly deleted as it would be ill-defined
    */
   Exception(const Exception& rhs);
 
   /**
-   * Assignment operator
+   * Assignment constructor
+   *
+   * Default assignment constructor is implicitly deleted as it it would be ill-defined
    */
-  Exception& operator=(const Exception &rhs);
+  Exception& operator=(const Exception& rhs);
 
   /**
-   * Empty Destructor (needed for std::exception inheritance)
+   * Empty Destructor
+   *
+   * Needed for std::exception inheritance
    */
   ~Exception() override = default;
 
   /**
-   * Get the value of m_message
-   * A message explaining why this exception was raised
+   * Get the message explaining why this exception was raised
+   *
    * @return the value of m_message
    */
-  std::ostringstream& getMessage() {
-    return m_message;
-  }
+  std::ostringstream& getMessage() { return m_message; }
 
   /**
-   * Get the value of m_message
-   * A message explaining why this exception was raised
+   * Get the message explaining why this exception was raised
+   *
    * @return the value of m_message
    */
+  const std::ostringstream& getMessage() const { return m_message; }
 
-  const std::ostringstream& getMessage() const {
-    return m_message;
-  }
   /**
-   * Get the value of m_message as a sting, for const-c orrectness
-   * @return the value as a string.
+   * Get the value of m_message as a string, for const-correctness
+   *
+   * @return the value of m_message
    */
+  std::string getMessageValue() const { return m_message.str(); }
 
-  std::string getMessageValue() const {
-    return m_message.str();
-  }
   /**
-   * Get the backtrace's contents
+   * Get the backtrace
+   *
    * @return backtrace in a standard string.
    */
   std::string const backtrace() const {
-    return (std::string)m_backtrace;
+    return m_backtrace.str();
   }
 
   /**
-   * Updates the m_what member with a concatenation of the message and
-   * the stack trace.
+   * Updates the m_what member with a concatenation of the message and the stack trace
+   *
    * @return pointer to m_what's contents
    */
-  virtual const char * what() const noexcept;
+  virtual const char* what() const noexcept;
 
 private:
-  /// A message explaining why this exception was raised
+  /**
+   * Message explaining why this exception was raised
+   */
   std::ostringstream m_message;
 
   /**
-   * Placeholder for the what result. It has to be a member
-   * of the object, and not on the stack of the "what" function.
+   * Placeholder for the what result. It has to be a member of the object, and not on the stack of the "what" function.
    */
   mutable std::string m_what;
 
 protected:
-  void setWhat(const std::string &w);
+  void setWhat(std::string_view w);
 
   /**
-   * Backtrace object. Its constructor does the heavy lifting of
-   * generating the backtrace.
+   * Backtrace object. Its constructor does the heavy lifting of generating the backtrace.
    */
   Backtrace m_backtrace;
-
-} ;
+};
 
 } // namespace cta::exception
 

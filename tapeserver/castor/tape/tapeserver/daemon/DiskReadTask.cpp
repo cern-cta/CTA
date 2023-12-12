@@ -37,8 +37,8 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory & fileFactory,
-    MigrationWatchDog & watchdog, const int threadID) {
+void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
+    MigrationWatchDog& watchdog, const int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
 
@@ -190,7 +190,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------  
-void DiskReadTask::logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc){
+void DiskReadTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_stats.readWriteTime)
            .add("checksumingTime",m_stats.checksumingTime)
@@ -210,7 +210,7 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,cta::log::LogCon
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
            .add("fileId",m_archiveJobCachedInfo.fileId)
            .add("path",m_archiveJobCachedInfo.remotePath);
-    lc.log(level,msg);
+    lc.log(level, msg);
 }
 
 const DiskStats DiskReadTask::getTaskStats() const{

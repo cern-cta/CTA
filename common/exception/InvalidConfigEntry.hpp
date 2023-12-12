@@ -17,68 +17,60 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
-
 #include <string>
-
+#include "common/exception/Exception.hpp"
 
 namespace cta::exception {
 
-    /**
-     * Invalid configuration entry exception.
-     */
-    class InvalidConfigEntry : public cta::exception::Exception {
+/**
+ * Invalid configuration entry exception.
+ */
+class InvalidConfigEntry : public Exception {
+public:
+  /**
+   * Constructor
+   *
+   * @param catagory   The category of the configuration entry.
+   * @param entryName  The name of the configuration entry.
+   * @param entryValue The (invalid) value of the configuration entry.
+   */
+  InvalidConfigEntry(const char* const category, const char* const entryName, const char* const entryValue);
+
+  /**
+   * Trivial destructor (required through inheritence from std::exception) 
+   */
+  ~InvalidConfigEntry() final = default;
       
-    public:
-      
-      /**
-       * Constructor
-       *
-       * @param catagory   The category of the configuration entry.
-       * @param entryName  The name of the configuration entry.
-       * @param entryValue The (invalid) value of the configuration entry.
-       */
-      InvalidConfigEntry(const char *const category,
-        const char *const entryName, const char *const entryValue);
+  /**
+   * Returns the category of the configuration entry.
+   */
+  const std::string& getEntryCategory();
 
-      /**
-       * Trivial destructor (required through inheritence from std::exception) 
-       */
-      virtual ~InvalidConfigEntry() final = default;
-      
-      /**
-       * Returns the category of the configuration entry.
-       */
-      const std::string &getEntryCategory();
+  /**
+   * Returns the name of the configuration entry.
+   */
+  const std::string& getEntryName();
 
-      /**
-       * Returns the name of the configuration entry.
-       */
-      const std::string &getEntryName();
+  /**
+   * Returns the (invalid) value of the configuration entry.
+   */
+  const std::string& getEntryValue();
 
-      /**
-       * Returns the (invalid) value of the configuration entry.
-       */
-      const std::string &getEntryValue();
+private:
+  /**
+   * The category of the configuration entry.
+   */
+  const std::string m_entryCategory;
 
+  /**
+   * The name of the configuration entry.
+   */
+  const std::string m_entryName;
 
-    private:
-
-      /**
-       * The category of the configuration entry.
-       */
-      const std::string m_entryCategory;
-
-      /**
-       * The name of the configuration entry.
-       */
-      const std::string m_entryName;
-
-      /**
-       * The (invalid) value of the configuration entry.
-       */
-      const std::string m_entryValue;
-
-    }; // class InvalidConfigEntry
+  /**
+   * The (invalid) value of the configuration entry.
+   */
+  const std::string m_entryValue;
+};
 
 } // namespace cta::exception

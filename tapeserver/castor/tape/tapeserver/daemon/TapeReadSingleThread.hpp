@@ -54,7 +54,7 @@ public:
                        uint64_t maxFilesRequest,
                        cta::server::ProcessCap& capUtils,
                        RecallWatchDog& watchdog,
-                       cta::log::LogContext& logContext,
+                       const cta::log::LogContext& logContext,
                        RecallReportPacker& reportPacker,
                        const bool useLbp,
                        const bool useRAO,

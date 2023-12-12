@@ -28,7 +28,7 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(const std::string &hostName, const std::string &programName, const int logMask):
+Logger::Logger(std::string_view hostName, std::string_view programName, const int logMask):
   m_hostName(hostName), m_programName(programName), m_logMask(logMask),
   m_priorityToText(generatePriorityToTextMap()) {}
 
@@ -47,11 +47,7 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) {
-
+void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) {
   const std::string rawParams;
   struct timeval timeStamp;
   gettimeofday(&timeStamp, nullptr);
@@ -128,7 +124,7 @@ std::map<std::string, int>
 //------------------------------------------------------------------------------
 // setLogMask
 //------------------------------------------------------------------------------
-void Logger::setLogMask(const std::string logMask) {
+void Logger::setLogMask(std::string_view logMask) {
   try {
     setLogMask(toLogLevel(logMask));
   } catch(exception::Exception &ex) {
@@ -148,8 +144,8 @@ void Logger::setLogMask(const int logMask) {
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgHeader(
   const struct timeval &timeStamp,
-  const std::string &hostName,
-  const std::string &programName,
+  std::string_view hostName,
+  std::string_view programName,
   const int pid) {
   std::ostringstream os;
   char buf[80];
@@ -168,14 +164,8 @@ std::string Logger::createMsgHeader(
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(
-  const int priority,
-  const std::string &priorityText,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const std::string &rawParams,
-  const std::string &programName,
-  const int pid) {
+std::string Logger::createMsgBody(int priority, std::string_view priorityText, std::string_view msg,
+  const std::list<Param> &params, std::string_view rawParams, std::string_view programName, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);

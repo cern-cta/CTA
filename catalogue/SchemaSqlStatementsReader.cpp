@@ -107,20 +107,6 @@ std::string SchemaSqlStatementsReader::getDatabaseType() {
 //////////////////////////////////////////////////////////////////
 // DirectoryVersionsSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType,
-  const std::string &catalogueVersion, const std::string &allSchemasVersionPath)
-  : SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion), m_allSchemasVersionPath(allSchemasVersionPath) {
-}
-
-DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig)
-  : SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion),
-  m_allSchemasVersionPath(orig.m_allSchemasVersionPath) {
-}
-
-std::list<std::string> DirectoryVersionsSqlStatementsReader::getStatements() {
-  return getAllStatementsFromSchema(readSchemaFromFile());
-}
-
 std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
   std::string schemaFilePath = getSchemaFilePath();
   std::ifstream schemaFile(schemaFilePath);
@@ -130,10 +116,6 @@ std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
   }
   std::string content((std::istreambuf_iterator<char>(schemaFile)), (std::istreambuf_iterator<char>()));
   return content;
-}
-
-std::string DirectoryVersionsSqlStatementsReader::getSchemaFilePath() {
-  return m_allSchemasVersionPath+m_catalogueVersion+"/"+getDatabaseType()+c_catalogueFileNameTrailer;
 }
 
 //////////////////////////////////////////////////////////////////

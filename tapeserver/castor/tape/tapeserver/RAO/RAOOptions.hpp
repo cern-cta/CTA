@@ -49,7 +49,7 @@ public:
    *
    * @param options    string in the format option1Name:value1,option2Name:value2,[...],optionNName:valueN
    */
-  explicit RAOOptions(const std::string& options);
+  explicit RAOOptions(std::string_view options);
 
   /**
    * Destructor

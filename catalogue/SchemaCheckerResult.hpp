@@ -40,9 +40,10 @@ public:
   };
   static std::string statusToString(const Status& status);
   
-  SchemaCheckerResult();
-  SchemaCheckerResult(const SchemaCheckerResult& orig);
-  SchemaCheckerResult& operator=(const SchemaCheckerResult& other);
+  /**
+   * Constructor
+   */
+  SchemaCheckerResult() : m_status(Status::SUCCESS) { }
   /**
    * We can combine the SchemaComparerResult in order to add other Results to it
    * @param other the SchemaComparerResult object to add
@@ -52,13 +53,11 @@ public:
    * It will simply append the list of differences of other to this SchemaComparerResult
    */
   SchemaCheckerResult operator+=(const SchemaCheckerResult &other);
-  
   /**
    * Prints the errors the ostream
    * @param os the ostream to print the errors
    */
   void displayErrors(std::ostream & os) const;
-  
   /**
    * Prints the warnings the ostream
    * @param os the ostream to print the warnings
@@ -68,7 +67,7 @@ public:
    * Returns the status of the SchemaComparerResult
    * @return the status of the SchemaComparerResult
    */
-  Status getStatus() const;
+  Status getStatus() const { return m_status; }
   /**
    * Add an error to this result
    * @param error the error to add
@@ -81,6 +80,7 @@ public:
   void addWarning(const std::string & warning);
   
   virtual ~SchemaCheckerResult() = default;
+
 private:
   std::list<std::string> m_errors;
   std::list<std::string> m_warnings;

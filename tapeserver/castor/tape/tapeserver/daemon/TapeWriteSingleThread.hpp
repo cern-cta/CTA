@@ -55,7 +55,7 @@ public:
     TapeSessionReporter& reporter,
     MigrationWatchDog& watchdog,
     const VolumeInfo& volInfo,
-    cta::log::LogContext& logContext,
+    const cta::log::LogContext& logContext,
     MigrationReportPacker& reportPacker,
     cta::server::ProcessCap& capUtils,
     uint64_t filesBeforeFlush,
