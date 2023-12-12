@@ -310,15 +310,14 @@ IFS='|' read -a results_array <<< $(sqlite3 ${DB_NAME} "SELECT SUM(archived), SU
 ARCHIVED=${results_array[0]}
 RETRIEVED=${results_array[1]}
 EVICTED=${results_array[2]}
-ABORTED="TODO"
 DELETED=${results_array[3]}
 
 names_arr=("ARCHIVED" "RETRIEVED" "EVICTED" "ABORTED" "DELETED")
 
 echo "###"
 echo "$(date +%s): Results:"
-echo "NB FILES / ARCHIVED / RETRIEVED / EVICTED / ABORTED / DELETED"
-echo "${TOTAL_FILES} / ${ARCHIVED} / ${RETRIEVED} / ${EVICTED} / ${ABORTED} / ${DELETED}"
+echo "NB FILES / ARCHIVED / RETRIEVED / EVICTED / DELETED"
+echo "${TOTAL_FILES} / ${ARCHIVED} / ${RETRIEVED} / ${EVICTED} / ${DELETED}"
 echo "###"
 
 test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}</br>EVICTED: ${EVICTED}<br/>DELETED: ${DELETED}" 'test,end'
