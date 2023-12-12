@@ -282,7 +282,7 @@ for step in $SEQUENCE; do
   case "${step}" in
     abort)
         # We can't track anything from eos for file to  be aborted. This is done in the
-    # abort test script. So we sleep for the aproximate time of the abort. TODO: change wait for abort file from script
+    # abort test script. So we sleep for the aproximate time of the abort.
         sleep 15
         ;;
     archive)
@@ -322,9 +322,11 @@ echo "###"
 
 test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}</br>EVICTED: ${EVICTED}<br/>DELETED: ${DELETED}" 'test,end'
 
+# Exit if some files failed in some stage
 TOTAL_FILES=$(( ${NB_FILES} * ${NB_DIRS} ))
 for i in "${!resuls_array[@]}"; do
   if [[ ${TOTAL_FILES} -ne ${results_array[$i]} ]]; then
     echo "ERROR: ${names_arr[${i}]} count value ${results_arr[${i}]} does not match the expected value ${TOTAL_FILES}."
+    exit 1
   fi
 done
