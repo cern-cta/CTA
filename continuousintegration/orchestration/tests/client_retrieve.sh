@@ -54,7 +54,7 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
 
-TO_BE_RETRIEVED=$(( ${NB_FILES} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
+TO_BE_RETRIEVED=$(( ${NB_FILES} * ${NB_DIRS} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
 # Wait for the copy to appear on disk
