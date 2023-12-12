@@ -84,6 +84,12 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL} -c gfal2"
 
     echo
+    echo "Track progress of test"
+    (kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
+    )&
+    TRACKER_PID=$!
+
+    echo
     echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Archiving files: xrdcp as user1"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
@@ -102,10 +108,20 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
-    echo "Launching client-gfal2_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+    echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Deleting files with gfal-rm via root protocol"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+    echo "$(date +%s): Waiting for tracker process to finish. "
+    wait "${TRACKER_PID}"
+    if [[ $? == 1 ]]; then
+    echo "Some files were lost during tape workflow."
+    kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+    exit 1
+fi
+
+
 fi
 
 
