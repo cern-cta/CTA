@@ -824,11 +824,10 @@ class SchedulerDatabase {
 
   /**
    * A function dumping the relevant mount information for deciding which
-   * tape to mount next. This also starts the mount decision process (and takes
-   * a global lock on for scheduling).
+   * tape to mount next. This also starts the mount decision process.
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) = 0;
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding

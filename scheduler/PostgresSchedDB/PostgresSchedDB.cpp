@@ -387,7 +387,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   return PostgresSchedDB::getMountInfo(logContext, 0);
 }
 
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us)
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMountInfo(log::LogContext& logContext, uint64_t timeout_us)
 {
   utils::Timer t;
 

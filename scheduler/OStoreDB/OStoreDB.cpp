@@ -31,6 +31,7 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -712,7 +713,7 @@ OStoreDB::getMountInfo(log::LogContext& logContext) {
 // OStoreDB::getMountInfo()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-  OStoreDB::getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) {
+  OStoreDB::getMountInfo(log::LogContext& logContext, uint64_t timeout_us) {
   utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
@@ -726,7 +727,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_schedulerGlobalLock.reset(
     new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
   try {
-    tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, globalLockTimeout_us);
+    tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, timeout_us);
   } catch (cta::exception::TimeoutException &e) {
     auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params(logContext);

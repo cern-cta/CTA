@@ -15,26 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig() noexcept:
-        bufsz(0),
-        nbBufs(0),
-        bulkRequestMigrationMaxBytes(0),
-        bulkRequestMigrationMaxFiles(0),
-        bulkRequestRecallMaxBytes(0),
-        bulkRequestRecallMaxFiles(0),
-        maxBytesBeforeFlush(0),
-        maxFilesBeforeFlush(0),
-        nbDiskThreads(0),
-        xrootTimeout(0),
-        useLbp(false),
-        useRAO(false),
-        useEncryption(true),
-        tapeLoadTimeout(300),
-        wdNoBlockMoveMaxSecs(10 * 60),
-        wdIdleSessionTimer(10),
-        wdGetNextMountMaxSecs(15 * 60) {}
+#include "Exception.hpp"
+
+namespace cta::exception {
+
+/**
+ * class TimeoutException
+ * A simple exception used for timeout handling in cts
+ */
+class TimeoutException : public Exception {
+  using Exception::Exception;
+};
+
+} // namespace cta::exception

@@ -59,7 +59,7 @@ void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfigurat
   setConfigToDB(&config->repackMaxRequestsToExpand, catalogue, tapeDriveName);
   setConfigToDB(&config->externalFreeDiskSpaceScript, catalogue, tapeDriveName);
   setConfigToDB(&config->tapeLoadTimeout, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdGlobalLockAcqMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(&config->wdGetNextMountMaxSecs, catalogue, tapeDriveName);
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,

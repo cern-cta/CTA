@@ -976,7 +976,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
   dataTransferConfig.useEncryption = (m_tapedConfig.useEncryption.value() == "yes");
   dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
   dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
-  dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
+  dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
 
   // Capabilities management.

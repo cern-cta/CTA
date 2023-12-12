@@ -197,8 +197,8 @@ public:
     return m_SchedDB->getMountInfo(logContext);
   }
 
-  std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) override {
-    return m_SchedDB->getMountInfo(logContext, globalLockTimeout_us);
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override {
+    return m_SchedDB->getMountInfo(logContext, timeout_us);
   }
 
   void trimEmptyQueues(log::LogContext& lc) override {

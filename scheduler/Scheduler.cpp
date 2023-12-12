@@ -1579,7 +1579,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc, uint64_t globalLockTimeout_us) {
+std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc, uint64_t timeout_us) {
   // In order to decide the next mount to do, we have to take a global lock on
   // the scheduling, retrieve a list of all running mounts, queues sizes for
   // tapes and tape pools, order the candidates by priority
@@ -1622,7 +1622,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
   }
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfo(lc);
+  mountInfo = m_db.getMountInfo(lc, timeout_us);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
     m_db.trimEmptyQueues(lc);

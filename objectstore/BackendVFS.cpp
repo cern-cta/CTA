@@ -18,6 +18,7 @@
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"

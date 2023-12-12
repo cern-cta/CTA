@@ -133,8 +133,8 @@ struct TapedConfiguration {
   cta::SourcedParameter<time_t> wdIdleSessionTimer{
     "taped", "WatchdogIdleSessionTimer", 10, "Compile time default"};
   /// Time to wait after which the tape server stops trying to get the next mount
-  cta::SourcedParameter<time_t> wdGlobalLockAcqMaxSecs{
-    "taped", "WatchdogGlobalLockAcqMaxSecs", 15 * 60, "Compile time default"};
+  cta::SourcedParameter<time_t> wdGetNextMountMaxSecs{
+    "taped", "WatchdogGetNextMountMaxSecs", 15 * 60, "Compile time default"};
   //----------------------------------------------------------------------------
   // The central storage access configuration
   //---------------------------------------------------------------------------- 
