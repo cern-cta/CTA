@@ -96,21 +96,21 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
-    echo "Launching client-gfal2_retrieve.sh on client pod using ${TEST_PROTOCOL protocol}"
+    echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Retrieving files with gfal-bringonline via root protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_retrieve.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
-    echo "Launching client-gfal2_evict.sh on client pod using ${TEST_PROTOCOL protocol}"
+    echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Evicting files with gfal-evict via root protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_evict.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
-    echo "Launching client-gfal2_delete.sh on client pod using ${TEST_PROTOCOL protocol}"
+    echo "Launching client-gfal2_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Deleting files with gfal-rm via root protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_delete.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
