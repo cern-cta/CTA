@@ -93,6 +93,15 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 rm -f reqid_*
 
+
+REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+echo "${REMAINING_REQUESTS} requests remaining."
+
+if [[ ${REMAINING_REQUESTS} -ne $((NB_FILES * NB_DIRS)) ]]; then
+  echo "ERROR: Not all files were queued for abort prepare test."
+  exit 1
+fi
+
 # Put drive(s) back up to clear the queue
 echo -n "Will put back up those drives : "
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
@@ -100,16 +109,12 @@ for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "U
   admin_cta dr up $d
 done
 
+echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 sleep 10
 
-# Check that queues are empty after a while and files did not get retrieved
-echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
-REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
-echo "${REMAINING_REQUESTS} requests remaining."
-# Prevent the result from being empty
-if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi
+# Wait for Requests to be removed.
 while [[ ${REMAINING_REQUESTS} > 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -146,5 +151,6 @@ fi
 if [ ${RESTAGEDFILES} -ne "0" ]; then
   echo 'ERROR some files were retrieved in spite of retirve cancellation.' >> /tmp/RC
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
+  exit 1
 fi
 
