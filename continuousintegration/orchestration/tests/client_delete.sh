@@ -65,16 +65,9 @@ kill ${EOSRMPID} &> /dev/null
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was
 # successful or not
-LASTCOUNT=0
 if [[ ${INITIALFILESONTAPE} -gt ${DELETED} ]]; then
-  LASTCOUNT=${DELETED}
-  echo "Some files have not been deleted:"
+  echo "ERROR: Some files have not been deleted"
+  exit 1
 else
   echo "All files have been deleted"
-  LASTCOUNT=${INITIALFILESONTAPE}
-fi
-
-if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
-  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files" >> /tmp/RC
-  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files"
 fi

@@ -149,7 +149,6 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
 fi
 
 if [ ${RESTAGEDFILES} -ne "0" ]; then
-  echo 'ERROR some files were retrieved in spite of retirve cancellation.' >> /tmp/RC
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
   exit 1
 fi

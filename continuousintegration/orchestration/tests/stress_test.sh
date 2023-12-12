@@ -60,9 +60,6 @@ kubectl -n ${NAMESPACE} exec ctaeos -- yum install -y eos-debuginfo
 
 kubectl -n ${NAMESPACE} exec ctafrontend -- yum install -y xrootd-debuginfo
 
-echo "Installing parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel" || exit 1
-kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex" || exit 1
 
 ls | xargs -I{} kubectl -n ${NAMESPACE} cp {} client:/root/{}
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
@@ -89,9 +86,24 @@ echo "Launching client_ar.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_ar.sh ${TEST_POSTRUN}" || exit 1
-## Do not remove as listing af is not coming back???
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -A -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+
+echo
+echo "Launching client_evict.sh on client pod"
+echo " Evicting files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+
+echo
+echo "Launching client_abortPrepare.sh on client pod"
+echo "  Retrieving files: xrdfs as poweruser1"
+echo "  Aborting prepare: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
+
+echo
+echo "Launching client_delete.sh on client pod"
+echo " Deleting files:"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 

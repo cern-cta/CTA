@@ -36,3 +36,8 @@ done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
+
+if [[ ${EVICTED} -ne ${TO_EVICT} ]]; then
+  echo "ERROR: some files were not evicted"
+  exit 1
+fi
