@@ -857,7 +857,7 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::Ta
   log::ScopedParamContainer params(m_lc);
   int logLevel = log::ERR;
   params.add("tapeDrive", m_driveConfig.unitName);
-  m_lc.log(logLevel, std::string(errorMsg));
+  m_lc.log(logLevel, errorMsg);
   try {
     scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
       cta::common::dataStructures::DriveStatus::Down, m_lc);
@@ -865,7 +865,7 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::Ta
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
     driveState.forceDown = false;
-    driveState.setReasonFromLogMsg(logLevel, std::string(errorMsg));
+    driveState.setReasonFromLogMsg(logLevel, errorMsg);
     scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);

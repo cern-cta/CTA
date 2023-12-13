@@ -118,7 +118,7 @@ protected:
   /*
    *  Is the system at _this very moment_ reading or writing on tape
    */
-  bool m_fileBeingMoved;
+  bool m_fileBeingMoved = false;
   /*
    * Logging system  
    */
@@ -332,7 +332,7 @@ public:
   TaskWatchDog(double reportPeriod, double stuckPeriod, cta::tape::daemon::TapedProxy& initialProcess,
     cta::TapeMount& mount, std::string_view driveUnitName, const cta::log::LogContext& lc, double pollPeriod = 0.1) :
     m_pollPeriod(pollPeriod), m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), m_initialProcess(initialProcess),
-    m_mount(mount), m_driveUnitName(driveUnitName), m_fileBeingMoved(false), m_lc(lc) {
+    m_mount(mount), m_driveUnitName(driveUnitName), m_lc(lc) {
     m_lc.pushOrReplace(cta::log::Param("thread","Watchdog"));
   }
   
