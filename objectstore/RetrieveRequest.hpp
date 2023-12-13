@@ -216,6 +216,7 @@ public:
     }
   };
 private:
+  std::string asyncJobSucceedReporterCallback(const std::string &strIn, std::unique_ptr<AsyncJobSucceedReporter> &ret, uint32_t copyNb);
   /*!
    * Determine and set the new status of the job.
    *
