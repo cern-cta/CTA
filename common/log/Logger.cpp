@@ -71,7 +71,7 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   const std::string &priorityText = priorityTextPair->second;
 
   const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
-  const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
+  const std::string body = createMsgBody(priorityText, msg, params, rawParams, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
 }
@@ -164,8 +164,8 @@ std::string Logger::createMsgHeader(
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(int priority, std::string_view priorityText, std::string_view msg,
-  const std::list<Param> &params, std::string_view rawParams, std::string_view programName, int pid) {
+std::string Logger::createMsgBody(std::string_view priorityText, std::string_view msg,
+  const std::list<Param> &params, std::string_view rawParams, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);

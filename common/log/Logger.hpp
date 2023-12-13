@@ -225,7 +225,6 @@ private:
   /**
    * Creates and returns the body of a log message
    *
-   * @param priority    the priority of the message as defined by the syslog API
    * @param msg         the message
    * @param params      the parameters of the message
    * @param rawParams   preprocessed parameters of the message
@@ -233,8 +232,8 @@ private:
    * @param pid         the pid of the log message
    * @return the message body
    */
-  static std::string createMsgBody(int priority, std::string_view priorityText, std::string_view msg,
-    const std::list<Param> &params, std::string_view rawParams, std::string_view programName, int pid);
+  static std::string createMsgBody(std::string_view priorityText, std::string_view msg,
+    const std::list<Param> &params, std::string_view rawParams, int pid);
 };
 
 } // namespace cta::log
