@@ -32,12 +32,12 @@ public:
   /**
    * Existing CostHeuristic type
    */
-  enum CostHeuristicType{ cta };
+  enum class CostHeuristicType{ cta };
 
   /**
    * Existing FilePositionEstimator type
    */
-  enum FilePositionEstimatorType { interpolation };
+  enum class FilePositionEstimatorType { interpolation };
 
   /**
    * Default constructor
