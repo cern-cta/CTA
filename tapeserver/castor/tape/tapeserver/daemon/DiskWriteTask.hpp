@@ -119,7 +119,7 @@ private:
   /**
    * log into lc all m_stats parameters with the given message at the given level
    */
-  void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc);
+  void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) const;
 };
 
 } // namespace castor::tape::tapeserver::daemon
