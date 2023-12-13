@@ -23,135 +23,116 @@
 namespace castor::tape::tapeserver::daemon {
 
 /**
- * The contents of the cta.conf file to be used by a DataTransferSession.
+ * The contents of the cta.conf file to be used by a DataTransferSession
  */
 struct DataTransferConfig {
+  /**
+   * The size of a data-transfer buffer in bytes
+   */
+  uint32_t bufsz = 0;
 
   /**
-   * The size in bytes of a data-transfer buffer.
+   * The total number of data-transfer buffers to be instantiated
    */
-  uint32_t bufsz;
+  uint32_t nbBufs = 0;
 
   /**
-   * The total number of data-transfer buffers to be instantiated.
+   * Maximum number of bytes in a set of files to be archived to tape
    */
-  uint32_t nbBufs;
+  uint64_t bulkRequestMigrationMaxBytes = 0;
 
   /**
-   * When the tapebridged daemon requests the tapegatewayd daemon for a set of
-   * files to migrate to tape, this parameter defines the maximum number of
-   * bytes the set of files should represent.
+   * Maximum number of files in a set of files to be archived to tape
    */
-  uint64_t bulkRequestMigrationMaxBytes;
+  uint64_t bulkRequestMigrationMaxFiles = 0;
 
   /**
-   * When the tapebridged daemon requests the tapegatewayd daemon for a set of
-   * files to migrate to tape, this parameter defines the maximum number of files
-   * the set may contain.
+   * Maximum number of bytes in a set of files to be recalled from tape
    */
-  uint64_t bulkRequestMigrationMaxFiles;
+  uint64_t bulkRequestRecallMaxBytes = 0;
 
   /**
-   * When the tapebridged daemon requests the tapegatewayd daemon for a set of
-   * files to recall from tape, this parameter defines the maximum number of bytes
-   * the set of files should represent.
+   * Maximum number of files in a set of files to be recalled from tape
    */
-  uint64_t bulkRequestRecallMaxBytes;
+  uint64_t bulkRequestRecallMaxFiles = 0;
 
   /**
-   * When the tapebridged daemon requests the tapegatewayd daemon for a set of
-   * files to recall from tape, this parameter defines the maximum number of bytes
-   * the set of files should represent.
+   * Maximum number of bytes to be written before a flush to tape (synchronised tape-mark). Note that as
+   * a flush occurs on a file boundary, usually more bytes will be written to tape before the actual flush occurs.
    */
-  uint64_t bulkRequestRecallMaxFiles;
+  uint64_t maxBytesBeforeFlush = 0;
 
   /**
-   * The value of this parameter defines the maximum number of bytes to be written
-   * to tape before a flush to tape (synchronised tape-mark).  Please note that a
-   * flush occurs on a file boundary therefore more bytes will normally be written
-   * to tape before the actual flush occurs.
+   * Maximum number of files to be written before a flush to tape (synchronised or non-immediate tape-mark)
    */
-  uint64_t maxBytesBeforeFlush;
+  uint64_t maxFilesBeforeFlush = 0;
 
   /**
-   * The value of this parameter defines the maximum number of files to be written
-   * to tape before a flush to tape (synchronised or non-immediate tape-mark).
+   * Number of disk I/O threads
    */
-  uint64_t maxFilesBeforeFlush;
+  uint32_t nbDiskThreads = 0;
 
   /**
-   * The number of disk I/O threads.
+   * Timeout for XRoot functions
+   *
+   * Default is 0 (no timeout)
    */
-  uint32_t nbDiskThreads;
+  uint16_t xrootTimeout = 0;
 
   /**
-   * The timeout for all the xroot functions. The default is 0 (no timeout)
+   * Whether to use Logical Block Protection (LBP)
    */
-  uint16_t xrootTimeout;
+  bool useLbp = false;
 
   /**
-   * The boolean variable describing to use on not to use Logical
-   * Block Protection.
+   * Whether to use Recommended Access Order (RAO)
    */
-  bool useLbp;
-
-  /**
-   * The boolean variable describing to use on not to use Recommended
-   * Access Order
-   */
-  bool useRAO;
+  bool useRAO = false;
   
   /**
-   * The name of the RAO LTO algorithm to use
+   * Which RAO LTO algorithm to use
    */
   std::string raoLtoAlgorithm;
   
   /**
-   * The options that can be used by the raoAlgorithm
+   * Options to be provided to the raoLtoAlgorithm
    */
   std::string raoLtoAlgorithmOptions;
 
   /**
-   * The boolean variable describing to use on not to use Encryption
+   * Whether to use encryption
    */
-  bool useEncryption;
+  bool useEncryption = true;
 
   /**
-   * The path to the operator provided encyption control script (or empty string)
+   * Path to the operator-provided encyption control script (empty string for none)
    */
   std::string externalEncryptionKeyScript;  
     
   /**
-   * The path to the operator provided EOS free space fetch script (or empty string)
+   * Path to the operator-provided disk free space fetch script (empty string for none)
    */
   std::string externalFreeDiskSpaceScript;
 
   /**
-   * The timeout after which the mount of a tape is considered failed
+   * Timeout after which the mounting of a tape is considered failed
    */
-  uint32_t tapeLoadTimeout;
+  uint32_t tapeLoadTimeout = 300;
 
   /**
    * Maximum time allowed after mounting without a single tape block move
    */
-  time_t wdNoBlockMoveMaxSecs;
+  time_t wdNoBlockMoveMaxSecs = 600;
 
   /**
    * Time to wait after scheduling came up idle
    */
-  time_t wdIdleSessionTimer;
+  time_t wdIdleSessionTimer = 10;
 
   /**
-  * The timeout after which the tape server stops trying to get the next mount
-  */
-  time_t wdGetNextMountMaxSecs;
-
-  /**
-   * Constructor that sets all integer member-variables to 0 and all string
-   * member-variables to the empty string.
+   * Timeout after which the tape server stops trying to get the next mount
    */
-  DataTransferConfig() noexcept;
-
-}; // DataTransferConfig
+  time_t wdGetNextMountMaxSecs = 900;
+};
 
 } // namespace castor::tape::tapeserver::daemon

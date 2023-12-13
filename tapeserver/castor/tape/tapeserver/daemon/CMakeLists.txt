@@ -26,7 +26,6 @@ find_package( ZLIB REQUIRED )
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   CleanerSession.cpp
-  DataTransferConfig.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
