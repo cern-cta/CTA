@@ -43,7 +43,7 @@ public:
   /**
    * Constructor
    */
-  SchemaCheckerResult() : m_status(Status::SUCCESS) { }
+  SchemaCheckerResult() = default;
   /**
    * We can combine the SchemaComparerResult in order to add other Results to it
    * @param other the SchemaComparerResult object to add
@@ -84,7 +84,7 @@ public:
 private:
   std::list<std::string> m_errors;
   std::list<std::string> m_warnings;
-  Status m_status;
+  Status m_status = Status::SUCCESS;
 };
 
 } // namespace cta::catalogue
