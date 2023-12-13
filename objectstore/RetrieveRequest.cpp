@@ -1161,46 +1161,53 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::asyncJobSucceedReporterCallbac()
+//------------------------------------------------------------------------------
+std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string &strIn, std::unique_ptr<AsyncJobSucceedReporter> &ret, uint32_t copyNb) {
+//std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string &strIn, uint32_t copyNb) {
+  // We have a locked and fetched object, so we just need to work on its representation.
+  cta::objectstore::serializers::ObjectHeader oh;
+  if (!oh.ParseFromString(strIn)) {
+    // Use a the tolerant parser to assess the situation.
+    oh.ParsePartialFromString(strIn);
+    throw cta::exception::Exception(std::string("In RetrieveRequest::asyncJobSucceedReporterCallback(): could not parse header: ")+
+      oh.InitializationErrorString());
+  }
+  if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+    std::stringstream err;
+    err << "In RetrieveRequest::asyncReportSucceed()::lambda(): wrong object type: " << oh.type();
+    throw cta::exception::Exception(err.str());
+  }
+  serializers::RetrieveRequest payload;
+
+  if (!payload.ParseFromString(oh.payload())) {
+    // Use a the tolerant parser to assess the situation.
+    payload.ParsePartialFromString(oh.payload());
+    throw cta::exception::Exception(std::string("In RetrieveRequest::asyncJobSucceedReporterCallback(): could not parse payload: ")+
+      payload.InitializationErrorString());
+  }
+  auto retrieveJobs = payload.mutable_jobs();
+  for (auto &job : *retrieveJobs) {
+    if (job.copynb() == copyNb) {
+      //Change the status to RJS_Succeed
+      job.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer);
+      oh.set_payload(payload.SerializeAsString());
+      return oh.SerializeAsString();
+    }
+  }
+  ret->m_MountPolicy.deserialize(payload.mountpolicy());
+  throw cta::exception::Exception("In RetrieveRequest::asyncJobSucceedReporterCallback(): copyNb not found");
+}
+//------------------------------------------------------------------------------
 // RetrieveRequest::asyncReportSucceed()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedReporter * RetrieveRequest::asyncReportSucceed(uint32_t copyNb) {
   auto ret = std::make_unique<AsyncJobSucceedReporter>();
+ 
+  ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncJobSucceedReporterCallback,
+      this, std::placeholders::_1, std::ref(ret), copyNb);
 
-  ret->m_updaterCallback = [&ret, copyNb](const std::string &in)->std::string {
-    // We have a locked and fetched object, so we just need to work on its representation.
-    cta::objectstore::serializers::ObjectHeader oh;
-    if (!oh.ParseFromString(in)) {
-      // Use a the tolerant parser to assess the situation.
-      oh.ParsePartialFromString(in);
-      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceed(): could not parse header: ")+
-        oh.InitializationErrorString());
-    }
-    if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
-      std::stringstream err;
-      err << "In RetrieveRequest::asyncReportSucceed()::lambda(): wrong object type: " << oh.type();
-      throw cta::exception::Exception(err.str());
-    }
-    serializers::RetrieveRequest payload;
-
-    if (!payload.ParseFromString(oh.payload())) {
-      // Use a the tolerant parser to assess the situation.
-      payload.ParsePartialFromString(oh.payload());
-      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceed(): could not parse payload: ")+
-        payload.InitializationErrorString());
-    }
-    auto retrieveJobs = payload.mutable_jobs();
-    for (auto &job : *retrieveJobs) {
-      if (job.copynb() == copyNb) {
-        //Change the status to RJS_Succeed
-        job.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForTransfer);
-        oh.set_payload(payload.SerializeAsString());
-        return oh.SerializeAsString();
-      }
-    }
-    ret->m_MountPolicy.deserialize(payload.mountpolicy());
-    throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceed::lambda(): copyNb not found");
-  };
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
   return ret.release();
 }
 
