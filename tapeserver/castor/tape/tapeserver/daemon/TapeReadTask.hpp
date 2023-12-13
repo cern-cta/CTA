@@ -88,7 +88,7 @@ public:
     MemBlock* mb = nullptr;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
-      auto reader = openFileReader(rs, lc);
+      auto reader = openFileReader(*rs, lc);
       LBPMode = reader->getLBPMode();
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -250,14 +250,14 @@ private:
    * object.
    * @return if successful, return an unique_ptr on the FileReader we want
    */
-  std::unique_ptr<castor::tape::tapeFile::FileReader>
-  openFileReader(const std::unique_ptr<castor::tape::tapeFile::ReadSession>& session, cta::log::LogContext& lc) {
+  std::unique_ptr<tapeFile::FileReader>
+  openFileReader(tapeFile::ReadSession& session, cta::log::LogContext& lc) {
     using cta::log::Param;
     typedef cta::log::LogContext::ScopedParam ScopedParam;
 
     std::unique_ptr<castor::tape::tapeFile::FileReader> reader;
     try {
-      reader = castor::tape::tapeFile::FileReaderFactory::create(session, *m_retrieveJob);
+      reader = tapeFile::FileReaderFactory::create(session, *m_retrieveJob);
       lc.log(cta::log::DEBUG, "Successfully opened the tape file");
     } catch (cta::exception::Exception & ex) {
       // Log the error

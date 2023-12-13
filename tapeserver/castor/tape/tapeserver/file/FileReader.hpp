@@ -31,10 +31,23 @@ namespace castor::tape::tapeFile {
 class ReadSession;
 
 class FileReader {
+  friend class FileReaderFactory;
+
 public:
   /**
-    * Destructor of the FileReader. It will release the lock on the read session.
-    */
+   * Constructor
+   *
+   * It will bind itself to an existing read session and position the tape right at the beginning of the file
+   *
+   * @param rs              session to be bound to
+   * @param fileInfo        information about the file we would like to read
+   * @param positioningMode method used when positioning (see the PositioningMode enum)
+   */
+  FileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall);
+
+  /**
+   * Destructor. It will release the lock on the read session.
+   */
   virtual ~FileReader() noexcept;
 
   /**
@@ -60,18 +73,7 @@ public:
     */
   std::string getLBPMode();
 
-  friend class FileReaderFactory;
-
 protected:
-  /**
-    * Constructor of the FileReader. It will bind itself to an existing read session
-    * and position the tape right at the beginning of the file
-    * @param rs: session to be bound to
-    * @param fileInfo: information about the file we would like to read
-    * @param positioningMode: method used when positioning (see the PositioningMode enum)
-    */
-  FileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
-
   /**
     * Move throught the headers to the block to read using Fseq Delta increments.
     */
@@ -85,12 +87,12 @@ protected:
   /**
     * Block size in Bytes of the current file
     */
-  size_t m_currentBlockSize;
+  size_t m_currentBlockSize = 0;
 
   /**
     * Session to which we are attached to
     */
-  const std::unique_ptr<ReadSession> &m_session;
+  ReadSession& m_session;
 
   /**
     * What kind of command we use to position ourself on the tape (fseq or blockid)

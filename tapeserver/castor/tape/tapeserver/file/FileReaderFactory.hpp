@@ -32,8 +32,7 @@ class ReadSession;
 
 class FileReaderFactory {
 public:
-  static std::unique_ptr<FileReader> create(const std::unique_ptr<ReadSession> &readSession,
-    const cta::RetrieveJob &fileToRecall);
+  static std::unique_ptr<FileReader> create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall);
 };
 
 } // namespace castor::tape::tapeFile

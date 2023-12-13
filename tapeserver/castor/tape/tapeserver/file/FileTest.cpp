@@ -94,7 +94,7 @@ TEST_P(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {
   ASSERT_NE(readSession, nullptr);
   m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
   // cannot read a file on an empty tape
-  ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall),
+  ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall),
     cta::exception::Exception);
 }
 
@@ -125,9 +125,9 @@ TEST_P(castorTapeFileTest, throwsWhenUsingSessionTwice) {
   const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     // cannot have two FileReader's on the same session
-    ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall),
+    ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall),
       castor::tape::tapeFile::SessionAlreadyInUse);
   }
 }
@@ -175,7 +175,7 @@ TEST_P(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
   auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     char *data = new char[blockSize+1];
     // block size needs to be the same provided by the headers
@@ -226,7 +226,7 @@ TEST_P(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
   ASSERT_EQ(readSession->m_useLbp, true);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     ASSERT_EQ(blockSize, m_block_size);
     char *data = new char[blockSize+1];
