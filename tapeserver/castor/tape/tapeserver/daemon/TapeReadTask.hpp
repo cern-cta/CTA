@@ -51,7 +51,7 @@ public:
      * The main loop is :
      * Acquire a free memory block from the memory manager , fill it, push it
      */
-  void execute(const std::unique_ptr<castor::tape::tapeFile::ReadSession>& rs, cta::log::LogContext& lc,
+  void execute(tapeFile::ReadSession& rs, cta::log::LogContext& lc,
     RecallWatchDog& watchdog, TapeSessionStats& stats, cta::utils::Timer& timer) {
 
     using cta::log::Param;
@@ -88,7 +88,7 @@ public:
     MemBlock* mb = nullptr;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
-      auto reader = openFileReader(*rs, lc);
+      auto reader = openFileReader(rs, lc);
       LBPMode = reader->getLBPMode();
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
