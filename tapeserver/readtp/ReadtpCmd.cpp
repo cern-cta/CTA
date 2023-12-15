@@ -456,7 +456,7 @@ void ReadtpCmd::readTapeFile(
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
 
-  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;

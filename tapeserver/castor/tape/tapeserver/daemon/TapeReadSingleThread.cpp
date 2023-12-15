@@ -402,9 +402,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
           m_logContext.log(cta::log::DEBUG, "No more files to read from tape");
           break;
         }
-        // This can lead the session being marked as corrupt, so we test
-        // it in the while loop
-        task->execute(readSession, m_logContext, m_watchdog, m_stats, timer);
+        // This can lead the session being marked as corrupt, so we test it in the while loop
+        task->execute(*readSession, m_logContext, m_watchdog, m_stats, timer);
         // Transmit the statistics to the watchdog thread
         m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)

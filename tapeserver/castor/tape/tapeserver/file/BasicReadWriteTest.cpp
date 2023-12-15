@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
             fileToRecall.retrieveRequest.archiveFileID = 2;
             fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
 
-            auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
+            auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
             size_t bs = reader->getBlockSize();
             char *data = new char[bs+1];
             for(int j = 0; j < 100; ++j) {

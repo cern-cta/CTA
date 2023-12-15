@@ -238,7 +238,7 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------  
-void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) {
+void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) const {
   cta::log::ScopedParamContainer params(lc);
   params.add("readWriteTime", m_stats.readWriteTime)
         .add("checksumingTime",m_stats.checksumingTime)
@@ -250,10 +250,9 @@ void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogCo
         .add("transferTime", m_stats.transferTime)
         .add("totalTime", m_stats.totalTime)
         .add("dataVolume", m_stats.dataVolume)
-        .add("globalPayloadTransferSpeedMBps", m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
-        .add("diskPerformanceMBps", m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-        .add("openRWCloseToTransferTimeRatio",
-          m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
+        .add("globalPayloadTransferSpeedMBps",    m_stats.totalTime == 0.0 ? 0.0 : 1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime)
+        .add("diskPerformanceMBps",            m_stats.transferTime == 0.0 ? 0.0 : 1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime)
+        .add("openRWCloseToTransferTimeRatio", m_stats.transferTime == 0.0 ? 0.0 : (m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime)
         .add("fileId",m_stats.fileId)
         .add("dstURL",m_stats.dstURL);
   lc.log(level,msg);

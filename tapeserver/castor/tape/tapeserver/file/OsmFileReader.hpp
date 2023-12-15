@@ -27,26 +27,16 @@
 namespace castor::tape::tapeFile {
 
 class OsmFileReader : public FileReader {
+  using FileReader::FileReader;
+
 public:
   /**
-    * Constructor of the FileReader. It will bind itself to an existing read session
-    * and position the tape right at the beginning of the file
-    * @param rs: session to be bound to
-    * @param fileInfo: information about the file we would like to read
-    * @param positioningMode: method used when positioning (see the PositioningMode enum)
-    */
-  OsmFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
-
-  /**
-    * Destructor of the FileReader. It will release the lock on the read session.
+    * Destructor. It will release the lock on the read session.
     */
   ~OsmFileReader() override = default;
 
   size_t readNextDataBlock(void *data, const size_t size) override;
   
-  /**
-   *
-   */
   const CPIO& getCPIOHeader() const {
     return m_cpioHeader;
   }

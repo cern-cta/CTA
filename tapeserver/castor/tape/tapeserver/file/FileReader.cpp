@@ -28,21 +28,20 @@
 
 namespace castor::tape::tapeFile {
 
-FileReader::FileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
-  : m_currentBlockSize(0), m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod),
-    m_LBPMode(rs->getLBPMode()) {
-  if (m_session->isCorrupted()) {
+FileReader::FileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall) :
+  m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod), m_LBPMode(rs.getLBPMode()) {
+  if (m_session.isCorrupted()) {
     throw SessionCorrupted();
   }
-  m_session->lock();
+  m_session.lock();
 }
 
 FileReader::~FileReader() noexcept {
   if (cta::PositioningMethod::ByFSeq == m_positionCommandCode
-    && m_session->getCurrentFilePart() != PartOfFile::Header) {
-    m_session->setCorrupted();
+    && m_session.getCurrentFilePart() != PartOfFile::Header) {
+    m_session.setCorrupted();
   }
-  m_session->release();
+  m_session.release();
 }
 
 size_t FileReader::getBlockSize()  {

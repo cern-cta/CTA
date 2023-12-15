@@ -71,7 +71,7 @@ public:
   */
   RecallTaskInjector(RecallMemoryManager& mm, TapeSingleThreadInterface<TapeReadTask>& tapeReader,
     DiskWriteThreadPool& diskWriter, cta::RetrieveMount& retrieveMount, uint64_t maxFilesPerRequest,
-    uint64_t maxBytesPerRequest, const cta::log::LogContext lc) :
+    uint64_t maxBytesPerRequest, const cta::log::LogContext& lc) :
       m_thread(*this), m_memManager(mm), m_tapeReader(tapeReader), m_diskWriter(diskWriter),
       m_retrieveMount(retrieveMount), m_lc(lc), m_maxBatchFiles(maxFilesPerRequest),
       m_maxBatchBytes(maxBytesPerRequest), m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()) { }

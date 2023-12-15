@@ -28,18 +28,14 @@
 
 namespace castor::tape::tapeFile {
 
-OsmFileReader::OsmFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
-  : FileReader(rs, fileToRecall) {
-}
-
 void OsmFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
-  if (m_session->getCurrentFilePart() != PartOfFile::Header) {
-    m_session->setCorrupted();
+  if (m_session.getCurrentFilePart() != PartOfFile::Header) {
+    m_session.setCorrupted();
     throw SessionCorrupted();
   }
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
-  m_session->setCurrentFilePart(PartOfFile::HeaderProcessing);
+  m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
 
   if (fileToRecall.selectedTapeFile().fSeq < 1) {
     std::ostringstream err;
@@ -49,20 +45,20 @@ void OsmFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
   }
 
   const int64_t fSeq_delta = static_cast<int64_t>(fileToRecall.selectedTapeFile().fSeq)
-                           - static_cast<int64_t>(m_session->getCurrentFseq());
+                           - static_cast<int64_t>(m_session.getCurrentFseq());
   if(fileToRecall.selectedTapeFile().fSeq == 1) { 
     moveToFirstFile();
   } else {
     moveReaderByFSeqDelta(fSeq_delta);
   }
-  m_session->setCurrentFilePart(PartOfFile::Payload);
+  m_session.setCurrentFilePart(PartOfFile::Payload);
   setBlockSize(PAYLOAD_BOLCK_SIZE);
 }
 
 void OsmFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
-  m_session->setCurrentFilePart(PartOfFile::HeaderProcessing);
+  m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
 
   if (fileToRecall.selectedTapeFile().blockId
     > std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()) {
@@ -72,7 +68,7 @@ void OsmFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
     throw cta::exception::Exception(ex_str.str());
   }
   useBlockID(fileToRecall);
-  m_session->setCurrentFilePart(PartOfFile::Payload);
+  m_session.setCurrentFilePart(PartOfFile::Payload);
   setBlockSize(PAYLOAD_BOLCK_SIZE);
 }
 
@@ -80,16 +76,16 @@ void OsmFileReader::moveToFirstFile() {
   // special case: we can rewind the tape to be faster
   // (TODO: in the future we could also think of a threshold above
   // which we rewind the tape anyway and then space forward)
-  m_session->m_drive.rewind();
+  m_session.m_drive.rewind();
   osm::LABEL osmLabel;
-  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 1");
-  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 2");
+  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 1");
+  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 2");
   try {
     osmLabel.decode();
   } catch(const std::exception& osmExc) {
     throw TapeFormatError(osmExc.what());
   }
-  m_session->m_drive.readFileMark("[FileReader::position] Reading file mark right before the header of the file we want to read");
+  m_session.m_drive.readFileMark("[FileReader::position] Reading file mark right before the header of the file we want to read");
 }
 
 void OsmFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
@@ -97,13 +93,13 @@ void OsmFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
     // do nothing we are in the correct place
   } else if (fSeq_delta > 0) {
     // we need to skip one file mark per file
-    m_session->m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta+1));
+    m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta+1));
   } else {  // fSeq_delta < 0
     // we need to skip one file mark per file
     // to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
-    m_session->m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta)+1));
-    m_session->m_drive.readFileMark(
+    m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta)+1));
+    m_session.m_drive.readFileMark(
       "[FileReader::position] Reading file mark right before the header of the file we want to read");
   }
 }
@@ -121,7 +117,7 @@ void OsmFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
 
   // at this point we should be at the beginning of
   // the headers of the desired file, so now let's check the headers...
-  m_session->m_drive.positionToLogicalObject(destination_block);
+  m_session.m_drive.positionToLogicalObject(destination_block);
 }
 
 void OsmFileReader::setBlockSize(size_t uiBlockSize) {
@@ -154,7 +150,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     size_t uiResiduesSize = 0;
     uint8_t* pucTmpData = new uint8_t[size];
 
-    bytes_read = m_session->m_drive.readBlock(pucTmpData, size);
+    bytes_read = m_session.m_drive.readBlock(pucTmpData, size);
     uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
     uiResiduesSize = bytes_read - uiHeaderSize;
 
@@ -170,7 +166,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     }
     delete[] pucTmpData;
   } else {
-    bytes_read = m_session->m_drive.readBlock(data, size);
+    bytes_read = m_session.m_drive.readBlock(data, size);
     m_ui64CPIODataSize += bytes_read;
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
@@ -186,8 +182,8 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 
   // end of file reached! keep reading until the header of the next file
   if (!bytes_read) {
-    m_session->setCurrentFseq(m_session->getCurrentFseq() + 1); // moving on to the header of the next file
-    m_session->setCurrentFilePart(PartOfFile::Header);
+    m_session.setCurrentFseq(m_session.getCurrentFseq() + 1); // moving on to the header of the next file
+    m_session.setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();
   }

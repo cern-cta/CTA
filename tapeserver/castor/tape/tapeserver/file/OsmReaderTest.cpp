@@ -149,7 +149,7 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
 
     // Create Read File OSM
-    auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
+    auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
     size_t bs = reader->getBlockSize();
     char *data = new char[bs+1];
     size_t j = 0;

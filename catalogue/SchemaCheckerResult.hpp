@@ -38,31 +38,31 @@ public:
     SUCCESS,
     FAILED
   };
+
+  virtual ~SchemaCheckerResult() = default;
+
   static std::string statusToString(const Status& status);
-  
-  /**
-   * Constructor
-   */
-  SchemaCheckerResult() : m_status(Status::SUCCESS) { }
+
   /**
    * We can combine the SchemaComparerResult in order to add other Results to it
-   * @param other the SchemaComparerResult object to add
-   * @return other appended to this Schema ComparerResult
    * 
-   * Note: The status will never change if it is failed (this or other)
-   * It will simply append the list of differences of other to this SchemaComparerResult
+   * Note: The status will never change if either this or other is FAILED. It will simply append the
+   *       list of differences of other to this SchemaComparerResult.
+   *
+   * @param other the SchemaComparerResult object to add
+   * @return combined SchemaCheckerResult
    */
-  SchemaCheckerResult operator+=(const SchemaCheckerResult &other);
+  SchemaCheckerResult operator+=(const SchemaCheckerResult& other);
   /**
    * Prints the errors the ostream
    * @param os the ostream to print the errors
    */
-  void displayErrors(std::ostream & os) const;
+  void displayErrors(std::ostream& os) const;
   /**
    * Prints the warnings the ostream
    * @param os the ostream to print the warnings
    */
-  void displayWarnings(std::ostream & os) const;
+  void displayWarnings(std::ostream& os) const;
   /**
    * Returns the status of the SchemaComparerResult
    * @return the status of the SchemaComparerResult
@@ -72,19 +72,17 @@ public:
    * Add an error to this result
    * @param error the error to add
    */
-  void addError(const std::string &error);
+  void addError(const std::string& error);
   /**
    * Add a warning to this result
    * @param warning the warning to add
    */
-  void addWarning(const std::string & warning);
-  
-  virtual ~SchemaCheckerResult() = default;
+  void addWarning(const std::string& warning);
 
 private:
   std::list<std::string> m_errors;
   std::list<std::string> m_warnings;
-  Status m_status;
+  Status m_status = Status::SUCCESS;
 };
 
 } // namespace cta::catalogue

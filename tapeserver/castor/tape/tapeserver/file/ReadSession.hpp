@@ -98,11 +98,11 @@ public:
     m_fseq = fseq;
   }
 
-  inline uint32_t getCurrentFseq() {
+  inline uint32_t getCurrentFseq() const {
     return m_fseq;
   }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() {
+  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const {
     return m_volInfo;
   }
 
@@ -110,16 +110,16 @@ public:
     m_currentFilePart = currentFilePart;
   }
 
-  inline PartOfFile getCurrentFilePart() {
+  inline PartOfFile getCurrentFilePart() const {
     return m_currentFilePart;
   }
 
-  inline std::string getLBPMode() {
-    if (m_useLbp && m_detectedLbp)
+  inline std::string getLBPMode() const {
+    if(m_useLbp && m_detectedLbp)
       return "LBP_On";
-    else if (!m_useLbp && m_detectedLbp)
+    else if(!m_useLbp && m_detectedLbp)
       return "LBP_Off_but_present";
-    else if (!m_detectedLbp)
+    else if(!m_detectedLbp)
       return "LBP_Off";
     throw cta::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
   }

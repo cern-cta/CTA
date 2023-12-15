@@ -51,7 +51,7 @@ std::unique_ptr<SLTFRAOAlgorithm> SLTFRAOAlgorithm::Builder::build() {
 
 void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
   RAOOptions::FilePositionEstimatorType filePositionType = m_raoParams.getRAOAlgorithmOptions().getFilePositionEstimatorType();
-  switch(filePositionType){
+  switch(filePositionType) {
     case RAOOptions::FilePositionEstimatorType::interpolation: {
       if(m_catalogue != nullptr && m_drive != nullptr) {
         m_algorithm->m_filePositionEstimator = FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(m_raoParams.getMountedVid(),m_catalogue,m_drive,m_algorithm->m_raoTimings);
@@ -62,10 +62,6 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
       }
       break;
     }
-    default:
-      std::string errorMsg = "In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() unable to instanciate an estimator to estimate the position of the files on tape "
-        "because the type given in parameter is unknown ("+std::to_string(filePositionType)+").";
-      throw cta::exception::Exception(errorMsg);
   }
 }
 

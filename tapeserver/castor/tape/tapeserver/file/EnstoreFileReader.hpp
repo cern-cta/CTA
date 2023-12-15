@@ -28,13 +28,16 @@ namespace castor::tape::tapeFile {
 class EnstoreFileReader : public FileReader {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+
   /**
-    * Constructor of the EnstoreFileReader. It will bind itself to an existing read session
-    * and position the tape right at the beginning of the file
-    * @param rs: session to be bound to
-    * @param fileToRecall: the file which will be recalled
-    */
-  EnstoreFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
+   * Constructor
+   *
+   * It will bind itself to an existing read session and position the tape right at the beginning of the file
+   *
+   * @param rs           session to bind to
+   * @param fileToRecall the file which will be recalled
+   */
+  EnstoreFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall);
 
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
@@ -44,7 +47,6 @@ public:
   size_t readNextDataBlock(void *data, const size_t size) override;
 
 private:
-
   // Stuff for CPIO file
   CPIO m_cpioHeader;
   uint64_t m_ui64CPIODataSize = 0;
