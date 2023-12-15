@@ -348,7 +348,7 @@ repackCancellation() {
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n repack_ctasystest & 2>/dev/null
-    pid=$!
+    pid=$(kubectl -n ${NAMESPACE} exec client -ti -- pgrep -f /root/repack_systemtest.sh)
   else
     echo "No vid found to repack"
     exit 1
@@ -373,7 +373,7 @@ repackCancellation() {
   done
 
   echo "Expansion finished, deleting the Repack Request"
-  kill $pid
+  kubectl -n ${NAMESPACE} exec client -ti -- kill $pid
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin repack rm --vid ${VID_TO_REPACK} || echo "Error while removing the Repack Request. Test FAILED"
 
   echo
