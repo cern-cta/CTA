@@ -62,6 +62,9 @@ void RepackRequest::initialize() {
   m_payload.set_status(serializers::RepackRequestStatus::RRS_Pending);
   m_payload.set_add_copies_mode(true);
   m_payload.set_move_mode(true);
+  m_payload.set_totalfilesontapeatstart(0);
+  m_payload.set_totalbytesontapeatstart(0);
+  m_payload.set_allfilesselectedatstart(true);
   m_payload.set_totalfilestoretrieve(0);
   m_payload.set_totalbytestoretrieve(0);
   m_payload.set_totalfilestoarchive(0);
@@ -83,6 +86,7 @@ void RepackRequest::initialize() {
   m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
   m_payload.set_repack_finished_time(0);
+  m_payload.set_maxfilestoselect(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -140,6 +144,9 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.vid = m_payload.vid();
   ret.status = (RepackInfo::Status) m_payload.status();
   ret.repackBufferBaseURL = m_payload.buffer_url();
+  ret.totalFilesOnTapeAtStart = m_payload.totalfilesontapeatstart();
+  ret.totalBytesOnTapeAtStart = m_payload.totalbytesontapeatstart();
+  ret.allFilesSelectedAtStart = m_payload.allfilesselectedatstart();
   ret.totalFilesToArchive = m_payload.totalfilestoarchive();
   ret.totalBytesToArchive = m_payload.totalbytestoarchive();
   ret.totalFilesToRetrieve = m_payload.totalfilestoretrieve();
@@ -160,6 +167,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   creationLog.deserialize(m_payload.creation_log());
   ret.creationLog = creationLog;
   ret.repackFinishedTime = m_payload.repack_finished_time();
+  ret.maxFilesToSelect = m_payload.maxfilestoselect();
   for(auto & rdi: m_payload.destination_infos()){
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
@@ -195,6 +203,9 @@ void RepackRequest::setExpandStarted(const bool expandStarted){
 }
 
 void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles){
+  setTotalFilesOnTapeAtStart(totalStatsFiles.totalFilesOnTapeAtStart);
+  setTotalBytesOnTapeAtStart(totalStatsFiles.totalBytesOnTapeAtStart);
+  setAllFilesSelectedAtStart(totalStatsFiles.allFilesSelectedAtStart);
   setTotalFileToRetrieve(totalStatsFiles.totalFilesToRetrieve);
   setTotalFileToArchive(totalStatsFiles.totalFilesToArchive);
   setTotalBytesToArchive(totalStatsFiles.totalBytesToArchive);
@@ -355,6 +366,14 @@ void RepackRequest::setBufferURL(const std::string& bufferURL) {
 }
 
 //------------------------------------------------------------------------------
+// RepackRequest::setMaxFilesToSelect()
+//------------------------------------------------------------------------------
+void RepackRequest::setMaxFilesToSelect(const uint64_t masFilesToExpand) {
+  checkPayloadWritable();
+  m_payload.set_maxfilestoselect(masFilesToExpand);
+}
+
+//------------------------------------------------------------------------------
 // RepackRequest::RepackSubRequestPointer::serialize()
 //------------------------------------------------------------------------------
 void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) {
@@ -443,6 +462,30 @@ uint64_t RepackRequest::getLastExpandedFSeq() {
 }
 
 //------------------------------------------------------------------------------
+// RepackRequest::setTotalFilesOnTapeAtStart()
+//------------------------------------------------------------------------------
+void RepackRequest::setTotalFilesOnTapeAtStart(const uint64_t nbFilesOnTapeAtStart){
+  checkPayloadWritable();
+  m_payload.set_totalfilesontapeatstart(nbFilesOnTapeAtStart);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setTotalBytesOnTapeAtStart()
+//------------------------------------------------------------------------------
+void RepackRequest::setTotalBytesOnTapeAtStart(const uint64_t nbBytesOnTapeAtStart){
+  checkPayloadWritable();
+  m_payload.set_totalbytesontapeatstart(nbBytesOnTapeAtStart);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setAllFilesSelectedAtStart()
+//------------------------------------------------------------------------------
+void RepackRequest::setAllFilesSelectedAtStart(const bool allFilesSelectedAtStart){
+  checkPayloadWritable();
+  m_payload.set_allfilesselectedatstart(allFilesSelectedAtStart);
+}
+
+//------------------------------------------------------------------------------
 // RepackRequest::setTotalFileToRetrieve()
 //------------------------------------------------------------------------------
 void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve){
@@ -485,6 +528,9 @@ void RepackRequest::setUserProvidedFiles(const uint64_t userProvidedFiles){
 cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() {
   checkPayloadReadable();
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles ret;
+  ret.totalFilesOnTapeAtStart = m_payload.totalfilesontapeatstart();
+  ret.totalBytesOnTapeAtStart = m_payload.totalbytesontapeatstart();
+  ret.allFilesSelectedAtStart = m_payload.allfilesselectedatstart();
   ret.totalBytesToRetrieve = m_payload.totalbytestoretrieve();
   ret.totalBytesToArchive = m_payload.totalbytestoarchive();
   ret.totalFilesToRetrieve = m_payload.totalfilestoretrieve();
@@ -778,6 +824,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
       retRef.m_repackInfo.noRecall = payload.no_recall();
+      retRef.m_repackInfo.maxFilesToSelect = payload.maxfilestoselect();
       if (payload.move_mode()) {
         if (payload.add_copies_mode()) {
           retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;

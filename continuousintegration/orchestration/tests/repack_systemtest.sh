@@ -61,10 +61,13 @@ then
   usage
 fi;
 
-while getopts "v:e:b:t:r:n:ampu" o; do
+while getopts "v:f:e:b:t:r:n:ampu" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
+      ;;
+    f)
+      MAX_FILES_TO_SELECT=${OPTARG}
       ;;
     e)
       EOSINSTANCE=${OPTARG}
@@ -115,6 +118,10 @@ if [ "x${MOUNT_POLICY_NAME}" = "x" ]; then
   die "No mount policy name provided."
 fi
 
+if [ ! -z $MAX_FILES_TO_SELECT ]; then
+  MAX_FILES_TO_SELECT_ARG="--maxfilestoselect ${MAX_FILES_TO_SELECT}"
+fi
+
 REPACK_OPTION=""
 
 if [ "x${ADD_COPIES_ONLY}" != "x" ] && [ "x${MOVE_ONLY}" != "x" ]; then
@@ -160,7 +167,20 @@ if [ ! -z $NO_RECALL ]; then
   NO_RECALL_FLAG="--nr"
 fi
 
-admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} || exit 1
+# Check if not all files will be repacked
+if [ ! -z $MAX_FILES_TO_SELECT ]; then
+  TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
+  if [ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]; then
+    echo "Partial repack covering only ${MAX_FILES_TO_SELECT}/${TOTAL_FILES_IN_TAPE} files from tape ${VID_TO_REPACK}"
+  else
+    echo "Partial repack covering all ${TOTAL_FILES_IN_TAPE} files from tape ${VID_TO_REPACK}"
+  fi
+fi
+
+# Record number of files already in the recycle table
+amountRecyleTapeFilesPrev=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+
+admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
@@ -213,6 +233,26 @@ if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | 
     exit 1
 fi
 
+# If not all files were repacked, confirm this as true
+if [ ! -z $MAX_FILES_TO_SELECT ]; then
+  TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
+  if [ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]; then
+    if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length'` && test 0 != `admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'`; then
+      echo "Partial repack selected a subset of files, as expected"
+    else
+      echo "Partial repack failed to select a subset files"
+      exit 1
+    fi
+  else
+    if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == true)] | length'` && test 0 = `admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'`; then
+      echo "Partial repack selected the full subset of files, as expected"
+    else
+      echo "Partial repack failed to select the full subset files"
+      exit 1
+    fi
+  fi
+fi
+
 echo
 destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
 if [[ `echo $destinationInfos | jq length` != 0 ]]
@@ -222,15 +262,16 @@ then
 fi
 
 amountArchivedFiles=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles"`
-amountRecyleTapeFiles=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+amountRecyleTapeFilesNew=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
 
 echo "Amount of archived files = $amountArchivedFiles"
-echo "Amount of recycled tape files = $amountRecyleTapeFiles"
+echo "Amount of new recycled tape files = $amountRecyleTapeFiles"
 if [[ $amountArchivedFiles -eq $amountRecyleTapeFiles ]]
 then
-  echo "The amount of archived files is equal to the amount of recycled tape files. Test OK"
+  echo "The amount of archived files is equal to the amount of new recycled tape files. Test OK"
 else
-  echo "The amount of archived files is not equal to the amount of recycled tape files. Test FAILED"
+  echo "The amount of archived files is not equal to the amount of new recycled tape files. Test FAILED"
   exit 1
 fi
 

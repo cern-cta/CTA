@@ -31,6 +31,9 @@ struct RepackJobQueueRow {
   RepackJobStatus status;
   bool isAddCopies;
   bool isMove;
+  uint64_t totalFilesOnTapeAtStart;
+  uint64_t totalBytesOnTapeAtStart;
+  bool allFilesSelectedAtStart;
   uint64_t totalFilesToRetrieve;
   uint64_t totalBytesToRetrieve;
   uint64_t totalFilesToArchive;
@@ -58,7 +61,8 @@ struct RepackJobQueueRow {
   time_t repackFinishedTime;
 
   RepackJobQueueRow() : repackReqId(0), status(RepackJobStatus::RRS_Pending),
-   isAddCopies(true), isMove(true), totalFilesToRetrieve(0), totalBytesToRetrieve(0),
+   isAddCopies(true), isMove(true), totalFilesOnTapeAtStart(0), totalBytesOnTapeAtStart(0),
+   allFilesSelectedAtStart(true), totalFilesToRetrieve(0), totalBytesToRetrieve(0),
    totalFilesToArchive(0), totalBytesToArchive(0), userProvidedFiles(0),
    userProvidedBytes(0), retrievedFiles(0), retrievedBytes(0), archivedFiles(0),
    archivedBytes(0), failedToRetrieveFiles(0), failedToRetrieveBytes(0),
@@ -83,6 +87,9 @@ struct RepackJobQueueRow {
                                 rset.columnString("STATUS") );
     isAddCopies               = rset.columnBool("IS_ADD_COPIES");
     isMove                    = rset.columnBool("IS_MOVE");
+    totalFilesOnTapeAtStart   = rset.columnUint64("TOTAL_FILES_ON_TAPE_AT_START");
+    totalBytesOnTapeAtStart   = rset.columnUint64("TOTAL_BYTES_ON_TAPE_AT_START");
+    allFilesSelectedAtStart   = rset.columnBool("ALL_FILES_SELECTED_AT_START");
     totalFilesToRetrieve      = rset.columnUint64("TOTAL_FILES_TO_RETRIEVE");
     totalBytesToRetrieve      = rset.columnUint64("TOTAL_BYTES_TO_RETRIEVE");
     totalFilesToArchive       = rset.columnUint64("TOTAL_FILES_TO_ARCHIVE");
@@ -123,6 +130,9 @@ struct RepackJobQueueRow {
         "STATUS,"
         "IS_ADD_COPIES,"
         "IS_MOVE,"
+        "TOTAL_FILES_ON_TAPE_AT_START,"
+        "TOTAL_BYTES_ON_TAPE_AT_START,"
+        "ALL_FILES_SELECTED_AT_START,"
         "TOTAL_FILES_TO_RETRIEVE,"
         "TOTAL_BYTES_TO_RETRIEVE,"
         "TOTAL_FILES_TO_ARCHIVE,"
@@ -155,6 +165,9 @@ struct RepackJobQueueRow {
         ":STATUS,"
         ":IS_ADD_COPIES,"
         ":IS_MOVE,"
+        ":TOTAL_FILES_ON_TAPE_AT_START,"
+        ":TOTAL_BYTES_ON_TAPE_AT_START,"
+        ":ALL_FILES_SELECTED_AT_START,"
         ":TOTAL_FILES_TO_RETRIEVE,"
         ":TOTAL_BYTES_TO_RETRIEVE,"
         ":TOTAL_FILES_TO_ARCHIVE,"
@@ -189,6 +202,9 @@ struct RepackJobQueueRow {
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindBool(":IS_ADD_COPIES", isAddCopies);
     stmt.bindBool(":IS_MOVE", isMove);
+    stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalFilesOnTapeAtStart);
+    stmt.bindUint64(":TOTAL_BYTES_ON_TAPE_AT_START", totalBytesOnTapeAtStart);
+    stmt.bindBool(":ALL_FILES_SELECTED_AT_START", allFilesSelectedAtStart);
     stmt.bindUint64(":TOTAL_FILES_TO_RETRIEVE", totalFilesToRetrieve);
     stmt.bindUint64(":TOTAL_BYTES_TO_RETRIEVE", totalBytesToRetrieve);
     stmt.bindUint64(":TOTAL_FILES_TO_ARCHIVE", totalFilesToArchive);
@@ -227,6 +243,9 @@ struct RepackJobQueueRow {
     params.add("status", to_string(status));
     params.add("isAddCopies", isAddCopies);
     params.add("isMove", isMove);
+    params.add("totalFilesOnTapeAtStart", totalFilesOnTapeAtStart);
+    params.add("totalBytesOnTapeAtStart", totalBytesOnTapeAtStart);
+    params.add("allFilesSelectedAtStart", allFilesSelectedAtStart);
     params.add("totalFilesToRetrieve", totalFilesToRetrieve);
     params.add("totalBytesToRetrieve", totalBytesToRetrieve);
     params.add("totalFilesToArchive", totalFilesToArchive);
@@ -276,6 +295,9 @@ struct RepackJobQueueRow {
       "STATUS AS STATUS,"
       "IS_ADD_COPIES AS IS_ADD_COPIES,"
       "IS_MOVE AS IS_MOVE,"
+      "TOTAL_FILES_ON_TAPE_AT_START AS TOTAL_FILES_ON_TAPE_AT_START,"
+      "TOTAL_BYTES_ON_TAPE_AT_START AS TOTAL_BYTES_ON_TAPE_AT_START,"
+      "ALL_FILES_SELECTED_AT_START AS ALL_FILES_SELECTED_AT_START,"
       "TOTAL_FILES_TO_RETRIEVE AS TOTAL_FILES_TO_RETRIEVE,"
       "TOTAL_BYTES_TO_RETRIEVE AS TOTAL_BYTES_TO_RETRIEVE,"
       "TOTAL_FILES_TO_ARCHIVE AS TOTAL_FILES_TO_ARCHIVE,"

@@ -1944,7 +1944,7 @@ TEST_P(SchedulerTest, repack) {
 
   //The queueing of a repack request should fail if the tape to repack is not full
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
   ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
   //The queueing of a repack request in a vid that does not exist should throw an exception
   qrr.m_vid = "NOT_EXIST";
@@ -2024,7 +2024,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
 
   //Queue the first repack request
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
   scheduler.queueRepack(cliId, qrr, lc);
 
   std::string tape2 = "TAPE2";
@@ -2170,7 +2170,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
   // Should work
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
     ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2268,7 +2268,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
   // Should work
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
     ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2321,7 +2321,7 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2374,7 +2374,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-                                                  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2427,7 +2427,7 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-      common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall, 0);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2931,7 +2931,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   bool noRecall = true;
 
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://DOES_NOT_EXIST",common::dataStructures::RepackInfo::Type::MoveOnly,
-  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall);
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall, 0);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3029,7 +3029,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   tempDirectory.append("/"+s_vid);
   tempDirectory.mkdir();
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,pathRepackBuffer,common::dataStructures::RepackInfo::Type::MoveOnly,
-  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall);
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall, 0);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 

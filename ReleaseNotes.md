@@ -1,6 +1,10 @@
 # v4.NEXT
 
 ### Features
+
+### Features
+- cta/CTA#546 - Limit the number of repack sub-requests that can be expanded at the same moment
+
 ### Bug Fixes
 - cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
 - cta/CTA#540 - Allow optional string values to be cleared in the Physical Library catalogue

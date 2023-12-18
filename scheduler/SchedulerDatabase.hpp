@@ -160,15 +160,17 @@ class SchedulerDatabase {
     QueueRepackRequest(const std::string & vid, const std::string& repackBufferURL,
       const common::dataStructures::RepackInfo::Type& repackType,
       const common::dataStructures::MountPolicy & mountPolicy,
-      const bool noRecall)
+      const bool noRecall,
+      const uint64_t maxFilesToSelect)
     : m_vid(vid), m_repackBufferURL(repackBufferURL), m_repackType(repackType),
-      m_mountPolicy(mountPolicy), m_noRecall(noRecall) {}
+      m_mountPolicy(mountPolicy), m_noRecall(noRecall), m_maxFilesToSelect(maxFilesToSelect) {}
 
     std::string m_vid;
     std::string m_repackBufferURL;
     common::dataStructures::RepackInfo::Type m_repackType;
     common::dataStructures::MountPolicy m_mountPolicy;
     bool m_noRecall;
+    uint64_t m_maxFilesToSelect;
     common::dataStructures::EntryLog m_creationLog;
   };
 
@@ -584,6 +586,9 @@ class SchedulerDatabase {
 
     // Struct to hold the RepackRequest's total stats
     struct TotalStatsFiles{
+      uint64_t totalFilesOnTapeAtStart = 0;
+      uint64_t totalBytesOnTapeAtStart = 0;
+      bool allFilesSelectedAtStart = true;
       uint64_t totalFilesToArchive = 0;
       uint64_t totalBytesToArchive = 0;
       uint64_t totalFilesToRetrieve = 0;

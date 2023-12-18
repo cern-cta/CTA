@@ -39,6 +39,9 @@ void RepackRequest::setLastExpandedFSeq(uint64_t fseq)
 
 void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles)
 {
+  repackInfo.totalFilesOnTapeAtStart = totalStatsFiles.totalFilesOnTapeAtStart;
+  repackInfo.totalBytesOnTapeAtStart = totalStatsFiles.totalBytesOnTapeAtStart;
+  repackInfo.allFilesSelectedAtStart = totalStatsFiles.allFilesSelectedAtStart;
   repackInfo.totalFilesToRetrieve = totalStatsFiles.totalFilesToRetrieve;
   repackInfo.totalFilesToArchive  = totalStatsFiles.totalFilesToArchive;
   repackInfo.totalBytesToArchive  = totalStatsFiles.totalBytesToArchive;
@@ -491,6 +494,9 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
       break;
   }
 
+  repackInfo.totalFilesOnTapeAtStart = row.totalFilesOnTapeAtStart;
+  repackInfo.totalBytesOnTapeAtStart = row.totalBytesOnTapeAtStart;
+  repackInfo.allFilesSelectedAtStart = row.allFilesSelectedAtStart;
   repackInfo.totalFilesToArchive   = row.totalFilesToArchive;
   repackInfo.totalBytesToArchive   = row.totalBytesToArchive;
   repackInfo.totalFilesToRetrieve  = row.totalFilesToRetrieve;

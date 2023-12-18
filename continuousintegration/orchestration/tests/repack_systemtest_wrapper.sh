@@ -208,7 +208,7 @@ repackJustMove() {
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ]
   then
-  echo
+    echo
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
@@ -228,6 +228,65 @@ repackJustMove() {
   echo "*****************************************************"
   echo "STEP $1. Testing Repack \"Just move\" workflow TEST OK"
   echo "*****************************************************"
+}
+
+repackJustMoveWithMaxFiles() {
+  echo
+  echo "*****************************************************************"
+  echo "STEP $1. Testing Repack \"Just move\" workflow with limited files"
+  echo "*****************************************************************"
+
+  VID_TO_REPACK=$(getFirstVidContainingFiles)
+
+  if [ "$VID_TO_REPACK" = "null" ]
+  then
+    echo "No vid found to repack"
+    exit 1
+  fi
+
+  TOTAL_FILES_ON_TAPE=$(getNumberOfFilesOnTape $VID_TO_REPACK)
+  NUMBER_OF_FILES_TO_REPACK=$(($TOTAL_FILES_ON_TAPE/2)) # Number that covers only some of the files on tape (half)
+
+  echo
+  echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
+  modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
+  echo "Launching the repack test \"just move\", with only ${NUMBER_OF_FILES_TO_REPACK}/${TOTAL_FILES_ON_TAPE} files, on VID ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${NUMBER_OF_FILES_TO_REPACK} || exit 1
+  removeRepackRequest ${VID_TO_REPACK}
+  echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
+  modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}, should fail because tape should still have files"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
+  if [ $? -eq 0 ]; then
+    echo "Reclaim should have failed"
+    exit 1
+  else
+    echo "Reclaim failed as expected"
+  fi
+
+  TOTAL_FILES_ON_TAPE=$(getNumberOfFilesOnTape $VID_TO_REPACK)
+
+  echo
+  echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
+  modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
+  echo "Launching the repack test \"just move\", for all its ${TOTAL_FILES_ON_TAPE} files, on VID ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${TOTAL_FILES_ON_TAPE} || exit 1
+  removeRepackRequest ${VID_TO_REPACK}
+  echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
+  modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}, should succeed because tape no longer has files"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
+  if [ $? -eq 0 ]; then
+    echo "Reclaim succeeded as expected"
+  else
+    echo "Reclaim should have succeeded"
+    exit 1
+  fi
+
+  echo
+  echo "*************************************************************************"
+  echo "STEP $1. Testing Repack \"Just move\" workflow with limited files TEST OK"
+  echo "*************************************************************************"
 }
 
 repackJustAddCopies() {
@@ -289,7 +348,6 @@ repackCancellation() {
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n repack_ctasystest & 2>/dev/null
-    pid=$!
   else
     echo "No vid found to repack"
     exit 1
@@ -314,7 +372,7 @@ repackCancellation() {
   done
 
   echo "Expansion finished, deleting the Repack Request"
-  kill $pid
+  kubectl -n ${NAMESPACE} exec client -- bash -c 'kill $(pgrep -f /root/repack_systemtest.sh)'
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin repack rm --vid ${VID_TO_REPACK} || echo "Error while removing the Repack Request. Test FAILED"
 
   echo
@@ -678,10 +736,12 @@ repackTapeRepairNoRecall() {
 archiveFiles 1 15
 roundTripRepack 1
 repackNonRepackingTape 2
+archiveFiles 1000 15
+repackJustMoveWithMaxFiles 3
 archiveFiles 1152 15
-repackJustMove 3
-repackTapeRepair 4
-repackJustAddCopies 5
-repackCancellation 6
+repackJustMove 4
+repackTapeRepair 5
+repackJustAddCopies 6
+repackCancellation 7
 # repackMoveAndAddCopies 7
-repackTapeRepairNoRecall 7
+repackTapeRepairNoRecall 8

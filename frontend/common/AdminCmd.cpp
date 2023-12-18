@@ -37,7 +37,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   m_lc(frontendService.getLogContext()),
   m_cliIdentity(clientIdentity),
   m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
-  m_repackBufferURL(frontendService.getRepackBufferURL())
+  m_repackBufferURL(frontendService.getRepackBufferURL()),
+  m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect())
 {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
@@ -885,10 +886,15 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   }
 
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
+  const auto maxFilesToSelectOpt = getOptional(OptionUInt64::MAX_FILES_TO_EXPAND);
+  // 1. If the 'MAX_FILES_TO_EXPAND' parameter was received, use its value.
+  // 2. Else, if 'm_repackMaxFilesToSelect' configuration is defined, use its value.
+  // 3. Else, use 0 as a default. Zero means that all files will be expanded.
+  uint64_t maxFilesToSelect = maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : m_repackMaxFilesToSelect.value_or(0);
 
   // Process each item in the list
   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-    SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy, noRecall);
+    SchedulerDatabase::QueueRepackRequest repackRequest(*it, bufferURL, type, mountPolicy, noRecall, maxFilesToSelect);
     m_scheduler.queueRepack(m_cliIdentity, repackRequest, m_lc);
   }
 

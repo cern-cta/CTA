@@ -56,6 +56,9 @@ struct RepackInfo {
     Failed = 6,
     Undefined = 999
   } status;
+  uint64_t totalFilesOnTapeAtStart;
+  uint64_t totalBytesOnTapeAtStart;
+  bool allFilesSelectedAtStart;
   uint64_t totalFilesToArchive;
   uint64_t totalBytesToArchive;
   uint64_t totalFilesToRetrieve;
@@ -70,6 +73,7 @@ struct RepackInfo {
   uint64_t retrievedBytes;
   uint64_t archivedFiles;
   uint64_t archivedBytes;
+  uint64_t maxFilesToSelect;
   bool isExpandFinished;
   bool noRecall;
   common::dataStructures::EntryLog creationLog;
