@@ -751,7 +751,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS },
-   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional(),                opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional() }},
+   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional(),                opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional() }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE },
    { opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
       /*----------------------------------------------------------------------------------------------------*/
