@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 import argparse
-import ConfigParser
+import configparser
 import datetime
 import distutils
 import errno
@@ -301,7 +301,7 @@ class Gc:
   @staticmethod
   def parse_conf(conf_fp):
     try:
-      parser = ConfigParser.ConfigParser()
+      parser = configparser.ConfigParser()
       parser.readfp(conf_fp)
       config = GcConfig()
       config.log_file = parser.get('main', 'log_file')
@@ -325,7 +325,7 @@ class Gc:
            'value=\'{}\''.format(eos_space, config.eos_space_to_min_free_bytes_str))
 
       return config
-    except ConfigParser.Error as err:
+    except configparser.Error as err:
       raise UserError(err)
 
   @staticmethod
