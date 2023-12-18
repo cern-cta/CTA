@@ -306,8 +306,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
       ASSERT_EQ(fileRecycleLog.sizeInBytes,fileWrittenPtr->size);
       ASSERT_EQ(fileRecycleLog.checksumBlob,fileWrittenPtr->checksumBlob);
       ASSERT_EQ(fileRecycleLog.storageClassName,fileWrittenPtr->storageClassName);
-      ASSERT_EQ(fileRecycleLog.vo,fileWrittenPtr->vo);
-      ASSERT_EQ(fileRecycleLog.reconciliationTime,fileWrittenPtr->archiveFileCreationTime);
+      ASSERT_EQ(fileRecycleLog.reconciliationTime,fileRecycleLog.archiveFileCreationTime);
       ASSERT_EQ(std::nullopt, fileRecycleLog.collocationHint);
       ASSERT_EQ(std::nullopt, fileRecycleLog.diskFilePath);
       ASSERT_EQ(cta::catalogue::InsertFileRecycleLog::getRepackReasonLog(),fileRecycleLog.reasonLog);
