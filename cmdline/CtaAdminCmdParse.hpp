@@ -312,7 +312,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--nbphysicalcartridgeslots",  OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS },
    { "--nbavailablecartridgeslots", OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS },
    { "--nbphysicaldriveslots",      OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS },
-   { "--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND }
+   { "--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND },
    { "--logunixtimemin",            OptionUInt64::LOG_UNIXTIME_MIN },
    { "--logunixtimemax",            OptionUInt64::LOG_UNIXTIME_MAX },
 };
