@@ -35,6 +35,7 @@
 
 ### Features
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
+- cta/CTA#462 - Have additonal filters on 'cta-admin recycletf ls'
 
 ### Bug Fixes
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
