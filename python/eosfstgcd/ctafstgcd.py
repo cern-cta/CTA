@@ -1,7 +1,7 @@
-#!/bin/python
+#!/usr/bin/env python3
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright(C) 2015-2022 CERN
+# @copyright    Copyright(C) 2023 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
