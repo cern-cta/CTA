@@ -86,6 +86,10 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
+  searchCriteria.recycleLogTimeMin = requestMsg.getOptional(OptionUInt64::LOG_UNIXTIME_MIN, &has_any);
+  searchCriteria.recycleLogTimeMax = requestMsg.getOptional(OptionUInt64::LOG_UNIXTIME_MAX, &has_any);
+  searchCriteria.vo = requestMsg.getOptional(OptionString::VO, &has_any);
+
   // Copy number on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
 
