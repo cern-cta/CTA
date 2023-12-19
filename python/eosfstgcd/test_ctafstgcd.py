@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-import cStringIO
+import io
 import ctafstgcd
 import io
 import os
@@ -57,7 +57,7 @@ class MockDisk:
     self.nb_get_free_bytes = 0
 
   def listdir(self, path):
-    print "listdir path={}".format(path)
+    print("listdir path={}".format(path))
     self.nb_listdir = self.nb_listdir + 1
 
     path_list = self.path_to_list(path)
@@ -65,7 +65,7 @@ class MockDisk:
     current_node_list = [self.mock_tree]
     result_node_list = None
     for node_name in path_list:
-      matching = filter(lambda node: node.name == node_name, current_node_list)
+      matching = [node for node in current_node_list if node.name == node_name]
       if len(matching) == 0:
         raise Exception("Cannot list {}".format(path))
       if len(matching) > 1:
