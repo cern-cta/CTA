@@ -217,7 +217,25 @@ else
   echo "'eos evict' command failed as expected"
 fi
 
-# 17. Test removing one existing replica, should succeed and keep remaining replicas intact
+# 17.1. Test removing existing replica with --ignore-removal-on-fst, should fail when --fsid is not used
+echo "Testing 'eos root://${EOS_INSTANCE} evict --ignore-removal-on-fst ${TEMP_FILE}'... without '--fsid'"
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-removal-on-fst ${TEMP_FILE}
+if [ $? -eq 0 ]; then
+  error "'eos evict' command succeeded where it should have failed"
+else
+  echo "'eos evict' command failed as expected"
+fi
+
+# 17.2. Test removing existing replica with --ignore-removal-on-fst, should fail when --ignore-evict-counter is not used
+echo "Testing 'eos root://${EOS_INSTANCE} evict --ignore-removal-on-fst --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}'... without '--ignore-evict-counter'"
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-removal-on-fst --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
+if [ $? -eq 0 ]; then
+  error "'eos evict' command succeeded where it should have failed"
+else
+  echo "'eos evict' command failed as expected"
+fi
+
+# 18. Test removing one existing replica, should succeed and keep remaining replicas intact
 echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE} and --ignore-evict-counter..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-evict-counter --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
 if [ $? -ne 0 ]; then
@@ -231,13 +249,13 @@ else
   echo "Disk replica count is as expected"
 fi
 
-# 18. Test removing one existing replica, should succeed and keep remaining replicas intact
-echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE} and -f..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE}
+# 19. Test removing one existing replica, should succeed and keep remaining replicas intact
+echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE}, --ignore-removal-on-fst and  --ignore-evict-counter..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE}
 if [ $? -ne 0 ]; then
-  error "'eos evict --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command failed where it should have succeeded"
+  error "'eos evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command failed where it should have succeeded"
 else
-  echo "'eos evict --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command succeeded as expected"
+  echo "'eos evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command succeeded as expected"
 fi
 if test 2 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
@@ -245,7 +263,7 @@ else
   echo "Disk replica count is as expected"
 fi
 
-# 19. Test removing all remaining replicas
+# 20. Test removing all remaining replicas
 echo "Trying to remove all disk replicas..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --ignore-evict-counter ${TEMP_FILE}
 if [ $? -ne 0 ]; then
