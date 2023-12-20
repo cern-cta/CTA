@@ -1,6 +1,7 @@
 # v4.NEXT
 
 ### Features
+- cta/CTA#546 - Limit the number of repack sub-requests that can be expanded at the same moment
 - cta/CTA#154 - Update RetrieveJob to support completion report
 
 ### Bug Fixes
