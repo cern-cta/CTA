@@ -1164,7 +1164,6 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 // RetrieveRequest::asyncJobSucceedReporterCallbac()
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string &strIn, std::unique_ptr<AsyncJobSucceedReporter> &ret, uint32_t copyNb) {
-//std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string &strIn, uint32_t copyNb) {
   // We have a locked and fetched object, so we just need to work on its representation.
   cta::objectstore::serializers::ObjectHeader oh;
   if (!oh.ParseFromString(strIn)) {

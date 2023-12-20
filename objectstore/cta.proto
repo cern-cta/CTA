@@ -399,7 +399,7 @@ message SchedulerRetrieveRequest {
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;
   required EntryLog entrylog = 9106;
-  required string retrievereporturl = 9109;
+  optional string retrievereporturl = 9109;
   required string retrieveerrorreporturl = 9110;
   required bool isverifyonly = 9111;
 }

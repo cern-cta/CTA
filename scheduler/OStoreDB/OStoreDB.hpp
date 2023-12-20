@@ -22,6 +22,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <variant>
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
@@ -306,6 +307,19 @@ class OStoreDB: public SchedulerDatabase {
    private:
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;
 
+    struct AsyncJobCaller {
+        OStoreDB::RetrieveJob* m_pOsdbJob;
+        common::dataStructures::MountPolicy& m_mountPolicy;
+        std::list<std::string>& m_rjToUnown;
+        std::map<std::string, std::list<OStoreDB::RetrieveJob*>>& m_jobsToRequeueForRepackMap;
+        std::map<std::string, std::list<OStoreDB::RetrieveJob*>>& m_jobsToRequeueForReportToUser;
+        log::LogContext& m_lc;
+
+        void operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter>& upAsyncJob);
+        void operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter>& upAsyncJob);    
+        void operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter>& upAsyncJob);
+    };
+
    public:
     void
     setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
@@ -349,9 +363,9 @@ class OStoreDB: public SchedulerDatabase {
     OStoreDB & m_oStoreDB;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount *m_retrieveMount;
-    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
-    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
-    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter> m_jobSucceedReporter;
+    std::variant<std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter>, 
+                 std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter>,
+                 std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter>> m_variantAsyncJob;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
     std::optional<std::string> m_activity;
     std::optional<std::string> m_diskSystemName;
