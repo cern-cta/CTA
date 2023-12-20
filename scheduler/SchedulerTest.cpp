@@ -506,7 +506,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  ASSERT_FALSE(found);
 //}
 
-TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
+TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -670,6 +670,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
+    // Check the retrieve report URL
+    ASSERT_EQ("", job.request.retrieveReportURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 
@@ -684,6 +686,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(1, job_vid.tapeCopies.size());
     ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
     ASSERT_EQ("dstURL", job_vid.request.dstURL);
+    ASSERT_EQ("", job_vid.request.retrieveReportURL);
     ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
   }
 
@@ -710,7 +713,230 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
 
   {
+    /* 
+     * Emulate the reporter process: if request.retrieveReportURL is not set
+     * the number of reporting jobs shuld be eq 0
+     */ 
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  }
+
+}
+
+TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  uint64_t archiveFileId;
+  {
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    request.storageClass=s_storageClassName;
+    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Check that we have the file in the queues
+  // TODO: for this to work all the time, we need an index of all requests
+  // (otherwise we miss the selected ones).
+  // Could also be limited to querying by ID (global index needed)
+  bool found=false;
+  for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
+    for (auto & req: tp.second) {
+      if (req.archiveFileID == archiveFileId)
+        found = true;
+    }
+  }
+  ASSERT_TRUE(found);
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = true;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, physicalLibraryName, libraryComment);
+  {
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  {
+    // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
+    std::unique_ptr<cta::TapeMount> mount;
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    //Test that no mount is available when a logical library is disabled
+    ASSERT_EQ(nullptr, mount.get());
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    //continue our test
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    auto & osdb=getSchedulerDB();
+    auto mi=osdb.getMountInfo(lc);
+    ASSERT_EQ(1, mi->existingOrNextMounts.size());
+    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
+    archiveJob->tapeFile.blockId = 1;
+    archiveJob->tapeFile.fSeq = 1;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.copyNb = 1;
+    archiveJob->validate();
+    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
+    sDBarchiveJobBatch.emplace(std::move(archiveJob));
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, archiveJobBatch.size());
+    archiveMount->complete();
+  }
+
+  {
     // Emulate the reporter process reporting successful transfer to tape to the disk system
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+  }
+
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.retrieveReportURL = "null:";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve("disk_instance", request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
+  // Check that the retrieve request is queued
+  {
+    auto rqsts = scheduler.getPendingRetrieveJobs(lc);
+    // We expect 1 tape with queued jobs
+    ASSERT_EQ(1, rqsts.size());
+    // We expect the queue to contain 1 job
+    ASSERT_EQ(1, rqsts.cbegin()->second.size());
+    // We expect the job to be single copy
+    auto & job = rqsts.cbegin()->second.back();
+    ASSERT_EQ(1, job.tapeCopies.size());
+    // We expect the copy to be on the provided tape.
+    ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
+    // Check the remote target
+    ASSERT_EQ("dstURL", job.request.dstURL);
+    // Check the retrieve report URL
+    ASSERT_EQ("null:", job.request.retrieveReportURL);
+    // Check the archive file ID
+    ASSERT_EQ(archiveFileId, job.request.archiveFileID);
+
+    // Check that we can retrieve jobs by VID
+
+    // Get the vid from the above job and submit a separate request for the same vid
+    auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
+    auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
+    // same tests as above
+    ASSERT_EQ(1, rqsts_vid.size());
+    auto &job_vid = rqsts_vid.back();
+    ASSERT_EQ(1, job_vid.tapeCopies.size());
+    ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
+    ASSERT_EQ("dstURL", job_vid.request.dstURL);
+    ASSERT_EQ("null:", job_vid.request.retrieveReportURL);
+    ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
+  }
+
+  {
+    // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
+    std::unique_ptr<cta::RetrieveMount> retrieveMount;
+    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+    ASSERT_NE(nullptr, retrieveMount.get());
+    std::unique_ptr<cta::RetrieveJob> retrieveJob;
+    auto jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(1, jobBatch.size());
+    retrieveJob.reset(jobBatch.front().release());
+    ASSERT_NE(nullptr, retrieveJob.get());
+    retrieveJob->asyncSetSuccessful();
+    std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
+    jobQueue.push(std::move(retrieveJob));
+    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, jobBatch.size());
+  }
+
+  {
+    // Emulate the reporter process reporting successful transfer to disk to the disk system
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -882,6 +1108,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
+    request.retrieveReportURL = "null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     request.mountPolicy = "custom_mount_policy";
@@ -903,6 +1130,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
+    // Check the retrieve report URL
+    ASSERT_EQ("null:", job.request.retrieveReportURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 
@@ -917,6 +1146,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     ASSERT_EQ(1, job_vid.tapeCopies.size());
     ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
     ASSERT_EQ("dstURL", job_vid.request.dstURL);
+    ASSERT_EQ("null:", job_vid.request.retrieveReportURL);
     ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
   }
 
@@ -943,7 +1173,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
   }
 
   {
-    // Emulate the reporter process reporting successful transfer to tape to the disk system
+    // Emulate the reporter process reporting successful transfer to disk to the disk system
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -1333,6 +1563,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
+    request.retrieveReportURL = "null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
@@ -1351,6 +1582,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(1, job.tapeCopies.size());
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
+    // Check the retrieve report URL
+    ASSERT_EQ("null:", job.request.retrieveReportURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 

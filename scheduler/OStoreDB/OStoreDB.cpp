@@ -3912,6 +3912,120 @@ OStoreDB::RetrieveJob * OStoreDB::castFromSchedDBJob(SchedulerDatabase::Retrieve
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::AsyncJobCaller(AsyncJobSucceedForRepackReporter&)
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter>& upAsyncJob) {
+  try {
+    upAsyncJob->wait();
+    {
+      cta::log::ScopedParamContainer spc(m_lc);
+      std::string vid = m_pOsdbJob->archiveFile.tapeFiles.at(m_pOsdbJob->selectedCopyNb).vid;
+      spc.add("tapeVid", vid)
+         .add("mountType", "RetrieveForRepack")
+         .add("fileId",m_pOsdbJob->archiveFile.archiveFileID);
+      m_lc.log(cta::log::INFO, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+    }
+    m_mountPolicy = upAsyncJob->m_MountPolicy;
+    m_jobsToRequeueForRepackMap[m_pOsdbJob->m_repackInfo.repackRequestAddress].emplace_back(m_pOsdbJob);
+  } catch (cta::exception::NoSuchObject &ex){
+    log::ScopedParamContainer params(m_lc);
+    params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+          .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::WARNING,
+        "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
+  } catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+          .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::ERR,
+        "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
+        "Will leave job to garbage collection.");
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::AsyncJobCaller(AsyncJobDeleter&)
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter>& asyncJob) {
+  try {
+    asyncJob->wait();
+    {
+      //Log for monitoring
+      cta::log::ScopedParamContainer spc(m_lc);
+      std::string vid = m_pOsdbJob->archiveFile.tapeFiles.at(m_pOsdbJob->selectedCopyNb).vid;
+      spc.add("tapeVid", vid)
+         .add("mountType", "RetrieveForUser")
+         .add("fileId", m_pOsdbJob->archiveFile.archiveFileID);
+      m_lc.log(cta::log::INFO, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+    }
+    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
+    m_rjToUnown.push_back(m_pOsdbJob->m_retrieveRequest.getAddressIfSet());
+    cta::common::dataStructures::LifecycleTimings requestTimings = m_pOsdbJob->retrieveRequest.lifecycleTimings;
+    {
+      log::ScopedParamContainer params(m_lc);
+      params.add("requestAddress", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+            .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+            .add("vid", m_pOsdbJob->m_retrieveMount->mountInfo.vid)
+            .add("timeForSelection", requestTimings.getTimeForSelection())
+            .add("timeForCompletion", requestTimings.getTimeForCompletion());
+      m_lc.log(log::INFO, "Retrieve job successfully deleted");
+    }
+  } catch(const cta::exception::NoSuchObject & ex) {
+        log::ScopedParamContainer params(m_lc);
+        params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+              .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+              .add("exceptionMessage", ex.getMessageValue());
+        m_lc.log(log::WARNING,
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed, the object does not exist anymore. ");
+  }  catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+          .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::ERR,
+        "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed. "
+        "Will leave job to garbage collection.");
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::AsyncJobCaller(AsyncJobSucceedReporter&)
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(const std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter>& asyncJob) {
+  try {
+    asyncJob->wait();
+    {
+      //Log for monitoring
+      cta::log::ScopedParamContainer spc(m_lc);
+      std::string vid = m_pOsdbJob->archiveFile.tapeFiles.at(m_pOsdbJob->selectedCopyNb).vid;
+      spc.add("tapeVid", vid)
+         .add("mountType", "RetrieveForUser")
+         .add("fileId", m_pOsdbJob->archiveFile.archiveFileID);
+      m_lc.log(cta::log::INFO, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+    }
+    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
+    m_jobsToRequeueForReportToUser[m_pOsdbJob->m_retrieveRequest.getAddressIfSet()].emplace_back(m_pOsdbJob);
+  } catch(const cta::exception::NoSuchObject & ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+          .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::WARNING,
+        "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
+  } catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
+          .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::ERR,
+        "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
+        "Will leave job to garbage collection.");
+  }
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::flushAsyncSuccessReports()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
@@ -3926,68 +4040,11 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
   common::dataStructures::MountPolicy mountPolicy;
   for (auto & sDBJob: jobsBatch) {
     auto osdbJob = castFromSchedDBJob(sDBJob);
-    if (osdbJob->diskSystemName) diskSpaceReservationRequest.addRequest(osdbJob->diskSystemName.value(), osdbJob->archiveFile.fileSize);
-    if (osdbJob->isRepack) {
-      try {
-        osdbJob->m_jobSucceedForRepackReporter->wait();
-        {
-          cta::log::ScopedParamContainer spc(lc);
-          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
-          spc.add("tapeVid",vid)
-             .add("mountType","RetrieveForRepack")
-             .add("fileId",osdbJob->archiveFile.archiveFileID);
-          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
-        }
-        mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
-        jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
-      } catch (cta::exception::NoSuchObject &ex){
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", osdbJob->archiveFile.archiveFileID)
-              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::WARNING,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
-      } catch (cta::exception::Exception & ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", osdbJob->archiveFile.archiveFileID)
-              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::ERR,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
-            "Will leave job to garbage collection.");
-      }
-    } else {
-      try {
-        osdbJob->m_jobSucceedReporter->wait();
-        {
-          //Log for monitoring
-          cta::log::ScopedParamContainer spc(lc);
-          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
-          spc.add("tapeVid",vid)
-             .add("mountType","RetrieveForUser")
-             .add("fileId",osdbJob->archiveFile.archiveFileID);
-          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
-        }
-        osdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
-        std::string requestAddress = osdbJob->m_retrieveRequest.getAddressIfSet();
-        jobsToRequeueForReportToUser[requestAddress].emplace_back(osdbJob);
-      } catch(const cta::exception::NoSuchObject & ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", osdbJob->archiveFile.archiveFileID)
-              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::WARNING,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
-      } catch (cta::exception::Exception & ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", osdbJob->archiveFile.archiveFileID)
-              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::ERR,
-            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
-            "Will leave job to garbage collection.");
-      }
+    if (osdbJob->diskSystemName) {
+      diskSpaceReservationRequest.addRequest(osdbJob->diskSystemName.value(), osdbJob->archiveFile.fileSize);
     }
+    std::visit(AsyncJobCaller{osdbJob, mountPolicy, rjToUnown, jobsToRequeueForRepackMap, jobsToRequeueForReportToUser, lc},
+      osdbJob->m_variantAsyncJob);
   }
   this->m_oStoreDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive, mountInfo.mountId,
     diskSpaceReservationRequest, lc);
@@ -5338,11 +5395,14 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
   if (isRepack) {
     // If the job is from a repack subrequest, we change its status (to report
     // for repack success). Queueing will be done in batch in
-    m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(selectedCopyNb));
+    m_variantAsyncJob = std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter>(m_retrieveRequest.asyncReportSucceedForRepack(selectedCopyNb));
+  } else if (retrieveRequest.retrieveReportURL.empty()) {
+    // Set the user transfer request as successful (delete it).
+    m_variantAsyncJob = std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter>(m_retrieveRequest.asyncDeleteJob());
   } else {
     // else we change its status (to report for transfer success).
     // Queueing will be done in batch in
-    m_jobSucceedReporter.reset(m_retrieveRequest.asyncReportSucceed(selectedCopyNb));
+    m_variantAsyncJob = std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedReporter>(m_retrieveRequest.asyncReportSucceed(selectedCopyNb));
   }
 }
 
