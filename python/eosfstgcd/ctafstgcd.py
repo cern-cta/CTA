@@ -102,7 +102,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\'": {}'.format(cmd, err))
     stdout,stderr = process.communicate()
@@ -136,7 +136,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\': {}'.format(cmd, err))
     stdout,stderr = process.communicate()
@@ -152,7 +152,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\': {}'.format(' '.join(args), err))
     stdout,stderr = process.communicate()
