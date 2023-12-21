@@ -42,7 +42,10 @@ case "$(get_conf database.type)" in
     echo "Configuring oracle database"
     DATABASETYPE=oracle
     DATABASEURL=oracle:$(get_conf database.oracle.username)/$(get_conf database.oracle.password)@$(get_conf database.oracle.database)
-  ;;
+    # Update TNS name ASAP
+    # oracle-instantclient-tnsnames.ora rpm must be installed before
+    test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron
+    ;;
   "postgres")
      echo "Configuring postgres database"
      DATABASETYPE=postgres
