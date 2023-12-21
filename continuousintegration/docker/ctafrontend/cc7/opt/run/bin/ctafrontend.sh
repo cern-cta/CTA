@@ -70,7 +70,7 @@ fi
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
   echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
-  cat /etc/sysconfig/cta-frontend | sed -e 's/^/export /' >> /tmp/cta-frontend_env
+  cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
   source /tmp/cta-frontend_env
 
   runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
