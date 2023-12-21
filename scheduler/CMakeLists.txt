@@ -103,18 +103,25 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 
 # End of definitions specific to Postgres scheduler lib compilation
 
-add_library (ctascheduler-postgres SHARED
+add_library (ctascheduler SHARED
         ${CTA_SCHEDULER_PG_SRC_FILES})
 add_library (ctascheduler-objectstore SHARED
         ${CTA_SCHEDULER_OS_SRC_FILES})
 
-target_link_libraries (ctascheduler-objectstore ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
-target_link_libraries (ctascheduler-postgres ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
-
 if(NOT CTA_USE_PGSCHED)
-    add_custom_target(ctascheduler DEPENDS ctascheduler-objectstore)
+    add_library (ctascheduler SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
+    target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    add_library (ctascheduler-postgres SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
+    target_link_libraries (ctascheduler-postgres ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    set_property(TARGET ctascheduler-postgres PROPERTY SOVERSION "${CTA_SOVERSION}")
+    set_property(TARGET ctascheduler-postgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 else()
-    add_custom_target(ctascheduler DEPENDS ctascheduler-postgres)
+    add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
+    target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    add_library (ctascheduler-objectstore SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
+    target_link_libraries (ctascheduler-objectstore ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    set_property(TARGET ctascheduler-objectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
+    set_property(TARGET ctascheduler-objectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 endif()
 
 set_property(TARGET ctascheduler PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -123,39 +130,34 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 if(NOT CTA_USE_PGSCHED)
-  target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+  add_library (ctascheduler-postgresunittests SHARED
+          SchedulerDatabaseFactory.cpp
+          SchedulerDatabaseTest.cpp
+          GenericSchedulerTest.cpp
+          PostgresSchedDB/PostgresSchedDBTest.cpp)
+  add_library (ctaschedulerunittests SHARED
+          SchedulerDatabaseFactory.cpp
+          SchedulerDatabaseTest.cpp
+          SchedulerTest.cpp
+          OStoreDB/OStoreDBTest.cpp)
+  target_link_libraries (ctascheduler-postgresunittests ctascheduler-postgres)
 else()
-  target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
-endif()
-
-add_library (ctascheduler-objectstoreunittests SHARED
-    SchedulerDatabaseFactory.cpp
-    SchedulerDatabaseTest.cpp
-    SchedulerTest.cpp
-    OStoreDB/OStoreDBTest.cpp)
-
-add_library (ctascheduler-postgresunittests SHARED
+  add_library (ctascheduler-objectstoreunittests SHARED
+          SchedulerDatabaseFactory.cpp
+          SchedulerDatabaseTest.cpp
+          SchedulerTest.cpp
+          OStoreDB/OStoreDBTest.cpp)
+  add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     GenericSchedulerTest.cpp
     PostgresSchedDB/PostgresSchedDBTest.cpp)
-
-target_link_libraries (ctascheduler-objectstoreunittests
-        ctascheduler-objectstore)
-
-target_link_libraries (ctascheduler-postgresunittests
-        ctascheduler-postgres)
-
-if(NOT CTA_USE_PGSCHED)
-  add_custom_target(ctaschedulerunittests DEPENDS ctascheduler-objectstoreunittests)
-else()
-  add_custom_target(ctaschedulerunittests DEPENDS ctascheduler-postgresunittests)
+  target_link_libraries (ctascheduler-objectstoreunittests ctascheduler-objectstore)
 endif()
+
+target_link_libraries (ctaschedulerunittests ctascheduler)
 
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries (ctaschedulerunittests
-  ctascheduler)
 
 install(TARGETS ctaschedulerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
