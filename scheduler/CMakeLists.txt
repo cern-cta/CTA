@@ -103,11 +103,6 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 
 # End of definitions specific to Postgres scheduler lib compilation
 
-add_library (ctascheduler SHARED
-        ${CTA_SCHEDULER_PG_SRC_FILES})
-add_library (ctascheduler-objectstore SHARED
-        ${CTA_SCHEDULER_OS_SRC_FILES})
-
 if(NOT CTA_USE_PGSCHED)
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
     target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
