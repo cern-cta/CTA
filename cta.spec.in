@@ -426,7 +426,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-verify.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
-%if "%{usingObjectstore}" == "0"
 %package -n cta-scheduler-utils
 Summary: Utilities to faciliate working with the CTA scheduler database
 Group: Application/CTA
@@ -437,7 +436,6 @@ Scripts and utilities to faciliate working with the CTA scheduler database
 %files -n cta-scheduler-utils
 %attr(0755,root,root) %{_bindir}/cta-scheduler-schema-create
 %attr(0755,root,root) %{_bindir}/cta-scheduler-schema-drop
-%endif
 
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
