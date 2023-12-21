@@ -125,29 +125,17 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 if(NOT CTA_USE_PGSCHED)
-  add_library (ctascheduler-postgresunittests SHARED
-          SchedulerDatabaseFactory.cpp
-          SchedulerDatabaseTest.cpp
-          GenericSchedulerTest.cpp
-          PostgresSchedDB/PostgresSchedDBTest.cpp)
   add_library (ctaschedulerunittests SHARED
-          SchedulerDatabaseFactory.cpp
-          SchedulerDatabaseTest.cpp
-          SchedulerTest.cpp
-          OStoreDB/OStoreDBTest.cpp)
-  target_link_libraries (ctascheduler-postgresunittests ctascheduler-postgres)
+    SchedulerDatabaseFactory.cpp
+    SchedulerDatabaseTest.cpp
+    SchedulerTest.cpp
+    OStoreDB/OStoreDBTest.cpp)
 else()
-  add_library (ctascheduler-objectstoreunittests SHARED
-          SchedulerDatabaseFactory.cpp
-          SchedulerDatabaseTest.cpp
-          SchedulerTest.cpp
-          OStoreDB/OStoreDBTest.cpp)
   add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     GenericSchedulerTest.cpp
     PostgresSchedDB/PostgresSchedDBTest.cpp)
-  target_link_libraries (ctascheduler-objectstoreunittests ctascheduler-objectstore)
 endif()
 
 target_link_libraries (ctaschedulerunittests ctascheduler)
