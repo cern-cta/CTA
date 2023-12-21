@@ -193,7 +193,9 @@ else
   #/etc/init.d/eos start
     ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
-    ${XRDPROG} -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
+    for fst_config in /etc/xrd.cf.fst; do
+       EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
+    done
 fi
 
 # EOS service is starting for the first time we need to check if it is ready before
