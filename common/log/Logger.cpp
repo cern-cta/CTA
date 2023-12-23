@@ -29,6 +29,8 @@
 #include <chrono>
 #include <iomanip> 
 
+#include "common/log/JSONLogger.hpp"
+
 namespace cta::log {
 
 //------------------------------------------------------------------------------
@@ -65,15 +67,22 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   char local_time[sizeof "2011-10-08T07:07:09Z"];
   //strftime(local_time, sizeof local_time, "%FT%TZ", gmtime(&now));
   strftime(local_time, sizeof local_time, "%FT%TZ", localtime(&now));
-
-  const float epoch_time_def = std::chrono::duration_cast<std::chrono::nanoseconds>
-        (std::chrono::system_clock::now().time_since_epoch()).count();
-  const float epoch_time= (epoch_time_def/1000000000.0);
+  
+  //const float epoch_time = std::chrono::duration_cast<std::chrono::seconds>
+     //   (std::chrono::system_clock::now().time_since_epoch()).count();
+   // const float epoch_time_nano = std::chrono::duration_cast<std::chrono::nanoseconds>
+      //  (std::chrono::system_clock::now().time_since_epoch()).count();
+  //const float nano = epoch_time_nano-epoch_time;
+    uint64_t nanoTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    uint64_t nanoseconds =     nanoTime/1000000000;
+    uint64_t seconds = nanoTime%1000000000;
+  //const float epoch_time= (epoch_time_def/1000000000.0);
   //std::cout<<epoch_time_def << std::endl;
   //const std::string input = epoch_time;
   //const std::string epoch_time_formated = format("{0:.2s}.{0:2s.}",input);
   //sprintf(epoch_time,"%f.9f",epoch_time_def);
-  //std::cout<<epoch_time << std::endl;
+  //std::cout<<nano << std::endl;
+  
   const std::string rawParams;
   //struct timeval timeStamp;
   //gettimeofday(&timeStamp, nullptr);
@@ -95,10 +104,18 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
 
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
-  const std::string header = createMsgHeader(epoch_time, local_time, m_hostName, m_programName, pid);
-  const std::string body = createMsgBody(epoch_time, local_time, priority, priorityText, msg, params, rawParams, pid);
-
+  std::string strJson = "{\"mykey\" : \"myvalue\"}";
+  //const std::string s = jsonSetValue(rawParams);
+  //const std::string s1 = jsonGetValue(rawParams);
+  //cta::utils::json::object::JSONCObject JsonClass;
+ 
+   
+  const std::string header = createMsgHeader(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid);
+  const std::string body = createMsgBody(local_time, priority, priorityText, msg, params, rawParams, pid);
+  const std::string jsonOut = createMsgJsonOut(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid, priority, priorityText, msg, params, rawParams); 
+ 
   writeMsgToUnderlyingLoggingSystem(header, body);
+  //writeMsgToUnderlyingLoggingSystemJson(jsonOut);
 }
 
 //-----------------------------------------------------------------------------
@@ -172,13 +189,19 @@ std::string Logger::createMsgHeader(
   //const std::string Time1,
   //std::time_t epoch_time,
   //char epoch_time[],
-  const float epoch_time,
+  //const float epoch_time,
+  //const float epoch_time_nano, 
+  //const float nano,
+  uint64_t nanoTime,
+  uint64_t seconds,
+  uint64_t nanoseconds,
   //const std::string Utc1,
   char* local_time,
   std::string_view hostName,
   std::string_view programName,
   const int pid) {
   std::ostringstream os;
+  //cta::utils::json::object::JSONCObject jsonObject;
   //char buf[80];
   //int bufLen = sizeof(buf);
   //int len = 0;
@@ -188,7 +211,22 @@ std::string Logger::createMsgHeader(
   //len += strftime(buf, bufLen, "%b %e %T", &localTime);
   //len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
   //buf[sizeof(buf) - 1] = '\0';
-  os<<"'time:' "<< std::setprecision(20)<< epoch_time <<" local_time: "<<local_time<< " hostName: "<<hostName << " programName: " << programName << ": ";
+  //uint64_t jsontime= 
+  //JSONLogger->addToObject("Time", nanoTime);
+  os<<nanoTime;
+  m_jsonLog.addToObject("Time", os.str());
+  os.str(std::string());
+  os<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds;
+  m_jsonLog.addToObject("EpochTime", os.str());
+  os.str(std::string());
+  os<<local_time;
+  m_jsonLog.addToObject("local_time", os.str());
+  os.str(std::string());
+  m_jsonLog.addToObject("hostName", hostName);
+  os.str(std::string());
+  //jsonObject.jsonSetValue("hostName", hostName);
+  os<< m_jsonLog.getJSON();
+  os<<"{\"time\":\""<<std::setprecision(20)<<nanoTime <<"\", \"EpochTime\":\""<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds <<"\", \"local_time\":\""<<local_time<< "\", \"hostName\":\""<<hostName << "\", \"programName\":\" " << programName <<"\", ";
   return os.str();
 }
 
@@ -196,9 +234,7 @@ std::string Logger::createMsgHeader(
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(
-  //std::time_t epoch_time,
-  //char epoch_time[],
-  const float epoch_time,
+  //const float epoch_time,
   char* local_time,
   const int priority,
   std::string_view priorityText, std::string_view msg,
@@ -211,8 +247,8 @@ std::string Logger::createMsgBody(
  // os << "Time=\""<< epoch_time << "\" UTC=\""  <<local_time <<"\" LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
   //  msg << "\" ";
 
-  os << " LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
-    msg << "\" ";
+  os << " \"LVL\":\"" << priorityText << "\", \"PID\":\"" << pid << "\", \"TID\":\"" << tid << "\", \"MSG\":\"" <<
+    msg << "\"";
 
   // Process parameters
   for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
@@ -227,12 +263,40 @@ std::string Logger::createMsgBody(
     const std::string value = cleanString(param.getValue(), false);
 
     // Write the name and value to the buffer
-    os << name << "=\"" << value << "\" ";
+    os << ", \""<< name<<"\"" << ":\"" << value << "\"";
   }
 
   // Append raw parameters
-  os << rawParams;
+  os << rawParams <<"}";
 
+  return os.str();
+}
+std::string Logger::createMsgJsonOut(
+    uint64_t nanoTime,
+    uint64_t nanoseconds,
+    uint64_t seconds,
+    char* local_time,
+    const std::string &hostName,
+    const std::string &programName,
+    const int pid,
+    const int priority,
+    const std::string &priorityText,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const std::string &rawParams) {
+  std::ostringstream os;
+  os<<nanoTime;
+  m_jsonLog.addToObject("Time", os.str());
+  os.str(std::string());
+  os<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds;
+  m_jsonLog.addToObject("EpochTime", os.str());
+  os.str(std::string());
+  os<<local_time;
+  m_jsonLog.addToObject("local_time", os.str());
+  os.str(std::string());
+  m_jsonLog.addToObject("hostName", hostName);
+  os.str(std::string());
+  os<< m_jsonLog.getJSON();
   return os.str();
 }
 
