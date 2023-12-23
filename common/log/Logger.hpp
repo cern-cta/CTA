@@ -20,6 +20,11 @@
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
 
+#include "common/json/object/JSONCObject.hpp"
+#include "common/log/JSONLogger.hpp"
+
+using namespace cta::utils::json::object;//::JSONCObject;;
+
 // The header file for atomic was is actually called cstdatomic in gcc 4.4
 #if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
     #include <cstdatomic>
@@ -182,6 +187,7 @@ protected:
    * @param body The body of the message to be logged.
    */
   virtual void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) = 0;
+  //virtual void writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) = 0;
 
   /**
    * The log mask.
@@ -212,7 +218,7 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
-
+  inline static cta::log::JSONLogger m_jsonLog = cta::log::JSONLogger();
   /**
    * Creates and returns the header of a log message.
    *
@@ -230,7 +236,12 @@ private:
   static std::string createMsgHeader(
     //const struct timeval &timeStamp,
     //char epoch_time[],
-    const float epoch_time,
+    //const float epoch_time,
+    //const float epoch_time_nano,
+    //const float nano,
+    uint64_t nanoTime,
+    uint64_t seconds,
+    uint64_t nanoseconds,
     char* local_time,
     const std::string &hostName,
     const std::string &programName,
@@ -249,7 +260,7 @@ private:
    */
   static std::string createMsgBody(
     //char epoch_time[],
-    const float epoch_time,
+    //const float epoch_time,
     char* local_time,
     const int priority,
     const std::string &priorityText,
@@ -258,6 +269,20 @@ private:
     const std::string &rawParams,
     const std::string &programName,
     const int pid);
+
+  static std::string createMsgJsonOut(
+    uint64_t nanoTime,
+    uint64_t nanoseconds,
+    uint64_t seconds,
+    char* local_time,
+    const std::string &hostName,
+    const std::string &programName,
+    const int pid,
+    const int priority,
+    const std::string &priorityText,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const std::string &rawParams);
 
 }; // class Logger
 
