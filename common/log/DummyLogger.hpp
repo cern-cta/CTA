@@ -72,6 +72,10 @@ protected:
   void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override {
     // intentionally-blank override of pure virtual method
   }
+  void writeMsgToUnderlyingLoggingSystemJson(const std::string& jsonOut) override {
+    // intentionally-blank override of pure virtual method
+       }
+
 };
 
 } // namespace cta::log

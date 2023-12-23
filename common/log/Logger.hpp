@@ -187,7 +187,7 @@ protected:
    * @param body The body of the message to be logged.
    */
   virtual void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) = 0;
-  //virtual void writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) = 0;
+  virtual void writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) = 0;
 
   /**
    * The log mask.

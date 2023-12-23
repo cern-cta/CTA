@@ -55,4 +55,8 @@ void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   syslog(LOG_LOCAL3|INFO, "%s", body.c_str());
 }
 
+void SyslogLogger::writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) {
+  syslog(LOG_LOCAL3|INFO, "%s", jsonOut.c_str());
+}
+
 } // namespace cta::log

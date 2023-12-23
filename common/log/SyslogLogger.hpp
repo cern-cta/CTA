@@ -71,6 +71,7 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+  void writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) override;
 };
 
 } // namespace cta::log

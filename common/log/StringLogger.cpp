@@ -34,4 +34,10 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, 
   m_log << headerPlusBody << std::endl;
 }
 
+void StringLogger::writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) {
+  threading::MutexLocker lock(m_mutex);
+  const std::string headerPlusBody = jsonOut;
+  m_log << headerPlusBody << std::endl;
+}
+
 } // namespace cta::log

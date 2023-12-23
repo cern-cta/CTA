@@ -120,7 +120,7 @@ void Logger::operator() (
   const std::string jsonOut = createMsgJsonOut(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid, priority, priorityText, msg, params, rawParams); 
  
   writeMsgToUnderlyingLoggingSystem(header, body);
-  //writeMsgToUnderlyingLoggingSystemJson(jsonOut);
+  writeMsgToUnderlyingLoggingSystemJson(jsonOut);
 }
 
 //-----------------------------------------------------------------------------
@@ -218,6 +218,7 @@ std::string Logger::createMsgHeader(
   //buf[sizeof(buf) - 1] = '\0';
   //uint64_t jsontime= 
   //JSONLogger->addToObject("Time", nanoTime);
+  /*
   os<<nanoTime;
   m_jsonLog.addToObject("Time", os.str());
   os.str(std::string());
@@ -231,6 +232,7 @@ std::string Logger::createMsgHeader(
   os.str(std::string());
   //jsonObject.jsonSetValue("hostName", hostName);
   os<< m_jsonLog.getJSON();
+  */
   os<<"{\"time\":\""<<std::setprecision(20)<<nanoTime <<"\", \"EpochTime\":\""<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds <<"\", \"local_time\":\""<<local_time<< "\", \"hostName\":\""<<hostName << "\", \"programName\":\" " << programName <<"\", ";
   return os.str();
 }
@@ -294,6 +296,9 @@ std::string Logger::createMsgJsonOut(
     const std::list<Param> &params,
     const std::string &rawParams) {
   std::ostringstream os;
+
+  const int tid = syscall(__NR_gettid);
+
   os<<nanoTime;
   m_jsonLog.addToObject("Time", os.str());
   os.str(std::string());
@@ -305,6 +310,24 @@ std::string Logger::createMsgJsonOut(
   os.str(std::string());
   m_jsonLog.addToObject("hostName", hostName);
   os.str(std::string());
+  m_jsonLog.addToObject("programName", programName);
+  m_jsonLog.addToObject("LVL", priorityText);
+  os<< pid;
+  m_jsonLog.addToObject("PID", os.str());
+  os.str(std::string());
+  os<< tid;
+  m_jsonLog.addToObject("TID", os.str());
+  os.str(std::string());
+  m_jsonLog.addToObject("MSG", msg);
+  // Process parameters
+    for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
+    const Param &param = *itor;
+    const std::string name = param.getName() == "" ? "Undefined" :
+      cleanString(param.getName(), true);
+    const std::string value = cleanString(param.getValue(), false);
+   m_jsonLog.addToObject(name, value);
+}
+  m_jsonLog.addToObject("", rawParams);
   os<< m_jsonLog.getJSON();
   return os.str();
 }
