@@ -62,4 +62,22 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
       "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
+void FileLogger::writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) {
+  if (-1 == m_fd) {
+    throw cta::exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystemJson(): file is not properly initialized");
+  }
+
+  const std::string headerPlusBody = jsonOut;
+
+  // Prepare the string to print
+  std::string m = jsonOut + "\n";
+  
+  // enter critical section
+  threading::MutexLocker lock(m_mutex);
+  
+  // Append the message to the file
+  cta::exception::Errnum::throwOnMinusOne(::write(m_fd, m.c_str(), m.size()),
+                  "In FileLogger::writeMsgToUnderlyingLoggingSystemJson(): failed to write to file");
+}
+
 } // namespace cta::log

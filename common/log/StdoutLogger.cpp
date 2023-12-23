@@ -30,4 +30,12 @@ void StdoutLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, st
   }
 }
 
+void StdoutLogger::writeMsgToUnderlyingLoggingSystemJson(const std::string &jsonOut) {
+  if (m_simple) {
+    printf("%s\n", jsonOut.c_str());
+  }  else {
+    printf("%s\n", "Noheader");
+  }
+}
+
 } // namespace cta::log

@@ -108,6 +108,7 @@ set (COMMON_LIB_SRC_FILES
   json/object/JSONCObject.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
+  log/JSONLogger.cpp
   log/Logger.cpp
   log/LogLevel.cpp
   log/Message.cpp
