@@ -94,7 +94,7 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
 
   if(!has_any){
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile, archiveFileId, instance, vo, ltmin, ltmax");
   }
   
   m_fileRecycleLogItor = catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
