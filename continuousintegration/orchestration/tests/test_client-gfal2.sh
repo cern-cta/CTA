@@ -150,15 +150,16 @@ fi
 
 
 # Test gfal http plugin.
-#GFAL2_PROTOCOL='https'
-# echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests
-# kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
-# echo "Installing gfal2-plugin-http for http gfal test."
-# kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http" || exit 1
-#echo
-#echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
-#echo " Archiving files: xrdcp as user1"
-#echo " Retrieving files with gfal https"
-#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh && ${TEST_POSTRUN}" || exit 1
-#kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+GFAL2_PROTOCOL='https'
+echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests"
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
+echo "Installing gfal2-plugin-http for http gfal test."
+kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http" || exit 1
+echo
+
+echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
+echo " Archiving files: xrdcp as user1"
+echo " Retrieving files with gfal https"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-archive.sh && ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 exit 0
