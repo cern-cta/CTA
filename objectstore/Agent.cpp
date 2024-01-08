@@ -206,7 +206,7 @@ void cta::objectstore::Agent::addToOwnership(const std::string& name) {
   *owned = name;
 }
 
-void cta::objectstore::Agent::removeFromOwnership(std::string name) {
+void cta::objectstore::Agent::removeFromOwnership(const std::string &name) {
   checkPayloadWritable();
   serializers::removeString(m_payload.mutable_ownedobjects(), name);
 }

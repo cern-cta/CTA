@@ -37,8 +37,8 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   void addAgent (std::string name);
-  void removeAgent (const std::string  & name);
-  void trackAgent (std::string name);
+  void removeAgent (const std::string  &name);
+  void trackAgent (const std::string &name);
   void untrackAgent(std::string name);
   std::list<std::string> getAgents();
   std::list<std::string> getUntrackedAgents();

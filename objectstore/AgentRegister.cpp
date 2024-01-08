@@ -76,7 +76,7 @@ void cta::objectstore::AgentRegister::removeAgent (const std::string  & name) {
 }
 
 
-void cta::objectstore::AgentRegister::trackAgent(std::string name) {
+void cta::objectstore::AgentRegister::trackAgent(const std::string &name) {
   checkPayloadWritable();
   // Check that the agent is present (next statement throws an exception
   // if the agent is not known)

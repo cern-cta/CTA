@@ -71,7 +71,7 @@ public:
 private:
   void addToOwnership(const std::string& name);
 
-  void removeFromOwnership(std::string name);
+  void removeFromOwnership(const std::string &name);
 
 public:
   std::list<std::string> getOwnershipList();

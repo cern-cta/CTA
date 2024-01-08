@@ -162,7 +162,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
 void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
   try {
     std::list<std::string> sequences = conn.getSequenceNames();
-    for(auto sequence : sequences) {
+    for(const auto sequence : sequences) {
       conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
       m_out << "Dropped sequence " << sequence << std::endl;
     }
