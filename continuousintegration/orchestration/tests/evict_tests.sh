@@ -282,6 +282,15 @@ else
   echo "Tape replica was preserved"
 fi
 
+# 21. Cleanup dummy spaces and file systems
+echo "Cleaning up dummy spaces and filesystems ${FSID_DUMMY_1_NAME}, ${FSID_DUMMY_2_NAME} and ${FSID_DUMMY_3_NAME}..."
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_3_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_1_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_2_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_1_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_2_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_3_NAME}
+
 ################################################################
 # Finalize
 ################################################################
