@@ -290,9 +290,6 @@ XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs config ${FSID_DUMMY_3_VA
 XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_1_VALUE}
 XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_2_VALUE}
 XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_3_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_1_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_2_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space rm ${FSID_DUMMY_3_NAME}
 
 ################################################################
 # Finalize
