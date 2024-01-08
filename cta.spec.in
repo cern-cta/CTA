@@ -584,8 +584,8 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 %post -n cta-release
 # Add CTA version to cta-release.conf file
-cta_major_version=$(echo "%{ctaVersion}" | cut -d '.' -f 1)
-echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_version": $CTA_MAJOR_VERSION}' %{_sysconfdir}/cta/cta-release.conf) > %{_sysconfdir}/cta/cta-release.conf
+cta_xrootd_version=$(echo "%{ctaVersion}" | cut -d '.' -f 1)
+echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_version": CTA_XROOTD_VERSION}' %{_sysconfdir}/cta/cta-release.conf) > %{_sysconfdir}/cta/cta-release.conf
 
 %preun -n cta-release
 /usr/bin/cta-versionlock config eos4
