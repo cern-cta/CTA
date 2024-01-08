@@ -54,6 +54,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
         "FILE_RECYCLE_LOG.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
         "FILE_RECYCLE_LOG.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME as VIRTUAL_ORGANIZATION_NAME,"
         "FILE_RECYCLE_LOG.ARCHIVE_FILE_CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "FILE_RECYCLE_LOG.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "FILE_RECYCLE_LOG.COLLOCATION_HINT AS COLLOCATION_HINT,"
@@ -63,14 +64,19 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       "FROM "
         "FILE_RECYCLE_LOG "
       "JOIN "
-        "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID";
+        "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID "
+      "JOIN "
+        "VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID";
 
     const bool thereIsAtLeastOneSearchCriteria =
-      searchCriteria.vid            ||
-      searchCriteria.diskFileIds    ||
-      searchCriteria.archiveFileId  ||
-      searchCriteria.copynb         ||
-      searchCriteria.diskInstance;
+            searchCriteria.vid ||
+            searchCriteria.diskFileIds ||
+            searchCriteria.archiveFileId ||
+            searchCriteria.copynb ||
+            searchCriteria.diskInstance ||
+            searchCriteria.recycleLogTimeMin ||
+            searchCriteria.recycleLogTimeMax ||
+            searchCriteria.vo;
 
     if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
@@ -104,6 +110,25 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     if (searchCriteria.copynb) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "FILE_RECYCLE_LOG.COPY_NB = :COPY_NB";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.recycleLogTimeMin) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME >= :RECYCLE_LOG_TIME_MIN";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.recycleLogTimeMax) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME <= :RECYCLE_LOG_TIME_MAX";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.vo) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+      addedAWhereConstraint = true;
     }
     
     // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
@@ -130,7 +155,19 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     if (searchCriteria.copynb) {
       m_stmt.bindUint64(":COPY_NB", searchCriteria.copynb.value());
     }
-    
+
+    if (searchCriteria.recycleLogTimeMin) {
+      m_stmt.bindUint64(":RECYCLE_LOG_TIME_MIN", searchCriteria.recycleLogTimeMin.value());
+    }
+
+    if (searchCriteria.recycleLogTimeMax) {
+      m_stmt.bindUint64(":RECYCLE_LOG_TIME_MAX", searchCriteria.recycleLogTimeMax.value());
+    }
+
+    if (searchCriteria.vo) {
+      m_stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", searchCriteria.vo.value());
+    }
+
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
@@ -212,6 +249,7 @@ common::dataStructures::FileRecycleLog RdbmsCatalogueGetFileRecycleLogItor::popu
   fileRecycleLog.sizeInBytes = m_rset.columnUint64("SIZE_IN_BYTES");
   fileRecycleLog.checksumBlob.deserializeOrSetAdler32(m_rset.columnBlob("CHECKSUM_BLOB"),m_rset.columnUint64("CHECKSUM_ADLER32"));
   fileRecycleLog.storageClassName = m_rset.columnString("STORAGE_CLASS_NAME");
+  fileRecycleLog.vo = m_rset.columnString("VIRTUAL_ORGANIZATION_NAME");
   fileRecycleLog.archiveFileCreationTime = m_rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
   fileRecycleLog.reconciliationTime = m_rset.columnUint64("RECONCILIATION_TIME");
   fileRecycleLog.collocationHint = m_rset.columnOptionalString("COLLOCATION_HINT");

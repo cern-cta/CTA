@@ -83,16 +83,18 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
 
     searchCriteria.diskFileIds->push_back(std::to_string(fid));
   }
-  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
-  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
-
+  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+
+  searchCriteria.recycleLogTimeMin = requestMsg.getOptional(OptionUInt64::LOG_UNIXTIME_MIN, &has_any);
+  searchCriteria.recycleLogTimeMax = requestMsg.getOptional(OptionUInt64::LOG_UNIXTIME_MAX, &has_any);
+  searchCriteria.vo = requestMsg.getOptional(OptionString::VO, &has_any);
 
   // Copy number on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
 
   if(!has_any){
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile, archiveFileId, instance, vo, ltmin, ltmax");
   }
   
   m_fileRecycleLogItor = catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
@@ -129,6 +131,7 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
       cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
     }
     recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
+    recycleLogToReturn->set_virtual_organization(fileRecycleLog.vo);
     recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
     recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
     if(fileRecycleLog.collocationHint){

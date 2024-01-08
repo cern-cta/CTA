@@ -58,6 +58,21 @@ struct RecycleTapeFileSearchCriteria {
    */
   std::optional<uint64_t> copynb;
 
+  /**
+   * Minimum recycle log time of a file
+   */
+  std::optional<uint64_t> recycleLogTimeMin;
+
+  /**
+   * Maximum recycle log time of a file
+   */
+  std::optional<uint64_t> recycleLogTimeMax;
+
+  /**
+   * The name of the virtual organization
+   */
+   std::optional<std::string> vo;
+
 }; // struct TapeFileSearchCriteria
 
 } // namespace cta::catalogue
