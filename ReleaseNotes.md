@@ -15,6 +15,7 @@
 ### Continuous Integration
 - cta/CTA#504 - Update CI scripts to use CERN's k8s infrastructure
 - cta/CTA#555 - Upgrade eos-5 to 4.8.105/5.2.4
+- cta/CTA#560 - Fix cppcheck updated errors
 
 ### Building and Packaging
 - cta/CTA#532 - Remove forcing ABI in CMake
