@@ -236,7 +236,7 @@ class SpaceTracker:
     self.freebytes = None
     self.lastquerytimestamp = None
 
-  def stagerrm_queued(self, file_size_bytes):
+  def evict_queued(self, file_size_bytes):
     self.freebytes = self.freebytes + file_size_bytes
 
   def get_free_bytes(self):
@@ -545,7 +545,7 @@ class Gc:
           self.eos.evict(fsid, fst_file)
         else:
           self.eos.stagerrm(fst_file)
-        space_tracker.stagerrm_queued(file_size_and_ctime.sizebytes)
+        space_tracker.evict_queued(file_size_and_ctime.sizebytes)
         self.log.info('stagerrm: ' \
           'sub_dir={}, ' \
           'fxid={}, ' \
