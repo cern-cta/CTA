@@ -30,6 +30,8 @@ import subprocess
 import sys
 import time
 
+MIN_VERSION_WITH_EVICT = (5, 2)
+
 class UserError(Exception):
   pass
 
@@ -149,7 +151,7 @@ class RealEos:
 
   def evict(self, fsid, fxid):
     mgmurl = 'root://{}'.format(self.mgm_host)
-    cmd = 'eos {} evict --force --fsid {} fxid:{}'.format(mgmurl, fsid, fxid)
+    cmd = 'eos {} evict --ignore-evict-counter --fsid {} fxid:{}'.format(mgmurl, fsid, fxid)
     env = os.environ.copy()
     env['XrdSecPROTOCOL'] = 'sss'
     env['XrdSecSSSKT'] = self.xrdsecssskt
@@ -163,7 +165,7 @@ class RealEos:
     if 0 != process.returncode:
       raise EvictError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
 
-  def getMinMajorVersion(self):
+  def getMinMajorMinorVersion(self):
     mgmurl = 'root://{}'.format(self.mgm_host)
     cmd = 'eos {} version'.format(mgmurl)
     env = os.environ.copy()
@@ -188,13 +190,23 @@ class RealEos:
           versions[splitpair[0]] = splitpair[1]
 
     server_major_version = int(versions['EOS_SERVER_VERSION'].split('.')[0])
+    server_minor_version = int(versions['EOS_SERVER_VERSION'].split('.')[1])
     client_major_version = int(versions['EOS_CLIENT_VERSION'].split('.')[0])
-    min_major_version = min(server_major_version, client_major_version)
+    client_minor_version = int(versions['EOS_CLIENT_VERSION'].split('.')[1])
+    if server_major_version < client_major_version:
+      min_major_version = server_major_version
+      min_minor_version = server_minor_version
+    elif server_major_version > client_major_version:
+      min_major_version = client_major_version
+      min_minor_version = client_minor_version
+    else:
+      min_major_version = min(server_major_version, client_major_version)
+      min_minor_version = min(server_minor_version, client_minor_version)
 
     if min_major_version not in (4, 5):
       raise VersionError('EOS major version \'{}\' is not valid'.format(min_major_version))
 
-    return min_major_version
+    return min_major_version, min_minor_version
 
   def attrset(self, name, value, fxid):
     mgmurl = 'root://{}'.format(self.mgm_host)
@@ -333,7 +345,7 @@ class Gc:
     self.fqdn = fqdn
     self.disk = disk
     self.eos = eos
-    self.eos_version = 4 # Version 4 by default
+    self.eos_version = (4, 0) # Version 4.0 by default, with only stagerrm command
     self.config = config
 
     self.local_file_system_paths = []
@@ -443,14 +455,18 @@ class Gc:
   def check_eos_version(self):
     # Check if the EOS version has changed
     try:
-      new_eos_version = self.getMinMajorVersion()
+      new_eos_version = self.getMinMajorMinorVersion()
     except Exception as err:
       self.log.error('process_eos_version: Failed to determine the EOS major version: {}'.format(err))
       return
 
     if new_eos_version != self.eos_version:
       self.eos_version = new_eos_version
-      self.log.info('EOS major version switched to {}'.format(new_eos_version))
+      self.log.info('EOS version switched to {}.{}'.format(*new_eos_version))
+      if self.eos_version >= MIN_VERSION_WITH_EVICT:
+        self.log.info('Will use \'evict\' command')
+      else:
+        self.log.info('Will use \'stagerrm\' command')
 
   def log_file_system_paths(self):
     self.log.info('Number of local file systems is {}'.format(len(self.local_file_system_paths)))
@@ -525,7 +541,7 @@ class Gc:
         bytes_required_before = 0
         if self.config.eos_space_to_min_free_bytes[eos_space] > total_free_bytes:
           bytes_required_before = self.config.eos_space_to_min_free_bytes[eos_space] - total_free_bytes
-        if self.eos_version == 5:
+        if self.eos_version >= MIN_VERSION_WITH_EVICT:
           self.eos.evict(fsid, fst_file)
         else:
           self.eos.stagerrm(fst_file)
