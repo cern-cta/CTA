@@ -143,7 +143,7 @@ TRACKER_PID=$!
 echo
 echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
 echo " Archiving files: gfal-copy as user1 via https"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-archive.sh && ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
  echo
