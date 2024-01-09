@@ -1,7 +1,7 @@
-#!/bin/python
+#!/usr/bin/env python3
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright(C) 2015-2022 CERN
+# @copyright    Copyright(C) 2015-2023 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 import argparse
-import ConfigParser
+import configparser
 import datetime
 import distutils
 import errno
@@ -102,7 +102,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\'": {}'.format(cmd, err))
     stdout,stderr = process.communicate()
@@ -136,7 +136,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\': {}'.format(cmd, err))
     stdout,stderr = process.communicate()
@@ -152,7 +152,7 @@ class RealEos:
     env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
-      process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+      process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True)
     except Exception as err:
       raise Exception('Failed to execute \'{}\': {}'.format(' '.join(args), err))
     stdout,stderr = process.communicate()
@@ -301,7 +301,7 @@ class Gc:
   @staticmethod
   def parse_conf(conf_fp):
     try:
-      parser = ConfigParser.ConfigParser()
+      parser = configparser.ConfigParser()
       parser.readfp(conf_fp)
       config = GcConfig()
       config.log_file = parser.get('main', 'log_file')
@@ -325,7 +325,7 @@ class Gc:
            'value=\'{}\''.format(eos_space, config.eos_space_to_min_free_bytes_str))
 
       return config
-    except ConfigParser.Error as err:
+    except configparser.Error as err:
       raise UserError(err)
 
   @staticmethod
