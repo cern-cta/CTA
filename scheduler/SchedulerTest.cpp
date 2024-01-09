@@ -549,9 +549,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // Check that we have the file in the queues
-  // TODO: for this to work all the time, we need an index of all requests
-  // (otherwise we miss the selected ones).
-  // Could also be limited to querying by ID (global index needed)
   bool found=false;
   for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
     for (auto & req: tp.second) {
@@ -728,7 +725,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
 
 }
 
-TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
+TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -1108,7 +1105,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
-    request.retrieveReportURL = "null:";
+//    request.retrieveReportURL = "null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     request.mountPolicy = "custom_mount_policy";
@@ -1130,8 +1127,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
-    // Check the retrieve report URL
-    ASSERT_EQ("null:", job.request.retrieveReportURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 
@@ -1146,7 +1141,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     ASSERT_EQ(1, job_vid.tapeCopies.size());
     ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
     ASSERT_EQ("dstURL", job_vid.request.dstURL);
-    ASSERT_EQ("null:", job_vid.request.retrieveReportURL);
     ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
   }
 
@@ -1171,18 +1165,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
-
-  {
-    // Emulate the reporter process reporting successful transfer to disk to the disk system
-    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
-    ASSERT_NE(0, jobsToReport.size());
-    disk::DiskReporterFactory factory;
-    log::TimingList timings;
-    utils::Timer t;
-    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
-    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
-  }
-
 }
 
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
@@ -1563,7 +1545,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
-    request.retrieveReportURL = "null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
@@ -1582,8 +1563,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(1, job.tapeCopies.size());
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
-    // Check the retrieve report URL
-    ASSERT_EQ("null:", job.request.retrieveReportURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 
@@ -1621,18 +1600,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(0, jobBatch.size());
   }
 
-  {
-    // Emulate the reporter process reporting successful transfer to tape to the disk system
-    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
-    ASSERT_NE(0, jobsToReport.size());
-    disk::DiskReporterFactory factory;
-    log::TimingList timings;
-    utils::Timer t;
-    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
-    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
-  }
-
-}
+ }
 
 TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   using namespace cta;

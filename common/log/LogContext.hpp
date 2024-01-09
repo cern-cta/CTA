@@ -135,7 +135,7 @@ private:
 
 class ScopedParamContainer {
 public:
-  explicit ScopedParamContainer(LogContext& context):m_context(context) {}
+  explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
   ~ScopedParamContainer() {
     for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
       m_context.erase(*it);
@@ -147,6 +147,10 @@ public:
     m_context.pushOrReplace(Param(s,t));
     m_names.push_back(s);
     return *this;
+  }
+
+  void log(int iPriority, std::string_view strvMsg) noexcept {
+    m_context.log(iPriority, strvMsg);
   }
 
 private:

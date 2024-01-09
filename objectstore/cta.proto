@@ -466,7 +466,7 @@ message RetrieveRequest {
   optional string disk_system_name = 9161;
   required bool isverifyonly = 9162;
   optional bool isfailed = 9166 [default = false];
-  required string retrievereporturl = 91667;
+  optional string retrievereporturl = 9167;
 }
 
 message ValueCountPair {
