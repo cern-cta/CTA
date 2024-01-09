@@ -45,6 +45,12 @@ BATCH_SIZE=20    # number of files per batch process
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
+NOW=$(date +%s)
+LATER=$(echo "${NOW}+86400"  | bc)
+TOKEN=$(eos root://ctaeos token --tree --path '/eos/ctaeos' --expore "${LATER}" --owner user1 --group eosusers --permission rwxd)
+
+TOKEN_EOSPOWER=$(eospower_eos "${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
+
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -151,7 +157,7 @@ case "${CLI_TARGET}" in
     . /root/cli_calls.sh 'xrd'
     ;;
   gfal2)
-    . /root/cli_calls.sh 'gfal2'
+    . /root/cli_calls.sh "gfal2-${GFAL2_PROTOCOL}"
     ;;
   *)
     echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
