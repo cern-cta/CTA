@@ -58,11 +58,11 @@ echo "Copying test scripts to client pod"
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
 
+kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_helper.sh && admin_kinit"
+
 NB_FILES=5000
 FILE_SIZE_KB=15
 NB_PROCS=100
-
-
 
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
@@ -130,7 +130,7 @@ echo "Installing gfal2-plugin-http for http gfal test."
 kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
 echo "Enable insecure certs for gfal2"
 kubectl -n ${NAMESPACE} exec client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
-echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests"
+echo "Setting up environment for gfal-https tests"
 GFAL2_PROTOCOL='https'
 kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 

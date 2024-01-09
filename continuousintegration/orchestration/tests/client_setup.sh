@@ -45,12 +45,6 @@ BATCH_SIZE=20    # number of files per batch process
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
-NOW=$(date +%s)
-LATER=$(echo "${NOW}+86400"  | bc)
-TOKEN=$(eos root://ctaeos token --tree --path '/eos/ctaeos' --expore "${LATER}" --owner user1 --group eosusers --permission rwxd)
-
-TOKEN_EOSPOWER=$(eospower_eos "${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
-
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -154,10 +148,11 @@ fi
 
 case "${CLI_TARGET}" in
   xrd)
-    . /root/cli_calls.sh 'xrd'
+    . /root/cli_calls.sh
     ;;
   gfal2)
-    . /root/cli_calls.sh "gfal2-${GFAL2_PROTOCOL}"
+    CLI_TARGET="gfal2-${GFAL2_PROTOCOL}"
+    . /root/cli_calls.sh
     ;;
   *)
     echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
@@ -213,6 +208,12 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 # Get kerberos credentials for poweruser1
 eospower_kdestroy
 eospower_kinit
+
+NOW=$(date +%s)
+LATER=$(echo "${NOW}+${TOKEN_TIMEOUT}"  | bc)
+TOKEN=$(eos root://ctaeos token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
+
+TOKEN_EOSPOWER=$(eospower_eos root://"${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
 
 echo "Starting test ${TESTID}: ${COMMENT}"
 

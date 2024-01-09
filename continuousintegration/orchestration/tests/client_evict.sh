@@ -36,7 +36,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
-echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
+echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS ${evict}"
 
 if [[ ${EVICTED} -ne ${TO_EVICT} ]]; then
   echo "ERROR: some files were not evicted"
