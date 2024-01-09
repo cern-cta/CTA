@@ -455,7 +455,7 @@ class Gc:
   def check_eos_version(self):
     # Check if the EOS version has changed
     try:
-      new_eos_version = self.getMinMajorMinorVersion()
+      new_eos_version = self.eos.getMinMajorMinorVersion()
     except Exception as err:
       self.log.error('process_eos_version: Failed to determine the EOS major version: {}'.format(err))
       return
