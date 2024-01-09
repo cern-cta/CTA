@@ -75,7 +75,7 @@ client-gfal2-eos5:
     - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos5-config-quarkdb-https.yaml"
 
 repack:
   stage: test
