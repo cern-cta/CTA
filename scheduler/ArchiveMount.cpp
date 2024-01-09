@@ -167,19 +167,19 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 }
 
 //------------------------------------------------------------------------------
-// reportJobsBatchWritten
+// reportJobsBatchTransferred
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs,
+void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
                                                    std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
                                                    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
                                                    cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
-  std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
+  std::list<std::unique_ptr<cta::ArchiveJob>> validatedSuccessfulArchiveJobs;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
   std::string failedValidationJobReportURL;
   bool catalogue_updated = false;
-  try{
+  try {
     uint64_t files=0;
     uint64_t bytes=0;
     double catalogueTime=0;
@@ -195,7 +195,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("mountType", cta::common::dataStructures::toString(job->m_mount->getMountType()))
             .add("fileId", job->archiveFile.archiveFileID)
             .add("type", "ReportSuccessful");
-      logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(), archive job successful.");
+      logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(): archive job successful");
       try {
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
       } catch(const cta::exception::Exception&) {
@@ -247,7 +247,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
           .add("catalogueTime", catalogueTime)
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime + schedulerDbTime + clientReportingTime);
-    logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
+    logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchTransferred(): recorded a batch of archive jobs in metadata");
   } catch (const cta::exception::NoSuchObject& ex){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", ex.getMessageValue());
@@ -258,7 +258,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
             .add("reportURL", failedValidationJobReportURL);
     }
-    const std::string msg_error = "In ArchiveMount::reportJobsBatchWritten(): job does not exist in the objectstore.";
+    const std::string msg_error = "In ArchiveMount::reportJobsBatchTransferred(): job does not exist in the Scheduler DB";
     logContext.log(cta::log::WARNING, msg_error);
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(logContext);
@@ -270,7 +270,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
             .add("reportURL", failedValidationJobReportURL);
     }
-    const std::string msg_error = "In ArchiveMount::reportJobsBatchWritten(): got an exception";
+    const std::string msg_error = "In ArchiveMount::reportJobsBatchTransferred(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     //If validatedSuccessfulArchiveJobs has still jobs in it, it means that
     //the validation job->validateAndGetTapeFileWritten() failed for one job and
@@ -298,7 +298,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error = "In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
+    const std::string msg_error = "In ArchiveMount::reportJobsBatchTransferred(): got a standard exception";
     logContext.log(cta::log::ERR, msg_error);
     for (auto& aj: validatedSuccessfulDBArchiveJobs) {
       if (aj)

@@ -129,6 +129,9 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   // Validate received protobuf
   checkIsNotEmptyString(m_event.cli().user().username(),  "m_event.cli.user.username");
   checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
+  if(m_event.file().owner().uid() == 0) {
+    throw exception::PbException(std::string(__FUNCTION__) + ": file is owned by root");
+  }
 
   // Unpack message
   common::dataStructures::RequesterIdentity requester;
