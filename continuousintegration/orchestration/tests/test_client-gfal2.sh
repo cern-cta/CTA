@@ -62,6 +62,8 @@ NB_FILES=5000
 FILE_SIZE_KB=15
 NB_PROCS=100
 
+
+
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
@@ -71,7 +73,7 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r"
+clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c gfal2"
 
 # Tests
 # Check for xrd vesion as xrd gfal plugin only runs under xrd version 5.
@@ -81,7 +83,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-xrootd"
 
     echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
-    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL} -c gfal2"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
     echo
     echo "Track progress of test"
@@ -130,7 +132,7 @@ echo "Enable insecure certs for gfal2"
 kubectl -n ${NAMESPACE} exec client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
 echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests"
 GFAL2_PROTOCOL='https'
-kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
 echo
 echo "Track progress of test"
