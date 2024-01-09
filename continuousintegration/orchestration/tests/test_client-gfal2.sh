@@ -125,7 +125,7 @@ fi
 
 # Test gfal2 https plugin
 echo "Installing gfal2-plugin-http for http gfal test."
-kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
 echo "Enable insecure certs for gfal2"
 kubectl -n ${NAMESPACE} exec client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
 echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests"
