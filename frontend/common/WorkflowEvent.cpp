@@ -130,7 +130,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   checkIsNotEmptyString(m_event.cli().user().username(),  "m_event.cli.user.username");
   checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
   if(m_event.file().owner().uid() == 0) {
-    throw exception::PbException(std::string(__FUNCTION__) + ": file is owned by root");
+    throw exception::PbException(std::string(__FUNCTION__) + ": file owner uid must be non-zero (archive files cannot be owned by root)");
   }
 
   // Unpack message
