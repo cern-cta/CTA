@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2023 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -36,7 +36,9 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
   file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
-  
+
+  # The `archive` variable is sourced from cli_calls.sh without parameter
+  # expansion, to be able to expand the variable afterwards we need `eval echo`
   xrdcp_call=$(eval echo "${archive}")
   xrdcp_call+=" 2>${ERROR_DIR}/${subdir}TEST_FILE_NUM"
   xrdcp_succes=" rm ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
@@ -99,7 +101,6 @@ done
 echo "###"
 echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 echo "###"
-i
 if [[ ${ARCHIVED} -ne ${TO_BE_ARCHIVED} ]]; then
   echo "ERROR: Some files were lost during archival."
   exit 1
