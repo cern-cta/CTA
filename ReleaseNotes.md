@@ -12,6 +12,7 @@
 - cta/CTA#543 - Revert log level back to DEBUG 
 - cta/CTA#542 - Fix valgrind tests
 - cta/CTA#547 - Fix repack backpressure mechanism not requeueing repack requests
+- cta/CTA#562 - CTA Frontend should reject files with owner_uid=0
 
 ### Continuous Integration
 - cta/CTA#278 - Updating system tests for new EOS evict command
