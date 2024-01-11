@@ -62,13 +62,14 @@ trackArchive() {
 trackPrepare() {
   total=0
   evictCounter=$((base_evict + 1))
+
   s=0;
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
-              grep "^d${evictCounter}::t1" | awk '{print $10}')
+              grep "^d[1-9][0-9]*::t1" | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map
@@ -106,13 +107,17 @@ trackPrepare() {
 trackEvict() {
   total=0
   evictCounter=$((base_evict - 1))
+  on_disk=0
+  if [[ $evictCounter != 0 ]]; then
+    on_disk="[1-9][0-9]*"
+  fi
   s=0
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
-              grep "^d${evictCounter}::t1" | awk '{print $10}')
+              grep "^d${on_disk}::t1" | awk '{print $10}')
       ts=$(date +%s)
 
       # Update map
