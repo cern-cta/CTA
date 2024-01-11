@@ -77,8 +77,6 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
    `2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && echo ${subdir}/${subdir}TEST_FILE_NAME >> reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME `
    `|| echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" \
      | grep ^ERROR
-
-
 done
 
 # Wait for requests to be generated

@@ -25,7 +25,6 @@ trackArchive() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
-
       tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
       ts=$(date +%s)
@@ -63,6 +62,7 @@ trackArchive() {
 trackPrepare() {
   total=0
   evictCounter=$((base_evict + 1))
+
   s=0;
   while [[ $s -lt 90 ]]; do # 90 secs timeout
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
@@ -90,6 +90,7 @@ trackPrepare() {
       fi
 
       # Check if we are done.
+      if [[ $total == $((NB_FILES*NB_DIRS)) ]]; then
         base_evict=$evictCounter
         return
       fi

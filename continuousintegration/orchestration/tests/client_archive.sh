@@ -101,7 +101,6 @@ done
 echo "###"
 echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 echo "###"
-
 if [[ ${ARCHIVED} -ne ${TO_BE_ARCHIVED} ]]; then
   echo "ERROR: Some files were lost during archival."
   exit 1
