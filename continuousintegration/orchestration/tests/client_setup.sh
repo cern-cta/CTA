@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -26,6 +26,7 @@ ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
 LOGDIR='/var/log'
+CLI_TARGET="xrd"
 
 COMMENT=''
 # id of the test so that we can track it
@@ -44,30 +45,6 @@ BATCH_SIZE=20    # number of files per batch process
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
-# Setup sqlite3 DB.
-# Table client_tests
-#   filename
-#   archived     - amount of time a file has been archived
-#   staged       - amount of times a file has been evicted
-#   evicted      - amount of times the evict call has been called for the file.
-#   deleted      - deleted files.
-cat <<EOF > /opt/run/bin/tracker.schema
-
-CREATE TABLE client_tests_${TESTID}(
-       filename TEXT PRIMARY KEY,
-       archived INTEGER DEFAULT 0,
-       staged   INTEGER DEFAULT 0,
-       evicted  INTEGER DEFAULT 0,
-       aborted  INTEGER DEFAULT 0,
-       deleted  INTEGER DEFAULT 0
-);
-EOF
-
-export DB_NAME="/root/trackerdb.db"
-export TEST_TABLE="client_tests_${TESTID}"
-
-sqlite3 /root/trackerdb.db < /opt/run/bin/tracker.schema
-
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -77,14 +54,15 @@ die() {
 
 usage() { cat <<EOF 1>&2
 Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
-  -v		Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
-  -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
-  -a		Archiveonly mode: exits after file archival
-  -g		Tape aware GC?
+  -v    Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
+  -r    Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
+  -a    Archiveonly mode: exits after file archival
+  -g    Tape aware GC?
+  -S    Track progress in SQLite?
+  -c    CLI tool to execute
 EOF
 exit 1
 }
-
 
 # Send annotations to Influxdb
 annotate() {
@@ -96,8 +74,11 @@ annotate() {
   eval ${curlcmd}
 }
 
-while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:" o; do
+while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:c:" o; do
     case "${o}" in
+        c)
+            CLI_TARGET=${OPTARG}
+            ;;
         e)
             EOSINSTANCE=${OPTARG}
             ;;
@@ -164,6 +145,18 @@ if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
+
+case "${CLI_TARGET}" in
+  xrd)
+    . /root/cli_calls.sh 'xrd'
+    ;;
+  gfal2)
+    . /root/cli_calls.sh 'gfal2'
+    ;;
+  *)
+    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
+    exit 1
+esac
 
 if [ "x${COMMENT}" = "x" ]; then
     echo "No annotation will be pushed to Influxdb"
