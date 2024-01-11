@@ -187,6 +187,8 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 # Get EOS version
 EOS_V=$(yum list | grep eos-client | awk '{print $2}' | awk -F. '{print $1}')
+yum list
+echo $EOS_V
 if [[ $EOS_V == 5 ]]; then
   echo
   echo "Launching evict_tests.sh on client pod"
