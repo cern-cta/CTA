@@ -1,4 +1,4 @@
-#!/bin/bash sh
+#!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright © 2024 CERN
