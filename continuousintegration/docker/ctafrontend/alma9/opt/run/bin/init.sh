@@ -27,6 +27,7 @@ die() {
 }
 
 # enable cta repository from previously built artifacts
+yum -y install yum-utils
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
