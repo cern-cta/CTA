@@ -52,8 +52,8 @@ default:
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
     - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
-    - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-    - if [[ ${major_version} == 4 ]]; then
+    - xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+    - if [[ ${xrootd_version} == 4 ]]; then
         echo "Setting to compile with XRootD version 4";
         XROOTD_VERSION=4;
         CTA_VERSION=4;

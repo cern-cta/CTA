@@ -59,8 +59,8 @@ jobs:
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^[^-]*-//')
           fi
-          major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-          if [[ ${major_version} == 5 ]]; then
+          xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+          if [[ ${xrootd_version} == 5 ]]; then
             echo "Setting to compile with XRootD version 5"
             XROOTD_VERSION=5
           fi
