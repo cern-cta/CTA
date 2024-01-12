@@ -1,6 +1,6 @@
 [ceph]
 name=Ceph packages for $basearch
-baseurl=https://download.ceph.com/rpm-15.2.15/el8/x86_64/
+baseurl=https://download.ceph.com/rpm-17.2.7/el9/x86_64/
 enabled=1
 priority=2
-gpgcheck=1
+gpgcheck=0

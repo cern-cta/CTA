@@ -15,4 +15,5 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+yum install -y expect
 /opt/run/bin/ctaeos-mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log

@@ -26,12 +26,16 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 
 # Manage repos before running yum
 COPY ${BASEDIR}/repos/ /etc/yum.repos.d/
+COPY ${BASEDIR}/cta/ /etc/cta/
+COPY ${BASEDIR}/yum/ /etc/yum/
+RUN cp /etc/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/opt /opt
 
 RUN yum install -y \
       yum-plugin-versionlock \
+      yum-utils \
       createrepo epel-release \
   && \
     # where do we want to get xroot from?
@@ -75,7 +79,7 @@ RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-4; then \
 fi
 
 # Add pod specific configuration
-# COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
+COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
 # Docker image run setup
 COPY ${BASEDIR}/run.sh /
@@ -89,7 +93,7 @@ RUN chmod 744 /etc/rc.local
 
 # disable selinux so that systemd works if the container is booted
 # with an image that already contains selinux
-# COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
+COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # One more thing so that we can use systemd
 VOLUME [ "/sys/fs/cgroup" ]
