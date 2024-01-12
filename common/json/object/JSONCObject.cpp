@@ -89,25 +89,29 @@ double JSONCObject::jsonGetValue(const std::string & key){
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const std::string & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_string(value.c_str()));
+void JSONCObject::jsonSetValue(const std::string_view key, const std::string& value) {
+  json_object_object_add(m_jsonObject,key.data(),json_object_new_string(value.c_str()));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const double & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double(value));
+void JSONCObject::jsonSetValue(std::string_view key, const std::string_view& value) {
+  json_object_object_add(m_jsonObject,key.data(),json_object_new_string(value.data()));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const uint64_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
+void JSONCObject::jsonSetValue(std::string_view key, const double& value) {
+  json_object_object_add(m_jsonObject,key.data(),json_object_new_double(value));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const time_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
+void JSONCObject::jsonSetValue(std::string_view key, const uint64_t& value) {
+  json_object_object_add(m_jsonObject,key.data(),json_object_new_int64(value));
 }
 
+template<>
+void JSONCObject::jsonSetValue(std::string_view key, const time_t& value) {
+  json_object_object_add(m_jsonObject,key.data(),json_object_new_int64(value));
+}
 
 JSONCObject::~JSONCObject() {
   //Free the JSON object if initialized

@@ -85,7 +85,7 @@ protected:
    * T is the type of the value associated to the key
    */
   template<typename T>
-  void jsonSetValue(const std::string & key, const T & value);
+  void jsonSetValue(std::string_view key, const T& value);
   
   /**
    * Returns a pointer to the JSON-C representation of the object associated to the key passed in parameter

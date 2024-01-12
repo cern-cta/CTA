@@ -2,12 +2,11 @@
 
 namespace cta::log {
 
-JSONLogger::JSONLogger(): cta::utils::json::object::JSONCObject() {
+JSONLogger::JSONLogger() : cta::utils::json::object::JSONCObject() {
 }
 
-
-void JSONLogger::addToObject(const std::string& key, const std::string & value){
-  this->jsonSetValue(key, value);
+void JSONLogger::addToObject(std::string_view key, std::string_view value) {
+  jsonSetValue(key, value);
 }
 
-} 
+}

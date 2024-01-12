@@ -278,14 +278,14 @@ std::string Logger::createMsgJsonOut(
     uint64_t nanoseconds,
     uint64_t seconds,
     char* local_time,
-    const std::string &hostName,
-    const std::string &programName,
+    std::string_view hostName,
+    std::string_view programName,
     const int pid,
     const int priority,
-    const std::string &priorityText,
-    const std::string &msg,
+    std::string_view priorityText,
+    std::string_view msg,
     const std::list<Param> &params,
-    const std::string &rawParams) {
+    std::string_view rawParams) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
