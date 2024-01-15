@@ -300,9 +300,7 @@ The shared libraries
 %defattr(0755,root,root,-)
 #TODO: merge util and common
 %{_libdir}/libctascheduler.so*
-%if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstore.so*
-%endif
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
@@ -348,9 +346,7 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctainmemorycatalogueunittests.so*
 %{_libdir}/libctainmemoryconnunittests.so*
 %{_libdir}/libctainmemorystmtunittests.so*
-%if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstoreunittests.so*
-%endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
 %{_libdir}/libctaschedulerunittests.so*
@@ -380,7 +376,6 @@ Command-line tool for testing immutable files
 %defattr(0755,root,root,-)
 %{_bindir}/cta-immutable-file-test
 
-%if "%{usingObjectstore}" != "0"
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
@@ -396,7 +391,6 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
-%endif
 
 #cta-systemtests installs libraries so we need ldconfig.
 %post -n cta-systemtests -p /sbin/ldconfig
