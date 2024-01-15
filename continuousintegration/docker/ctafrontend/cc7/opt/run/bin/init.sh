@@ -48,9 +48,13 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   echo "Wiping objectstore"
   if [ "$OBJECTSTORETYPE" == "file" ]; then
     rm -fr $OBJECTSTOREURL
+    rm -fr $OBJECTSTOREREPACKURL
     mkdir -p $OBJECTSTOREURL
+    mkdir -p $OBJECTSTOREREPACKURL
     cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
+    cta-objectstore-initialize $OBJECTSTOREREPACKURL || die "ERROR: Could not Wiper the repack objectstore. cta-objectstore-initialize $OBJECSTOREREPACKURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
+    chmod -R 777 $OBJECTSTOREREPACKURL
   elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
     cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else

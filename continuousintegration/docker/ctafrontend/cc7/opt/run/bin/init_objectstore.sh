@@ -71,6 +71,7 @@ EOF
     echo "Configuring file objectstore"
     OBJECTSTORETYPE=file
     OBJECTSTOREURL=$(echo $(get_conf objectstore.file.path) | sed -e "s#%NAMESPACE#${MY_NAMESPACE}#")
+    OBJECTSTOREREPACKURL=$(echo $(get_conf objectstorerepack.file.path) | sed -e "s#%NAMESPACE#${MY_NAMESPACE}#")
   ;;
   *)
     if [ "$NOSCHEDKEY" == "NOTOK" ]; then
