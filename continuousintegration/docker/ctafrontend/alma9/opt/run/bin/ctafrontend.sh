@@ -65,7 +65,7 @@ else
   echo 'KO'
 fi
 
-
+find /usr/lib64 | grep libXrdSsiCta.so
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
