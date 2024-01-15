@@ -50,15 +50,22 @@ index 1c2508ea8a..3192f3746c 100644
    NO_DEFAULT_PATH)
  
 diff --git a/cta.spec.in b/cta.spec.in
-index 2e71df3266..3a31e1550f 100644
+index 2e71df3266..418cd7a189 100644
 --- a/cta.spec.in
 +++ b/cta.spec.in
+@@ -1,5 +1,5 @@
+ # Avoid problem with official Oracle RPMS not listing necessary capabilities
+-%global __requires_exclude ^libocci.so|^libclntsh.so
++%global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
+ 
+ # Generic macros
+ #---------------
 @@ -50,13 +50,13 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
  %define xrootdVersion 1:5.6.1-1
  %endif
  
 -%define radosVersion 2:15.2.15
-+%define radosVersion 2:16.2.4
++%define radosVersion 2:17.2.7
  BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
  BuildRequires: xrootd-devel         >= %{xrootdVersion}
  BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
@@ -102,7 +109,7 @@ index 2e71df3266..3a31e1550f 100644
 +# Explicity require protobuf to avoid clash with eos-protobuf
  Requires: cta-lib-common
 -Requires: oracle-instantclient19.3-basic
-+Requires: oracle-instantclient19.19-basic
++# Requires: oracle-instantclient19.19-basic
  Requires: postgresql-libs
  Requires: xrootd-client-libs >= %{xrootdVersion}
  %description -n cta-lib-catalogue
@@ -117,6 +124,15 @@ index 2e71df3266..3a31e1550f 100644
  Requires: cta-lib-common = %{version}-%{release}
  %description -n cta-lib
  CERN Tape Archive:
+@@ -388,6 +388,7 @@ Command-line tool for testing immutable files
+ Summary: CERN Tape Archive: object store tools
+ Group: Application/CTA
+ Requires: cta-lib = %{version}-%{release}
++Requires: cta-lib-catalogue = %{version}-%{release}
+ Requires: xrootd-client-libs >= %{xrootdVersion}
+ %description -n cta-objectstore-tools
+ CERN Tape Archive:
+
 diff --git a/eos_cta/CMakeLists.txt b/eos_cta/CMakeLists.txt
 index 66f3a07ce5..9ee05dfd78 100644
 --- a/eos_cta/CMakeLists.txt
