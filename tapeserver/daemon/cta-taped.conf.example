@@ -43,6 +43,10 @@
 # objectstore. For testing or small installations, a file-based objectstore can be used instead.
 ObjectStore BackendPath rados://cta@tapecta:cta
 # ObjectStore BackendPath /path/to/local/objectstore
+#
+# URL of dedicated repack's objectstore. It is optional
+ObjectStore BackendPathRepack rados://cta@tapecta:cta2
+# ObjectStore BackendPathRepakc /path/to/local/repack/objectstore
 
 #
 # MEMORY MANAGEMENT OPTIONS

@@ -141,6 +141,9 @@ struct TapedConfiguration {
   /// URL of the object store.
   cta::SourcedParameter<std::string> backendPath{
     "ObjectStore", "BackendPath"};
+  // URL of the dedicated repack object store
+  cta::SourcedParameter<std::string> backendPathRepack{
+  "ObjectStore", "BackendPathRepack", "", "Compile time default"};
   /// Path to the CTA catalogue config file
   cta::SourcedParameter<std::string> fileCatalogConfigFile{
     "taped", "CatalogueConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
