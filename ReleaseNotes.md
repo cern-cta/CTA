@@ -21,6 +21,7 @@
 - cta/CTA#555 - Upgrade eos-5 to 4.8.105/5.2.4
 - cta/CTA#560 - Fix cppcheck updated errors
 - cta/CTA#564 - Skip eos evict system tests on EOS 4
+- cta/CTA#571 - Remove 'eos-*' dependencies from versionlock file
 
 ### Building and Packaging
 - cta/CTA#532 - Remove forcing ABI in CMake
