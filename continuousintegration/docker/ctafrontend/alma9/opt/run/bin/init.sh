@@ -44,8 +44,8 @@ cp libocci_gcc53.so.19.1 $occi_folder
 ls -l $occi_folder
 
 # install needed packages
-yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
-# oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-tnsnames.ora
+# oracle-instantclient19.3-sqlplus 
 yum clean packages
 
 echo "Using this configuration for library:"
