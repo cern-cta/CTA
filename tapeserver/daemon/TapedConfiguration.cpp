@@ -123,7 +123,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdGetNextMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   // The central storage access configuration
   ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
-  ret.backendPathRepack.setFromConfigurtaionFile(cf, generalConfigPath);
+  ret.backendPathRepack.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
   // Repack management configuration
   ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
