@@ -13,6 +13,7 @@
 - cta/CTA#542 - Fix valgrind tests
 - cta/CTA#547 - Fix repack backpressure mechanism not requeueing repack requests
 - cta/CTA#562 - CTA Frontend should reject files with owner_uid=0
+- cta/CTA#572 - Do not set the 'queueTrimRequired' flag as true when 'doCleanup' is required
 
 ### Continuous Integration
 - cta/CTA#278 - Updating system tests for new EOS evict command
