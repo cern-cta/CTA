@@ -49,7 +49,9 @@ target_link_libraries (cta-scheduler-schema-create ctacatalogue)
 
 set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
+if(CTA_USE_PGSCHED)
+  install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
+endif()
 
 set (DROP_SCHEMA_CMD
   CmdLineTool.cpp
@@ -61,4 +63,6 @@ set (DROP_SCHEMA_CMD
 add_executable(cta-scheduler-schema-drop ${DROP_SCHEMA_CMD})
 target_link_libraries (cta-scheduler-schema-drop ctacatalogue)
 
-install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
+if(CTA_USE_PGSCHED)
+  install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
+endif()
