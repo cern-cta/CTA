@@ -488,7 +488,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         }
       }
     } else {
-      if(!rqSummary.jobs)
+      if(!rqSummary.jobs && !rqueue.getQueueCleanupDoCleanup())
         tmdi.queueTrimRequired = true;
     }
     auto processingTime = t.secs(utils::Timer::resetCounter);
