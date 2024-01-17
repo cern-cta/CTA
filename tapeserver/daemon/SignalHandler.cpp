@@ -118,6 +118,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGUSR1:
   {
     m_processManager.logContext().log(log::INFO, "In signal handler, received signal to swap objecstore.");
+    [[fallthrough]];
   }
   case SIGINT:
   case SIGTERM:
