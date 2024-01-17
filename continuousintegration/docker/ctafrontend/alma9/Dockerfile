@@ -37,7 +37,7 @@ RUN yum install -y \
       yum-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
-      oracle-instantclient-tnsnames.ora \
+      wget \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
@@ -78,6 +78,16 @@ RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-4; then \
   yum-config-manager --enable cta-ci-xroot; \
   yum-config-manager --disable cta-ci-xrootd5; \
 fi
+
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/oracle-instantclient19.19-basic-19.19.0.0.0-1.el9.x86_64.rpm; \
+    wget https://download.oracle.com/otn_software/linux/instantclient/1919000/oracle-instantclient19.19-devel-19.19.0.0.0-1.el9.x86_64.rpm; \
+    wget https://cernbox.cern.ch/remote.php/dav/public-files/KpgLqb7gURQp6Qd/libocci_gcc53.so.19.1; \
+    yum install -y oracle-instantclient19.19-basic-19.19.0.0.0-1.el9.x86_64.rpm; \
+    yum install -y oracle-instantclient19.19-devel-19.19.0.0.0-1.el9.x86_64.rpm; \
+    yum install -y oracle-instantclient-tnsnames.ora; \
+    echo "Copying files to /usr/lib/oracle/"; \
+    occi_folder=$(find /usr/ | grep libocci.so.19.1 | xargs dirname); \
+    cp libocci_gcc53.so.19.1 $occi_folder
 
 # Add pod specific configuration
 COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
