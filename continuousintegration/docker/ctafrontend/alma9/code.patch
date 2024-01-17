@@ -132,6 +132,15 @@ index 2e71df3266..418cd7a189 100644
  Requires: xrootd-client-libs >= %{xrootdVersion}
  %description -n cta-objectstore-tools
  CERN Tape Archive:
+@@ -536,7 +537,7 @@ Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
+ CERN Tape Archive:
+ Common items such as the creation of the cta local user and /var/log/cta
+ %pre -n cta-common
+-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
++/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /usr/sbin/nologin -c "CTA system account" -g tape cta
+ %files -n cta-common
+ %defattr(-,root,root)
+ %attr(0755,cta,tape) %dir /var/log/cta
 
 diff --git a/eos_cta/CMakeLists.txt b/eos_cta/CMakeLists.txt
 index 66f3a07ce5..9ee05dfd78 100644

@@ -37,6 +37,7 @@ RUN yum install -y \
       yum-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
+      oracle-instantclient-tnsnames.ora \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
