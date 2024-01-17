@@ -117,7 +117,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   }
   case SIGUSR1:
   {
-    m_processManager.logContext().log(log::INFO, "In signal handler, received signal to swap objecstore.")
+    m_processManager.logContext().log(log::INFO, "In signal handler, received signal to swap objecstore.");
   }
   case SIGINT:
   case SIGTERM:
