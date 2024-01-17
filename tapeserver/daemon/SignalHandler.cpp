@@ -103,7 +103,6 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGHUP:
   case SIGQUIT:
   case SIGPIPE:
-  case SIGUSR1:
   case SIGUSR2:
   case SIGTSTP:
   case SIGTTIN:
@@ -115,6 +114,10 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     
     m_processManager.logContext().log(log::INFO, "In signal handler, ignoring signal");
     break;
+  }
+  case SIGUSR1:
+  {
+    m_processManager.logContext().log(log::INFO, "In signal handler, received signal to swap objecstore.")
   }
   case SIGINT:
   case SIGTERM:
