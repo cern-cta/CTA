@@ -94,7 +94,7 @@ tail -F /var/log/cta/cta-taped.log &
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
 # working correctly
-runuser -c "/usr/bin/cta-taped --foreground ${CTA_TAPED_OPTIONS}"
+runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground ${CTA_TAPED_OPTIONS}"
 
 echo "taped died"
 
