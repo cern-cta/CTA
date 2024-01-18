@@ -24,8 +24,8 @@ namespace cta::daemon {
 
 CommandLineParams::CommandLineParams(int argc, char** argv):
   foreground(false), logToStdout(false), logToFile(false),
-  configFileLocation("/etc/cta/cta-taped.conf"),
   helpRequested(false){
+  configFileLocation = "";
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
     { "foreground", no_argument, nullptr, 'f' },
@@ -64,6 +64,10 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
       break;
     }
   }
+  if (configFileLocation.empty()) {
+    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): no configFileLocation flag provided");
+  }
+
   if (logToStdout && !foreground) {
     throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
   }
