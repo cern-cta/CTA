@@ -31,13 +31,15 @@
 
 #include "common/log/JSONLogger.hpp"
 
+#include "frontend/common/Config.hpp"
+
 namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(std::string_view hostName, std::string_view programName, const int logMask):
-  m_hostName(hostName), m_programName(programName), m_logMask(logMask),
+Logger::Logger(std::string_view hostName, std::string_view programName, const int logMask, const std::string& configFilename):
+  m_hostName(hostName), m_programName(programName), m_logMask(logMask), m_configFilename(configFilename),
   m_priorityToText(generatePriorityToTextMap()) {}
 
 //------------------------------------------------------------------------------
@@ -57,22 +59,11 @@ Logger::~Logger() {
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) {
-  //const std::string Time1= "Time: ";
-  //const std::string Utc1= "UTC: ";
-  
-  //char epoch_time[]="1111111111111111111";//"1702006478.962950144";
-  //const float epoch_time;
   time_t now;
   time(&now);
   char local_time[sizeof "2011-10-08T07:07:09Z"];
-  //strftime(local_time, sizeof local_time, "%FT%TZ", gmtime(&now));
   strftime(local_time, sizeof local_time, "%FT%TZ", localtime(&now));
   
-  //const float epoch_time = std::chrono::duration_cast<std::chrono::seconds>
-     //   (std::chrono::system_clock::now().time_since_epoch()).count();
-   // const float epoch_time_nano = std::chrono::duration_cast<std::chrono::nanoseconds>
-      //  (std::chrono::system_clock::now().time_since_epoch()).count();
-  //const float nano = epoch_time_nano-epoch_time;
     uint64_t nanoTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     uint64_t nanoseconds =     nanoTime/1000000000;
     uint64_t seconds = nanoTime%1000000000;
@@ -84,8 +75,8 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   //std::cout<<nano << std::endl;
   
   const std::string rawParams;
-  //struct timeval timeStamp;
-  //gettimeofday(&timeStamp, nullptr);
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
@@ -110,8 +101,17 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   //cta::utils::json::object::JSONCObject JsonClass;
  
    
-  const std::string header = createMsgHeader(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid);
-  const std::string body = createMsgBody(local_time, priority, priorityText, msg, params, rawParams, pid);
+  //const std::string header = createMsgHeader(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid);
+  //const std::string body = createMsgBody(local_time, priority, priorityText, msg, params, rawParams, pid);
+  const std::string header = createMsgHeader(timeStamp, nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid);
+  const std::string body = createMsgBody(local_time, priorityText, msg, params, rawParams, pid);
+
+  // Read CTA namespaced configuration options from XRootD config file
+  //const std::string& configFilename;
+  cta::frontend::Config config(m_configFilename);
+  
+  auto jsonValue = config.getOptionValueStr("cta.log.json_state");
+
   const std::string jsonOut = createMsgJsonOut(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid, priority, priorityText, msg, params, rawParams); 
  
   writeMsgToUnderlyingLoggingSystem(header, body);
@@ -185,34 +185,24 @@ void Logger::setLogMask(const int logMask) {
 // createMsgHeader
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgHeader(
-  //const struct timeval& timeStamp,
-  //const std::string Time1,
-  //std::time_t epoch_time,
-  //char epoch_time[],
-  //const float epoch_time,
-  //const float epoch_time_nano, 
-  //const float nano,
+  const struct timeval &timeStamp,
   uint64_t nanoTime,
   uint64_t seconds,
   uint64_t nanoseconds,
-  //const std::string Utc1,
   char* local_time,
   std::string_view hostName,
   std::string_view programName,
   const int pid) {
   std::ostringstream os;
-  //cta::utils::json::object::JSONCObject jsonObject;
-  //char buf[80];
-  //int bufLen = sizeof(buf);
-  //int len = 0;
+  char buf[80];
+  int bufLen = sizeof(buf);
+  int len = 0;
 
- // struct tm localTime;
-  //localtime_r(&(timeStamp.tv_sec), &localTime);
-  //len += strftime(buf, bufLen, "%b %e %T", &localTime);
-  //len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
-  //buf[sizeof(buf) - 1] = '\0';
-  //uint64_t jsontime= 
-  //JSONLogger->addToObject("Time", nanoTime);
+  struct tm localTime;
+  localtime_r(&(timeStamp.tv_sec), &localTime);
+  len += strftime(buf, bufLen, "%b %e %T", &localTime);
+  len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
+  buf[sizeof(buf) - 1] = '\0';
   /*
   os<<nanoTime;
   m_jsonLog.addToObject("Time", os.str());
@@ -228,7 +218,8 @@ std::string Logger::createMsgHeader(
   //jsonObject.jsonSetValue("hostName", hostName);
   os<< m_jsonLog.getJSON();
   */
-  os<<"{\"time\":\""<<std::setprecision(20)<<nanoTime <<"\", \"EpochTime\":\""<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds <<"\", \"local_time\":\""<<local_time<< "\", \"hostName\":\""<<hostName << "\", \"programName\":\" " << programName <<"\", ";
+  //os<<"{\"time\":\""<<std::setprecision(20)<<nanoTime <<"\", \"EpochTime\":\""<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds <<"\", \"local_time\":\""<<local_time<< "\", \"hostName\":\""<<hostName << "\", \"programName\":\" " << programName <<"\", ";
+  os << buf << hostName << " " << programName << ": "; 
   return os.str();
 }
 
@@ -236,9 +227,8 @@ std::string Logger::createMsgHeader(
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(
-  //const float epoch_time,
   char* local_time,
-  const int priority,
+  //const int priority,
   std::string_view priorityText, std::string_view msg,
   const std::list<Param> &params, std::string_view rawParams, int pid) {
   std::ostringstream os;
@@ -249,8 +239,11 @@ std::string Logger::createMsgBody(
  // os << "Time=\""<< epoch_time << "\" UTC=\""  <<local_time <<"\" LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
   //  msg << "\" ";
 
-  os << " \"LVL\":\"" << priorityText << "\", \"PID\":\"" << pid << "\", \"TID\":\"" << tid << "\", \"MSG\":\"" <<
-    msg << "\"";
+  //os << " \"LVL\":\"" << priorityText << "\", \"PID\":\"" << pid << "\", \"TID\":\"" << tid << "\", \"MSG\":\"" <<
+   // msg << "\"";
+  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
+    msg << "\" ";
+
 
   // Process parameters
   for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
@@ -265,11 +258,12 @@ std::string Logger::createMsgBody(
     const std::string value = cleanString(param.getValue(), false);
 
     // Write the name and value to the buffer
-    os << ", \""<< name<<"\"" << ":\"" << value << "\"";
+    //os << ", \""<< name<<"\"" << ":\"" << value << "\"";
+    os << name << "=\"" << value << "\" ";
   }
 
   // Append raw parameters
-  os << rawParams <<"}";
+  os << rawParams;
 
   return os.str();
 }

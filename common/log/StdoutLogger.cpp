@@ -16,7 +16,7 @@
  */
 
 #include "common/log/StdoutLogger.hpp"
-
+#include <cstdio>
 namespace cta::log {
 
 //------------------------------------------------------------------------------

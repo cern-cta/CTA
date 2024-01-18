@@ -23,6 +23,7 @@
 #include "common/json/object/JSONCObject.hpp"
 #include "common/log/JSONLogger.hpp"
 
+#include <cstdio>
 using namespace cta::utils::json::object;//::JSONCObject;;
 
 // The header file for atomic was is actually called cstdatomic in gcc 4.4
@@ -97,7 +98,7 @@ public:
    * @param logMask The log mask.
    * message.
    */
-  Logger(std::string_view hostName, std::string_view programName, const int logMask);
+  Logger(std::string_view hostName, std::string_view programName, const int logMask, const std::string& configFilename);
 
   /**
    * Destructor.
@@ -166,6 +167,7 @@ protected:
    * The name of the program to be prepended to every log message.
    */
   const std::string m_programName;
+
   
   /**
    * Writes the specified msg to the underlying logging system.
@@ -189,7 +191,7 @@ protected:
    * The log mask.
    */
   std::atomic<int> m_logMask;
-
+  const std::string& m_configFilename;
   /**
    * Map from syslog integer priority to textual representation.
    */
@@ -230,11 +232,7 @@ private:
    * @return The message header.
    */
   static std::string createMsgHeader(
-    //const struct timeval &timeStamp,
-    //char epoch_time[],
-    //const float epoch_time,
-    //const float epoch_time_nano,
-    //const float nano,
+    const struct timeval &timeStamp,
     uint64_t nanoTime,
     uint64_t seconds,
     uint64_t nanoseconds,
@@ -257,10 +255,8 @@ private:
    * @return the message body
    */
   static std::string createMsgBody(
-    //char epoch_time[],
-    //const float epoch_time,
     char* local_time,
-    const int priority,
+    //const int priority,
     std::string_view priorityText, std::string_view msg,
     const std::list<Param> &params, std::string_view rawParams, int pid);
 
