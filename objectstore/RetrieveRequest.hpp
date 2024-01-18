@@ -42,18 +42,18 @@ class EntryLogSerDeser;
 
 class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t> {
 public:
-  RetrieveRequest(const std::string & address, Backend & os);
+  RetrieveRequest(const std::string& address, Backend& os);
   explicit RetrieveRequest(GenericObject& go);
   void initialize() override;
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
-  void garbageCollectRetrieveRequest(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue, bool isQueueCleanup);
+  void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
+    cta::catalogue::Catalogue& catalogue) override;
+  void garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
+    cta::catalogue::Catalogue& catalogue, bool isQueueCleanup);
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
-  void setFailureReason(const std::string & reason);
-  static void updateLifecycleTiming(serializers::RetrieveRequest& payload, const cta::objectstore::serializers::RetrieveJob & retrieveJob);
+  void setFailureReason(const std::string& reason);
+  static void updateLifecycleTiming(serializers::RetrieveRequest& payload, const cta::objectstore::serializers::RetrieveJob& retrieveJob);
   class JobDump {
   public:
     uint32_t copyNb;
@@ -67,8 +67,22 @@ public:
   private:
     std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
   };
-  AsyncJobDeleter * asyncDeleteJob();
+  AsyncJobDeleter* asyncDeleteJob();
 
+  class AsyncJobSucceedReporter {
+    friend class RetrieveRequest;
+  public:
+    /**
+     * Wait for the end of the execution of the updater callback
+     */
+    void wait();
+    MountPolicySerDeser m_MountPolicy;
+  private:
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    //Callback to be executed by the AsyncUpdater
+    std::function<std::string(const std::string&)> m_updaterCallback;
+  };
 
   class AsyncJobSucceedForRepackReporter{
     friend class RetrieveRequest;
@@ -82,7 +96,7 @@ public:
     //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     //Callback to be executed by the AsyncUpdater
-    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::function<std::string(const std::string&)> m_updaterCallback;
   };
 
   /**
@@ -97,7 +111,7 @@ public:
     //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     //Callback to be executed by the AsyncUpdater
-    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::function<std::string(const std::string&)> m_updaterCallback;
   };
 
   /**
@@ -108,14 +122,24 @@ public:
    * @return the class that is Responsible to save the updater callback
    * and the backend async updater (responsible for executing asynchronously the updater callback
    */
-  AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint32_t copyNb);
+  AsyncJobSucceedReporter* asyncReportSucceed(uint32_t ui32CopyNb);
+
+  /**
+   * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
+   * as RJS_Success
+   * @param copyNb the copyNb corresponding to the RetrieveJob we want to report as
+   * RJS_Succeeded
+   * @return the class that is Responsible to save the updater callback
+   * and the backend async updater (responsible for executing asynchronously the updater callback
+   */
+  AsyncJobSucceedForRepackReporter* asyncReportSucceedForRepack(uint32_t ui32CopyNb);
 
   /**
    * Asynchronously transform the current RetrieveRequest into an ArchiveRequest
    * @param processAgent : The agent of the process that will transform the RetrieveRequest into an ArchiveRequest
    * @return the class that is Responsible to save the updater callback and the backend async updater.
    */
-  AsyncRetrieveToArchiveTransformer * asyncTransformToArchiveRequest(AgentReference& processAgent);
+  AsyncRetrieveToArchiveTransformer* asyncTransformToArchiveRequest(AgentReference& processAgent);
 
   JobDump getJob(uint32_t copyNb);
   std::list<JobDump> getJobs();
@@ -161,14 +185,14 @@ public:
     std::string fileBufferURL;
     bool hasUserProvidedFile = false;
   };
-  void setRepackInfo(const RepackInfo & repackInfo);
+  void setRepackInfo(const RepackInfo& repackInfo);
   RepackInfo getRepackInfo();
 
   struct RepackInfoSerDeser: public RepackInfo {
-    void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
+    void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo& rrri) {
       if (!isRepack) throw exception::Exception("In RetrieveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
-      for (auto &route: archiveRouteMap) {
-        auto * ar = rrri.mutable_archive_routes()->Add();
+      for (auto& route: archiveRouteMap) {
+        auto* ar = rrri.mutable_archive_routes()->Add();
         ar->set_copynb(route.first);
         ar->set_tapepool(route.second);
       }
@@ -179,48 +203,34 @@ public:
       rrri.set_has_user_provided_file(hasUserProvidedFile);
     }
 
-    void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
+    void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo& rrri) {
       isRepack = true;
-      for(auto &route: rrri.archive_routes()) { archiveRouteMap[route.copynb()] = route.tapepool(); }
-      for(auto &cntr: rrri.copy_nbs_to_rearchive()) { copyNbsToRearchive.insert(cntr); }
+      for (auto& route: rrri.archive_routes()) { archiveRouteMap[route.copynb()] = route.tapepool(); }
+      for (auto& cntr: rrri.copy_nbs_to_rearchive()) { copyNbsToRearchive.insert(cntr); }
       fileBufferURL = rrri.file_buffer_url();
       repackRequestAddress = rrri.repack_request_address();
       fSeq = rrri.fseq();
-      if(rrri.has_has_user_provided_file()){
+      if (rrri.has_has_user_provided_file()) {
         hasUserProvidedFile = rrri.has_user_provided_file();
       }
     }
   };
-private:
-  /*!
-   * Determine and set the new status of the job.
-   *
-   * Determines whether the request should be queued or deleted after the job status change. This method
-   * only handles failures, which have a more varied array of possibilities.
-   *
-   * @param[in] copyNumberToUpdate    the copy number to update
-   * @param[in] jobEvent              the event that happened to the job
-   * @param[in] lc                    the log context
-   *
-   * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
-   *             and status setting
-   */
-  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext &lc);
-public:
+
+//public:
   //! Returns next step to take with the job
-  EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason, log::LogContext& lc);
   //! Returns next step to take with the job
-  EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
-  EnqueueingNextStep addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string &abortReason, log::LogContext &lc);
+  EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason, log::LogContext& lc);
+  EnqueueingNextStep addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string& abortReason, log::LogContext& lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
   common::dataStructures::JobQueueType getQueueType();
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
   common::dataStructures::JobQueueType getQueueType(uint32_t copyNumber);
   std::list<std::string> getFailures();
   std::list<std::string> getReportFailures();
-  std::string statusToString(const serializers::RetrieveJobStatus & status);
+  std::string statusToString(const serializers::RetrieveJobStatus& status);
   serializers::RetrieveJobStatus getJobStatus(uint32_t copyNumber);
-  void setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus &status);
+  void setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus& status);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {
@@ -228,13 +238,13 @@ public:
   public:
     void wait();
     serializers::RetrieveJobStatus getJobStatus() { return m_jobStatus; }
-    const common::dataStructures::RetrieveRequest &getRetrieveRequest();
-    const common::dataStructures::ArchiveFile &getArchiveFile();
-    const RepackInfo &getRepackInfo();
-    const std::optional<std::string> &getActivity();
-    const std::optional<std::string> &getDiskSystemName();
+    const common::dataStructures::RetrieveRequest& getRetrieveRequest();
+    const common::dataStructures::ArchiveFile& getArchiveFile();
+    const RepackInfo& getRepackInfo();
+    const std::optional<std::string>& getActivity();
+    const std::optional<std::string>& getDiskSystemName();
   private:
-    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::function<std::string(const std::string&)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     common::dataStructures::RetrieveRequest m_retrieveRequest;
     common::dataStructures::ArchiveFile m_archiveFile;
@@ -244,16 +254,16 @@ public:
     std::optional<std::string> m_diskSystemName;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  AsyncJobOwnerUpdater *asyncUpdateJobOwner(uint32_t copyNumber, const std::string &owner, const std::string &previousOwner);
+  AsyncJobOwnerUpdater* asyncUpdateJobOwner(uint32_t ui32CopyNb, const std::string& strOwner, const std::string& strPreviousOwner);
   // ===========================================================================
-  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
+  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
 
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
-  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
+  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   std::optional<std::string> getActivity();
-  void setDiskSystemName(const std::string & diskSystemName);
+  void setDiskSystemName(const std::string& diskSystemName);
   std::optional<std::string> getDiskSystemName();
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
   cta::common::dataStructures::ArchiveFile getArchiveFile();
@@ -277,6 +287,27 @@ public:
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();
+
+private:
+  std::string asyncUpdateJobOwnerCallback(const std::string& strIn, AsyncJobOwnerUpdater& ret, uint32_t ui32CopyNb, const std::string& strOwner, const std::string& strPreviousOwner); 
+  std::string asyncJobSucceedReporterCallback(const std::string& strIn, AsyncJobSucceedReporter& ret, uint32_t ui32CopyNb);
+  std::string asyncReportSucceedForRepackCallback(const std::string& strIn, AsyncJobSucceedForRepackReporter& ret, uint32_t ui32CopyNb);
+  std::string asyncTransformToArchiveRequestCallback(const std::string& strIn, AsyncRetrieveToArchiveTransformer& ret, const std::string& strProcessAgentAddress);
+  /*!
+   * Determine and set the new status of the job.
+   *
+   * Determines whether the request should be queued or deleted after the job status change. This method
+   * only handles failures, which have a more varied array of possibilities.
+   *
+   * @param[in] copyNumberToUpdate    the copy number to update
+   * @param[in] jobEvent              the event that happened to the job
+   * @param[in] lc                    the log context
+   *
+   * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
+   *             and status setting
+   */
+  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext& lc);
+
 };
 
 }}

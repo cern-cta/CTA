@@ -98,6 +98,12 @@ public:
   virtual void transferFailed(const std::string &failureReason, log::LogContext &lc);
 
   /**
+   * Get the URL used for reporting
+   * @return The URL used to report to the disk system.
+   */
+  virtual std::string exceptionThrowingReportURL();
+
+  /**
    * Get the report type.
    * @return the type of report (success or failure), as a string
    */
