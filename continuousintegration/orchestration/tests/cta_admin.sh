@@ -180,21 +180,15 @@ else
 fi
 
 # Get drive names.
-IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
+readarray -t  dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
 
-IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
+readarray -t  dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
 
 # Get tape names.
-IFS=' ' read -r -a vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
+readarray -t  vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
 
 # Get lls
-IFS=' ' read -r -a lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
-
-echo "dr_names: ${dr_names[@]}"
-admin_cta --json ll ls
-admin_cta --json ll ls | jq -r '.[] | .name'
-echo "lls: ${lls}"
-echo "First logical Library: ${lls[1]}"
+readarray -t lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
 
 ########################################
 # Misc - v #############################
