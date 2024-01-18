@@ -21,7 +21,7 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install cta-cli cta-debuginfo
+yum -y install cta-cli cta-debuginfo jq
 
 cat <<EOF > /etc/cta/cta-cli.conf
 # The CTA frontend address in the form <FQDN>:<TCPPort>
