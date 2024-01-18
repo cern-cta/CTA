@@ -90,14 +90,4 @@ EOF
   ;;
 esac
 
-# Echo the library configuration
-echo "Library configuration:"
-echo "LIBRARYNAME: ${LIBRARYNAME}"
-echo "LIBRARYDEVICE: ${LIBRARYDEVICE}"
-echo "DRIVENAMES: ${DRIVENAMES}"
-echo "DRIVEDEVICES: ${DRIVEDEVICES}"
-echo "DRIVESERIALS: ${DRIVESERIALS}"
-echo "TAPES: ${TAPES}"
-echo "driveslot: ${driveslot}"
-
 exit 0

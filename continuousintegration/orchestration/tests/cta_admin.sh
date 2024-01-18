@@ -190,6 +190,12 @@ IFS=' ' read -r -a vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
 # Get lls
 IFS=' ' read -r -a lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
 
+echo "dr_names: ${dr_names[@]}"
+admin_cta --json ll ls
+admin_cta --json ll ls | jq -r '.[] | .name'
+echo "lls: ${lls}"
+echo "First logical Library: ${lls[1]}"
+
 ########################################
 # Misc - v #############################
 ########################################
