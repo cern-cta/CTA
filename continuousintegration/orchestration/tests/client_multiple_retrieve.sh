@@ -48,6 +48,7 @@ EVICT_COUNTER_ATTR="sys.retrieve.evict_counter"
 
 NB_RETRIEVES=2
 NB_RETRIEVES_EXTRA=2
+NB_RETRIEVES_MAX=64
 NB_FILES=4
 
 
@@ -248,6 +249,68 @@ fi
 
 echo "Files replicas evicted from disk successfully"
 
+################################################################################
+# Check maximum number of retrieve requests allowed per file
+################################################################################
+
+echo
+echo "Test c allowed per file (${NB_RETRIEVES_MAX})"
+
+TEST_FILE_NAME=${EOS_BASEDIR}/$(uuidgen)
+
+echo
+echo "Archiving test file ${TEST_FILE_NAME}..."
+
+# TODO: Use this for the tests above
+wait_for_archive ${EOS_INSTANCE} "${TEST_FILE_NAME}"
+
+put_all_drives_down
+
+echo
+echo "Trigering EOS retrieve workflow as poweruser1:powerusers (12001:1200), ${NB_RETRIEVES_MAX} times, to fill max request ID quota"
+for i in $(seq ${NB_RETRIEVES_MAX})
+do
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}")
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}")
+  PATH_EXISTS=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
+  REQUESTED=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
+  HAS_REQID=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").has_reqid")
+  ERROR_TEXT=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
+
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}" ||
+    "true" != "${HAS_REQID}" ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: The ${i}th retrieve request should have been received without failure"
+    exit 1
+  fi
+done
+
+echo
+echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200) one more time, should fail to create request ID"
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}")
+
+echo "Checking that the $(expr ${NB_RETRIEVES_MAX} + 1)th retrieve request failed"
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}")
+PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
+REQUESTED=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
+HAS_REQID=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").has_reqid")
+ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
+
+if [[
+  "true" != "${PATH_EXISTS}" ||
+  "true" != "${REQUESTED}" ||
+  "false" != "${HAS_REQID}" ||
+  "\"\"" == "${ERROR_TEXT}" ]]
+then
+  echo "ERROR: New request was not rejected properly after ${NB_RETRIEVES_MAX} retrieve requests have been accumulated"
+  exit 1
+fi
+echo "Test completed successfully"
+
+put_all_drives_up
 
 ################################################################################
 # Cleanup
