@@ -20,12 +20,8 @@
 #include "common/log/Logger.hpp"
 #include <stdio.h>
 #include <stdlib.h>
-#include <cstdio>
 
 
-#ifdef USE_STDIO
-#include <stdio.h>
-#endif
 
 namespace cta::log {
 
@@ -43,9 +39,9 @@ public:
    * @param simple If true, then logging header is not included.
    */
  //const std::string& m_configFilename;
- explicit StdoutLogger(const std::string& m_configFilename); 
+ //explicit StdoutLogger(const std::string& m_configFilename); 
  StdoutLogger(std::string_view hostName, std::string_view programName, bool simple = false) :
-    Logger(hostName, programName, DEBUG, m_configFilename), m_simple(simple) { }
+    Logger(hostName, programName, DEBUG, "configFilename"), m_simple(simple) { }
 
   /**
    * Destructor

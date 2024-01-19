@@ -33,6 +33,7 @@ namespace cta::log {
     {LOG_NOTICE,"NOTICE"},
     {INFO,"INFO"},
     {DEBUG,"DEBUG"},
+    {JSON, "JSON"},
   };
   
   const std::map<std::string,int> PriorityMaps::c_configTextToPriorityMap = {
@@ -44,6 +45,7 @@ namespace cta::log {
     {"LOG_NOTICE",LOG_NOTICE},
     {"INFO",INFO},
     {"DEBUG",DEBUG},
+    {"JSON", JSON},
   };
   
   std::string PriorityMaps::getPriorityText(const int priority){

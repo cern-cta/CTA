@@ -33,6 +33,8 @@
 
 #include "frontend/common/Config.hpp"
 
+#include "common/Configuration.hpp"
+
 namespace cta::log {
 
 //------------------------------------------------------------------------------
@@ -108,14 +110,17 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
 
   // Read CTA namespaced configuration options from XRootD config file
   //const std::string& configFilename;
-  cta::frontend::Config config(m_configFilename);
-  
-  auto jsonValue = config.getOptionValueStr("cta.log.json_state");
+  //cta::frontend::Config config(m_configFilename);
+  cta::common::Configuration config(m_configFilename);  
 
+  //auto jsonValue1 = config.getOptionValueStr("cta.log.json_state");
+  std::string jsonValue = config.getConfEntString("json", "jsonValue");
   const std::string jsonOut = createMsgJsonOut(nanoTime, nanoseconds, seconds, local_time, m_hostName, m_programName, pid, priority, priorityText, msg, params, rawParams); 
- 
+  if (jsonValue.empty()){ 
   writeMsgToUnderlyingLoggingSystem(header, body);
+   }else{
   writeMsgToUnderlyingLoggingSystemJson(jsonOut);
+ }
 }
 
 //-----------------------------------------------------------------------------
@@ -285,13 +290,13 @@ std::string Logger::createMsgJsonOut(
   const int tid = syscall(__NR_gettid);
 
   os<<nanoTime;
-  m_jsonLog.addToObject("Time", os.str());
+  m_jsonLog.addToObject("time", os.str());
   os.str(std::string());
   os<< seconds << "." << std::setw(9) << std::setfill('0') << nanoseconds;
-  m_jsonLog.addToObject("EpochTime", os.str());
-  os.str(std::string());
-  os<<local_time;
-  m_jsonLog.addToObject("local_time", os.str());
+  //m_jsonLog.addToObject("EpochTime", os.str());
+  //os.str(std::string());
+  //os<<local_time;
+  m_jsonLog.addToObject("localTime", os.str());
   os.str(std::string());
   m_jsonLog.addToObject("hostName", hostName);
   os.str(std::string());

@@ -33,6 +33,8 @@ int toLogLevel(std::string_view s) {
   if(s == "INFO")    return INFO;
   if(s == "DEBUG")   return DEBUG;
 
+  if(s == "JSON")    return JSON;
+
   // It is a convention of CTA to use syslog level of LOG_NOTICE to label
   // user errors.
   if(s == "USERERR") return NOTICE;

@@ -35,8 +35,8 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  TestingSyslogLogger(std::string_view hostName, std::string_view programName) :
-    SyslogLogger(hostName, programName, DEBUG) { }
+  TestingSyslogLogger(std::string_view hostName, std::string_view programName, const std::string& configFilename) :
+    SyslogLogger(hostName, programName, DEBUG, configFilename) { }
 
   using SyslogLogger::cleanString;
 };

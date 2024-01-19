@@ -22,10 +22,8 @@
 
 #include "common/json/object/JSONCObject.hpp"
 #include "common/log/JSONLogger.hpp"
-
-#include <cstdio>
 using namespace cta::utils::json::object;//::JSONCObject;;
-
+ 
 // The header file for atomic was is actually called cstdatomic in gcc 4.4
 #if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
     #include <cstdatomic>

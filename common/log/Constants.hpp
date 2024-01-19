@@ -29,7 +29,7 @@ const int WARNING = 4; // warning conditions
 const int NOTICE  = 5; // normal but signification condition
 const int INFO    = 6; // informational
 const int DEBUG   = 7; // debug-level messages
-
+const int JSON    = 8; ///json level
 /**
  * It is a convention of CTA to use syslog level of LOG_NOTICE to label
  * user errors.

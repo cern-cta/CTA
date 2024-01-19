@@ -40,8 +40,8 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SyslogLogger::SyslogLogger(std::string_view hostName, std::string_view programName, const int logMask):
-  Logger(hostName, programName, logMask) {
+SyslogLogger::SyslogLogger(std::string_view hostName, std::string_view programName, const int logMask, const std::string& configFilename):
+  Logger(hostName, programName, logMask, configFilename) {
   const int option = 0;
   const int facility = 0;
   openlog(m_programName.data(), option, facility);

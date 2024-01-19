@@ -39,8 +39,8 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  DummyLogger(std::string_view hostName, std::string_view programName) :
-    Logger(hostName, programName, DEBUG) { }
+  DummyLogger(std::string_view hostName, std::string_view programName, const std::string& configFilename) :
+    Logger(hostName, programName, DEBUG, configFilename) { }
 
   /**
    * Destructor

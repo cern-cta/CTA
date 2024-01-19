@@ -28,7 +28,7 @@ namespace unitTests {
   
 class cta_log_SyslogLoggerTest: public ::testing::Test {
 public:
-  cta_log_SyslogLoggerTest(): m_log("dummy", "unitttests") {
+  cta_log_SyslogLoggerTest(): m_log("dummy", "unitttests", "dummy") {
   }
 protected:
 
