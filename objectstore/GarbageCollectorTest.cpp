@@ -49,9 +49,9 @@ namespace unitTests {
 TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
@@ -106,9 +106,9 @@ TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
 TEST_F(ObjectStore, GarbageCollectorRegister) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   cta::catalogue::DummyCatalogue catalogue;
@@ -169,9 +169,9 @@ TEST_F(ObjectStore, GarbageCollectorRegister) {
 TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -233,9 +233,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
 TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -298,9 +298,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -487,9 +487,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -675,9 +675,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
 TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -757,9 +757,9 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
 TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -838,9 +838,9 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
 TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -921,9 +921,9 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
 TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -975,7 +975,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
-  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
+  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG, "configFilenname");
   cta::log::LogContext lc2(strLogger);
   std::string agentGarbageCollectingRepackRequestAddress;
   {
@@ -1030,9 +1030,9 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
 TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -1083,7 +1083,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
     repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
-  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
+  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG, "configFilename");
   cta::log::LogContext lc2(strLogger);
   {
     // Now we garbage collect the RepackRequest
@@ -1109,9 +1109,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   using cta::common::dataStructures::JobQueueType;
 // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -1578,9 +1578,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   using cta::common::dataStructures::JobQueueType;
 // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -1738,9 +1738,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue

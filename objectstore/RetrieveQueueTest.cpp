@@ -31,7 +31,7 @@ namespace unitTests {
 
 TEST_F(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
@@ -59,7 +59,7 @@ TEST_F(ObjectStore, RetrieveQueueBasicAccess) {
 
 TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());
@@ -160,7 +160,7 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
 
 TEST_F(ObjectStore, RetrieveQueueMissingShardingTest) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());
@@ -257,7 +257,7 @@ TEST_F(ObjectStore, RetrieveQueueMissingShardingTest) {
 
 TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());

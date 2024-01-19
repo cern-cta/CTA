@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
   try {
     std::unique_ptr<cta::objectstore::Backend> be;
     std::unique_ptr<cta::catalogue::Catalogue> catalogue;
-    cta::log::StringLogger sl(cta::utils::getShortHostname(), "cta-objectstore-collect-orphaned", cta::log::DEBUG);
+    cta::log::StringLogger sl(cta::utils::getShortHostname(), "cta-objectstore-collect-orphaned", cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(sl);
     std::string objectName;
     if (4 == argc) {

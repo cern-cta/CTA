@@ -148,9 +148,9 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
@@ -230,9 +230,9 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
@@ -344,9 +344,9 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
@@ -439,9 +439,9 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   using cta::objectstore::ContainerAlgorithms;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
@@ -528,9 +528,9 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   using cta::objectstore::ContainerAlgorithms;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);

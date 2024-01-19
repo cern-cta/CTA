@@ -33,7 +33,7 @@
 
 int main(int argc, char ** argv) {
   try {
-    cta::log::DummyLogger dl("", "");
+    cta::log::DummyLogger dl("", "", "");
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
       cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");

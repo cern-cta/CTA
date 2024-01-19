@@ -216,9 +216,9 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue

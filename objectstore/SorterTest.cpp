@@ -44,8 +44,8 @@
 namespace unitTests {
 
 TEST_F(ObjectStore,SorterInsertArchiveRequest){
-  //cta::log::StdoutLogger dl("dummy", "unitTest");
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  //cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -193,8 +193,8 @@ TEST_F(ObjectStore,SorterInsertRetrieveRequest){
 
   using namespace cta::objectstore;
 
-  //cta::log::StdoutLogger dl("dummy", "unitTest");
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  //cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -398,8 +398,8 @@ TEST_F(ObjectStore,SorterInsertDifferentTypesOfRequests){
 
   using namespace cta::objectstore;
 
-  //cta::log::StdoutLogger dl("dummy", "unitTest");
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  //cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -701,8 +701,8 @@ TEST_F(ObjectStore,SorterInsertArchiveRequestNotFetched){
 
   using namespace cta::objectstore;
 
-  //cta::log::StdoutLogger dl("dummy", "unitTest");
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  //cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -844,8 +844,8 @@ TEST_F(ObjectStore,SorterInsertArchiveRequestNotFetched){
 TEST_F(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   using namespace cta::objectstore;
 
-  //cta::log::StdoutLogger dl("dummy", "unitTest");
-  cta::log::DummyLogger dl("dummy", "unitTest");
+  //cta::log::StdoutLogger dl("dummy", "unitTest", "configFilename");
+  cta::log::DummyLogger dl("dummy", "unitTest", "configFilename");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;

@@ -32,7 +32,7 @@
 
 int main(int argc, char ** argv) {
   try {
-    cta::log::DummyLogger dl("", "");
+    cta::log::DummyLogger dl("", "", "");
     std::unique_ptr<cta::objectstore::Backend> be;
     std::string objectName;
     if (3 == argc) {
