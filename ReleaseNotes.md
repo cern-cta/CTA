@@ -24,6 +24,7 @@
 - cta/CTA#560 - Fix cppcheck updated errors
 - cta/CTA#564 - Skip eos evict system tests on EOS 4
 - cta/CTA#571 - Remove 'eos-*' dependencies from versionlock file
+- cta/CTA#554 - Enabling PostgresSchedDB compilation by default
 
 ### Building and Packaging
 - cta/CTA#532 - Remove forcing ABI in CMake

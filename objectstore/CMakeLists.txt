@@ -103,7 +103,9 @@ set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctaobjectstore rados json-c cryptopp)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+if(NOT CTA_USE_PGSCHED)
+  install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+endif()
 
 set(ObjectStoreUnitTests
   ObjectStoreFixture.cpp
@@ -124,7 +126,9 @@ set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION
 
 target_link_libraries(ctaobjectstoreunittests
   ${PROTOBUF3_LIBRARIES} rados ctacommon gtest ctaobjectstore)
-install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+if(NOT CTA_USE_PGSCHED)
+  install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+endif()
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
 set_property(TARGET cta-objectstore-initialize APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
@@ -156,6 +160,8 @@ set_property(TARGET cta-objectstore-create-missing-repack-index APPEND PROPERTY 
 target_link_libraries(cta-objectstore-create-missing-repack-index
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
-install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
-  cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
-  DESTINATION usr/bin)
+if(NOT CTA_USE_PGSCHED)
+  install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
+    cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
+    DESTINATION usr/bin)
+endif()

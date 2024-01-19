@@ -149,9 +149,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(disk)
   add_subdirectory(mediachanger)
 
-  if(NOT CTA_USE_PGSCHED)
-    add_subdirectory(objectstore)
-  endif()
+  add_subdirectory(objectstore)
 
   add_subdirectory(python)
   add_subdirectory(rdbms)

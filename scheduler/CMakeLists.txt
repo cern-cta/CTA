@@ -17,9 +17,7 @@ cmake_minimum_required (VERSION 3.17)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${XROOTD_INCLUDE_DIR})
 
-if(CTA_USE_PGSCHED)
-  add_subdirectory(PostgresSchedDB/schema)
-endif()
+add_subdirectory(PostgresSchedDB/schema)
 
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
@@ -41,77 +39,90 @@ set (CTA_SCHEDULER_SRC_FILES
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
+# Definitions specific to only Objectstore module lib compilation:
+
+set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+  OStoreDB/MemQueues.cpp
+  OStoreDB/OStoreDB.cpp
+  OStoreDB/OStoreDBWithAgent.cpp
+  OStoreDB/QueueItor.cpp)
+
+# End of definitions specific to Objectstore lib compilation
+
+# Definitions specific to only PostgreSched DB module lib compilation:
+
+set (CTAProtoFiles
+  PostgresSchedDB/rowblobs.proto)
+
+# Generate should be used on protofile in the current directory
+# This needs to be changed. todo
+PROTOBUF3_GENERATE_CPP(CTAProtoSources0 CTAProtoHeaders0 ${CTAProtoFiles})
+
+set (CTAProtoSources
+  ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.cc)
+
+set (CTAProtoHeaders
+  ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.h)
+
+SET_SOURCE_FILES_PROPERTIES(${CTAProtoSources} PROPERTIES OBJECT_DEPENDS ${CTAProtoSources0})
+SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders0})
+
+SET_SOURCE_FILES_PROPERTIES(
+  ${CTAProtoSources} ${CTAProtoHeaders}
+  PROPERTIES GENERATED TRUE)
+
+include_directories (${CMAKE_BINARY_DIR}/scheduler)
+
+set (CTAProtoDependants
+  PostgresSchedDB/RetrieveRequest.cpp
+  PostgresSchedDB/RepackRequest.cpp)
+
+SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
+  PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
+
+set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+  ${CTAProtoSources}
+  PostgresSchedDB/PostgresSchedDB.cpp
+  PostgresSchedDB/ArchiveMount.cpp
+  PostgresSchedDB/ArchiveJob.cpp
+  PostgresSchedDB/ArchiveJobQueueItor.cpp
+  PostgresSchedDB/ArchiveRequest.cpp
+  PostgresSchedDB/Helpers.cpp
+  PostgresSchedDB/RetrieveMount.cpp
+  PostgresSchedDB/RetrieveRequest.cpp
+  PostgresSchedDB/RetrieveJob.cpp
+  PostgresSchedDB/RetrieveJobQueueItor.cpp
+  PostgresSchedDB/RepackRequestPromotionStatistics.cpp
+  PostgresSchedDB/RepackRequest.cpp
+  PostgresSchedDB/RepackReportBatch.cpp
+  PostgresSchedDB/TapeMountDecisionInfo.cpp
+  PostgresSchedDB/sql/ArchiveJobQueue.cpp
+  PostgresSchedDB/sql/RetrieveJobQueue.cpp
+  PostgresSchedDB/sql/RepackJobQueue.cpp
+  PostgresSchedDB/sql/Transaction.cpp)
+
+# End of definitions specific to Postgres scheduler lib compilation
+
 if(NOT CTA_USE_PGSCHED)
-  set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
-    OStoreDB/MemQueues.cpp
-    OStoreDB/OStoreDB.cpp
-    OStoreDB/OStoreDBWithAgent.cpp
-    OStoreDB/QueueItor.cpp)
+    add_library (ctascheduler SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
+    target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    add_library (ctascheduler-postgres SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
+    target_link_libraries (ctascheduler-postgres ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    set_property(TARGET ctascheduler-postgres PROPERTY SOVERSION "${CTA_SOVERSION}")
+    set_property(TARGET ctascheduler-postgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 else()
-
-  set (CTAProtoFiles
-    PostgresSchedDB/rowblobs.proto)
-
-  # Generate should be used on protofile in the current directory
-  # This needs to be changed. todo
-  PROTOBUF3_GENERATE_CPP(CTAProtoSources0 CTAProtoHeaders0 ${CTAProtoFiles})
-
-  set (CTAProtoSources
-    ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.cc)
-
-  set (CTAProtoHeaders
-    ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.h)
-
-  SET_SOURCE_FILES_PROPERTIES(${CTAProtoSources} PROPERTIES OBJECT_DEPENDS ${CTAProtoSources0})
-  SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders0})
-
-  SET_SOURCE_FILES_PROPERTIES(
-    ${CTAProtoSources} ${CTAProtoHeaders}
-    PROPERTIES GENERATED TRUE)
-
-  include_directories (${CMAKE_BINARY_DIR}/scheduler)
-
-  set (CTAProtoDependants
-    PostgresSchedDB/RetrieveRequest.cpp
-    PostgresSchedDB/RepackRequest.cpp)
-
-  SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
-    PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
-
-  set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
-    ${CTAProtoSources}
-    PostgresSchedDB/PostgresSchedDB.cpp
-    PostgresSchedDB/ArchiveMount.cpp
-    PostgresSchedDB/ArchiveJob.cpp
-    PostgresSchedDB/ArchiveJobQueueItor.cpp
-    PostgresSchedDB/ArchiveRequest.cpp
-    PostgresSchedDB/Helpers.cpp
-    PostgresSchedDB/RetrieveMount.cpp
-    PostgresSchedDB/RetrieveRequest.cpp
-    PostgresSchedDB/RetrieveJob.cpp
-    PostgresSchedDB/RetrieveJobQueueItor.cpp
-    PostgresSchedDB/RepackRequestPromotionStatistics.cpp
-    PostgresSchedDB/RepackRequest.cpp
-    PostgresSchedDB/RepackReportBatch.cpp
-    PostgresSchedDB/TapeMountDecisionInfo.cpp
-    PostgresSchedDB/sql/ArchiveJobQueue.cpp
-    PostgresSchedDB/sql/RetrieveJobQueue.cpp
-    PostgresSchedDB/sql/RepackJobQueue.cpp
-    PostgresSchedDB/sql/Transaction.cpp)
+    add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
+    target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    add_library (ctascheduler-objectstore SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
+    target_link_libraries (ctascheduler-objectstore ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    set_property(TARGET ctascheduler-objectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
+    set_property(TARGET ctascheduler-objectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 endif()
 
-add_library (ctascheduler SHARED
-  ${CTA_SCHEDULER_SRC_FILES})
 set_property(TARGET ctascheduler PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-if(NOT CTA_USE_PGSCHED)
-  target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
-else()
-  target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
-endif()
 
 if(NOT CTA_USE_PGSCHED)
   add_library (ctaschedulerunittests SHARED
@@ -126,10 +137,10 @@ else()
     GenericSchedulerTest.cpp
     PostgresSchedDB/PostgresSchedDBTest.cpp)
 endif()
+
+target_link_libraries (ctaschedulerunittests ctascheduler)
+
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries (ctaschedulerunittests
-  ctascheduler)
 
 install(TARGETS ctaschedulerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
