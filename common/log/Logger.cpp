@@ -35,13 +35,6 @@ Logger::Logger(std::string_view hostName, std::string_view programName, int logM
   m_priorityToText(generatePriorityToTextMap()) { }
 
 //------------------------------------------------------------------------------
-// getProgramName
-//------------------------------------------------------------------------------
-const std::string &Logger::getProgramName() const {
-  return m_programName;
-}
-
-//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 Logger::~Logger() = default;
@@ -50,30 +43,22 @@ Logger::~Logger() = default;
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
-  const std::string rawParams;
   struct timeval timeStamp;
   gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) {
-    return;
-  }
+  if(priority > m_logMask) return;
 
   // Try to find the textual representation of the syslog priority
   std::map<int, std::string>::const_iterator priorityTextPair =
     m_priorityToText.find(priority);
 
-  // Do nothing if the log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) {
-    return;
-  }
-
-  // Safe to get a reference to the textual representation of the priority
-  const std::string &priorityText = priorityTextPair->second;
+  // Ignore messages where log priority is not valid
+  if(m_priorityToText.end() == priorityTextPair) return;
 
   const std::string header = createMsgHeader(timeStamp);
-  const std::string body = createMsgBody(priorityText, msg, params, rawParams, pid);
+  const std::string body = createMsgBody(priorityTextPair->second, msg, params, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
 }
@@ -81,8 +66,7 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string Logger::cleanString(const std::string &s,
-  const bool replaceUnderscores) {
+std::string Logger::cleanString(std::string_view s, bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = utils::trimString(s);
 
@@ -170,21 +154,19 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
-  const std::list<Param> &params, std::string_view rawParams, int pid) {
+  const std::list<Param> &params, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
-    msg << "\" ";
+  os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
 
   // Process parameters
   for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
     const Param &param = *itor;
 
-    // Check the parameter name, if it's an empty string set the value to
-    // "Undefined".
+    // Check the parameter name, if it's an empty string set the value to "Undefined"
     const std::string name = param.getName() == "" ? "Undefined" :
       cleanString(param.getName(), true);
 
@@ -194,9 +176,6 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
     // Write the name and value to the buffer
     os << name << "=\"" << value << "\" ";
   }
-
-  // Append raw parameters
-  os << rawParams;
 
   return os.str();
 }

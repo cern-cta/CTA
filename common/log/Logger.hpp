@@ -105,7 +105,7 @@ public:
   /**
    * Returns the name of the program
    */
-  const std::string& getProgramName() const;
+  const std::string& getProgramName() const { return m_programName; }
 
   /**
    * Writes a message into the CTA logging system
@@ -148,7 +148,7 @@ public:
    * @param replaceUnderscores Set to true if spaces should be replaced by underscores
    * @return                   A cleaned version of the string
    */
-  static std::string cleanString(const std::string &s, bool replaceUnderscores);
+  static std::string cleanString(std::string_view s, bool replaceUnderscores);
 
 protected:
   /**
@@ -160,7 +160,27 @@ protected:
    * The name of the program to be prepended to every log message
    */
   const std::string m_programName;
-  
+
+  /**
+   * Log mask
+   */
+  std::atomic<int> m_logMask;
+
+  /**
+   * Log output format
+   */
+  std::atomic<LogFormat> m_logFormat = LogFormat::DEFAULT;
+
+  /**
+   * Map from syslog integer priority to textual representation
+   */
+  const std::map<int, std::string> m_priorityToText;
+
+  /**
+   * Map from the possible string values of the LogMask parameters and their equivalent syslog priorities
+   */
+  const std::map<std::string, int> m_configTextToPriority;
+
   /**
    * Writes the specified msg to the underlying logging system
    *
@@ -172,21 +192,6 @@ protected:
    */
   virtual void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) = 0;
 
-  /**
-   * The log mask
-   */
-  std::atomic<int> m_logMask;
-
-  /**
-   * Map from syslog integer priority to textual representation
-   */
-  const std::map<int, std::string> m_priorityToText;
-
-  /**
-   * Map from the possible string values of the LogMask parameters and their equivalent syslog priorities
-   */
-  const std::map<std::string, int> m_configTextToPriority;
-  
   /**
    * Generates and returns the mapping between syslog priorities and their textual representations
    */
@@ -214,17 +219,10 @@ private:
    * @param logLevel    Log level
    * @param msg         Message text
    * @param params      Message parameters
-   * @param rawParams   Preprocessed message parameters
    * @param pid         Process ID of the process logging the message
    * @return            Message body
    */
-  std::string createMsgBody(std::string_view logLevel, std::string_view msg,
-    const std::list<Param> &params, std::string_view rawParams, int pid);
-
-  /**
-   * Log format
-   */
-  LogFormat m_logFormat = LogFormat::DEFAULT;
+  std::string createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param> &params, int pid);
 };
 
 } // namespace cta::log

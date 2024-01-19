@@ -48,17 +48,19 @@ FileLogger::~FileLogger() {
 //-----------------------------------------------------------------------------
 void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   if (-1 == m_fd) {
-    throw cta::exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
+    throw exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
   }
 
   // Prepare the string to print
-  std::string m = std::string(header) + std::string(body) + "\n";
-  
-  // enter critical section
-  threading::MutexLocker lock(m_mutex);
+  std::ostringstream logLine;
+  logLine << (m_logFormat == LogFormat::JSON ? "{" : "")
+          << header << body
+          << (m_logFormat == LogFormat::JSON ? "}" : "")
+          << std::endl;
   
   // Append the message to the file
-  cta::exception::Errnum::throwOnMinusOne(::write(m_fd, m.c_str(), m.size()), 
+  threading::MutexLocker lock(m_mutex);
+  cta::exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()), 
       "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 

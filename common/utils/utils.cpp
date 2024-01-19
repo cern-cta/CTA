@@ -268,29 +268,17 @@ void splitString(const std::string &str, const char separator,
 //-----------------------------------------------------------------------------
 // trimString
 //-----------------------------------------------------------------------------
-std::string trimString(const std::string &s) {
+std::string trimString(std::string_view s) {
   const std::string& spaces="\t\n\v\f\r ";
 
-  // Find first non white character
+  // Find first non-space character
   size_t beginpos = s.find_first_not_of(spaces);
-  std::string::const_iterator it1;
-  if (std::string::npos != beginpos) {
-    it1 = beginpos + s.begin();
-  } else {
-    it1 = s.begin();
-  }
+  std::string_view::const_iterator it1 = s.begin() + (beginpos == std::string_view::npos ? 0 : beginpos);
 
-  // Find last non white chararacter
-  std::string::const_iterator it2;
+  // Find last non-space chararacter
   size_t endpos = s.find_last_not_of(spaces);
-  if (std::string::npos != endpos) {
-    //http://www.cplusplus.com/reference/string/string/string/
-    //The string constructor with iterator does not include the character pointed by the end iterator
-    it2 = endpos + 1 + s.begin();
-  } else {
-    //The string contains only white characters, the trimmed string should be an empty string
-    it2 = s.begin();
-  }
+  // endpos+1 because the string constructor with iterator does not include the character pointed to by the end iterator
+  std::string_view::const_iterator it2 = s.begin() + (endpos == std::string_view::npos ? 0 : endpos + 1);
 
   return std::string(it1, it2);
 }
