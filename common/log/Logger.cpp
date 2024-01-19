@@ -112,17 +112,10 @@ std::map<std::string, int>
 //------------------------------------------------------------------------------
 void Logger::setLogMask(std::string_view logMask) {
   try {
-    setLogMask(toLogLevel(logMask));
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string("Failed to set log mask: ") + ex.getMessage().str());
+    m_logMask = toLogLevel(logMask);
+  } catch(exception::Exception& ex) {
+    throw exception::Exception("Failed to set log mask: " + ex.getMessage().str());
   }
-}
-
-//------------------------------------------------------------------------------
-// setLogMask
-//------------------------------------------------------------------------------
-void Logger::setLogMask(const int logMask) {
-  m_logMask = logMask;
 }
 
 //-----------------------------------------------------------------------------

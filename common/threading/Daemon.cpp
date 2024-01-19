@@ -35,13 +35,6 @@ cta::server::Daemon::Daemon(cta::log::Logger &log) noexcept :
 }
 
 //------------------------------------------------------------------------------
-// getServerName
-//------------------------------------------------------------------------------
-const std::string &cta::server::Daemon::getServerName() const noexcept {
-  return m_log.getProgramName();
-}
-
-//------------------------------------------------------------------------------
 // getForeground
 //------------------------------------------------------------------------------
 bool cta::server::Daemon::getForeground() const

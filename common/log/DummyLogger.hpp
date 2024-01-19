@@ -53,7 +53,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed
    */
-  void prepareForFork() override { /* intentionally-blank override of pure virtual method */ }
+  void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
   
 protected:
   /**
@@ -69,7 +69,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged
    */
-  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override {
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final {
     // intentionally-blank override of pure virtual method
   }
 };

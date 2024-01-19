@@ -103,11 +103,6 @@ public:
   virtual void prepareForFork() = 0;
 
   /**
-   * Returns the name of the program
-   */
-  const std::string& getProgramName() const { return m_programName; }
-
-  /**
    * Writes a message into the CTA logging system
    *
    * Exceptions are not thrown in case of failure. Failures are silently ignored in order to not impact the processing.
@@ -126,13 +121,6 @@ public:
    * @param logMask The log mask
    */
   void setLogMask(std::string_view logMask);
-
-  /**
-   * Sets the log mask
-   *
-   * @param logMask The log mask
-   */
-  void setLogMask(const int logMask);
 
   /**
    * Sets the log format
