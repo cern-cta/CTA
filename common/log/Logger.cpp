@@ -118,6 +118,19 @@ void Logger::setLogMask(std::string_view logMask) {
   }
 }
 
+//------------------------------------------------------------------------------
+// setLogFormat
+//------------------------------------------------------------------------------
+void Logger::setLogFormat(std::string_view logFormat) {
+  if(logFormat == "default") {
+    m_logFormat = LogFormat::DEFAULT;
+  } else if(logFormat == "json") {
+    m_logFormat = LogFormat::JSON;
+  } else {
+    throw exception::Exception("Log format value \"" + std::string(logFormat) + "\" is invalid.");
+  }
+}
+
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------

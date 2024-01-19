@@ -68,13 +68,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
     // Set the logger output format
     auto loggerFormat = config.getOptionValueStr("cta.log.format");
-    if(loggerFormat.has_value()) {
-      if(loggerFormat.value() == "json") {
-        m_log->setLogFormat(log::LogFormat::JSON);
-      } else if(loggerFormat.value() != "default") {
-        throw exception::Exception("cta.log.format value \"" + loggerFormat.value() + "\" is invalid.");
-      }
-    }
+    if(loggerFormat.has_value()) m_log->setLogFormat(loggerFormat.value());
   } catch(exception::Exception& ex) {
     std::string ex_str("Failed to instantiate object representing CTA logging system: ");
     throw exception::Exception(ex_str + ex.getMessage().str());

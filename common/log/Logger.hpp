@@ -127,7 +127,7 @@ public:
    *
    * @param logFormat The log format
    */
-  void setLogFormat(LogFormat logFormat) { m_logFormat = logFormat; }
+  void setLogFormat(std::string_view logFormat);
 
   /**
    * Creates a clean version of the specified string ready for use with syslog

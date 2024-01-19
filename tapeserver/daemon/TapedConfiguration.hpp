@@ -50,6 +50,9 @@ struct TapedConfiguration {
   /// The log mask.  Logs with a level lower than this value will be masked.
   cta::SourcedParameter<std::string> logMask{
     "taped", "LogMask", "INFO", "Compile time default"};
+  /// The log format. Default is plain-text.
+  cta::SourcedParameter<std::string> logFormat{
+    "taped", "LogFormat", "default", "Compile time default"};
   /// Path to the file describing the tape drives (TPCONFIG)
   cta::SourcedParameter<std::string> tpConfigPath{
     "taped" , "TpConfigPath", "/etc/cta/TPCONFIG", "Compile time default"};
