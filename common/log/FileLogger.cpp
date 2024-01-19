@@ -48,7 +48,7 @@ FileLogger::~FileLogger() {
 //-----------------------------------------------------------------------------
 void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   if (-1 == m_fd) {
-    throw exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
+    throw exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialised");
   }
 
   // Prepare the string to print
