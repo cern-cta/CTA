@@ -110,7 +110,7 @@ namespace unitTests{
     url += path;
     std::ofstream out(path,std::ios::out | std::ios::binary);
     cta::threading::AtomicFlag flag;
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskReadTaskTest",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskReadTaskTest",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);
 
     const int blockSize=1500;    

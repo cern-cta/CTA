@@ -47,7 +47,7 @@ const uint32_t TEST_GROUP_2 = 9754;
   class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
   public:
     castor_tape_tapeserver_daemon_MigrationReportPackerTest():
-      m_dummyLog("dummy", "dummy") {
+      m_dummyLog("dummy", "dummy", "configFilename") {
     }
 
   protected:
@@ -236,7 +236,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     job2->tapeFile.copyNb=1;
     job2->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
@@ -279,7 +279,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       job3.reset(mockJob.release());
     }
 
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
@@ -423,7 +423,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedNullFile->tapeFile.copyNb=1;
     migratedNullFile->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();

@@ -73,9 +73,9 @@ int main(int argc, char** argv) {
     g_cmdLineArgs = parseCmdLine(argc, argv);
 
     #ifdef STDOUT_LOGGING
-    cta::log::StdoutLogger dummyLogger("stdout", "stdout");
+    cta::log::StdoutLogger dummyLogger("stdout", "stdout", "configFilename");
     #else
-    cta::log::DummyLogger dummyLogger("dummy", "dummy");
+    cta::log::DummyLogger dummyLogger("dummy", "dummy", "configFilename");
     #endif
     const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
     const uint64_t nbConns = 1;

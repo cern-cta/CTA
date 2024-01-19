@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <cstdio>
+
 namespace unitTests {
 
 class cta_threading_DaemonTest : public ::testing::Test {
@@ -32,12 +34,18 @@ protected:
   const std::string m_programName;
   int m_argc;
   char **m_argv;
+  //const std::string& configFilename;
+  //const std::string& unitTests::cta_threading_DaemonTest::configFilename;
+  //const string& cta::log::DummyLogger m_configFilename;
 
   cta_threading_DaemonTest() :
     m_hostName("dummy"),
     m_programName("testdaemon"),
     m_argc(0),
-    m_argv(nullptr) {
+    m_argv(nullptr)
+    
+    { 
+    //m_configFilename;
   }
 
   virtual void SetUp() {
@@ -55,7 +63,7 @@ protected:
 };
 
 TEST_F(cta_threading_DaemonTest, getForegroundBeforeParseCommandLine) {
-  cta::log::DummyLogger log(m_hostName, m_programName);
+  cta::log::DummyLogger log(m_hostName, m_programName, "configFilename");
   cta::server::Daemon daemon(log);
 
   ASSERT_THROW(daemon.getForeground(), cta::server::Daemon::CommandLineNotParsed);

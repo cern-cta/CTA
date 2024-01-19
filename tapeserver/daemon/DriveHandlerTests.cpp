@@ -178,7 +178,7 @@ protected:
   std::shared_ptr<NiceMock<cta::SchedulerMock>> m_scheduler;
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
 
-  cta::log::StringLogger m_logger{"dummy", "driveHandlerTests", cta::log::DEBUG};
+  cta::log::StringLogger m_logger{"dummy", "driveHandlerTests", cta::log::DEBUG, "configFilename"};
   cta::log::LogContext m_lc;
   NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
   cta::tape::daemon::TapedConfiguration m_tapedConfig;

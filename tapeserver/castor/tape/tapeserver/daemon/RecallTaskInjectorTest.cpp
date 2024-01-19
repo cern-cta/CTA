@@ -146,7 +146,7 @@ namespace unitTests
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
     const int nbJobs=15;
     const int maxNbJobsInjectedAtOnce = 6;
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
@@ -162,7 +162,7 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    cta::log::DummyLogger dummyLog("dummy","dummy");
+    cta::log::DummyLogger dummyLog("dummy","dummy", "confiFilename");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;
@@ -214,7 +214,7 @@ namespace unitTests
   }
 
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
-    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG, "configFilename");
     cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
@@ -229,7 +229,7 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    cta::log::DummyLogger dummyLog("dummy","dummy");
+    cta::log::DummyLogger dummyLog("dummy","dummy", "configFilename");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;

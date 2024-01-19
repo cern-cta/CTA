@@ -53,7 +53,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
     // Set the log context
     if(loggerURL.value() == "syslog:") {
-      m_log = std::make_unique<log::SyslogLogger>(shortHostname, "cta-frontend", loggerLevel);
+      m_log = std::make_unique<log::SyslogLogger>(shortHostname, "cta-frontend", loggerLevel, configFilename);
       logToSyslog = 1;
     } else if(loggerURL.value() == "stdout:") {
       m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend");

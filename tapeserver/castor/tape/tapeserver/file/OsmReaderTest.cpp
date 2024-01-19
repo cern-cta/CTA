@@ -163,9 +163,9 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
 }
 
 TEST_F(OsmReaderTest, CleanDrive) {
-  cta::log::DummyLogger dummylogger("dummy", "unitTest");
-  cta::log::StringLogger strlogger("string", "unitTest", cta::log::DEBUG);
-  cta::log::StdoutLogger stdoutlogger("stdout", "unitTest");
+  cta::log::DummyLogger dummylogger("dummy", "unitTest", "configFilename");
+  cta::log::StringLogger strlogger("string", "unitTest", cta::log::DEBUG, "configFilename");
+  cta::log::StdoutLogger stdoutlogger("stdout", "unitTest", "configFilename");
   cta::server::ProcessCapDummy capUtils;
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);

@@ -36,7 +36,7 @@ protected:
 TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDatabases) {
   using namespace cta;
 
-  log::DummyLogger dummyLog("dummy", "dummy");
+  log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
 
@@ -54,7 +54,7 @@ TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDat
 TEST_F(cta_catalogue_InMemoryCatalogue, schemaTables) {
   using namespace cta;
 
-  log::DummyLogger dummyLog("dummy", "dummy");
+  log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
 

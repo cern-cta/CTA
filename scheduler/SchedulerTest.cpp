@@ -123,7 +123,7 @@ std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
 class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
-  SchedulerTest(): m_dummyLog("dummy", "dummy") {
+  SchedulerTest(): m_dummyLog("dummy", "dummy", "configFilename") {
   }
 
   class FailedToGetCatalogue: public std::exception {
@@ -411,7 +411,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
@@ -514,9 +514,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -719,9 +719,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
   setupDefaultCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -1048,9 +1048,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   }
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -1373,9 +1373,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -1624,9 +1624,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -1881,9 +1881,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   auto &catalogue = getCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -1969,7 +1969,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
 
   Scheduler &scheduler = getScheduler();
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
 
   {
@@ -1999,7 +1999,7 @@ TEST_P(SchedulerTest, showqueues) {
 
   Scheduler &scheduler = getScheduler();
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
 
   uint64_t archiveFileId __attribute__((unused));
@@ -2043,7 +2043,7 @@ TEST_P(SchedulerTest, repack) {
   Scheduler &scheduler = getScheduler();
   cta::catalogue::Catalogue& catalogue = getCatalogue();
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
 
   typedef cta::common::dataStructures::RepackInfo RepackInfo;
@@ -2126,7 +2126,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   Scheduler &scheduler = getScheduler();
   catalogue::Catalogue& catalogue = getCatalogue();
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
 
   // Create the environment for the migration to happen (library + tape)
@@ -2214,9 +2214,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -2546,9 +2546,9 @@ TEST_P(SchedulerTest, expandRepackRequestWithMaxFiles) {
   catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "diskSystem", "diskInstance", "diskInstanceSpace", "/public_dir/public_file", 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -2737,9 +2737,9 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", , "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -2944,9 +2944,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   setupDefaultCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3204,9 +3204,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   setupDefaultCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3469,9 +3469,9 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3577,9 +3577,9 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3686,9 +3686,9 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3749,9 +3749,9 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -3812,9 +3812,9 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -4177,9 +4177,9 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -4407,9 +4407,9 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -4660,9 +4660,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -4843,9 +4843,9 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5124,9 +5124,9 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   setupDefaultCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5367,9 +5367,9 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   setupDefaultCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5479,9 +5479,9 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5639,9 +5639,9 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5789,9 +5789,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -5889,9 +5889,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace",tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6029,7 +6029,7 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount){
   catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
 
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
@@ -6074,9 +6074,9 @@ TEST_P(SchedulerTest, retrieveUserQueueMaxDrivesVoInFlightChangeScheduleMount)
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6180,9 +6180,9 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6366,9 +6366,9 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6623,9 +6623,9 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6779,9 +6779,9 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -6969,9 +6969,9 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
   auto &scheduler = getScheduler();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -7018,9 +7018,9 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
   auto &catalogue = getCatalogue();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -7061,9 +7061,9 @@ TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
   auto &scheduler = getScheduler();
 
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 
@@ -7111,9 +7111,9 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
 
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
+  log::StdoutLogger dl("dummy", "unitTest", "configFilename");
 #else
-  log::DummyLogger dl("", "");
+  log::DummyLogger dl("", "", "");
 #endif
   log::LogContext lc(dl);
 

@@ -50,7 +50,7 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t nbDbConns = 1;
   const uint64_t nbArchiveFileListingDbConns = 1;
-  log::DummyLogger dummyLog("dummy", "dummy");
+  log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
   auto catalogue = catalogueFactory->create();
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());

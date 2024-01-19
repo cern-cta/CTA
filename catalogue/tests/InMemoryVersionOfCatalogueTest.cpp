@@ -52,9 +52,9 @@ const uint64_t g_in_memory_CatalogueTest_nbConn = 1;
 const uint64_t g_in_memory_nbArchiveFileListingConns = 1;
 const uint64_t g_in_memory_maxTriesToConnect = 1;
 #ifdef STDOUT_LOGGING
-cta::log::StdoutLogger g_in_memory_CatalogueTest_dummyLogger("stdout", "stdout");
+cta::log::StdoutLogger g_in_memory_CatalogueTest_dummyLogger("stdout", "stdout", "stdout");
 #else
-cta::log::DummyLogger g_in_memory_CatalogueTest_dummyLogger("dummy", "dummy");
+cta::log::DummyLogger g_in_memory_CatalogueTest_dummyLogger("dummy", "dummy", "configFilename");
 #endif
 
 cta::catalogue::InMemoryCatalogueFactory g_inMemoryCatalogueFactory(g_in_memory_CatalogueTest_dummyLogger,

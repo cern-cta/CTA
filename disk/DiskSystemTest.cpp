@@ -27,7 +27,7 @@ namespace unitTests {
   
   class DiskSystemTest: public ::testing::Test {
     public:
-      DiskSystemTest(): m_dummyLog("dummy", "dummy") {}
+      DiskSystemTest(): m_dummyLog("dummy", "dummy", "configFilename") {}
       virtual ~DiskSystemTest() {}
       
       class FailedToGetCatalogue: public std::exception {

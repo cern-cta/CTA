@@ -119,7 +119,7 @@ class OStoreDBTest: public
 };  // class SchedulerDatabaseTest
 
 TEST_P(OStoreDBTest, getBatchArchiveJob) {
-  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
   cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();
@@ -189,7 +189,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
 TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   using cta::objectstore::ArchiveQueue;
   using cta::objectstore::ArchiveRequest;
-  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
   cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();

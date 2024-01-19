@@ -25,7 +25,7 @@
 namespace cta::catalogue {
 
 SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): SchemaComparer(databaseToCheckName,catalogueMetadataGetter) {
-  log::DummyLogger dl("dummy","dummy");
+  log::DummyLogger dl("dummy","dummy","configFilename");
   auto login = rdbms::Login::parseString("in_memory");
   //Create SQLite connection
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));

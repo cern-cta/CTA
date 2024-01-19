@@ -217,7 +217,7 @@ int main(const int argc, char **const argv) {
     } else if (commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
     } else {
-      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
+      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG, "configFilename"));
     }
   } catch(exception::Exception &ex) {
     std::cerr <<

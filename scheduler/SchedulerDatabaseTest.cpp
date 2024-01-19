@@ -78,7 +78,7 @@ public:
 
   virtual void SetUp() {
     using namespace cta;
-    cta::log::DummyLogger logger("", "");
+    cta::log::DummyLogger logger("", "", "");
     const SchedulerDatabaseFactory &factory = GetParam().dbFactory;
     //m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
@@ -154,9 +154,9 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_use
 TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -322,9 +322,9 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
     using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -388,9 +388,9 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
 TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
     using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -461,9 +461,9 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
 TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -542,9 +542,9 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
 TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -632,9 +632,9 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -718,9 +718,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 
@@ -815,9 +815,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+  cta::log::DummyLogger dl("", "", "");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::StdoutLogger dl("", "", "");
 #endif
   cta::log::LogContext lc(dl);
 

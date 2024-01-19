@@ -25,7 +25,7 @@
 namespace unitTests {
 
 TEST(cta_Daemon, ProcessManager) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);
   {

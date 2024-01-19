@@ -37,8 +37,8 @@ int main(const int argc, char *const *const argv) {
     buf[sizeof(buf) - 1] = '\0';
     hostName = buf;
   }
-  cta::log::StdoutLogger log(hostName, "cta-readtp");
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::StdoutLogger log(hostName, "cta-readtp", "configFilename");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   const cta::tape::daemon::TapedConfiguration tapeConfig
     = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapeConfigFile);
   cta::mediachanger::RmcProxy rmcProxy(

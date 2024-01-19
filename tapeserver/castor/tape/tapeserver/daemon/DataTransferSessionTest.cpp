@@ -114,7 +114,7 @@ class DataTransferSessionTest : public ::testing::TestWithParam<DataTransferSess
 public:
 
   DataTransferSessionTest() :
-    m_dummyLog("dummy", "dummy") {
+    m_dummyLog("dummy", "dummy", "dummy") {
   }
 
 
@@ -470,7 +470,7 @@ protected:
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -611,7 +611,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -652,7 +652,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest",cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -799,7 +799,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -854,7 +854,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // to recall the first file and cancel the second.
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1017,7 +1017,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1050,7 +1050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1202,7 +1202,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1242,7 +1242,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1391,7 +1391,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1431,7 +1431,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1581,7 +1581,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
 
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1624,7 +1624,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1774,7 +1774,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   castorConf.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1818,7 +1818,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1954,7 +1954,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   castorConf.nbBufs = 10;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   castor::messages::TapeserverProxyDummy initialProcess;
@@ -1969,7 +1969,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2109,7 +2109,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2136,7 +2136,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2250,7 +2250,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2289,7 +2289,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // except the first should be written to tape and the catalogue
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2404,7 +2404,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2449,7 +2449,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Behaviour is different from production due to  cta/CTA#1100
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2569,7 +2569,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2610,7 +2610,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // except the fifth should be written to tape and the catalogue
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2725,7 +2725,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2772,7 +2772,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2891,7 +2891,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2940,7 +2940,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 //
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3055,7 +3055,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -3113,7 +3113,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3228,7 +3228,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
@@ -3281,7 +3281,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
 
 TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG, "configFilename");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3362,7 +3362,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
-  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::log::DummyLogger dummyLog("dummy", "dummy", "configFilename");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCapDummy capUtils;
