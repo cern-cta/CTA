@@ -154,27 +154,39 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
-  const std::list<Param> &params, int pid) {
+  const std::list<Param>& params, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
+  switch(m_logFormat) {
+    case LogFormat::DEFAULT:
+      os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
+      break;
+    case LogFormat::JSON:
+        os << "\"log_level\":\"" << logLevel << "\","
+           << "\"pid\":\"" << pid << "\","
+           << "\"tid\":\"" << tid << "\","
+           << "\"message\":\"" << msg << "\"";
+  }
 
   // Process parameters
-  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
-    const Param &param = *itor;
-
-    // Check the parameter name, if it's an empty string set the value to "Undefined"
-    const std::string name = param.getName() == "" ? "Undefined" :
-      cleanString(param.getName(), true);
+  for(auto& param : params) {
+    // If parameter name is an empty string, set the value to "Undefined"
+    const std::string name = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
 
     // Process the parameter value
     const std::string value = cleanString(param.getValue(), false);
 
     // Write the name and value to the buffer
-    os << name << "=\"" << value << "\" ";
+    switch(m_logFormat) {
+      case LogFormat::DEFAULT:
+        os << name << "=\"" << value << "\" ";
+        break;
+      case LogFormat::JSON:
+        os << ",\"" << name << "\":\"" << value << "\"";
+    }
   }
 
   return os.str();
