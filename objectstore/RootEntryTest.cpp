@@ -35,7 +35,7 @@ namespace unitTests {
 
 TEST_F(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   {
     // Try to create the root entry
@@ -57,7 +57,7 @@ TEST_F(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     // Create an agent
-    cta::log::DummyLogger dl("dummy", "dummyLogger");
+    cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
     cta::objectstore::AgentReference agentRef("unitTest", dl);
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
@@ -82,7 +82,7 @@ TEST_F(ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(nullptr));
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -150,7 +150,7 @@ TEST_F(ObjectStore, RootEntryDriveRegister) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(nullptr));
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -206,7 +206,7 @@ TEST_F(ObjectStore, RootEntryAgentRegister) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(nullptr));
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -256,7 +256,7 @@ TEST_F(ObjectStore, RootEntrySchedulerGlobalLock) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(nullptr));
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -307,7 +307,7 @@ TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(nullptr));
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger", "configFilename");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);

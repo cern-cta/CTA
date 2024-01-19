@@ -111,6 +111,8 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   // Read CTA namespaced configuration options from XRootD config file
   //const std::string& configFilename;
   //cta::frontend::Config config(m_configFilename);
+  //Could have used this instead of importing in
+  // std::string m_configFilename= "/etc/cta/cta-catalogue.conf";
   cta::common::Configuration config(m_configFilename);  
 
   //auto jsonValue1 = config.getOptionValueStr("cta.log.json_state");
