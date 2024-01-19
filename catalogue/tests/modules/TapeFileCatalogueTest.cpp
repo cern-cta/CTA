@@ -36,7 +36,7 @@
 namespace unitTests {
 
 cta_catalogue_TapeFileTest::cta_catalogue_TapeFileTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy","configFilename"),
     m_admin(CatalogueTestUtils::getAdmin()),
     m_vo(CatalogueTestUtils::getVo()),
     m_diskInstance(CatalogueTestUtils::getDiskInstance()),

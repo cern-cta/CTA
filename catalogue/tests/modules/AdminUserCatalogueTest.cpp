@@ -28,7 +28,7 @@
 namespace unitTests {
 
 cta_catalogue_AdminUserTest::cta_catalogue_AdminUserTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_localAdmin(CatalogueTestUtils::getLocalAdmin()),
     m_admin(CatalogueTestUtils::getAdmin()) {
 }

@@ -29,7 +29,7 @@
 namespace unitTests {
 
 cta_catalogue_ArchiveRouteTest::cta_catalogue_ArchiveRouteTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_tape1(CatalogueTestUtils::getTape1()),
     m_admin(CatalogueTestUtils::getAdmin()),
     m_diskInstance(CatalogueTestUtils::getDiskInstance()),

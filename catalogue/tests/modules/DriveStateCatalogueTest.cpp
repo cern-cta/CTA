@@ -108,7 +108,7 @@ cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::st
 }  // namespace
 
 cta_catalogue_DriveStateTest::cta_catalogue_DriveStateTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_admin(getAdmin()) {
 }
 

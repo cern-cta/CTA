@@ -42,7 +42,7 @@
 namespace unitTests {
 
 cta_catalogue_FileRecycleLogTest::cta_catalogue_FileRecycleLogTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_tape1(CatalogueTestUtils::getTape1()),
     m_tape2(CatalogueTestUtils::getTape2()),
     m_tape3(CatalogueTestUtils::getTape3()),

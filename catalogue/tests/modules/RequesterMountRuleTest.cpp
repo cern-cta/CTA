@@ -30,7 +30,7 @@
 namespace unitTests {
 
 cta_catalogue_RequesterMountRuleTest::cta_catalogue_RequesterMountRuleTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_admin(CatalogueTestUtils::getAdmin()),
     m_diskInstance(CatalogueTestUtils::getDiskInstance()) {
 }

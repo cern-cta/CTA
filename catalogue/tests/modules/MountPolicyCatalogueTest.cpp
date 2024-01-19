@@ -28,7 +28,7 @@
 namespace unitTests {
 
 cta_catalogue_MountPolicyTest::cta_catalogue_MountPolicyTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_admin("admin", "host") {
 }
 

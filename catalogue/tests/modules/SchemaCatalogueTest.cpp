@@ -28,7 +28,7 @@
 namespace unitTests {
 
 cta_catalogue_SchemaTest::cta_catalogue_SchemaTest()
-  : m_dummyLog("dummy", "dummy") {
+  : m_dummyLog("dummy", "dummy", "configFilename") {
 }
 
 void cta_catalogue_SchemaTest::SetUp() {

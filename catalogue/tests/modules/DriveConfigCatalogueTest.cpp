@@ -30,7 +30,7 @@
 namespace unitTests {
 
 cta_catalogue_DriveConfigTest::cta_catalogue_DriveConfigTest()
-  : m_dummyLog("dummy", "dummy") {
+  : m_dummyLog("dummy", "dummy", "configFilename") {
 }
 
 void cta_catalogue_DriveConfigTest::SetUp() {

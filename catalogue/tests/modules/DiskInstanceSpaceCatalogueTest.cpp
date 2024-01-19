@@ -28,7 +28,7 @@
 namespace unitTests {
 
 cta_catalogue_DiskInstanceSpaceTest::cta_catalogue_DiskInstanceSpaceTest()
-  : m_dummyLog("dummy", "dummy"),
+  : m_dummyLog("dummy", "dummy", "configFilename"),
     m_admin(CatalogueTestUtils::getAdmin()) {
 }
 
