@@ -20,17 +20,21 @@
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
 
-// The header file for atomic was is actually called cstdatomic in gcc 4.4
-#if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
-    #include <cstdatomic>
-#else
-  #include <atomic>
-#endif
-
+#include <atomic>
 #include <list>
 #include <map>
 
 namespace cta::log {
+
+/**
+ * Format for log lines
+ *
+ * Log lines are output as key-value pairs
+ */
+enum class LogFormat {
+  DEFAULT,  //!< Text format
+  JSON      //!< JSON format
+};
 
 /**
  * Abstract class representing the API of the CTA logging system
@@ -76,24 +80,22 @@ namespace cta::log {
  */
 class Logger {
 public:
-
   /**
    * Constructor
    *
-   * @param hostName The name of the host to be prepended to every log
-   * @param programName The name of the program to be prepended to every log
-   * @param logMask The log mask.
-   * message.
+   * @param hostName    The name of the host to be prepended to every log message
+   * @param programName The name of the program to be prepended to every log message
+   * @param logMask     The log mask
    */
-  Logger(std::string_view hostName, std::string_view programName, const int logMask);
+  Logger(std::string_view hostName, std::string_view programName, int logMask);
 
   /**
-   * Destructor.
+   * Destructor
    */
   virtual ~Logger() = 0;
 
   /**
-   * Prepares the logger object for a call to fork().
+   * Prepares the logger object for a call to fork()
    *
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
@@ -101,140 +103,128 @@ public:
   virtual void prepareForFork() = 0;
 
   /**
-   * Returns the name of the program.
+   * Returns the name of the program
    */
-  const std::string &getProgramName() const;
+  const std::string& getProgramName() const;
 
   /**
-   * Writes a message into the CTA logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
+   * Writes a message into the CTA logging system
    *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
+   * Exceptions are not thrown in case of failure. Failures are silently ignored in order to not impact the processing.
    *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params optional parameters of the message.
+   * This version of operator() implicitly uses the current time as the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API
+   * @param msg      the message
+   * @param params   optional parameters of the message
    */
-  virtual void operator() (int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>());
+  virtual void operator() (int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>()) noexcept;
 
   /**
-   * Sets the log mask.
+   * Sets the log mask
    *
-   * @param logMask The log mask.
+   * @param logMask The log mask
    */
   void setLogMask(std::string_view logMask);
 
   /**
-   * Sets the log mask.
+   * Sets the log mask
    *
-   * @param logMask The log mask.
+   * @param logMask The log mask
    */
   void setLogMask(const int logMask);
 
   /**
-   * Creates a clean version of the specified string ready for use with syslog.
+   * Sets the log format
    *
-   * @param s The string to be cleaned.
-   * @param replaceUnderscores Set to true if spaces should be replaced by
-   * underscores.
-   * @return A cleaned version of the string.
+   * @param logFormat The log format
    */
-  static std::string cleanString(const std::string &s,
-    const bool replaceUnderscores);
+  void setLogFormat(LogFormat logFormat) { m_logFormat = logFormat; }
+
+  /**
+   * Creates a clean version of the specified string ready for use with syslog
+   *
+   * @param s                  The string to be cleaned
+   * @param replaceUnderscores Set to true if spaces should be replaced by underscores
+   * @return                   A cleaned version of the string
+   */
+  static std::string cleanString(const std::string &s, bool replaceUnderscores);
 
 protected:
   /**
-   * The name of the host to be prepended to every log message.
+   * The name of the host to be prepended to every log message
    */
   const std::string m_hostName;
 
   /**
-   * The name of the program to be prepended to every log message.
+   * The name of the program to be prepended to every log message
    */
   const std::string m_programName;
   
   /**
-   * Writes the specified msg to the underlying logging system.
+   * Writes the specified msg to the underlying logging system
    *
-   * This method is to be implemented by concrete sub-classes of the Logger
-   * class.
+   * It is the responsibility of the concrete sub-classes to decide whether or not to use the specified log message
+   * header. The SysLogLogger sub-class does not use the header, relying instead on rsyslog to provide a header.
    *
-   * Please note it is the responsibility of a concrete sub-class to decide
-   * whether or not to use the specified log message header.  For example, the
-   * SysLogLogger sub-class does not use the header.  Instead it relies on
-   * rsyslog to provide a header.
-   *
-   * @param header The header of the message to be logged.  It is the
-   * esponsibility of the concrete sub-class 
-   * @param body The body of the message to be logged.
+   * @param header The header of the message to be logged
+   * @param body   The body of the message to be logged
    */
   virtual void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) = 0;
 
   /**
-   * The log mask.
+   * The log mask
    */
   std::atomic<int> m_logMask;
 
   /**
-   * Map from syslog integer priority to textual representation.
+   * Map from syslog integer priority to textual representation
    */
   const std::map<int, std::string> m_priorityToText;
 
   /**
-   * Map from the possible string values of the LogMask parameters and
-   * their equivalent syslog priorities.
+   * Map from the possible string values of the LogMask parameters and their equivalent syslog priorities
    */
   const std::map<std::string, int> m_configTextToPriority;
   
   /**
-   * Generates and returns the mapping between syslog priorities and their
-   * textual representations.
+   * Generates and returns the mapping between syslog priorities and their textual representations
    */
   static std::map<int, std::string> generatePriorityToTextMap();
 
   /**
-   * Generates and returns the mapping between the possible string values
-   * of the LogMask parameters their equivalent syslog priorities.
+   * Generates the mapping between possible string values of the LogMask parameters and their equivalent syslog priorities
    */
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
-
   /**
-   * Creates and returns the header of a log message.
+   * Creates and returns the header of a log message
    *
-   * Concrete subclasses of the Logger class can decide whether or not to use
-   * message headers created by this method.  The SysLogger sub-class for example
-   * relies on rsyslog to provide message headers and therefore does not call
-   * this method.
+   * Concrete subclasses of the Logger class can decide whether or not to use message headers created by this method.
    *
-   * @param timeStamp The time stamp of the message.
-   * @param hostName The name of the host.
-   * @param programName the program name of the log message.
-   * @param pid The process ID of the process logging the message.
-   * @return The message header.
+   * @param timeStamp   Timestamp of the message
+   * @return            Message header
    */
-  static std::string createMsgHeader(
-    const struct timeval &timeStamp,
-    std::string_view hostName,
-    std::string_view programName,
-    const int pid);
+  std::string createMsgHeader(const struct timeval& timeStamp);
 
   /**
    * Creates and returns the body of a log message
    *
-   * @param msg         the message
-   * @param params      the parameters of the message
-   * @param rawParams   preprocessed parameters of the message
-   * @param programName the program name of the log message
-   * @param pid         the pid of the log message
-   * @return the message body
+   * @param logLevel    Log level
+   * @param msg         Message text
+   * @param params      Message parameters
+   * @param rawParams   Preprocessed message parameters
+   * @param pid         Process ID of the process logging the message
+   * @return            Message body
    */
-  static std::string createMsgBody(std::string_view priorityText, std::string_view msg,
+  std::string createMsgBody(std::string_view logLevel, std::string_view msg,
     const std::list<Param> &params, std::string_view rawParams, int pid);
+
+  /**
+   * Log format
+   */
+  LogFormat m_logFormat = LogFormat::DEFAULT;
 };
 
 } // namespace cta::log
-

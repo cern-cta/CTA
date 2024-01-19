@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <iomanip>
+
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
@@ -28,9 +30,9 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(std::string_view hostName, std::string_view programName, const int logMask):
+Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
   m_hostName(hostName), m_programName(programName), m_logMask(logMask),
-  m_priorityToText(generatePriorityToTextMap()) {}
+  m_priorityToText(generatePriorityToTextMap()) { }
 
 //------------------------------------------------------------------------------
 // getProgramName
@@ -47,7 +49,7 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) {
+void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
   const std::string rawParams;
   struct timeval timeStamp;
   gettimeofday(&timeStamp, nullptr);
@@ -70,7 +72,7 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
+  const std::string header = createMsgHeader(timeStamp);
   const std::string body = createMsgBody(priorityText, msg, params, rawParams, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
@@ -142,36 +144,39 @@ void Logger::setLogMask(const int logMask) {
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(
-  const struct timeval &timeStamp,
-  std::string_view hostName,
-  std::string_view programName,
-  const int pid) {
+std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
   std::ostringstream os;
-  char buf[80];
-  int bufLen = sizeof(buf);
-  int len = 0;
-
   struct tm localTime;
-  localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%b %e %T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
-  buf[sizeof(buf) - 1] = '\0';
-  os << buf << hostName << " " << programName << ": ";
+  localtime_r(&timeStamp.tv_sec, &localTime);
+
+  switch(m_logFormat) {
+    case LogFormat::DEFAULT:
+      os << std::put_time(&localTime, "%b %e %T")
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << ' '
+         << m_hostName << " "
+         << m_programName << ": ";
+      break;
+    case LogFormat::JSON:
+      os << "\"epoch_time\":\"" << timeStamp.tv_sec
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << "\","
+         << "\"local_time\":\"" << std::put_time(&localTime, "%FT%T%z") << "\","
+         << "\"hostname\":\"" << m_hostName << "\","
+         << "\"program\":\"" << m_programName << "\",";
+  }
   return os.str();
 }
 
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(std::string_view priorityText, std::string_view msg,
+std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
   const std::list<Param> &params, std::string_view rawParams, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
+  os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
     msg << "\" ";
 
   // Process parameters

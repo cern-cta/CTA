@@ -65,11 +65,22 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     } else {
       throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.value());
     }
+
+    // Set the logger output format
+    auto loggerFormat = config.getOptionValueStr("cta.log.format");
+    if(loggerFormat.has_value()) {
+      if(loggerFormat.value() == "json") {
+        m_log->setLogFormat(log::LogFormat::JSON);
+      } else if(loggerFormat.value() != "default") {
+        throw exception::Exception("cta.log.format value \"" + loggerFormat.value() + "\" is invalid.");
+      }
+    }
   } catch(exception::Exception& ex) {
     std::string ex_str("Failed to instantiate object representing CTA logging system: ");
     throw exception::Exception(ex_str + ex.getMessage().str());
   }
   log::Logger& log = *m_log;
+
   const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
   {
     // Log starting message
