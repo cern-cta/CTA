@@ -51,8 +51,13 @@ SyslogLogger::SyslogLogger(std::string_view hostName, std::string_view programNa
 // writeMsgToLoggingSystem
 //-----------------------------------------------------------------------------
 void SyslogLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
-  // Explicitly ignore the message header as this will be provided by rsyslog
-  syslog(LOG_LOCAL3|INFO, "%s", body.data());
+  // Prepare the string to print. Explicitly ignore the message header as this will be provided by rsyslog.
+  std::ostringstream logLine;
+  logLine << (m_logFormat == LogFormat::JSON ? "{" : "")
+          << body
+          << (m_logFormat == LogFormat::JSON ? "}" : "");
+
+  syslog(LOG_LOCAL3|INFO, "%s", logLine.str().c_str());
 }
 
 } // namespace cta::log
