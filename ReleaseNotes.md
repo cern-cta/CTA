@@ -3,6 +3,7 @@
 ### Features
 - cta/CTA#546 - Limit the number of repack sub-requests that can be expanded at the same moment
 - cta/CTA#154 - Update RetrieveJob to support completion report
+- cta/CTA#488 - Optionally output log lines in JSON format
 
 ### Alma9 Migration
 - cta/CTA#534 - Migrate fst garbage collector to Python3

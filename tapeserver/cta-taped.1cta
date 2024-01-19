@@ -69,6 +69,10 @@ Logs with a level lower than this value will be masked. Possible values are EMER
 WARNING, NOTICE (USERERR), INFO, DEBUG. USERERR log level is equivalent to NOTICE, because by
 convention, CTA uses log level NOTICE for user errors.
 .TP
+.B taped LogFormat \fIdefault\fR
+The default format for log lines is plain-text key-value pairs. If this option is set to \fIjson\fR,
+log lines will be output in JSON format.
+.TP
 .B taped TpConfigPath \fI/etc/cta/TPCONFIG\fR
 Path to the tape drive configuration file. See \fBFILES\fP, below.
 .TP
