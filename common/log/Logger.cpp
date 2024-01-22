@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <iomanip>
+
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
@@ -28,16 +30,9 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(std::string_view hostName, std::string_view programName, const int logMask):
+Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
   m_hostName(hostName), m_programName(programName), m_logMask(logMask),
-  m_priorityToText(generatePriorityToTextMap()) {}
-
-//------------------------------------------------------------------------------
-// getProgramName
-//------------------------------------------------------------------------------
-const std::string &Logger::getProgramName() const {
-  return m_programName;
-}
+  m_priorityToText(generatePriorityToTextMap()) { }
 
 //------------------------------------------------------------------------------
 // destructor
@@ -47,31 +42,23 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) {
-  const std::string rawParams;
+void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
   struct timeval timeStamp;
   gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) {
-    return;
-  }
+  if(priority > m_logMask) return;
 
   // Try to find the textual representation of the syslog priority
   std::map<int, std::string>::const_iterator priorityTextPair =
     m_priorityToText.find(priority);
 
-  // Do nothing if the log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) {
-    return;
-  }
+  // Ignore messages where log priority is not valid
+  if(m_priorityToText.end() == priorityTextPair) return;
 
-  // Safe to get a reference to the textual representation of the priority
-  const std::string &priorityText = priorityTextPair->second;
-
-  const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
-  const std::string body = createMsgBody(priorityText, msg, params, rawParams, pid);
+  const std::string header = createMsgHeader(timeStamp);
+  const std::string body = createMsgBody(priorityTextPair->second, msg, params, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
 }
@@ -79,8 +66,7 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string Logger::cleanString(const std::string &s,
-  const bool replaceUnderscores) {
+std::string Logger::cleanString(std::string_view s, bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = utils::trimString(s);
 
@@ -126,72 +112,88 @@ std::map<std::string, int>
 //------------------------------------------------------------------------------
 void Logger::setLogMask(std::string_view logMask) {
   try {
-    setLogMask(toLogLevel(logMask));
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string("Failed to set log mask: ") + ex.getMessage().str());
+    m_logMask = toLogLevel(logMask);
+  } catch(exception::Exception& ex) {
+    throw exception::Exception("Failed to set log mask: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
-// setLogMask
+// setLogFormat
 //------------------------------------------------------------------------------
-void Logger::setLogMask(const int logMask) {
-  m_logMask = logMask;
+void Logger::setLogFormat(std::string_view logFormat) {
+  if(logFormat == "default") {
+    m_logFormat = LogFormat::DEFAULT;
+  } else if(logFormat == "json") {
+    m_logFormat = LogFormat::JSON;
+  } else {
+    throw exception::Exception("Log format value \"" + std::string(logFormat) + "\" is invalid.");
+  }
 }
 
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(
-  const struct timeval &timeStamp,
-  std::string_view hostName,
-  std::string_view programName,
-  const int pid) {
+std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
   std::ostringstream os;
-  char buf[80];
-  int bufLen = sizeof(buf);
-  int len = 0;
-
   struct tm localTime;
-  localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%b %e %T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
-  buf[sizeof(buf) - 1] = '\0';
-  os << buf << hostName << " " << programName << ": ";
+  localtime_r(&timeStamp.tv_sec, &localTime);
+
+  switch(m_logFormat) {
+    case LogFormat::DEFAULT:
+      os << std::put_time(&localTime, "%b %e %T")
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << ' '
+         << m_hostName << " "
+         << m_programName << ": ";
+      break;
+    case LogFormat::JSON:
+      os << "\"epoch_time\":\"" << timeStamp.tv_sec
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << "\","
+         << "\"local_time\":\"" << std::put_time(&localTime, "%FT%T%z") << "\","
+         << "\"hostname\":\"" << m_hostName << "\","
+         << "\"program\":\"" << m_programName << "\",";
+  }
   return os.str();
 }
 
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(std::string_view priorityText, std::string_view msg,
-  const std::list<Param> &params, std::string_view rawParams, int pid) {
+std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
+  const std::list<Param>& params, int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
-    msg << "\" ";
+  switch(m_logFormat) {
+    case LogFormat::DEFAULT:
+      os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
+      break;
+    case LogFormat::JSON:
+        os << "\"log_level\":\"" << logLevel << "\","
+           << "\"pid\":\"" << pid << "\","
+           << "\"tid\":\"" << tid << "\","
+           << "\"message\":\"" << msg << "\"";
+  }
 
   // Process parameters
-  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
-    const Param &param = *itor;
-
-    // Check the parameter name, if it's an empty string set the value to
-    // "Undefined".
-    const std::string name = param.getName() == "" ? "Undefined" :
-      cleanString(param.getName(), true);
+  for(auto& param : params) {
+    // If parameter name is an empty string, set the value to "Undefined"
+    const std::string name = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
 
     // Process the parameter value
     const std::string value = cleanString(param.getValue(), false);
 
     // Write the name and value to the buffer
-    os << name << "=\"" << value << "\" ";
+    switch(m_logFormat) {
+      case LogFormat::DEFAULT:
+        os << name << "=\"" << value << "\" ";
+        break;
+      case LogFormat::JSON:
+        os << ",\"" << name << "\":\"" << value << "\"";
+    }
   }
-
-  // Append raw parameters
-  os << rawParams;
 
   return os.str();
 }

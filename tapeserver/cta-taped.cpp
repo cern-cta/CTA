@@ -109,6 +109,9 @@ static int exceptionThrowingMain(
   const TapedConfiguration globalConfig =
     TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
+  // Set log lines to JSON format if configured
+  log.setLogFormat(globalConfig.logFormat.value());
+
   // Adjust log mask to the log level potentionally set in the configuration file
   log.setLogMask(globalConfig.logMask.value());
   {

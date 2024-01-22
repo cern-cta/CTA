@@ -132,13 +132,12 @@ namespace cta::utils {
 
 
   /**
-   * Returns the result of trimming both left and right white-space from the
-   * specified string.
+   * Trims left and right white-space from the specified string
    *
-   * @param s The string to be trimmed.
-   * @return The result of trimming the string.
+   * @param s The string to be trimmed
+   * @return The input string with leading/trailing white-space removed
    */
-  std::string trimString(const std::string &s);
+  std::string trimString(std::string_view s);
 
   /**
    * Returns a string with an ellipsis in the end if necessary so that the

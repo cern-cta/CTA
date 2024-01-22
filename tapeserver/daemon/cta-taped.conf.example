@@ -33,6 +33,9 @@
 # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
 # taped LogMask INFO
 #
+# Log format. Possible values are default, json.
+# taped LogFormat default
+#
 # Path to the tape drive configuration file
 # taped TpConfigPath /etc/cta/TPCONFIG
 #

@@ -97,6 +97,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.daemonUserName.setFromConfigurationFile(cf, generalConfigPath);
   ret.daemonGroupName.setFromConfigurationFile(cf, generalConfigPath);
   ret.logMask.setFromConfigurationFile(cf, generalConfigPath);
+  ret.logFormat.setFromConfigurationFile(cf, generalConfigPath);
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, generalConfigPath);
   ret.useEncryption.setFromConfigurationFile(cf, generalConfigPath);

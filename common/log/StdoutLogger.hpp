@@ -64,7 +64,7 @@ protected:
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) override;
+  void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 
 private:
     bool m_simple;

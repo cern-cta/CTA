@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <iostream>
+
 #include "common/log/StdoutLogger.hpp"
 
 namespace cta::log {
@@ -23,11 +25,11 @@ namespace cta::log {
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
 void StdoutLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
-  if (m_simple) {
-    printf("%s\n", body.data());
-  }  else {
-    printf("%s%s\n", header.data(), body.data());
-  }
+  std::cout << (m_logFormat == LogFormat::JSON ? "{" : "")
+            << (m_simple ? "" : header)
+            << body
+            << (m_logFormat == LogFormat::JSON ? "}" : "")
+            << std::endl;
 }
 
 } // namespace cta::log

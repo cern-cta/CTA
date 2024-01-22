@@ -48,14 +48,9 @@ public:
   virtual ~Daemon() = default;
 
   /**
-   * Returns this server's name as used by the CASTOR logging system.
-   */
-  const std::string &getServerName() const noexcept;
-
-  /**
    * Returns true if the daemon is configured to run in the foreground.
    */
-  bool getForeground() const ;
+  bool getForeground() const;
 
 protected:
 
