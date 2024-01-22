@@ -36,8 +36,9 @@
   extends:
     - .kubernetes_test
   rules:
+    - if: $ALMA9 == "ON"
+      when: never
     - !reference [.manual_rules, rules]
-    - if: $ALMA9 == "OFF"
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
