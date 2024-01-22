@@ -81,12 +81,12 @@ dbunittests_postgresql_alma9:
     - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
   script:
-    - yum -y install createrepo
+    - yum -y install createrepo epel-release almalinux-release-devel
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
     - yum -y install cta-catalogueutils
-    - yum -y install rpostgresql-server
+    - yum -y install postgresql-server
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
