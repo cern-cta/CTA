@@ -118,7 +118,7 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
-void OStoreDB::initConfig(const std::optional<cta::frontend::Config>& config) {
+void OStoreDB::initConfig(const std::optional<frontend::Config>& config) {
     // starts the configured number of thread workers for Objectstore
     if (config.has_value()) {
         const cta::frontend::Config& configObj = config.value();
