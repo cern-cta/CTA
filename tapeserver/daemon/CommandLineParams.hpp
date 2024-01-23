@@ -23,20 +23,19 @@
 
 namespace cta::daemon {
 
-/// A class parsing the command line and turning it into a struct.
-struct CommandLineParams{
+struct CommandLineParams {
   /**
    * Translates the command line parameters into a struct
-   * @param argc
-   * @param argv
    */
   CommandLineParams(int argc, char **argv);
-  bool foreground;                  ///< Prevents daemonisation
-  bool logToStdout;                 ///< Log to stdout instead of syslog. Foreground is required.
-  bool logToFile;                   ///< Log to file intead of syslog.
-  std::string logFilePath;
-  std::string configFileLocation;   ///< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
-  bool helpRequested;               ///< Help requested: will print out help and exit.
-  std::list<cta::log::Param> toLogParams() const; ///< Convert the command line into set of parameters for logging.
+  bool foreground = false;                                      ///< Prevents daemonisation
+  bool logToStdout = false;                                     ///< Log to stdout instead of syslog. Foreground is required.
+  bool logToFile = false;                                       ///< Log to file intead of syslog.
+  std::string logFilePath;                                      ///< Path to log file
+  std::string logFormat;                                        ///< Format of log messages [default|json]
+  std::string configFileLocation = "/etc/cta/cta-taped.conf";   ///< Location of the configuration file
+  bool helpRequested = false;                                   ///< Print help message and exit
+  std::list<cta::log::Param> toLogParams() const;               ///< Convert command line into set of parameters for logging
 };
+
 } // namespace cta::daemon

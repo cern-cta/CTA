@@ -46,7 +46,7 @@ public:
   /**
    * Destructor
    */
-  ~SyslogLogger() = default;
+  ~SyslogLogger() override = default;
 
   /**
    * Prepares the logger object for a call to fork()

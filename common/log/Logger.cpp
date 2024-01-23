@@ -134,7 +134,7 @@ void Logger::setLogFormat(std::string_view logFormat) {
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
+std::string Logger::createMsgHeader(const struct timeval& timeStamp) const {
   std::ostringstream os;
   struct tm localTime;
   localtime_r(&timeStamp.tv_sec, &localTime);
@@ -147,11 +147,11 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
          << m_programName << ": ";
       break;
     case LogFormat::JSON:
-      os << "\"epoch_time\":\"" << timeStamp.tv_sec
-         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << "\","
-         << "\"local_time\":\"" << std::put_time(&localTime, "%FT%T%z") << "\","
-         << "\"hostname\":\"" << m_hostName << "\","
-         << "\"program\":\"" << m_programName << "\",";
+      os << R"("epoch_time":")" << timeStamp.tv_sec
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(",)"
+         << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
+         << R"("hostname":")" << m_hostName << R"(",)"
+         << R"("program":")" << m_programName << R"(",)";
   }
   return os.str();
 }
@@ -160,7 +160,7 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) {
 // createMsgBody
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
-  const std::list<Param>& params, int pid) {
+  const std::list<Param>& params, int pid) const {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
@@ -168,13 +168,13 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
   // Append the log level, the thread id and the message text
   switch(m_logFormat) {
     case LogFormat::DEFAULT:
-      os << "LVL=\"" << logLevel << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
+      os << R"(LVL=")" << logLevel << R"(" PID=")" << pid << R"(" TID=")" << tid << R"(" MSG=")" << msg << R"(" )";
       break;
     case LogFormat::JSON:
-        os << "\"log_level\":\"" << logLevel << "\","
-           << "\"pid\":\"" << pid << "\","
-           << "\"tid\":\"" << tid << "\","
-           << "\"message\":\"" << msg << "\"";
+        os << R"("log_level":")" << logLevel << R"(",)"
+           << R"("pid":")" << pid << R"(",)"
+           << R"("tid":")" << tid << R"(",)"
+           << R"("message":")" << msg << R"(")";
   }
 
   // Process parameters

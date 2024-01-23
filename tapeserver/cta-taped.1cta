@@ -49,6 +49,9 @@ Display command options and exit.
 \-l, \-\-log\-to\-file <log_file>
 Log to a file instead of using syslog.
 .TP
+\-o, \-\-log\-format <format>
+Output format for log messages. [default|json]
+.TP
 \-s, \-\-stdout
 Log to standard output instead of using syslog. Requires \-\-foreground.
 

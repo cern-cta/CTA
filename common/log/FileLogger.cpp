@@ -57,11 +57,11 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
           << header << body
           << (m_logFormat == LogFormat::JSON ? "}" : "")
           << std::endl;
-  
+
   // Append the message to the file
   threading::MutexLocker lock(m_mutex);
-  cta::exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()), 
-      "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
+  cta::exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), static_cast<int>(logLine.str().size())), 
+    "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
 } // namespace cta::log

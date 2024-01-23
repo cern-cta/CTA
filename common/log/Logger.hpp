@@ -199,7 +199,7 @@ private:
    * @param timeStamp   Timestamp of the message
    * @return            Message header
    */
-  std::string createMsgHeader(const struct timeval& timeStamp);
+  std::string createMsgHeader(const struct timeval& timeStamp) const;
 
   /**
    * Creates and returns the body of a log message
@@ -210,7 +210,7 @@ private:
    * @param pid         Process ID of the process logging the message
    * @return            Message body
    */
-  std::string createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param> &params, int pid);
+  std::string createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param> &params, int pid) const;
 };
 
 } // namespace cta::log

@@ -22,10 +22,7 @@
 
 namespace cta::daemon {
 
-CommandLineParams::CommandLineParams(int argc, char** argv):
-  foreground(false), logToStdout(false), logToFile(false),
-  configFileLocation("/etc/cta/cta-taped.conf"),
-  helpRequested(false){
+CommandLineParams::CommandLineParams(int argc, char** argv) {
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
     { "foreground", no_argument, nullptr, 'f' },
@@ -33,6 +30,7 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
     { "help", no_argument, nullptr, 'h' },
     { "stdout", no_argument, nullptr, 's' },
     { "log-to-file", required_argument, nullptr, 'l' },
+    { "log-format", required_argument, nullptr, 'o' },
     { nullptr, 0, nullptr, '\0' }
   };
 
@@ -60,6 +58,9 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
       logFilePath = optarg;
       logToFile = true;
       break;
+    case 'o':
+      logFormat = optarg;
+      break;
     default:
       break;
     }
@@ -78,10 +79,10 @@ std::list<cta::log::Param> CommandLineParams::toLogParams() const {
   ret.push_back({"logToStdout", logToStdout});
   ret.push_back({"logToFile", logToFile});
   ret.push_back({"logFilePath", logFilePath});
+  ret.push_back({"logFormat", logFormat});
   ret.push_back({"configFileLocation", configFileLocation});
   ret.push_back({"helpRequested", helpRequested});
   return ret;
 }
 
 } // namespace cta::daemon
-

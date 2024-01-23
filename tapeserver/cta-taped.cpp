@@ -59,6 +59,7 @@ std::string gHelpString =
     "\t--foreground             or -f         \tRemain in the Foreground\n"
     "\t--stdout                 or -s         \tPrint logs to standard output. Required --foreground\n"
     "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default syslog)\n"
+    "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
     "\t--config <config-file>   or -c         \tConfiguration file\n"
     "\t--help                   or -h         \tPrint this help and exit\n";
 
@@ -98,19 +99,18 @@ void logStartOfDaemon(cta::log::Logger &log,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(
-  const cta::daemon::CommandLineParams & commandLine,
-  cta::log::Logger &log) {
+static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
   using namespace cta::tape::daemon;
 
   logStartOfDaemon(log, commandLine);
 
   // Parse /etc/cta/cta-taped.conf and /etc/cta/TPCONFIG for global parameters
-  const TapedConfiguration globalConfig =
-    TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
+  const TapedConfiguration globalConfig = TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
-  // Set log lines to JSON format if configured
-  log.setLogFormat(globalConfig.logFormat.value());
+  // Set log lines to JSON format if configured and not overridden on command line
+  if(commandLine.logFormat.empty()) {
+    log.setLogFormat(globalConfig.logFormat.value());
+  }
 
   // Adjust log mask to the log level potentionally set in the configuration file
   log.setLogMask(globalConfig.logMask.value());
@@ -215,20 +215,21 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<log::Logger> logPtr;
   try {
     const std::string shortHostName = utils::getShortHostname();
-    if (commandLine->logToStdout) {
+    if(commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
-    } else if (commandLine->logToFile) {
+    } else if(commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
     } else {
       logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }
-  } catch(exception::Exception &ex) {
-    std::cerr <<
-      "Failed to instantiate object representing CTA logging system: " <<
-      ex.getMessage().str() << std::endl;
+    if(!commandLine->logFormat.empty()) {
+      logPtr->setLogFormat(commandLine->logFormat);
+    }
+  } catch(exception::Exception& ex) {
+    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
-  cta::log::Logger &log = *logPtr;
+  cta::log::Logger& log = *logPtr;
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
