@@ -38,6 +38,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "frontend/common/Config.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -173,9 +174,10 @@ class PostgresSchedDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
     log::LogContext& logContext) override;
 
-  // these are not in the baseclass but are beeded by XrdSsiCtaServiceProvider
-  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt) const;
-  void setBottomHalfQueueSize(uint64_t tasksNumber) const;
+  // this function is needed for the moment only to allow initialisation of
+  // Objectstore threads via the Frontend config values
+  // unless we need to initialise anything for PostgresSchedDB we can remove it once we decommission the Objectstore
+  void initConfig(const std::optional<frontend::common::Config>& config = std::nullopt);
 
 private:
 

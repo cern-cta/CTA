@@ -443,14 +443,16 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   return ret;
 }
 
-void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize) const
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void PostgresSchedDB::setBottomHalfQueueSize(uint64_t tasksNumber) const
-{
-   throw cta::exception::Exception("Not implemented");
+//------------------------------------------------------------------------------
+// PostgresSchedDB::initConfig()
+//------------------------------------------------------------------------------
+void PostgresSchedDB::initConfig(const std::optional<frontend::common::Config>& config = std::nullopt) {
+    // this function is needed for the moment only to allow initialisation of
+    // Objectstore threads via the Frontend config file
+    // unless we need to initialise anything for PostgresSchedDB
+    // we can remove it once we decommission the Objectstore
+    log::LogContext lc(m_logger);
+    lc.log(log::INFO, "PostgresSchedDB initConfig was called successfully.");
 }
 
 void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc)
