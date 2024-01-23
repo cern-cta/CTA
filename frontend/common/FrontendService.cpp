@@ -159,7 +159,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddb->initConfig(threadPoolSize, schedulerThreadStackOpt);
 
   // Log cta.schedulerdb.numberofthreads
-  auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
   if(threadPoolSize.has_value()) {
     std::list<log::Param> params;
     params.push_back(log::Param("source", configFilename));
