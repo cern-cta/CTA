@@ -118,7 +118,7 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
-void OStoreDB::initConfig(const std::optional<frontend::common::Config>& config = std::nullopt) {
+void OStoreDB::initConfig(const std::optional<cta::frontend::Config>& config = std::nullopt) {
     // starts the configured number of thread workers for Objectstore
     if (config.has_value()) {
         const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
