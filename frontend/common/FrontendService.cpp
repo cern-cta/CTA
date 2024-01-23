@@ -150,7 +150,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
-  m_schedd->initConfig(config);
+  m_scheddb->initConfig(config);
 
   // Log cta.schedulerdb.numberofthreads
   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");

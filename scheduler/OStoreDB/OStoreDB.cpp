@@ -121,10 +121,11 @@ void OStoreDB::waitSubthreadsComplete() {
 void OStoreDB::initConfig(const std::optional<cta::frontend::Config>& config) {
     // starts the configured number of thread workers for Objectstore
     if (config.has_value()) {
-        const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
+        const cta::frontend::Config& configObj = config.value();
+        const auto schedulerThreadStackSize = configObj.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
         std::optional<size_t> schedulerThreadStackOpt = schedulerThreadStackSize.has_value() ?
                                                         std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) : std::nullopt;
-        auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
+        auto threadPoolSize = configObj.getOptionValueInt("cta.schedulerdb.numberofthreads");
         if(threadPoolSize.has_value()) {
             OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
         }
