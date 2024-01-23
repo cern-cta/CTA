@@ -3553,7 +3553,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
 // OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo()
 //------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB& oStoreDb) :
-  m_lockTaken(false), m_oStoreDB(oStoreDb) {
+  m_oStoreDB(oStoreDb) {
 
 }
 //------------------------------------------------------------------------------

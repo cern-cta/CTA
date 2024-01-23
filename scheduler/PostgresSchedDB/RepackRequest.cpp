@@ -49,7 +49,7 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   repackInfo.userProvidedFiles    = totalStatsFiles.userProvidedFiles;
 }
 
-void RepackRequest::reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests) {
+void RepackRequest::reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests) const {
    throw cta::exception::Exception("Not implemented");
 }
 
@@ -396,7 +396,7 @@ void RepackRequest::setCreationLog(const common::dataStructures::EntryLog & crea
   m_creationLog = creationLog;
 }
 
-void RepackRequest::update()
+void RepackRequest::update() const
 {
   throw cta::exception::Exception("Not implemented");
 }

@@ -22,31 +22,24 @@
 namespace cta::postgresscheddb::sql {
 
 struct ArchiveJobSummaryRow {
-  uint64_t mountId;
-  ArchiveJobStatus status;
+  uint64_t mountId = 0;
+  ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
-  uint64_t jobsCount;
-  uint64_t jobsTotalSize;
-  time_t oldestJobStartTime;
-  uint16_t archivePriority;
-  uint32_t archiveMinRequestAge;
+  uint64_t jobsCount = 0;
+  uint64_t jobsTotalSize = 0;
+  time_t oldestJobStartTime = std::numeric_limits<time_t>::max();
+  uint16_t archivePriority = 0;
+  uint32_t archiveMinRequestAge = 0;
 
-  ArchiveJobSummaryRow() :
-    mountId(0),
-    status(ArchiveJobStatus::AJS_ToTransferForUser),
-    jobsCount(0),
-    jobsTotalSize(0),
-    oldestJobStartTime(std::numeric_limits<time_t>::max()),
-    archivePriority(0),
-    archiveMinRequestAge(0) { }
+  ArchiveJobSummaryRow() = default;
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  ArchiveJobSummaryRow(const rdbms::Rset &rset) {
+  explicit ArchiveJobSummaryRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 

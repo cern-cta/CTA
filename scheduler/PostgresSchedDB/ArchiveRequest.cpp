@@ -20,7 +20,7 @@
 
 namespace cta::postgresscheddb {
 
-void ArchiveRequest::update() {
+void ArchiveRequest::update() const {
   throw std::runtime_error("update not implemented.");
 }
 
@@ -89,7 +89,7 @@ void ArchiveRequest::setArchiveFile(const common::dataStructures::ArchiveFile& a
   m_archiveFile = archiveFile;
 }
 
-common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
+common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() const {
   return m_archiveFile;
 }
 
@@ -97,7 +97,7 @@ void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
   m_archiveReportURL = URL;
 }
 
-std::string ArchiveRequest::getArchiveReportURL() {
+std::string ArchiveRequest::getArchiveReportURL() const {
   return m_archiveReportURL;
 }
 
@@ -105,7 +105,7 @@ void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
   m_archiveErrorReportURL = URL;
 }
 
-std::string ArchiveRequest::getArchiveErrorReportURL() {
+std::string ArchiveRequest::getArchiveErrorReportURL() const {
   return m_archiveErrorReportURL;
 }
 
@@ -113,7 +113,7 @@ void ArchiveRequest::setRequester(const common::dataStructures::RequesterIdentit
   m_requesterIdentity = requester;
 }
 
-common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() {
+common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() const {
   return m_requesterIdentity;
 }
 
@@ -121,7 +121,7 @@ void ArchiveRequest::setSrcURL(const std::string& srcURL) {
   m_srcURL = srcURL;
 }
 
-std::string ArchiveRequest::getSrcURL() {
+std::string ArchiveRequest::getSrcURL() const {
   return m_srcURL;
 }
 
@@ -129,7 +129,7 @@ void ArchiveRequest::setEntryLog(const common::dataStructures::EntryLog& creatio
   m_entryLog = creationLog;
 }
 
-common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
+common::dataStructures::EntryLog ArchiveRequest::getEntryLog() const {
   return m_entryLog;
 }
 
@@ -137,11 +137,11 @@ void ArchiveRequest::setMountPolicy(const common::dataStructures::MountPolicy& m
   m_mountPolicy = mountPolicy;
 }
 
-common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() {
+common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() const {
   return m_mountPolicy;
 }
 
-std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() {
+std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() const {
   throw std::runtime_error("dumpJobs not implemented.");
 }
 

@@ -21,20 +21,18 @@
 namespace cta::postgresscheddb::sql {
 
 struct MountsRow {
-  uint64_t mountId;
-  time_t creationTime;
+  uint64_t mountId = 0;
+  time_t creationTime = 0;
   std::string owner;
 
-  MountsRow() :
-    mountId(0),
-    creationTime(0) { }
+  MountsRow() = default;
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  MountsRow(const rdbms::Rset &rset) {
+  explicit MountsRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 

@@ -25,61 +25,53 @@
 namespace cta::postgresscheddb::sql {
 
 struct RepackJobQueueRow {
-  uint64_t repackReqId;
+  uint64_t repackReqId = 0;
   std::string vid;
   std::string bufferUrl;
-  RepackJobStatus status;
-  bool isAddCopies;
-  bool isMove;
-  uint64_t totalFilesOnTapeAtStart;
-  uint64_t totalBytesOnTapeAtStart;
-  bool allFilesSelectedAtStart;
-  uint64_t totalFilesToRetrieve;
-  uint64_t totalBytesToRetrieve;
-  uint64_t totalFilesToArchive;
-  uint64_t totalBytesToArchive;
-  uint64_t userProvidedFiles;
-  uint64_t userProvidedBytes;
-  uint64_t retrievedFiles;
-  uint64_t retrievedBytes;
-  uint64_t archivedFiles;
-  uint64_t archivedBytes;
-  uint64_t failedToRetrieveFiles;
-  uint64_t failedToRetrieveBytes;
-  uint64_t failedToCreateArchiveReq;
-  uint64_t failedToArchiveFiles;
-  uint64_t failedToArchiveBytes;
-  uint64_t lastExpandedFseq;
-  bool isExpandFinished;
-  bool isExpandStarted;
+  RepackJobStatus status = RepackJobStatus::RRS_Pending;
+  bool isAddCopies = true;
+  bool isMove = true;
+  uint64_t totalFilesOnTapeAtStart = 0;
+  uint64_t totalBytesOnTapeAtStart = 0;
+  bool allFilesSelectedAtStart = true;
+  uint64_t totalFilesToRetrieve = 0;
+  uint64_t totalBytesToRetrieve = 0;
+  uint64_t totalFilesToArchive = 0;
+  uint64_t totalBytesToArchive = 0;
+  uint64_t userProvidedFiles = 0;
+  uint64_t userProvidedBytes = 0;
+  uint64_t retrievedFiles = 0;
+  uint64_t retrievedBytes = 0;
+  uint64_t archivedFiles = 0;
+  uint64_t archivedBytes = 0;
+  uint64_t failedToRetrieveFiles = 0;
+  uint64_t failedToRetrieveBytes = 0;
+  uint64_t failedToCreateArchiveReq = 0;
+  uint64_t failedToArchiveFiles = 0;
+  uint64_t failedToArchiveBytes = 0;
+  uint64_t lastExpandedFseq = 0;
+  bool isExpandFinished = false;
+  bool isExpandStarted = false;
   std::string mountPolicyName;
-  bool isComplete;
-  bool isNoRecall;
+  bool isComplete = false;
+  bool isNoRecall = false;
   std::string subReqProtoBuf;
   std::string destInfoProtoBuf;
   common::dataStructures::EntryLog createLog;
-  time_t repackFinishedTime;
+  time_t repackFinishedTime = 0;
 
-  RepackJobQueueRow() : repackReqId(0), status(RepackJobStatus::RRS_Pending),
-   isAddCopies(true), isMove(true), totalFilesOnTapeAtStart(0), totalBytesOnTapeAtStart(0),
-   allFilesSelectedAtStart(true), totalFilesToRetrieve(0), totalBytesToRetrieve(0),
-   totalFilesToArchive(0), totalBytesToArchive(0), userProvidedFiles(0),
-   userProvidedBytes(0), retrievedFiles(0), retrievedBytes(0), archivedFiles(0),
-   archivedBytes(0), failedToRetrieveFiles(0), failedToRetrieveBytes(0),
-   failedToCreateArchiveReq(0), failedToArchiveFiles(0), failedToArchiveBytes(0),
-   lastExpandedFseq(0), isExpandFinished(false), isExpandStarted(false),
-   isComplete(false), isNoRecall(0), repackFinishedTime(0) { }
+  RepackJobQueueRow() = default;
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the current row of the rset
    */
-  RepackJobQueueRow(const rdbms::Rset &rset) {
+  explicit RepackJobQueueRow(const rdbms::Rset &rset) noexcept {
     *this = rset;
   }
 
-  RepackJobQueueRow& operator=(const rdbms::Rset &rset) {
+  RepackJobQueueRow& operator=(const rdbms::Rset &rset) noexcept {
     repackReqId               = rset.columnUint64("REPACK_REQID");
     vid                       = rset.columnString("VID");
     bufferUrl                 = rset.columnString("BUFFER_URL");

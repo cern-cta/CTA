@@ -37,8 +37,7 @@ DropSchemaCmd::DropSchemaCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DropSchemaCmd::~DropSchemaCmd() noexcept {
-}
+DropSchemaCmd::~DropSchemaCmd() = default;
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

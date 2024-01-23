@@ -45,7 +45,6 @@ class ArchiveJob : public SchedulerDatabase::ArchiveJob {
    bool m_jobOwned = false;
    uint64_t m_mountId = 0;
    std::string m_tapePool;
-   std::string reportType;
 };
 
 } // namespace cta::postgresscheddb

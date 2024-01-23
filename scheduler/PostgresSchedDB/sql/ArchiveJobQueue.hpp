@@ -76,7 +76,7 @@ struct ArchiveJobQueueRow {
    *
    * @param row  A single row from the current row of the rset
    */
-  ArchiveJobQueueRow(const rdbms::Rset &rset) {
+  explicit ArchiveJobQueueRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 

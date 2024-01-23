@@ -20,13 +20,12 @@
 namespace cta::postgresscheddb {
 
 Transaction::Transaction(rdbms::ConnPool &connPool) :
-  m_conn(std::move(connPool.getConn())), m_begin(false)
+  m_conn(std::move(connPool.getConn()))
 {
   m_conn.executeNonQuery("BEGIN");
-  m_begin = true;
 }
 
-Transaction::Transaction(Transaction &&other):
+Transaction::Transaction(Transaction &&other) noexcept:
   m_conn(std::move(other.m_conn)), m_begin(other.m_begin) { }
 
 Transaction::~Transaction() { 
@@ -35,7 +34,7 @@ Transaction::~Transaction() {
   }
 }
 
-Transaction &Transaction::operator=(Transaction &&rhs) {
+Transaction &Transaction::operator=(Transaction &&rhs) noexcept {
   m_conn = std::move(rhs.m_conn);
   m_begin = rhs.m_begin;
   return *this;

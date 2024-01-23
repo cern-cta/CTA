@@ -123,7 +123,7 @@ class OStoreDB: public SchedulerDatabase {
 
    private:
     explicit TapeMountDecisionInfo(OStoreDB& oStoreDB);
-    bool m_lockTaken;
+    bool m_lockTaken = false;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
     OStoreDB& m_oStoreDB;

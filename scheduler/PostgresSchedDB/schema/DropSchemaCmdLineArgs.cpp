@@ -26,8 +26,7 @@ namespace cta::postgresscheddb {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const argv) {
 
   static struct option longopts[] = {
     { "help",  no_argument, nullptr, 'h' },

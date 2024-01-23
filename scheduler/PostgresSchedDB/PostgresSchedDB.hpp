@@ -174,8 +174,8 @@ class PostgresSchedDB: public SchedulerDatabase {
     log::LogContext& logContext) override;
 
   // these are not in the baseclass but are beeded by XrdSsiCtaServiceProvider
-  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt);
-  void setBottomHalfQueueSize(uint64_t tasksNumber);
+  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt) const;
+  void setBottomHalfQueueSize(uint64_t tasksNumber) const;
 
 private:
 

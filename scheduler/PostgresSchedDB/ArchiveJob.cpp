@@ -20,9 +20,7 @@
 
 namespace cta::postgresscheddb {
 
-ArchiveJob::ArchiveJob()
-{
-}
+ArchiveJob::ArchiveJob() = default;
 
 void ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
 {

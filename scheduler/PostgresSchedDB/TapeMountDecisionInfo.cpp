@@ -28,7 +28,6 @@ TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPo
   m_PostgresSchedDB(pdb),
   m_txn(cp),
   m_ownerId(ownerId),
-  m_lockTaken(false),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
 {

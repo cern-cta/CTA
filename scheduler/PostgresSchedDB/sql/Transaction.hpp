@@ -25,7 +25,7 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  Transaction(rdbms::ConnPool &connPool);
+  explicit Transaction(rdbms::ConnPool &connPool);
 
   /**
    * Prohibit copy construction
@@ -37,7 +37,7 @@ public:
    *
    * @param other  The other object
    */
-  Transaction(Transaction&& other);
+  Transaction(Transaction&& other) noexcept;
 
   /**
    * Destructor
@@ -57,7 +57,7 @@ public:
    * @param rhs The object on the right-hand side of the operator
    * @return This object
    */
-  Transaction &operator=(Transaction &&rhs);
+  Transaction &operator=(Transaction &&rhs) noexcept;
 
   rdbms::Conn &conn();
 
@@ -83,7 +83,7 @@ public:
 private:
   
   rdbms::Conn m_conn;
-  bool m_begin;
+  bool m_begin = true;
 };
 
 } // namespace cta::postgresscheddb

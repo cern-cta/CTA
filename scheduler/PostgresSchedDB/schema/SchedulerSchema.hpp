@@ -41,7 +41,7 @@ struct SchedulerSchema {
    * @param sqlSchema The sql for the scheduler schema provided at compilation
    *                  time.
    */
-  SchedulerSchema(const std::string &sqlSchema);
+  explicit SchedulerSchema(const std::string &sqlSchema);
   
   /**
    * The schema.

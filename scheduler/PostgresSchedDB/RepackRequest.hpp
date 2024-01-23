@@ -63,13 +63,13 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
   void setMountPolicy(const common::dataStructures::MountPolicy &mp);
   void setNoRecall(const bool noRecall);
   void setCreationLog(const common::dataStructures::EntryLog & creationLog);
-  std::string getIdStr() { return "??"; }
+  std::string getIdStr() const { return "??"; }
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
-  void reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests);
+  void reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests) const;
 
   void commit();
   void insert();
-  void update();
+  void update() const;
 
   common::dataStructures::MountPolicy m_mountPolicy;
   bool m_noRecall = false;

@@ -36,8 +36,7 @@ CmdLineTool(inStream, outStream, errStream) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-CreateSchemaCmd::~CreateSchemaCmd() noexcept {
-}
+CreateSchemaCmd::~CreateSchemaCmd() = default;
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -109,7 +108,7 @@ void CreateSchemaCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) {
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;

@@ -29,14 +29,14 @@ struct RetrieveJobSummaryRow {
   uint16_t priority;
   postgresscheddb::RetrieveJobStatus status;
 
-  RetrieveJobSummaryRow()  { }
+  RetrieveJobSummaryRow() = default;
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  RetrieveJobSummaryRow(const rdbms::Rset &rset) {
+  explicit RetrieveJobSummaryRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 

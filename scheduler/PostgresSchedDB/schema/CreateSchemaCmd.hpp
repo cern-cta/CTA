@@ -81,7 +81,7 @@ private:
    * @param sqlStmts Multiple SQL statements separated by semicolons.
    * Statements that themselves contain one more semicolons are not supported.
    */
-  void executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts);
+  void executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const;
 
 }; // class CreateSchemaCmd
 

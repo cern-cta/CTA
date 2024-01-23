@@ -55,14 +55,14 @@ struct RetrieveJobQueueRow {
   cta::common::dataStructures::RetrieveRequest retrieveRequest;
   std::optional<std::string> diskSystemName;
 
-  RetrieveJobQueueRow() { }
+  RetrieveJobQueueRow() = default;
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the current row of the rset
    */
-  RetrieveJobQueueRow(const rdbms::Rset &rset) {
+  explicit RetrieveJobQueueRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 

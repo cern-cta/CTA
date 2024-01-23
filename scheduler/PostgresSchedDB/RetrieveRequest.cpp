@@ -49,7 +49,7 @@ void RetrieveRequest::insert() {
   for(auto &j: m_jobs) {
     postgresscheddb::blobser::RetrieveJob *pb_job = rj.add_jobs();
     postgresscheddb::blobser::TapeFile *pb_tf = pb_job->mutable_tapefile();
-    const cta::common::dataStructures::TapeFile *tf = 0;
+    const cta::common::dataStructures::TapeFile *tf = nullptr;
     for(auto &f: m_archiveFile.tapeFiles) {
       if (f.copyNb == j.copyNb) {
         tf = &f;
@@ -103,7 +103,6 @@ void RetrieveRequest::insert() {
         break;
       default:
         throw  std::runtime_error("unexpected status in RetrieveRequest insert");
-        break;
     }
   }
 
@@ -151,7 +150,7 @@ void RetrieveRequest::insert() {
   m_lc.log(log::INFO, "In RetrieveRequest::insert(): added job to queue.");
 }
 
-void RetrieveRequest::update() {
+void RetrieveRequest::update() const {
   throw std::runtime_error("update not implemented.");
 }
 
@@ -162,19 +161,19 @@ void RetrieveRequest::commit() {
   m_txn.reset();
 }
 
-void RetrieveRequest::setFailureReason(const std::string & reason) {
+void RetrieveRequest::setFailureReason(const std::string & reason) const{
   throw std::runtime_error("setFailureReason not implemented.");
 }
 
-bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc) {
+bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc) const {
   throw std::runtime_error("addJobFailure not implemented.");
 }
 
-void RetrieveRequest::setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) {
+void RetrieveRequest::setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const {
   throw std::runtime_error("setRepackInfo not implemented.");
 }
 
-void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status) {
+void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status) const {
   throw std::runtime_error("setJobStatus not implemented.");
 }
 
@@ -219,15 +218,15 @@ void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
   m_schedRetrieveReq.lifecycleTimings.creation_time = creationTime;
 }
 
-void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) {
+void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
   throw std::runtime_error("setFirstSelectedTime not implemented.");
 }
 
-void RetrieveRequest::setCompletedTime(const uint64_t completedTime) {
+void RetrieveRequest::setCompletedTime(const uint64_t completedTime) const {
   throw std::runtime_error("setCompletedTime not implemented.");
 }
 
-void RetrieveRequest::setReportedTime(const uint64_t reportedTime) {
+void RetrieveRequest::setReportedTime(const uint64_t reportedTime) const {
   throw std::runtime_error("setReportedTime not implemented.");
 }
 
@@ -251,11 +250,11 @@ void RetrieveRequest::setIsVerifyOnly(bool isVerifyOnly) {
   m_schedRetrieveReq.isVerifyOnly = isVerifyOnly;
 }
 
-void RetrieveRequest::setFailed() {
+void RetrieveRequest::setFailed() const {
   throw std::runtime_error("setFailed not implemented.");
 }
 
-std::list<RetrieveRequest::RetrieveReqJobDump> RetrieveRequest::dumpJobs() {
+std::list<RetrieveRequest::RetrieveReqJobDump> RetrieveRequest::dumpJobs() const {
   throw std::runtime_error("dumpJobs not implemented.");
 }
 
@@ -353,7 +352,6 @@ RetrieveRequest& RetrieveRequest::operator=(const postgresscheddb::sql::Retrieve
         break;
       default:
         throw std::runtime_error("unexpected status in RetrieveRequest assign from row");
-        break;
     }
   }
 

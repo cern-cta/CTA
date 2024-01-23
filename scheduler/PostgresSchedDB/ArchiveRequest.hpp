@@ -36,7 +36,7 @@ public:
   ArchiveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) { }
 
   void insert();
-  void update();
+  void update() const;
   void commit();
 
   // ============================== Job management =============================
@@ -44,27 +44,27 @@ public:
     uint16_t maxReportRetries);
 
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
-  common::dataStructures::ArchiveFile getArchiveFile();
+  common::dataStructures::ArchiveFile getArchiveFile() const;
   
   void setArchiveReportURL(const std::string &URL);
-  std::string getArchiveReportURL();
+  std::string getArchiveReportURL() const;
   
   void setArchiveErrorReportURL(const std::string &URL);
-  std::string getArchiveErrorReportURL();
+  std::string getArchiveErrorReportURL() const;
 
   void setRequester(const common::dataStructures::RequesterIdentity &requester);
-  common::dataStructures::RequesterIdentity getRequester();
+  common::dataStructures::RequesterIdentity getRequester() const;
 
   void setSrcURL(const std::string &srcURL);
-  std::string getSrcURL();
+  std::string getSrcURL() const;
 
   void setEntryLog(const common::dataStructures::EntryLog &creationLog);
-  common::dataStructures::EntryLog getEntryLog();
+  common::dataStructures::EntryLog getEntryLog() const;
   
   void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
-  common::dataStructures::MountPolicy getMountPolicy();
+  common::dataStructures::MountPolicy getMountPolicy() const;
 
-  std::string getIdStr() { return "?"; }
+  std::string getIdStr() const { return "?"; }
   
   struct JobDump {
     uint32_t copyNb;
@@ -72,7 +72,7 @@ public:
     ArchiveJobStatus status;
   };
   
-  std::list<JobDump> dumpJobs();
+  std::list<JobDump> dumpJobs() const;
 
 private:
   /**

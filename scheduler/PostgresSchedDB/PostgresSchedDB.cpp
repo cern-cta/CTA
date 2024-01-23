@@ -44,7 +44,7 @@ PostgresSchedDB::PostgresSchedDB( const std::string &ownerId,
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
-PostgresSchedDB::~PostgresSchedDB() noexcept { }
+PostgresSchedDB::~PostgresSchedDB() = default;
 
 void PostgresSchedDB::waitSubthreadsComplete()
 {
@@ -443,12 +443,12 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   return ret;
 }
 
-void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize)
+void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize) const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::setBottomHalfQueueSize(uint64_t tasksNumber)
+void PostgresSchedDB::setBottomHalfQueueSize(uint64_t tasksNumber) const
 {
    throw cta::exception::Exception("Not implemented");
 }

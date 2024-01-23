@@ -52,7 +52,7 @@ public:
 
   void insert();
   void commit();
-  void update();
+  void update() const;
 
   // ============================== Job management =============================
 
@@ -86,13 +86,13 @@ public:
     bool isfailed{false};
   };
 
-  void setFailureReason(const std::string & reason);
+  void setFailureReason(const std::string & reason) const;
 
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc);
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc) const;
 
-  void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo);
+  void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const;
 
-  void setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status);
+  void setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status) const;
 
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
 
@@ -105,18 +105,18 @@ public:
 
   void setCreationTime(const uint64_t creationTime);
 
-  void setFirstSelectedTime(const uint64_t firstSelectedTime);
-  void setCompletedTime(const uint64_t completedTime);
-  void setReportedTime(const uint64_t reportedTime);
+  void setFirstSelectedTime(const uint64_t firstSelectedTime) const;
+  void setCompletedTime(const uint64_t completedTime) const;
+  void setReportedTime(const uint64_t reportedTime) const;
   void setActiveCopyNumber(uint32_t activeCopyNb);
 
   void setIsVerifyOnly(bool isVerifyOnly);
 
-  void setFailed();
+  void setFailed() const;
   
-  std::list<RetrieveReqJobDump> dumpJobs();
+  std::list<RetrieveReqJobDump> dumpJobs() const;
 
-  std::string getIdStr() { return "?"; }
+  std::string getIdStr() const { return "?"; }
 
   uint64_t                                     m_requestId = 0;
   uint64_t                                     m_mountId = 0;
