@@ -118,23 +118,15 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
-void OStoreDB::initConfig(const std::optional<frontend::Config>& config) {
+void OStoreDB::initConfig(const std::optional<int> threadPoolSize, const std::optional<size_t>& schedulerThreadStackOpt) {
     // starts the configured number of thread workers for Objectstore
-    if (config.has_value()) {
-        const frontend::Config& configObj = config.value();
-        auto schedulerThreadStackSize = configObj.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
-        std::optional<size_t> schedulerThreadStackOpt = schedulerThreadStackSize.has_value() ?
-                                                        std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) : std::nullopt;
-        auto threadPoolSize = configObj.getOptionValueInt("cta.schedulerdb.numberofthreads");
-        if(threadPoolSize.has_value()) {
-            OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
-        }
-        OStoreDB::setBottomHalfQueueSize(25000);
-    } else {
+    if (threadPoolSize.has_value()) {
+        OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
         OStoreDB::setBottomHalfQueueSize(25000);
     }
+    OStoreDB::setBottomHalfQueueSize(25000);
     log::LogContext lc(m_logger);
-    lc.log(log::INFO, "Objectstore threads were initialised.");
+    lc.log(log::INFO, "Objectstore threads were started.");
 }
 
 //------------------------------------------------------------------------------

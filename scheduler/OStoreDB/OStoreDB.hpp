@@ -30,7 +30,6 @@
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
-#include "frontend/common/Config.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveQueue.hpp"
@@ -103,7 +102,7 @@ class OStoreDB: public SchedulerDatabase {
 
  public:
   void waitSubthreadsComplete() override;
-  void initConfig(const std::optional<frontend::Config>& config = std::nullopt);
+  void initConfig(const std::optional<int> threadPoolSize = std::nullopt, const std::optional<size_t>& schedulerThreadStackOpt = std::nullopt);
   void setThreadNumber(uint64_t threadNumber, const std::optional<size_t>& stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/
