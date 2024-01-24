@@ -114,7 +114,7 @@ class OStoreDB: public SchedulerDatabase {
    * @param stackSize the thread stack size in bytes,
    * @return void
    */
-  void setThreadNumber(uint64_t threadNumber, std::optional<int> stackSize = std::nullopt);
+  void setThreadNumber(uint64_t threadNumber, std::optional<size_t> stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
 
  public:
