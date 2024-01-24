@@ -52,10 +52,6 @@ namespace catalogue {
 class Catalogue;
 }
 
-namespace frontend{
-    class Config;
-}
-
 class PostgresSchedDB: public SchedulerDatabase {
  public:
   PostgresSchedDB( const std::string &ownerId,

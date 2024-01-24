@@ -52,10 +52,6 @@ namespace catalogue {
 class Catalogue;
 }
 
-namespace frontend{
-    class Config;
-}
-
 namespace ostoredb {
 template <class, class>
 class MemQueue;
