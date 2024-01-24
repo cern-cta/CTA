@@ -151,12 +151,12 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
-  const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
-  std::optional<size_t> schedulerThreadStackOpt = schedulerThreadStackSize.has_value() ?
-                                                  std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) : std::nullopt;
+  const auto schedulerThreadStackOpt = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
+  std::optional<size_t> schedulerThreadStackSize = schedulerThreadStackOpt.has_value() ?
+                                                  std::optional<size_t>(schedulerThreadStackOpt.value() * 1024 * 1024) : std::nullopt;
 
   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
-  m_scheddb->initConfig(threadPoolSize, schedulerThreadStackOpt);
+  m_scheddb->initConfig(threadPoolSize, schedulerThreadStackSize);
 
   // Log cta.schedulerdb.numberofthreads
   if(threadPoolSize.has_value()) {

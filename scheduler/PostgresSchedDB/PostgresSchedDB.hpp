@@ -177,7 +177,7 @@ class PostgresSchedDB: public SchedulerDatabase {
   // this function is needed for the moment only to allow initialisation of
   // Objectstore threads via the Frontend config values
   // unless we need to initialise anything for PostgresSchedDB we can remove it once we decommission the Objectstore
-  void initConfig(const std::optional<int> threadPoolSize = std::nullopt, const std::optional<size_t>& schedulerThreadStackOpt = std::nullopt);
+  void initConfig(const std::optional<int> threadPoolSize = std::nullopt, const std::optional<size_t>& schedulerThreadStackSize = std::nullopt);
 
 private:
 
