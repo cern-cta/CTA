@@ -22,10 +22,10 @@ namespace cta::exception {
 
 Errnum::Errnum(int err, std::string_view what) : Exception(),
   m_errnum(err),
-  m_strerror(utils::errnoToString(m_errnum)) {
+  m_strerror(utils::errnoToString(err)) {
   std::stringstream what2;
-  what2 << what << (what.empty() ? "" : " ");
-  what2 << "Errno=" << m_errnum << ": " << m_strerror;
+  what2 << what << (what.empty() ? "" : " ")
+        << "Errno=" << m_errnum << ": " << m_strerror;
   getMessage() << what2.str();
 }
 

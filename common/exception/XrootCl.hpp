@@ -18,7 +18,7 @@
 #pragma once
 
 #include <xrootd/XrdCl/XrdClXRootDResponses.hh>
-#include "Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta::exception {
 

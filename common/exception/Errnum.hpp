@@ -28,7 +28,6 @@ public:
   virtual ~Errnum() = default;
 
   int errorNumber() const { return m_errnum; }
-  std::string strError() const { return m_strerror; }
 
   static void throwOnReturnedErrno(int err, std::string_view context = "");
   static void throwOnNonZero(int status, std::string_view context = "");
@@ -36,8 +35,6 @@ public:
   static void throwOnMinusOne(ssize_t ret, const std::string_view context = "");
 
 private:
-  void ErrnumConstructorBottomHalf(std::string_view what);
-
   int m_errnum;
   std::string m_strerror;
 };
