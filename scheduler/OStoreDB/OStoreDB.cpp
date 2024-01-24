@@ -119,19 +119,21 @@ void OStoreDB::waitSubthreadsComplete() {
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
 void OStoreDB::initConfig(const std::optional<int> threadPoolSize, const std::optional<size_t>& schedulerThreadStackSize) {
-    // starts the configured number of thread workers for Objectstore
-    if (threadPoolSize.has_value()) {
-        OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
-    }
-    OStoreDB::setBottomHalfQueueSize(25000);
-    log::LogContext lc(m_logger);
-    lc.log(log::INFO, "Objectstore threads were started.");
+  // starts the configured number of thread workers for Objectstore
+  if (threadPoolSize.has_value() {
+    OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackSize);
+  }
+  OStoreDB::setBottomHalfQueueSize(25000);
+  log::LogContext lc(m_logger);
+  lc.log(log::INFO, "Objectstore threads were started, threadPoolSize:" + std::to_string(threadPoolSize.value())
+  + " , threadStackSize:" + std::to_string(schedulerThreadStackSize.value()) + " MB" );
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
 void OStoreDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t>& stackSize) {
+  stackSize = stackSize.has_value() ? std::optional<size_t>(stackSize.value() * 1024 * 1024) : std::nullopt;
   // Clear all threads.
   for (__attribute__((unused)) auto& t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
   for (auto& t: m_enqueueingWorkerThreads) {
