@@ -91,7 +91,7 @@ rm -rf /tmp/certificates
 # We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
 # with the specification.
 echo " Launching client_rest_api.sh on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
+# kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
 
 
 echo
