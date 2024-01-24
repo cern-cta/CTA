@@ -160,12 +160,12 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
 
   // Log cta.schedulerdb.numberofthreads
-  if(threadPoolSize.has_value()) {
+  if(osThreadPoolSize.has_value()) {
     std::list<log::Param> params;
     params.push_back(log::Param("source", configFilename));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "numberofthreads"));
-    params.push_back(log::Param("value", std::to_string(threadPoolSize.value())));
+    params.push_back(log::Param("value", std::to_string(osThreadPoolSize.value())));
     log(log::INFO, "Configuration entry", params);
   }
 
