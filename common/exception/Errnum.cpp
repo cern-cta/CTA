@@ -18,54 +18,58 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
-#include <errno.h>
-#include <string.h>
+namespace cta::exception {
 
-using namespace cta::exception;
-
-Errnum::Errnum(std::string what):Exception("") {
+Errnum::Errnum(std::string_view what) : Exception() {
   m_errnum = errno;
   ErrnumConstructorBottomHalf(what);
 }
 
-Errnum::Errnum(int err, std::string what):Exception("") {
+Errnum::Errnum(int err, std::string_view what) : Exception() {
   m_errnum = err;
   ErrnumConstructorBottomHalf(what);
 }
 
-void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
+void Errnum::ErrnumConstructorBottomHalf(std::string_view what) {
   m_strerror = utils::errnoToString(m_errnum);
   std::stringstream w2;
-  if (what.size())
+  if(what.size()) {
     w2 << what << " ";
+  }
   w2 << "Errno=" << m_errnum << ": " << m_strerror;
   getMessage() << w2.str();
 }
 
-void Errnum::throwOnReturnedErrno (const int err, const std::string &context) {
-  if (err) throw Errnum(err, context);
+void Errnum::throwOnReturnedErrno(int err, std::string_view context) {
+  if(err) throw Errnum(err, context);
 }
 
-void Errnum::throwOnNonZero(const int status, const std::string &context) {
-  if (status) throw Errnum(context);
+void Errnum::throwOnNonZero(int status, std::string_view context) {
+  if(status) throw Errnum(context);
 }
 
-void Errnum::throwOnZero(const int status, const std::string &context) {
-  if (!status) throw Errnum(context);
+void Errnum::throwOnZero(int status, std::string_view context) {
+  if(!status) throw Errnum(context);
 }
 
-void Errnum::throwOnNull(const void *const f, const std::string &context) {
-  if (nullptr == f) throw Errnum(context);
+void Errnum::throwOnNull(const void* const ptr, std::string_view context) {
+  if(nullptr == ptr) throw Errnum(context);
 }
 
-void Errnum::throwOnNegative(const int ret, const std::string &context) {
-  if (ret < 0) throw Errnum(context);
+void Errnum::throwOnNegative(int ret, std::string_view context) {
+  if(ret < 0) throw Errnum(context);
 }
 
-void Errnum::throwOnMinusOne(const int ret, const std::string &context) {
-  if (-1 == ret) throw Errnum(context);
+void Errnum::throwOnMinusOne(int ret, std::string_view context) {
+  if(ret == -1) throw Errnum(context);
 }
 
-void Errnum::throwOnNegativeErrnoIfNegative(const int ret, const std::string& context) {
-  if (ret < 0) throw Errnum(-ret, context);
+void Errnum::throwOnMinusOne(ssize_t ret, std::string_view context) {
+  if(ret == -1) throw Errnum(context);
 }
+
+void Errnum::throwOnNegativeErrnoIfNegative(int ret, std::string_view context) {
+  if(ret < 0) throw Errnum(-ret, context);
+}
+
+} // namespace cta::exception

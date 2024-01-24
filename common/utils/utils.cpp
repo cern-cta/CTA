@@ -21,6 +21,7 @@
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
 
+#include <algorithm>
 #include <attr/xattr.h>
 #include <limits>
 #include <memory>
