@@ -150,11 +150,14 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
-  // [[OStoreDB specific]] The schedulerThreadStackSize and threadPoolSize variables
-  // shall be removed once we decommission OStoreDB
-  auto schedulerThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
-  auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
-  m_scheddb->initConfig(threadPoolSize, schedulerThreadStackSize);
+
+  /** [[OStoreDB specific]]
+   * The osThreadStackSize and osThreadPoolSize variables
+   * shall be removed once we decommission OStoreDB
+   */
+  auto osThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
+  auto osThreadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
+  m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
 
   // Log cta.schedulerdb.numberofthreads
   if(threadPoolSize.has_value()) {

@@ -107,8 +107,8 @@ class SchedulerDatabase {
   virtual void waitSubthreadsComplete() = 0;
 
   /*============ Initialising the scheduler DB threads [[OStoreDB specific]] =================
-  * @param osThreadPoolSize number of threads to start,
-  * @param osThreadStackSize the thread stack size in MB,
+  * @param osThreadPoolSize number of threads to start
+  * @param osThreadStackSize the thread stack size in MB
   * @return void
   */
   virtual void initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) { };
