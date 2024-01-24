@@ -98,7 +98,7 @@ class OStoreDB: public SchedulerDatabase {
 
  public:
   void waitSubthreadsComplete() override;
-  void initConfig(const std::optional<int> threadPoolSize = std::nullopt, std::optional<size_t> schedulerThreadStackSize = std::nullopt);
+  void initConfig(const std::optional<int>& threadPoolSize = std::nullopt, std::optional<int> schedulerThreadStackSize = std::nullopt);
   void setThreadNumber(uint64_t threadNumber, const std::optional<size_t>& stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/

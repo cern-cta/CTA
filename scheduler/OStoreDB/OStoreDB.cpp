@@ -118,7 +118,7 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
-void OStoreDB::initConfig(const std::optional<int> threadPoolSize, std::optional<size_t> schedulerThreadStackSize) {
+void OStoreDB::initConfig(const std::optional<int>& threadPoolSize, std::optional<int> schedulerThreadStackSize) {
   // starts the configured number of thread workers for Objectstore
   if (threadPoolSize.has_value()) {
     OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackSize);
@@ -132,7 +132,7 @@ void OStoreDB::initConfig(const std::optional<int> threadPoolSize, std::optional
 //------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
-void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<size_t>& stackSize) {
+void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<int>& stackSize) {
   stackSize = stackSize.has_value() ? std::optional<size_t>(stackSize.value() * 1024 * 1024) : std::nullopt;
   // Clear all threads.
   for (__attribute__((unused)) auto& t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
