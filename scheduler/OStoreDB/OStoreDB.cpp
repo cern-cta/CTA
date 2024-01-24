@@ -126,7 +126,7 @@ void OStoreDB::initConfig(const std::optional<int> threadPoolSize, const std::op
   OStoreDB::setBottomHalfQueueSize(25000);
   log::LogContext lc(m_logger);
   lc.log(log::INFO, "Objectstore threads were started, threadPoolSize:" + std::to_string(threadPoolSize.value())
-  + " , threadStackSize:" + std::to_string(schedulerThreadStackSize.value()) + " MB" );
+         + " , threadStackSize:" + std::to_string(schedulerThreadStackSize.value()) + " MB" );
 }
 
 //------------------------------------------------------------------------------
