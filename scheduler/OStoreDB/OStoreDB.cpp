@@ -120,7 +120,7 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 void OStoreDB::initConfig(const std::optional<int> threadPoolSize, const std::optional<size_t>& schedulerThreadStackSize) {
   // starts the configured number of thread workers for Objectstore
-  if (threadPoolSize.has_value() {
+  if (threadPoolSize.has_value()) {
     OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackSize);
   }
   OStoreDB::setBottomHalfQueueSize(25000);
