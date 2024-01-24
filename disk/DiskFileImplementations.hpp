@@ -27,7 +27,6 @@
 #include <radosstriper/libradosstriper.hpp>
 
 namespace cta::disk {
-
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
@@ -58,15 +57,6 @@ namespace cta::disk {
       private:
         int m_fd;
         bool m_closeTried;
-      };
-      
-      //==============================================================================
-      // CRYPTOPP SIGNER
-      //==============================================================================
-      struct CryptoPPSigner {
-        static std::string sign(const std::string msg, 
-          const CryptoPP::RSA::PrivateKey  & privateKey);
-        static cta::threading::Mutex s_mutex;
       };
       
       //==============================================================================
@@ -248,5 +238,4 @@ namespace cta::disk {
 	std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
 	const uint16_t c_xrootTimeout = 15; 
       };
-
 } // namespace cta::disk

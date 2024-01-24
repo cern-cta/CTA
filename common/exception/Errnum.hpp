@@ -17,42 +17,26 @@
 
 #pragma once
 
-#include "Exception.hpp"
-#include <functional>
-#include <system_error>
+#include "common/exception/Exception.hpp"
 
 namespace cta::exception {
 
-  class Errnum: public cta::exception::Exception {
-  public:
-    explicit Errnum(std::string what = "");
-    Errnum(int err, std::string what = "");
-    virtual ~Errnum() = default;
-    int errorNumber() const { return m_errnum; }
-    std::string strError() const { return m_strerror; }
-    static void throwOnReturnedErrno(const int err, const std::string &context = "");
-    template <typename F>
-    static void throwOnReturnedErrnoOrThrownStdException (F f, const std::string &context = "") {
-      try {
-        throwOnReturnedErrno(f(), context);
-      } catch (Errnum &) {
-        throw; // Let the exception of throwOnReturnedErrno pass through.
-      } catch (std::error_code & ec) {
-        throw Errnum(ec.value(), context + " Got an std::error_code: " + ec.message());
-      } catch (std::exception & ex) {
-        throw Exception(context + " Got a standard exception: " + ex.what());
-      }
-    }
-    static void throwOnNonZero(const int status, const std::string &context = "");
-    static void throwOnZero(const int status, const std::string &context = "");
-    static void throwOnNull(const void *const f, const std::string &context = "");
-    static void throwOnNegative(const int ret, const std::string &context = "");
-    static void throwOnMinusOne(const int ret, const std::string &context = "");
-    static void throwOnNegativeErrnoIfNegative(const int ret, const std::string &context = "");
-  protected:
-    void ErrnumConstructorBottomHalf(const std::string & what);
-    int m_errnum;
-    std::string m_strerror;
-  };
+class Errnum : public Exception {
+public:
+  explicit Errnum(std::string_view what = "");
+  Errnum(int err, std::string_view what = "");
+  virtual ~Errnum() = default;
+
+  int errorNumber() const { return m_errnum; }
+
+  static void throwOnReturnedErrno(int err, std::string_view context = "");
+  static void throwOnNonZero(int status, std::string_view context = "");
+  static void throwOnNull(const void *const f, std::string_view context = "");
+  static void throwOnMinusOne(ssize_t ret, const std::string_view context = "");
+
+private:
+  int m_errnum;
+  std::string m_strerror;
+};
 
 } // namespace cta::exception

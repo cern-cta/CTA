@@ -83,46 +83,21 @@ namespace unitTests {
   TEST(cta_exceptions, Errnum_throwers) {
     /* throwOnReturnedErrno */
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrno(0, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"),
-      cta::exception::Errnum);
-
-    ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return 0; }, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return ENOSPC; }, "Context"),
-      cta::exception::Errnum);
-    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ throw std::error_code(ENOSPC, std::system_category()); return 0; }, "Context"),
-      cta::exception::Errnum);
-    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ throw std::exception(); return 0; }, "Context"),
-      cta::exception::Exception);
-
+    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"), cta::exception::Errnum);
 
     /* throwOnNonZero */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNonZero(0, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnNonZero(-1, "Context"),
-      cta::exception::Errnum);
+    ASSERT_THROW(cta::exception::Errnum::throwOnNonZero(-1, "Context"), cta::exception::Errnum);
 
     /* throwOnMinusOne */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnMinusOne(0, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnMinusOne(-1, "Context"),
-      cta::exception::Errnum);
-
-    /* throwOnNegative */
-    errno = ENOENT;
-    ASSERT_NO_THROW(cta::exception::Errnum::throwOnNegative(0, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnNegative(-1, "Context"),
-      cta::exception::Errnum);
+    ASSERT_THROW(cta::exception::Errnum::throwOnMinusOne(-1, "Context"), cta::exception::Errnum);
 
     /* throwOnNull */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNull(this, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnNull(nullptr, "Context"),
-      cta::exception::Errnum);
-
-    /* throwOnZero */
-    errno = ENOENT;
-    ASSERT_NO_THROW(cta::exception::Errnum::throwOnZero(1, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnZero(0, "Context"),
-      cta::exception::Errnum);
+    ASSERT_THROW(cta::exception::Errnum::throwOnNull(nullptr, "Context"), cta::exception::Errnum);
   }
 }

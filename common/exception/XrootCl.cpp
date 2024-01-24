@@ -22,8 +22,8 @@
 
 namespace cta::exception {
 
-XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
-  if (!what.empty()) {
+XrootCl::XrootCl(const XrdCl::XRootDStatus& status, std::string_view what) {
+  if(!what.empty()) {
     getMessage() << what << " ";
   }
   getMessage() << status.ToStr().c_str();
@@ -32,8 +32,8 @@ XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
                << " status:" << status.status;
 }
 
-void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, const std::string& context) {
-  if (!status.IsOK()) {
+void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string_view context) {
+  if(!status.IsOK()) {
     throw XrootCl(status, context);
   }
 }

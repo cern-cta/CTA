@@ -112,6 +112,21 @@ public:
   static const size_t c_backoffFraction;
   static const uint64_t c_maxWait;
 
+  // This method was originally part of cta::exception::Errnum. As it is only used in the BackupRados class,
+  // it has been moved here.
+  template <typename F>
+  static void throwOnReturnedErrnoOrThrownStdException(F f, std::string_view context = "") {
+    try {
+      exception::Errnum::throwOnReturnedErrno(f(), context);
+    } catch(exception::Errnum&) {
+      throw; // Let the exception of throwOnReturnedErrno pass through
+    } catch(std::error_code& ec) {
+      throw exception::Errnum(ec.value(), std::string(context) + " Got a std::error_code: " + ec.message());
+    } catch(std::exception& ex) {
+      throw exception::Exception(std::string(context) + " Got a std::exception: " + ex.what());
+    }
+  }
+
 private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */

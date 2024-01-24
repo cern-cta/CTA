@@ -69,7 +69,7 @@ void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const 
 
     {
       pid_t pid = 0;
-      cta::exception::Errnum::throwOnNegative(pid = fork(),
+      cta::exception::Errnum::throwOnMinusOne(pid = fork(),
         "Failed to daemonize: Failed to fork");
       // If we got a good PID, then we can exit the parent process
       if (0 < pid) {
@@ -85,7 +85,7 @@ void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const 
     umask(0177);
 
     // Run the daemon in a new session
-    cta::exception::Errnum::throwOnNegative(setsid(),
+    cta::exception::Errnum::throwOnMinusOne(setsid(),
       "Failed to daemonize: Failed to run daemon is a new session");
 
     // Redirect standard files to /dev/null
