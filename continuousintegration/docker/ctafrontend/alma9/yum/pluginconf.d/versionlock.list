@@ -32,8 +32,6 @@ eos-srm-5.2.4-1.el9.x86_64
 eos-test-5.2.4-1.el9.x86_64
 eos-testkeytab-5.2.4-1.el9.x86_64
 eos-quarkdb-5.2.4-1.el9.x86_64
-eos-xrootd-5.6.4-1.el9.x86_64
-eos-xrootd-debuginfo-5.6.4-1.el9.x86_64
 #### EOS-5-END ####
 eos-folly-2019.11.11.00-1.el9.*
 eos-folly-deps-2019.11.11.00-1.el9.*
