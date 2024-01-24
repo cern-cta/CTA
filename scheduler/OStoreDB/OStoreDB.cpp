@@ -132,7 +132,7 @@ void OStoreDB::initConfig(const std::optional<int>& threadPoolSize, std::optiona
 //------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
-void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<int>& stackSize) {
+void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<int> stackSize) {
   stackSize = stackSize.has_value() ? std::optional<size_t>(stackSize.value() * 1024 * 1024) : std::nullopt;
   // Clear all threads.
   for (__attribute__((unused)) auto& t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
