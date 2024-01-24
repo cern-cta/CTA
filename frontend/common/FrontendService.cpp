@@ -152,7 +152,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
   // [[OstoreDB specific]] The schedulerThreadStackSize and threadPoolSize variables
   // shall be removed once we decommission OStoreDB
-  const auto schedulerThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
+  auto schedulerThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
   m_scheddb->initConfig(threadPoolSize, schedulerThreadStackSize);
 
