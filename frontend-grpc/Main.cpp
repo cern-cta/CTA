@@ -154,8 +154,9 @@ int main(const int argc, char *const *const argv) {
 
     auto sInit = std::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
     auto scheddb = sInit->getSchedDB(*catalogue, logger);
-    std::optional<int> osThreadNullOpt = std::nullopt;
-    scheddb->initConfig(osThreadNullOpt, osThreadNullOpt);
+    std::optional<int> osNullOpt = std::nullopt;
+    const std::optional<int> osNullConstOpt = std::nullopt;
+    scheddb->initConfig(osNullConstOpt, osNullOpt);
     auto scheduler = std::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
 
     CtaRpcImpl svc(&logger, catalogue, scheduler);
