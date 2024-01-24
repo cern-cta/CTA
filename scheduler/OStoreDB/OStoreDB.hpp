@@ -105,7 +105,7 @@ class OStoreDB: public SchedulerDatabase {
    * @param osThreadStackSize the thread stack size in MB,
    * @return void
    */
-  void initConfig(const std::optional<int>& osThreadPoolSize = std::nullopt, std::optional<int>& osThreadStackSize = std::nullopt) override;
+  void initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) override;
 
  private:
   /**
