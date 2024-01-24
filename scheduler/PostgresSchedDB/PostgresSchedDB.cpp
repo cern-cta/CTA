@@ -446,7 +446,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
 //------------------------------------------------------------------------------
 // PostgresSchedDB::initConfig()
 //------------------------------------------------------------------------------
-void PostgresSchedDB::initConfig(const std::optional<int> threadPoolSize, std::optional<size_t>& schedulerThreadStackSize) {
+void PostgresSchedDB::initConfig(const std::optional<int> threadPoolSize, std::optional<size_t> schedulerThreadStackSize) {
   // this function is needed for the moment only to allow initialisation of
   // Objectstore threads via the Frontend config file
   // unless we need to initialise anything for PostgresSchedDB
