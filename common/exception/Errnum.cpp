@@ -20,25 +20,16 @@
 
 namespace cta::exception {
 
-Errnum::Errnum(std::string_view what) : Exception() {
-  m_errnum = errno;
-  ErrnumConstructorBottomHalf(what);
+Errnum::Errnum(int err, std::string_view what) : Exception(),
+  m_errnum(err),
+  m_strerror(utils::errnoToString(m_errnum)) {
+  std::stringstream what2;
+  what2 << what << (what.empty() ? "" : " ");
+  what2 << "Errno=" << m_errnum << ": " << m_strerror;
+  getMessage() << what2.str();
 }
 
-Errnum::Errnum(int err, std::string_view what) : Exception() {
-  m_errnum = err;
-  ErrnumConstructorBottomHalf(what);
-}
-
-void Errnum::ErrnumConstructorBottomHalf(std::string_view what) {
-  m_strerror = utils::errnoToString(m_errnum);
-  std::stringstream w2;
-  if(what.size()) {
-    w2 << what << " ";
-  }
-  w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  getMessage() << w2.str();
-}
+Errnum::Errnum(std::string_view what) : Errnum(errno, what) { }
 
 void Errnum::throwOnReturnedErrno(int err, std::string_view context) {
   if(err) throw Errnum(err, context);
