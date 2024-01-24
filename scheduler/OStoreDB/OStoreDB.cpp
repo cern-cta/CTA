@@ -122,7 +122,6 @@ void OStoreDB::initConfig(const std::optional<int> threadPoolSize, const std::op
     // starts the configured number of thread workers for Objectstore
     if (threadPoolSize.has_value()) {
         OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
-        OStoreDB::setBottomHalfQueueSize(25000);
     }
     OStoreDB::setBottomHalfQueueSize(25000);
     log::LogContext lc(m_logger);
