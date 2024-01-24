@@ -101,6 +101,7 @@ class OStoreDB: public SchedulerDatabase {
 
   /**
    * Initialise and start the OStoreDB threads
+   *
    * @param osThreadPoolSize number of threads to start
    * @param osThreadStackSize the thread stack size in MB
    */
@@ -109,6 +110,7 @@ class OStoreDB: public SchedulerDatabase {
  private:
   /**
    * Start the OStoreDB threads
+   *
    * @param threadNumber number of threads to start
    * @param stackSize the thread stack size in bytes
    */

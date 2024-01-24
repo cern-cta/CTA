@@ -106,10 +106,11 @@ class SchedulerDatabase {
   /*============ Sub thread handling, mostly for unit tests =================*/
   virtual void waitSubthreadsComplete() = 0;
 
-  /*============ Initialising the scheduler DB threads [[OStoreDB specific]] =================
-  * @param osThreadPoolSize number of threads to start
-  * @param osThreadStackSize the thread stack size in MB
-  */
+  /*============ Initialising the scheduler DB threads [[OStoreDB specific]] =================*/
+  /**
+   * @param osThreadPoolSize number of threads to start
+   * @param osThreadStackSize the thread stack size in MB
+   */
   virtual void initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) { };
 
   /*============ Basic IO check: validate object store access ===============*/
