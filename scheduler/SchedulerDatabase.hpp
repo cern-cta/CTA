@@ -111,7 +111,7 @@ class SchedulerDatabase {
   * @param osThreadStackSize the thread stack size in MB,
   * @return void
   */
-  virtual void initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) = 0;
+  virtual void initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) { };
 
   /*============ Basic IO check: validate object store access ===============*/
   /**
