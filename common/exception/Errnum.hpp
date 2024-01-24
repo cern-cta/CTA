@@ -32,25 +32,8 @@ public:
 
   static void throwOnReturnedErrno(int err, std::string_view context = "");
   static void throwOnNonZero(int status, std::string_view context = "");
-  static void throwOnZero(int status, std::string_view context = "");
   static void throwOnNull(const void *const f, std::string_view context = "");
-  static void throwOnNegative(int ret, const std::string_view context = "");
-  static void throwOnMinusOne(int ret, const std::string_view context = "");
   static void throwOnMinusOne(ssize_t ret, const std::string_view context = "");
-  static void throwOnNegativeErrnoIfNegative(int ret, std::string_view context = "");
-
-  template <typename F>
-  static void throwOnReturnedErrnoOrThrownStdException(F f, std::string_view context = "") {
-    try {
-      throwOnReturnedErrno(f(), context);
-    } catch(Errnum&) {
-      throw; // Let the exception of throwOnReturnedErrno pass through
-    } catch(std::error_code& ec) {
-      throw Errnum(ec.value(), std::string(context) + " Got a std::error_code: " + ec.message());
-    } catch(std::exception& ex) {
-      throw Exception(std::string(context) + " Got a std::exception: " + ex.what());
-    }
-  }
 
 private:
   void ErrnumConstructorBottomHalf(std::string_view what);

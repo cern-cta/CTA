@@ -48,28 +48,12 @@ void Errnum::throwOnNonZero(int status, std::string_view context) {
   if(status) throw Errnum(context);
 }
 
-void Errnum::throwOnZero(int status, std::string_view context) {
-  if(!status) throw Errnum(context);
-}
-
 void Errnum::throwOnNull(const void* const ptr, std::string_view context) {
   if(nullptr == ptr) throw Errnum(context);
 }
 
-void Errnum::throwOnNegative(int ret, std::string_view context) {
-  if(ret < 0) throw Errnum(context);
-}
-
-void Errnum::throwOnMinusOne(int ret, std::string_view context) {
-  if(ret == -1) throw Errnum(context);
-}
-
 void Errnum::throwOnMinusOne(ssize_t ret, std::string_view context) {
   if(ret == -1) throw Errnum(context);
-}
-
-void Errnum::throwOnNegativeErrnoIfNegative(int ret, std::string_view context) {
-  if(ret < 0) throw Errnum(-ret, context);
 }
 
 } // namespace cta::exception

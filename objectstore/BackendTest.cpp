@@ -222,6 +222,13 @@ TEST_P(BackendAbstractTest, ParametersInterface) {
   //std::cout << params->toStr() << std::endl;
 }
 
+TEST(BackendAbstractTest, Errnum_throwers) {
+  ASSERT_NO_THROW(cta::objectstore::BackendRados::throwOnReturnedErrnoOrThrownStdException([](){ return 0; }, "Context"));
+  ASSERT_THROW(cta::objectstore::BackendRados::throwOnReturnedErrnoOrThrownStdException([](){ return ENOSPC; }, "Context"), cta::exception::Errnum);
+  ASSERT_THROW(cta::objectstore::BackendRados::throwOnReturnedErrnoOrThrownStdException([](){ throw std::error_code(ENOSPC, std::system_category()); return 0; }, "Context"), cta::exception::Errnum);
+  ASSERT_THROW(cta::objectstore::BackendRados::throwOnReturnedErrnoOrThrownStdException([](){ throw std::exception(); return 0; }, "Context"), cta::exception::Exception);
+}
+
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
 #ifdef TEST_RADOS
 static cta::log::DummyLogger dl("", "");
