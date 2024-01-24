@@ -98,9 +98,26 @@ class OStoreDB: public SchedulerDatabase {
 
  public:
   void waitSubthreadsComplete() override;
-  void initConfig(const std::optional<int>& threadPoolSize = std::nullopt, std::optional<int> schedulerThreadStackSize = std::nullopt);
+
+  /**
+   * Initialise and start the OStoreDB threads
+   * @param osThreadPoolSize number of threads to start,
+   * @param osThreadStackSize the thread stack size in MB,
+   * @return void
+   */
+  void initConfig(const std::optional<int>& osThreadPoolSize = std::nullopt, std::optional<int>& osThreadStackSize = std::nullopt) override;
+
+ private:
+  /**
+   * Start the OStoreDB threads
+   * @param threadNumber number of threads to start,
+   * @param stackSize the thread stack size in bytes,
+   * @return void
+   */
   void setThreadNumber(uint64_t threadNumber, std::optional<int> stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
+
+ public:
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 

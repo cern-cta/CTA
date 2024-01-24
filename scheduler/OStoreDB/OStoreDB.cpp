@@ -118,22 +118,23 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::initConfig()
 //------------------------------------------------------------------------------
-void OStoreDB::initConfig(const std::optional<int>& threadPoolSize, std::optional<int> schedulerThreadStackSize) {
+void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, std::optional<int>& osThreadStackSize) {
   // starts the configured number of thread workers for Objectstore
-  if (threadPoolSize.has_value()) {
-    OStoreDB::setThreadNumber(threadPoolSize.value(), schedulerThreadStackSize);
+  if (osThreadPoolSize.has_value()) {
+    OStoreDB::setThreadNumber(osThreadPoolSize.value(), osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
   }
   OStoreDB::setBottomHalfQueueSize(25000);
   log::LogContext lc(m_logger);
-  lc.log(log::INFO, "Objectstore threads were started, threadPoolSize:" + std::to_string(threadPoolSize.value())
-         + " , threadStackSize:" + std::to_string(schedulerThreadStackSize.value()) + " MB" );
+  log::ScopedParamContainer(lc)
+    .add("threadPoolSize", osThreadPoolSize.value())
+    .add("threadStackSize_MB", osThreadStackSize.value())
+    .log(log::INFO, "Objectstore threads were started.");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
-void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<int> stackSize) {
-  stackSize = stackSize.has_value() ? std::optional<size_t>(stackSize.value() * 1024 * 1024) : std::nullopt;
+void OStoreDB::setThreadNumber(uint64_t threadNumber, std::optional<size_t> stackSize) {
   // Clear all threads.
   for (__attribute__((unused)) auto& t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
   for (auto& t: m_enqueueingWorkerThreads) {
@@ -156,7 +157,6 @@ void OStoreDB::setBottomHalfQueueSize(uint64_t tasksNumber) {
   // 5 is the default queue size.
   m_taskPostingSemaphore.release(tasksNumber - 5);
 }
-
 
 //------------------------------------------------------------------------------
 // OStoreDB::EnqueueingWorkerThread::run()

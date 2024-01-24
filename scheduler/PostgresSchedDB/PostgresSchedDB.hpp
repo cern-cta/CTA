@@ -47,7 +47,6 @@
 
 namespace cta {
 
-
 namespace catalogue {
 class Catalogue;
 }
@@ -173,11 +172,6 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
     log::LogContext& logContext) override;
-
-  // this function is needed for the moment only to allow initialisation of
-  // Objectstore threads via the Frontend config values
-  // unless we need to initialise anything for PostgresSchedDB we can remove it once we decommission the Objectstore
-  void initConfig(const std::optional<int>& threadPoolSize = std::nullopt, std::optional<int> schedulerThreadStackSize = std::nullopt);
 
 private:
 
