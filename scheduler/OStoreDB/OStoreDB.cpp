@@ -120,6 +120,13 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std::optional<int>& osThreadStackSize) {
   // starts the configured number of thread workers for Objectstore
+  if (osThreadPoolSize == std::nullopt && osThreadStackSize.has_value()) {
+    log::LogContext lc(m_logger);
+    log::ScopedParamContainer params(lc);
+    params.add("osThreadPoolSize", osThreadPoolSize.value())
+          .add("osThreadStackSize_MB", osThreadStackSize.value());
+    lc.log(log::WARNING, "Missing number of threads. Objectstore thread pool will not be initialised.");
+  }
   if (osThreadPoolSize.has_value()) {
     OStoreDB::setThreadNumber(osThreadPoolSize.value(), osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
   }
