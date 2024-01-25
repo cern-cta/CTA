@@ -106,7 +106,7 @@ PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | he
 YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 # Add our intermediate script (do we really need it?)
-SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh")")"
+SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh" | head -n 1)")"
 kubectl -n ${NAMESPACE} create configmap dbupdatetestscript-config --from-file=${SCRIPT_FILE}
 # Add configmap taken from ctafrontend pod (will go to standard /shared/etc_cta/cta-catalogue.conf file in cta-catalogue-updater container)
 kubectl cp -n ${NAMESPACE} ctafrontend:/etc/cta/cta-catalogue.conf ${tempdir}/cta-catalogue.conf
