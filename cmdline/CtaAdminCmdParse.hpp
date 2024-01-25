@@ -404,7 +404,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
            "     The default bufferURL is set in the CTA frontend configuration file.\n"
            "   * If the option (--maxfilestoselect value) is set, the number of files to be selected for repack will\n"
            "     be limited to this value. If not, it will use the default value configured in the CTA frontend.\n"
-           "     To force all files to be selected, set the value as zero.\n"
+           "     Set the value as zero to force all files to be selected.\n"
            "     A flag '*' in a 'repack ls' row means that not all files were selected for repack.\n"
            "   * If the --justmove option is set, the files located on the tape to repack will be migrated on\n"
            "     one or multiple tapes.\n"
