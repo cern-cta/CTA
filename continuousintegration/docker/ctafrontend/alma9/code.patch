@@ -49,8 +49,64 @@ index 1c2508ea8a..3192f3746c 100644
    PATHS ${ORACLE-INSTANTCLIENT_RPATH}
    NO_DEFAULT_PATH)
  
+diff --git a/common/json/object/JSONCObject.cpp b/common/json/object/JSONCObject.cpp
+index 43fc568c79..3bdde9a8c9 100644
+--- a/common/json/object/JSONCObject.cpp
++++ b/common/json/object/JSONCObject.cpp
+@@ -95,7 +95,9 @@ void JSONCObject::jsonSetValue(const std::string& key, const std::string & value
+ 
+ template<>
+ void JSONCObject::jsonSetValue(const std::string& key, const double & value){
+-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double(value));
++  char buffer[64];
++  snprintf(buffer, sizeof(buffer), "%.6f", value);
++  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double_s(value, buffer));
+ }
+ 
+ template<>
+diff --git a/common/json/test/JSONCObjectTest.cpp b/common/json/test/JSONCObjectTest.cpp
+index b834ad5f28..bd5ac647f3 100644
+--- a/common/json/test/JSONCObjectTest.cpp
++++ b/common/json/test/JSONCObjectTest.cpp
+@@ -26,10 +26,10 @@ using namespace cta::utils;
+ 
+ TEST(JSONCObjectTest, testJSONGenerationFromObject) {
+   JSONCTestObject to;
+-  to.double_number = 42.0;
++  to.double_number = 42.234567;
+   to.integer_number = 42;
+   to.str = "forty two";
+-  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}",to.getJSON());
++  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.234567}",to.getJSON());
+ }
+ 
+ TEST(JSONCObjectTest, testObjectGenerationFromJSON){
+diff --git a/continuousintegration/ci_runner/prepareImage.sh b/continuousintegration/ci_runner/prepareImage.sh
+index a35c3a807a..ffe4681e16 100755
+--- a/continuousintegration/ci_runner/prepareImage.sh
++++ b/continuousintegration/ci_runner/prepareImage.sh
+@@ -37,4 +37,4 @@ mkdir -p $rpm_dir
+ cp -r $rpm_source $rpm_dir
+ 
+ echo "sudo docker build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag}"
+-sudo docker build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag}
++podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host
+
+diff --git a/continuousintegration/orchestration/create_instance.sh b/continuousintegration/orchestration/create_instance.sh
+index 964c1f6c74..4bd5aedcae 100755
+--- a/continuousintegration/orchestration/create_instance.sh
++++ b/continuousintegration/orchestration/create_instance.sh
+@@ -172,7 +172,7 @@ echo "Creating instance using docker image with tag: ${imagetag}"
+ cp pod-* ${poddir}
+ if [ ! -z "${dockerimage}" ]; then
+   echo "set image to ctageneric:${imagetag}"
+-  sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
++  sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: localhost\/ctageneric:${imagetag}\n\1PullPolicy: Never/"
+ else
+   sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+ fi
 diff --git a/cta.spec.in b/cta.spec.in
-index 2e71df3266..418cd7a189 100644
+index c7755abc2e..44beb3cf1d 100644
 --- a/cta.spec.in
 +++ b/cta.spec.in
 @@ -1,5 +1,5 @@
@@ -141,7 +197,6 @@ index 2e71df3266..418cd7a189 100644
  %files -n cta-common
  %defattr(-,root,root)
  %attr(0755,cta,tape) %dir /var/log/cta
-
 diff --git a/eos_cta/CMakeLists.txt b/eos_cta/CMakeLists.txt
 index 66f3a07ce5..9ee05dfd78 100644
 --- a/eos_cta/CMakeLists.txt
