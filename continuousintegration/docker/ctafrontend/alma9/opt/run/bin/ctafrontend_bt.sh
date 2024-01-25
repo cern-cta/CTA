@@ -21,7 +21,7 @@ test -z ${COREFILE} && (echo "NO COREFILE FOUND, EXITING"; exit 1)
 
 echo "PROCESSING COREFILE: ${COREFILE}"
 
-yum install -y xrootd-debuginfo cta-debuginfo gdb
+yum install -y xrootd-debuginfo cta-debuginfo
 
 cat <<EOF > /tmp/ctabt.gdb
 file /usr/bin/xrootd
