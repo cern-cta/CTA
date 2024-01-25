@@ -19,7 +19,6 @@
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
-yum-config-manager --enable castor
 
 # source library configuration file
 echo "Using this configuration for library:"

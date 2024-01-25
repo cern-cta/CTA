@@ -1,10 +1,3 @@
-[eos-citrine-depend]
-name=EOS Citrine depend
-baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/citrine-depend/al-9/x86_64/
-priority=4
-gpgcheck=0
-enabled=1
-
 [cta-eos-diopside]
 name=EOS diopside releases from EOS project
 baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-$releasever/$basearch/
