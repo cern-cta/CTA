@@ -125,10 +125,10 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
   }
   OStoreDB::setBottomHalfQueueSize(25000);
   log::LogContext lc(m_logger);
-  log::ScopedParamContainer(lc)
-    .add("threadPoolSize", osThreadPoolSize.value())
-    .add("threadStackSize_MB", osThreadStackSize.value())
-    .log(log::INFO, "Objectstore threads were started.");
+  log::ScopedParamContainer params(lc);
+  params.add("osThreadPoolSize", osThreadPoolSize.value())
+        .add("osThreadStackSize_MB", osThreadStackSize.value())
+  lc.log(log::INFO, "Objectstore thread pool initialised.");
 }
 
 //------------------------------------------------------------------------------
