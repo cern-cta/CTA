@@ -57,12 +57,13 @@ echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)"
 
 # Archive the file.
 
-INIT_COUNT=$(eos "${EOSINSTANCE}" ls -y /eos/ctaeos/preprod/ | grep test_http-rest-api | wc -l)
-test "${INIT_COUNT}" -eq 0 || { echo "Test file already in EOS before archiving."; exit 1; }
+test_filename="test_http-rest-api_$(uuidgen)"
+INIT_COUNT=$(eos "${EOSINSTANCE}" ls -y /eos/ctaeos/preprod/ | grep ${test_filename} | wc -l)
+test "${INIT_COUNT}" -eq 0 || { echo "Test file ${test_filename} already in EOS before archiving."; exit 1; }
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" https://ctaeos:8444/eos/ctaeos/preprod/test_http-rest-api --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" https://ctaeos:8444/eos/ctaeos/preprod/${test_filename} --upload-file "${tmp_file}"
 
 FINAL_COUNT=0
 TIMEOUT=90
