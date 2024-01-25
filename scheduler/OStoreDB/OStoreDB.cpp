@@ -116,6 +116,24 @@ void OStoreDB::waitSubthreadsComplete() {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::initConfig()
+//------------------------------------------------------------------------------
+void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std::optional<int>& osThreadStackSize) {
+  // starts the configured number of thread workers for Objectstore
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("osThreadPoolSize", osThreadPoolSize.value())
+        .add("osThreadStackSize_MB", osThreadStackSize.value());
+  if (osThreadPoolSize.has_value()) {
+    OStoreDB::setThreadNumber(osThreadPoolSize.value(), osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
+    lc.log(log::INFO, "Objectstore thread pool initialised.");
+  } else if (osThreadStackSize.has_value()) {
+    lc.log(log::WARNING, "Missing cta.schedulerdb.numberofthreads in the configuration. Objectstore thread pool will not be initialised.");
+  }
+  OStoreDB::setBottomHalfQueueSize(25000);
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
 void OStoreDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t>& stackSize) {
@@ -141,7 +159,6 @@ void OStoreDB::setBottomHalfQueueSize(uint64_t tasksNumber) {
   // 5 is the default queue size.
   m_taskPostingSemaphore.release(tasksNumber - 5);
 }
-
 
 //------------------------------------------------------------------------------
 // OStoreDB::EnqueueingWorkerThread::run()

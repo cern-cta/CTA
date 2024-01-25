@@ -173,10 +173,6 @@ class PostgresSchedDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
     log::LogContext& logContext) override;
 
-  // these are not in the baseclass but are beeded by XrdSsiCtaServiceProvider
-  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt) const;
-  void setBottomHalfQueueSize(uint64_t tasksNumber) const;
-
 private:
 
    void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);

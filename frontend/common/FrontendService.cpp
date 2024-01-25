@@ -151,26 +151,34 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
-  const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
-  std::optional<size_t> schedulerThreadStackOpt = schedulerThreadStackSize.has_value() ?
-    std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) : std::nullopt;
-
-  auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
-  if(threadPoolSize.has_value()) {
-    m_scheddb->setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
-  }
-  m_scheddb->setBottomHalfQueueSize(25000);
+  /** [[OStoreDB specific]]
+   * The osThreadStackSize and osThreadPoolSize variables
+   * shall be removed once we decommission OStoreDB
+   */
+  auto osThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
+  auto osThreadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
 
   // Log cta.schedulerdb.numberofthreads
-  if(threadPoolSize.has_value()) {
+  if(osThreadPoolSize.has_value()) {
     std::list<log::Param> params;
     params.push_back(log::Param("source", configFilename));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "numberofthreads"));
-    params.push_back(log::Param("value", std::to_string(threadPoolSize.value())));
+    params.push_back(log::Param("value", std::to_string(osThreadPoolSize.value())));
     log(log::INFO, "Configuration entry", params);
   }
 
+  // Log cta.schedulerdb.threadstacksize_mb
+  if(osThreadStackSize.has_value()) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("category", "cta.schedulerdb"));
+    params.push_back(log::Param("key", "threadstacksize_mb"));
+    params.push_back(log::Param("value", std::to_string(osThreadStackSize.value())));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
   // Initialise the Scheduler
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 

@@ -443,16 +443,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   return ret;
 }
 
-void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize) const
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void PostgresSchedDB::setBottomHalfQueueSize(uint64_t tasksNumber) const
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
 void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc)
 {
   utils::Timer t, t2;
