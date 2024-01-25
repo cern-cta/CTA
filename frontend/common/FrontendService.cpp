@@ -157,7 +157,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
    */
   auto osThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
   auto osThreadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
-  m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
 
   // Log cta.schedulerdb.numberofthreads
   if(osThreadPoolSize.has_value()) {
@@ -169,6 +168,17 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, "Configuration entry", params);
   }
 
+  // Log cta.schedulerdb.threadstacksize_mb
+  if(osThreadStackSize.has_value()) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("category", "cta.schedulerdb"));
+    params.push_back(log::Param("key", "threadstacksize_mb"));
+    params.push_back(log::Param("value", std::to_string(osThreadStackSize.value())));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
   // Initialise the Scheduler
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
