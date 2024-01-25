@@ -127,7 +127,7 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
   log::LogContext lc(m_logger);
   log::ScopedParamContainer params(lc);
   params.add("osThreadPoolSize", osThreadPoolSize.value())
-        .add("osThreadStackSize_MB", osThreadStackSize.value())
+        .add("osThreadStackSize_MB", osThreadStackSize.value());
   lc.log(log::INFO, "Objectstore thread pool initialised.");
 }
 
