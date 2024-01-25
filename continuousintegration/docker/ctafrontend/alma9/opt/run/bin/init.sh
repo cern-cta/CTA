@@ -27,14 +27,8 @@ die() {
 }
 
 # enable cta repository from previously built artifacts
-yum -y install yum-utils wget
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
-
-echo "Copying files to /usr/lib/oracle/"
-occi_folder=$(find /usr/ | grep libocci.so.19.1 | xargs dirname)
-cp libocci_gcc53.so.19.1 $occi_folder
-ls -l $occi_folder
 
 # install needed packages
 yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-tnsnames.ora
