@@ -100,7 +100,7 @@ cta_valgrind_alma9:
     - occi_folder=$(find /usr/ | grep libocci.so.19.1 | xargs dirname)
     - cp libocci_gcc53.so.19.1 $occi_folder
   script:
-    - yum -y install yum-plugin-priorities createrepo epel-release almalinux-release-devel
+    - yum -y install createrepo epel-release almalinux-release-devel
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
