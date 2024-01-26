@@ -47,6 +47,7 @@ spec:
   containers:
   - name: postgres-sched
     image: postgres:9.6
+    imagePullPolicy: Always
     stdin: true
     env:
     - name: POSTGRES_USER
