@@ -75,7 +75,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
   log::Logger& log = *m_log;
 
-  const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
   {
     // Log starting message
     std::list<log::Param> params;
