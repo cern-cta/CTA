@@ -248,7 +248,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // All done
-  log(log::INFO, std::string("cta-frontend started"), log::Param("version", CTA_VERSION));
+  log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }
 
 void FrontendService::setNamespaceMap(const std::string& keytab_file) {
