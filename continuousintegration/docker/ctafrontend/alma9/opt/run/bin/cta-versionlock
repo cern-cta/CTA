@@ -65,7 +65,7 @@ if not os.path.exists(os.path.dirname(conf_file)):
 if not os.path.isfile(conf_file):
   with open(conf_file, 'w') as f:
     print("Creating new config file %s" % conf_file)
-    cta_conf_json = {'eos_major_version': 4, 'xrootd_major_version': 4, 'cta_xrootd_version': 4}
+    cta_conf_json = {'eos_major_version': 4, 'xrootd_major_version': 4, 'cta_major_version': 4}
     f.write(json.dumps(cta_conf_json))
 with open(conf_file) as f:
   cta_conf_json = json.load(f)
@@ -78,13 +78,13 @@ def get_repo_set_for_eos_version(eos_major_version):
   else:
     raise RuntimeError("Unknown EOS major version '%s'." % eos_major_version)
 
-def get_repo_set_for_cta_version(cta_xrootd_version):
-  if cta_xrootd_version == 4:
+def get_repo_set_for_cta_version(cta_major_version):
+  if cta_major_version == 4:
     return {repo_id for repo_id in repos_all if "eos" not in repo_id and "public-5" not in repo_id}
-  elif cta_xrootd_version == 5:
+  elif cta_major_version == 5:
     return {repo_id for repo_id in repos_all if "eos" not in repo_id and "public-4" not in repo_id}
   else:
-    raise RuntimeError("Unknown CTA xrootd version '%s'." % cta_xrootd_version)
+    raise RuntimeError("Unknown CTA major version '%s'." % cta_major_version)
 
 def switch_repos(repo_id_list, enable):
   for repo_id in repo_id_list:
@@ -306,7 +306,7 @@ if (args.command == 'config'):
   _exit()
 
 repos_selected = set()
-repos_selected |= get_repo_set_for_cta_version(cta_conf_json["cta_xrootd_version"])
+repos_selected |= get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
 repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
 
 # check if CTA packages exist in versionlock.list (ignore arch)
