@@ -272,7 +272,7 @@ for status_pod in ${STATUS_PODS}; do
 done
 kubectl --namespace=${instance} get pods
 
-echo "\nCreating pods in instance"
+echo "Creating pods in instance"
 
 sed "s/SCHEMA_VERSION_VALUE/${SCHEMA_VERSION}/g" ${poddir}/pod-init.yaml | kubectl create --namespace=${instance} -f -
 
