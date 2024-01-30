@@ -87,7 +87,8 @@ public:
    * @param programName The name of the program to be prepended to every log message
    * @param logMask     The log mask
    */
-  Logger(std::string_view hostName, std::string_view programName, int logMask);
+  Logger(std::string_view hostName, std::string_view programName, int logMask,
+         std::string_view unitName, std::string_view schedBackendName );
 
   /**
    * Destructor
@@ -148,6 +149,16 @@ protected:
    * The name of the program to be prepended to every log message
    */
   const std::string m_programName;
+
+  /**
+   * The name of the instance
+   */
+  const std::string m_instanceName;
+
+  /**
+   * The name of the instance
+   */
+  const std::string m_schedulerBackendName;
 
   /**
    * Log mask

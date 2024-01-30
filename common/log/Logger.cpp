@@ -144,14 +144,19 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) const {
       os << std::put_time(&localTime, "%b %e %T")
          << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << ' '
          << m_hostName << " "
-         << m_programName << ": ";
+         << m_programName << " "
+         << m_instanceName << " "
+         << m_schedulerBackenddName << ": ";
       break;
     case LogFormat::JSON:
       os << R"("epoch_time":")" << timeStamp.tv_sec
          << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(",)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
          << R"("hostname":")" << m_hostName << R"(",)"
-         << R"("program":")" << m_programName << R"(",)";
+         << R"("program":")" << m_programName << R"(",)"
+         << R"("instance_name":")" << m_instanceName << R"(",)"
+         << R"("scheduler_backend_name":")" << m_schedulerBackendName << R"(",)"
+        ;
   }
   return os.str();
 }
