@@ -1,5 +1,20 @@
+# Detecting if we are building on ALMA9
+%if 0%{?rhel} == 9
+%if "%{_vendor}" == "redhat"
+%define alma9 1
+%else
+%define alma9 0
+%endif
+%else
+%define alma9 0
+%endif
+
 # Avoid problem with official Oracle RPMS not listing necessary capabilities
-%global __requires_exclude ^libocci.so|^libclntsh.so
+%if %{alma9}
+  %global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
+%else
+  %global __requires_exclude ^libocci.so|^libclntsh.so
+%endif
 
 # Generic macros
 #---------------
@@ -50,13 +65,22 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 %define xrootdVersion 1:5.6.1-1
 %endif
 
-%define radosVersion 2:15.2.15
+%if %{alma9}
+  %define radosVersion 2:17.2.7
+  BuildRequires: protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1
+  BuildRequires: oracle-instantclient-devel
+  BuildRequires: grpc, grpc-devel, grpc-plugins
+%else
+  %define radosVersion 2:15.2.15
+  BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
+  BuildRequires: oracle-instantclient19.3-devel
+  BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
+%endif
 BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-devel         >= %{xrootdVersion}
 BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-private-devel >= %{xrootdVersion}
 BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
-BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gtest-devel >= 1.11.0
 BuildRequires: sqlite-devel >= 3.6
 BuildRequires: libcap-devel >= 2.16
@@ -65,11 +89,9 @@ BuildRequires: cryptopp-devel >= 5.6.2
 BuildRequires: libuuid-devel >= 2.17
 BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
-BuildRequires: oracle-instantclient19.3-devel
 BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
-BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
 BuildRequires: krb5-devel
 BuildRequires: libtirpc-devel
 %{?systemd_requires}
@@ -254,8 +276,12 @@ fi
 %package -n cta-lib-common
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-# Explicity require protobuf3 to avoid clash with eos-protobuf3
-Requires: protobuf3
+# Explicity require protobuf to avoid clash with eos-protobuf
+%if %{alma9}
+  Requires: protobuf
+%else
+  Requires: protobuf3
+%endif
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-common
 CERN Tape Archive:
@@ -267,9 +293,10 @@ The shared libraries base
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-# Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: cta-lib-common
-Requires: oracle-instantclient19.3-basic
+%if %{alma9} == 0
+  Requires: oracle-instantclient19.3-basic
+%endif
 Requires: postgresql-libs
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
@@ -292,8 +319,12 @@ Requires: librados2 = %{radosVersion}
 Requires: postgresql-libs
 %endif
 Requires: xrootd-client-libs >= %{xrootdVersion}
-# Explicity require protobuf3 to avoid clash with eos-protobuf3
-Requires: protobuf3
+# Explicity require protobuf to avoid clash with eos-protobuf
+%if %{alma9}
+  Requires: protobuf
+%else
+  Requires: protobuf3
+%endif
 Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-lib
 CERN Tape Archive:
@@ -388,6 +419,7 @@ Command-line tool for testing immutable files
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-objectstore-tools
 CERN Tape Archive:
@@ -536,7 +568,11 @@ Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
 CERN Tape Archive:
 Common items such as the creation of the cta local user and /var/log/cta
 %pre -n cta-common
-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
+%if %{alma9}
+  /usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /usr/sbin/nologin -c "CTA system account" -g tape cta
+%else
+  /usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
+%endif
 %files -n cta-common
 %defattr(-,root,root)
 %attr(0755,cta,tape) %dir /var/log/cta
