@@ -21,7 +21,7 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common oracle-instantclient-tnsnames.ora
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh

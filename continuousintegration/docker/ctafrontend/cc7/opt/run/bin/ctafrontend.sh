@@ -65,8 +65,6 @@ else
   echo 'KO'
 fi
 
-
-
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
   echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
