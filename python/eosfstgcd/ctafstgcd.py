@@ -183,7 +183,7 @@ class RealEos:
     if 0 != process.returncode:
       raise VersionError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
     else:
-      entries = stdout.split();
+      entries = stdout.decode().split();
       for e in entries:
         splitpair = e.split('=')
         if 2 == len(splitpair):
