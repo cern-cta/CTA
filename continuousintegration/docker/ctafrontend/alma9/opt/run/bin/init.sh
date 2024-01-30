@@ -31,7 +31,8 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # install needed packages
-yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils cta-scheduler-utils ceph-common oracle-instantclient-tnsnames.ora
+# Skip-broken is added because cta-scheduler-utils can be missed in case CTA is compiled with objectstore
+yum -y --skip-broken install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils cta-scheduler-utils ceph-common oracle-instantclient-tnsnames.ora
 yum clean packages
 
 echo "Using this configuration for library:"
