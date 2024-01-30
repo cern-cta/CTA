@@ -40,4 +40,4 @@ RUN set -ex; \
     mkdir /Project/build; \
     cd /Project/build; \
     cmake3 ../CTA; \
-    make -j7;
+    make cta_rpm -j7;

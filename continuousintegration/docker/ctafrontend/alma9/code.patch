@@ -36,7 +36,7 @@ index 1c2508ea8a..3192f3746c 100644
  #     ORACLE-INSTANTCLIENT_RPATH
  
 -set(ORACLE-INSTANTCLIENT_VERSION 19.3)
-+set(ORACLE-INSTANTCLIENT_VERSION 19.19)
++set(ORACLE-INSTANTCLIENT_VERSION 21)
  
  set(ORACLE-INSTANTCLIENT_RPATH /usr/lib/oracle/${ORACLE-INSTANTCLIENT_VERSION}/client64/lib)
  message(STATUS "ORACLE-INSTANTCLIENT_RPATH=${ORACLE-INSTANTCLIENT_RPATH}")
@@ -45,7 +45,7 @@ index 1c2508ea8a..3192f3746c 100644
  
  find_library(ORACLE-INSTANTCLIENT_OCCI_LIBRARY
 -  NAME libocci.so.19.1
-+  NAME libocci_gcc53.so.19.1
++  NAME libocci_gcc53.so
    PATHS ${ORACLE-INSTANTCLIENT_RPATH}
    NO_DEFAULT_PATH)
  
@@ -136,7 +136,7 @@ index c7755abc2e..44beb3cf1d 100644
  BuildRequires: json-c-devel >= 0.11
  BuildRequires: libattr-devel >= 2.4.44
 -BuildRequires: oracle-instantclient19.3-devel
-+BuildRequires: oracle-instantclient19.19-devel
++BuildRequires: oracle-instantclient-devel
  BuildRequires: postgresql-devel
  BuildRequires: valgrind
  BuildRequires: valgrind-devel
@@ -164,7 +164,7 @@ index c7755abc2e..44beb3cf1d 100644
 +# Explicity require protobuf to avoid clash with eos-protobuf
  Requires: cta-lib-common
 -Requires: oracle-instantclient19.3-basic
-+# Requires: oracle-instantclient19.19-basic
++# Requires: oracle-instantclient-basic
  Requires: postgresql-libs
  Requires: xrootd-client-libs >= %{xrootdVersion}
  %description -n cta-lib-catalogue
