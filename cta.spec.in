@@ -67,15 +67,15 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
 %if %{alma9}
   %define radosVersion 2:17.2.7
-  BuildRequires: protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1
-  BuildRequires: oracle-instantclient-devel
-  BuildRequires: grpc, grpc-devel, grpc-plugins
+  %define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel
+  %define requiredProtobuf protobuf
 %else
   %define radosVersion 2:15.2.15
-  BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
-  BuildRequires: oracle-instantclient19.3-devel
-  BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
+  %define requirementsOS protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1 oracle-instantclient19.3-devel rpc-static
+  %define requiredProtobuf protobuf3
 %endif
+BuildRequires: %{requirementsOS}
+BuildRequires: grpc, grpc-devel, grpc-plugins
 BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-devel         >= %{xrootdVersion}
 BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
@@ -277,11 +277,7 @@ fi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf to avoid clash with eos-protobuf
-%if %{alma9}
-  Requires: protobuf
-%else
-  Requires: protobuf3
-%endif
+Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-common
 CERN Tape Archive:
@@ -293,11 +289,13 @@ The shared libraries base
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: cta-lib-common
-%if %{alma9} == 0
-  Requires: oracle-instantclient19.3-basic
+%if %{alma9}
+  %define requirementsLibCatalogue oracle-instantclient19.3-basic postgresql-libs
+%else
+  %define requirementsLibCatalogue postgresql-libs
 %endif
-Requires: postgresql-libs
+Requires: cta-lib-common
+Requires: %{requirementsLibCatalogue}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
 CERN Tape Archive:
@@ -320,11 +318,7 @@ Requires: postgresql-libs
 %endif
 Requires: xrootd-client-libs >= %{xrootdVersion}
 # Explicity require protobuf to avoid clash with eos-protobuf
-%if %{alma9}
-  Requires: protobuf
-%else
-  Requires: protobuf3
-%endif
+Requires: %{requiredProtobuf}
 Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-lib
 CERN Tape Archive:
