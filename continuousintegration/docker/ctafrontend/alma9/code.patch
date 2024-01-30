@@ -1,54 +1,3 @@
-diff --git a/cmake/FindProtobuf3.cmake b/cmake/FindProtobuf3.cmake
-index bbb25ecc72..7e6db8f294 100644
---- a/cmake/FindProtobuf3.cmake
-+++ b/cmake/FindProtobuf3.cmake
-@@ -18,20 +18,20 @@
- set(PROTOBUF3_ROOT /usr)
- #set(PROTOBUF3_ROOT /opt/eos)
- 
--set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64/protobuf3)
-+set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64)
- message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
- 
- set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
- 
- find_program(PROTOBUF3_PROTOC3_EXECUTABLE
--    NAMES ${PROTOBUF3_ROOT}/bin/protoc3
-+    NAMES ${PROTOBUF3_ROOT}/bin/protoc
-     DOC "Version 3 of The Google Protocol Buffers Compiler"
- )
--message(STATUS "protoc3 is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
-+message(STATUS "protoc is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
- 
- find_path(PROTOBUF3_INCLUDE_DIRS
-   google/protobuf/message.h
--  PATHS ${PROTOBUF3_ROOT}/include/protobuf3
-+  PATHS ${PROTOBUF3_ROOT}/include
-   NO_DEFAULT_PATH)
- message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
- 
-diff --git a/cmake/Findoracle-instantclient.cmake b/cmake/Findoracle-instantclient.cmake
-index 1c2508ea8a..3192f3746c 100644
---- a/cmake/Findoracle-instantclient.cmake
-+++ b/cmake/Findoracle-instantclient.cmake
-@@ -19,7 +19,7 @@
- #     ORACLE-INSTANTCLIENT_LIBRARIES
- #     ORACLE-INSTANTCLIENT_RPATH
- 
--set(ORACLE-INSTANTCLIENT_VERSION 19.3)
-+set(ORACLE-INSTANTCLIENT_VERSION 21)
- 
- set(ORACLE-INSTANTCLIENT_RPATH /usr/lib/oracle/${ORACLE-INSTANTCLIENT_VERSION}/client64/lib)
- message(STATUS "ORACLE-INSTANTCLIENT_RPATH=${ORACLE-INSTANTCLIENT_RPATH}")
-@@ -35,7 +35,7 @@ find_library(ORACLE-INSTANTCLIENT_CLNTSH_LIBRARY
-   NO_DEFAULT_PATH)
- 
- find_library(ORACLE-INSTANTCLIENT_OCCI_LIBRARY
--  NAME libocci.so.19.1
-+  NAME libocci_gcc53.so
-   PATHS ${ORACLE-INSTANTCLIENT_RPATH}
-   NO_DEFAULT_PATH)
- 
 diff --git a/common/json/object/JSONCObject.cpp b/common/json/object/JSONCObject.cpp
 index 43fc568c79..3bdde9a8c9 100644
 --- a/common/json/object/JSONCObject.cpp
@@ -196,16 +145,6 @@ index c7755abc2e..44beb3cf1d 100644
  %files -n cta-common
  %defattr(-,root,root)
  %attr(0755,cta,tape) %dir /var/log/cta
-diff --git a/eos_cta/CMakeLists.txt b/eos_cta/CMakeLists.txt
-index 66f3a07ce5..9ee05dfd78 100644
---- a/eos_cta/CMakeLists.txt
-+++ b/eos_cta/CMakeLists.txt
-@@ -54,4 +54,4 @@ add_library(EosCtaGrpc ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
- set_target_properties(EosCtaGrpc PROPERTIES
-   LINKER_LANGUAGE CXX
-   POSITION_INDEPENDENT_CODE TRUE)
--target_link_libraries(EosCtaGrpc gpr ${PROTOBUF3_GRPC_LIBRARIES})
-+target_link_libraries(EosCtaGrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})
 diff --git a/rdbms/StmtTest.cpp b/rdbms/StmtTest.cpp
 index cdc3c3c2c1..552afa210d 100644
 --- a/rdbms/StmtTest.cpp

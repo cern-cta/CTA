@@ -42,6 +42,19 @@ execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
   OUTPUT_VARIABLE GCC_VERSION)
 
+execute_process(COMMAND cat /etc/os-release
+  RESULT_VARIABLE result
+  OUTPUT_VARIABLE output)
+
+if(NOT result AND output MATCHES "AlmaLinux-9")
+  message(STATUS "Detected AlmaLinux-9")
+  # Set a variable to indicate that we are on AlmaLinux
+  set(ALMA9 ON)
+else()
+  message(STATUS "Not AlmaLinux-9")
+  set(ALMA9 OFF)
+endif()
+
 message(STATUS "Setting support for c++17")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
