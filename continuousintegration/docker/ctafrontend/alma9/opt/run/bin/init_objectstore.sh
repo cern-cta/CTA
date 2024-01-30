@@ -15,38 +15,24 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-SCHEDSTORE_CONFIG_DIR=/etc/config/objectstore
+OBJECTSTORE_CONFIG_DIR=/etc/config/objectstore
 
 function get_conf {
-  test -r ${SCHEDSTORE_CONFIG_DIR}/$1 && cat ${SCHEDSTORE_CONFIG_DIR}/$1 || echo -n UNDEF
+  test -r ${OBJECTSTORE_CONFIG_DIR}/$1 && cat ${OBJECTSTORE_CONFIG_DIR}/$1 || echo -n UNDEF
 }
 
 OBJECTSTORETYPE=UNDEF
 OBJECTSTOREURL=UNDEF
-NOSCHEDKEY="OK"
 
 rm -f /tmp/objectstore-rc.sh
-case "$(get_conf database.type)" in
-  "UNDEF")
-    echo "Postgres scheduler configmap is not defined."
-    ls ${SCHEDSTORE_CONFIG_DIR}
-    NOSCHEDKEY="NOTOK"
-  ;;
-  "postgres")
-     echo "Configuring postgres database"
-     OBJECTSTORETYPE=postgres
-     OBJECTSTOREURL=postgresql:postgresql://$(get_conf database.postgres.username):$(get_conf database.postgres.password)@$(get_conf database.postgres.server)/$(get_conf database.postgres.database)
-  ;;
-esac
 
 case "$(get_conf objectstore.type)" in
   "UNDEF")
-    echo "Objectstore configmap is not defined."
-    ls ${SCHEDSTORE_CONFIG_DIR}
-    if [ "$NOSCHEDKEY" == "NOTOK" ]; then
-        exit 1
-    fi
+    echo "objectstore configmap is not defined"
+    ls ${OBJECTSTORE_CONFIG_DIR}
+    exit 1
     ;;
+
   "ceph")
     echo "Configuring ceph objectstore"
 
@@ -73,13 +59,8 @@ EOF
     OBJECTSTOREURL=$(echo $(get_conf objectstore.file.path) | sed -e "s#%NAMESPACE#${MY_NAMESPACE}#")
   ;;
   *)
-    if [ "$NOSCHEDKEY" == "NOTOK" ]; then
-      echo "Error unknown objectstore type: $(get_conf objectstore.type)"
-      echo "Neither found postgres scheduler type."
-      exit 1
-    else
-      echo "Found postgres scheduler type: $(get_conf database.type)"
-    fi
+    echo "Error unknown objectstore type: $(get_conf objectstore.type)"
+    exit 1
   ;;
 esac
 
