@@ -31,7 +31,7 @@ COPY ${BASEDIR}/cta/ /etc/cta/
 COPY ${BASEDIR}/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
 
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/opt /opt
+COPY ${BASEDIR}/../opt /opt
 
 RUN yum install -y \
       yum-plugin-versionlock \
@@ -74,9 +74,7 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el
   yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
   yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
   yum install -y oracle-instantclient-tnsnames.ora; \ 
-  rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  sed -i '/sleep \$WAIT/d' /etc/cron.hourly/tnsnames-update.cron; \
-  test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron;
+  rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)

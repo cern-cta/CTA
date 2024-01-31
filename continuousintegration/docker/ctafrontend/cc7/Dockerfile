@@ -28,7 +28,7 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 COPY ${BASEDIR}/etc /etc
 
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/opt /opt
+COPY ${BASEDIR}/../opt /opt
 
 RUN yum install -y \
       yum-plugin-downloadonly \
