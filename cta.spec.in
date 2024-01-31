@@ -71,7 +71,7 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
   %define requiredProtobuf protobuf
 %else
   %define radosVersion 2:15.2.15
-  %define requirementsOS protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1 oracle-instantclient19.3-devel rpc-static
+  %define requirementsOS protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1 oracle-instantclient19.3-devel grpc-static
   %define requiredProtobuf protobuf3
 %endif
 BuildRequires: %{requirementsOS}
