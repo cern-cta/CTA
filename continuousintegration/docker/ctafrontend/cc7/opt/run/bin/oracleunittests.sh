@@ -24,7 +24,7 @@ yum-config-manager --enable ceph
 yum-config-manager --enable castor
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common oracle-instantclient-tnsnames.ora
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
 
 echo "Configuring database"
 /opt/run/bin/init_database.sh

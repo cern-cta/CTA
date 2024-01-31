@@ -9,4 +9,4 @@ data:
   database.type: oracle
   database.oracle.username: user1
   database.oracle.password: mypasswd
-  database.oracle.database: dbname
+  database.oracle.database: //host:port/service name # no TNS entry support in CI: must be resolved following Oracle documentation
