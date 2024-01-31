@@ -68,6 +68,7 @@ ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQ
 # Check if we are using Linux Alma9
 if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
   echo "This container is not running on AlmaLinux 9"
+  yum install -y python3
   if test -f "/etc/config/eos/eos4"; then
     # Switch to EOS-4 versionlock
     /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos4
