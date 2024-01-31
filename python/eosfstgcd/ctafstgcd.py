@@ -543,19 +543,30 @@ class Gc:
           bytes_required_before = self.config.eos_space_to_min_free_bytes[eos_space] - total_free_bytes
         if self.eos_version >= MIN_VERSION_WITH_EVICT:
           self.eos.evict(fsid, fst_file)
+          self.log.info('evict: ' \
+                        'sub_dir={}, ' \
+                        'fxid={}, ' \
+                        'fsid={}, ' \
+                        'bytes_required_before={}, ' \
+                        'file_size_bytes={}, ' \
+                        'absolute_max_age_reached={}, ' \
+                        'should_free_space={}, ' \
+                        'gc_age_reached={}'
+                        .format(sub_dir, fst_file, fsid, bytes_required_before, file_size_and_ctime.sizebytes,
+                                absolute_max_age_reached, should_free_space, gc_age_reached))
         else:
           self.eos.stagerrm(fst_file)
+          self.log.info('stagerrm: ' \
+                        'sub_dir={}, ' \
+                        'fxid={}, ' \
+                        'bytes_required_before={}, ' \
+                        'file_size_bytes={}, ' \
+                        'absolute_max_age_reached={}, ' \
+                        'should_free_space={}, ' \
+                        'gc_age_reached={}'
+                        .format(sub_dir, fst_file, bytes_required_before, file_size_and_ctime.sizebytes,
+                                absolute_max_age_reached, should_free_space, gc_age_reached))
         space_tracker.evict_queued(file_size_and_ctime.sizebytes)
-        self.log.info('stagerrm: ' \
-          'sub_dir={}, ' \
-          'fxid={}, ' \
-          'bytes_required_before={}, ' \
-          'file_size_bytes={}, ' \
-          'absolute_max_age_reached={}, ' \
-          'should_free_space={}, ' \
-          'gc_age_reached={}'
-          .format(sub_dir, fst_file, bytes_required_before, file_size_and_ctime.sizebytes, absolute_max_age_reached,
-            should_free_space, gc_age_reached))
         nowstr = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S.%f')
         attrname = 'sys.retrieve.error'
         attrvalue = 'Garbage collected at {}'.format(nowstr)
