@@ -290,9 +290,9 @@ The shared libraries base
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 %if %{alma9}
-  %define requirementsLibCatalogue oracle-instantclient19.3-basic postgresql-libs
-%else
   %define requirementsLibCatalogue postgresql-libs
+%else
+  %define requirementsLibCatalogue postgresql-libs oracle-instantclient19.3-basic
 %endif
 Requires: cta-lib-common
 Requires: %{requirementsLibCatalogue}
