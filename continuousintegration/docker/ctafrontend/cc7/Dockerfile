@@ -37,7 +37,6 @@ RUN yum install -y \
       createrepo epel-release \
       oracle-instantclient-tnsnames.ora \
   && \
-    sed -i '/sleep \$WAIT/d' /etc/cron.hourly/tnsnames-update.cron; \
     test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron; \
   && \
     # where do we want to get xroot from?
