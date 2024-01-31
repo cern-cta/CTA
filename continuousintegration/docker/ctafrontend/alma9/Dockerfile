@@ -69,6 +69,15 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   ; \
     rm -f /etc/rc.d/rc.local
 
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
+  wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
+  yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
+  yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
+  yum install -y oracle-instantclient-tnsnames.ora; \ 
+  rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
+  sed -i '/sleep \$WAIT/d' /etc/cron.hourly/tnsnames-update.cron; \
+  test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron;
+
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
 
@@ -78,15 +87,6 @@ RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-4; then \
   yum-config-manager --enable cta-ci-xroot; \
   yum-config-manager --disable cta-ci-xrootd5; \
 fi
-
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-  wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-  yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  yum install -y oracle-instantclient-tnsnames.ora; \ 
-  rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  sed -i '/sleep \$WAIT/d' /etc/cron.hourly/tnsnames-update.cron; \
-  test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron;
 
 # Add pod specific configuration
 COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
