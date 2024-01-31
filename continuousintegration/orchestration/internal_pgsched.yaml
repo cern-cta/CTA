@@ -46,7 +46,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: postgres-sched
-    image: postgres:14.10
+    image: postgres:9.6
     imagePullPolicy: Always
     stdin: true
     env:
