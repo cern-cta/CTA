@@ -35,10 +35,6 @@ RUN yum install -y \
       yum-plugin-priorities \
       yum-plugin-versionlock \
       createrepo epel-release \
-      oracle-instantclient-tnsnames.ora \
-  && \
-    sed -i '/sleep \$WAIT/d' /etc/cron.hourly/tnsnames-update.cron; \
-    test -x /etc/cron.hourly/tnsnames-update.cron && /etc/cron.hourly/tnsnames-update.cron \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
