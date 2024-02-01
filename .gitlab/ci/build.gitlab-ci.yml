@@ -39,7 +39,7 @@
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DSKIP_UNIT_TESTS=1 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_rpm
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
@@ -173,7 +173,7 @@ cta_rpm_alma9:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DSKIP_UNIT_TESTS=1 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_rpm
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
