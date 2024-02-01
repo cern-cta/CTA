@@ -17,21 +17,21 @@
 #eos-xrootd-debuginfo-4.12.8-1.el7.*
 #### EOS-4-END ####
 #### EOS-5-START ####
-eos-archive-5.2.4-1.el9.x86_64
-eos-cleanup-5.2.4-1.el9.x86_64
-eos-client-5.2.4-1.el9.x86_64
-eos-fuse-5.2.4-1.el9.x86_64
-eos-fuse-core-5.2.4-1.el9.x86_64
-eos-fuse-sysv-5.2.4-1.el9.x86_64
-eos-fusex-5.2.4-1.el9.x86_64
-eos-fusex-core-5.2.4-1.el9.x86_64
-eos-fusex-selinux-5.2.4-1.el9.x86_64
-eos-ns-inspect-5.2.4-1.el9.x86_64
-eos-server-5.2.4-1.el9.x86_64
-eos-srm-5.2.4-1.el9.x86_64
-eos-test-5.2.4-1.el9.x86_64
-eos-testkeytab-5.2.4-1.el9.x86_64
-eos-quarkdb-5.2.4-1.el9.x86_64
+eos-archive-5.2.8-1.el9.x86_64
+eos-cleanup-5.2.8-1.el9.x86_64
+eos-client-5.2.8-1.el9.x86_64
+eos-fuse-5.2.8-1.el9.x86_64
+eos-fuse-core-5.2.8-1.el9.x86_64
+eos-fuse-sysv-5.2.8-1.el9.x86_64
+eos-fusex-5.2.8-1.el9.x86_64
+eos-fusex-core-5.2.8-1.el9.x86_64
+eos-fusex-selinux-5.2.8-1.el9.x86_64
+eos-ns-inspect-5.2.8-1.el9.x86_64
+eos-server-5.2.8-1.el9.x86_64
+eos-srm-5.2.8-1.el9.x86_64
+eos-test-5.2.8-1.el9.x86_64
+eos-testkeytab-5.2.8-1.el9.x86_64
+eos-quarkdb-5.2.8-1.el9.x86_64
 #### EOS-5-END ####
 eos-folly-2019.11.11.00-1.el9.*
 eos-folly-deps-2019.11.11.00-1.el9.*
