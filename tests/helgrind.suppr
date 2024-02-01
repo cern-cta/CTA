@@ -786,8 +786,7 @@
 {
    SharedQueue
    Helgrind:Race
-   fun:_ZN9__gnu_cxxL18__exchange_and_addEPVii
-   fun:_ZN9__gnu_cxxL27__exchange_and_add_dispatchEPii
+   ...
    fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
    fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
    fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
