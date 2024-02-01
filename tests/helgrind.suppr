@@ -780,7 +780,6 @@
    ...
    fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EEC1ERKS9_
    fun:_ZNSt10shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEEEC1ERKS7_
-   fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE16sharedAddToQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextE
    ...
 }
 
@@ -930,5 +929,49 @@
    fun:_ZN6google8protobuf8internal29InternalMetadataWithArenaBaseINS0_15UnknownFieldSetENS1_25InternalMetadataWithArenaEED1Ev
    fun:_ZN6google8protobuf8internal25InternalMetadataWithArenaD1Ev
    fun:_ZN3cta11objectstore11serializers8TapeFileD1Ev
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   ...
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers12ArchiveQueueELNS2_10ObjectTypeE9EED1Ev
+   fun:_ZN3cta11objectstore12ArchiveQueueD1Ev
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNK6google8protobuf8internal9TaggedPtrINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE9UnsafeGetEv
+   fun:_ZNK6google8protobuf8internal14ArenaStringPtr9IsDefaultEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN3cta11objectstore14ArchiveRequest7JobDumpD1Ev
    ...
 }
