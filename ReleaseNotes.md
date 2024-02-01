@@ -7,6 +7,7 @@
 
 ### Alma9 Migration
 - cta/CTA#534 - Migrate fst garbage collector to Python3
+- cta/CTA#499 - Compile and running cta in alma9 linux
 
 ### Bug Fixes
 - cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
