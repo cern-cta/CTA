@@ -52,6 +52,8 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
     cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
   elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
+    echo "Postgres scheduler config file content: "
+    cat /etc/cta/cta-scheduler.conf
     cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then

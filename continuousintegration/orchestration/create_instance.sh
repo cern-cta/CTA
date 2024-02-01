@@ -259,6 +259,18 @@ for service_file in *svc\.yaml; do
   kubectl create -f ${service_file} --namespace=${instance}
 done
 
+echo "Waiting for pods to be Running before starting init"
+kubectl --namespace=${instance} get pods
+STATUS_PODS=$(kubectl --namespace=${instance} get pods -o json | jq -r .items[].metadata.name)
+for status_pod in ${STATUS_PODS}; do
+  echo "Waiting for pod: ${status_pod}"
+  for ((i=0; i<120; i++)); do
+    echo -n "."
+    kubectl --namespace=${instance} get pod ${status_pod} ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Running|Failed' && break
+    sleep 1
+  done
+done
+kubectl --namespace=${instance} get pods
 
 echo "Creating pods in instance"
 
