@@ -38,7 +38,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/GarbageCollector.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RootEntry.hpp"
@@ -7464,10 +7463,4 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTestTriggerTa
 
 #endif
 
-#ifdef TEST_RADOS
-static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
-
-INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(OStoreDBFactoryRados)));
-#endif
 } // namespace unitTests

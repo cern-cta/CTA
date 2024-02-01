@@ -28,7 +28,6 @@
 #include "common/log/StringLogger.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendRados.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/MemQueues.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
@@ -236,11 +235,6 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
-#ifdef TEST_RADOS
-static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
-INSTANTIATE_TEST_CASE_P(OStoreTestRados, OStoreDBTest,
-    ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryRados)));
-#endif
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 INSTANTIATE_TEST_CASE_P(OStoreTestVFS, OStoreDBTest,
     ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryVFS)));
