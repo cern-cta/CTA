@@ -27,7 +27,7 @@ COPY ./code.patch /Project/CTA/continuousintegration/docker/ctafrontend/alma9/co
 
 RUN set -ex; \
     cd CTA; \
-    ./continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh;
+    ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh;
 
 RUN set -ex; \
     mkdir /Project/build_srpm; \
