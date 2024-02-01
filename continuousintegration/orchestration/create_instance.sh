@@ -172,7 +172,13 @@ echo "Creating instance using docker image with tag: ${imagetag}"
 cp pod-* ${poddir}
 if [ ! -z "${dockerimage}" ]; then
   echo "set image to ctageneric:${imagetag}"
-  sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
+    echo "Not running on AlmaLinux 9"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  else
+    echo "Running on AlmaLinux 9"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: localhost\/ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  fi
 else
   sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
 fi
