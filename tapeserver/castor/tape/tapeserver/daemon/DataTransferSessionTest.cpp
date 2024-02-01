@@ -69,7 +69,6 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #endif
 
 #ifdef STDOUT_LOGGING
@@ -3413,12 +3412,5 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, DataTransferSessionTes
                         ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryVFS)));
 #endif
 
-#ifdef TEST_RADOS
-static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
-
-INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, DataTransferSessionTest,
-  ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryRados)));
 #endif
-#endif
-
 } // namespace unitTest

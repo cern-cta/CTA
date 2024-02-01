@@ -21,7 +21,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/Timer.hpp"
-#include "BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include <atomic>
 #include <future>
@@ -230,11 +229,5 @@ TEST(BackendAbstractTest, Errnum_throwers) {
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
-#ifdef TEST_RADOS
-static cta::log::DummyLogger dl("", "");
-static cta::objectstore::BackendRados osRados(dl, "tapetest", "tapetest");
-INSTANTIATE_TEST_CASE_P(BackendTestRados, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osRados));
-#endif
 INSTANTIATE_TEST_CASE_P(BackendTestVFS, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osVFS));
-
 }
