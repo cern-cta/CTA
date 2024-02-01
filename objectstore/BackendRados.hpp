@@ -31,22 +31,6 @@
 #define RADOS_LOCKING_STRATEGY BACKOFF
 
 // Define this to get long response times logging.
-#define RADOS_SLOW_CALLS_LOGGING
-#define RADOS_SLOW_CALLS_LOGGING_FILE "/var/tmp/cta-rados-slow-calls.log"
-#define RADOS_SLOW_CALL_TIMEOUT 1
-
-#ifdef RADOS_SLOW_CALLS_LOGGING
-#include "common/Timer.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
-#include <fstream>
-#include <iomanip>
-#include <algorithm>
-#include <syscall.h>
-#endif //RADOS_SLOW_CALLS_LOGGING
-
-#define RADOS_LOCK_PERFORMANCE_LOGGING_FILE "/var/tmp/cta-rados-locking.log"
-
 namespace cta::objectstore {
 
 /**
@@ -214,7 +198,6 @@ private:
     };
     CumulatedMesurements m_measurements;
     threading::Mutex m_mutex;
-    utils::Timer m_timer;
   };
   static RadosLockTimingLogger g_RadosLockTimingLogger;
 
@@ -319,7 +302,6 @@ public:
     /** Instrumentation for rados calls timing */
     RadosTimeoutLogger m_radosTimeoutLogger;
     /** Timer for retries (created only when needed */
-    std::unique_ptr<cta::utils::Timer> m_retryTimer;
   };
 
   Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;

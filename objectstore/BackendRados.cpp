@@ -84,8 +84,6 @@ void notifyLocked() {
 
 namespace cta::objectstore {
 
-cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
-
 BackendRados::BackendRados(log::Logger& logger, const std::string& userId, const std::string& pool, const std::string& radosNameSpace) :
   m_logger(logger), m_user(userId), m_pool(pool), m_namespace(radosNameSpace)
 {
@@ -94,46 +92,34 @@ BackendRados::BackendRados(log::Logger& logger, const std::string& userId, const
     [this, &userId]() { return -m_cluster.init(userId.c_str()); },
     "In BackendRados::BackendRados, failed to m_cluster.init");
   try {
-    RadosTimeoutLogger rtl;
     throwOnReturnedErrnoOrThrownStdException(
       [this]() { return -m_cluster.conf_read_file(nullptr); },
       "In BackendRados::BackendRados, failed to m_cluster.conf_read_file");
-    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_read_file()", "no object");
-    rtl.reset();
     throwOnReturnedErrnoOrThrownStdException(
       [this]() { return -m_cluster.conf_parse_env(nullptr);},
       "In BackendRados::BackendRados, failed to m_cluster.conf_parse_env");
-    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_parse_env()", "no object");
-    rtl.reset();
     throwOnReturnedErrnoOrThrownStdException(
       [this]() { return -m_cluster.connect();},
       "In BackendRados::BackendRados, failed to m_cluster.connect");
-    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.connect()", "no object");
     // Create the connection pool. One per CPU hardware thread.
     for (size_t i=0; i<std::thread::hardware_concurrency(); i++) {
       m_radosCtxPool.emplace_back(librados::IoCtx());
       log::ScopedParamContainer params(lc);
       params.add("contextId", i);
       lc.log(log::DEBUG, "BackendRados::BackendRados() about to create a new context");
-      rtl.reset();
       throwOnReturnedErrnoOrThrownStdException(
         [this, &pool]() { return -m_cluster.ioctx_create(pool.c_str(), m_radosCtxPool.back()); },
         "In BackendRados::BackendRados, failed to m_cluster.ioctx_create");
-      rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.ioctx_create()", "no object");
       lc.log(log::DEBUG, "BackendRados::BackendRados() context created. About to set namespace.");
       librados::bufferlist bl;
-      rtl.reset();
       // An empty string also sets the namespace to default so no need to filter. This function does not fail.
       m_radosCtxPool.back().set_namespace(radosNameSpace);
-      rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtxPool.back().set_namespace()", "no object");
-      rtl.reset();
 lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test access.");
       // Try to read a non-existing object through the newly created context, in hope this will protect against
       // race conditions(?) when creating the contexts in a tight loop.
       throwOnReturnedErrnoOrThrownStdException(
-        [this, &bl, &rtl]() {
+        [this, &bl]() {
           auto rc = m_radosCtxPool.back().read("TestObjectThatDoesNotNeedToExist", bl, 1, 0);
-          rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtxPool.back().read()", "TestObjectThatDoesNotNeedToExist");
           return -rc == ENOENT ? 0 : -rc;
         },
         "In BackendRados::BackendRados, failed to m_radosCtxPool.back().read(), and error is not ENOENT as expected");
@@ -159,13 +145,9 @@ lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test ac
       delete t;
     }
     for(auto & c:m_radosCtxPool) {
-      RadosTimeoutLogger rtl;
       c.close();
-      rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtx.close()", "no object");
     }
-    RadosTimeoutLogger rtl;
     m_cluster.shutdown();
-    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.shutdown()", "no object");
     throw;
   }
 }
@@ -184,15 +166,10 @@ BackendRados::~BackendRados() {
   for(auto& t: m_threads) {
     t->wait();
   }
-  RadosTimeoutLogger rtl;
   for(auto& c: m_radosCtxPool) {
-    rtl.reset();
     c.close();
-    rtl.logIfNeeded("In BackendRados::~BackendRados(): m_radosCtx.close()", "no object");
   }
-  rtl.reset();
   m_cluster.shutdown();
-  rtl.logIfNeeded("In BackendRados::~BackendRados(): m_cluster.shutdown()", "no object");
 }
 
 librados::IoCtx& BackendRados::getRadosCtx() {
@@ -213,7 +190,6 @@ void BackendRados::create(const std::string& name, const std::string& content) {
   wop.write_full(bl);
   retry:;
   {
-    RadosTimeoutLogger rtl;
     try {
       throwOnReturnedErrnoOrThrownStdException(
         [this, &name, &wop]() {
@@ -222,7 +198,6 @@ void BackendRados::create(const std::string& name, const std::string& content) {
         std::string("In BackendRados::create(), failed to create exclusively or write: ") + name);
     } catch (cta::exception::Errnum & en) {
       if (en.errorNumber() == EEXIST) {
-        rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
         // We can race with locking in some situations: attempting to lock a non-existing object creates it, of size
         // zero.
         // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
@@ -250,7 +225,6 @@ void BackendRados::create(const std::string& name, const std::string& content) {
         }
       }
     }
-    rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
   }
 }
 
@@ -260,17 +234,14 @@ void BackendRados::atomicOverwrite(const std::string& name, const std::string& c
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
-  RadosTimeoutLogger rtl;
   throwOnReturnedErrnoOrThrownStdException(
     [this, &name, &wop]() { return -getRadosCtx().operate(name, &wop); },
     std::string("In BackendRados::atomicOverwrite, failed to assert existence or write: ") + name);
-  rtl.logIfNeeded("In BackendRados::atomicOverwrite(): m_radosCtx.operate(assert_exists+write_full)", name);
 }
 
 std::string BackendRados::read(const std::string& name) {
   std::string ret;
   librados::bufferlist bl;
-  RadosTimeoutLogger rtl;
   try {
     throwOnReturnedErrnoOrThrownStdException(
     [this, &name, &bl]() {
@@ -284,7 +255,6 @@ std::string BackendRados::read(const std::string& name) {
       throw cta::exception::NoSuchObject(e.getMessageValue());
     }
   }
-  rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
   // Transient empty object can exist (due to locking)
   // They are regarded as not-existing.
   std::string errorMsg = "In BackendRados::read(): considering empty object (name=" + name + ") as non-existing.";
@@ -294,23 +264,19 @@ std::string BackendRados::read(const std::string& name) {
 }
 
 void BackendRados::remove(const std::string& name) {
-  RadosTimeoutLogger rtl;
   throwOnReturnedErrnoOrThrownStdException(
     [this, &name]() { return -getRadosCtx().remove(name); });
-  rtl.logIfNeeded("In BackendRados::remove(): m_radosCtx.remove()", name);
 }
 
 bool BackendRados::exists(const std::string& name) {
   uint64_t size;
   time_t date;
-  RadosTimeoutLogger rtl;
   int statRet;
   throwOnReturnedErrnoOrThrownStdException(
     [this, &statRet, &name, &size, &date]() {
       statRet = getRadosCtx().stat(name, &size, &date);
       return 0;
     }, "In BackendRados::exists: failed to getRadosCtx().stat()");
-  rtl.logIfNeeded("In BackendRados::exists(): m_radosCtx.stat()", name);
   if (ENOENT == -statRet) {
     return false;
   } else if (statRet) {
@@ -366,10 +332,8 @@ void BackendRados::ScopedLock::releaseNotify() {
   // of the lock-remove-(implicit unlock) cycle when we delete an object
   // we hence overlook the ENOENT errors.
   TIMESTAMPEDPRINT("Pre-release");
-  RadosTimeoutLogger rtl1;
-  throwOnReturnedErrnoOrThrownStdException([this, &rtl1]() {
+  throwOnReturnedErrnoOrThrownStdException([this]() {
       int rc=m_context.unlock(m_oid, "lock", m_clientId);
-      rtl1.logIfNeeded("In BackendRados::ScopedLock::releaseNotify(): m_context.unlock()", m_oid);
       return rc==-ENOENT?0:-rc;
     },
     std::string("In cta::objectstore::ScopedLock::release, failed unlock: ") +
@@ -380,10 +344,8 @@ void BackendRados::ScopedLock::releaseNotify() {
   librados::bufferlist bl;
   // We use a fire and forget aio call.
   librados::AioCompletion * completion = librados::Rados::aio_create_completion(nullptr, nullptr, nullptr);
-  RadosTimeoutLogger rtl2;
   throwOnReturnedErrnoOrThrownStdException([this, &completion, &bl]() { return -m_context.aio_notify(m_oid, completion, bl, 10000, nullptr);},
       "In BackendRados::ScopedLock::releaseNotify(): failed to aio_notify()");
-  rtl2.logIfNeeded("In BackendRados::ScopedLock::releaseNotify(): m_context.aio_notify()", m_oid);
   completion->release();
   m_lockSet = false;
   TIMESTAMPEDPRINT("Post-notify");
@@ -395,13 +357,11 @@ void BackendRados::ScopedLock::releaseBackoff() {
   // of the lock-remove-(implicit unlock) cycle when we delete an object
   // we hence overlook the ENOENT errors.
   TIMESTAMPEDPRINT("Pre-release");
-  RadosTimeoutLogger rtl1;
   int rc;
   throwOnReturnedErrnoOrThrownStdException([this, &rc]() {
     rc=m_context.unlock(m_oid, "lock", m_clientId);
     return 0;
   }, "In BackendRados::ScopedLock::releaseBackoff(): failed m_context.unlock()");
-  rtl1.logIfNeeded("In BackendRados::ScopedLock::releaseBackoff(): m_context.unlock()", m_oid);
   switch (-rc) {
     case ENOENT:
       break;
@@ -436,10 +396,8 @@ BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::stri
   m_internal->m_name = name;
   m_internal->m_future = m_internal->m_promise.get_future();
   TIMESTAMPEDPRINT("Pre-watch2");
-  RadosTimeoutLogger rtl;
   throwOnReturnedErrnoOrThrownStdException([this, &name]() { return -m_context.watch2(name, &m_watchHandle, m_internal.get());},
     "In BackendRados::LockWatcher::LockWatcher(): failed m_context.watch2()");
-  rtl.logIfNeeded("In BackendRados::LockWatcher::LockWatcher(): m_context.watch2()", name);
   TIMESTAMPEDPRINT("Post-watch2");
 }
 
@@ -470,7 +428,6 @@ BackendRados::LockWatcher::~LockWatcher() {
   m_internal->m_radosTimeoutLogger.reset();
   auto name=m_internal->m_name;
   librados::AioCompletion *completion = librados::Rados::aio_create_completion(m_internal.release(), nullptr, Internal::deleter);
-  RadosTimeoutLogger rtl;
   try {
     throwOnReturnedErrnoOrThrownStdException([this, &completion]() {
       m_context.aio_unwatch(m_watchHandle, completion);
@@ -481,7 +438,6 @@ BackendRados::LockWatcher::~LockWatcher() {
     cta::utils::segfault();
   }
   completion->release();
-  rtl.logIfNeeded("In BackendRados::LockWatcher::~LockWatcher(): m_context.aio_unwatch() call", name);
   TIMESTAMPEDPRINT("Post-aio_unwatch2");
 }
 
@@ -524,19 +480,16 @@ void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, Lock
   utils::Timer timeoutTimer;
   while (true) {
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
-    RadosTimeoutLogger rtl;
     if(lockType==LockType::Shared) {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
         rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
         return 0;
       }, "In BackendRados::lockNotify: failed radosCtx.lock_shared()");
-      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
     } else {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
         rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
         return 0;
       }, "In BackendRados::lockNotify: failed radosCtx.lock_exclusive()");
-      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
     }
     if (!rc) {
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-lock (shared) (got it)":"Post-lock (exclusive) (got it)");
@@ -551,19 +504,16 @@ void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, Lock
     LockWatcher watcher(radosCtx, name);
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-watch-setup/Pre-relock (shared)":"Post-watch-setup/Pre-relock (exclusive)");
     // We need to retry the lock after establishing the watch: it could have been released during that time.
-    rtl.reset();
     if (lockType==LockType::Shared) {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
         rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
         return 0;
       }, "In BackendRados::lockNotify: failed radosCtx.lock_shared()(2)");
-      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
     } else {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
         rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
         return 0;
       }, "In BackendRados::lockNotify: failed radosCtx.lock_shared()(2)");
-      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
     }
     if (!rc) {
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-relock (shared) (got it)":"Post-relock (exclusive) (got it)");
@@ -608,121 +558,6 @@ void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, Lock
   }
 }
 
-BackendRados::RadosLockTimingLogger BackendRados::g_RadosLockTimingLogger;
-
-void BackendRados::RadosLockTimingLogger::Measurements::addAttempt(double latency, double waitTime, double latencyMultiplier) {
-  totalLatency += latency;
-  totalWaitTime += waitTime;
-  totalLatencyMultiplier += latencyMultiplier;
-  if (attempts) {
-    minLatency = std::min(minLatency, latency);
-    maxLatency = std::max(maxLatency, latency);
-    minWaitTime = std::min(minWaitTime, waitTime);
-    maxWaitTime = std::max(maxWaitTime, waitTime);
-    minLatencyMultiplier = std::min(minLatencyMultiplier, latencyMultiplier);
-    maxLatencyMultiplier = std::max(maxLatencyMultiplier, latencyMultiplier);
-  } else {
-    minLatency = maxLatency = latency;
-    minWaitTime = maxWaitTime = waitTime;
-    minLatencyMultiplier = maxLatencyMultiplier = latencyMultiplier;
-  }
-  attempts++;
-  waitCount++;
-}
-
-void BackendRados::RadosLockTimingLogger::Measurements::addSuccess(double latency, double time) {
-  if (attempts) {
-    minLatency = std::min(minLatency, latency);
-    maxLatency = std::max(maxLatency, latency);
-  } else {
-    minLatency = maxLatency = latency;
-  }
-  totalLatency += latency;
-  totalTime = time;
-  attempts++;
-  BackendRados::g_RadosLockTimingLogger.addMeasurements(*this);
-}
-
-
-void BackendRados::RadosLockTimingLogger::addMeasurements(const Measurements& measurements) {
-  threading::MutexLocker ml(m_mutex);
-  if (m_measurements.totalCalls) {
-    m_measurements.minAttempts = std::min(measurements.attempts, m_measurements.minAttempts);
-    m_measurements.maxAttempts = std::max(measurements.attempts, m_measurements.maxAttempts);
-    m_measurements.minTotalTime = std::min(measurements.totalTime, m_measurements.minTotalTime);
-    m_measurements.maxTotalTime = std::max(measurements.totalTime, m_measurements.maxTotalTime);
-    m_measurements.minLatency = std::min(measurements.minLatency, m_measurements.minLatency);
-    m_measurements.maxLatency = std::max(measurements.maxLatency, m_measurements.maxLatency);
-  } else {
-    m_measurements.minAttempts = measurements.attempts;
-    m_measurements.maxAttempts = measurements.attempts;
-    m_measurements.minTotalTime = measurements.totalTime;
-    m_measurements.maxTotalTime = measurements.totalTime;
-    m_measurements.minLatency = measurements.minLatency;
-    m_measurements.maxLatency = measurements.maxLatency;
-  }
-  if (measurements.waitCount) {
-    if (m_measurements.waitCount) {
-      m_measurements.minWaitTime = std::min(measurements.minWaitTime, m_measurements.minWaitTime);
-      m_measurements.maxWaitTime = std::max(measurements.maxWaitTime, m_measurements.maxWaitTime);
-      m_measurements.minLatencyMultiplier = std::min(measurements.minLatencyMultiplier, m_measurements.minLatencyMultiplier);
-      m_measurements.maxLatencyMultiplier = std::max(measurements.maxLatencyMultiplier, m_measurements.maxLatencyMultiplier);
-    } else {
-      m_measurements.minWaitTime = measurements.minWaitTime;
-      m_measurements.maxWaitTime = measurements.maxWaitTime;
-      m_measurements.minLatencyMultiplier = measurements.minLatencyMultiplier;
-      m_measurements.maxLatencyMultiplier = measurements.maxLatencyMultiplier;
-    }
-  }
-  m_measurements.totalCalls++;
-  m_measurements.attempts += measurements.attempts;
-  m_measurements.waitCount += measurements.waitCount;
-  m_measurements.totalTime += measurements.totalTime;
-  m_measurements.totalLatency += measurements.totalLatency;
-  m_measurements.totalWaitTime += measurements.totalWaitTime;
-  m_measurements.totalLatencyMultiplier += measurements.totalLatencyMultiplier;
-  m_measurements.totalWaitTime += measurements.totalWaitTime;
-  if (m_timer.secs() > 60) {
-    logIfNeeded();
-  }
-}
-
-void BackendRados::RadosLockTimingLogger::logIfNeeded() {
-  if (m_measurements.totalCalls) {
-    {
-      std::ofstream logFile(RADOS_LOCK_PERFORMANCE_LOGGING_FILE, std::ofstream::app);
-      std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-      std::string date=std::ctime(&end_time);
-      // Chomp newline in the end
-      date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-      logFile << date << " pid=" << ::getpid() << " progname=" << program_invocation_name
-          << " totalCalls=" << m_measurements.totalCalls
-          << " averageAttempts=" << 1.0 * m_measurements.attempts / m_measurements.totalCalls
-          << " waitCount=" << m_measurements.waitCount
-          << " minAttempts=" << m_measurements.minAttempts
-          << " maxAttempts=" << m_measurements.maxAttempts
-          << " averageTotalTime=" << m_measurements.totalTime / m_measurements.totalCalls
-          << " minTotalTime=" << m_measurements.minTotalTime
-          << " maxTotalTime=" << m_measurements.maxTotalTime
-          << " averageLatency=" << (m_measurements.attempts? m_measurements.totalLatency / m_measurements.attempts : 0)
-          << " minLatency=" << m_measurements.minLatency
-          << " maxLatency=" << m_measurements.maxLatency
-          << " averageWaitTime=" << (m_measurements.waitCount? m_measurements.totalWaitTime / m_measurements.waitCount : 0)
-          << " minWaitTime=" << m_measurements.minWaitTime
-          << " maxWaitTime=" << m_measurements.maxWaitTime
-          << " averageLatencyMultiplier=" << (m_measurements.waitCount? m_measurements.totalLatencyMultiplier / m_measurements.waitCount : 0)
-          << " minLatencyMultiplier=" << m_measurements.minLatencyMultiplier
-          << " maxLatencyMultiplier=" << m_measurements.maxLatencyMultiplier
-          << " samplingTime=" << m_timer.secs(utils::Timer::resetCounter) <<  std::endl;
-    }
-    m_measurements = CumulatedMesurements();
-  }
-}
-
-BackendRados::RadosLockTimingLogger::~RadosLockTimingLogger() {
-  threading::MutexLocker ml(m_mutex);
-  logIfNeeded();
-}
 
 const size_t BackendRados::c_maxBackoff=16;
 const size_t BackendRados::c_backoffFraction=1;
@@ -742,26 +577,20 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
   // (betweend and 50-150%)
   size_t backoff=1;
   utils::Timer t, timeoutTimer;
-  RadosLockTimingLogger::Measurements timingMeasurements;
   uint64_t nbTriesToLock = 0;
   while (true) {
     nbTriesToLock++;
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
-    RadosTimeoutLogger rtl;
     if (lockType==LockType::Shared) {
-      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &timingMeasurements, &t, &timeoutTimer]() {
+      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &t, &timeoutTimer]() {
         rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &radosLockExpirationTime, 0);
-        timingMeasurements.addSuccess(t.secs(), timeoutTimer.secs());
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_shared()");
-      rtl.logIfNeeded("In BackendRados::lockBackoff(): radosCtx.lock_shared()", name);
     } else {
-      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &timingMeasurements, &t, &timeoutTimer]() {
+      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &t, &timeoutTimer]() {
         rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &radosLockExpirationTime, 0);
-        timingMeasurements.addSuccess(t.secs(), timeoutTimer.secs());
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_exclusive()");
-      rtl.logIfNeeded("In BackendRados::lockBackoff(): radosCtx.lock_exclusive()", name);
     }
     if (!rc) {
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-lock (shared) (got it)":"Post-lock (exclusive) (got it)");
@@ -788,7 +617,6 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
     ts.tv_sec = wait/(1000*1000);
     ts.tv_nsec = (wait % (1000*1000)) * 1000;
     nanosleep(&ts, nullptr);
-    timingMeasurements.addAttempt(1.0 * latencyUsecs / 1000 / 1000, 1.0 * wait / 1000 /1000, 1.0 * randFactor / 100);
     t.reset();
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
@@ -869,13 +697,11 @@ m_backend(be), m_name(name), m_value(value), m_job(), m_jobFuture(m_job.get_futu
     wop.write_full(m_radosBufferList);
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, createExclusiveCallback, nullptr);
     m_radosTimeoutLogger.reset();
-    RadosTimeoutLogger rtl;
     int rc;
     throwOnReturnedErrnoOrThrownStdException([this, &rc, &aioc, &wop]() {
       rc=m_backend.getRadosCtx().aio_operate(m_name, aioc, &wop);
       return 0;
     }, "In BackendRados::AsyncCreator::AsyncCreator(): failed m_backend.getRadosCtx().aio_operate()");
-    rtl.logIfNeeded("In BackendRados::AsyncCreator::AsyncCreator(): m_radosCtx.aio_operate() call", m_name);
     aioc->release();
     if (rc) {
       cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncCreator::AsyncCreator(): failed to launch aio_operate(): ")+m_name);
@@ -899,15 +725,12 @@ void BackendRados::AsyncCreator::createExclusiveCallback(librados::completion_t 
         // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
         // We will stat-poll the object and retry the create as soon as it's gone.
         // Prepare the retry timer (it will be used in the stat step).
-        if (!ac.m_retryTimer) ac.m_retryTimer.reset(new utils::Timer());
-        RadosTimeoutLogger rtl;
         int rc;
         librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
         throwOnReturnedErrnoOrThrownStdException([&rc, &ac, &aioc]() {
           rc=ac.m_backend.getRadosCtx().aio_stat(ac.m_name, aioc, &ac.m_size, &ac.m_time);
           return 0;
         }, "In BackendRados::AsyncCreator::createExclusiveCallback(): failed m_backend.getRadosCtx().aio_operate()");
-        rtl.logIfNeeded("In BackendRados::AsyncCreator::createExclusiveCallback(): m_radosCtx.aio_operate() call", ac.m_name);
       } else {
         cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
             std::string("In BackendRados::AsyncCreator::createExclusiveCallback(): could not create object: ") + ac.m_name);
@@ -938,13 +761,11 @@ void BackendRados::AsyncCreator::statCallback(librados::completion_t completion,
         wop.write_full(ac.m_radosBufferList);
         librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, createExclusiveCallback, nullptr);
         ac.m_radosTimeoutLogger.reset();
-        RadosTimeoutLogger rtl;
         int rc;
         throwOnReturnedErrnoOrThrownStdException([&rc, &ac, &aioc, &wop]() {
           rc=ac.m_backend.getRadosCtx().aio_operate(ac.m_name, aioc, &wop);
           return 0;
         }, "In BackendRados::AsyncCreator::statCallback(): failed m_backend.getRadosCtx().aio_operate()");
-        rtl.logIfNeeded("In BackendRados::AsyncCreator::statCallback(): m_radosCtx.aio_operate() call", ac.m_name);
         aioc->release();
         if (rc) {
           cta::exception::Errnum errnum (-rc,
@@ -966,21 +787,12 @@ void BackendRados::AsyncCreator::statCallback(librados::completion_t completion,
             << " size=" << ac.m_size << " time=" << ac.m_time;
         throw en;
       } else {
-        // The object is indeed zero-sized. We can just retry stat (for 10s max)
-        if (ac.m_retryTimer && (ac.m_retryTimer->secs() > 10)) {
-          exception::Errnum en(EEXIST, "In BackendRados::AsyncCreator::statCallback: Object is still here after 10s: ");
-          en.getMessage() << ac.m_name << "After statRet=" << -rados_aio_get_return_value(completion)
-              << " size=" << ac.m_size << " time=" << ac.m_time;
-          throw en;
-        }
-        RadosTimeoutLogger rtl;
         int rc;
         librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
         throwOnReturnedErrnoOrThrownStdException([&rc, &ac, &aioc]() {
           rc=ac.m_backend.getRadosCtx().aio_stat(ac.m_name, aioc, &ac.m_size, &ac.m_time);
           return 0;
         }, "In BackendRados::AsyncCreator::statCallback(): failed m_backend.getRadosCtx().aio_operate()");
-        rtl.logIfNeeded("In BackendRados::AsyncCreator::statCallback(): m_radosCtx.aio_operate() call", ac.m_name);
       }
     }
   } catch (...) {
@@ -1016,14 +828,12 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
             m_backend.lock(m_name, 100*10000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the read operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
-            RadosTimeoutLogger rtl;
             m_radosTimeoutLogger.reset();
             int rc;
             throwOnReturnedErrnoOrThrownStdException([this, &rc, &aioc]() {
               rc=m_backend.getRadosCtx().aio_read(m_name, aioc, &m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
               return 0;
             }, std::string("In AsyncUpdater::AsyncUpdater::lock_lambda(): failed getRadosCtx().aio_read(): ")+m_name);
-            rtl.logIfNeeded("BackendRados::AsyncUpdater::AsyncUpdater::lock_lambda(): getRadosCtx().aio_read()", m_name);
             aioc->release();
             if (rc) {
               cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::AsyncUpdater::lock_lambda(): failed to launch aio_read(): ")+m_name);
@@ -1133,14 +943,12 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
       }
       // Launch the write
       librados::AioCompletion * aioc = librados::Rados::aio_create_completion(m_parentUpdater, commitCallback, nullptr);
-      RadosTimeoutLogger rtl;
       au.m_radosTimeoutLogger.reset();
       int rc;
       throwOnReturnedErrnoOrThrownStdException([&rc, &au, &aioc]() {
         rc=au.m_backend.getRadosCtx().aio_write_full(au.m_name, aioc, au.m_radosBufferList);
         return 0;
       }, "In BackendRados::AsyncUpdater::UpdateJob::execute(): failed m_backend.getRadosCtx().aio_write_full()");
-      rtl.logIfNeeded("In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): m_radosCtx.aio_write_full() call", au.m_name);
       aioc->release();
       if (rc) {
         cta::exception::Errnum errnum (-rc,
@@ -1167,13 +975,11 @@ void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completio
     // Launch the async unlock.
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, unlockCallback, nullptr);
     au.m_radosTimeoutLogger.reset();
-    RadosTimeoutLogger rtl;
     int rc;
     throwOnReturnedErrnoOrThrownStdException([&rc, &au, &aioc]() {
       rc=au.m_backend.getRadosCtx().aio_unlock(au.m_name, "lock", au.m_lockClient, aioc);
       return 0;
     }, "In BackendRados::AsyncUpdater::commitCallback(): failed to m_backend.getRadosCtx().aio_unlock()");
-    rtl.logIfNeeded("In BackendRados::AsyncUpdater::commitCallback(): m_radosCtx.aio_unlock", au.m_name);
     aioc->release();
     if (rc) {
       cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::commitCallback(): failed to launch aio_unlock()")+au.m_name);
@@ -1232,14 +1038,12 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
             // Locking is done, we can launch the remove operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, deleteCallback, nullptr);
             m_radosTimeoutLogger.reset();
-            RadosTimeoutLogger rtl;
             int rc;
             throwOnReturnedErrnoOrThrownStdException([this, &rc, &aioc]() {
               rc=m_backend.getRadosCtx().aio_remove(m_name, aioc);
               return 0;
             }, "In BackendRados::AsyncDeleter::AsyncDeleter(): failed m_backend.getRadosCtx().aio_remove()");
-            rtl.logIfNeeded("In BackendRados::AsyncDeleter::AsyncDeleter(): m_radosCtx.aio_remove() call", m_name);
-            aioc->release();
+                        aioc->release();
             if (rc) {
               cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::AsyncDeleter(): failed to launch aio_remove(): ")+m_name);
               throw Backend::CouldNotDelete(errnum.getMessageValue());
@@ -1297,14 +1101,12 @@ void BackendRados::AsyncLockfreeFetcher::AioReadPoster::execute() {
   try {
     // Just start the read.
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(m_parentFetcher, fetchCallback, nullptr);
-    RadosTimeoutLogger rtl;
     au.m_radosTimeoutLogger.reset();
     int rc;
     throwOnReturnedErrnoOrThrownStdException([&rc, &au, &aioc]() {
       rc=au.m_backend.getRadosCtx().aio_read(au.m_name, aioc, &au.m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
       return 0;
     }, "In BackendRados::AsyncLockfreeFetcher::AioReadPoster::execute(): failed m_backend.getRadosCtx().aio_read()");
-    rtl.logIfNeeded("BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): m_radosCtx.aio_read()", au.m_name);
     aioc->release();
     if (rc) {
       cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): failed to launch aio_read(): ")+au.m_name);
