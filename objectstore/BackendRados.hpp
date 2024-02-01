@@ -125,69 +125,7 @@ public:
 
   ScopedLock * lockShared(const std::string& name, uint64_t timeout_us=0) override;
 private:
-  /**
-   * A class for logging the calls to rados taking too long.
-   * If RADOS_SLOW_CALLS_LOGGING is not defined, this is just an empty shell.
-   */
-  class RadosTimeoutLogger {
-  public:
-    void logIfNeeded(const std::string & radosCall, const std::string & objectName) {
-      #ifdef RADOS_SLOW_CALLS_LOGGING
-      if (m_timer.secs() >= RADOS_SLOW_CALL_TIMEOUT) {
-        cta::threading::MutexLocker ml(g_mutex);
-        std::ofstream logFile(RADOS_SLOW_CALLS_LOGGING_FILE, std::ofstream::app);
-
-        auto now = std::chrono::system_clock::now();
-        auto duration = now.time_since_epoch();
-        std::time_t end_time = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-        duration -= std::chrono::seconds(end_time);
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
-
-        char date[80];
-        int len = strftime(date, 80, "%b %e %T", localtime(&end_time));
-        snprintf(date+len, 79-len, ".%06ld ", us);
-
-        logFile << date << " PID=\"" << ::getpid() << "\" TID=\"" << syscall(SYS_gettid) << "\" op=\"" << radosCall
-                << "\" obj=\"" << objectName << "\" duration=\"" << m_timer.secs() << "\"" << std::endl;
-      }
-      #endif //RADOS_SLOW_CALLS_LOGGING
-    }
-    void reset() {
-      #ifdef RADOS_SLOW_CALLS_LOGGING
-      m_timer.reset();
-      #endif //RADOS_SLOW_CALLS_LOGGING
-    }
-  private:
-    #ifdef RADOS_SLOW_CALLS_LOGGING
-    cta::utils::Timer m_timer;
-    static cta::threading::Mutex g_mutex;
-    #endif //RADOS_SLOW_CALLS_LOGGING
-  };
-
-  /**
-   * A class for logging lock timings and performance
-   */
-  class RadosLockTimingLogger {
-  public:
-    struct Measurements {
-      size_t attempts = 0;
-      size_t waitCount = 0;
-      double totalTime = 0;
-      double totalLatency = 0;
-      double minLatency = 0;
-      double maxLatency = 0;
-      double totalWaitTime = 0;
-      double minWaitTime = 0;
-      double maxWaitTime = 0;
-      double totalLatencyMultiplier = 0;
-      double minLatencyMultiplier = 0;
-      double maxLatencyMultiplier = 0;
-      void addSuccess (double latency, double time);
-      void addAttempt(double latency, double waitTime, double latencyMultiplier);
-   };
     void addMeasurements(const Measurements & measurements);
-    void logIfNeeded();
-    ~RadosLockTimingLogger();
   private:
     struct CumulatedMesurements: public Measurements {
       size_t totalCalls = 0;
@@ -199,7 +137,6 @@ private:
     CumulatedMesurements m_measurements;
     threading::Mutex m_mutex;
   };
-  static RadosLockTimingLogger g_RadosLockTimingLogger;
 
   /**
    * A class handling the watch part when waiting for a lock.

@@ -33,13 +33,6 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 
-// This macro should be defined to get printouts to understand timings of locking.
-// Usually while running BackendTestRados/BackendAbstractTest.MultithreadLockingInterface
-// Also define  TEST_RADOS in objectstore/BackendRadosTestSwitch.hpp.
-// Nunber of threads/passes should be reduced in the test for any usefullness.
-#undef DEBUG_RADOS_LOCK_TIMINGS
-#ifdef DEBUG_RADOS_LOCK_TIMINGS
-
 namespace {
   std::atomic<double> previousSec;
   std::atomic<bool> everReleased{false};
