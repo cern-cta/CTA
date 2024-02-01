@@ -33,48 +33,6 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 
-namespace {
-  std::atomic<double> previousSec;
-  std::atomic<bool> everReleased{false};
-  std::atomic<double> lastReleased;
-
-void timestampedPrint (const char * f, const char *s) {
-  struct ::timeval tv;
-  ::gettimeofday(&tv, nullptr);
-  double localPreviousSec=previousSec;
-  double secs=previousSec=tv.tv_sec % 1000 + tv.tv_usec / 1000.0 / 1000;
-  uint8_t tid = syscall(__NR_gettid) % 100;
-  ::printf ("%03.06f %02.06f %02d %s %s\n", secs, secs - localPreviousSec, tid, f, s);
-  ::fflush(::stdout);
-}
-
-void notifyReleased() {
-  struct ::timeval tv;
-  ::gettimeofday(&tv, nullptr);
-  lastReleased=tv.tv_sec + tv.tv_usec / 1000.0 / 1000;
-  everReleased=true;
-}
-
-void notifyLocked() {
-  if (everReleased) {
-    struct ::timeval tv;
-    ::gettimeofday(&tv, nullptr);
-    ::printf ("Relocked after %02.06f\n", (tv.tv_sec + tv.tv_usec / 1000.0 / 1000) - lastReleased);
-    ::fflush(::stdout);
-  }
-}
-
-}
-
-#define TIMESTAMPEDPRINT(A) timestampedPrint(__PRETTY_FUNCTION__, (A))
-#define NOTIFYLOCKED() notifyLocked()
-#define NOTIFYRELEASED() notifyReleased()
-#else
-#define TIMESTAMPEDPRINT(A)
-#define NOTIFYLOCKED()
-#define NOTIFYRELEASED()
-#endif
-
 namespace cta::objectstore {
 
 BackendRados::BackendRados(log::Logger& logger, const std::string& userId, const std::string& pool, const std::string& radosNameSpace) :
