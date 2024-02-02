@@ -1,22 +1,3 @@
-#### EOS-4-START ####
-#eos-archive-4.8.105-1.el7.x86_64.rpm
-#eos-cleanup-4.8.105-1.el7.x86_64.rpm
-#eos-client-4.8.105-1.el7.x86_64.rpm
-#eos-fuse-4.8.105-1.el7.x86_64.rpm
-#eos-fuse-core-4.8.105-1.el7.x86_64.rpm
-#eos-fuse-sysv-4.8.105-1.el7.x86_64.rpm
-#eos-fusex-4.8.105-1.el7.x86_64.rpm
-#eos-fusex-core-4.8.105-1.el7.x86_64.rpm
-#eos-fusex-selinux-4.8.105-1.el7.x86_64.rpm
-#eos-ns-inspect-4.8.105-1.el7.x86_64.rpm
-#eos-server-4.8.105-1.el7.x86_64.rpm
-#eos-srm-4.8.105-1.el7.x86_64.rpm
-#eos-test-4.8.105-1.el7.x86_64.rpm
-#eos-testkeytab-4.8.105-1.el7.x86_64.rpm
-#eos-xrootd-4.12.8-1.el7.*
-#eos-xrootd-debuginfo-4.12.8-1.el7.*
-#### EOS-4-END ####
-#### EOS-5-START ####
 eos-archive-5.2.8-1.el9.x86_64
 eos-cleanup-5.2.8-1.el9.x86_64
 eos-client-5.2.8-1.el9.x86_64
@@ -32,29 +13,8 @@ eos-srm-5.2.8-1.el9.x86_64
 eos-test-5.2.8-1.el9.x86_64
 eos-testkeytab-5.2.8-1.el9.x86_64
 eos-quarkdb-5.2.8-1.el9.x86_64
-#### EOS-5-END ####
 eos-folly-2019.11.11.00-1.el9.*
 eos-folly-deps-2019.11.11.00-1.el9.*
-#### XROOTD-4-START ####
-#python2-xrootd-4.12.8-1.el7.*
-#python3-xrootd-4.12.8-1.el7.*
-#xrootd-4.12.8-1.el7.*
-#xrootd-client-4.12.8-1.el7.*
-#xrootd-client-devel-4.12.8-1.el7.*
-#xrootd-client-libs-4.12.8-1.el7.*
-#xrootd-debuginfo-4.12.8-1.el7.*
-#xrootd-devel-4.12.8-1.el7.*
-#xrootd-doc-4.12.8-1.el7.*
-#xrootd-fuse-4.12.8-1.el7.*
-#xrootd-libs-4.12.8-1.el7.*
-#xrootd-private-devel-4.12.8-1.el7.*
-#xrootd-selinux-4.12.8-1.el7.*
-#xrootd-server-4.12.8-1.el7.*
-#xrootd-server-devel-4.12.8-1.el7.*
-#xrootd-server-libs-4.12.8-1.el7.*
-#xrootd-tests-4.12.8-1.el7.*
-#### XROOTD-4-END ####
-#### XROOTD-5-START ####
 python2-xrootd-5.6.1-1.el9.*
 python3-xrootd-5.6.1-1.el9.*
 xrootd-5.6.1-1.el9.*
@@ -72,4 +32,3 @@ xrootd-server-5.6.1-1.el9.*
 xrootd-server-devel-5.6.1-1.el9.*
 xrootd-server-libs-5.6.1-1.el9.*
 xrootd-tests-5.6.1-1.el9.*
-#### XROOTD-5-END ####
