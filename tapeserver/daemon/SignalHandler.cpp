@@ -19,10 +19,13 @@
 #include "ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/FileLogger.hpp"
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <list>
+#include <fcntl.h>
 
 namespace cta::tape::daemon {
 
@@ -103,7 +106,40 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGHUP:
   case SIGQUIT:
   case SIGPIPE:
-  case SIGUSR1:
+  case SIGUSR1: // Custom signal to reset logging file descriptor
+  {
+    // Check if we are logging to a file
+   if(m_processManager.logContext().logger().m_logType != cta::log::LoggerType::FILE){
+      m_processManager.logContext().log(log::INFO, "In signal handler, not logging to file, ignoring SIGUSR1");
+      break;
+    }
+
+     m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1, trying to obtain a new file descriptor for logging");
+
+    // Get a new file descriptor for the log file
+    cta::log::FileLogger& fileLogger =
+      dynamic_cast<cta::log::FileLogger&>(m_processManager.logContext().logger());
+
+    int oldFd = fileLogger.m_fd;
+
+    int newFd = ::shm_open(m_logFilePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+
+    // Update the shared memory file descriptor.
+    fileLogger.m_fd = newFd;
+
+    // Close current old descriptor
+    ::shm_unlink(oldFd);
+
+    // If there was an error while getting the new file descriptor shutdown.
+    if (newFd == -1){
+     m_shutdownRequested=true;
+     // We no longer have a valid fd to log to. Try to generate a new one
+     // specific for errors if that fails throw.
+
+    }
+    m_processManager.logContext().log(log::INFO, "In signal handler, successfully changed logging file descriptor");
+    break;
+  }
   case SIGUSR2:
   case SIGTSTP:
   case SIGTTIN:

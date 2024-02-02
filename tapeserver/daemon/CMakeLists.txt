@@ -44,7 +44,8 @@ target_link_libraries(ctatapedaemon
   ctaTapeServerDaemon
   SCSI
   TapeDrive
-  File)
+  File
+  rt)
 
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp
