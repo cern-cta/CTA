@@ -40,7 +40,7 @@ public:
   void commit();
 
   // ============================== Job management =============================
-  void addJob(uint32_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
+  void addJob(uint64_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
     uint16_t maxReportRetries);
 
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);

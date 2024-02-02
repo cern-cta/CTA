@@ -23,7 +23,14 @@
 
 namespace cta::postgresscheddb {
 
-void RetrieveRequest::insert() {
+  /*!
+  * Retrieve request exception
+  */
+  class RetrieveRequestException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+  };
+
+  void RetrieveRequest::insert() {
   postgresscheddb::sql::RetrieveJobQueueRow           row;
   postgresscheddb::blobser::RetrieveJobs              rj;
   postgresscheddb::blobser::RetrieveRequestRepackInfo ri;
@@ -46,18 +53,18 @@ void RetrieveRequest::insert() {
   // Instead each tapefile is a part of the retrieve job protobuf.
   // So fill in the protobuf Job and Tapefile info here:
 
-  for(auto &j: m_jobs) {
+  for(const auto &j: m_jobs) {
     postgresscheddb::blobser::RetrieveJob *pb_job = rj.add_jobs();
     postgresscheddb::blobser::TapeFile *pb_tf = pb_job->mutable_tapefile();
     const cta::common::dataStructures::TapeFile *tf = nullptr;
-    for(auto &f: m_archiveFile.tapeFiles) {
+    for(const auto &f: m_archiveFile.tapeFiles) {
       if (f.copyNb == j.copyNb) {
         tf = &f;
         break;
       }
     }
     if (!tf) {
-      throw std::runtime_error("Found job without tapefile");
+      throw RetrieveRequestException("Found job without tapefile");
     }
     pb_tf->set_vid(tf->vid);
     pb_tf->set_fseq(tf->fSeq);
@@ -77,11 +84,11 @@ void RetrieveRequest::insert() {
     pb_job->set_totalreportretries(j.totalreportretries);
     pb_job->set_isfailed(j.isfailed);
 
-    for(auto &s: j.failurelogs) {
+    for(const auto &s: j.failurelogs) {
       pb_job->add_failurelogs(s);
     }
 
-    for(auto &s: j.reportfailurelogs) {
+    for(const auto &s: j.reportfailurelogs) {
       pb_job->add_reportfailurelogs(s);
     }
 
@@ -102,7 +109,7 @@ void RetrieveRequest::insert() {
         pb_job->set_status(postgresscheddb::blobser::RetrieveJobStatus::RJS_ToReportToRepackForFailure);
         break;
       default:
-        throw  std::runtime_error("unexpected status in RetrieveRequest insert");
+        throw  RetrieveRequestException("unexpected status in RetrieveRequest insert");
     }
   }
 
@@ -121,10 +128,10 @@ void RetrieveRequest::insert() {
   ri.set_file_buffer_url(m_repackInfo.fileBufferURL);
   ri.set_has_user_provided_file(m_repackInfo.hasUserProvidedFile);
 
-  for(auto &m: m_repackInfo.archiveRouteMap) {
+  for(const auto &[key, value]: m_repackInfo.archiveRouteMap) {
     postgresscheddb::blobser::RetrieveRequestArchiveRoute *ar = ri.add_archive_routes();
-    ar->set_copynb(m.first);
-    ar->set_tapepool(m.second);
+    ar->set_copynb(key);
+    ar->set_tapepool(value);
   }
 
   for(auto &c: m_repackInfo.copyNbsToRearchive) {
@@ -151,7 +158,7 @@ void RetrieveRequest::insert() {
 }
 
 void RetrieveRequest::update() const {
-  throw std::runtime_error("update not implemented.");
+  throw RetrieveRequestException("update not implemented.");
 }
 
 void RetrieveRequest::commit() {
@@ -161,20 +168,20 @@ void RetrieveRequest::commit() {
   m_txn.reset();
 }
 
-void RetrieveRequest::setFailureReason(const std::string & reason) const{
-  throw std::runtime_error("setFailureReason not implemented.");
+void RetrieveRequest::setFailureReason(std::string_view reason) const{
+  throw RetrieveRequestException("setFailureReason not implemented.");
 }
 
-bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc) const {
-  throw std::runtime_error("addJobFailure not implemented.");
+bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const {
+  throw RetrieveRequestException("addJobFailure not implemented.");
 }
 
 void RetrieveRequest::setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const {
-  throw std::runtime_error("setRepackInfo not implemented.");
+  throw RetrieveRequestException("setRepackInfo not implemented.");
 }
 
 void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status) const {
-  throw std::runtime_error("setJobStatus not implemented.");
+  throw RetrieveRequestException("setJobStatus not implemented.");
 }
 
 void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest) {
@@ -196,7 +203,7 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
   m_jobs.clear();
 
   // create jobs for each tapefile in the archiveFile;
-  for(auto &tf: m_archiveFile.tapeFiles) {
+  for(const auto &tf: m_archiveFile.tapeFiles) {
     m_jobs.emplace_back();
     m_jobs.back().copyNb = tf.copyNb;
     m_jobs.back().maxretrieswithinmount = hardcodedRetriesWithinMount;
@@ -210,7 +217,7 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
   m_activity = retrieveRequest.activity;
 }
 
-void RetrieveRequest::setDiskSystemName(const std::string & diskSystemName) {
+void RetrieveRequest::setDiskSystemName(std::string_view diskSystemName) {
   m_diskSystemName = diskSystemName;
 }
 
@@ -219,24 +226,24 @@ void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
 }
 
 void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
-  throw std::runtime_error("setFirstSelectedTime not implemented.");
+  throw RetrieveRequestException("setFirstSelectedTime not implemented.");
 }
 
 void RetrieveRequest::setCompletedTime(const uint64_t completedTime) const {
-  throw std::runtime_error("setCompletedTime not implemented.");
+  throw RetrieveRequestException("setCompletedTime not implemented.");
 }
 
 void RetrieveRequest::setReportedTime(const uint64_t reportedTime) const {
-  throw std::runtime_error("setReportedTime not implemented.");
+  throw RetrieveRequestException("setReportedTime not implemented.");
 }
 
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   m_actCopyNb = activeCopyNb;
 
   // copy the active job info to the request level columns
-  for(auto &j: m_jobs) {
+  for(const auto &j: m_jobs) {
     if (j.copyNb != m_actCopyNb) continue;
-    for(auto &tf: m_archiveFile.tapeFiles) {
+    for(const auto &tf: m_archiveFile.tapeFiles) {
       if (tf.copyNb != m_actCopyNb) continue;
 
       m_status = j.status;
@@ -251,11 +258,11 @@ void RetrieveRequest::setIsVerifyOnly(bool isVerifyOnly) {
 }
 
 void RetrieveRequest::setFailed() const {
-  throw std::runtime_error("setFailed not implemented.");
+  throw RetrieveRequestException("setFailed not implemented.");
 }
 
 std::list<RetrieveRequest::RetrieveReqJobDump> RetrieveRequest::dumpJobs() const {
-  throw std::runtime_error("dumpJobs not implemented.");
+  throw RetrieveRequestException("dumpJobs not implemented.");
 }
 
 RetrieveRequest& RetrieveRequest::operator=(const postgresscheddb::sql::RetrieveJobQueueRow &row) {
@@ -351,7 +358,7 @@ RetrieveRequest& RetrieveRequest::operator=(const postgresscheddb::sql::Retrieve
         m_jobs.back().status = postgresscheddb::RetrieveJobStatus::RJS_ToReportToRepackForFailure;
         break;
       default:
-        throw std::runtime_error("unexpected status in RetrieveRequest assign from row");
+        throw RetrieveRequestException("unexpected status in RetrieveRequest assign from row");
     }
   }
 

@@ -84,14 +84,14 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   aReq->setEntryLog(request.creationLog);
 
   std::list<postgresscheddb::ArchiveRequest::JobDump> jl;
-  for(auto & copy:criteria.copyToPoolMap) {
+  for(auto & [key, value]:criteria.copyToPoolMap) {
     const uint32_t hardcodedRetriesWithinMount = 2;
     const uint32_t hardcodedTotalRetries = 2;
     const uint32_t hardcodedReportRetries = 2;
-    aReq->addJob(copy.first, copy.second, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
-    jl.push_back(postgresscheddb::ArchiveRequest::JobDump());
-    jl.back().copyNb = copy.first;
-    jl.back().tapePool = copy.second;
+    aReq->addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
+    jl.emplace_back(postgresscheddb::ArchiveRequest::JobDump());
+    jl.back().copyNb = key;
+    jl.back().tapePool = value;
   }
 
   if(jl.empty()) {
@@ -392,7 +392,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return.
-  std::unique_ptr<postgresscheddb::TapeMountDecisionInfo> privateRet(new postgresscheddb::TapeMountDecisionInfo(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger));
+  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // Take an exclusive lock on the scheduling
@@ -404,12 +404,10 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
 
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
-  {
-    log::ScopedParamContainer params(logContext);
-    params.add("lockSchedGlobalTime", lockSchedGlobalTime)
-          .add("fetchMountInfoTime", fetchMountInfoTime);
-    logContext.log(log::INFO, "In PostgresSchedDB::getMountInfo(): success.");
-  }
+  log::ScopedParamContainer params(logContext);
+  params.add("lockSchedGlobalTime", lockSchedGlobalTime)
+        .add("fetchMountInfoTime", fetchMountInfoTime);
+  logContext.log(log::INFO, "In PostgresSchedDB::getMountInfo(): success.");
 
   return ret;
 }
@@ -425,8 +423,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return
-  std::unique_ptr<PostgresSchedDB::TapeMountDecisionInfo> privateRet(new postgresscheddb::TapeMountDecisionInfo(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger));
+  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
+
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto fetchNoLockTime = t.secs(utils::Timer::resetCounter);
@@ -434,25 +433,25 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
 
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
-  {
-    log::ScopedParamContainer params(logContext);
-    params.add("fetchNoLockTime", fetchNoLockTime)
-          .add("fetchMountInfoTime", fetchMountInfoTime);
-    logContext.log(log::INFO, "In PostgresSchedDB::getMountInfoNoLock(): success.");
-  }
+  log::ScopedParamContainer params(logContext);
+  params.add("fetchNoLockTime", fetchNoLockTime)
+        .add("fetchMountInfoTime", fetchMountInfoTime);
+  logContext.log(log::INFO, "In PostgresSchedDB::getMountInfoNoLock(): success.");
   return ret;
 }
 
 void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc)
 {
-  utils::Timer t, t2;
+  utils::Timer t;
+  utils::Timer t2;
+
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
 
-  auto &txn = reinterpret_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
+  auto &txn = static_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
   // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
-  std::map<std::string,common::dataStructures::MountPolicy> cachedMountPolicies;
-  for(auto &mp : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
+  std::map<std::string,common::dataStructures::MountPolicy, std::less<>> cachedMountPolicies;
+  for(const auto &mp : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
     cachedMountPolicies[mp.name] = mp;
   }
 
@@ -484,8 +483,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
     // we fall back to the mount policy values cached in the queue.
     uint64_t priority;
     time_t minRequestAge;
-    auto mpIt = cachedMountPolicies.find(ajsr.mountPolicy);
-    if(mpIt != cachedMountPolicies.end()) {
+    if(auto mpIt = cachedMountPolicies.find(ajsr.mountPolicy); mpIt != cachedMountPolicies.end()) {
       priority = mpIt->second.archivePriority;
       minRequestAge = mpIt->second.archiveMinRequestAge;
     } else {
@@ -498,8 +496,8 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
   }
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
-  for(auto &pm : potentialMounts) {
-    tmdi.potentialMounts.push_back(pm.second);
+  for(const auto &[mt, pm] : potentialMounts) {
+    tmdi.potentialMounts.push_back(pm);
   }
 
 

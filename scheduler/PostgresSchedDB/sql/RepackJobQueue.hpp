@@ -71,7 +71,7 @@ struct RepackJobQueueRow {
     *this = rset;
   }
 
-  RepackJobQueueRow& operator=(const rdbms::Rset &rset) noexcept {
+  RepackJobQueueRow& operator=(const rdbms::Rset &rset) {
     repackReqId               = rset.columnUint64("REPACK_REQID");
     vid                       = rset.columnString("VID");
     bufferUrl                 = rset.columnString("BUFFER_URL");

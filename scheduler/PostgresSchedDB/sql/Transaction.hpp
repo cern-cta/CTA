@@ -33,31 +33,9 @@ public:
   Transaction(Transaction&) = delete;
 
   /**
-   * Move constructor
-   *
-   * @param other  The other object
-   */
-  Transaction(Transaction&& other) noexcept;
-
-  /**
-   * Destructor
-   *
-   * Aborts the transaction
-   */
-  ~Transaction() noexcept;
-
-  /**
    * Prohibit copy assignment
    */
   Transaction &operator=(const Transaction &) = delete;
-
-  /**
-   * Move assignment operator
-   *
-   * @param rhs The object on the right-hand side of the operator
-   * @return This object
-   */
-  Transaction &operator=(Transaction &&rhs) noexcept;
 
   rdbms::Conn &conn();
 
@@ -79,6 +57,14 @@ public:
    * Abort and roll back the transaction
    */
   void abort();
+
+  /**
+   * Destructor
+   *
+   * Aborts the transaction
+   */
+
+  ~Transaction() noexcept;
 
 private:
   

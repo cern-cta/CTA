@@ -70,7 +70,7 @@ void ArchiveRequest::commit() {
   m_txn.reset();
 }
 
-void ArchiveRequest::addJob(uint32_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
+void ArchiveRequest::addJob(uint64_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   Job newJob;
   newJob.copyNb = copyNumber;
   newJob.status = ArchiveJobStatus::AJS_ToTransferForUser;

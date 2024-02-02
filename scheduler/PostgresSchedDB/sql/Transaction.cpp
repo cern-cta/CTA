@@ -25,19 +25,10 @@ Transaction::Transaction(rdbms::ConnPool &connPool) :
   m_conn.executeNonQuery("BEGIN");
 }
 
-Transaction::Transaction(Transaction &&other) noexcept:
-  m_conn(std::move(other.m_conn)), m_begin(other.m_begin) { }
-
 Transaction::~Transaction() { 
   if (m_begin) {
     m_conn.rollback();
   }
-}
-
-Transaction &Transaction::operator=(Transaction &&rhs) noexcept {
-  m_conn = std::move(rhs.m_conn);
-  m_begin = rhs.m_begin;
-  return *this;
 }
 
 void Transaction::lockGlobal(uint64_t lockId) {

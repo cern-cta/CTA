@@ -86,9 +86,9 @@ public:
     bool isfailed{false};
   };
 
-  void setFailureReason(const std::string & reason) const;
+  void setFailureReason(std::string_view reason) const;
 
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc) const;
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
 
   void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const;
 
@@ -101,7 +101,7 @@ public:
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
 
-  void setDiskSystemName(const std::string & diskSystemName);
+  void setDiskSystemName(std::string_view diskSystemName);
 
   void setCreationTime(const uint64_t creationTime);
 
@@ -122,7 +122,7 @@ public:
   uint64_t                                     m_mountId = 0;
   postgresscheddb::RetrieveJobStatus           m_status;
   std::string                                  m_vid;
-  uint16_t                                     m_priority = 0;
+  uint64_t                                     m_priority = 0;
   time_t                                       m_retrieveMinReqAge = 0;
   time_t                                       m_startTime = 0;
   std::string                                  m_failureReportUrl;

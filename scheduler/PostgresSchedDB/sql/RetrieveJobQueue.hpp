@@ -37,7 +37,7 @@ struct RetrieveJobQueueRow {
   RetrieveJobStatus status = RetrieveJobStatus::RJS_ToTransfer;
   std::string vid;
   std::optional<std::string> activity;
-  uint16_t actCopyNb = 0;
+  uint32_t actCopyNb = 0;
   uint16_t priority = 0;
   time_t retMinReqAge = 0;
   time_t startTime = 0;
