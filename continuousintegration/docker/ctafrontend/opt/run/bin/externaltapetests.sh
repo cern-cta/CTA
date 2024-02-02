@@ -15,4 +15,14 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-/opt/run/bin/ctaeos-mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log
+. /opt/run/bin/init_pod.sh
+
+set -e
+
+yum-config-manager --enable cta-artifacts
+yum-config-manager --enable ceph
+
+# Install missing RPMs
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common cta-systemtests
+
+2>&1 cta-osmReaderTest ${DEVICE_NAME} ${DRIVE_DEVICE}

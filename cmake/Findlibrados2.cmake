@@ -19,7 +19,7 @@
 #     LIBRADOS2_LIBRARIES
 
 find_path(LIBRADOS2_INCLUDE_DIRS
-  librados.hpp
+  librados.h
   PATHS /usr/include/rados
   NO_DEFAULT_PATH)
 

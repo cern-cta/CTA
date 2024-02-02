@@ -36,5 +36,12 @@ trap "rm -rf $rpm_dir" EXIT
 mkdir -p $rpm_dir
 cp -r $rpm_source $rpm_dir
 
-echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
-sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
+if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
+  echo "Not running on AlmaLinux 9"
+  echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
+  sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
+else
+  echo "Running on AlmaLinux 9"
+  echo "podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host"
+  podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host
+fi

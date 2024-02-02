@@ -19,46 +19,27 @@
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
-yum-config-manager --enable castor
 
-# source library configuration file
-echo "Using this configuration for library:"
-/opt/run/bin/init_library.sh
-cat /tmp/library-rc.sh
-. /tmp/library-rc.sh
+# Install missing RPMs
+yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python3
 
-ln -s /dev/${LIBRARYDEVICE} /dev/smc
+## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
+# Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
+# Andreas is fixing eos-(client|server) rpms to depend on eos-protobuf3 instead
+# yum -y install eos-protobuf3
 
-
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  # systemd is available
-
-cat <<EOF >/etc/sysconfig/cta-rmcd
-DAEMON_COREFILE_LIMIT=unlimited
-CTA_RMCD_OPTIONS=/dev/smc
+cat <<EOF > /etc/cta/cta-cli.conf
+# The CTA frontend address in the form <FQDN>:<TCPPort>
+# solved by kubernetes DNS server so KIS...
+cta.endpoint ctafrontend:10955
 EOF
 
-  # install RPMs
-  yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
-  # rmcd will be running as non root user, we need to fix a few things:
-  # device access rights
-  chmod 666 /dev/${LIBRARYDEVICE}
-
-  echo "Launching cta-rmcd with systemd:"
-  systemctl start cta-rmcd
-
-  echo "Status is now:"
-  systemctl status cta-rmcd
-
+if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
+  # sleep forever but exit immediately when pod is deleted
+  exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
 else
-  # systemd is not available
-  # install RPMs?
-  yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
-
-  # to get rmcd logs to stdout
-  tail -F /var/log/cta/cta-rmcd.log &
-
-  runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
-
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
 fi

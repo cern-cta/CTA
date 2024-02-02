@@ -1,0 +1,77 @@
+###########################################################
+# A prepare request with the Prep_EVICT flag can only call
+# XrdMgmOfs::prepare() if XRootD believes an alternative
+# Prepare plugin is present.  "xrootd.fslib -2" invokes
+# XrdSfsGetFileSystem2() which tells XRootD that such
+# a plugin is present.
+xrootd.fslib -2 libXrdEosMgm.so
+xrootd.seclib libXrdSec.so
+xrootd.async off nosf
+xrootd.chksum adler32
+###########################################################
+
+xrd.sched mint 8 maxt 256 idle 64
+###########################################################
+all.export /
+all.role manager
+###########################################################
+oss.fdlimit 16384 32768
+###########################################################
+# UNIX authentication
+sec.protocol unix
+# SSS authentication
+sec.protocol sss -c /etc/eos.keytab -s /etc/eos.keytab
+# KRB  authentication
+#sec.protocol krb5 -exptkn:/var/eos/auth/krb5#<uid> host/<host>@CERN.CH
+#sec.protocol krb5 host/<host>@CERN.CH
+sec.protocol krb5 /etc/eos-server.krb5.keytab eos/eos-server@TEST.CTA
+
+#sec.protbind localhost.localdomain unix sss
+#sec.protbind localhost unix sss
+# wrong order: can only get empty files owned by the correct user or 
+# files with data belonging to nobody...
+#sec.protbind * only sss unix krb5
+# krb5 first then the rest and I believe that we do not need unix
+sec.protbind * only krb5 sss
+###########################################################
+mgmofs.fs /
+mgmofs.targetport 1095
+###########################################################
+# this URL can be overwritten by EOS_BROKER_URL defined in /etc/sysconfig/eos
+
+mgmofs.broker root://DUMMY_HOST_TO_REPLACE:1097//eos/
+# this name can be overwritten by EOS_INSTANCE_NAME defined in /etc/sysconfig/eos
+
+mgmofs.instance DUMMY_INSTANCE_TO_REPLACE
+
+# configuration, namespace , transfer and authentication export directory 
+mgmofs.configdir /var/eos/config
+mgmofs.metalog /var/eos/md
+mgmofs.txdir /var/eos/tx
+mgmofs.authdir /var/eos/auth
+mgmofs.archivedir /var/eos/archive
+        
+# report store path
+mgmofs.reportstorepath /var/eos/report
+
+# this defines the default config to load
+mgmofs.autoloadconfig default
+
+# this enables that every change get's immedeatly stored to the active configuration - can be overwritten by EOS_AUTOSAVE_CONFIG defined in /etc/sysconfig/eos
+mgmofs.autosaveconfig true
+
+#-------------------------------------------------------------------------------
+# Set the namespace plugin implementation
+#-------------------------------------------------------------------------------
+# Done in configmap
+# mgmofs.nslib /usr/lib64/libEosNsInMemory.so
+
+# Set the endpoint and resources for EOS/CTA Workflows
+mgmofs.protowfendpoint ctafrontend:10955
+mgmofs.protowfresource /ctafrontend
+
+# Set the EOS space to be used as the destination of prepare requests
+mgmofs.prepare.dest.space default
+
+# Enable tape support
+mgmofs.tapeenabled true

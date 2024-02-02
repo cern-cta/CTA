@@ -1,6 +1,8 @@
 cta_valgrind:
   stage: test
   rules:
+    - if: $ALMA9 == "ON"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -24,8 +26,12 @@ cta_valgrind:
     - /usr/bin/cta-unitPlusSystemTests.sh
 
 dbunittests_postgresql:
-  except:
-    - tags
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "OFF"
   stage: test
   variables:
     CTAREPODIR: /tmp/repo
@@ -61,3 +67,87 @@ dbunittests_postgresql:
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
+cta_valgrind_alma9:
+  stage: test
+  rules:
+    - if: $ALMA9 == "OFF"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  before_script:
+    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+    - yum -y install wget
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+  script:
+    - yum -y install createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
+    - /usr/bin/cta-unitPlusSystemTests.sh
+
+
+dbunittests_postgresql_alma9:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "ON"
+  stage: test
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  before_script:
+    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+    - yum -y install wget
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+  script:
+    - yum -y install createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
+    - yum -y install cta-catalogueutils
+    - yum -y install postgresql-server
+    - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
+    - POSTGRESQL_LOG_DIR=/var/log/postgres
+    - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
+    - echo POSTGRESQL_LOG_DIR=${POSTGRESQL_LOG_DIR}
+    - mkdir -p ${POSTGRESQL_DATA_DIR}
+    - chown -R postgres:postgres ${POSTGRESQL_DATA_DIR}
+    - mkdir -p ${POSTGRESQL_LOG_DIR}
+    - chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
+    - runuser -u postgres -- initdb -D ${POSTGRESQL_DATA_DIR}
+    - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
+    - runuser -u postgres -- createdb cta
+    - runuser -u postgres -- createuser -E cta
+    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
+    - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}

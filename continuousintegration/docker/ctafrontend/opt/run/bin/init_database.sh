@@ -42,11 +42,11 @@ case "$(get_conf database.type)" in
     echo "Configuring oracle database"
     DATABASETYPE=oracle
     DATABASEURL=oracle:$(get_conf database.oracle.username)/$(get_conf database.oracle.password)@$(get_conf database.oracle.database)
-    ;;
+  ;;
   "postgres")
-     echo "Configuring postgres database"
-     DATABASETYPE=postgres
-     DATABASEURL=postgresql:postgresql://$(get_conf database.postgres.username):$(get_conf database.postgres.password)@$(get_conf database.postgres.server)/$(get_conf database.postgres.database)
+    echo "Configuring postgres database"
+    DATABASETYPE=postgres
+    DATABASEURL=postgresql:postgresql://$(get_conf database.postgres.username):$(get_conf database.postgres.password)@$(get_conf database.postgres.server)/$(get_conf database.postgres.database)
   ;;
   *)
     echo "Error unknown database type: $(get_conf database.type)"

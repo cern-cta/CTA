@@ -172,7 +172,13 @@ echo "Creating instance using docker image with tag: ${imagetag}"
 cp pod-* ${poddir}
 if [ ! -z "${dockerimage}" ]; then
   echo "set image to ctageneric:${imagetag}"
-  sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
+    echo "Not running on AlmaLinux 9"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  else
+    echo "Running on AlmaLinux 9"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: localhost\/ctageneric:${imagetag}\n\1PullPolicy: Never/"
+  fi
 else
   sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
 fi
@@ -242,6 +248,7 @@ done
 kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
 echo "OK"
 LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
+echo "Get library device: ${LIBRARY_DEVICE}"
 
 kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
 

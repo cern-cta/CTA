@@ -198,6 +198,25 @@
 }
 
 {
+   libXrdUtils3
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   obj:/usr/lib64/libXrdUtils.so.3.0.0
+   ...
+}
+
+{
+   libXrdUtils3Param
+   Memcheck:Param
+   socketcall.sendto(msg)
+   ...
+   obj:/usr/lib64/libXrdUtils.so.3.0.0
+   ...
+}
+
+{
    liblttng-ust_3
    Memcheck:Leak
    fun:malloc
@@ -244,9 +263,7 @@
    fun:_ZN11XrdSysUtils8ExecNameEv
    fun:_ZN5XrdCl10DefaultEnvC1Ev
    fun:_ZN5XrdCl10DefaultEnv10InitializeEv
-   obj:/usr/lib64/libXrdCl.so.2.0.0
-   obj:/usr/lib64/libXrdCl.so.2.0.0
-   obj:/usr/lib64/libXrdCl.so.2.0.0
+   ...
 }
 
 {
@@ -597,4 +614,73 @@
    fun:_ZNSsC1ERKSs
    fun:_ZN3cta11objectstore18RetrieveQueueShard19getCandidateJobListEmmSt3setISsSt4lessISsESaISsEE
    fun:_ZN3cta11objectstore13RetrieveQueue16getCandidateListEmmSt3setISsSt4lessISsESaISsEE
+}
+
+{
+   protobuf25
+   Memcheck:Cond
+   obj:/usr/lib64/libprotobuf.so.25.0.0
+   fun:_ZNK6google8protobuf11MessageLite21AppendPartialToStringEPNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   ...
+}
+
+{
+   protobufObjectStore
+   Memcheck:Cond
+   ...
+   fun:_ZNK6google8protobuf11MessageLite21AppendPartialToStringEPNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZNK6google8protobuf11MessageLite17SerializeAsStringB5cxx11Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers17ArchiveQueueShardELNS2_10ObjectTypeE90EE6insertEv
+   ...
+}
+
+{
+   protobufObjectStoreValue8
+   Memcheck:Value8
+   ...
+   fun:_ZNK6google8protobuf11MessageLite21AppendPartialToStringEPNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZNK6google8protobuf11MessageLite17SerializeAsStringB5cxx11Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers17ArchiveQueueShardELNS2_10ObjectTypeE90EE6insertEv
+   ...
+}
+
+{
+   protobufObjectStoreParamCount
+   Memcheck:Param
+   write(count)
+   ...
+   fun:_ZN3cta11objectstore10BackendVFS6createERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES9_
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers17ArchiveQueueShardELNS2_10ObjectTypeE90EE6insertEv
+   fun:_ZN3cta11objectstore12ArchiveQueue16addJobsAndCommitERNSt7__cxx114listINS1_8JobToAddESaIS4_EEERNS0_14AgentReferenceERNS_3log10LogContextE
+   ...
+}
+
+
+{
+   protobufObjectStoreParamBuff
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_ZN3cta11objectstore10BackendVFS6createERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES9_
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers17ArchiveQueueShardELNS2_10ObjectTypeE90EE6insertEv
+   fun:_ZN3cta11objectstore12ArchiveQueue16addJobsAndCommitERNSt7__cxx114listINS1_8JobToAddESaIS4_EEERNS0_14AgentReferenceERNS_3log10LogContextE
+   ...
+}
+
+{
+   protobufObjectStoreCond
+   Memcheck:Cond
+   ...
+   fun:_ZN3cta11objectstore12ArchiveQueue16addJobsAndCommitERNSt7__cxx114listINS1_8JobToAddESaIS4_EEERNS0_14AgentReferenceERNS_3log10LogContextE
+   fun:_ZN9unitTests49SchedulerTest_getQueuesAndMountSummariesTest_Test8TestBodyEv
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   ...
+   fun:_ZN6castor4tape8tapeFile3osm5LABEL6encodeEmmmmRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESB_SB_
+   fun:_ZN9unitTests15OSMTapeFileTest5SetUpEv
+   ...
 }

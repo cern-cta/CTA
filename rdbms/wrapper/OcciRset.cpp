@@ -51,11 +51,12 @@ void OcciRset::populateColNameToIdxMap() {
   using namespace oracle;
 
   try {
-    const std::vector<occi::MetaData> columns = m_rset->getColumnListMetaData();
+    const auto columns = m_rset->getColumnListMetaData();
     for (unsigned int i = 0; i < columns.size(); i++) {
       // Column indices start at 1
       const unsigned int colIdx = i + 1;
-      m_colNameToIdx.add(columns[i].getString(occi::MetaData::ATTR_NAME), colIdx);
+      const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
+      m_colNameToIdx.add(name, colIdx);
     }
   } catch(exception::Exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.getMessage().str());

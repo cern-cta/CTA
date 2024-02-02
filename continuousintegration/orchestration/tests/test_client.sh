@@ -14,18 +14,22 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-
+PREPARE=1 # run prepare by default
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
+Usage: $0 -n <namespace> -q
+   -q: do not run prepare
 EOF
 exit 1
 }
 
-while getopts "n:" o; do
+while getopts "n:q" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
+            ;;
+        q)
+            PREPARE=0
             ;;
         *)
             usage
@@ -43,11 +47,13 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-echo "Preparing namespace for the tests"
-  . prepare_tests.sh -n ${NAMESPACE}
-if [ $? -ne 0 ]; then
-  echo "ERROR: failed to prepare namespace for the tests"
-  exit 1
+if [[ ${PREPARE} -eq 1 ]]; then
+  echo "Preparing namespace for the tests"
+    . prepare_tests.sh -n ${NAMESPACE}
+  if [ $? -ne 0 ]; then
+    echo "ERROR: failed to prepare namespace for the tests"
+    exit 1
+  fi
 fi
 
 echo

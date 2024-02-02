@@ -351,7 +351,7 @@ fi
   fi
   echo "Giving cta-fst-gcd 1 second to start"
   sleep 1
-  FST_GCD_PID=`ps -ef | egrep '^daemon .* python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}'`
+  FST_GCD_PID=`ps -ef | egrep '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}'`
   if test "x${FST_GCD_PID}" = x; then
     echo "cta-fst-gcd is not running"
     exit 1

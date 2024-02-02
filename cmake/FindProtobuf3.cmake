@@ -18,22 +18,41 @@
 set(PROTOBUF3_ROOT /usr)
 #set(PROTOBUF3_ROOT /opt/eos)
 
-set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64/protobuf3)
-message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
+if (ALMA9)
+  set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64)
+  message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
 
-set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+  set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
-find_program(PROTOBUF3_PROTOC3_EXECUTABLE
-    NAMES ${PROTOBUF3_ROOT}/bin/protoc3
-    DOC "Version 3 of The Google Protocol Buffers Compiler"
-)
-message(STATUS "protoc3 is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
+  find_program(PROTOBUF3_PROTOC3_EXECUTABLE
+      NAMES ${PROTOBUF3_ROOT}/bin/protoc
+      DOC "Version 3 of The Google Protocol Buffers Compiler"
+  )
+  message(STATUS "protoc is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
 
-find_path(PROTOBUF3_INCLUDE_DIRS
-  google/protobuf/message.h
-  PATHS ${PROTOBUF3_ROOT}/include/protobuf3
-  NO_DEFAULT_PATH)
-message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
+  find_path(PROTOBUF3_INCLUDE_DIRS
+    google/protobuf/message.h
+    PATHS ${PROTOBUF3_ROOT}/include
+    NO_DEFAULT_PATH)
+  message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
+else()
+  set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64/protobuf3)
+  message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
+
+  set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+  find_program(PROTOBUF3_PROTOC3_EXECUTABLE
+      NAMES ${PROTOBUF3_ROOT}/bin/protoc3
+      DOC "Version 3 of The Google Protocol Buffers Compiler"
+  )
+  message(STATUS "protoc is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
+
+  find_path(PROTOBUF3_INCLUDE_DIRS
+    google/protobuf/message.h
+    PATHS ${PROTOBUF3_ROOT}/include/protobuf3
+    NO_DEFAULT_PATH)
+  message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
+endif()
 
 find_library(PROTOBUF3_LIBRARIES
   NAME protobuf

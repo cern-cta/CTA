@@ -179,16 +179,20 @@ else
   die "ERROR: Could not launch cta-admin command."
 fi
 
-# Get drive names.
-IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
-
-IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
-
-# Get tape names.
-IFS=' ' read -r -a vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
-
-# Get lls
-IFS=' ' read -r -a lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
+# CC7 doesn't have readarray
+if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
+  echo "This container is not running on AlmaLinux 9"
+  IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
+  IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
+  IFS=' ' read -r -a vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
+  IFS=' ' read -r -a lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
+else
+  echo "This container is running on AlmaLinux 9"
+  readarray -t dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
+  readarray -t dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
+  readarray -t vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
+  readarray -t lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
+fi
 
 ########################################
 # Misc - v #############################

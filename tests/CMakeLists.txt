@@ -16,6 +16,10 @@ cmake_minimum_required (VERSION 3.17)
 
 find_package(Protobuf3 REQUIRED)
 
+if (ALMA9)
+  add_definitions( -DALMA9 )
+endif()
+
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-unitTests
   unit_tests.cpp)
