@@ -35,7 +35,7 @@ public:
    * @param simple If true, then logging header is not included.
    */
   StdoutLogger(std::string_view hostName, std::string_view programName, bool simple = false) :
-    Logger(hostName, programName, DEBUG), m_simple(simple) { }
+    Logger(hostName, programName, DEBUG, LoggerType::STDOUT), m_simple(simple) { }
 
   /**
    * Destructor

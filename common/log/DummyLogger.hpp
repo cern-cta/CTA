@@ -40,7 +40,7 @@ public:
    * message.
    */
   DummyLogger(std::string_view hostName, std::string_view programName) :
-    Logger(hostName, programName, DEBUG) { }
+    Logger(hostName, programName, DEBUG, LoggerType::DUMMY) { }
 
   /**
    * Destructor

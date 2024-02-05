@@ -29,7 +29,7 @@ namespace cta::log {
 // constructor
 //------------------------------------------------------------------------------
 FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask) :
-  Logger(hostName, programName, logMask) {
+  Logger(hostName, programName, logMask, LoggerType::FILE) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 }

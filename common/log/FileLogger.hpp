@@ -50,16 +50,15 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+  std::string_view getFilePath() { return m_filePath; };
+
+  int m_fd = -1;
+
 protected:
   /**
    * Mutex used to protect the critical section of the StringLogger object.
    */
   threading::Mutex m_mutex;
-
-  /**
-   * The output file handle
-   */
-  int m_fd = -1;
 
   /**
    * Writes the specified msg to the underlying logging system
@@ -75,6 +74,9 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
+
+private:
+    const std::string_view m_filePath;
 };
 
 } // namespace cta::log

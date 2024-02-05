@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/prctl.h>
 
@@ -26,7 +27,9 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/FileLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
@@ -125,6 +128,46 @@ void DriveHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
   // without re-registering it from poll.
   m_socketPair.reset(nullptr);
+
+  // Only perform this if we are in a FileLogger
+  if(m_lc.logger().m_logType == cta::log::LoggerType::FILE){
+    m_processManager.logContext().log(log::INFO, "In post fork cleanup. Logger is file type.");
+    // Block the signal we want to handle.
+    ::sigset_t sigMask;
+    ::sigemptyset(&sigMask);
+    ::sigaddset(&sigMask, SIGUSR1);
+    cta::exception::Errnum::throwOnNonZero(
+      ::pthread_sigmask(SIG_SETMASK, &sigMask, nullptr));
+
+    auto &lc = m_processManager.logContext();
+
+    cta::log::FileLogger& fileLogger =
+      dynamic_cast<cta::log::FileLogger&>(m_lc.logger());
+
+    // Create a detached thread with shareed pointer for
+    // file descriptor. that will look for SIGUSR1
+    std::thread sigThread([&fileLogger, &lc, &sigMask]{
+      int sig;
+      lc.log(log::INFO, "Inside thread!");
+      // Wait for SIGUSR to arrive.
+      while(true) {
+        ::sigwait(&sigMask, &sig);
+        // Get new file descriptor
+        int newFd = ::open(fileLogger.getFilePath().data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+        int oldFd = fileLogger.m_fd;
+
+        // Swap
+        fileLogger.m_fd = newFd;
+
+        // Close old file descriptor
+        ::close(oldFd);
+
+        // Report succes
+        lc.log(log::INFO, "In signal handler, successfully changed logging file descriptor");
+      }
+    });
+    sigThread.detach();
+  }
 }
 
 //------------------------------------------------------------------------------

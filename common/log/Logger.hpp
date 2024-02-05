@@ -36,6 +36,14 @@ enum class LogFormat {
   JSON      //!< JSON format
 };
 
+enum class LoggerType {
+  DUMMY,
+  FILE,
+  STDOUT,
+  STRING,
+  SYSLOG
+};
+
 /**
  * Abstract class representing the API of the CTA logging system
  *
@@ -87,7 +95,7 @@ public:
    * @param programName The name of the program to be prepended to every log message
    * @param logMask     The log mask
    */
-  Logger(std::string_view hostName, std::string_view programName, int logMask);
+  Logger(std::string_view hostName, std::string_view programName, int logMask, LoggerType logType=LoggerType::DUMMY);
 
   /**
    * Destructor
@@ -137,6 +145,8 @@ public:
    * @return                   A cleaned version of the string
    */
   static std::string cleanString(std::string_view s, bool replaceUnderscores);
+
+  const LoggerType m_logType;
 
 protected:
   /**
