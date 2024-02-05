@@ -27,11 +27,18 @@
 
 #include "version.h"
 
+#include <cstdio>
 #include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <iostream>
+
+static bool FILELOGGER_VALID_FD = true;
+
+static void invalidateFileLoggerFd () {
+  FILELOGGER_VALID_FD = false;
+}
 
 namespace cta::taped {
 
@@ -195,6 +202,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 int main(const int argc, char **const argv) {
   using namespace cta;
 
+
   // Interpret the command line
   std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
   try {
@@ -219,6 +227,14 @@ int main(const int argc, char **const argv) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
+        // Setup signal handling of USR1 for FileLogger rotation
+       struct sigaction act = { 0 };
+       act.flags = SA_SIGINFO | SA_UNSUPORTED | SA_EXPOSE_TAGGITS;
+       act.sa_sigaction = &invalidateFileLoggerFd;
+       if(::sigaction(SIGUSR1, &act, nullptr) == -1){
+         std::perror("sigaction");
+         return -1;
+       }
     } else {
       logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }

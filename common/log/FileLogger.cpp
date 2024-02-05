@@ -51,6 +51,13 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
     throw exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialised");
   }
 
+  // File got rotate. Create fd for new file.
+  if(!FILELOGGER_VALID_FD) {
+    m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+    exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
+    FILELOGGER_VALID_FD = true;
+  }
+
   // Prepare the string to print
   std::ostringstream logLine;
   logLine << (m_logFormat == LogFormat::JSON ? "{" : "")

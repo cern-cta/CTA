@@ -61,6 +61,8 @@ protected:
    */
   int m_fd = -1;
 
+  bool m_validFd = true;
+
   /**
    * Writes the specified msg to the underlying logging system
    *
