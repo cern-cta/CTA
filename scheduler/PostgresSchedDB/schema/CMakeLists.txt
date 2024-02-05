@@ -47,7 +47,8 @@ set (SCHEMA_CREATE_SRC_FILES
 add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
 target_link_libraries (cta-scheduler-schema-create ctacatalogue)
 
-set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Protobuf shall not bee needed for Postgres Scheduler
+# set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)

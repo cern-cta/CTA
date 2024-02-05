@@ -19,7 +19,8 @@
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 
 // generated during build in the build tree
-#include "PostgresSchedDB/rowblobs.pb.h"
+// PostgresSched shall not use protobuf (commenting out)
+// #include "PostgresSchedDB/rowblobs.pb.h"
 
 namespace cta::postgresscheddb {
 
