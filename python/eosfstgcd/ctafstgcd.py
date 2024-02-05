@@ -30,10 +30,15 @@ import subprocess
 import sys
 import time
 
+MIN_VERSION_WITH_EVICT = (5, 2)
+
 class UserError(Exception):
   pass
 
-class StagerrmError(Exception):
+class EvictError(Exception):
+  pass
+
+class VersionError(Exception):
   pass
 
 class AttrsetError(Exception):
@@ -142,7 +147,66 @@ class RealEos:
     stdout,stderr = process.communicate()
 
     if 0 != process.returncode:
-      raise StagerrmError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
+      raise EvictError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
+
+  def evict(self, fsid, fxid):
+    mgmurl = 'root://{}'.format(self.mgm_host)
+    cmd = 'eos {} evict --ignore-evict-counter --fsid {} fxid:{}'.format(mgmurl, fsid, fxid)
+    env = os.environ.copy()
+    env['XrdSecPROTOCOL'] = 'sss'
+    env['XrdSecSSSKT'] = self.xrdsecssskt
+    process = None
+    try:
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    except Exception as err:
+      raise Exception('Failed to execute \'{}\': {}'.format(cmd, err))
+    stdout,stderr = process.communicate()
+
+    if 0 != process.returncode:
+      raise EvictError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
+
+  def getMinMajorMinorVersion(self):
+    mgmurl = 'root://{}'.format(self.mgm_host)
+    cmd = 'eos {} version'.format(mgmurl)
+    env = os.environ.copy()
+    env['XrdSecPROTOCOL'] = 'sss'
+    env['XrdSecSSSKT'] = self.xrdsecssskt
+    process = None
+    try:
+      process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    except Exception as err:
+      raise Exception('Failed to execute \'{}\': {}'.format(cmd, err))
+    stdout,stderr = process.communicate()
+
+    versions = {}
+
+    if 0 != process.returncode:
+      raise VersionError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
+    else:
+      entries = stdout.decode().split();
+      for e in entries:
+        splitpair = e.split('=')
+        if 2 == len(splitpair):
+          versions[splitpair[0]] = splitpair[1]
+
+    server_major_version = int(versions['EOS_SERVER_VERSION'].split('.')[0])
+    server_minor_version = int(versions['EOS_SERVER_VERSION'].split('.')[1])
+    client_major_version = int(versions['EOS_CLIENT_VERSION'].split('.')[0])
+    client_minor_version = int(versions['EOS_CLIENT_VERSION'].split('.')[1])
+    if server_major_version < client_major_version:
+      min_major_version = server_major_version
+      min_minor_version = server_minor_version
+    elif server_major_version > client_major_version:
+      min_major_version = client_major_version
+      min_minor_version = client_minor_version
+    else:
+      min_major_version = min(server_major_version, client_major_version)
+      min_minor_version = min(server_minor_version, client_minor_version)
+
+    if min_major_version not in (4, 5):
+      raise VersionError('EOS major version \'{}\' is not valid'.format(min_major_version))
+
+    return min_major_version, min_minor_version
 
   def attrset(self, name, value, fxid):
     mgmurl = 'root://{}'.format(self.mgm_host)
@@ -172,7 +236,7 @@ class SpaceTracker:
     self.freebytes = None
     self.lastquerytimestamp = None
 
-  def stagerrm_queued(self, file_size_bytes):
+  def evict_queued(self, file_size_bytes):
     self.freebytes = self.freebytes + file_size_bytes
 
   def get_free_bytes(self):
@@ -241,13 +305,11 @@ class GcConfig:
     self.main_loop_period_secs = 0
     self.xrdsecssskt = ''
 
-class PathAndEosSpace:
-  def __init__(self):
-    self.path = ''
-    self.eos_space = ''
+class PathAndFsidAndEosSpace:
 
-  def __init__(self, path, eos_space):
+  def __init__(self, path, fsid, eos_space):
     self.path = path
+    self.fsid = fsid
     self.eos_space = eos_space
 
 class MissingColonError(UserError):
@@ -283,6 +345,7 @@ class Gc:
     self.fqdn = fqdn
     self.disk = disk
     self.eos = eos
+    self.eos_version = (4, 0) # Version 4.0 by default, with only stagerrm command
     self.config = config
 
     self.local_file_system_paths = []
@@ -372,19 +435,38 @@ class Gc:
     if not file_systems:
       return
 
+    self.check_eos_version()
+
     new_local_file_system_paths = [
-      PathAndEosSpace(fs['path'], self.get_space_from_schedgroup(fs['schedgroup']))
+      PathAndFsidAndEosSpace(fs['path'], fs['id'], self.get_space_from_schedgroup(fs['schedgroup']))
       for fs in file_systems if
         'path' in fs and
+        'id' in fs and
         'host' in fs and self.fqdn == fs['host'] and
         'schedgroup' in fs and self.schedgroup_matches_eos_spaces(fs['schedgroup'])
     ]
     if new_local_file_system_paths != self.local_file_system_paths:
       self.local_file_system_paths = new_local_file_system_paths
-      self.log_file_system_paths();
+      self.log_file_system_paths()
 
     for path_and_eos_space in self.local_file_system_paths:
-      self.process_fs(path_and_eos_space.path, path_and_eos_space.eos_space)
+      self.process_fs(path_and_eos_space.path, path_and_eos_space.fsid, path_and_eos_space.eos_space)
+
+  def check_eos_version(self):
+    # Check if the EOS version has changed
+    try:
+      new_eos_version = self.eos.getMinMajorMinorVersion()
+    except Exception as err:
+      self.log.error('process_eos_version: Failed to determine the EOS major version: {}'.format(err))
+      return
+
+    if new_eos_version != self.eos_version:
+      self.eos_version = new_eos_version
+      self.log.info('EOS version switched to {}.{}'.format(*new_eos_version))
+      if self.eos_version >= MIN_VERSION_WITH_EVICT:
+        self.log.info('Will use \'evict\' command')
+      else:
+        self.log.info('Will use \'stagerrm\' command')
 
   def log_file_system_paths(self):
     self.log.info('Number of local file systems is {}'.format(len(self.local_file_system_paths)))
@@ -393,7 +475,7 @@ class Gc:
       self.log.info('Local file system {}: path={} eos_space={}'.format(i, path_and_eos_space.path, path_and_eos_space.eos_space))
       i = i + 1
 
-  def process_fs(self, path, eos_space):
+  def process_fs(self, path, fsid, eos_space):
     fsfiles = []
     try:
       fsfiles = self.disk.listdir(path)
@@ -410,7 +492,7 @@ class Gc:
       return
 
     for sub_dir in sub_dirs:
-      self.process_fs_sub_dir(sub_dir, eos_space)
+      self.process_fs_sub_dir(sub_dir, fsid, eos_space)
 
   def schedgroup_matches_eos_spaces(self, schedgroup):
     for eos_space in self.config.eos_spaces:
@@ -421,7 +503,7 @@ class Gc:
   def get_space_from_schedgroup(self, schedgroup):
     return re.match('^([^.]+)', schedgroup).group(0)
 
-  def process_fs_sub_dir(self, sub_dir, eos_space):
+  def process_fs_sub_dir(self, sub_dir, fsid, eos_space):
     sub_dir_files = []
     try:
       sub_dir_files = self.disk.listdir(sub_dir)
@@ -430,9 +512,9 @@ class Gc:
 
     fst_files = [f for f in sub_dir_files if re.match('^[0-9A-Fa-f]{8,}$', f) and self.disk.isfile(os.path.join(sub_dir, f))]
     for fst_file in fst_files:
-      self.process_file(sub_dir, fst_file, eos_space)
+      self.process_file(sub_dir, fst_file, fsid, eos_space)
 
-  def process_file(self, sub_dir, fst_file, eos_space):
+  def process_file(self, sub_dir, fst_file, fsid, eos_space):
     fullpath = os.path.join(sub_dir, fst_file)
     file_size_and_ctime = None
     try:
@@ -459,23 +541,37 @@ class Gc:
         bytes_required_before = 0
         if self.config.eos_space_to_min_free_bytes[eos_space] > total_free_bytes:
           bytes_required_before = self.config.eos_space_to_min_free_bytes[eos_space] - total_free_bytes
-        self.eos.stagerrm(fst_file)
-        space_tracker.stagerrm_queued(file_size_and_ctime.sizebytes)
-        self.log.info('stagerrm: ' \
-          'sub_dir={}, ' \
-          'fxid={}, ' \
-          'bytes_required_before={}, ' \
-          'file_size_bytes={}, ' \
-          'absolute_max_age_reached={}, ' \
-          'should_free_space={}, ' \
-          'gc_age_reached={}'
-          .format(sub_dir, fst_file, bytes_required_before, file_size_and_ctime.sizebytes, absolute_max_age_reached,
-            should_free_space, gc_age_reached))
+        if self.eos_version >= MIN_VERSION_WITH_EVICT:
+          self.eos.evict(fsid, fst_file)
+          self.log.info('evict: ' \
+                        'sub_dir={}, ' \
+                        'fxid={}, ' \
+                        'fsid={}, ' \
+                        'bytes_required_before={}, ' \
+                        'file_size_bytes={}, ' \
+                        'absolute_max_age_reached={}, ' \
+                        'should_free_space={}, ' \
+                        'gc_age_reached={}'
+                        .format(sub_dir, fst_file, fsid, bytes_required_before, file_size_and_ctime.sizebytes,
+                                absolute_max_age_reached, should_free_space, gc_age_reached))
+        else:
+          self.eos.stagerrm(fst_file)
+          self.log.info('stagerrm: ' \
+                        'sub_dir={}, ' \
+                        'fxid={}, ' \
+                        'bytes_required_before={}, ' \
+                        'file_size_bytes={}, ' \
+                        'absolute_max_age_reached={}, ' \
+                        'should_free_space={}, ' \
+                        'gc_age_reached={}'
+                        .format(sub_dir, fst_file, bytes_required_before, file_size_and_ctime.sizebytes,
+                                absolute_max_age_reached, should_free_space, gc_age_reached))
+        space_tracker.evict_queued(file_size_and_ctime.sizebytes)
         nowstr = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S.%f')
         attrname = 'sys.retrieve.error'
         attrvalue = 'Garbage collected at {}'.format(nowstr)
         self.eos.attrset(attrname, attrvalue, fst_file)
-      except StagerrmError as err:
+      except EvictError as err:
         pass
       except Exception as err:
         self.log.error('process_file: {}'.format(err))

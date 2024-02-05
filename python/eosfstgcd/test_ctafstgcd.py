@@ -110,11 +110,15 @@ class MockDisk:
     return result
 
 class MockEos:
-  def __init__(self, file_systems = []):
+
+  min_version_with_evict = (5, 2)
+  def __init__(self, file_systems, *, eos_version = (4 , 0)):
     self.file_systems = file_systems
     self.nb_fsls = 0
     self.nb_stagerrm = 0
+    self.nb_evict = 0
     self.nb_attrset = 0
+    self.eos_version = eos_version
 
   def fsls(self):
     self.nb_fsls = self.nb_fsls + 1
@@ -122,6 +126,17 @@ class MockEos:
 
   def stagerrm(self, fxid):
     self.nb_stagerrm = self.nb_stagerrm + 1
+
+  def evict(self, fsid, fxid):
+    if self.eos_version < MockEos.min_version_with_evict:
+      raise NotImplementedError()
+    self.nb_evict = self.nb_evict + 1
+
+  def getMinMajorMinorVersion(self):
+    return self.eos_version
+
+  def supportsEvict(self):
+    return self.eos_version >= MockEos.min_version_with_evict
 
   def attrset(self, name, value, fxid):
     self.nb_attrset = self.nb_attrset + 1
@@ -228,13 +243,16 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
 
-    self.config = ctafstgcd.Gc.parse_conf(io.BytesIO(self.config_str))
+    self.config = ctafstgcd.Gc.parse_conf(io.StringIO(self.config_str))
 
   def tearDown(self):
     pass
 
+  def getEosMock(self, file_systems = []):
+    raise NotImplementedError()
+
   def test_parse_conf_default_test_conf(self):
-    config = ctafstgcd.Gc.parse_conf(io.BytesIO(self.config_str))
+    config = ctafstgcd.Gc.parse_conf(io.StringIO(self.config_str))
 
     self.assertEqual('log_file', config.log_file)
     self.assertEqual('mgm_host', config.mgm_host)
@@ -260,7 +278,7 @@ absolute_max_age_secs = 604800
 query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
-    config = ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+    config = ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
     self.assertEqual('log_file', config.log_file)
     self.assertEqual('mgm_host', config.mgm_host)
@@ -293,7 +311,7 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
     with self.assertRaises(ctafstgcd.MissingColonError):
-      ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+      ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
   def test_parse_conf_eos_space_to_min_free_bytes_too_many_colons(self):
     config_str = \
@@ -308,7 +326,7 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
     with self.assertRaises(ctafstgcd.TooManyColonsError):
-      ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+      ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
   def test_parse_conf_min_free_bytes_not_a_valid_integer(self):
     config_str = \
@@ -323,7 +341,7 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
     with self.assertRaises(ctafstgcd.MinFreeBytesError):
-      ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+      ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
   def test_parse_conf_negative_min_free_bytes(self):
     config_str = \
@@ -338,7 +356,7 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
     with self.assertRaises(ctafstgcd.MinFreeBytesError):
-      ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+      ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
   def test_parse_conf_no_mapping_from_eos_space_to_min_free_bytes(self):
     config_str = \
@@ -353,11 +371,11 @@ query_period_secs = 0
 main_loop_period_secs = 0
 xrdsecssskt = xrdsecssskt"""
     with self.assertRaises(ctafstgcd.MinFreeBytesNotSetError):
-      ctafstgcd.Gc.parse_conf(io.BytesIO(config_str))
+      ctafstgcd.Gc.parse_conf(io.StringIO(config_str))
 
   def test_constructor(self):
     disk = MockDisk(self.mock_tree, self.free_bytes, self.file_size_and_ctime)
-    eos = MockEos()
+    eos = self.getEosMock()
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -366,6 +384,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
@@ -377,11 +396,12 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_no_fs(self):
     disk = MockDisk(self.mock_tree, self.free_bytes, self.file_size_and_ctime)
-    eos = MockEos()
+    eos = self.getEosMock()
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -390,6 +410,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
@@ -401,6 +422,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -413,6 +435,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs(self):
@@ -423,10 +446,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -435,6 +459,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
@@ -446,6 +471,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -458,6 +484,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_no_free_space(self):
@@ -469,10 +496,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -481,6 +509,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     self.config.eos_space_to_min_free_bytes['spinner'] = self.free_bytes + 1
@@ -494,6 +523,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -506,6 +536,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_free_space(self):
@@ -517,10 +548,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -529,6 +561,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
@@ -540,6 +573,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -552,6 +586,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_one_file_free_space(self):
@@ -564,10 +599,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -576,6 +612,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
@@ -587,6 +624,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -599,6 +637,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(1, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_one_file_no_free_space_young_file(self):
@@ -611,10 +650,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -623,6 +663,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     self.config.eos_space_to_min_free_bytes['spinner'] = self.free_bytes + 1
@@ -636,6 +677,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -648,6 +690,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(1, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_one_file_no_free_space_old_file(self):
@@ -663,10 +706,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -675,6 +719,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     self.config.eos_space_to_min_free_bytes['spinner'] = self.free_bytes + 1
@@ -688,6 +733,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -699,7 +745,12 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(1, disk.nb_get_free_bytes) # file
     self.assertEqual(1, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
-    self.assertEqual(1, eos.nb_stagerrm)
+    if eos.supportsEvict():
+      self.assertEqual(0, eos.nb_stagerrm)
+      self.assertEqual(1, eos.nb_evict)
+    else:
+      self.assertEqual(1, eos.nb_stagerrm)
+      self.assertEqual(0, eos.nb_evict)
     self.assertEqual(1, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_one_file_free_space_absolutely_old_file(self):
@@ -715,10 +766,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -727,6 +779,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     self.config.eos_space_to_min_free_bytes['spinner'] = self.free_bytes + 1
@@ -740,6 +793,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -751,7 +805,12 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(1, disk.nb_get_free_bytes) # file
     self.assertEqual(1, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
-    self.assertEqual(1, eos.nb_stagerrm)
+    if eos.supportsEvict():
+      self.assertEqual(0, eos.nb_stagerrm)
+      self.assertEqual(1, eos.nb_evict)
+    else:
+      self.assertEqual(1, eos.nb_stagerrm)
+      self.assertEqual(0, eos.nb_evict)
     self.assertEqual(1, eos.nb_attrset)
 
   def test_run_only_once_one_fs_one_sub_dir_one_file_free_space_old_file(self):
@@ -767,10 +826,11 @@ xrdsecssskt = xrdsecssskt"""
     filesystem1 = {
       'path' : '/filesystem1',
       'host' : self.fqdn,
-      'schedgroup' : 'spinner.0'
+      'schedgroup' : 'spinner.0',
+      'id': 1
     }
     file_systems = [filesystem1]
-    eos = MockEos(file_systems)
+    eos = self.getEosMock(file_systems)
 
     self.assertEqual(0, disk.nb_listdir)
     self.assertEqual(0, disk.nb_isdir)
@@ -779,6 +839,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     self.config.eos_space_to_min_free_bytes['spinner'] = self.free_bytes
@@ -792,6 +853,7 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(0, disk.nb_get_file_size_and_ctime)
     self.assertEqual(0, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
 
     runonlyonce = True
@@ -804,7 +866,16 @@ xrdsecssskt = xrdsecssskt"""
     self.assertEqual(1, disk.nb_get_file_size_and_ctime)
     self.assertEqual(1, eos.nb_fsls)
     self.assertEqual(0, eos.nb_stagerrm)
+    self.assertEqual(0, eos.nb_evict)
     self.assertEqual(0, eos.nb_attrset)
+
+class GcTestCaseStagerrm(GcTestCase):
+  def getEosMock(self, file_systems = []):
+    return MockEos(file_systems, eos_version=(4, 0))
+
+class GcTestCaseEvict(GcTestCase):
+  def getEosMock(self, file_systems = []):
+    return MockEos(file_systems, eos_version=(5, 2))
 
 if __name__ == '__main__':
   suites = []
@@ -812,7 +883,8 @@ if __name__ == '__main__':
   suites.append(unittest.TestLoader().loadTestsFromTestCase(RealEosCase))
   suites.append(unittest.TestLoader().loadTestsFromTestCase(SpaceTrackerCase))
   suites.append(unittest.TestLoader().loadTestsFromTestCase(SpaceTrackersCase))
-  suites.append(unittest.TestLoader().loadTestsFromTestCase(GcTestCase))
+  suites.append(unittest.TestLoader().loadTestsFromTestCase(GcTestCaseStagerrm))
+  suites.append(unittest.TestLoader().loadTestsFromTestCase(GcTestCaseEvict))
 
   suite = unittest.TestSuite(suites)
 
