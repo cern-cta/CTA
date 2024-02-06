@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/Globals.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/exception/Errnum.hpp"
@@ -29,7 +30,7 @@ namespace cta::log {
 // constructor
 //------------------------------------------------------------------------------
 FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask) :
-  Logger(hostName, programName, logMask) {
+  Logger(hostName, programName, logMask), m_filePath(filePath) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 }
@@ -52,7 +53,7 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
   }
 
   // File got rotate. Create fd for new file.
-  if(!FILELOGGER_VALID_FD) {
+  if(!::FILELOGGER_VALID_FD) {
     m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
     exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
     FILELOGGER_VALID_FD = true;

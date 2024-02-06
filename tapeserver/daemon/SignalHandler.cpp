@@ -34,7 +34,7 @@ SubprocessHandler("signalHandler"), m_processManager(pm) {
   // Block the signals we want to handle.
   ::sigset_t sigMask;
   ::sigemptyset(&sigMask);
-  std::list<int> sigLis = { SIGHUP, SIGINT,SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, 
+  std::list<int> sigLis = { SIGHUP, SIGINT,SIGQUIT, SIGPIPE, SIGTERM,
     SIGUSR2, SIGCHLD, SIGTSTP, SIGTTIN, SIGTTOU, SIGPOLL, SIGURG, SIGVTALRM };
   for (auto sig: sigLis) ::sigaddset(&sigMask, sig);
   cta::exception::Errnum::throwOnNonZero(::sigprocmask(SIG_BLOCK, &sigMask, nullptr),
@@ -103,7 +103,9 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGHUP:
   case SIGQUIT:
   case SIGPIPE:
-  case SIGUSR1:
+  // This is now a dedicated signal to trigger the update of the file descriptor
+  // of the log when it gets logrotate.
+  // case SIGUSR1:
   case SIGUSR2:
   case SIGTSTP:
   case SIGTTIN:

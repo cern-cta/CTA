@@ -79,4 +79,6 @@ protected:
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 };
 
+  std::string_view m_filePath;
+
 } // namespace cta::log

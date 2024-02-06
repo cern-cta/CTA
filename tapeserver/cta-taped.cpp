@@ -16,6 +16,7 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/Globals.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -26,6 +27,7 @@
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
 #include "version.h"
+#include "signal.h"
 
 #include <cstdio>
 #include <google/protobuf/stubs/common.h>
@@ -34,9 +36,7 @@
 #include <string>
 #include <iostream>
 
-static bool FILELOGGER_VALID_FD = true;
-
-static void invalidateFileLoggerFd () {
+static void invalidateFileLoggerFd (int signum) {
   FILELOGGER_VALID_FD = false;
 }
 
@@ -227,10 +227,11 @@ int main(const int argc, char **const argv) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
+
         // Setup signal handling of USR1 for FileLogger rotation
-       struct sigaction act = { 0 };
-       act.flags = SA_SIGINFO | SA_UNSUPORTED | SA_EXPOSE_TAGGITS;
-       act.sa_sigaction = &invalidateFileLoggerFd;
+       struct sigaction act;
+       act.sa_handler = invalidateFileLoggerFd;
+       ::sigemptyset(&act.sa_mask);
        if(::sigaction(SIGUSR1, &act, nullptr) == -1){
          std::perror("sigaction");
          return -1;
