@@ -61,7 +61,10 @@ protected:
    */
   int m_fd = -1;
 
-  bool m_validFd = true;
+  /**
+   * Log file path
+   */
+  std::string_view m_filePath;
 
   /**
    * Writes the specified msg to the underlying logging system
@@ -77,9 +80,6 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
-
-  std::string_view m_filePath;
-
 };
 
 

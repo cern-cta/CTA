@@ -104,7 +104,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGQUIT:
   case SIGPIPE:
   // This is now a dedicated signal to trigger the update of the file descriptor
-  // of the log when it gets logrotate.
+  // of the log when it gets logrotated. See: cta/CTA#570
   // case SIGUSR1:
   case SIGUSR2:
   case SIGTSTP:
