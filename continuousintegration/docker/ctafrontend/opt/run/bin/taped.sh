@@ -21,7 +21,7 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
+yum -y install psmisc mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
@@ -68,6 +68,19 @@ XrdSecPROTOCOL=sss
 XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
 EOF
 
+cat <<EOF > /root/logrotate_usr1
+/var/log/cta/cta-taped*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+    postrotate
+        /usr/bin/killall -USR1 -r 'cta-tpd*'
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+EOF
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available
