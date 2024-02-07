@@ -68,19 +68,6 @@ XrdSecPROTOCOL=sss
 XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
 EOF
 
-cat <<EOF > /root/logrotate_usr1
-/var/log/cta/cta-taped*.log {
-    compress
-    daily
-    missingok
-    rotate 500
-    delaycompress
-    postrotate
-        /usr/bin/killall -USR1 -r 'cta-tpd*'
-        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
-    endscript
-}
-EOF
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available

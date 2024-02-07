@@ -77,7 +77,7 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
   threading::MutexLocker lock(m_mutex);
 
   // File got rotated. Get new file descriptor.
-  if(!::g_loggerValidFd.exchange(false)) {
+  if(::g_invalidFd.exchange(false)) {
     ::close(m_fd);
 
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
