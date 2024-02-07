@@ -25,8 +25,10 @@ cta_tagged_rpm:
 
 publish_tagged_rpm:
   stage: publish_rpm
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
