@@ -241,6 +241,7 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-eos-namespace-inject
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-change-storage-class-in-catalogue.1cta.gz
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf.example
+%attr(0755,root,root) %{_bindir}/cta-wfe-test
 
 %posttrans -n cta-cli
 MISSING_CONF=%{_sysconfdir}/cta/cta-cli.conf

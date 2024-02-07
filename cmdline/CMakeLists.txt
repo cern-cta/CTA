@@ -48,6 +48,7 @@ target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsiLib X
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-admin DESTINATION usr/bin)
+install(TARGETS cta-wfe-test DESTINATION usr/bin)
 install(FILES cta-admin.1cta DESTINATION usr/share/man/man1)
 install(FILES cta-send-closew.sh DESTINATION usr/bin)
 install(FILES cta-cli.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)

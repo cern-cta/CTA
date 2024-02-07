@@ -162,3 +162,16 @@ regressioneos:
     - kubernetes
     - mhvtl
     - xlarge
+
+retrieve-report:
+  stage: test
+  extends:
+    - .kubernetes_test
+  rules:
+    - !reference [.manual_rules, rules]
+  variables:
+    TEST_SCRIPT: "tests/test_retrieve-job-completion-report.sh"
+    #TEST_SCRIPT: "/usr/bin/true"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    #JOB_NAME: "external-tape"
+
