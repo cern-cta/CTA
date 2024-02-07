@@ -31,17 +31,17 @@ CREATE TABLE CTA_SCHEDULER(
 );
 CREATE TABLE ARCHIVE_JOB_QUEUE(
 
-/* Common part with RETRIEVE table - "request" related info */
+/* Common part with RETRIEVE table - request related info */
   JOB_ID BIGSERIAL,
 
-/* Common part with RETRIEVE and REPACK table - "request" related info */
+/* Common part with RETRIEVE and REPACK table - request related info */
   ARCHIVE_REQID BIGSERIAL,
   STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
   CREATION_TIME BIGINT,
   MOUNT_POLICY VARCHAR(100) CONSTRAINT AJQ_MPN_NN NOT NULL,
   VID VARCHAR(20),
 
-/* Common part with RETRIEVE table - "request" related info */
+/* Common part with RETRIEVE table - request related info */
   MOUNT_ID BIGINT,
   START_TIME BIGINT,
   PRIORITY SMALLINT CONSTRAINT AJQ_MPAP_NN NOT NULL,

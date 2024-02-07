@@ -320,6 +320,8 @@ namespace cta::postgresscheddb {
     m_repackInfo.isRepack        = row.isRepack;
     m_repackInfo.repackRequestId = row.repackReqId;
     m_repackInfo.archiveRouteMap.clear();
+
+    /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
     for(auto &rm: ri.archive_routes()) {
       m_repackInfo.archiveRouteMap[rm.copynb()] = rm.tapepool();
     }
@@ -330,7 +332,7 @@ namespace cta::postgresscheddb {
     m_repackInfo.fSeq                = ri.fseq();
     m_repackInfo.fileBufferURL       = ri.file_buffer_url();
     m_repackInfo.hasUserProvidedFile = ri.has_user_provided_file();
-
+    */
     m_jobs.clear();
     /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
     for(auto &j: rj.jobs()) {

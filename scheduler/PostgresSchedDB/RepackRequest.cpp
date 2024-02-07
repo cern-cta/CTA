@@ -521,12 +521,14 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
   repackInfo.repackFinishedTime    = row.repackFinishedTime;
 
   repackInfo.destinationInfos.clear();
+  /*
   for(auto &d: di.infos()) {
     repackInfo.destinationInfos.emplace_back();
     repackInfo.destinationInfos.back().vid   = d.vid();
     repackInfo.destinationInfos.back().files = d.files();
     repackInfo.destinationInfos.back().bytes = d.bytes();
   }
+  */
 
   m_subreqp.clear();
   /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
