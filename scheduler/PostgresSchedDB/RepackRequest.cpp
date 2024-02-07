@@ -415,15 +415,18 @@ void RepackRequest::insert()
 
   // when request is inserted we expect there to be no subrequests or destinatioInfos
   // set yet; just check
+  /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
   postgresscheddb::blobser::RepackSubRequestPointers srp;
   postgresscheddb::blobser::RepackDestinationInfos di;
-
+  */
   if (repackInfo.destinationInfos.size()>0 || m_subreqp.size()>0)
     throw cta::exception::Exception(
       "RepackRequest::insert expected zero subreqs and desintionInfos in new request");
 
+  /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
   srp.SerializeToString(&rjr.subReqProtoBuf);
   di.SerializeToString(&rjr.destInfoProtoBuf);
+  */
 
   log::ScopedParamContainer params(m_lc);
   rjr.addParamsToLogContext(params);
@@ -451,12 +454,13 @@ void RepackRequest::commit()
 
 RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQueueRow &row)
 {
+  /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
   postgresscheddb::blobser::RepackSubRequestPointers srp;
   postgresscheddb::blobser::RepackDestinationInfos di;
 
   srp.ParseFromString(row.subReqProtoBuf);
   di.ParseFromString(row.destInfoProtoBuf);
-
+  */
   repackInfo.vid = row.vid;
   repackInfo.repackBufferBaseURL = row.bufferUrl;
   repackInfo.type = common::dataStructures::RepackInfo::Type::Undefined;
@@ -525,6 +529,7 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
   }
 
   m_subreqp.clear();
+  /* Commenting out due to postgresscheddb::blobser being replaced by DB columns in the future
   for(auto &s: srp.reqs()) {
     m_subreqp.emplace_back();
     m_subreqp.back().fSeq                = s.fseq();
@@ -535,7 +540,7 @@ RepackRequest& RepackRequest::operator=(const postgresscheddb::sql::RepackJobQue
     }
     m_subreqp.back().isSubreqDeleted     = s.subrequest_deleted();
   }
-
+  */
   return *this;
 }
 
