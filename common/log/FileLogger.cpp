@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/Globals.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/exception/Errnum.hpp"
@@ -23,6 +22,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
+
+static_assert(std::atomic<bool>::is_always_lock_free);
+std::atomic<bool> g_invalidFd = false;
+
+static void invalidateFileLoggerFd (int signum) {
+  ::g_invalidFd=true;
+}
 
 namespace cta::log {
 
@@ -33,8 +40,14 @@ FileLogger::FileLogger(std::string_view hostName, std::string_view programName, 
   Logger(hostName, programName, logMask), m_filePath(filePath) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
-  // Set valid fd to true.
-  ::g_loggerValidFd.test_and_set();
+
+  // Setup signal handling of USR1 FileLogger
+  struct sigaction act;
+  act.sa_handler = invalidateFileLoggerFd;
+  ::sigemptyset(&act.sa_mask);
+  exception::Errnum::throwOnMinusOne(
+    ::sigaction(SIGUSR1, &act, nullptr),
+    "In FileLogger::FileLogger(): failed to setup signal handler for SIGUSR1");
 }
 
 //------------------------------------------------------------------------------
@@ -64,12 +77,12 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
   threading::MutexLocker lock(m_mutex);
 
   // File got rotated. Get new file descriptor.
-  if(!::g_loggerValidFd.test_and_set()) {
+  if(!::g_loggerValidFd.exchange(false)) {
     ::close(m_fd);
 
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
 
-    exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(m_filePath.data()));
+    exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to open log file: ") + std::string(m_filePath.data()));
   }
 
   // Append the message to the file

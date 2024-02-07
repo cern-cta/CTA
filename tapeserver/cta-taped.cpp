@@ -16,7 +16,6 @@
  */
 
 #include "common/Configuration.hpp"
-#include "common/Globals.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -27,18 +26,12 @@
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
 #include "version.h"
-#include "signal.h"
 
-#include <cstdio>
 #include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <iostream>
-
-static void invalidateFileLoggerFd (int signum) {
-  ::g_loggerValidFd.clear();
-}
 
 namespace cta::taped {
 
@@ -202,7 +195,6 @@ void logStartOfDaemon(cta::log::Logger &log,
 int main(const int argc, char **const argv) {
   using namespace cta;
 
-
   // Interpret the command line
   std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
   try {
@@ -227,15 +219,6 @@ int main(const int argc, char **const argv) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
-
-        // Setup signal handling of USR1 for FileLogger rotation
-       struct sigaction act;
-       act.sa_handler = invalidateFileLoggerFd;
-       ::sigemptyset(&act.sa_mask);
-       if(::sigaction(SIGUSR1, &act, nullptr) == -1){
-         std::perror("sigaction");
-         return -1;
-       }
     } else {
       logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }
