@@ -15,6 +15,5 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "signal.h"
-
-volatile sig_atomic_t FILELOGGER_VALID_FD = true;
+#include <atomic>
+std::atomic_flag g_loggerValidFd = ATOMIC_FLAG_INIT;

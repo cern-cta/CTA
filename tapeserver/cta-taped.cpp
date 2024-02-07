@@ -37,7 +37,7 @@
 #include <iostream>
 
 static void invalidateFileLoggerFd (int signum) {
-  FILELOGGER_VALID_FD = false;
+  ::g_loggerValidFd.clear();
 }
 
 namespace cta::taped {

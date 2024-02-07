@@ -33,6 +33,8 @@ FileLogger::FileLogger(std::string_view hostName, std::string_view programName, 
   Logger(hostName, programName, logMask), m_filePath(filePath) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
+  // Set valid fd to true.
+  ::g_loggerValidFd.test_and_set();
 }
 
 //------------------------------------------------------------------------------
@@ -52,13 +54,6 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
     throw exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialised");
   }
 
-  // File got rotated. Get new file descriptor.
-  if(!::FILELOGGER_VALID_FD) {
-    m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
-    exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(m_filePath.data()));
-    FILELOGGER_VALID_FD = true;
-  }
-
   // Prepare the string to print
   std::ostringstream logLine;
   logLine << (m_logFormat == LogFormat::JSON ? "{" : "")
@@ -66,9 +61,19 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
           << (m_logFormat == LogFormat::JSON ? "}" : "")
           << std::endl;
 
-  // Append the message to the file
   threading::MutexLocker lock(m_mutex);
-  exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()), 
+
+  // File got rotated. Get new file descriptor.
+  if(!::g_loggerValidFd.test_and_set()) {
+    ::close(m_fd);
+
+    m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+
+    exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(m_filePath.data()));
+  }
+
+  // Append the message to the file
+  exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()),
     "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
