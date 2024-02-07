@@ -221,17 +221,6 @@ int main(const int argc, char **const argv) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
     } else {
       logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
-
-      // Setup signal handling of USR1 FileLogger
-      struct sigaction act;
-      act.sa_handler = &invalidateFileLoggerFd;
-      ::sigemptyset(&act.sa_mask);
-      act.sa_flags = 0;
-      if(::sigaction(SIGUSR1, &act, nullptr) == -1){
-        std::cerr << "Failed to instantiate sigaction while setting FileLogger" << std::endl;
-        std::perror("sigaction");
-        return EXIT_FAILURE;
-      }
     }
     if(!commandLine->logFormat.empty()) {
       logPtr->setLogFormat(commandLine->logFormat);

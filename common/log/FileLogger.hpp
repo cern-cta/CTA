@@ -20,9 +20,6 @@
 #include "common/log/Logger.hpp"
 #include "common/threading/Mutex.hpp"
 
-extern "C" {
-  void invalidateFileLoggerFd (int signum);
-}
 namespace cta::log {
 
 /**

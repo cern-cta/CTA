@@ -27,7 +27,7 @@
 static_assert(std::atomic<bool>::is_always_lock_free);
 std::atomic<bool> g_invalidFd = false;
 
-void invalidateFileLoggerFd (int signum) {
+static void invalidateFileLoggerFd (int signum) {
   ::g_invalidFd=true;
 }
 
@@ -40,6 +40,13 @@ FileLogger::FileLogger(std::string_view hostName, std::string_view programName, 
   Logger(hostName, programName, logMask), m_filePath(filePath) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
+
+  // Setup signal handling of USR1 FileLogger
+  struct sigaction act;
+  act.sa_handler = &invalidateFileLoggerFd;
+  ::sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  exception::Errnum::throwOnMinusOne(::sigaction(SIGUSR1, &act, nullptr) , std::string("In FileLogger::FileLogger(): failed to set sigaction "));
 }
 
 //------------------------------------------------------------------------------
