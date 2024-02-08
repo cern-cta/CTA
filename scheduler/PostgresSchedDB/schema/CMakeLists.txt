@@ -28,8 +28,6 @@ include_directories (${POSTGRES_INCLUDE_DIRS})
 #
 # include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-include_directories(${CMAKE_BINARY_DIR}/eos_cta)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql)
 
 add_custom_command(OUTPUT postgres_scheduler_schema.cpp
