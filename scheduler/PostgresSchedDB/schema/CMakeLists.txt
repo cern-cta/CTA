@@ -15,15 +15,20 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-find_package(Protobuf3 REQUIRED)
-find_package(postgres REQUIRED)
+# Commenting out Protobuf - to be removed if possible
+# find_package(Protobuf3 REQUIRED)
+# find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
 #
 # Compiled protocol buffers (for ChecksumBlob)
+# in 2023 seems unnecessary we can insert checksumblob without protobuf as bytearray
+# commenting out for the moment to remove protobuf if possible from PGSCHED DB implementation
 #
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+# include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+
+include_directories(${CMAKE_BINARY_DIR}/eos_cta)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql)
 
