@@ -16,7 +16,9 @@
 cmake_minimum_required (VERSION 3.17)
 
 # Commenting out Protobuf - to be removed if possible
-# find_package(Protobuf3 REQUIRED)
+# (needs dependency on cta-common to become private  )
+#
+find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
