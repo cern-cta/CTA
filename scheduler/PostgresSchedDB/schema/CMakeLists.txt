@@ -16,7 +16,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 # Commenting out Protobuf - to be removed if possible
-# find_package(Protobuf3 REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
@@ -48,7 +48,7 @@ set (SCHEMA_CREATE_SRC_FILES
 )
 
 add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
-#target_link_libraries (cta-scheduler-schema-create PRIVATE ctacatalogue)
+target_link_libraries (cta-scheduler-schema-create ctacatalogue)
 
 # Protobuf shall not bee needed for Postgres Scheduler
 # set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
@@ -65,7 +65,7 @@ set (DROP_SCHEMA_CMD
 )
 
 add_executable(cta-scheduler-schema-drop ${DROP_SCHEMA_CMD})
-#target_link_libraries (cta-scheduler-schema-drop PRIVATE ctacatalogue)
+target_link_libraries (cta-scheduler-schema-drop ctacatalogue)
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
