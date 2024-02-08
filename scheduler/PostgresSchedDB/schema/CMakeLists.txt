@@ -16,7 +16,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 # Commenting out Protobuf - to be removed if possible
-find_package(Protobuf3 REQUIRED)
+# find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
@@ -26,7 +26,7 @@ include_directories (${POSTGRES_INCLUDE_DIRS})
 # in 2023 seems unnecessary we can insert checksumblob without protobuf as bytearray
 # commenting out for the moment to remove protobuf if possible from PGSCHED DB implementation
 #
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+#include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql)
 
@@ -48,10 +48,10 @@ set (SCHEMA_CREATE_SRC_FILES
 )
 
 add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
-target_link_libraries (cta-scheduler-schema-create ctacatalogue)
+target_link_libraries (cta-scheduler-schema-create PRIVATE ctacatalogue)
 
 # Protobuf shall not bee needed for Postgres Scheduler
-set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
@@ -65,7 +65,7 @@ set (DROP_SCHEMA_CMD
 )
 
 add_executable(cta-scheduler-schema-drop ${DROP_SCHEMA_CMD})
-target_link_libraries (cta-scheduler-schema-drop ctacatalogue)
+target_link_libraries (cta-scheduler-schema-drop PRIVATE ctacatalogue)
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
