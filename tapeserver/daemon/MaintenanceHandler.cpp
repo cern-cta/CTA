@@ -328,6 +328,8 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       } catch (server::SocketPair::Timeout &) {
         // Timing out while waiting for message is not a problem for us
         // as we retry in the next loop iteration.
+      } catch (server::SocketPair::SignalInterrupt &) {
+        // Received a singal while waiting in poll().
       }
     } while (!receivedMessage);
     m_processManager.logContext().log(log::INFO,

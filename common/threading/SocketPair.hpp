@@ -44,6 +44,7 @@ public:
     both
   };
   CTA_GENERATE_EXCEPTION_CLASS(CloseAlreadyCalled);
+  CTA_GENERATE_EXCEPTION_CLASS(SignalInterrupt);
   /// Close one side (after forking)
   void close(Side sideToClose);
   /// Send a buffer (optional side parameter allows use without closing,

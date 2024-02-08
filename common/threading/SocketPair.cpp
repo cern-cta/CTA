@@ -24,6 +24,7 @@
 #include <memory>
 #include <list>
 #include <algorithm>
+#include <errno.h>
 
 namespace cta::server {
 
@@ -104,11 +105,14 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
     // We have readable fds, copy the results in the provided map
     fdsp=fds.get();
     for (const auto & key: keys) {
+      errno=0;
       socketPairs.at(key)->m_pollFlag = (fdsp++)->revents & POLLIN;
     }
-  } else if (!rc) {
+  } else if (rc < 0 && errno == EINTR) {
+    throw SignalInterrupt("In SocketPair::poll(): got interrupted by a signal. Will ignore.");
+  } else if (!rc)
     throw Timeout("In SocketPair::poll(): timeout");
-  } else {
+  else {
     throw cta::exception::Errnum("In SocketPair::poll(): failed to poll(): ");
   }
 }
