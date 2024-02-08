@@ -82,7 +82,6 @@ include_directories (${CMAKE_BINARY_DIR}/scheduler)
 #   PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
-  ${CTAProtoSources}
   PostgresSchedDB/PostgresSchedDB.cpp
   PostgresSchedDB/ArchiveMount.cpp
   PostgresSchedDB/ArchiveJob.cpp
