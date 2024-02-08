@@ -290,10 +290,17 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
     // Wait forever (negative timeout) for something to come from parent process.
-    server::SocketPair::poll(pollList, -1, server::SocketPair::Side::parent);
-    m_processManager.logContext().log(log::INFO,
+    while (true){
+      try {
+      server::SocketPair::poll(pollList, -1, server::SocketPair::Side::parent);
+       m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message after failure to contact storage. Exiting.");
-    throw ex;
+        throw ex;
+      } catch(server::SocketPair::SignalInterrupt &){
+        // Interrupted by signal. Keep waiting for something to come
+        // from parent.
+      }
+    }
   }
 
   // Create the garbage collector and the disk reporter
