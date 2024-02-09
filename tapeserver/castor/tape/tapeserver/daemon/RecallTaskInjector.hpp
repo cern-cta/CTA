@@ -24,6 +24,7 @@
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/RAO/RAOParams.hpp"
 #include "castor/tape/tapeserver/RAO/RAOManager.hpp"
@@ -71,10 +72,11 @@ public:
   */
   RecallTaskInjector(RecallMemoryManager& mm, TapeSingleThreadInterface<TapeReadTask>& tapeReader,
     DiskWriteThreadPool& diskWriter, cta::RetrieveMount& retrieveMount, uint64_t maxFilesPerRequest,
-    uint64_t maxBytesPerRequest, const cta::log::LogContext& lc) :
+    uint64_t maxBytesPerRequest, RecallWatchDog& recallWatchDog, const cta::log::LogContext& lc) :
       m_thread(*this), m_memManager(mm), m_tapeReader(tapeReader), m_diskWriter(diskWriter),
       m_retrieveMount(retrieveMount), m_lc(lc), m_maxBatchFiles(maxFilesPerRequest),
-      m_maxBatchBytes(maxBytesPerRequest), m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()) { }
+      m_maxBatchBytes(maxBytesPerRequest), m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()),
+      m_watchdog(recallWatchDog) { }
 
   virtual ~RecallTaskInjector() = default;
 
@@ -285,6 +287,10 @@ private:
   * Set as true if a previous disk space reservation failed for this mount
   */
   bool m_diskSpaceReservationFailed = false;
+
+  /** Reference to the session watchdog, allowing reporting of errors to it.
+   */
+  RecallWatchDog& m_watchdog;
 
 };
 

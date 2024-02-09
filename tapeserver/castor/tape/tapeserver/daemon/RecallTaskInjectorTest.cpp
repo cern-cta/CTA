@@ -173,7 +173,7 @@ namespace unitTests
                                                               "0.0.0.0", lc);
     cta::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, 60, lc);
-    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
+    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, rwd, lc);
 
     bool noFilesToRecall;
     ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
@@ -240,7 +240,7 @@ namespace unitTests
     castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(),
                                                               "0.0.0.0", lc);
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
-    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
+    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, rwd, lc);
 
     bool noFilesToRecall;
     ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));
