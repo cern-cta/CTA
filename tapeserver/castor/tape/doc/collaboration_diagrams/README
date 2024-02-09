@@ -1,9 +1,0 @@
-How to generate collaboration diagrams from the source in this directory
-========================================================================
-
-1. Install dot by installing the Graphviz package.  Instructions can
-   be found here:
-
-   http://www.graphviz.org
-
-2. Run the helper script generatesvg.sh located in this directory

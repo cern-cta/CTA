@@ -43,6 +43,7 @@
 - cta/CTA#544 - Fix default special member functions
 - cta/CTA#550 - Refactor classes to follow Rule of Zero
 - cta/CTA#552 - Decouple objectstore lock timeout errors from the scheduler code
+- cta/CTA#375 - Remove old CASTOR doc files
 
 # v4.10.8-1
 
