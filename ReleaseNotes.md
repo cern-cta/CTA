@@ -1,3 +1,8 @@
+# v4.NEXT / v5.NEXT
+
+## Features
+- cta/CTA#565 - Improve logging of 'Tape session finished' message
+
 # v4.10.11.0-1 / v5.10.11.0-1
 
 ## Features

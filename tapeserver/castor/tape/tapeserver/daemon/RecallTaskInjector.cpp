@@ -244,6 +244,7 @@ void RecallTaskInjector::injectBulkRecalls() {
   }
   bool reservationSuccess = reserveSpaceForNextJobBatch(retrieveJobsBatch);
   if (!reservationSuccess) {
+    m_watchdog.addToErrorCount("Info_diskSpaceReservationFailure");
     return;
   }
   bool setPromise = (retrieveJobsBatch.size() != 0);

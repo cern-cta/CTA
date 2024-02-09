@@ -287,7 +287,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                    m_dataTransferConfig.xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager, readSingleThread, threadPool, *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
-                                    m_dataTransferConfig.bulkRequestRecallMaxBytes, logContext);
+                                    m_dataTransferConfig.bulkRequestRecallMaxBytes,
+                                    watchDog,
+                                    logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type of the client
     readSingleThread.setTaskInjector(&taskInjector);
@@ -369,6 +371,14 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         retrieveMount->complete();
         watchDog.updateStats(TapeSessionStats());
         watchDog.reportStats();
+        if (!reservationResult) {
+          watchDog.addToErrorCount("Info_diskSpaceReservationTestFailure");
+        }
+        if (!noFilesToRecall) {
+          watchDog.addToErrorCount("Info_noFilesToRecall");
+        }
+        watchDog.addToErrorCount("Info_emptyMount");
+        watchDog.reportParams();
         std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam};
         m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
@@ -491,6 +501,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         archiveMount->complete();
         watchDog.updateStats(TapeSessionStats());
         watchDog.reportStats();
+        if (noFilesToMigrate) {
+          watchDog.addToErrorCount("Info_noFilesToMigrate");
+        }
+        watchDog.addToErrorCount("Info_emptyMount");
+        watchDog.reportParams();
         std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam};
         m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
