@@ -3425,8 +3425,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
   RQTRAlgo rqtrAlgo(m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while (true) {
+    re.fetchNoLock();
     auto queueList = re.dumpRetrieveQueues(common::dataStructures::JobQueueType::JobsToReportToUser);
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) return ret;
@@ -3488,8 +3488,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
   RQTRAlgo rqtrAlgo(m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while (true) {
+    re.fetchNoLock();
     auto queueList = re.dumpRetrieveQueues(common::dataStructures::JobQueueType::FailedJobs);
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) return ret;

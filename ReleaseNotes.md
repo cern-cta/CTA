@@ -18,6 +18,7 @@
 - cta/CTA#562 - CTA Frontend should reject files with owner_uid=0
 - cta/CTA#572 - Do not set the 'queueTrimRequired' flag as true when 'doCleanup' is required
 - cta/CTA#584 - Refactors exception::Errnum class
+- cta/CTA#602 - Fix infinite loop in ObjectStore
 
 ### Continuous Integration
 - cta/CTA#278 - Updating system tests for new EOS evict command
