@@ -19,6 +19,10 @@
 
 #include "common/log/Logger.hpp"
 #include "common/threading/Mutex.hpp"
+#include "common/threading/Thread.hpp"
+
+#include <atomic>
+#include <future>
 
 namespace cta::log {
 
@@ -35,7 +39,7 @@ public:
    * @param filePath path to the log file.
    * @param logMask The log mask.
    */
-  FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask);
+  FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask, std::optional<int> signum);
 
   /**
    * Destructor
@@ -50,16 +54,34 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+
 protected:
   /**
    * Mutex used to protect the critical section of the StringLogger object.
    */
   threading::Mutex m_mutex;
 
+  int m_waitSignal;
+
   /**
    * The output file handle
    */
   int m_fd = -1;
+
+  /**
+   * Reference to the included fd flag in invalidFdList
+   */
+  std::atomic<bool>* m_invalidFd;
+
+  /**
+   * List of fd flags to take care of, we should have one per FileLogger object
+   */
+  inline static std::list<std::unique_ptr<std::atomic<bool>>> invalidFdList;
+
+  /**
+   * Used to avoid race conditions with invalidFdList
+   */
+  inline static threading::Mutex m_invalidatorMutex;
 
   /**
    * Log file path
@@ -80,6 +102,20 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
+
+private:
+   /**
+   * Dedicated thread to listen to SIGUSR1 and invalidate the file descriptor flag.
+   */
+  class FdInvalidatorThread : public cta::threading::Thread {
+      FileLogger& m_parent;
+    public:
+      explicit FdInvalidatorThread(FileLogger& parent);
+      void run() override;
+     private:
+       // A promise used for graceful exit.
+       std::promise<void> m_exit;
+  } m_invalidator;
 };
 
 

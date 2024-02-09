@@ -17,36 +17,34 @@
 
 #include "common/log/FileLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/exception/Errnum.hpp"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
 
-static_assert(std::atomic<bool>::is_always_lock_free);
-std::atomic<bool> g_invalidFd = false;
-
-static void invalidateFileLoggerFd (int signum) {
-  ::g_invalidFd=true;
-}
+#include <future>
+#include <chrono>
 
 namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask) :
-  Logger(hostName, programName, logMask), m_filePath(filePath) {
+FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask, std::optional<int> signum) :
+  Logger(hostName, programName, logMask), m_waitSignal(signum.value_or(-1)), m_invalidFd(nullptr), m_filePath(filePath), m_invalidator(*this) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 
-  // Setup signal handling of USR1 FileLogger
-  struct sigaction act;
-  act.sa_handler = &invalidateFileLoggerFd;
-  ::sigemptyset(&act.sa_mask);
-  act.sa_flags = 0;
-  exception::Errnum::throwOnMinusOne(::sigaction(SIGUSR1, &act, nullptr) , std::string("In FileLogger::FileLogger(): failed to set sigaction "));
+  if (signum.value_or(false)){
+    threading::MutexLocker lock(m_invalidatorMutex);
+    invalidFdList.emplace_back(std::make_unique<std::atomic<bool>>(false));
+    m_invalidFd = invalidFdList.back().get();
+    m_invalidator.start();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -56,10 +54,15 @@ FileLogger::~FileLogger() {
   if (-1 != m_fd) {
     ::close(m_fd);
   }
+
+  // Kill invalidator thread if needed.
+  if (m_invalidFd != nullptr){
+    m_invalidator.kill();
+  }
 }
 
 //-----------------------------------------------------------------------------
-// writeMsgToUnderlyingLoggingSystem
+// FileLogger::writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
 void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) {
   if (-1 == m_fd) {
@@ -75,8 +78,8 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
 
   threading::MutexLocker lock(m_mutex);
 
-  // File got rotated. Get new file descriptor.
-  if(::g_invalidFd.exchange(false)) {
+  // Check flag and if we need to udpate.
+  if (m_invalidFd->exchange(false)) {
     ::close(m_fd);
 
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
@@ -87,6 +90,29 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
   // Append the message to the file
   exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()),
     "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
+}
+
+//-----------------------------------------------------------------------------
+// FdInvalidatorThread::FdInvalidatorThread
+//-----------------------------------------------------------------------------
+FileLogger::FdInvalidatorThread::FdInvalidatorThread(FileLogger& parent) : m_parent(parent) { }
+
+//-----------------------------------------------------------------------------
+// FdInvalidatorThread::run
+//-----------------------------------------------------------------------------
+void FileLogger::FdInvalidatorThread::run() {
+  ::sigset_t sigMask;
+  int recvSig;
+  ::sigaddset(&sigMask, m_parent.m_waitSignal);
+
+  auto exitFuture = m_exit.get_future();
+  while(std::future_status::ready != exitFuture.wait_for(std::chrono::seconds(0))){
+    ::sigwait(&sigMask, &recvSig);
+
+    // Update registered file loggers.
+    threading::MutexLocker lock(m_parent.m_invalidatorMutex);
+    for(auto& fdFlag : m_parent.invalidFdList) fdFlag->exchange(true);
+  }
 }
 
 } // namespace cta::log

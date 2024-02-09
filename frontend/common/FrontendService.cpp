@@ -28,7 +28,7 @@
 #include "Config.hpp"
 
 #include <fstream>
-
+#include <optional>
 namespace cta::frontend {
 
 FrontendService::FrontendService(const std::string& configFilename) : m_archiveFileMaxSize(0) {
@@ -61,7 +61,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     } else if(loggerURL.value().substr(0, 5) == "file:") {
       logtoFile = 1;
       logFilePath = loggerURL.value().substr(5);
-      m_log = std::make_unique<log::FileLogger>(shortHostname, "cta-frontend", logFilePath, loggerLevel);
+      m_log = std::make_unique<log::FileLogger>(shortHostname, "cta-frontend", logFilePath, loggerLevel, std::nullopt);
     } else {
       throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.value());
     }

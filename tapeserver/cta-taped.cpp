@@ -218,7 +218,7 @@ int main(const int argc, char **const argv) {
     if(commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
-      logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
+      logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG, std::optional<int>{SIGUSR1}));
     } else {
       logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }
