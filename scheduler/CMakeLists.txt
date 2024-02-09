@@ -50,36 +50,8 @@ set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 # End of definitions specific to Objectstore lib compilation
 
 # Definitions specific to only PostgreSched DB module lib compilation:
-# Protobuf shall bot be needed for PostgreSched (commented out)
-# set (CTAProtoFiles
-#   PostgresSchedDB/rowblobs.proto)
-
-# Generate should be used on protofile in the current directory
-# This needs to be changed. todo
-# PROTOBUF3_GENERATE_CPP(CTAProtoSources0 CTAProtoHeaders0 ${CTAProtoFiles})
-
-# Protobuf shall bot be needed for PostgreSched (commented out)
-# set (CTAProtoSources
-#   ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.cc)
-
-# set (CTAProtoHeaders
-#   ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.h)
-
-# SET_SOURCE_FILES_PROPERTIES(${CTAProtoSources} PROPERTIES OBJECT_DEPENDS ${CTAProtoSources0})
-# SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders0})
-
-# SET_SOURCE_FILES_PROPERTIES(
-#  ${CTAProtoSources} ${CTAProtoHeaders}
-#  PROPERTIES GENERATED TRUE)
 
 include_directories (${CMAKE_BINARY_DIR}/scheduler)
-
-# set (CTAProtoDependants
-#   PostgresSchedDB/RetrieveRequest.cpp
-#   PostgresSchedDB/RepackRequest.cpp)
-
-# SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
-#   PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   PostgresSchedDB/PostgresSchedDB.cpp

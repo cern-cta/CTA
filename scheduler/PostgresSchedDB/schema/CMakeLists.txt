@@ -15,10 +15,12 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-# TO-DO Remove Protobuf dependency if possible
-# (we could remove the dependency pulled in via
-# catalogue/cta common lib)
-#
+#[[
+   TO-DO Remove Protobuf dependency if possible
+   (we could remove the dependency pulled in via
+   catalogue --> cta-lib-common, does common lib
+   need Protobuf3 at all ?)
+]]#
 find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
