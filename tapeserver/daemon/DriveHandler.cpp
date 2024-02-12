@@ -26,6 +26,8 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/Logger.cpp"
+#include "common/log/FileLogger.cpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "rdbms/Login.hpp"
@@ -155,8 +157,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       // We are in the child process
 
       // Start the FileLogger file descriptor update thread.
-      if(m_processManager.logContext().m_log.m_logType == LoggerType::FILE){
-        auto& fileLogger = static_cast<FileLogger&>(m_processManager.logContext().m_log);
+      if(m_processManager.logContext().logger().m_logType == cta::log::LoggerType::FILE){
+        auto& fileLogger =
+          static_cast<cta::log::FileLogger&>(m_processManager.logContext().logger());
         fileLogger.startFdThread();
       }
 

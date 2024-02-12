@@ -23,6 +23,8 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/FileLogger.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
@@ -85,8 +87,9 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // We are in the child process
 
       // Start the FileLogger file descriptor update thread.
-      if(m_processManager.logContext().m_log.m_logType == LoggerType::FILE){
-        auto& fileLogger = static_cast<FileLogger&>(m_processManager.logContext().m_log);
+      if(m_processManager.logContext().logger().m_logType == cta::log::LoggerType::FILE){
+        auto& fileLogger =
+          static_cast<cta::log::FileLogger&>(m_processManager.logContext().logger());
         fileLogger.startFdThread();
       }
 

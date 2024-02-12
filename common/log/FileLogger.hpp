@@ -54,6 +54,12 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+  /**
+   *
+   *
+   */
+  void startFdThread();
+
 protected:
   /**
    * Mutex used to protect the critical section of the StringLogger object.
@@ -102,13 +108,7 @@ protected:
    */
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 
-  /**
-   *
-   *
-   */
-  void startFdThread();
-
-private:
+  private:
    /**
    * Dedicated thread to listen to SIGUSR1 and invalidate the file descriptor flag.
    */

@@ -40,8 +40,6 @@ FileLogger::FileLogger(std::string_view hostName, std::string_view programName, 
   Logger(hostName, programName, logMask, LoggerType::FILE), m_waitSignal(signum.value_or(-1)), m_invalidFd(nullptr), m_filePath(filePath), m_invalidator(*this) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
-
-
 }
 
 //------------------------------------------------------------------------------
@@ -94,6 +92,7 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
 //-----------------------------------------------------------------------------
 void FileLogger::startFdThread() {
   threading::MutexLocker lock(m_invalidatorMutex);
+  invalidFdList.clear();
   invalidFdList.emplace_back(std::make_unique<std::atomic<bool>>(false));
   m_invalidFd = invalidFdList.back().get();
   m_invalidator.start();
