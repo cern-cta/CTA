@@ -28,6 +28,7 @@
 
 #include <future>
 #include <chrono>
+#include <thread>
 
 namespace cta::log {
 
@@ -76,16 +77,18 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
           << (m_logFormat == LogFormat::JSON ? "}" : "")
           << std::endl;
 
-  threading::MutexLocker lock(m_mutex);
+
+  threading::MutexLocker fdLock(m_mutex);
 
   // Check flag and if we need to udpate.
-  if (m_invalidFd->exchange(false)) {
+  if (m_invalidFd != nullptr && m_invalidFd->exchange(false)) {
     ::close(m_fd);
 
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
 
     exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to open log file: ") + std::string(m_filePath.data()));
   }
+
 
   // Append the message to the file
   exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()),
