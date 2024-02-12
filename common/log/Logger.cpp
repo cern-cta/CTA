@@ -30,8 +30,8 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
-  m_hostName(hostName), m_programName(programName), m_logMask(logMask),
+Logger::Logger(std::string_view hostName, std::string_view programName, int logMask, LoggerType logType) :
+  m_logType(logType), m_hostName(hostName), m_programName(programName), m_logMask(logMask),
   m_priorityToText(generatePriorityToTextMap()) { }
 
 //------------------------------------------------------------------------------

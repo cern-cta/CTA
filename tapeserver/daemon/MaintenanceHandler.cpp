@@ -83,6 +83,13 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
     if (!m_pid) {
       // We are in the child process
+
+      // Start the FileLogger file descriptor update thread.
+      if(m_processManager.logContext().m_log.m_logType == LoggerType::FILE){
+        auto& fileLogger = static_cast<FileLogger&>(m_processManager.logContext().m_log);
+        fileLogger.startFdThread();
+      }
+
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
       return ret;

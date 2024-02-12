@@ -20,6 +20,7 @@
 #include "common/threading/Thread.hpp"
 #include "common/exception/Errnum.hpp"
 
+#include <csignal>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -35,17 +36,12 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask, std::optional<int> signum) :
-  Logger(hostName, programName, logMask), m_waitSignal(signum.value_or(-1)), m_invalidFd(nullptr), m_filePath(filePath), m_invalidator(*this) {
+FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask, std::optional<int> signum):
+  Logger(hostName, programName, logMask, LoggerType::FILE), m_waitSignal(signum.value_or(-1)), m_invalidFd(nullptr), m_filePath(filePath), m_invalidator(*this) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 
-  if (signum.value_or(false)){
-    threading::MutexLocker lock(m_invalidatorMutex);
-    invalidFdList.emplace_back(std::make_unique<std::atomic<bool>>(false));
-    m_invalidFd = invalidFdList.back().get();
-    m_invalidator.start();
-  }
+
 }
 
 //------------------------------------------------------------------------------
@@ -77,7 +73,6 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
           << (m_logFormat == LogFormat::JSON ? "}" : "")
           << std::endl;
 
-
   threading::MutexLocker fdLock(m_mutex);
 
   // Check flag and if we need to udpate.
@@ -89,10 +84,19 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
     exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to open log file: ") + std::string(m_filePath.data()));
   }
 
-
   // Append the message to the file
   exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()),
     "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
+}
+
+//-----------------------------------------------------------------------------
+// FileLogger::startThread
+//-----------------------------------------------------------------------------
+void FileLogger::startFdThread() {
+  threading::MutexLocker lock(m_invalidatorMutex);
+  invalidFdList.emplace_back(std::make_unique<std::atomic<bool>>(false));
+  m_invalidFd = invalidFdList.back().get();
+  m_invalidator.start();
 }
 
 //-----------------------------------------------------------------------------
@@ -107,6 +111,7 @@ void FileLogger::FdInvalidatorThread::run() {
   ::sigset_t sigMask;
   int recvSig;
   ::sigaddset(&sigMask, m_parent.m_waitSignal);
+  ::sigprocmask(SIG_BLOCK, &sigMask, nullptr);
 
   auto exitFuture = m_exit.get_future();
   while(std::future_status::ready != exitFuture.wait_for(std::chrono::seconds(0))){
