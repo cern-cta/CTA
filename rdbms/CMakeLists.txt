@@ -37,7 +37,6 @@ set (RDBMS_LIB_SRC_FILES
   Stmt.cpp
   StmtPool.cpp
   UniqueConstraintError.cpp
-  IntegrityConstraintError.cpp
 )
 
 add_library (ctardbms SHARED
