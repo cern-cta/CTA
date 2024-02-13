@@ -29,7 +29,6 @@ endif()
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
-  ConnFactory.cpp
   ConnFactoryFactory.cpp
   ConnWrapper.cpp
   ParamNameToIdx.cpp
