@@ -27,8 +27,8 @@ auto GetPluginFactory() -> IPluginFactory* {
   return &pinfo;
 }
 
-struct _DLLInit {
-  _DLLInit() { std::cerr << " [TRACE] Shared library PluginOracle loaded OK." << std::endl; }
+// struct _DLLInit {
+//   _DLLInit() { std::cerr << " [TRACE] Shared library PluginOracle loaded OK." << std::endl; }
 
-  ~_DLLInit() { std::cerr << " [TRACE] Shared library PluginOracle unloaded OK." << std::endl; }
-} dll_init;
+//   ~_DLLInit() { std::cerr << " [TRACE] Shared library PluginOracle unloaded OK." << std::endl; }
+// } dll_init;
