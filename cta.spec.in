@@ -628,6 +628,11 @@ echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_ver
 
 
 %changelog
+* Wed Feb 14 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.9.0-1
+- Various fixes and improvements to CTA
+- Updates EOS-5 version in CI to 5.2.4
+- See ReleaseNotes.md for details
+
 * Tue Nov 14 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.8-1
 - Various fixes and improvements to CTA
 - Updates EOS version in CI to 4.8.105/5.1.28
