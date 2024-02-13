@@ -33,12 +33,16 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
   ConnWrapper.cpp
   ParamNameToIdx.cpp
   RsetWrapper.cpp
+  StmtWrapper.cpp
+)
+
+set (RDBMS_WRAPPER_LIB_SRC_FILES
+  ${RDBMS_WRAPPER_LIB_SRC_FILES}
   Sqlite.cpp
   SqliteConn.cpp
   SqliteConnFactory.cpp
   SqliteRset.cpp
   SqliteStmt.cpp
-  StmtWrapper.cpp
 )
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES
