@@ -1,19 +1,20 @@
 # v4.10.9.0-1
 
 ### Features
-- cta/CTA#546 - Limit the number of repack sub-requests that can be expanded at the same moment
 - cta/CTA#154 - Update RetrieveJob to support completion report
+- cta/CTA#462 - Have additonal filters on 'cta-admin recycletf ls'
 - cta/CTA#488 - Optionally output log lines in JSON format
+- cta/CTA#546 - Limit the number of repack sub-requests that can be expanded at the same moment
 
 ### Alma9 Migration
-- cta/CTA#534 - Migrate fst garbage collector to Python3
 - cta/CTA#499 - Compile and running cta in alma9 linux
+- cta/CTA#534 - Migrate fst garbage collector to Python3
 
 ### Bug Fixes
 - cta/CTA#511 - Refactor ObjecStore queue names to avoid exceeding file name length limit
 - cta/CTA#540 - Allow optional string values to be cleared in the Physical Library catalogue
-- cta/CTA#543 - Revert log level back to DEBUG 
 - cta/CTA#542 - Fix valgrind tests
+- cta/CTA#543 - Revert log level back to DEBUG
 - cta/CTA#547 - Fix repack backpressure mechanism not requeueing repack requests
 - cta/CTA#562 - CTA Frontend should reject files with owner_uid=0
 - cta/CTA#572 - Do not set the 'queueTrimRequired' flag as true when 'doCleanup' is required
@@ -25,19 +26,21 @@
 - cta/CTA#380 - Fix systemtests performance
 - cta/CTA#421 - Updated FST GC for new 'eos evict' command
 - cta/CTA#504 - Update CI scripts to use CERN's k8s infrastructure
-- cta/CTA#555 - Upgrade eos-5 to 4.8.105/5.2.4
+- cta/CTA#554 - Enabling PostgresSchedDB compilation by default
+- cta/CTA#558 - Fix TNS error in gitlab CI
 - cta/CTA#560 - Fix cppcheck updated errors
 - cta/CTA#564 - Skip eos evict system tests on EOS 4
 - cta/CTA#571 - Remove 'eos-*' dependencies from versionlock file
-- cta/CTA#554 - Enabling PostgresSchedDB compilation by default
+- cta/CTA#589 - Remove TNS in CI for oracle database configs
+- cta/CTA#591 - Upgrade eos-5 to 5.2.8
 
 ### Building and Packaging
 - cta/CTA#532 - Remove forcing ABI in CMake
 
 ### Code Quality
 - cta/CTA#474 - Fix code smells reported by SonarCloud
-- cta/CTA#530 - Remove deprecated protobuf method from the code
 - cta/CTA#529 - Concise syntax should be used for concatenatable namespaces
+- cta/CTA#530 - Remove deprecated protobuf method from the code
 - cta/CTA#533 - Upgrade SonarCloud runtime to Java 17
 - cta/CTA#538 - Fix bugs reported by SonarCloud
 - cta/CTA#539 - Explicitly capture scope variables in lambdas
@@ -50,7 +53,6 @@
 
 ### Features
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
-- cta/CTA#462 - Have additonal filters on 'cta-admin recycletf ls'
 
 ### Bug Fixes
 - cta/CTA#517 - Remove DriveStatus::CleaningUp from activeDriveStatuses in OStoreDB
