@@ -36,13 +36,9 @@ set (RDBMS_LIB_SRC_FILES
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp
-<<<<<<< HEAD
-  UniqueConstraintError.cpp)
-=======
   UniqueConstraintError.cpp
   IntegrityConstraintError.cpp
 )
->>>>>>> f57ea308ac (Change the setting of property for oracle instant client)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})
