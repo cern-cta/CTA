@@ -57,7 +57,6 @@ struct ArchiveJobQueueRow {
   std::string repackFilebufUrl;
   uint64_t repackFseq = 0;
   std::string repackDestVid;
-  
 
   common::dataStructures::ArchiveFile archiveFile;
 
@@ -114,7 +113,7 @@ struct ArchiveJobQueueRow {
     return *this;
   }
 
-  void insert(Transaction &txn) const {
+  void insert(Transaction &txn) {
     // does not set mountId or jobId
     const char *const sql =
       "INSERT INTO ARCHIVE_JOB_QUEUE("
