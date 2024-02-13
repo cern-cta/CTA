@@ -27,8 +27,8 @@ auto GetPluginFactory() -> IPluginFactory* {
   return &pinfo;
 }
 
-struct _DLLInit {
-  _DLLInit() { std::cerr << " [TRACE] Shared library PluginPostgreSQL loaded OK." << std::endl; }
+// struct _DLLInit {
+//   _DLLInit() { std::cerr << " [TRACE] Shared library PluginPostgreSQL loaded OK." << std::endl; }
 
-  ~_DLLInit() { std::cerr << " [TRACE] Shared library PluginPostgreSQL unloaded OK." << std::endl; }
-} dll_init;
+//   ~_DLLInit() { std::cerr << " [TRACE] Shared library PluginPostgreSQL unloaded OK." << std::endl; }
+// } dll_init;
