@@ -24,6 +24,8 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
+#include <algorithm>
+
 namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
