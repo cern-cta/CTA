@@ -19,6 +19,7 @@
 #include "common/exception/CommandLineNotParsed.hpp"
 
 #include <unistd.h>
+#include <array>
 
 namespace cta::postgresscheddb {
 

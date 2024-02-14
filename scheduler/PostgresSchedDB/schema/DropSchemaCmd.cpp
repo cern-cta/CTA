@@ -88,7 +88,7 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 
   std::string userResponse;
   while(userResponse != "yes" && userResponse != "no") {
-    m_out << R"Please type either "yes" or "no" > ";
+    m_out << R"#(Please type either "yes" or "no" > )#";
     std::getline(m_in, userResponse);
   }
 
