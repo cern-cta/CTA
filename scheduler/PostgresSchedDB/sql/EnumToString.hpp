@@ -31,8 +31,8 @@ namespace cta {
  * specialised type (below).
  */
 template<typename T>
-T from_string(const std::string &val) {
-  throw std::runtime_error("In from_string(): This function should not be instantiated."); \
+T from_string([[maybe_unused]] std::string_view val) {
+  throw std::system_error("In from_string(): This function should not be instantiated."); \
 }
 
 /**

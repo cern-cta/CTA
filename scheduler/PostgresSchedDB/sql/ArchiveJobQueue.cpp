@@ -27,7 +27,7 @@ void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::list<Archive
   try {
     const char *const sqltt = "CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP";
     txn.conn().executeNonQuery(sqltt);
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception) {
     const char *const sqltrunc = "TRUNCATE TABLE TEMP_JOB_IDS";
     txn.conn().executeNonQuery(sqltrunc);
   }
@@ -37,7 +37,7 @@ void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::list<Archive
       ":JOB_ID";
 
   auto stmt = txn.conn().createStmt(sqlcopy);
-  rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+  auto &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
 
   const size_t nbrows = rowList.size();
   cta::rdbms::wrapper::PostgresColumn c1("JOB_ID", nbrows);

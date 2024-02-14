@@ -258,7 +258,6 @@ struct RetrieveJobQueueRow {
     params.add("priority", priority);
     params.add("retMinReqAge", retMinReqAge);
     params.add("startTime", startTime);
-//    params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
     params.add("requester.name", retrieveRequest.requester.name);
     params.add("requester.group", retrieveRequest.requester.group);
     params.add("archiveFileID", archiveFile.archiveFileID);
@@ -284,7 +283,11 @@ struct RetrieveJobQueueRow {
     params.add("failureReportLog", failureReportLog);
     params.add("isRepack", isRepack);
     params.add("repackReqId", repackReqId);
-//    params.add("repackInfoProtoBuf", repackInfoProtoBuf);
+
+    /* Columns to be replaced by other DB columns than protobuf filled columns
+     * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
+     * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
+     */
     params.add("lifecycleTimings.creation_time", retrieveRequest.lifecycleTimings.creation_time);
     params.add("lifecycleTimings.first_selected_time", retrieveRequest.lifecycleTimings.first_selected_time);
     params.add("lifecycleTimings.completed_time", retrieveRequest.lifecycleTimings.completed_time);
