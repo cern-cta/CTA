@@ -47,7 +47,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
-    jobs.emplace_back(sql::ArchiveJobQueueRow(resultSet));
+    jobs.emplace_back(resultSet);
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }

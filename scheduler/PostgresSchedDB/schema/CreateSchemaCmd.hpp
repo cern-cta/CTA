@@ -40,7 +40,7 @@ public:
   /**
    * Destructor.
    */
-  ~CreateSchemaCmd() noexcept;
+  ~CreateSchemaCmd() override;
 
 private:
 

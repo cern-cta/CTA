@@ -43,12 +43,13 @@ CmdLineTool::~CmdLineTool() = default;
 // getUsername
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getUsername() {
-  char buf[256];
+  std::array<char, 256> buf;
 
-  if(getlogin_r(buf, sizeof(buf))) {
-    return "UNKNOWN";
+  if(getlogin_r(buf.data(), buf.size()) == 0) {
+    buf[buf.size() - 1] = '\0';
+    return std::string(buf.data());
   } else {
-    return buf;
+    return "UNKNOWN";
   }
 }
 
@@ -56,20 +57,20 @@ std::string CmdLineTool::getUsername() {
 // getHostname
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getHostname() {
-  char buf[256];
+    std::array<char, 256> buf;
 
-  if(gethostname(buf, sizeof(buf))) {
-    return "UNKNOWN";
+  if(gethostname(buf.data(), buf.size()) == 0) {
+    buf[buf.size() - 1] = '\0';
+    return std::string(buf.data());
   } else {
-    buf[sizeof(buf) - 1] = '\0';
-    return buf;
+    return "UNKNOWN";
   }
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CmdLineTool::main(const int argc, char *const *const argv) {
+int CmdLineTool::cltMain(const int argc, char *const *const argv) {
   bool cmdLineNotParsed = false;
   std::string errorMessage;
 

@@ -20,29 +20,29 @@
 
 namespace cta::postgresscheddb {
 
-ArchiveJobQueueItor::ArchiveJobQueueItor()
-{
-   throw cta::exception::Exception("Not implemented");
-}
+  [[noreturn]] ArchiveJobQueueItor::ArchiveJobQueueItor()
+  {
+    throw cta::exception::Exception("Not implemented");
+  }
 
-const std::string &ArchiveJobQueueItor::qid() const
-{
-   throw cta::exception::Exception("Not implemented");
-}
+  const std::string &ArchiveJobQueueItor::qid() const
+  {
+     throw cta::exception::Exception("Not implemented");
+  }
 
-bool ArchiveJobQueueItor::end() const
-{
-   throw cta::exception::Exception("Not implemented");
-}
+  bool ArchiveJobQueueItor::end() const
+  {
+     throw cta::exception::Exception("Not implemented");
+  }
 
-void ArchiveJobQueueItor::operator++()
-{
-   throw cta::exception::Exception("Not implemented");
-}
+  void ArchiveJobQueueItor::operator++()
+  {
+     throw cta::exception::Exception("Not implemented");
+  }
 
-const common::dataStructures::ArchiveJob &ArchiveJobQueueItor::operator*() const
-{
-   throw cta::exception::Exception("Not implemented");
-}
+  const common::dataStructures::ArchiveJob &ArchiveJobQueueItor::operator*() const
+  {
+     throw cta::exception::Exception("Not implemented");
+  }
 
 } // namespace cta::postgresscheddb

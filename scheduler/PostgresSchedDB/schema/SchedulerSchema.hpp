@@ -54,7 +54,7 @@ struct SchedulerSchema {
    * 
    * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
    */
-  std::map<std::string, uint64_t> getSchemaVersion() const;
+  std::map<std::string, uint64_t, std::less<>> getSchemaVersion() const;
 };
 
 } // namespace cta::postgresscheddb
