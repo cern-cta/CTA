@@ -20,6 +20,7 @@
 
 #include <getopt.h>
 #include <ostream>
+#include <array>
 
 namespace cta::postgresscheddb {
 
