@@ -32,7 +32,9 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
   m_hostName(hostName), m_programName(programName), m_logMask(logMask),
-  m_priorityToText(generatePriorityToTextMap()) { }
+  m_priorityToText(generatePriorityToTextMap()) {
+  buildBaseHeader();
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -131,6 +133,56 @@ void Logger::setLogFormat(std::string_view logFormat) {
   }
 }
 
+//------------------------------------------------------------------------------
+// setExtraHeaders
+//------------------------------------------------------------------------------
+void Logger::setExtraHeaders(std::map<std::string, std::string> &extraHeaders){
+  // Update the extra headers map.
+  for(const auto& [headerKey, headerValue] : extraHeaders){
+    m_extraHeadersMap[headerKey] = headerValue;
+  }
+
+  buildBaseHeader();
+}
+
+//------------------------------------------------------------------------------
+// removeExtraHeaders
+//------------------------------------------------------------------------------
+void Logger::removeExtraHeaders(std::list<std::string> &headers) {
+  for (const auto& key : headers){
+    m_extraHeadersMap.extract(key);
+  }
+
+  buildBaseHeader();
+}
+
+//------------------------------------------------------------------------------
+// buildBaseHeader
+//------------------------------------------------------------------------------
+void Logger::buildBaseHeader(){
+  // Build the new headers string
+  std::ostringstream os;
+  switch(m_logFormat){
+    case LogFormat::DEFAULT:
+      os << m_hostName << " "
+         << m_programName << " ";
+      for(const auto& [headerKey, headerValue] : m_extraHeadersMap){
+        os << headerValue << " ";
+      }
+      os << ": ";
+      break;
+    case LogFormat::JSON:
+      os << R"("hostname":")" << m_hostName << R"(",)"
+         << R"("program":")" << m_programName << R"(",)";
+      for(const auto& [headerKey, headerValue] : m_extraHeadersMap){
+        os << R"(" )" << headerKey << R"(":")" << headerValue << R"(",)" ;
+      }
+      break;
+  }
+
+  m_baseHeader = os.str();
+}
+
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
@@ -143,21 +195,15 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) const {
     case LogFormat::DEFAULT:
       os << std::put_time(&localTime, "%b %e %T")
          << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << ' '
-         << m_hostName << " "
-         << m_programName << " "
-         << m_instanceName << " "
-         << m_schedulerBackenddName << ": ";
       break;
     case LogFormat::JSON:
       os << R"("epoch_time":")" << timeStamp.tv_sec
          << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(",)"
-         << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
-         << R"("hostname":")" << m_hostName << R"(",)"
-         << R"("program":")" << m_programName << R"(",)"
-         << R"("instance_name":")" << m_instanceName << R"(",)"
-         << R"("scheduler_backend_name":")" << m_schedulerBackendName << R"(",)"
-        ;
+         << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)";
   }
+
+  os << m_baseHeader;
+
   return os.str();
 }
 

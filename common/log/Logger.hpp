@@ -87,8 +87,7 @@ public:
    * @param programName The name of the program to be prepended to every log message
    * @param logMask     The log mask
    */
-  Logger(std::string_view hostName, std::string_view programName, int logMask,
-         std::string_view unitName, std::string_view schedBackendName );
+  Logger(std::string_view hostName, std::string_view programName, int logMask);
 
   /**
    * Destructor
@@ -131,6 +130,19 @@ public:
   void setLogFormat(std::string_view logFormat);
 
   /**
+   * Sets the names for logging the instance and backed the logger
+   *
+   * @param instanceName The type of instance we are serving, i.e, production.
+   * @param backendName The type of scheduler the logger is related to.
+   */
+  void setExtraHeaders(std::map<std::string, std::string> &extraHeaders);
+
+  /**
+   * Removes the headers from the extra headers map.
+   */
+  void removeExtraHeaders(std::list<std::string> &headers);
+
+  /**
    * Creates a clean version of the specified string ready for use with syslog
    *
    * @param s                  The string to be cleaned
@@ -151,14 +163,16 @@ protected:
   const std::string m_programName;
 
   /**
-   * The name of the instance
+   * Base header containing at least m_hostname and m_programName.
+   * If extra headers are added through setExtraHeaders they will
+   * be included in this string.
    */
-  const std::string m_instanceName;
+  std::string m_baseHeader;
 
   /**
-   * The name of the instance
+   * Set of extra headers to be included in the log message
    */
-  const std::string m_schedulerBackendName;
+  std::map<std::string, std::string> m_extraHeadersMap;
 
   /**
    * Log mask
@@ -202,6 +216,11 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
+  /**
+   *
+   */
+  void buildBaseHeader();
+
   /**
    * Creates and returns the header of a log message
    *

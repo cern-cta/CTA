@@ -1,3 +1,8 @@
+# v4.NEXT 
+
+### Features 
+- cta/CTA#588 - Alow extra header fields for logger
+
 # v4.10.9.0-1
 
 ### Features
