@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <algorithm>
 #include "scheduler/PostgresSchedDB/schema/CreateSchemaCmd.hpp"
 #include "scheduler/PostgresSchedDB/schema/CreateSchemaCmdLineArgs.hpp"
 #include "scheduler/PostgresSchedDB/schema/PostgresSchedulerSchema.hpp"
@@ -89,7 +88,9 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 bool CreateSchemaCmd::tableExists(const std::string &tableName, const rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  return std::any_of(std::begin(names), std::end(names), tableName);
+  return std::any_of(std::begin(names), std::end(names), [&tableName](const std::string& str) {
+    return str == tableName;
+  });
 }
 
 //------------------------------------------------------------------------------
