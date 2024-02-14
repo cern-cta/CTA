@@ -58,14 +58,6 @@ public:
    */
   void abort();
 
-  /**
-   * Destructor
-   *
-   * Aborts the transaction
-   */
-
-  ~Transaction() noexcept;
-
 private:
   
   rdbms::Conn m_conn;
