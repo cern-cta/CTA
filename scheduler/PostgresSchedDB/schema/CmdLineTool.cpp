@@ -45,6 +45,7 @@ CmdLineTool::~CmdLineTool() = default;
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getUsername() {
   std::array<char, 256> buf;
+  buf.fill('\0');
 
   if(getlogin_r(buf.data(), buf.size()) == 0) {
     buf[buf.size() - 1] = '\0';
@@ -58,7 +59,8 @@ std::string CmdLineTool::getUsername() {
 // getHostname
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getHostname() {
-    std::array<char, 256> buf;
+  std::array<char, 256> buf;
+  buf.fill('\0');
 
   if(gethostname(buf.data(), buf.size()) == 0) {
     buf[buf.size() - 1] = '\0';

@@ -89,7 +89,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 bool CreateSchemaCmd::tableExists(const std::string &tableName, const rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  return std::ranges::any_of(names, tableName);
+  return std::any_of(std::begin(names), std::end(names), tableName);
 }
 
 //------------------------------------------------------------------------------

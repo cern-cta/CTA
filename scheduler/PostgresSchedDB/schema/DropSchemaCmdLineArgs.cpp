@@ -29,10 +29,10 @@ namespace cta::postgresscheddb {
 //------------------------------------------------------------------------------
 DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const argv) {
 
-  std::array<option, 2> longopts = {
+  std::array<option, 2> longopts = {{
     { "help",  no_argument, nullptr, 'h' },
     { nullptr,           0, nullptr, 0 }
-  };
+  }};
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
