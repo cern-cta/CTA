@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "common/threading/SocketPair.hpp"
+
 #include <chrono>
 #include <string>
 
@@ -67,6 +69,7 @@ public:
     bool killRequested = false;     ///< Does the process handler require killing all processes
     bool forkRequested = false;     ///< Does the procerss handler request to fork a new process?
     bool sigChild = false;          ///< Did the process see a SIGCHLD? Used by signal handler only.
+    int message = 0;           ///< Did the process see a SIGUSR1? Used to trigger log fd reopen.
     /// Instant of the next timeout for the process handler. Defaults to end of times.
     std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
     /// A extra state variable used in the return value of fork()
@@ -80,6 +83,8 @@ public:
   virtual ProcessingStatus processTimeout() = 0;
   /** Function called when SIGCHLD is received */
   virtual ProcessingStatus processSigChild() = 0;
+  /** Function called when a message signal is received to broadcast it to all subprocesses */
+  virtual ProcessingStatus processBroadcast() = 0;
   /** Instructs the handler to initiate a clean shutdown and update its status */
   virtual ProcessingStatus shutdown() = 0;
   /** Instructs the handler to kill its subprocess immediately. The process 
@@ -94,6 +99,8 @@ public:
    * process and it's all his. This function should return the exit() code or 
    * call exit() itself */
   virtual int runChild() = 0;
+pirvate:
+  std::unique_ptr<cta::threading::SocketPair> m_broadcastSocketPair;
 };
 
 } // namespace cta::tape::daemon

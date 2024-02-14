@@ -103,6 +103,13 @@ public:
   virtual void prepareForFork() = 0;
 
   /**
+   * Refresh the underlying logger settings
+   *
+   * For example, when the file of a FileLogger is rotate we need to get a new fd.
+   */
+  virtual void refresh() = 0;
+
+  /**
    * Writes a message into the CTA logging system
    *
    * Exceptions are not thrown in case of failure. Failures are silently ignored in order to not impact the processing.

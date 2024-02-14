@@ -29,7 +29,7 @@ namespace cta::log {
 // constructor
 //------------------------------------------------------------------------------
 FileLogger::FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask) :
-  Logger(hostName, programName, logMask) {
+  Logger(hostName, programName, logMask). m_filePath(filePath) {
   m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 }
@@ -41,6 +41,19 @@ FileLogger::~FileLogger() {
   if (-1 != m_fd) {
     ::close(m_fd);
   }
+}
+
+//------------------------------------------------------------------------------
+// refresh
+//------------------------------------------------------------------------------
+FileLogger::refresh() {
+  if(-1 == m_fd) {
+    throw exception::Exception("In FileLogger::refresh(): file is not properly initialised");
+  }
+
+  thread::MutexLocker lock(m_mutex);
+  m_fd = ::open(filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+  exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(filePath));
 }
 
 //-----------------------------------------------------------------------------

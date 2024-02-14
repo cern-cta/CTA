@@ -103,7 +103,6 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGHUP:
   case SIGQUIT:
   case SIGPIPE:
-  case SIGUSR1:
   case SIGUSR2:
   case SIGTSTP:
   case SIGTTIN:
@@ -112,8 +111,13 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGURG:
   case SIGVTALRM:
   {
-    
     m_processManager.logContext().log(log::INFO, "In signal handler, ignoring signal");
+    break;
+  }
+  case SIGUSR1:
+  {
+    m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1, broadcasting message to other handlers");
+    m_messageQueue.push(SIGUSR1);
     break;
   }
   case SIGINT:
@@ -191,6 +195,13 @@ SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
     ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::processBroadcast
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus SignalHandler::processBroadcast() {
+  // Update the referenced file descriptor if we are on a FileLogger.
 }
 
 //------------------------------------------------------------------------------

@@ -48,6 +48,8 @@ private:
   bool m_shutdownRequested=false;
   bool m_shutdownAcknowlegded=false;
   bool m_sigChildPending=false;
+  bool m_broadcastPending=false;
+  std::queue<int>m_messageQueue;
   std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
           decltype(m_shutdownStartTime)::max();
   std::chrono::milliseconds m_timeoutDuration=

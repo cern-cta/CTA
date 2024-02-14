@@ -43,6 +43,11 @@ public:
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
   /**
+   * Update the underlying logger settings
+   */
+  void refresh() final { /* intentionally-blank override of pure virtual method */ }
+
+  /**
    * Extractor for the resulting logs
    */
   std::string getLog() { return m_log.str(); }

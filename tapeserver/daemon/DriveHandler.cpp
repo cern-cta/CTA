@@ -125,6 +125,7 @@ void DriveHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
   // without re-registering it from poll.
   m_socketPair.reset(nullptr);
+  m_broadcastSocketPair.reset(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -146,6 +147,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
     // First prepare a socket pair for this new subprocess
     m_socketPair = std::make_unique<cta::server::SocketPair>();
+    m_broadcastSocketPair = std::make_unique<cta::server::SocketPair>();
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
@@ -488,6 +490,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     m_pid = -1;
   }
   return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processBroadcast
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processBroadcast() {
+
 }
 
 //------------------------------------------------------------------------------

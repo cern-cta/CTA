@@ -76,6 +76,9 @@ int ProcessManager::run() {
     // Manage fork requests
     auto forkStatus = runForkManagement();
     if (forkStatus.doExit) return forkStatus.exitCode;
+    // Manage message broadcast request
+    auto broadcastStatus = runBroadcastManagement();
+    if (broadcastStatus.doExit) return broadcastStatus.exitCode;
     // All subprocesses requests have been handled. We can now switch to the 
     // event handling per se.
     runEventLoop();
@@ -227,6 +230,22 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   return RunPartStatus();
 }
 
+ProcessManager::RunPartStatus ProcessManager::runBroadcastManagement() {
+  for(auto &sp : m_subprocessHandlers){
+    if(sp.status.message){
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", sp.handler->index);
+      m_logContext.log(log::INFO, "Subprocess handler requested message broadcast");
+      // Send the message to every other subprocess
+      for(auto &sp2 : m_subprocessHandler){
+        if (&sp2 != &sp){
+          sp2.handler->sendMessage(sp.status.message);
+        }
+      }
+    }
+  }
+  return RunPartStatus();
+}
 
 void ProcessManager::runEventLoop() {
   // Compute the next timeout. Epoll expects milliseconds.

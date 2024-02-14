@@ -217,6 +217,13 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
+// MaintenanceHandler::processBroadcast
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcast() {
+
+}
+
+//------------------------------------------------------------------------------
 // MaintenanceHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {

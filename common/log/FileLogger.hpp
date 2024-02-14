@@ -50,6 +50,11 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+   /**
+   * Update the underlying logger settings
+   */
+  void refresh() final;
+
 protected:
   /**
    * Mutex used to protect the critical section of the StringLogger object.
@@ -75,6 +80,9 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
+
+private:
+  std::string_view m_filePath;
 };
 
 } // namespace cta::log
