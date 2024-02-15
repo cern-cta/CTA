@@ -41,7 +41,7 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_ToReportToRepackForFailure
 };
 
-constexpr std::array<std::string, 8> const StringsArchiveJobStatus[] = {
+constexpr std::array<std::string, 8> const StringsArchiveJobStatus = {
   "AJS_ToTransferForUser",
   "AJS_ToReportToUserForTransfer",
   "AJS_Complete",

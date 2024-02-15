@@ -31,7 +31,7 @@ namespace cta {
  * specialised type (below).
  */
   template<typename T>
-  T from_string(const std::string &val) {
+  T from_string([[maybe_unused]] std::string_view val) {
     throw std::runtime_error("In from_string(): This function should not be instantiated."); \
 }
 
@@ -41,10 +41,10 @@ namespace cta {
 #define TO_STRING(T) \
 constexpr std::string to_string(postgresscheddb::T e) { \
   using namespace postgresscheddb; \
-  return Strings##T[static_cast<uint8_t>(e)].data(); \
+  return Strings##T[static_cast<uint8_t>(e)]; \
 } \
 template<> \
-inline postgresscheddb::T from_string<postgresscheddb::T>(const std::string &val) { \
+inline postgresscheddb::T from_string<postgresscheddb::T>(std::string_view val) { \
   using namespace postgresscheddb; \
   uint8_t i = 0; \
   for(auto &v : Strings##T) { \
