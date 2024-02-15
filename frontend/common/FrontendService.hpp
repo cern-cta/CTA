@@ -103,6 +103,8 @@ private:
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                 //!< Scheduler DB for persistent objects (queues and requests)
   std::unique_ptr<cta::Scheduler>               m_scheduler;               //!< The scheduler
 
+  bool                                          m_acceptRepackRequests;    //!< Flag to allow the processing of repack requests
+  bool                                          m_acceptUserRequests;      //!< Flag to allow the processing of user requests
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
