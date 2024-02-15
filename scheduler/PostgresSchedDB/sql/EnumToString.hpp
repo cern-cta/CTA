@@ -51,7 +51,7 @@ inline postgresscheddb::T from_string<postgresscheddb::T>(std::string_view val) 
     if(v == val) return static_cast<T>(i); \
     ++i; \
   } \
-  throw std::runtime_error(std::string("In from_string(): Unexpected enum value ") + val); \
+  throw std::runtime_error(std::string("In from_string(): Unexpected enum value ") + std::string(val)); \
 }
 
 } // namespace cta
