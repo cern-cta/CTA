@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Features
+- cta/CTA#573 - Add configuration on CTA frontend to block user and/or repack operations
+
 # v4.10.9.0-1
 
 ### Features
