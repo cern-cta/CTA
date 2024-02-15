@@ -61,6 +61,16 @@ public:
   cta::Scheduler& getScheduler() const { return *m_scheduler; }
 
   /*!
+   * Get a reference to the Scheduler
+   */
+  bool getUserRequestsAllowed() const { return m_acceptUserRequests; }
+
+  /*!
+   * Get a reference to the Scheduler
+   */
+  bool getRepackRequestsAllowed() const { return m_acceptRepackRequests; }
+
+  /*!
    * Get the maximum file size for an archive request
    */
   uint64_t getArchiveFileMaxSize() const { return m_archiveFileMaxSize; }
