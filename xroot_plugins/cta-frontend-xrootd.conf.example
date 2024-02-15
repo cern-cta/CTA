@@ -5,7 +5,7 @@
 # CTA ObjectStore options
 #cta.objectstore.backendpath /tmp/jobStoreXXXXXXX
 
-# Block requests by
+# Block requests for user or repack
 cta.schedulerdb.enable_repack_requests on
 cta.schedulerdb.enable_user_requests on
 

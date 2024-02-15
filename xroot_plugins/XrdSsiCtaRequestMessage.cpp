@@ -29,14 +29,12 @@ void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Respons
   switch(request.request_case()) {
     using namespace cta::xrd;
 
-    m_service.getFrontendService();
-
     case Request::kAdmincmd:
       // Check if repack requests are blocked
       if(!m_service.getFrontendService().getRepackRequestsAllowed() &&
-           request.adminCmd.subcmd() != admin::AdminCmd::SUBCMD_LS &&
-           request.adminCmd.cmd() == admin::AdminCmd::CMD_REPACK){
-        response.set_message("Repack requests are disabled.");
+           request.admincmd.subcmd() != admin::AdminCmd::SUBCMD_LS &&
+           request.admincmd.cmd() == admin::AdminCmd::CMD_REPACK){
+        response.set_message_txt("Repack requests are disabled.");
         response.set_type(xrd::Response::RSP_SUCCESS);
         break;
       }
@@ -53,7 +51,7 @@ void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Respons
     case Request::kNotification: {
       // Check if WFE requests are blocked
       if(!m_service.getFrontendService().getUserRequestsAllowed()){
-        response.set_message("User requests are disabled.");
+        response.set_message_txt("User requests are disabled.");
         response.set_type(xrd::Response::RSP_ERR_CTA);
         break;
       }
