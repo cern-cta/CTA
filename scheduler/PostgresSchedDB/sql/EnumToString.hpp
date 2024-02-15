@@ -39,7 +39,7 @@ namespace cta {
  * TO_STRING macro: defines to_string(T) and from_string<T>(string) for an enum class : uint8_t
  */
 #define TO_STRING(T) \
-constexpr std::string to_string(postgresscheddb::T e) { \
+constexpr const char* to_string(postgresscheddb::T e) { \
   using namespace postgresscheddb; \
   return Strings##T[static_cast<uint8_t>(e)]; \
 } \
