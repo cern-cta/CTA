@@ -50,7 +50,7 @@ cta_srpm_xrootd4:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: ($CI_COMMIT_TAG =~ /^.*v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd4:
   stage: build
@@ -69,7 +69,7 @@ cta_srpm_xrootd5_pgsched:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_xrootd5_pgsched:
   stage: build
@@ -88,7 +88,7 @@ cta_srpm_xrootd5:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd5:
   stage: build
@@ -107,7 +107,7 @@ cta_srpm_no_oracle:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_no_oracle:
   stage: build
@@ -130,8 +130,8 @@ cta_srpm_alma9:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
-    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v//;s/-.*$//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v[^-]*-//')
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
@@ -160,8 +160,8 @@ cta_rpm_alma9:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
-    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v//;s/-.*$//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v[^-]*-//')
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
