@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Continuous Integration
+- cta/CTA#522 - Review CTA release versioning
+
 # v4.10.9.0-1
 
 ### Features
