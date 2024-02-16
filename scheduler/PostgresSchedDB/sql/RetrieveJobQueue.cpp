@@ -27,7 +27,7 @@ void RetrieveJobQueueRow::updateMountId(Transaction &txn, const std::list<Retrie
   try {
     const char *const sqltt = "CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP";
     txn.conn().executeNonQuery(sqltt);
-  } catch(...) {
+  } catch(exception::Exception &ex) {
     const char *const sqltrunc = "TRUNCATE TABLE TEMP_JOB_IDS";
     txn.conn().executeNonQuery(sqltrunc);
   }

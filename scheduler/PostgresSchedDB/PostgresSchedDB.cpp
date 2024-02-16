@@ -107,7 +107,7 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   return aReq->getIdStr();
 }
 
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> PostgresSchedDB::getArchiveJobs() const
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>> PostgresSchedDB::getArchiveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -253,7 +253,7 @@ void PostgresSchedDB::deleteFailed(const std::string &objectId, log::LogContext 
    throw cta::exception::Exception("Not implemented");
 }
 
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> PostgresSchedDB::getRetrieveJobs() const
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>> PostgresSchedDB::getRetrieveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -450,7 +450,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
   auto &txn = static_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
   // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
-  std::map<std::string,common::dataStructures::MountPolicy, std::less<>> cachedMountPolicies;
+  std::map<std::string,common::dataStructures::MountPolicy> cachedMountPolicies;
   for(const auto &mp : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
     cachedMountPolicies[mp.name] = mp;
   }
