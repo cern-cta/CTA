@@ -27,7 +27,7 @@ const SchedulerDatabase::RetrieveMount::MountInfo &RetrieveMount::getMountInfo()
    throw cta::exception::Exception("Not implemented");
 }
 
-std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNextJobBatch(uint32_t filesRequested,
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNextJobBatch(uint64_t filesRequested,
      uint64_t bytesRequested, log::LogContext& logContext)
 {
 
@@ -57,7 +57,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNex
     // and also the indication of which is the current active one
     postgresscheddb::RetrieveRequest rr(logContext, j);
 
-    auto rj = std::make_unique<postgresscheddb::RetrieveJob>(/* j.jobId */));
+    auto rj = std::make_unique<postgresscheddb::RetrieveJob>(/* j.jobId */);
     rj->archiveFile = rr.m_archiveFile;
     rj->diskSystemName = rr.m_diskSystemName;
     rj->retrieveRequest = rr.m_schedRetrieveReq;

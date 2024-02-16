@@ -27,7 +27,7 @@ class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
 
  public:
 
-   RepackReportBatch();
+   [[noreturn]] RepackReportBatch();
 
    void report(log::LogContext & lc) override;
 };

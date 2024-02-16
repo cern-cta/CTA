@@ -29,7 +29,7 @@ class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequest
 
  public:
 
-   RepackRequestPromotionStatistics();
+   [[noreturn]] RepackRequestPromotionStatistics();
 
    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
       log::LogContext &lc) override;

@@ -29,7 +29,7 @@ class RetrieveJobQueueItor : public SchedulerDatabase::IRetrieveJobQueueItor {
 
  public:
 
-   RetrieveJobQueueItor();
+   [[noreturn]] RetrieveJobQueueItor();
 
    const std::string &qid() const override;
 
