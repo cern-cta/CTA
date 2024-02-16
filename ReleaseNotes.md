@@ -22,6 +22,7 @@
 - cta/CTA#693 - Fix tapeserver tool regressions
 
 ### Continuous Integration
+- cta/CTA#522 - Review CTA release versioning
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
 - cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
