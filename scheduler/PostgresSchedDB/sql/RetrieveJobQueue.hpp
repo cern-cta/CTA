@@ -38,7 +38,7 @@ struct RetrieveJobQueueRow {
   std::string vid;
   std::optional<std::string> activity;
   uint32_t actCopyNb = 0;
-  uint16_t priority = 0;
+  uint64_t priority = 0;
   time_t retMinReqAge = 0;
   time_t startTime = 0;
   std::string mountPolicyName;

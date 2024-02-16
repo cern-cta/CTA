@@ -47,7 +47,7 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   repackInfo.userProvidedFiles    = totalStatsFiles.userProvidedFiles;
 }
 
-void RepackRequest::reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests) const {
+[[noreturn]] void RepackRequest::reportRetrieveCreationFailures([[maybe_unused]] const std::list<Subrequest> &notCreatedSubrequests) const {
    throw cta::exception::Exception("Not implemented");
 }
 
@@ -61,6 +61,7 @@ uint64_t RepackRequest::addSubrequestsAndUpdateStats(
   log::LogContext                                    &lc
 )
 {
+  // refactor this entire method and remove goto statements wherever possible !
   if (!m_txn) {
     throw cta::ExpandRepackRequestException(
       "In postgresscheddb::RepackRequest::addSubrequestsAndUpdateStats(), "
@@ -79,7 +80,7 @@ uint64_t RepackRequest::addSubrequestsAndUpdateStats(
   // go through and if needed add them to our
   // subrequest (retrieve or archive request) pointers
   bool newSubsCreated = false;
-  for(auto &r: repackSubrequests) {
+  for(const auto &r: repackSubrequests) {
     if (srmap.find(r.fSeq) == srmap.end()) {
       newSubsCreated = true;
       m_subreqp.emplace_back();
@@ -137,15 +138,15 @@ uint64_t RepackRequest::addSubrequestsAndUpdateStats(
         // Set the repack info.
         RetrieveRequest::RetrieveReqRepackInfo rRRepackInfo;
         try {
-          for (auto & ar: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
-            rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
+          for (const auto & [first, second]: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
+            rRRepackInfo.archiveRouteMap[second.copyNb] = second.tapePoolName;
           }
 
           //Check that we do not have the same destination tapepool for two different copyNb
-          for(auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
+          for(const auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
             int nbTapepool = std::count_if(
                rRRepackInfo.archiveRouteMap.begin(), rRRepackInfo.archiveRouteMap.end(),
-               [&currentCopyNbTapePool](const std::pair<uint64_t,std::string> & copyNbTapepool)
+               [&currentCopyNbTapePool](const std::pair<uint32_t,std::string> & copyNbTapepool)
                  {
                    return copyNbTapepool.second == currentCopyNbTapePool.second;
                  });

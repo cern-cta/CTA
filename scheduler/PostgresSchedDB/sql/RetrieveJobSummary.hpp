@@ -26,7 +26,7 @@ struct RetrieveJobSummaryRow {
   uint64_t jobsCount;
   uint64_t jobsTotalSize;
   std::string vid;
-  uint16_t priority;
+  uint64_t priority;
   postgresscheddb::RetrieveJobStatus status;
 
   RetrieveJobSummaryRow() = default;

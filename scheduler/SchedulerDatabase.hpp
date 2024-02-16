@@ -216,7 +216,7 @@ class SchedulerDatabase {
     virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
     virtual ~ArchiveMount() = default;
-    uint32_t nbFilesCurrentlyOnTape;
+    uint64_t nbFilesCurrentlyOnTape;
   };
 
   /**
@@ -495,7 +495,7 @@ class SchedulerDatabase {
     virtual void addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip) = 0;
     virtual void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) = 0;
     virtual ~RetrieveMount() = default;
-    uint32_t nbFilesCurrentlyOnTape;
+    uint64_t nbFilesCurrentlyOnTape;
   };
 
   class RetrieveJob {

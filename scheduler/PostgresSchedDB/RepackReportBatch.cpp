@@ -20,7 +20,7 @@
 
 namespace cta::postgresscheddb {
 
-RepackReportBatch::RepackReportBatch()
+[[noreturn]] RepackReportBatch::RepackReportBatch()
 {
    throw cta::exception::Exception("Not implemented");
 }

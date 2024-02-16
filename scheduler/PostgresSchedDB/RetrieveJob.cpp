@@ -20,7 +20,7 @@
 
 namespace cta::postgresscheddb {
 
-RetrieveJob::RetrieveJob()
+[[noreturn]] RetrieveJob::RetrieveJob()
 {
    throw cta::exception::Exception("Not implemented");
 }

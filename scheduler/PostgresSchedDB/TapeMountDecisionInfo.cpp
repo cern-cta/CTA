@@ -60,9 +60,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
         "createArchiveMount(): unexpected mount type.");
   }
 
-  std::unique_ptr<postgresscheddb::ArchiveMount> privateRet(
-    new postgresscheddb::ArchiveMount(m_ownerId, m_txn, queueType)
-  );
+  auto privateRet = std::make_unique<postgresscheddb::ArchiveMount>(m_ownerId, m_txn, queueType);
 
   auto &am = *privateRet;
   // Check we hold the scheduling lock
@@ -112,10 +110,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
     const std::string& hostName
   )
 {
-  std::unique_ptr<postgresscheddb::RetrieveMount> privateRet(
-    new postgresscheddb::RetrieveMount(m_ownerId, m_txn, mount.vid)
-  );
-
+  auto privateRet = std::make_unique<postgresscheddb::RetrieveMount>(m_ownerId, m_txn, mount.vid);
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if(!m_lockTaken) {
@@ -137,7 +132,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   rm.mountInfo.vid               = mount.vid;
   rm.mountInfo.vo                = mount.vo;
   rm.mountInfo.mediaType         = mount.mediaType;
-  rm.mountInfo.labelFormat       = mount.labelFormat.value_or(cta::common::dataStructures::Label::Format::CTA);;
+  rm.mountInfo.labelFormat       = mount.labelFormat.value_or(cta::common::dataStructures::Label::Format::CTA);
   rm.mountInfo.vendor            = mount.vendor;
   rm.mountInfo.capacityInBytes   = mount.capacityInBytes;
   rm.mountInfo.activity          = mount.activity;

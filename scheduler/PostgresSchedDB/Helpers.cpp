@@ -25,7 +25,7 @@ namespace cta::postgresscheddb {
 //------------------------------------------------------------------------------
 // Helpers::g_tapeStatuses
 //------------------------------------------------------------------------------
-std::map<std::string, Helpers::TapeStatusWithTime> Helpers::g_tapeStatuses;
+std::map<std::string, Helpers::TapeStatusWithTime, std::less<>> Helpers::g_tapeStatuses;
 
 //------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatisticsMutex
@@ -35,7 +35,7 @@ cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 //------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatistics
 //------------------------------------------------------------------------------
-std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime> Helpers::g_retrieveQueueStatistics;
+std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime, std::less<>> Helpers::g_retrieveQueueStatistics;
 
 std::string Helpers::selectBestVid4Retrieve
 (
@@ -75,9 +75,9 @@ std::string Helpers::selectBestVid4Retrieve
     }
     // Add in all the entries we need for this batch of candidates
     auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
-    for(auto& ts : tapeStatuses) {
-      g_tapeStatuses[ts.first].tapeStatus = ts.second;
-      g_tapeStatuses[ts.first].updateTime = time(nullptr);
+    for(const auto& [tv, ts] : tapeStatuses) {
+      g_tapeStatuses[tv].tapeStatus = ts;
+      g_tapeStatuses[tv].updateTime = time(nullptr);
     }
   }
 
@@ -207,7 +207,7 @@ std::string Helpers::selectBestVid4Retrieve
   candidateVidsStats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
   // Get a list of equivalent best tapes
   std::set<std::string> shortSetVids;
-  for (auto & s: candidateVidsStats) {
+  for (const auto & s: candidateVidsStats) {
     if (!(s<candidateVidsStats.front()) && !(s>candidateVidsStats.front()))
       shortSetVids.insert(s.vid);
   }
@@ -228,9 +228,9 @@ std::string Helpers::selectBestVid4Retrieve
 
 void Helpers::logUpdateCacheIfNeeded
 (
-  const bool                             entryCreation,
-  const RetrieveQueueStatisticsWithTime &tapeStatistic,
-  const std::string                     &message)
+  [[maybe_unused]] const bool                            entryCreation,
+  [[maybe_unused]] const RetrieveQueueStatisticsWithTime &tapeStatistic,
+  [[maybe_unused]] std::string_view                      message)
 {
   #ifdef HELPERS_CACHE_UPDATE_LOGGING
     std::ofstream logFile(HELPERS_CACHE_UPDATE_LOGGING_FILE, std::ofstream::app);
@@ -249,7 +249,7 @@ void Helpers::logUpdateCacheIfNeeded
 std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueStatistics
 (
   const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-  const std::set<std::string>                                  &vidsToConsider,
+  const std::set<std::string, std::less<>>                     &vidsToConsider,
   postgresscheddb::Transaction                                 &txn)
 {
 
@@ -266,7 +266,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       );
 
     if (!summary.next()) {
-      ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
+      ret.emplace_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.vid;
       ret.back().bytesQueued=0;
       ret.back().currentPriority=0;
@@ -275,7 +275,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     }
     cta::postgresscheddb::sql::RetrieveJobSummaryRow rjs(summary);
 
-    ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
+    ret.emplace_back(SchedulerDatabase::RetrieveQueueStatistics());
     ret.back().vid=rjs.vid;
     ret.back().currentPriority=rjs.priority;
     ret.back().bytesQueued=rjs.jobsTotalSize;

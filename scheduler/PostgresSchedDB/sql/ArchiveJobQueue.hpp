@@ -33,9 +33,9 @@ struct ArchiveJobQueueRow {
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
-  uint16_t priority = 0;
-  uint32_t minArchiveRequestAge = 0;
-  uint16_t copyNb = 0;
+  uint64_t priority = 0;
+  uint64_t minArchiveRequestAge = 0;
+  uint8_t copyNb = 0;
   time_t startTime = 0;                       //!< Time the job was inserted into the queue
   std::string archiveReportUrl;
   std::string archiveErrorReportUrl;

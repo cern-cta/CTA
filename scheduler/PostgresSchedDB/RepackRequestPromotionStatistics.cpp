@@ -20,7 +20,7 @@
 
 namespace cta::postgresscheddb {
 
-RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+[[noreturn]]RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 {
    throw cta::exception::Exception("Not implemented");
 }

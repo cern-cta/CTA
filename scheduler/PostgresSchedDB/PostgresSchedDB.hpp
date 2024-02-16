@@ -59,7 +59,7 @@ class PostgresSchedDB: public SchedulerDatabase {
                    const rdbms::Login &login,
                    const uint64_t nbConns);
 
-  virtual ~PostgresSchedDB() noexcept;
+  ~PostgresSchedDB() override;
 
   void waitSubthreadsComplete() override;
 
