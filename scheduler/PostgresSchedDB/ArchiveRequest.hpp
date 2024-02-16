@@ -72,7 +72,7 @@ public:
     ArchiveJobStatus status;
   };
   
-  std::list<JobDump> dumpJobs() const;
+  [[noreturn]] std::list<JobDump> dumpJobs() const;
 
 private:
   /**
