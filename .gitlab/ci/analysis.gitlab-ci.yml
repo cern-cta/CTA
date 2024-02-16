@@ -57,13 +57,13 @@ catalogue_schema_version_check:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
       allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
     # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
       allow_failure: false
       variables:
