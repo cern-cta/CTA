@@ -143,7 +143,7 @@ class SchedulerDatabase {
    *
    * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
+  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>>
     getArchiveJobs() const = 0;
 
   /**
@@ -429,7 +429,7 @@ class SchedulerDatabase {
    *
    * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<> >
+  virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
     getRetrieveJobs() const = 0;
 
   /**
