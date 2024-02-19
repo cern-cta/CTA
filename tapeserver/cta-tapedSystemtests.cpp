@@ -51,14 +51,18 @@ TEST(cta_taped, InvocationTests) {
   {
     // We provide le daemon with an existing (but almost empty) configuration
     // file. The mandatory fields are present.
-    unitTests::TempFile ctaConf, tpConfig;
+    unitTests::TempFile ctaConf, driveConfig;
     ctaConf.stringAppend(
       "#A good enough configuration file for taped\n"
       "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
       "taped BufferCount 1\n"
-      "taped TpConfigPath ");
-    ctaConf.stringAppend(tpConfig.path());
-    cta::threading::SubProcess spNoDrive("/usr/bin/cta-taped",
+
+      "taped DriveName dummy-Drive\n"
+      "taped DriveLogicalLibrary dummyLL\n"
+      "taped DriveDevice /dummy/Device\n"
+      "taped DriveControlPath dummyControlPath\n");
+
+    cta::threading::SubProcess spNoDrive("/usr/bin/cta-taped", 
       std::list<std::string>({"/usr/bin/cta-taped", "-f", "-s", "-c", ctaConf.path()}));
     spNoDrive.wait();
     ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting cta-taped. Not starting because: "

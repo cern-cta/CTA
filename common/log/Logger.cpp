@@ -131,6 +131,30 @@ void Logger::setLogFormat(std::string_view logFormat) {
   }
 }
 
+//------------------------------------------------------------------------------
+// setStaticParams
+//------------------------------------------------------------------------------
+void Logger::setStaticParams(const std::map<std::string, std::string> &staticParams) {
+  // Build the static params string
+  std::ostringstream os;
+  if (!m_staticParamsStr.empty()) {
+    throw exception::Exception("Static log params have already been set.");
+  }
+  switch(m_logFormat){
+  case LogFormat::DEFAULT:
+    for(const auto& [headerKey, headerValue] : staticParams){
+      os << headerKey << "=\""  << headerValue << "\" ";
+    }
+    break;
+  case LogFormat::JSON:
+    for(const auto& [headerKey, headerValue] : staticParams){
+      os << ",\"" << headerKey << "\":\"" << headerValue << "\"";
+    }
+    break;
+  }
+  m_staticParamsStr = os.str();
+}
+
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
@@ -176,6 +200,9 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
            << R"("tid":")" << tid << R"(",)"
            << R"("message":")" << msg << R"(")";
   }
+
+  // Print static params
+  os << m_staticParamsStr;
 
   // Process parameters
   for(auto& param : params) {

@@ -27,7 +27,7 @@
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "tapeserver/daemon/TpconfigLine.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "version.h"
 
 namespace cta {
@@ -36,9 +36,9 @@ TapeDrivesCatalogueState::TapeDrivesCatalogueState(catalogue::Catalogue &catalog
 
 void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+  const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
+  auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
   if (it != driveNames.end()) {
@@ -475,7 +475,7 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
 common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+  const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
   const common::dataStructures::SecurityIdentity& identity) {
   const time_t reportTime = time(nullptr);
   common::dataStructures::TapeDrive tapeDriveStatus;
@@ -492,8 +492,8 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   tapeDriveStatus.diskSystemName = std::nullopt;
   tapeDriveStatus.reservedBytes = std::nullopt;
   tapeDriveStatus.reservationSessionId = std::nullopt;
-  tapeDriveStatus.devFileName = tpConfigLine.devFilename;
-  tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
+  tapeDriveStatus.devFileName = driveConfigEntry.devFilename;
+  tapeDriveStatus.rawLibrarySlot = driveConfigEntry.rawLibrarySlot;
   if (identity.username.empty()) {
     tapeDriveStatus.creationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);
     tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);

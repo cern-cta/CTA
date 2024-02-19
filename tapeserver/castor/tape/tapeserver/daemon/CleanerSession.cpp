@@ -30,7 +30,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   cta::server::ProcessCap &capUtils,
   cta::mediachanger::MediaChangerFacade &mc,
   cta::log::Logger &log,
-  const cta::tape::daemon::TpconfigLine &driveConfig,
+  const cta::tape::daemon::DriveConfigEntry &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid,
   const bool waitMediaInDrive,

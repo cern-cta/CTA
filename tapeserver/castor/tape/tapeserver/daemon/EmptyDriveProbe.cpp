@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
   cta::log::Logger &log,
-  const cta::tape::daemon::TpconfigLine &driveConfig,
+  const cta::tape::daemon::DriveConfigEntry &driveConfig,
   System::virtualWrapper &sysWrapper):
   m_log(log),
   m_driveConfig(driveConfig),

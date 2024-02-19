@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2024 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "tapeserver/daemon/TpconfigLine.hpp"
+#include "DriveConfigEntry.hpp"
 #include "common/exception/Exception.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 
@@ -24,7 +24,7 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 // Constructor.
 //------------------------------------------------------------------------------
-cta::tape::daemon::TpconfigLine::TpconfigLine(
+cta::tape::daemon::DriveConfigEntry::DriveConfigEntry(
   const std::string &unitName,
   const std::string &logicalLibrary,
   const std::string &devFilename,
@@ -35,32 +35,32 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
   rawLibrarySlot(librarySlot),
   m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)){
   if (unitName.size() > maxNameLen)
-    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: unitName too long");
+    throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: unitName too long");
   if (logicalLibrary.size() > maxNameLen)
-    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: logicalLibrary too long");
+    throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: logicalLibrary too long");
   if (devFilename.size() > maxNameLen)
-    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: devFilename too long");
+    throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: devFilename too long");
   if (librarySlot.size() > maxNameLen)
-    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: librarySlot too long");
+    throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: librarySlot too long");
 }
 
 //------------------------------------------------------------------------------
 // Copy constructor.
 //------------------------------------------------------------------------------
-TpconfigLine::TpconfigLine(const TpconfigLine& o): TpconfigLine(o.unitName, o.logicalLibrary,
+DriveConfigEntry::DriveConfigEntry(const DriveConfigEntry& o): DriveConfigEntry(o.unitName, o.logicalLibrary,
     o.devFilename, o.rawLibrarySlot) {}
 
 //------------------------------------------------------------------------------
-// TpconfigLine::librarySlot
+// DriveConfigEntry::librarySlot
 //------------------------------------------------------------------------------
-const cta::mediachanger::LibrarySlot& TpconfigLine::librarySlot() const {
+const cta::mediachanger::LibrarySlot& DriveConfigEntry::librarySlot() const {
   return *m_librarySlot;
 }
 
 //------------------------------------------------------------------------------
-// TpconfigLine::operator=
+// DriveConfigEntry::operator=
 //------------------------------------------------------------------------------
-TpconfigLine& TpconfigLine::operator=(const TpconfigLine& o) {
+DriveConfigEntry& DriveConfigEntry::operator=(const DriveConfigEntry& o) {
   unitName = o.unitName;
   logicalLibrary = o.logicalLibrary;
   devFilename = o.devFilename;

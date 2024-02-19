@@ -18,7 +18,7 @@
 cta-readtp \- Low-level utility to read files from a tape
 
 .SH SYNOPSIS
-\fBcta-readtp\fP \fIvid\fR \fIsequence\fR [--destination_files \fIfile_url\fR] [--help]
+\fBcta-readtp\fP \fIvid\fR \fIsequence\fR [--destination_files \fIfile_url\fR] [--drive \fIdrive_name\fR] [--help]
 
 .SH DESCRIPTION
 \fBcta-readtp\fP is a command-line tool for reading files from tape and validating their checksums.
@@ -39,6 +39,9 @@ f1-f2,f4,f6-   A series of non-consecutive ranges of files.
 Path to a file containing a list of destination URLs that the files will be written to (one URL per
 line). If not specified, all data read will be written to /dev/null. If there are less destination
 files than read files, the remaining files read will be written to /dev/null.
+.TP
+-u, --drive \fIdrive_name\fR
+The unit name of the drive used. Defaults to the first taped configuration file matching 'cta-taped-unitName.conf' under the directory '/etc/cta/'
 .TP
 \-h, \-\-help
 Display command options and exit.

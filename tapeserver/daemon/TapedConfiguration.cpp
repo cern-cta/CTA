@@ -16,10 +16,12 @@
  */
 
 #include "TapedConfiguration.hpp"
+#include "DriveConfigEntry.hpp"
 #include "common/ConfigurationFile.hpp"
-#include "Tpconfig.hpp"
 
 #include <algorithm>
+#include <regex>
+#include <filesystem>
 
 namespace cta {
 
@@ -27,8 +29,8 @@ namespace cta {
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
-  lc.pushOrReplace({"category", "TPCONFIG Entry"});
+void SourcedParameter<tape::daemon::DriveConfigEntry>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"category", "Drive Entry"});
   lc.pushOrReplace({"tapeDrive", m_value.unitName});
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
   lc.pushOrReplace({"devFilename", m_value.devFilename});
@@ -85,82 +87,127 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
 namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
-// GlobalConfiguration::createFromCtaConf w path
+// TapedConfiguration::getDriveConfigFile
+//------------------------------------------------------------------------------
+std::string TapedConfiguration::getDriveConfigFile(const std::optional<std::string> &unitName, cta::log::Logger &log) {
+  const std::regex CTA_CONF_REGEX("cta-taped.*\\.conf");
+
+  if (unitName){
+    // Try exact match.
+    std::string tapeDriveConfigFile = "/etc/cta/cta-taped-" + unitName.value() + ".conf";
+    if(std::filesystem::exists(tapeDriveConfigFile)){
+      return tapeDriveConfigFile;
+    }
+  } else {
+      log(cta::log::INFO, "Unit name not specified, choosing first config file found.");
+      for(auto const& entry : std::filesystem::directory_iterator("/etc/cta/")){
+        if (std::regex_match( entry.path().filename().string(), CTA_CONF_REGEX)){
+          return entry.path().string();
+        }
+      }
+  }
+  cta::exception::Exception ex;
+  ex.getMessage() << "Failed to find a drive configuration file for the server.";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// TapedConfiguration::getFirstDriveName
+//------------------------------------------------------------------------------
+std::string TapedConfiguration::getFirstDriveName() {
+  // Get first config file path
+  const std::string driveTapedConfigPath = getDriveConfigFile(std::nullopt, gDummyLogger);
+
+  // Read config file
+  ConfigurationFile cf(driveTapedConfigPath);
+
+  return cf.entries.at("taped").at("DriveName").value;
+}
+
+//------------------------------------------------------------------------------
+// TapedConfiguration::createFromCtaConf w path
 //------------------------------------------------------------------------------
 TapedConfiguration TapedConfiguration::createFromCtaConf(
-  const std::string& generalConfigPath, cta::log::Logger& log) {
+  const std::string &driveTapedConfigPath, cta::log::Logger &log) {
   TapedConfiguration ret;
+
   // Parse config file
-  ConfigurationFile cf(generalConfigPath);
+  ConfigurationFile cf(driveTapedConfigPath);
+
   // Extract configuration from parsed config file
-  // TpConfig
-  ret.daemonUserName.setFromConfigurationFile(cf, generalConfigPath);
-  ret.daemonGroupName.setFromConfigurationFile(cf, generalConfigPath);
-  ret.logMask.setFromConfigurationFile(cf, generalConfigPath);
-  ret.logFormat.setFromConfigurationFile(cf, generalConfigPath);
-  ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
-  ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, generalConfigPath);
-  ret.useEncryption.setFromConfigurationFile(cf, generalConfigPath);
+  ret.daemonUserName.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.daemonGroupName.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.logMask.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.logFormat.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.useEncryption.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Memory management
-  ret.bufferSizeBytes.setFromConfigurationFile(cf, generalConfigPath);
-  ret.bufferCount.setFromConfigurationFile(cf, generalConfigPath);
+  ret.bufferSizeBytes.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.bufferCount.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Batched metadata access and tape write flush parameters
-  ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
-  ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
-  ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
+  ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Mount criteria
-  ret.mountCriteria.setFromConfigurationFile(cf, generalConfigPath);
+  ret.mountCriteria.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Disk file access parameters
-  ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
+  ret.nbDiskThreads.setFromConfigurationFile(cf, driveTapedConfigPath);
   //RAO
-  ret.useRAO.setFromConfigurationFile(cf, generalConfigPath);
-  ret.raoLtoAlgorithm.setFromConfigurationFile(cf,generalConfigPath);
-  ret.raoLtoOptions.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useRAO.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.raoLtoAlgorithm.setFromConfigurationFile(cf,driveTapedConfigPath);
+  ret.raoLtoOptions.setFromConfigurationFile(cf,driveTapedConfigPath);
   // Watchdog: parameters for timeouts in various situations.
-  ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
-  ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
-  ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
-  ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
-  ret.wdGetNextMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
+  ret.wdIdleSessionTimer.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.wdMountMaxSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.wdGetNextMountMaxSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
   // The central storage access configuration
-  ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
-  ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
+  ret.backendPath.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.fileCatalogConfigFile.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Repack management configuration
-  ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useRepackManagement.setFromConfigurationFile(cf,driveTapedConfigPath);
   // Maintenance process configuration
-  ret.useMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
-  ret.repackMaxRequestsToExpand.setFromConfigurationFile(cf, generalConfigPath);
+  ret.useMaintenanceProcess.setFromConfigurationFile(cf,driveTapedConfigPath);
+  ret.repackMaxRequestsToExpand.setFromConfigurationFile(cf, driveTapedConfigPath);
   // External free disk space script configuration
-  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
+  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,driveTapedConfigPath);
   // Timeout for tape load action
-  ret.tapeLoadTimeout.setFromConfigurationFile(cf,generalConfigPath);
-  // Extract drive list from tpconfig + parsed config file
-  ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
-  
+  ret.tapeLoadTimeout.setFromConfigurationFile(cf,driveTapedConfigPath);
+
   ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"),"Environment variable");
   ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"),"Environment variable");
   // rmcd connection options
-  ret.rmcPort.setFromConfigurationFile(cf, generalConfigPath);
-  ret.rmcNetTimeout.setFromConfigurationFile(cf, generalConfigPath);
-  ret.rmcRequestAttempts.setFromConfigurationFile(cf, generalConfigPath);
-  
+  ret.rmcPort.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.rmcNetTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.rmcRequestAttempts.setFromConfigurationFile(cf, driveTapedConfigPath);
+
+  // Drive options
+  ret.driveName.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.driveLogicalLibrary.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.driveDevice.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.driveControlPath.setFromConfigurationFile(cf, driveTapedConfigPath);
+
+  // General options
+  ret.instanceName.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.schedulerBackendName.setFromConfigurationFile(cf, driveTapedConfigPath);
+
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);
   ret.logMask.log(log);
-  ret.tpConfigPath.log(log);
   ret.externalEncryptionKeyScript.log(log);
   ret.useEncryption.log(log);
-  
+
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
-  
+
   ret.archiveFetchBytesFiles.log(log);
   ret.archiveFlushBytesFiles.log(log);
   ret.retrieveFetchBytesFiles.log(log);
-  
+
   ret.mountCriteria.log(log);
-  
+
   ret.nbDiskThreads.log(log);
   ret.useRAO.log(log);
 
@@ -169,25 +216,38 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdNoBlockMoveMaxSecs.log(log);
   ret.wdScheduleMaxSecs.log(log);
   ret.wdGetNextMountMaxSecs.log(log);
-  
+
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
-  
+
   ret.useRepackManagement.log(log);
   ret.useMaintenanceProcess.log(log);
   ret.repackMaxRequestsToExpand.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
-  
+
   ret.tapeLoadTimeout.log(log);
 
   ret.rmcPort.log(log);
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);
 
-  for (auto & [driveName, configLine]:ret.driveConfigs) {
-    configLine.log(log);
-  }
+  ret.driveName.log(log);
+  ret.driveLogicalLibrary.log(log);
+  ret.driveDevice.log(log);
+  ret.driveControlPath.log(log);
+
+  ret.instanceName.log(log);
+  ret.schedulerBackendName.log(log);
+
   return ret;
+}
+
+TapedConfiguration TapedConfiguration::createFromCtaConf(
+  const std::optional<std::string> &unitName, cta::log::Logger &log) {
+  // Get the config file path
+  const std::string driveTapedConfigPath = getDriveConfigFile(unitName, log);
+
+  return createFromCtaConf(driveTapedConfigPath, log);
 }
 
 //------------------------------------------------------------------------------

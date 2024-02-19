@@ -30,10 +30,6 @@ cat /tmp/library-rc.sh
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
-# tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
-# Configuring one library per tape drive so that mhvtl can work with multiple tapeservers
-tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
-
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
@@ -43,14 +39,23 @@ echo "Configuring database"
 
 echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 
+TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVENAMES[${driveslot}]}.conf"
+
 # cta-taped setup
-  echo "taped BufferSizeBytes 262144" > /etc/cta/cta-taped.conf
-  echo "taped BufferCount 200" >> /etc/cta/cta-taped.conf
-  echo "taped MountCriteria 2000000, 100" >> /etc/cta/cta-taped.conf
-  echo "taped WatchdogIdleSessionTimer 2" >> /etc/cta/cta-taped.conf # Make tape servers more responsive, thus improving CI test speed
-  echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
-  echo "taped UseEncryption no" >> /etc/cta/cta-taped.conf
-  echo "${tpconfig}" > /etc/cta/TPCONFIG
+  echo "taped BufferSizeBytes 262144" > "${TAPED_CONF_FILE}"
+  echo "taped BufferCount 200" >> "${TAPED_CONF_FILE}"
+  echo "taped MountCriteria 2000000, 100" >> "${TAPED_CONF_FILE}"
+  echo "taped WatchdogIdleSessionTimer 2" >> "${TAPED_CONF_FILE}" # Make tape servers more responsive, thus improving CI test speed
+  echo "ObjectStore BackendPath $OBJECTSTOREURL" >> "${TAPED_CONF_FILE}"
+  echo "taped UseEncryption no" >> "${TAPED_CONF_FILE}"
+  echo "taped DriveName ${DRIVENAMES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
+  echo "taped DriveLogicalLibrary ${DRIVENAMES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
+  echo "taped DriveDevice /dev/${DRIVEDEVICES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
+  echo "taped DriveControlPath smc${driveslot}" >> "${TAPED_CONF_FILE}"
+
+  echo "general InstanceName CI" >> "${TAPED_CONF_FILE}"
+  echo "general SchedulerBackendName VFS" >> "${TAPED_CONF_FILE}"
+
 
 ####
 # configuring taped using the official location for SSS: /etc/cta/cta-taped.sss.keytab
@@ -63,7 +68,7 @@ chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-CTA_TAPED_OPTIONS="--log-to-file=/var/log/cta/cta-taped.log"
+CTA_TAPED_OPTIONS="--log-to-file=/var/log/cta/cta-taped-${DRIVENAMES[${driveslot}]}.log"
 XrdSecPROTOCOL=sss
 XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
 EOF
@@ -93,7 +98,7 @@ tail -F /var/log/cta/cta-taped.log &
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
 # working correctly
-runuser -c "/usr/bin/cta-taped --foreground ${CTA_TAPED_OPTIONS}"
+runuser -c "/usr/bin/cta-taped -c ${TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 
 echo "taped died"
 

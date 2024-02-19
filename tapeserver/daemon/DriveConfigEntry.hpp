@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2024 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -24,10 +24,11 @@
 namespace cta::tape::daemon {
 
 /**
- * The data stored in a data-line (as opposed to a comment-line) from a
- * TPCONFIG file (/etc/cta/TPCONFIG).
+ * The Drive configuration entry containing the unit name, logicalLibrary,
+ * device filename, and library slot. Loaded from a drive configuration
+ * file in /etc/cta/.
  */
-class TpconfigLine {
+class DriveConfigEntry {
 public:
   /**
    * The unit name of the tape drive.
@@ -48,13 +49,13 @@ public:
    * The slot in the tape library that contains the tape drive (string encoded).
    */
   std::string rawLibrarySlot;
-  
+
   /**
    * Accessor method to the library slot strcuture.
    * @return reference to the library slot.
    */
   const cta::mediachanger::LibrarySlot & librarySlot() const;
-  
+
 private:
   /**
    * The library slot structure.
@@ -65,8 +66,8 @@ public:
   /**
    * Trivial constructor (used in unit tests)
    */
-  TpconfigLine() = default;
-  
+  DriveConfigEntry() = default;
+
   /**
    * Constructor.
    *
@@ -76,7 +77,7 @@ public:
    * @param librarySlot The slot in the tape library that contains the tape
    * drive.
    */
-  TpconfigLine(
+  DriveConfigEntry(
     const std::string &unitName,
     const std::string &logicalLibrary,
     const std::string &devFilename,
@@ -84,17 +85,17 @@ public:
 
   /**
    * Copy constructor
-   * @param o the other TpConfigLine to be copied.
+   * @param o the other DriveConfigEntry to be copied.
    */
-  TpconfigLine(const TpconfigLine& o);
-  
+  DriveConfigEntry(const DriveConfigEntry& o);
+
   /**
    * Copy operator
-   * @param o the other TpConfigLine to copy.
+   * @param o the other DriveConfigEntry to copy.
    * @return a reference to the object
    */
-  TpconfigLine& operator=(const TpconfigLine& o);
+  DriveConfigEntry& operator=(const DriveConfigEntry& o);
   static const size_t maxNameLen = 100;
-}; // struct TpconfigLine
+}; // struct DriveConfigEntry
 
 } // namespace cta::tape::daemon

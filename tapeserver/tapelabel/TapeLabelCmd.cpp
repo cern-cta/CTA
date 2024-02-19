@@ -21,7 +21,6 @@
 #include "common/Constants.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
-#include "tapeserver/castor/tape/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/LabelSession.hpp"
@@ -273,7 +272,7 @@ void TapeLabelCmd::dismountTape(
 
   try {
     m_log(cta::log::INFO, "Label session dismounting tape", params);
-    m_mc.dismountTape(vid, librarySlot);
+    m_mc->dismountTape(vid, librarySlot);
     m_log(cta::log::INFO, "Label session dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
@@ -398,45 +397,25 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
   m_vid = vid;
   m_oldLabel = oldLabel;
   m_userName = userName;
-  cta::tape::daemon::Tpconfig tpConfig;
-  tpConfig  = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
-  const int configuredDrives =  tpConfig.size();
-  
-  if (unitName) {
-    bool found = false;
-    for (auto &driveConfig: tpConfig) {
-      auto currentUnitName = driveConfig.second.value().unitName;
-      if (currentUnitName == unitName.value()) {
-        m_devFilename = driveConfig.second.value().devFilename;
-        m_rawLibrarySlot = driveConfig.second.value().rawLibrarySlot;
-        m_logicalLibrary = driveConfig.second.value().logicalLibrary;
-        m_unitName = driveConfig.second.value().unitName;
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Drive with unit name " << unitName.value() << " does not exist in TPCONFIG";
-      throw ex;
-    }
-  } else {
-    m_log(cta::log::INFO, "Unit name not specified, choosing first line of TPCONFIG");
-    if (1 == configuredDrives) {
-      for (auto & driveConfig: tpConfig) {
-        m_devFilename = driveConfig.second.value().devFilename;
-        m_rawLibrarySlot = driveConfig.second.value().rawLibrarySlot;
-        m_logicalLibrary = driveConfig.second.value().logicalLibrary;
-        m_unitName = driveConfig.second.value().unitName;
-      }
-    } else {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to read configuration: " << configuredDrives << " drives configured, please use the --drive option";
-      throw ex;
-    }
-  }
 
+  // Read taped config file
+  const cta::tape::daemon::TapedConfiguration driveConfig
+    = cta::tape::daemon::TapedConfiguration::createFromCtaConf(unitName, m_log);
 
+  // Configure drive
+  m_devFilename = driveConfig.driveDevice.value();
+  m_rawLibrarySlot = driveConfig.driveControlPath.value();
+  m_logicalLibrary = driveConfig.driveLogicalLibrary.value();
+  m_unitName = driveConfig.driveName.value();
+
+  // Configure rmcd
+  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(
+    driveConfig.rmcPort.value(),
+    driveConfig.rmcNetTimeout.value(),
+    driveConfig.rmcRequestAttempts.value());
+  m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
+
+  // Configure catalogue
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(CATALOGUE_CONFIG_PATH);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
@@ -476,7 +455,7 @@ void TapeLabelCmd::mountTape(const std::string &vid) {
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
 
   m_log(cta::log::INFO, "Label session mounting tape", params);
-  m_mc.mountTapeReadWrite(vid, librarySlot);
+  m_mc->mountTapeReadWrite(vid, librarySlot);
   m_log(cta::log::INFO, "Label session mounted tape", params);
 }
 

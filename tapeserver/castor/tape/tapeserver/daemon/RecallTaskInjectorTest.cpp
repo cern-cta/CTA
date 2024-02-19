@@ -169,7 +169,7 @@ namespace unitTests
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
-    castor::tape::tapeserver::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::TpconfigLine(),
+    castor::tape::tapeserver::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::DriveConfigEntry(),
                                                               "0.0.0.0", lc);
     cta::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, 60, lc);
@@ -237,7 +237,7 @@ namespace unitTests
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     cta::server::ProcessCapDummy cap;
-    castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(),
+    castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::DriveConfigEntry(),
                                                               "0.0.0.0", lc);
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);

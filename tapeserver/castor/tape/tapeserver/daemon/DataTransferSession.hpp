@@ -23,7 +23,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "DataTransferConfig.hpp"
-#include "tapeserver/daemon/TpconfigLine.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "Session.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
@@ -49,7 +49,7 @@ public:
    */
   DataTransferSession(const std::string& hostname, cta::log::Logger& log,
                       System::virtualWrapper& sysWrapper,
-                      const cta::tape::daemon::TpconfigLine& driveConfig,
+                      const cta::tape::daemon::DriveConfigEntry& driveConfig,
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
                       cta::server::ProcessCap& capUtils, const DataTransferConfig& dataTransferConfig,
@@ -103,7 +103,7 @@ private:
   /**
    * The configuration of the tape drive to be used by this session.
    */
-  const cta::tape::daemon::TpconfigLine m_driveConfig;
+  const cta::tape::daemon::DriveConfigEntry m_driveConfig;
   const DataTransferConfig m_dataTransferConfig;
   /**
    * The drive information bundle allowing drive register update.

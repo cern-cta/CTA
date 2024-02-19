@@ -20,6 +20,7 @@
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
 #include <string>
+#include <optional>
 
 namespace cta::tapeserver::readtp {
 
@@ -37,6 +38,11 @@ struct ReadtpCmdLineArgs {
    * The tape VID to read.
    */
   std::string m_vid;
+
+  /**
+   * The unit name of the drive used to mount the tape.
+   */
+  std::optional<std::string> m_unitName;
 
   /**
    * Sequence of file fSeqs to read.

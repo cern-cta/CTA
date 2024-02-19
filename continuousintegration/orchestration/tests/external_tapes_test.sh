@@ -84,8 +84,10 @@ if [ ! -d "${tempdir}/osm-mhvtl" ] ; then
 fi
 
 # Get the device to be used.
-device_name=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- cat /etc/cta/TPCONFIG | grep smc0 | awk '{ print $1 }')
-device=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- cat /etc/cta/TPCONFIG | grep smc0 | awk '{ print $3 }')
+
+device_name=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- ls | grep -r 'cta-taped-.*\.conf' | awk 'NR==1')
+device_name="${device_name:10:-5}"
+device=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
 sed -i "s#DEVICE#${device}#g" ${READ_OSM_SCRIPT}
 sed -i "s#DEVICE_NAME_VALUE#${device_name}#g" ${poddir}/pod-externaltapetests.yaml
 sed -i "s#DEVICE_PATH#${device}#g" ${poddir}/pod-externaltapetests.yaml

@@ -22,7 +22,6 @@
 #include "common/processCap/ProcessCap.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
-#include "tapeserver/daemon/Tpconfig.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
 #include "version.h"
@@ -32,6 +31,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <map>
 
 namespace cta::taped {
 
@@ -70,33 +70,6 @@ void logStartOfDaemon(cta::log::Logger &log,
   const daemon::CommandLineParams& commandLine);
 
 //------------------------------------------------------------------------------
-// Creates a string that contains the specified command-line arguments
-// separated by single spaces.
-//
-// @param argc The number of command-line arguments.
-// @param argv The array of command-line arguments.
-//------------------------------------------------------------------------------
-//static std::string argvToString(const int argc, const char *const *const argv);
-
-////------------------------------------------------------------------------------
-//// Writes the specified TPCONFIG lines to the specified logging system.
-////
-//// @param log The logging system.
-//// @param lines The lines parsed from /etc/cta/TPCONFIG.
-////------------------------------------------------------------------------------
-//static void logTpconfigLines(cta::log::Logger &log,
-//  const cta::tape::daemon::TpconfigLines &lines);
-//
-////------------------------------------------------------------------------------
-//// Writes the specified TPCONFIG lines to the logging system.
-////
-//// @param log The logging system.
-//// @param line The line parsed from /etc/cta/TPCONFIG.
-////------------------------------------------------------------------------------
-//static void logTpconfigLine(cta::log::Logger &log,
-//  const cta::tape::daemon::TpconfigLine &line);
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
@@ -104,13 +77,20 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
 
   logStartOfDaemon(log, commandLine);
 
-  // Parse /etc/cta/cta-taped.conf and /etc/cta/TPCONFIG for global parameters
+  // Parse /etc/cta/cta-taped-unitName.conf parameters
   const TapedConfiguration globalConfig = TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
   // Set log lines to JSON format if configured and not overridden on command line
   if(commandLine.logFormat.empty()) {
     log.setLogFormat(globalConfig.logFormat.value());
   }
+
+  // Set specific static headers for tape daemon
+  std::map<std::string, std::string> staticParamMap;
+  staticParamMap["instance"] = globalConfig.instanceName.value();
+  staticParamMap["sched_backend"] = globalConfig.schedulerBackendName.value();
+  staticParamMap["drive_name"] = globalConfig.driveName.value();
+  log.setStaticParams(staticParamMap);
 
   // Adjust log mask to the log level potentionally set in the configuration file
   log.setLogMask(globalConfig.logMask.value());
@@ -144,48 +124,6 @@ void logStartOfDaemon(cta::log::Logger &log,
   params.splice(params.end(), commandLine.toLogParams());
   log(log::INFO, "Starting cta-taped", params);
 }
-
-//------------------------------------------------------------------------------
-// argvToString
-//------------------------------------------------------------------------------
-//static std::string argvToString(const int argc, const char *const *const argv) {
-//  std::string str;
-//
-//  for(int i=0; i < argc; i++) {
-//    if(i != 0) {
-//      str += " ";
-//    }
-//
-//    str += argv[i];
-//  }
-//  return str;
-//}
-
-////------------------------------------------------------------------------------
-//// logTpconfigLines
-////------------------------------------------------------------------------------
-//static void logTpconfigLines(cta::log::Logger &log,
-//  const cta::tape::daemon::TpconfigLines &lines) {
-//  using namespace cta::tape::daemon;
-//
-//  for(TpconfigLines::const_iterator itor = lines.begin();
-//    itor != lines.end(); itor++) {
-//    logTpconfigLine(log, *itor);
-//  }
-//}
-//
-////------------------------------------------------------------------------------
-//// logTpconfigLine
-////------------------------------------------------------------------------------
-//static void logTpconfigLine(cta::log::Logger &log,
-//  const cta::tape::daemon::TpconfigLine &line) {
-//  std::list<cta::log::Param> params = {
-//    cta::log::Param("tapeDrive", line.unitName),
-//    cta::log::Param("logicalLibrary", line.logicalLibrary),
-//    cta::log::Param("devFilename", line.devFilename),
-//    cta::log::Param("librarySlot", line.librarySlot)};
-//  log(log::INFO, "TPCONFIG line", params);
-//}
 
 } // namespace cta::taped
 

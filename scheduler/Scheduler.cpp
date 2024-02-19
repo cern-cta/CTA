@@ -901,12 +901,12 @@ void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliI
 //------------------------------------------------------------------------------
 // reportDriveConfig
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) {
+void Scheduler::reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) {
   utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tpConfigLine.unitName);
+  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, driveConfigEntry.unitName);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-   spc.add("drive", tpConfigLine.unitName)
+   spc.add("drive", driveConfigEntry.unitName)
       .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO,"In Scheduler::reportDriveConfig(): success.");
 }
@@ -930,9 +930,9 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
 
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+  const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  m_tapeDrivesState->createTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity, lc);
+  m_tapeDrivesState->createTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity, lc);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);
   lc.log(log::DEBUG, "In Scheduler::createTapeDriveStatus(): success.");

@@ -2,6 +2,7 @@
 
 ### Features
 - cta/CTA#573 - Add configuration on CTA SSI frontend to block user and/or repack operations
+- cta/CTA#576 - Read current TPCONFIG configuration from cta-taped.conf
 
 # v4.10.9.0-1
 

@@ -49,6 +49,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
   
   static struct option longopts[] = {
     {"destination_files",      required_argument, nullptr, 'f'},
+    {"drive",                  required_argument, nullptr, 'u'},
     {"help",                   no_argument,       nullptr, 'h'},
     {nullptr,                  0,                 nullptr,   0}
   };
@@ -57,10 +58,13 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
   int opt = 0;
   int opt_index = 3;
 
-  while ((opt = getopt_long(argc, argv, ":d:f:p:h", longopts, &opt_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, ":d:f:u:p:h", longopts, &opt_index)) != -1) {
     switch(opt) {
     case 'f':
       m_destinationFileListURL = std::string(optarg);
+      break;
+    case 'u':
+      m_unitName = std::string(optarg);
       break;
     case 'h':
       help = true;
@@ -113,6 +117,7 @@ void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
     "      f1-f2,f4,f6-     A series of non-consecutive ranges of files" << std::endl <<
     "Options:" <<std::endl <<
     "  -h, --help                              Print this help message and exit." << std::endl <<
+    "  -u, --drive                             The unit name of the drive used (if absent, the first drive configuration file found is used)" << std::endl <<
     "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files."  << std::endl <<
     "                                          If not set, all data read is written to file:///dev/null" << std::endl <<
     "                                          If there are less destination files than read files, the remaining" << std::endl <<

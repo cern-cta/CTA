@@ -45,7 +45,7 @@ namespace castor::tape::tapeserver::daemon {
      */
     EmptyDriveProbe(
       cta::log::Logger &log,
-      const cta::tape::daemon::TpconfigLine &driveConfig,
+      const cta::tape::daemon::DriveConfigEntry &driveConfig,
       System::virtualWrapper &sysWrapper);
 
     /**
@@ -70,7 +70,7 @@ namespace castor::tape::tapeserver::daemon {
     /**
      * The configuration of the tape drive to be probed.
      */
-    const cta::tape::daemon::TpconfigLine m_driveConfig;
+    const cta::tape::daemon::DriveConfigEntry m_driveConfig;
 
     /**
      * The system wrapper used to find the device and instantiate the drive object

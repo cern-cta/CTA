@@ -33,6 +33,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 #include "XrdSsiPbException.hpp"
 #include "version.h"
@@ -41,7 +42,6 @@
 #include <getopt.h>
 
 std::atomic<bool> cta::frontend::grpc::client::CtaAdminGrpcCmd::m_abIsJson(false);
-std::string tp_config_file = "/etc/cta/TPCONFIG";
 
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
@@ -250,7 +250,12 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::addOption(const cta::admin::O
        auto new_opt = admincmd_ptr->add_option_str();
        new_opt->set_key(key);
        if (option == cta::admin::opt_drivename_cmd && strValue == "first") {
-          new_opt->set_value(getDriveFromTpConfig());
+           try {
+           new_opt->set_value(
+               cta::tape::daemon::TapedConfiguration::getFirstDriveName());
+           } catch (cta::exception::Exception &ex){
+               throw std::runtime_error("Could not find a taped configuration file. This option should only be run from a tapeserver.");
+           }
        } else {
           new_opt->set_value(strValue);
        }
@@ -291,37 +296,6 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::addOption(const cta::admin::O
        throw std::runtime_error(strValue + " is out of range: " + option.help());
     }
  }
-}
-
-std::string cta::frontend::grpc::client::CtaAdminGrpcCmd::getDriveFromTpConfig() {
-  std::ifstream file(tp_config_file);
-  if (file.fail()) {
-    throw std::runtime_error("Unable to open file " + tp_config_file);
-  }
-
-  std::string line;
-
-  while(std::getline(file, line)) {
-    // Strip out comments
-    auto pos = line.find('#');
-    if(pos != std::string::npos) {
-       line.resize(pos);
-    }
-
-    // Extract the list items
-    std::stringstream ss(line);
-    while(!ss.eof()) {
-       std::string item;
-       ss >> item;
-       // skip blank lines or lines consisting only of whitespace
-       if(item.empty()) continue;
-
-       std::string drivename = item.substr(0, item.find(" ")); // first word of line
-       return drivename;
-       
-    }
-  }
-  throw std::runtime_error("File " + tp_config_file + " is empty");
 }
 
 void cta::frontend::grpc::client::CtaAdminGrpcCmd::readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename)

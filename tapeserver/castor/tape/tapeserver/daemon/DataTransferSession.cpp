@@ -46,7 +46,7 @@
 castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const std::string& hostname,
                                                                            cta::log::Logger& log,
                                                                            System::virtualWrapper& sysWrapper,
-                                                                           const cta::tape::daemon::TpconfigLine& driveConfig,
+                                                                           const cta::tape::daemon::DriveConfigEntry& driveConfig,
                                                                            cta::mediachanger::MediaChangerFacade& mc,
                                                                            cta::tape::daemon::TapedProxy& initialProcess,
                                                                            cta::server::ProcessCap& capUtils,
@@ -530,7 +530,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::Lo
 /*
  * Function synopsis  :
  *  1) Get hold of the drive and check it.
- *  --- Check If we did not find the drive in the tpConfig, we have a problem
+ *  --- Check If we did not find the configured drive, we have a problem
  *  2) Try to find the drive
  *    Log if we do not find it
  *  3) Try to open it, log if we fail

@@ -20,11 +20,12 @@
 #include <map>
 #include <type_traits>
 #include <limits>
+#include <optional>
+#include "DriveConfigEntry.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"
 #include "FetchReportOrFlushLimits.hpp"
-#include "Tpconfig.hpp"
 
 namespace cta::tape::daemon {
 /**
@@ -33,13 +34,31 @@ namespace cta::tape::daemon {
  */
 struct TapedConfiguration {
   static TapedConfiguration createFromCtaConf(
-          const std::string & generalConfigPath,
+          const std::string &configFilePath,
+          cta::log::Logger &log=gDummyLogger);
+
+  static TapedConfiguration createFromCtaConf(
+          const std::optional<std::string> &unitName,
           cta::log::Logger & log = gDummyLogger);
-  
+
+  /**
+   * Get the first match (exact or regex) of the specified unitName or the first config file
+   * found in the standard directory in case of nullopt.
+   *
+   * @param unitName Full name of the drive or regular expression.
+   * @param log Logger object
+   */
+  static std::string getDriveConfigFile(const std::optional<std::string> &unitName, cta::log::Logger &log);
+
+  /**
+   *  Return the name of one of the configured drives in the instace.
+   */
+  static std::string getFirstDriveName();
+
   //----------------------------------------------------------------------------
   // The actual parameters:
   //----------------------------------------------------------------------------
-  // Basics: tp config
+  // Basics: tape daemon config
   //----------------------------------------------------------------------------
   /// The user name of the cta-taped daemon process
   cta::SourcedParameter<std::string> daemonUserName{
@@ -53,11 +72,6 @@ struct TapedConfiguration {
   /// The log format. Default is plain-text.
   cta::SourcedParameter<std::string> logFormat{
     "taped", "LogFormat", "default", "Compile time default"};
-  /// Path to the file describing the tape drives (TPCONFIG)
-  cta::SourcedParameter<std::string> tpConfigPath{
-    "taped" , "TpConfigPath", "/etc/cta/TPCONFIG", "Compile time default"};
-  /// Extracted drives configuration.
-  Tpconfig driveConfigs;
   //----------------------------------------------------------------------------
   // Memory management
   //----------------------------------------------------------------------------
@@ -208,6 +222,39 @@ struct TapedConfiguration {
 
   cta::SourcedParameter<uint32_t> rmcRequestAttempts {
     "taped", "RmcRequestAttempts", 10, "Compile time default"
+  };
+
+  //----------------------------------------------------------------------------
+  // Drive Options
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> driveName {
+    "taped", "DriveName"
+  };
+
+  // CTA Logical Library for the tape drive
+  cta::SourcedParameter<std::string> driveLogicalLibrary {
+    "taped", "DriveLogicalLibrary"
+  };
+
+  // System device allowing to read and write
+  cta::SourcedParameter<std::string> driveDevice {
+    "taped", "DriveDevice"
+  };
+
+  // Unique library control path for this drive in its physical library
+  cta::SourcedParameter<std::string> driveControlPath {
+    "taped", "DriveControlPath"
+  };
+
+  //----------------------------------------------------------------------------
+  // Drive Options
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> instanceName {
+    "general", "InstanceName"
+  };
+
+  cta::SourcedParameter<std::string> schedulerBackendName {
+    "general", "SchedulerBackendName"
   };
 
 private:

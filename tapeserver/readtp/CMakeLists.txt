@@ -23,7 +23,6 @@ add_executable(cta-readtp
   ReadtpCmd.cpp
   ReadtpCmdMain.cpp
   ReadtpCmdLineArgs.cpp
-  CmdLineTool.cpp
   TapeFseqRange.cpp
   TapeFseqRangeSequence.cpp
   TapeFseqRangeListSequence.cpp

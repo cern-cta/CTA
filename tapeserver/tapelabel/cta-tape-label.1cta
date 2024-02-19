@@ -43,7 +43,7 @@ The timeout to load the tape in the drive slot, in seconds. Defaults to 7200 (tw
 for media initialisation.
 .TP
 -u, --drive \fIdrive_name\fR
-The unit name of the drive used. Defaults to the first drive listed in TPCONFIG.
+The unit name of the drive used. Defaults to the first taped configuration file matching 'cta-taped-unitName.conf' under the directory '/etc/cta/'
 .TP
 -f, --force
 \fBWarning: this option destroys any data on the tape without first performing the label check.\fP

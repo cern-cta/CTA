@@ -156,7 +156,6 @@ The tape server daemon
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.conf.example
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/TPCONFIG.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-taped.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-taped
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-taped.service

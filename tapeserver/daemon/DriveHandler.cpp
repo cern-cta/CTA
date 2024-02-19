@@ -32,6 +32,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
 #include "tapeserver/daemon/DriveHandlerProxy.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
@@ -51,7 +52,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm) :
+DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const cta::tape::daemon::DriveConfigEntry& driveConfig, ProcessManager& pm) :
   SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
   m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_lc(m_processManager.logContext()) {
   // As the handler is started, its first duty is to create a new subprocess. This
