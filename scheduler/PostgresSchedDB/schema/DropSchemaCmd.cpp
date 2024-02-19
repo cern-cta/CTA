@@ -88,7 +88,7 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 
   std::string userResponse;
   while(userResponse != "yes" && userResponse != "no") {
-    m_out << "Please type either \"yes\" or \"no\" > ";
+    m_out << R"#(Please type either "yes" or "no" > )#";
     std::getline(m_in, userResponse);
   }
 
@@ -128,13 +128,9 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       auto tables = conn.getTableNames();
       tables.remove("CTA_SCHEDULER");  // Remove CTA_SCHEDULER to drop it at the end
       for (const auto &table : tables) {
-        try {
-          conn.executeNonQuery(std::string("DROP TABLE ") + table);
-          m_out << "Dropped table " << table << std::endl;
-          droppedAtLeastOneTable = true;
-        } catch(exception::Exception &ex) {
-          // Ignore reason for failure
-        }
+        conn.executeNonQuery(std::string("DROP TABLE ") + table);
+        m_out << "Dropped table " << table << std::endl;
+        droppedAtLeastOneTable = true;
       }
     }
 
@@ -143,12 +139,8 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (tables.size() != 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_SCHEDULER.");
     }
-    try {
-      conn.executeNonQuery("DROP TABLE CTA_SCHEDULER");
-      m_out << "Dropped table CTA_SCHEDULER" << std::endl;
-    } catch(exception::Exception &ex) {
-      // Ignore reason for failure
-    }
+    conn.executeNonQuery("DROP TABLE CTA_SCHEDULER");
+    m_out << "Dropped table CTA_SCHEDULER" << std::endl;
 
     tables = conn.getTableNames();
     if (!tables.empty()) {

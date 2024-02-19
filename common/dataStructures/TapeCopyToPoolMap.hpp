@@ -26,6 +26,6 @@ namespace cta::common::dataStructures {
 /**
  * Map from tape copy number to destination tape pool name.
  */
-typedef std::map<uint64_t, std::string> TapeCopyToPoolMap;
+typedef std::map<uint32_t, std::string> TapeCopyToPoolMap;
 
 } // namespace cta::common::dataStructures

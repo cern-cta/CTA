@@ -37,7 +37,7 @@ void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::list<Archive
       ":JOB_ID";
 
   auto stmt = txn.conn().createStmt(sqlcopy);
-  rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+  auto &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
 
   const size_t nbrows = rowList.size();
   cta::rdbms::wrapper::PostgresColumn c1("JOB_ID", nbrows);

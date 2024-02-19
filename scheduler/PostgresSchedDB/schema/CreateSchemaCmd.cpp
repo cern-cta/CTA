@@ -24,6 +24,8 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
+#include <algorithm>
+
 namespace cta::postgresscheddb {
 
 //------------------------------------------------------------------------------
@@ -52,11 +54,9 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(login, maxNbConns);
-  auto conn = connPool.getConn();;
+  auto conn = connPool.getConn();
 
-  const bool ctaSchedulerTableExists = tableExists("CTA_SCHEDULER", conn);
-
-  if(ctaSchedulerTableExists) {
+  if(tableExists("CTA_SCHEDULER", conn)) {
     std::cerr << "Cannot create the database schema because the CTA_SCHEDULER table already exists" << std::endl;
     return 1;
   }
@@ -88,14 +88,11 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool CreateSchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
+bool CreateSchemaCmd::tableExists(const std::string &tableName, const rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  for(auto &name : names) {
-    if(tableName == name) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(std::begin(names), std::end(names), [&tableName](const std::string& str) {
+    return str == tableName;
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -108,7 +105,7 @@ void CreateSchemaCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, std::string_view sqlStmts) const {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;

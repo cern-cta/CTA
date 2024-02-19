@@ -65,7 +65,7 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
   void setCreationLog(const common::dataStructures::EntryLog & creationLog);
   std::string getIdStr() const { return "??"; }
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
-  void reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests) const;
+  [[noreturn]] void reportRetrieveCreationFailures([[maybe_unused]] const std::list<Subrequest> &notCreatedSubrequests) const;
 
   void commit();
   void insert();

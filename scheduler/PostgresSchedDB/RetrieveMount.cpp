@@ -41,7 +41,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNex
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
-    jobs.emplace_back(sql::RetrieveJobQueueRow(resultSet));
+    jobs.emplace_back(resultSet);
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }
@@ -52,12 +52,12 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNex
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
-  for (auto &j : jobs) {
+  for (const auto &j : jobs) {
     // each row represents an entire retreieverequest (including all jobs)
     // and also the indication of which is the current active one
     postgresscheddb::RetrieveRequest rr(logContext, j);
 
-    std::unique_ptr<postgresscheddb::RetrieveJob> rj(new postgresscheddb::RetrieveJob(/* j.jobId */));
+    auto rj = std::make_unique<postgresscheddb::RetrieveJob>(/* j.jobId */);
     rj->archiveFile = rr.m_archiveFile;
     rj->diskSystemName = rr.m_diskSystemName;
     rj->retrieveRequest = rr.m_schedRetrieveReq;

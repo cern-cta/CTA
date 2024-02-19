@@ -30,7 +30,7 @@ class RetrieveJob : public SchedulerDatabase::RetrieveJob {
 
  public:
 
-   RetrieveJob();
+   [[noreturn]] RetrieveJob();
 
    void asyncSetSuccessful() override;
 

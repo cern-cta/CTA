@@ -89,7 +89,7 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
     const uint32_t hardcodedTotalRetries = 2;
     const uint32_t hardcodedReportRetries = 2;
     aReq->addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
-    jl.emplace_back(postgresscheddb::ArchiveRequest::JobDump());
+    jl.emplace_back();
     jl.back().copyNb = key;
     jl.back().tapePool = value;
   }

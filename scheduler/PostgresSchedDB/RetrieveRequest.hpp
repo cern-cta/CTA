@@ -86,9 +86,9 @@ public:
     bool isfailed{false};
   };
 
-  void setFailureReason(std::string_view reason) const;
+  [[noreturn]] void setFailureReason(std::string_view reason) const;
 
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
+  [[noreturn]] bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
 
   void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const;
 

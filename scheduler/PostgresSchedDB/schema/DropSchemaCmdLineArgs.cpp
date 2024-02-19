@@ -20,6 +20,7 @@
 
 #include <getopt.h>
 #include <ostream>
+#include <array>
 
 namespace cta::postgresscheddb {
 
@@ -28,16 +29,16 @@ namespace cta::postgresscheddb {
 //------------------------------------------------------------------------------
 DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const argv) {
 
-  static struct option longopts[] = {
+  std::array<option, 2> longopts = {{
     { "help",  no_argument, nullptr, 'h' },
     { nullptr,           0, nullptr, 0 }
-  };
+  }};
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
 
-  for(int opt = 0; (opt = getopt_long(argc, argv, ":h", longopts, nullptr)) != -1; ) {
+  for(int opt = 0; (opt = getopt_long(argc, argv, ":h", longopts.data(), nullptr)) != -1; ) {
     switch(opt) {
     case 'h':
       help = true;
@@ -63,7 +64,7 @@ DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const 
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << opt;
         throw ex;
       }
     } // switch(opt)
@@ -74,11 +75,10 @@ DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char *const *const 
     return;
   }
 
-  // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
-  // Check the number of arguments
-  if(nbArgs != 1) {
+  /* Calculate the number of non-option ARGV-elements
+     and check the number of arguments
+  */
+  if(const int nbArgs(argc - optind); nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;

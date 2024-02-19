@@ -47,7 +47,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
-    jobs.emplace_back(sql::ArchiveJobQueueRow(resultSet));
+    jobs.emplace_back(resultSet);
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }
@@ -58,8 +58,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  for (auto &j : jobs) {
-    std::unique_ptr<postgresscheddb::ArchiveJob> aj(new postgresscheddb::ArchiveJob(/* j.jobId */));
+  for (const auto &j : jobs) {
+    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportUrl;

@@ -173,11 +173,11 @@ namespace cta::postgresscheddb {
     m_txn.reset();
   }
 
-  void RetrieveRequest::setFailureReason(std::string_view reason) const{
+  [[noreturn]] void RetrieveRequest::setFailureReason([[maybe_unused]] std::string_view reason) const{
     throw RetrieveRequestException("setFailureReason not implemented.");
   }
 
-  bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const {
+  [[noreturn]] bool RetrieveRequest::addJobFailure([[maybe_unused]] uint32_t copyNumber, [[maybe_unused]] uint64_t mountId, [[maybe_unused]] std::string_view failureReason) const {
     throw RetrieveRequestException("addJobFailure not implemented.");
   }
 
@@ -296,11 +296,11 @@ namespace cta::postgresscheddb {
     /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
-     * // the archiveFile above doesn't include the tapeFiles list. We only consider
-     * // tapefiles that the scheduler originally gave us for in the criteria of
-     * // the retrieve request (which might be a subset of those in the catalogue
-     * // for the given archiveFile). The tape files are packed inside the jobs list
-     * // in the row.
+     * the archiveFile above doesn't include the tapeFiles list. We only consider
+     * tapefiles that the scheduler originally gave us for in the criteria of
+     * the retrieve request (which might be a subset of those in the catalogue
+     * for the given archiveFile). The tape files are packed inside the jobs list
+     * in the row.
      * for(auto &j: rj.jobs()) {
      *   m_archiveFile.tapeFiles.emplace_back();
      *   m_archiveFile.tapeFiles.back().vid          = j.tapefile().vid();

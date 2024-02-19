@@ -36,26 +36,26 @@ public:
   ArchiveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) { }
 
   void insert();
-  void update() const;
+  [[noreturn]] void update() const;
   void commit();
 
   // ============================== Job management =============================
-  void addJob(uint64_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
+  void addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
     uint16_t maxReportRetries);
 
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
   common::dataStructures::ArchiveFile getArchiveFile() const;
   
-  void setArchiveReportURL(const std::string &URL);
+  void setArchiveReportURL(std::string_view URL);
   std::string getArchiveReportURL() const;
   
-  void setArchiveErrorReportURL(const std::string &URL);
+  void setArchiveErrorReportURL(std::string_view URL);
   std::string getArchiveErrorReportURL() const;
 
   void setRequester(const common::dataStructures::RequesterIdentity &requester);
   common::dataStructures::RequesterIdentity getRequester() const;
 
-  void setSrcURL(const std::string &srcURL);
+  void setSrcURL(std::string_view srcURL);
   std::string getSrcURL() const;
 
   void setEntryLog(const common::dataStructures::EntryLog &creationLog);
@@ -72,7 +72,7 @@ public:
     ArchiveJobStatus status;
   };
   
-  std::list<JobDump> dumpJobs() const;
+  [[noreturn]] std::list<JobDump> dumpJobs() const;
 
 private:
   /**

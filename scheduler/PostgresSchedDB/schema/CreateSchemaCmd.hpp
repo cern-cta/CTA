@@ -40,7 +40,7 @@ public:
   /**
    * Destructor.
    */
-  ~CreateSchemaCmd() noexcept;
+  ~CreateSchemaCmd() override;
 
 private:
 
@@ -68,7 +68,7 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+  bool tableExists(const std::string &tableName, const rdbms::Conn &conn) const;
 
   /**
    * Parses the specified string of multiple SQL statements separated by
@@ -81,7 +81,7 @@ private:
    * @param sqlStmts Multiple SQL statements separated by semicolons.
    * Statements that themselves contain one more semicolons are not supported.
    */
-  void executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const;
+  void executeNonQueries(rdbms::Conn &conn, std::string_view sqlStmts) const;
 
 }; // class CreateSchemaCmd
 

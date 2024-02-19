@@ -67,7 +67,7 @@ struct RepackJobQueueRow {
    *
    * @param row  A single row from the current row of the rset
    */
-  explicit RepackJobQueueRow(const rdbms::Rset &rset) noexcept {
+  explicit RepackJobQueueRow(const rdbms::Rset &rset) {
     *this = rset;
   }
 
@@ -259,8 +259,11 @@ struct RepackJobQueueRow {
     params.add("mountPolicyName", mountPolicyName);
     params.add("isComplete", isComplete);
     params.add("isNoRecall", isNoRecall);
-//    params.add("subReqProtoBuf", subReqProtoBuf);
-//    params.add("destInfoProtoBuf", destInfoProtoBuf);
+
+    /* Columns to be replaced by other DB columns than protobuf filled columns
+     * params.add("subReqProtoBuf", subReqProtoBuf);
+     * params.add("destInfoProtoBuf", destInfoProtoBuf);
+     */
     params.add("createUsername", createLog.username);
     params.add("createHost", createLog.host);
     params.add("createTime", createLog.time);

@@ -33,9 +33,9 @@ struct ArchiveJobQueueRow {
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
-  uint16_t priority = 0;
-  uint32_t minArchiveRequestAge = 0;
-  uint16_t copyNb = 0;
+  uint64_t priority = 0;
+  uint64_t minArchiveRequestAge = 0;
+  uint8_t copyNb = 0;
   time_t startTime = 0;                       //!< Time the job was inserted into the queue
   std::string archiveReportUrl;
   std::string archiveErrorReportUrl;
@@ -243,7 +243,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint32_t limit) {
+  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
 
     const char *const sql =
     "SELECT "
@@ -286,7 +286,7 @@ struct ArchiveJobQueueRow {
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint32(":LIMIT", limit);
+    stmt.bindUint64(":LIMIT", limit);
 
     return stmt.executeQuery();
   }
@@ -302,7 +302,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint32_t limit, uint64_t mount_id) {
+  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"

@@ -41,7 +41,7 @@ public:
   /**
    * Destructor.
    */
-  ~DropSchemaCmd() noexcept;
+  ~DropSchemaCmd() override;
 
   /**
    * Checks if the IS_PRODUCTION bit is set on the CTA_SCHEDULER table

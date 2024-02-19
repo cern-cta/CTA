@@ -41,7 +41,7 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_ToReportToRepackForFailure
 };
 
-constexpr const char* const StringsArchiveJobStatus[] = {
+constexpr std::array<const char*, 8> const StringsArchiveJobStatus = {
   "AJS_ToTransferForUser",
   "AJS_ToReportToUserForTransfer",
   "AJS_Complete",
@@ -82,7 +82,7 @@ enum class RetrieveJobStatus : uint8_t {
   RJS_ToReportToRepackForFailure
 };
 
-constexpr const char* const StringsRetrieveJobStatus[] = {
+constexpr std::array<const char*, 5> const StringsRetrieveJobStatus = {
   "RJS_ToTransfer"
   "RJS_ToReportToUserForFailure",
   "RJS_Failed",
@@ -101,7 +101,7 @@ enum class RepackJobStatus : uint8_t {
   RRS_Failed
 };
 
-constexpr const char* const StringsRepackJobStatus[] = {
+constexpr std::array<const char*, 6> const StringsRepackJobStatus = {
   "RRS_Pending",
   "RRS_ToExpand",
   "RRS_Starting",

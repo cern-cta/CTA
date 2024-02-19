@@ -45,7 +45,7 @@ class Helpers {
 
   static std::list<SchedulerDatabase::RetrieveQueueStatistics> getRetrieveQueueStatistics(
                 const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-                const std::set<std::string>                                  &vidsToConsider,
+                const std::set<std::string, std::less<>>                     &vidsToConsider,
                 postgresscheddb::Transaction                                 &txn);
 
   /*
@@ -60,20 +60,6 @@ class Helpers {
 
   static void flushRetrieveQueueStatisticsCacheForVid(const std::string & vid);
 
- private:
-
-  /** A struct holding together tape statistics and an update time */
-  struct TapeStatusWithTime {
-    common::dataStructures::Tape tapeStatus;
-    time_t updateTime;
-  };
-
-   /** Cache for tape statistics */
-  static std::map<std::string, TapeStatusWithTime> g_tapeStatuses;
-
-  /** Lock for the retrieve queues stats */
-  static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
-
   /** A struct holding together RetrieveQueueStatistics, tape status and an update time. */
   struct RetrieveQueueStatisticsWithTime {
     cta::SchedulerDatabase::RetrieveQueueStatistics stats;
@@ -85,8 +71,22 @@ class Helpers {
     time_t updateTime;
   };
 
+private:
+
+  /** A struct holding together tape statistics and an update time */
+  struct TapeStatusWithTime {
+    common::dataStructures::Tape tapeStatus;
+    time_t updateTime;
+  };
+
+   /** Cache for tape statistics */
+  static std::map<std::string, TapeStatusWithTime, std::less<>> g_tapeStatuses;
+
+  /** Lock for the retrieve queues stats */
+  static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
+
   /** The stats for the queues */
-  static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
+  static std::map<std::string, RetrieveQueueStatisticsWithTime, std::less<>> g_retrieveQueueStatistics;
 
   /** Time between cache updates */
   static const time_t c_tapeCacheMaxAge = 600;
@@ -95,7 +95,7 @@ class Helpers {
   static void logUpdateCacheIfNeeded(
                 const bool                             entryCreation,
                 const RetrieveQueueStatisticsWithTime &tapeStatistic,
-                const std::string                     &message = "");
+                std::string_view                      message = "");
 };
 
 } // namespace cta::postgresscheddb

@@ -20,14 +20,14 @@
 
 namespace cta::postgresscheddb {
 
-void ArchiveRequest::update() const {
+[[noreturn]] void ArchiveRequest::update() const {
   throw std::runtime_error("update not implemented.");
 }
 
 void ArchiveRequest::insert() {
   m_txn.reset(new postgresscheddb::Transaction(m_connPool));
 
-  for(auto &aj : m_jobs) {
+  for(const auto &aj : m_jobs) {
     cta::postgresscheddb::sql::ArchiveJobQueueRow ajr;
 
     ajr.tapePool = aj.tapepool;
@@ -70,7 +70,7 @@ void ArchiveRequest::commit() {
   m_txn.reset();
 }
 
-void ArchiveRequest::addJob(uint64_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
+void ArchiveRequest::addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   Job newJob;
   newJob.copyNb = copyNumber;
   newJob.status = ArchiveJobStatus::AJS_ToTransferForUser;
@@ -93,7 +93,7 @@ common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() const {
   return m_archiveFile;
 }
 
-void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
+void ArchiveRequest::setArchiveReportURL(std::string_view URL) {
   m_archiveReportURL = URL;
 }
 
@@ -101,7 +101,7 @@ std::string ArchiveRequest::getArchiveReportURL() const {
   return m_archiveReportURL;
 }
 
-void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
+void ArchiveRequest::setArchiveErrorReportURL(std::string_view URL) {
   m_archiveErrorReportURL = URL;
 }
 
@@ -117,7 +117,7 @@ common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() const {
   return m_requesterIdentity;
 }
 
-void ArchiveRequest::setSrcURL(const std::string& srcURL) {
+void ArchiveRequest::setSrcURL(std::string_view srcURL) {
   m_srcURL = srcURL;
 }
 
@@ -141,7 +141,7 @@ common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() const {
   return m_mountPolicy;
 }
 
-std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() const {
+[[noreturn]] std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() const {
   throw std::runtime_error("dumpJobs not implemented.");
 }
 

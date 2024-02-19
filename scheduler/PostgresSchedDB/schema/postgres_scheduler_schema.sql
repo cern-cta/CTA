@@ -30,17 +30,14 @@ CREATE TABLE CTA_SCHEDULER(
   CONSTRAINT CTA_SCHEDULER_IP_BOOL_CK     CHECK(IS_PRODUCTION IN ('0','1'))
 );
 CREATE TABLE ARCHIVE_JOB_QUEUE(
-
 /* Common part with RETRIEVE table - request related info */
   JOB_ID BIGSERIAL,
-
 /* Common part with RETRIEVE and REPACK table - request related info */
   ARCHIVE_REQID BIGSERIAL,
   STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
   CREATION_TIME BIGINT,
   MOUNT_POLICY VARCHAR(100) CONSTRAINT AJQ_MPN_NN NOT NULL,
   VID VARCHAR(20),
-
 /* Common part with RETRIEVE table - request related info */
   MOUNT_ID BIGINT,
   START_TIME BIGINT,
@@ -64,7 +61,6 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
   ARCHIVE_ERROR_REPORT_URL VARCHAR(2000),
   ARCHIVE_REPORT_URL VARCHAR(2000),
   FAILURE_REPORT_LOG TEXT,
-
 /* ARCHIVE specific columns */
   FAILURE_LOG TEXT,
   REPACK_DEST_VID VARCHAR(20),
@@ -80,13 +76,11 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
   REPACK_FILEBUF_URL VARCHAR(2000),
   REPACK_FSEQ NUMERIC(20, 0)
 );
-
 CREATE TABLE RETRIEVE_JOB_QUEUE(
   JOB_ID BIGSERIAL,
   RETRIEVE_REQID BIGSERIAL,
   STATUS RETRIEVE_JOB_STATUS CONSTRAINT RJQ_S_NN NOT NULL,
   MOUNT_ID BIGINT,
-
 /* From RetrieveJobPointer/RetrieveQueue */
   VID VARCHAR(20),
   ACTIVE_COPY_NB NUMERIC(3, 0),
@@ -94,66 +88,50 @@ CREATE TABLE RETRIEVE_JOB_QUEUE(
   RETRIEVE_MIN_REQ_AGE BIGINT,
   STARTTIME BIGINT,
   ACTIVITY VARCHAR(100),
-
-/* from RetrieveRequest : RetrieveJob */
+/* From RetrieveRequest : RetrieveJob */
   RETRIEVEJOB_PB BYTEA,
-
 /* From RetrieveRequest->SchedulerRetrieveRequest->RequesterIdentity */
   REQUESTER_NAME VARCHAR(100),
   REQUESTER_GROUP VARCHAR(100),
-
 /* From RetrieveRequest->SchedulerRetrieveRequest */
   ARCHIVE_FILE_ID BIGINT,
   DST_URL VARCHAR(2000),
-
 /* From RetrieveRequest->SchedulerRetrieveRequest->DiskFileInfo */
   DISK_FILE_OWNER_UID INTEGER,
   DISK_FILE_GID INTEGER,
   DISK_FILE_PATH VARCHAR(2000),
-
 /* From RetrieveRequest->SchedulerRetrieveRequest->EntryLog */
   SRR_USERNAME VARCHAR(100),
   SRR_HOST VARCHAR(100),
   SRR_TIME BIGINT,
-
 /* From RetrieveRequest->SchedulerRetrieveRequest */
   RETRIEVE_ERROR_REPORT_URL VARCHAR(2000),
   IS_VERIFY CHAR(1),
-
 /* From RetrieveRequest->MountPolicy */
   MOUNT_POLICY VARCHAR(100),
-
 /* From RetrieveRequest */
   SRR_MOUNT_POLICY VARCHAR(100),
   SRR_ACTIVITY VARCHAR(100),
-
-/* RetrieveRequest ArchiveFile */
-  /* Use Archive_File_Id from SchedulerRetrieveRequest */
+/* RetrieveRequest ArchiveFile, Use Archive_File_Id from SchedulerRetrieveRequest */
   SIZE_IN_BYTES BIGINT,
   DISK_FILE_ID VARCHAR(100),
   DISK_INSTANCE VARCHAR(100),
-  /* Use DiskFileInfo from RetrieveRequest->SchedulerRetrieveRequest->DiskFileInfo */
+/* Use DiskFileInfo from RetrieveRequest->SchedulerRetrieveRequest->DiskFileInfo */
   CHECKSUMBLOB BYTEA,
   CREATION_TIME BIGINT,
   STORAGE_CLASS VARCHAR(100),
-
   FAILURE_REPORT_URL VARCHAR(2000),
   FAILURE_REPORT_LOG VARCHAR(2000),
-
   IS_REPACK CHAR(1),
   REPACK_REQID BIGINT,
-
 /* From RetrieveRequest->RetrieveRequestRepackInfo */
   RR_REPACKINFO_PB BYTEA,
-
 /* From RetrieveRequest->LifeCycleTimings */
   LT_CREATE BIGINT,
   LT_FIRST_SELECTED BIGINT,
   LT_COMPLETED BIGINT,
-
 /* From RetrieveRequest */
   DISK_SYSTEM_NAME VARCHAR(100),
-
 /* User is_verify from schedulerretrieverequest */
   IS_FAILED CHAR(1)
 );

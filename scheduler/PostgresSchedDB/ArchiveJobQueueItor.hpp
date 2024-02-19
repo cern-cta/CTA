@@ -29,7 +29,7 @@ class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
 
  public:
 
-   ArchiveJobQueueItor();
+  [[noreturn]] ArchiveJobQueueItor();
 
    const std::string &qid() const override;
 
