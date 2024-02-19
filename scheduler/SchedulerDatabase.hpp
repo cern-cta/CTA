@@ -143,7 +143,7 @@ class SchedulerDatabase {
    *
    * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<> >
+  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
     getArchiveJobs() const = 0;
 
   /**

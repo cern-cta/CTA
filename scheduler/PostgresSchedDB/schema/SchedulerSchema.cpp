@@ -37,9 +37,9 @@ SchedulerSchema::SchedulerSchema(const std::string &sqlSchema): sql(sqlSchema) {
 //------------------------------------------------------------------------------
 // getSchemaVersion
 //------------------------------------------------------------------------------
-std::map<std::string, uint64_t> SchedulerSchema::getSchemaVersion() const {
+std::map<std::string, uint64_t, std::less<>> SchedulerSchema::getSchemaVersion() const {
   try {
-    std::map<std::string, uint64_t> schemaVersion;
+    std::map<std::string, uint64_t, std::less<>> schemaVersion;
     cta::utils::Regex schemaVersionRegex(
       "INSERT INTO CTA_SCHEDULER\\("
       "  SCHEMA_VERSION_MAJOR,"

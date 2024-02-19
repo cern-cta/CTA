@@ -80,13 +80,13 @@ private:
   };
 
    /** Cache for tape statistics */
-  static std::map<std::string, TapeStatusWithTime> g_tapeStatuses;
+  static std::map<std::string, TapeStatusWithTime, std::less<>> g_tapeStatuses;
 
   /** Lock for the retrieve queues stats */
   static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
 
   /** The stats for the queues */
-  static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
+  static std::map<std::string, RetrieveQueueStatisticsWithTime, std::less<>> g_retrieveQueueStatistics;
 
   /** Time between cache updates */
   static const time_t c_tapeCacheMaxAge = 600;

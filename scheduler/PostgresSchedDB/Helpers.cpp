@@ -25,7 +25,7 @@ namespace cta::postgresscheddb {
 //------------------------------------------------------------------------------
 // Helpers::g_tapeStatuses
 //------------------------------------------------------------------------------
-std::map<std::string, Helpers::TapeStatusWithTime> Helpers::g_tapeStatuses;
+std::map<std::string, Helpers::TapeStatusWithTime, std::less<>> Helpers::g_tapeStatuses;
 
 //------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatisticsMutex
@@ -35,7 +35,7 @@ cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 //------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatistics
 //------------------------------------------------------------------------------
-std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime> Helpers::g_retrieveQueueStatistics;
+std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime, std::less<>> Helpers::g_retrieveQueueStatistics;
 
 std::string Helpers::selectBestVid4Retrieve
 (
