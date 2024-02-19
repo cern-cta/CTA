@@ -245,6 +245,31 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     }
   }
 
+  // Configure allowed requests
+  {
+    m_acceptRepackRequests =
+      config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value() == "on" ? true : false;
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("category", "cta.schedulerdb"));
+    params.push_back(log::Param("key", "enable_repack_requests"));
+    params.push_back(log::Param("value",
+                                config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value()));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  {
+    m_acceptUserRequests =
+      config.getOptionValueStr("cta.schedulerdb.enable_user_requests") == "on" ? true : false;
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("category", "cta.schedulerdb"));
+    params.push_back(log::Param("key", "enable_user_requests"));
+    params.push_back(log::Param("value",
+                                config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
+    log(log::INFO, "Configuration entry", params);
+  }
+
   // Get the mount policy name for verification requests
 
   // All done
