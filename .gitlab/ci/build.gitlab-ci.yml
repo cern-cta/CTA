@@ -134,7 +134,7 @@ cta_srpm_alma9:
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -n -e 's/^.*\(v.*\)$/\1/p')
     - echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
     - yum -y install epel-release almalinux-release-devel git
     - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
@@ -163,7 +163,7 @@ cta_rpm_alma9:
     - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v//;s/-.*$//')
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v[^-]*-//')
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
     - yum -y install epel-release almalinux-release-devel git
     - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
