@@ -33,7 +33,7 @@ cta_tagged_rpm_alma9:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum -y install epel-release almalinux-release-devel git
     - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
     - yum -y install yum-plugin-versionlock
