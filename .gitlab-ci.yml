@@ -51,8 +51,8 @@ default:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v//;s/-.*$//')
-    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^.*v[^-]*-//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -n -e 's/^.*v\([0-9]*\)\..*$/\1/p')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -n -e 's/^.*\(v.*\)$/\1/p')
     - xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
     - if [[ ${xrootd_version} == 4 ]]; then
         echo "Setting to compile with XRootD version 4";
