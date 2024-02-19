@@ -29,11 +29,14 @@ cta_tagged_rpm_alma9:
   stage: build:tagged_rpm
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  script:
+  before_script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -n -e 's/^.*v\([0-9]*\)\..*$/\1/p')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -n -e 's/^.*\(v.*\)$/\1/p')
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
     - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+  script:
     - yum -y install epel-release almalinux-release-devel git
     - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
     - yum -y install yum-plugin-versionlock
