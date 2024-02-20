@@ -30,9 +30,9 @@ die() {
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
-# install needed packages
-# Skip-broken is added because cta-scheduler-utils can be missed in case CTA is compiled with objectstore
-yum -y --skip-broken install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils cta-scheduler-utils ceph-common
+# install the needed packages
+# the scheduler tools are installed once the scheduler type is known (see below)
+yum -y install mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
 yum clean packages
 
 echo "Using this configuration for library:"
@@ -46,17 +46,23 @@ echo "Configuring Scheduler store:"
 echo ${OBJECTSTOREURL} >/etc/cta/cta-scheduler.conf
 
 if [ "$KEEP_OBJECTSTORE" == "0" ]; then
-  echo "Wiping objectstore"
   if [ "$OBJECTSTORETYPE" == "file" ]; then
+    echo "Installing the cta-objectstore-tools"
+    yum -y install cta-objectstore-tools
+    echo "Wiping objectstore"
     rm -fr $OBJECTSTOREURL
     mkdir -p $OBJECTSTOREURL
     cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
   elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
+    echo "Installing the cta-scheduler-utils"
+    yum -y install cta-scheduler-utils
     echo "Postgres scheduler config file content: "
     cat /etc/cta/cta-scheduler.conf
+    echo "Creating the scheduler DB schema"
     cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else
+    echo "Wiping objectstore"
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
       echo "Rados objectstore ${OBJECTSTOREURL} is not empty: deleting content"
       rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -L 100 -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm
