@@ -45,18 +45,22 @@ echo "Configuring Scheduler store:"
 . /tmp/objectstore-rc.sh
 echo ${OBJECTSTOREURL} >/etc/cta/cta-scheduler.conf
 
-if [ "$KEEP_OBJECTSTORE" == "0" ]; then
-  if [ "$OBJECTSTORETYPE" == "file" ]; then
+if [ "$OBJECTSTORETYPE" == "postgres" ]; then
+    echo "Installing the cta-scheduler-utils"
+    yum -y install cta-scheduler-utils
+else
     echo "Installing the cta-objectstore-tools"
     yum -y install cta-objectstore-tools
+fi
+
+if [ "$KEEP_OBJECTSTORE" == "0" ]; then
+  if [ "$OBJECTSTORETYPE" == "file" ]; then
     echo "Wiping objectstore"
     rm -fr $OBJECTSTOREURL
     mkdir -p $OBJECTSTOREURL
     cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
   elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
-    echo "Installing the cta-scheduler-utils"
-    yum -y install cta-scheduler-utils
     echo "Postgres scheduler config file content: "
     cat /etc/cta/cta-scheduler.conf
     echo "Creating the scheduler DB schema"
