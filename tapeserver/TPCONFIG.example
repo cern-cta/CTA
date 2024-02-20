@@ -12,37 +12,19 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-cmake_minimum_required (VERSION 3.17)
 
-include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
-
-find_package( ZLIB REQUIRED )
-
-
-add_executable(cta-readtp
-  ReadtpCmd.cpp
-  ReadtpCmdMain.cpp
-  ReadtpCmdLineArgs.cpp
-  CmdLineTool.cpp
-  TapeFseqRange.cpp
-  TapeFseqRangeSequence.cpp
-  TapeFseqRangeListSequence.cpp
-  TapeFseqSequenceParser.cpp)
-
-target_link_libraries (cta-readtp
-  ctacommon
-  TapeDrive
-  ctamediachanger
-  ctacatalogue
-  SCSI
-)
-
-# need to be removed when drop dependencies to taped
-find_package(Protobuf3 REQUIRED)
-set_property (TARGET cta-readtp APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-readtp APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
-
-install (TARGETS cta-readtp DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)
+# Example tape configuration file (/etc/cta/TPCONFIG)
+#
+# A single tape server daemon can control one or two tape drives. This file should contain one line
+# per tape drive. Each line should consist of the following four elements, delimited by spaces:
+#
+# DRIVE_NAME            Label for this drive
+# LOGICAL_LIBRARY_NAME  Logical tape library that this drive belongs to
+# DRIVE_DEVICE          Path to the character special device used to access the drive
+# LIBRARY_SLOT          The SCSI media changer address of the drive. This is "smc" + the drive
+#                       ordinal number of the device, which can by obtained with "cta-smc -q D"
+#
+# Example configuration:
+#
+# DRIVE_NAME LOGICAL_LIBRARY_NAME DRIVE_DEVICE LIBRARY_SLOT
+DRIVE0       LIB1                 /dev/nst0    smc1

@@ -25,7 +25,7 @@ namespace cta::mediachanger {
 
 /**
  * Class representing a generic tape-library slot as found in the
- * /etc/cta/cta-taped-unitName.conf.
+ * /etc/castor/TPCONFIG.
  */
 class LibrarySlot {
 protected:

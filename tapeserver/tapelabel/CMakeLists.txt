@@ -16,6 +16,7 @@ cmake_minimum_required (VERSION 3.17)
 
 add_executable(cta-tape-label
   TapeLabelCmd.cpp
+  CmdLineTool.cpp
   TapeLabelCmdLineArgs.cpp
   TapeLabelCmdMain.cpp)
 

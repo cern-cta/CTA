@@ -30,8 +30,8 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "common/CmdLineTool.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
+#include "tapeserver/readtp/CmdLineTool.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
@@ -51,7 +51,7 @@ namespace tapeserver::readtp {
 /**
  * Command-line tool for reading files from a CTA tape.
  */
-class ReadtpCmd: public common::CmdLineTool {
+class ReadtpCmd: public CmdLineTool {
 public:
   /**
    * Constructor
@@ -63,8 +63,8 @@ public:
    * @param mc Interface to the media changer
    */
   ReadtpCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, cta::log::StdoutLogger& log,
-    cta::log::DummyLogger& dummyLog) :
-    CmdLineTool(inStream, outStream, errStream), m_log(log), m_dummyLog(dummyLog) { }
+    cta::log::DummyLogger& dummyLog, cta::mediachanger::MediaChangerFacade& mc) :
+    CmdLineTool(inStream, outStream, errStream), m_log(log), m_dummyLog(dummyLog), m_mc(mc) { }
 
   /**
    * Destructor
@@ -90,8 +90,8 @@ private:
 
   /**
    * Sets internal configuration parameters to be used for reading.
-   * It reads drive and library parameters from /etc/cta/cta-taped-*.conf
-   * and catalogue login parameters from /etc/cta/cta-catalogue.conf.
+   * It reads drive and library parameters from /etc/cta/TPCONFIG and catalogue
+   * login parameters from /etc/cta/cta-catalogue.conf.
    *
    * @param username The name of the user running the command-line tool.
    * @param cmdLineArgs The arguments parsed from the command line.
@@ -300,14 +300,9 @@ private:
   TapeFseqRangeList m_fSeqRangeList;
 
   /**
-   * Object representeing the rmc proxy
-   */
-  std::unique_ptr<cta::mediachanger::RmcProxy> m_rmcProxy;
-
-  /**
    * The object representing the media changer.
    */
-  std::unique_ptr<cta::mediachanger::MediaChangerFacade> m_mc;
+  cta::mediachanger::MediaChangerFacade &m_mc;
 
   /**
    * Should we use logical block protection?

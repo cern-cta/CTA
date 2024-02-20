@@ -30,7 +30,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -267,9 +267,9 @@ class DriveInterface {
   virtual SCSI::Structures::RAO::udsLimits getLimitUDS() = 0;
   virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported) = 0;
   /**
-   * The configuration of the tape drive as parsed from /etc/cta/cta-taped-unitName.conf file.
+   * The configuration of the tape drive as parsed from the TPCONFIG file.
    */
-  cta::tape::daemon::DriveConfigEntry config;
+  cta::tape::daemon::TpconfigLine config;
 };
 
 /**

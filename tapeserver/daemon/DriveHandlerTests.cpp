@@ -38,7 +38,7 @@
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 
 using ::testing::_;
 using ::testing::ByMove;
@@ -109,9 +109,9 @@ public:
     cta::common::dataStructures::DesiredDriveState(const std::string& driveName, cta::log::LogContext& lc));
   MOCK_METHOD(void, createTapeDriveStatus, (const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc));
-  MOCK_METHOD3(reportDriveConfig, void(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
+  MOCK_METHOD3(reportDriveConfig, void(const cta::tape::daemon::TpconfigLine& tpConfigLine,
     const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc));
 };
 
@@ -182,7 +182,7 @@ protected:
   cta::log::LogContext m_lc;
   NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
   cta::tape::daemon::TapedConfiguration m_tapedConfig;
-  cta::tape::daemon::DriveConfigEntry m_driveConfig{"drive0", "lib0", "/dev/tape0", "smc0"};
+  cta::tape::daemon::TpconfigLine m_driveConfig{"drive0", "lib0", "/dev/tape0", "smc0"};
 
   
 };

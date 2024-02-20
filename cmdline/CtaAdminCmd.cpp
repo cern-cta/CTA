@@ -24,7 +24,7 @@
 
 #include <cmdline/CtaAdminCmd.hpp>
 #include <cmdline/CtaAdminTextFormatter.hpp>
-#include <tapeserver/daemon/TapedConfiguration.hpp>
+
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
@@ -35,6 +35,7 @@ std::atomic<bool> isHeaderSent(false);
 cta::admin::TextFormatter formattedText(1000);
 
 const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
+std::string tp_config_file = "/etc/cta/TPCONFIG";
 
 
 namespace XrdSsiPb {
@@ -379,6 +380,37 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const arg
    }
 }
 
+std::string CtaAdminCmd::getDriveFromTpConfig() {
+   std::ifstream file(tp_config_file);
+   if (file.fail()) {
+      throw std::runtime_error("Unable to open file " + tp_config_file);
+   }
+
+   std::string line;
+
+   while(std::getline(file, line)) {
+      // Strip out comments
+      auto pos = line.find('#');
+      if(pos != std::string::npos) {
+         line.resize(pos);
+      }
+
+      // Extract the list items
+      std::stringstream ss(line);
+      while(!ss.eof()) {
+         std::string item;
+         ss >> item;
+         // skip blank lines or lines consisting only of whitespace
+         if(item.empty()) continue;
+
+         std::string drivename = item.substr(0, item.find(" ")); // first word of line
+         return drivename;
+         
+      }
+   }
+   throw std::runtime_error("File " + tp_config_file + " is empty");
+}
+
 void CtaAdminCmd::addOption(const Option &option, const std::string &value)
 {
    auto admincmd_ptr = m_request.mutable_admincmd();
@@ -391,12 +423,7 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          auto new_opt = admincmd_ptr->add_option_str();
          new_opt->set_key(key);
          if (option == opt_drivename_cmd && value == "first") {
-            try {
-            new_opt->set_value(
-               cta::tape::daemon::TapedConfiguration::getFirstDriveName());
-            } catch(cta::exception::Exception &ex){
-               throw std::runtime_error("Could not find a taped configuration file. This option should only be run from a tapeserver.");
-            }
+            new_opt->set_value(getDriveFromTpConfig());
          } else {
             new_opt->set_value(value);
          }

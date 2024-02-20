@@ -31,7 +31,7 @@ class LogContext;
 }
 
 namespace tape::daemon {
-class DriveConfigEntry;
+class TpconfigLine;
 class TapedConfiguration;
 }
 
@@ -59,10 +59,10 @@ public:
 
   virtual void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) = 0;
 
-  virtual void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
+  virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,
     const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) = 0;
 };
 

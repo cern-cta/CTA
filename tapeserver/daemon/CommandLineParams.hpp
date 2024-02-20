@@ -33,7 +33,7 @@ struct CommandLineParams {
   bool logToFile = false;                                       ///< Log to file intead of syslog.
   std::string logFilePath;                                      ///< Path to log file
   std::string logFormat;                                        ///< Format of log messages [default|json]
-  std::string configFileLocation;                               ///< Location of the configuration file
+  std::string configFileLocation = "/etc/cta/cta-taped.conf";   ///< Location of the configuration file
   bool helpRequested = false;                                   ///< Print help message and exit
   std::list<cta::log::Param> toLogParams() const;               ///< Convert command line into set of parameters for logging
 };

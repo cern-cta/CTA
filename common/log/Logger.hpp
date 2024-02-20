@@ -130,11 +130,6 @@ public:
   void setLogFormat(std::string_view logFormat);
 
   /**
-   * Sets the map of static headers to be included in every log line.
-   */
-  void setStaticParams(const std::map<std::string, std::string> &staticHeaders);
-
-  /**
    * Creates a clean version of the specified string ready for use with syslog
    *
    * @param s                  The string to be cleaned
@@ -165,12 +160,6 @@ protected:
   std::atomic<LogFormat> m_logFormat = LogFormat::DEFAULT;
 
   /**
-   * String containing static parameters, expected to always be printed in a log massage.
-   * There parameters can be set with setStaticParams.
-   */
-  std::string m_staticParamsStr;
-
- /**
    * Map from syslog integer priority to textual representation
    */
   const std::map<int, std::string> m_priorityToText;

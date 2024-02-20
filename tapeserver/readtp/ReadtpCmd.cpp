@@ -29,11 +29,13 @@
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "tapeserver/castor/tape/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
 #include "tapeserver/readtp/TapeFseqRange.hpp"
@@ -103,26 +105,20 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_fSeqRangeList = cmdLineArgs.m_fSeqRangeList;
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
-  std::optional<std::string> unitName = cmdLineArgs.m_unitName.value();
+  cta::tape::daemon::Tpconfig tpConfig;
+  tpConfig = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
 
-  // Read taped config file
-  const cta::tape::daemon::TapedConfiguration driveConfig
-  = cta::tape::daemon::TapedConfiguration::createFromCtaConf(unitName, m_log);
+  if (tpConfig.empty()) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Unable to obtain drive info as TPCONFIG is empty";
+    throw ex;
+  }
+  const auto &tpConfigLine = tpConfig.begin()->second.value();
+  m_devFilename    = tpConfigLine.devFilename;
+  m_rawLibrarySlot = tpConfigLine.rawLibrarySlot;
+  m_logicalLibrary = tpConfigLine.logicalLibrary;
+  m_unitName       = tpConfigLine.unitName;
 
-  // Configure drive
-  m_devFilename = driveConfig.driveDevice.value();
-  m_rawLibrarySlot = driveConfig.driveControlPath.value();
-  m_logicalLibrary = driveConfig.driveLogicalLibrary.value();
-  m_unitName = driveConfig.driveName.value();
-
-  // Configure rmc
-  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(
-    driveConfig.rmcPort.value(),
-    driveConfig.rmcNetTimeout.value(),
-    driveConfig.rmcRequestAttempts.value());
-  m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
-
-  // Configure catalogue
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(CATALOGUE_CONFIG_PATH);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
@@ -277,7 +273,7 @@ void ReadtpCmd::mountTape(const std::string &vid) {
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
 
-  m_mc->mountTapeReadOnly(vid, librarySlot);
+  m_mc.mountTapeReadOnly(vid, librarySlot);
   m_log(cta::log::INFO, "Mounted tape", params);
 }
 
@@ -546,7 +542,7 @@ void ReadtpCmd::dismountTape(const std::string &vid) {
 
   try {
     m_log(cta::log::INFO, "Dismounting tape", params);
-    m_mc->dismountTape(vid, librarySlot);
+    m_mc.dismountTape(vid, librarySlot);
     m_log(cta::log::INFO, "Dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;

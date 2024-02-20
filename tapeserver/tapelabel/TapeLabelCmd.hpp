@@ -19,7 +19,6 @@
 
 #include <memory>
 
-#include "common/CmdLineTool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -27,6 +26,8 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
+#include "tapeserver/tapelabel/CmdLineTool.hpp"
 
 namespace cta {
 
@@ -39,7 +40,7 @@ namespace tapeserver::tapelabel {
 /**
  * Command-line tool for pre-labeling a CTA tape.
  */
-class TapeLabelCmd: public common::CmdLineTool {
+class TapeLabelCmd: public CmdLineTool {
 public:
   /**
    * Constructor
@@ -48,9 +49,11 @@ public:
    * @param outStream Standard output stream
    * @param errStream Standard error stream
    * @param log The object representing the API of the CTA logging system
+   * @param mc Interface to the media changer
    */
-   TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log) : CmdLineTool(inStream, outStream, errStream),
-      m_log(log) { }
+  TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log,
+    mediachanger::MediaChangerFacade& mc) : CmdLineTool(inStream, outStream, errStream),
+      m_log(log), m_mc(mc) { }
 
   /**
    * Destructor
@@ -122,16 +125,11 @@ private:
    * Encryption helper object 
    */
   castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl { false, "" };
-
-  /**
-   * Object representeing the rmc proxy
-   */
-  std::unique_ptr<cta::mediachanger::RmcProxy> m_rmcProxy;
-
+   
   /**
    * The object representing the media changer.
    */
-  std::unique_ptr<cta::mediachanger::MediaChangerFacade> m_mc;
+  cta::mediachanger::MediaChangerFacade &m_mc;
   
   /**
    * Use Logical Block Protection?
@@ -166,8 +164,8 @@ private:
   
   /**
    * Sets internal configuration parameters to be used for labeling.
-   * It reads drive and library parameters from /etc/cta/cta-taped-*.conf
-   * and catalogue login parameters from /etc/cta/cta-catalogue.conf.
+   * It reads drive and library parameters from /etc/cta/TPCONFIG and catalogue
+   * login parameters from /etc/cta/cta-catalogue.conf.
    *
    * @param username The name of the user running the command-line tool.
    * @param vid The tape VID to be pre-label.

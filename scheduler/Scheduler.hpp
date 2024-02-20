@@ -243,7 +243,7 @@ public:
    */
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) override;
 
   /**
@@ -251,7 +251,7 @@ public:
    * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
-  void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,
     const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
 
   /**

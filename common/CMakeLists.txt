@@ -38,7 +38,6 @@ set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
   checksum/ChecksumBlob.cpp
-  CmdLineTool.cpp
   Configuration.cpp
   ConfigurationFile.cpp
   CRC.cpp

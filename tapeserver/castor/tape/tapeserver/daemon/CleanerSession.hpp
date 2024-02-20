@@ -29,7 +29,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 
 namespace cta::catalogue {
 class Catalogue;
@@ -64,7 +64,7 @@ public:
     cta::server::ProcessCap &capUtils,
     cta::mediachanger::MediaChangerFacade &mc,
     cta::log::Logger &log,
-    const cta::tape::daemon::DriveConfigEntry &driveConfig,
+    const cta::tape::daemon::TpconfigLine &driveConfig,
     System::virtualWrapper &sysWrapper,
     const std::string &vid,
     const bool waitMediaInDrive,
@@ -101,7 +101,7 @@ private:
   /**
     * The configuration of the tape drive to be cleaned.
     */
-  const cta::tape::daemon::DriveConfigEntry m_driveConfig;
+  const cta::tape::daemon::TpconfigLine m_driveConfig;
 
   /**
     * The system wrapper used to find the device and instantiate the drive object

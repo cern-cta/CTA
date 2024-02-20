@@ -22,7 +22,7 @@
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
 #include "daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 #include <memory>
@@ -41,7 +41,7 @@ public:
    * @param hostname The host name of the computer
    * @param lc 
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::DriveConfigEntry& driveConfig,
+  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::TpconfigLine& driveConfig,
     std::string_view hostname, const cta::log::LogContext& lc);
 
   /**

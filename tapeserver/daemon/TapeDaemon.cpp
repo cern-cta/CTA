@@ -79,6 +79,9 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
+  if (m_globalConfiguration.driveConfigs.empty())
+    throw cta::exception::NoSuchObject("No drive found in configuration");
+
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
   setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
@@ -108,16 +111,11 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   ProcessManager pm(lc);
   auto sh = std::make_unique<SignalHandler>(pm);
   pm.addHandler(std::move(sh));
-  // Create the drive handler
-  const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
-                                             m_globalConfiguration.driveLogicalLibrary.value(),
-                                             m_globalConfiguration.driveDevice.value(),
-                                             m_globalConfiguration.driveControlPath.value()};
-  auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
-                                           dce,
-                                           pm);
-  pm.addHandler(std::move(dh));
-
+  // Create the drive handlers
+  for (const auto &[key, driveConfig] : m_globalConfiguration.driveConfigs) {
+    auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, driveConfig.value(), pm);
+    pm.addHandler(std::move(dh));
+  }
   // Create the garbage collector
   if(!isMaintenanceProcessDisabled()){
     auto gc = std::make_unique<MaintenanceHandler>(m_globalConfiguration, pm);

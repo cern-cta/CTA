@@ -33,6 +33,7 @@ void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfigurat
   setConfigToDB(&config->daemonUserName, catalogue, tapeDriveName);
   setConfigToDB(&config->daemonGroupName, catalogue, tapeDriveName);
   setConfigToDB(&config->logMask, catalogue, tapeDriveName);
+  setConfigToDB(&config->tpConfigPath, catalogue, tapeDriveName);
   setConfigToDB(&config->bufferSizeBytes, catalogue, tapeDriveName);
   setConfigToDB(&config->bufferCount, catalogue, tapeDriveName);
   setConfigToDB(&config->archiveFetchBytesFiles, catalogue, tapeDriveName);

@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include "common/exception/Exception.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
 
@@ -24,6 +26,9 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
+
+  const std::string tapeConfigFile = "/etc/cta/cta-taped.conf";
+
   char buf[256];
   std::string hostName;
   if (gethostname(buf, sizeof(buf))) {
@@ -34,7 +39,14 @@ int main(const int argc, char *const *const argv) {
   }
   cta::log::StdoutLogger log(hostName, "cta-readtp");
   cta::log::DummyLogger dummyLog("dummy", "dummy");
+  const cta::tape::daemon::TapedConfiguration tapeConfig
+    = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapeConfigFile);
+  cta::mediachanger::RmcProxy rmcProxy(
+    tapeConfig.rmcPort.value(),
+    tapeConfig.rmcNetTimeout.value(),
+    tapeConfig.rmcRequestAttempts.value());
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, log);
 
-  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog);
+  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc);
   return cmd.main(argc, argv);
 }

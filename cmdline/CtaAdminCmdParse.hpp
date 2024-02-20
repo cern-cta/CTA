@@ -385,9 +385,8 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                           "  more drives. The <drive_name> option accepts a regular expression. If the\n"
                           "  --force option is not set, the drives will complete any running mount and\n"
                           "  drives must be in the down state before deleting. If the <drive_name> option\n"
-                          "  is set to first, the up, down, ls and ch commands will use the drive from the\n"
-                          "  first configuration file listed in /etc/cta. This does not guarantee that the\n"
-                          "  same drive will be used every time.\n"
+                          "  is set to first, the up, down, ls and ch commands will use the first drive\n"
+                          "  listed in TPCONFIG\n\n"
                                          }},
    { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "rm" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},

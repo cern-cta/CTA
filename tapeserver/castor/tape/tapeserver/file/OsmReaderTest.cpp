@@ -169,7 +169,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::server::ProcessCapDummy capUtils;
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
-  cta::tape::daemon::DriveConfigEntry driveConfig(m_devName, "TestLogicalLibrary", m_nstDev, "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig(m_devName, "TestLogicalLibrary", m_nstDev, "dummy");
 
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
 

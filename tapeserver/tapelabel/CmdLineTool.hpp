@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2024 CERN
+ * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,7 +20,7 @@
 #include <istream>
 #include <ostream>
 
-namespace cta::common {
+namespace cta::tapeserver::tapelabel {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -101,4 +101,4 @@ protected:
 
 }; // class CmdLineTool
 
-} // namespace cta::common
+} // namespace cta::tapeserver::tapelabel

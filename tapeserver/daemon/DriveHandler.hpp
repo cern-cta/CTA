@@ -69,7 +69,7 @@ public:
     Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
+  DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm);
   ~DriveHandler() override = default;
 
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
@@ -88,7 +88,7 @@ private:
   // The parameters
   const TapedConfiguration& m_tapedConfig;
   // This drive's parameters
-  const DriveConfigEntry& m_driveConfig;
+  const TpconfigLine& m_driveConfig;
   // The log context
   cta::log::LogContext& m_lc;
   // Representation of the outcome of the previous session/child process

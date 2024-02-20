@@ -159,7 +159,7 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "Options:" <<std::endl <<
     "  -o, --oldlabel      The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
     "  -t, --loadtimeout   The timeout to load the tape in the drive slot in seconds (default: 2 hours)" << std::endl <<
-    "  -u, --drive         The unit name of the drive used (if absent, the first drive configuration file found is used)" << std::endl <<
+    "  -u, --drive         The unit name of the drive used (if absent, the first line of TPCONFIG is used)" << std::endl <<
     "  -h, --help          Print this help message and exit" << std::endl <<
     "  -d, --debug         Print more logs for label operations" << std::endl <<
     "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  

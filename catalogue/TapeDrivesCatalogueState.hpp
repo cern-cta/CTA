@@ -43,7 +43,7 @@ struct SecurityIdentity;
 }
 
 namespace tape::daemon {
-class DriveConfigEntry;
+class TpconfigLine;
 }
 
 struct ReportDriveStatusInputs {
@@ -72,7 +72,7 @@ public:
   ~TapeDrivesCatalogueState() = default;
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo);
@@ -98,7 +98,7 @@ private:
 
   common::dataStructures::TapeDrive setTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
     const common::dataStructures::SecurityIdentity& identity);
   void setDriveDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;
   void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;

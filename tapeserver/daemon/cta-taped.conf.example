@@ -36,6 +36,8 @@
 # Log format. Possible values are default, json.
 # taped LogFormat default
 #
+# Path to the tape drive configuration file
+# taped TpConfigPath /etc/cta/TPCONFIG
 #
 # Path to the CTA Catalogue configuration file
 # taped CatalogueConfigFile /etc/cta/cta-catalogue.conf
@@ -44,35 +46,6 @@
 # objectstore. For testing or small installations, a file-based objectstore can be used instead.
 ObjectStore BackendPath rados://cta@tapecta:cta
 # ObjectStore BackendPath /path/to/local/objectstore
-
-#
-# DRIVE OPTIONS
-#
-# The name of the drive. Will be included for every line in the logs. This can help identifying
-# a problematic maintenance process of the drive after log agregation.
-# taped DriveName
-#
-# CTA's logical library the tape drive will be linked to.
-# taped DriveLogicalLibrary
-#
-# Path to the character special device used to access the drive.
-# taped DriveDevice
-#
-# The SCSI media changer address of the drive. This is "smc" + the drive ordinal number of the
-# device, which can be obtained with "cta-smc -q D"
-# taped DriveControlPath
-
-#
-# GENERAL OPTIONS
-# This options will be included in every log line of the tape daemon to enhance log identification
-# when swapping drives between different backends.
-#
-# Unique string to identify CTA's catalogue instance the tape daemon is serving.
-# general InstanceName production
-#
-# The unique string to identify the backend scheduler resources. It can be structured as:
-# "[ceph|postgres|vfs][User|Repack]".
-# general SchedulerBackendName cephUser
 
 #
 # MEMORY MANAGEMENT OPTIONS
@@ -140,7 +113,6 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 
 #
 # RECOMMENDED ACCESS ORDER (RAO) OPTIONS
-#
 #
 
 # ##### WARNING #####

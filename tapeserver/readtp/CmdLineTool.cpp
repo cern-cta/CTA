@@ -15,13 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/CmdLineTool.hpp"
+#include "tapeserver/readtp/CmdLineTool.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/exception/EncryptionException.hpp"
 
 #include <unistd.h>
 
-namespace cta::common {
+namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -100,4 +100,4 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace cta::common
+} // namespace cta::tapeserver::readtp

@@ -32,16 +32,9 @@ TEST(cta_Daemon, TapedConfiguration) {
   completeConfFile.stringFill(
   "# A good enough configuration file for taped\n"
   "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-
-  "taped DriveName dummy-Drive\n"
-  "taped DriveLogicalLibrary dummyLL\n"
-  "taped DriveDevice /dummy/Device\n"
-  "taped DriveControlPath dummyControlPath\n"
-
-  "general InstanceName production\n"
-  "general SchedulerBackendName dummyProdUser\n"
-  "general ServiceName dummy-service-name\n");
-
+  "taped TpConfigPath ");
+  TempFile emptyTpConfig;
+  completeConfFile.stringAppend(emptyTpConfig.path());
   ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
     cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
   auto completeConfig = 
@@ -61,16 +54,12 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   "taped ArchiveFlushBytesFiles              3 , 4 \n"
   "taped RetrieveFetchBytesFiles  5,   6\n"
   "taped BufferCount 1  \n"
-
-  "taped DriveName dummy-Drive\n"
-  "taped DriveLogicalLibrary dummyLL\n"
-  "taped DriveDevice /dummy/Device\n"
-  "taped DriveControlPath dummyControlPath\n"
-
-  "general InstanceName production\n"
-  "general SchedulerBackendName dummyProdUser\n"
-  "general ServiceName dummy-service-name\n");
-
+  "taped TpConfigPath ");
+  TempFile TpConfig;
+  TpConfig.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape2 smc2");
+  completeConfFile.stringAppend(TpConfig.path());
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
@@ -84,6 +73,8 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   ASSERT_EQ(4, completeConfig.archiveFlushBytesFiles.value().maxFiles);
   ASSERT_EQ(5, completeConfig.retrieveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(6, completeConfig.retrieveFetchBytesFiles.value().maxFiles);
+  ASSERT_EQ(3, completeConfig.driveConfigs.size());
+  ASSERT_EQ("/dev/tape1", completeConfig.driveConfigs.at("drive1").value().devFilename);
 }
 
 } // namespace unitTests

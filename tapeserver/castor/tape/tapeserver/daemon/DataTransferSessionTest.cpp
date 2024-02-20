@@ -589,7 +589,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -777,7 +777,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -995,7 +995,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -1179,7 +1179,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
@@ -1367,7 +1367,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
@@ -1556,7 +1556,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
@@ -1749,7 +1749,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
@@ -1935,7 +1935,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -2087,7 +2087,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -2226,7 +2226,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -2380,7 +2380,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2545,7 +2545,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2701,7 +2701,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2865,7 +2865,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -3031,7 +3031,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -3204,7 +3204,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
@@ -3338,7 +3338,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
                                                                                            castor::tape::tapeserver::drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveConfig.unitName;
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
