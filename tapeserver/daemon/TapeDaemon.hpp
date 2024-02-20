@@ -19,7 +19,7 @@
 
 #include "common/threading/Daemon.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
@@ -41,7 +41,7 @@ public:
   TapeDaemon(
     const cta::daemon::CommandLineParams & commandLine,
     cta::log::Logger &log,
-    const TapedConfiguration &globalConfig,
+    const common::TapedConfiguration &globalConfig,
     cta::server::ProcessCap &capUtils);
   
   virtual ~TapeDaemon();
@@ -227,7 +227,7 @@ protected:
   void logChildProcessTerminated(const pid_t pid, const int waitpidStat) noexcept;
   
   /** The tape server's configuration */
-  const TapedConfiguration& m_globalConfiguration;
+  const common::TapedConfiguration& m_globalConfiguration;
 
   /**
    * Object providing utilities for working UNIX capabilities.

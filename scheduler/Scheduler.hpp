@@ -58,7 +58,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/IScheduler.hpp"
 
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace cta {
 
@@ -252,7 +252,7 @@ public:
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
   void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-    const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
+    const cta::tape::daemon::common::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
 
   /**
    * Dumps the state of an specifig drive

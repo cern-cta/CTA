@@ -16,7 +16,6 @@
  */
 
 #include "TapedConfiguration.hpp"
-#include "DriveConfigEntry.hpp"
 #include "common/ConfigurationFile.hpp"
 
 #include <algorithm>
@@ -29,19 +28,7 @@ namespace cta {
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::DriveConfigEntry>::addLogParamForValue(log::LogContext & lc) {
-  lc.pushOrReplace({"category", "Drive Entry"});
-  lc.pushOrReplace({"tapeDrive", m_value.unitName});
-  lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
-  lc.pushOrReplace({"devFilename", m_value.devFilename});
-  lc.pushOrReplace({"librarySlot", m_value.rawLibrarySlot});
-} // namespace cta
-
-//------------------------------------------------------------------------------
-// addLogParamForValue
-//------------------------------------------------------------------------------
-template<>
-void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
 } // namespace cta
@@ -50,7 +37,7 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForVal
 // set
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::string & value,
+void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::set(const std::string & value,
   const std::string & source) {
   // We expect an entry in the form "<size limit>, <file limit>"
   // There should be one and only one comma in the parameter.
@@ -84,7 +71,7 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
 } // namespace cta
 } // namespace cta
 
-namespace cta::tape::daemon {
+namespace cta::tape::daemon::common {
 
 //------------------------------------------------------------------------------
 // TapedConfiguration::getDriveConfigFile

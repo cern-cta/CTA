@@ -106,8 +106,8 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   std::optional<std::string> unitName = cmdLineArgs.m_unitName.value();
 
   // Read taped config file
-  const cta::tape::daemon::TapedConfiguration driveConfig
-  = cta::tape::daemon::TapedConfiguration::createFromCtaConf(unitName, m_log);
+  const cta::tape::daemon::common::TapedConfiguration driveConfig
+  = cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(unitName, m_log);
 
   // Configure drive
   m_devFilename = driveConfig.driveDevice.value();
@@ -583,8 +583,8 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
     const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
 
     // Config file needed to find the cta-get-encryption-key script
-    const cta::tape::daemon::TapedConfiguration tapedConfig =
-      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, m_dummyLog);
+    const cta::tape::daemon::common::TapedConfiguration tapedConfig =
+      cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, m_dummyLog);
     const std::string externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
     const bool useEncryption = tapedConfig.useEncryption.value() == "yes";
     m_encryptionControl = std::make_unique<castor::tape::tapeserver::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);

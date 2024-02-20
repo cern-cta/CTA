@@ -19,7 +19,7 @@
 
 #include "SubprocessHandler.hpp"
 #include "ProcessManager.hpp"
-#include "TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "common/threading/SocketPair.hpp"
 
 namespace cta::tape::daemon {
@@ -30,7 +30,7 @@ namespace cta::tape::daemon {
  */
 class MaintenanceHandler: public SubprocessHandler {
 public:
-  MaintenanceHandler(const TapedConfiguration & tapedConfig, ProcessManager & pm);
+  MaintenanceHandler(const common::TapedConfiguration & tapedConfig, ProcessManager & pm);
   virtual ~MaintenanceHandler();
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
   SubprocessHandler::ProcessingStatus fork() override;
@@ -52,7 +52,7 @@ private:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager & m_processManager;
   /** The parameters */
-  const TapedConfiguration & m_tapedConfig;
+  const common::TapedConfiguration & m_tapedConfig;
   /** The current state we report to process manager */
   SubprocessHandler::ProcessingStatus m_processingStatus;
   /** PID for the subprocess */

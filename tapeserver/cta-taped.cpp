@@ -21,7 +21,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
 #include "version.h"
@@ -73,7 +73,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
-  using namespace cta::tape::daemon;
+  using namespace cta::tape::daemon::common;
 
   logStartOfDaemon(log, commandLine);
 

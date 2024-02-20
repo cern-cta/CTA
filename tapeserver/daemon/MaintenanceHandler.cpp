@@ -40,7 +40,7 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MaintenanceHandler::MaintenanceHandler(const TapedConfiguration& tapedConfig, ProcessManager& pm):
+MaintenanceHandler::MaintenanceHandler(const common::TapedConfiguration& tapedConfig, ProcessManager& pm):
 SubprocessHandler("maintenanceHandler"), m_processManager(pm), m_tapedConfig(tapedConfig) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)

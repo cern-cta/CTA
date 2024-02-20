@@ -94,11 +94,11 @@ add_executable(cta-frontend-async-grpc
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          ctascheduler ctacommon ctatapedaemon ctacatalogue gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-	  EosCtaGrpc ctascheduler ctacommon ctatapedaemon ctaobjectstore ctacatalogue gssapi_krb5)
+	      EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
 endif()
 
 
@@ -122,11 +122,11 @@ if(CTA_USE_PGSCHED)
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemon ctacatalogue cryptopp gssapi_krb5)
+          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp gssapi_krb5)
 else()
   target_link_libraries(cta-admin-grpc
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
+          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
 endif()

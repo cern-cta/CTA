@@ -24,7 +24,7 @@
 
 #include <cmdline/CtaAdminCmd.hpp>
 #include <cmdline/CtaAdminTextFormatter.hpp>
-#include <tapeserver/daemon/TapedConfiguration.hpp>
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
@@ -393,7 +393,7 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          if (option == opt_drivename_cmd && value == "first") {
             try {
             new_opt->set_value(
-               cta::tape::daemon::TapedConfiguration::getFirstDriveName());
+               cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
             } catch(cta::exception::Exception &ex){
                throw std::runtime_error("Could not find a taped configuration file. This option should only be run from a tapeserver.");
             }

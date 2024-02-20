@@ -34,7 +34,7 @@ namespace cta::tape::daemon {
 
 TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     log::Logger& log,
-    const TapedConfiguration& globalConfig,
+    const common::TapedConfiguration& globalConfig,
     cta::server::ProcessCap& capUtils):
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),

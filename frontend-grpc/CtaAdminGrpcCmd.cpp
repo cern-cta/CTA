@@ -33,7 +33,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 #include "XrdSsiPbException.hpp"
 #include "version.h"
@@ -252,7 +252,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::addOption(const cta::admin::O
        if (option == cta::admin::opt_drivename_cmd && strValue == "first") {
            try {
            new_opt->set_value(
-               cta::tape::daemon::TapedConfiguration::getFirstDriveName());
+               cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
            } catch (cta::exception::Exception &ex){
                throw std::runtime_error("Could not find a taped configuration file. This option should only be run from a tapeserver.");
            }

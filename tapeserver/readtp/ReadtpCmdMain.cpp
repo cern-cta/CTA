@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
 
 //------------------------------------------------------------------------------

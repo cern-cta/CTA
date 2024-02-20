@@ -14,6 +14,8 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
+add_subdirectory(common)
+
 find_package(Protobuf3 REQUIRED)
 
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
@@ -34,20 +36,19 @@ add_library(ctatapedaemon
   ProcessManager.cpp
   SignalHandler.cpp
   TapeDaemon.cpp
-  TapedConfiguration.cpp
   DriveConfigEntry.cpp
 )
 
 target_link_libraries(ctatapedaemon
   ctatapesession
   ctaTapeServerDaemon
+  ctatapedaemoncommon
   SCSI
   TapeDrive
   File)
 
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp
-  TapedConfigurationTests.cpp
 )
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
@@ -62,10 +63,14 @@ set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LI
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
+  ctatapedaemoncommon
+  ctatapedaemoncommontests
   unitTestHelper)
 
 target_link_libraries(ctadaemonunittests-multiprocess
   ctatapedaemon
+  ctatapedaemoncommon
+  ctatapedaemoncommontests
   unitTestHelper)
 
 install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
