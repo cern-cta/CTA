@@ -21,7 +21,6 @@
 #include <type_traits>
 #include <limits>
 #include <optional>
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"

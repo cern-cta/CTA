@@ -22,7 +22,7 @@
 namespace cta {
 
 namespace common::dataStructures {
-class DriveInfo;
+struct DriveInfo;
 class DesiredDriveState;
 }
 
@@ -35,7 +35,7 @@ class DriveConfigEntry;
 }
 
 namespace tape::daemon::common {
-class TapedConfiguration;
+struct TapedConfiguration;
 }
 
 class IScheduler {

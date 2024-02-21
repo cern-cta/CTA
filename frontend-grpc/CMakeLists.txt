@@ -98,7 +98,7 @@ if(CTA_USE_PGSCHED)
 else()
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-	      EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
+          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
 endif()
 
 

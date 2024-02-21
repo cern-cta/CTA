@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 
 #include "tests/TempFile.hpp"
-#include "common/ConfigurationFile.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 

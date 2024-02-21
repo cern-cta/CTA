@@ -18,12 +18,18 @@ cmake_minimum_required (VERSION 3.17)
 add_library(ctatapedaemoncommon SHARED
   TapedConfiguration.cpp
 )
+
+target_link_libraries(ctatapedaemoncommon
+  stdc++fs
+)
+
 set_property(TARGET ctatapedaemoncommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedaemoncommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctatapedaemoncommontests SHARED
   TapedConfigurationTests.cpp
 )
+
 set_property(TARGET ctatapedaemoncommontests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedaemoncommontests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
