@@ -26,7 +26,7 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 
 # Manage repos before running yum
 COPY ${BASEDIR}/repos/ /etc/yum.repos.d/
-COPY ${BASEDIR}/cta/ /etc/cta/
+COPY ${BASEDIR}/../etc/ /etc/
 # COPY ${BASEDIR}/yum/ /etc/yum/
 COPY ${BASEDIR}/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
 
