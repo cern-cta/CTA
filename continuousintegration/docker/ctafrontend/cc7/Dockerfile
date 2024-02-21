@@ -25,7 +25,8 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     CTAREPODIR="/opt/repo"
 
 # Manage repos before running yum
-COPY ${BASEDIR}/../etc /etc
+COPY ${BASEDIR}/etc /etc
+COPY ${BASEDIR}/../etc/cta /etc/cta
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
