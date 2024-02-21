@@ -368,6 +368,7 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-osmReaderTest
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctatapedaemoncommontests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
