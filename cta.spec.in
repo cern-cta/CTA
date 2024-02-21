@@ -179,7 +179,6 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: cta-taped = %{version}-%{release}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 Requires: xrootd-server >= %{xrootdVersion}
 %description -n cta-frontend
@@ -222,7 +221,6 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: cta-taped = %{version}-%{release}
 %description -n cta-frontend-grpc
 CERN Tape Archive:
 dCache frontend
