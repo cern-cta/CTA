@@ -47,26 +47,29 @@ TEST(cta_taped, InvocationTests) {
     ASSERT_EQ(EXIT_FAILURE, spNoConfigFile.exitValue());
   }
 
-  // Does the tape server complain about absence of drive configuration?
+  // Does the tape server complain about absence of a mandatory configuration (DriveName)
   {
-    // We provide le daemon with an existing (but almost empty) configuration
-    // file. The mandatory fields are present.
+    // We provide le daemon with an existing configuration
+    // file. The DriveName field is missing purposely.
     unitTests::TempFile ctaConf, driveConfig;
     ctaConf.stringAppend(
       "#A good enough configuration file for taped\n"
       "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
       "taped BufferCount 1\n"
 
-      "taped DriveName dummy-Drive\n"
+      //"taped DriveName dummy-Drive\n"
       "taped DriveLogicalLibrary dummyLL\n"
       "taped DriveDevice /dummy/Device\n"
-      "taped DriveControlPath dummyControlPath\n");
+      "taped DriveControlPath dummyControlPath\n"
+
+      "general InstanceName production\n"
+      "general SchedulerBackendName dummyProdUser\n"
+      "general ServiceName dummy-service-name\n");
 
     cta::threading::SubProcess spNoDrive("/usr/bin/cta-taped", 
       std::list<std::string>({"/usr/bin/cta-taped", "-f", "-s", "-c", ctaConf.path()}));
     spNoDrive.wait();
-    ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting cta-taped. Not starting because: "
-      "No drive found in configuration\""));
+    ASSERT_NE(std::string::npos, spNoDrive.stdout().find("In SourcedParameter::setFromConfigurationFile: mandatory parameter not found: category=taped key=DriveName"));
     ASSERT_TRUE(spNoDrive.stderr().empty());
     ASSERT_EQ(EXIT_FAILURE, spNoDrive.exitValue());
   }
