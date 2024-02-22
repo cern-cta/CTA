@@ -17,7 +17,7 @@
 
 #pragma once
 
-namespace cta::tape::daemon {
+namespace cta::tape::daemon::common {
 
 /** The structure representing the maximum number of bytes and files
  cta-taped will fetch or report in one access to the object store*/

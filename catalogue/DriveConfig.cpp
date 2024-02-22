@@ -22,13 +22,13 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/DriveConfig.hpp"
 #include "common/SourcedParameter.hpp"
-#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
+#include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
 
 namespace cta {
 
-void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfiguration &tapedConfiguration,
+void DriveConfig::setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration &tapedConfiguration,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  auto *config = const_cast<cta::tape::daemon::TapedConfiguration *>(&tapedConfiguration);
+  auto *config = const_cast<cta::tape::daemon::common::TapedConfiguration *>(&tapedConfiguration);
 
   setConfigToDB(&config->daemonUserName, catalogue, tapeDriveName);
   setConfigToDB(&config->daemonGroupName, catalogue, tapeDriveName);
@@ -80,7 +80,7 @@ void DriveConfig::setConfigToDB(cta::SourcedParameter<std::string>* sourcedParam
     sourcedParameter->value(), sourcedParameter->source());
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>* sourcedParameter,
+void DriveConfig::setConfigToDB(cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>* sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
   std::string key = sourcedParameter->key();
   cta::utils::searchAndReplace(key, "Bytes", "");

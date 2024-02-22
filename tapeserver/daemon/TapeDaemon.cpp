@@ -29,12 +29,13 @@
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SignalHandler.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 
 namespace cta::tape::daemon {
 
 TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     log::Logger& log,
-    const TapedConfiguration& globalConfig,
+    const common::TapedConfiguration& globalConfig,
     cta::server::ProcessCap& capUtils):
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
@@ -110,9 +111,9 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handler
   const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
-                                             m_globalConfiguration.driveLogicalLibrary.value(),
-                                             m_globalConfiguration.driveDevice.value(),
-                                             m_globalConfiguration.driveControlPath.value()};
+                             m_globalConfiguration.driveLogicalLibrary.value(),
+                             m_globalConfiguration.driveDevice.value(),
+                             m_globalConfiguration.driveControlPath.value()};
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,
                                            pm);

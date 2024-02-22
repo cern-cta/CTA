@@ -115,12 +115,14 @@ trigger_queue_cleanup() {
   for i in ${!tapeList[@]}; do
     wait_for_tape_state ${tapeList[$i]} BROKEN
   done
+  sleep 1
   for i in ${!tapeList[@]}; do
     admin_cta tape ch --vid ${tapeList[$i]} --state ACTIVE
   done
   for i in ${!tapeList[@]}; do
     wait_for_tape_state ${tapeList[$i]} ACTIVE
   done
+  sleep 1
 }
 
 wait_for_request_cancel_report() {
@@ -504,11 +506,13 @@ test_tape_state_change_queue_moved() {
   if test "0" == "${EXPECTED_QUEUE_START}"; then
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
     change_tape_state $TAPE_1 $TAPE_1_STATE_END
+    sleep 1
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
     change_tape_state $TAPE_0 $TAPE_0_STATE_END
   else
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
     change_tape_state $TAPE_0 $TAPE_0_STATE_END
+    sleep 1
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
     change_tape_state $TAPE_1 $TAPE_1_STATE_END
   fi

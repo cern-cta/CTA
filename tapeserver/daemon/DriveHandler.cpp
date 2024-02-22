@@ -52,7 +52,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const cta::tape::daemon::DriveConfigEntry& driveConfig, ProcessManager& pm) :
+DriveHandler::DriveHandler(const common::TapedConfiguration& tapedConfig, const cta::tape::daemon::DriveConfigEntry& driveConfig, ProcessManager& pm) :
   SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
   m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_lc(m_processManager.logContext()) {
   // As the handler is started, its first duty is to create a new subprocess. This
@@ -695,8 +695,8 @@ int DriveHandler::runChild() {
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
-      scheduler->createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
-                                      common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, m_lc);
+      scheduler->createTapeDriveStatus(driveInfo, driveState, cta::common::dataStructures::MountType::NoMount,
+                                       cta::common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, m_lc);
 
       // Get the drive state to see if there is a reason or not, we don't want to change the reason
       // why a drive is down at the startup of the tapeserver. If it's setted up a previous Reason From Log

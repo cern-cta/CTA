@@ -29,7 +29,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
@@ -69,7 +69,7 @@ public:
     Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
+  DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
   ~DriveHandler() override = default;
 
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
@@ -86,7 +86,7 @@ private:
   // Reference to the process manager
   cta::tape::daemon::ProcessManager& m_processManager;
   // The parameters
-  const TapedConfiguration& m_tapedConfig;
+  const common::TapedConfiguration& m_tapedConfig;
   // This drive's parameters
   const DriveConfigEntry& m_driveConfig;
   // The log context

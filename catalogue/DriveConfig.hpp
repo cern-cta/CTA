@@ -22,7 +22,7 @@
 #include <string>
 
 #include "common/SourcedParameter.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace cta {
 
@@ -35,7 +35,7 @@ class Catalogue;
  */
 class DriveConfig {
  public:
-  static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration &tapedConfiguration,
+  static void setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration &tapedConfiguration,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
 
  private:
@@ -43,7 +43,7 @@ class DriveConfig {
     const std::string& key);
   static void setConfigToDB(cta::SourcedParameter<std::string>* sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
-  static void setConfigToDB(cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>* sourcedParameter,
+  static void setConfigToDB(cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>* sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::uint32_t>* sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);

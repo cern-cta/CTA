@@ -54,7 +54,7 @@
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "disk/DiskSystem.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace cta {
 

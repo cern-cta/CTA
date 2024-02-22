@@ -21,13 +21,12 @@
 #include <type_traits>
 #include <limits>
 #include <optional>
-#include "DriveConfigEntry.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"
 #include "FetchReportOrFlushLimits.hpp"
 
-namespace cta::tape::daemon {
+namespace cta::tape::daemon::common {
 /**
  * Class containing all the parameters needed by the watchdog process
  * to spawn a transfer session per drive.

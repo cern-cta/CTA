@@ -22,7 +22,7 @@
 namespace cta {
 
 namespace common::dataStructures {
-class DriveInfo;
+struct DriveInfo;
 class DesiredDriveState;
 }
 
@@ -32,7 +32,10 @@ class LogContext;
 
 namespace tape::daemon {
 class DriveConfigEntry;
-class TapedConfiguration;
+}
+
+namespace tape::daemon::common {
+struct TapedConfiguration;
 }
 
 class IScheduler {
@@ -63,7 +66,7 @@ public:
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) = 0;
 
   virtual void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-    const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) = 0;
+    const cta::tape::daemon::common::TapedConfiguration& tapedConfig, log::LogContext& lc) = 0;
 };
 
 } // namespace cta

@@ -17,10 +17,9 @@
 
 #include <gtest/gtest.h>
 
-#include "common/ConfigurationFile.hpp"
-#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tests/TempFile.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace unitTests {
 
@@ -42,10 +41,10 @@ TEST(cta_Daemon, TapedConfiguration) {
   "general SchedulerBackendName dummyProdUser\n"
   "general ServiceName dummy-service-name\n");
 
-  ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
+  ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
     cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
   auto completeConfig = 
-    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
+    cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
 }
@@ -73,7 +72,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
 
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = 
-    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
+    cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());

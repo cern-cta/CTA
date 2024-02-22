@@ -284,6 +284,7 @@ The shared libraries base
 %files -n cta-lib-common
 %defattr(0755,root,root,-)
 %{_libdir}/libctacommon.so*
+%{_libdir}/libctatapedaemoncommon.so*
 
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive libraries
@@ -367,6 +368,7 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-osmReaderTest
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*

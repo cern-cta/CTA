@@ -901,7 +901,7 @@ void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliI
 //------------------------------------------------------------------------------
 // reportDriveConfig
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) {
+void Scheduler::reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,const cta::tape::daemon::common::TapedConfiguration& tapedConfig,log::LogContext& lc) {
   utils::Timer t;
   DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, driveConfigEntry.unitName);
   auto schedulerDbTime = t.secs();
