@@ -63,14 +63,11 @@ set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LI
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
-  ctatapedaemoncommon
-  ctatapedaemoncommontests
+  ctatapedaemoncommonunittests
   unitTestHelper)
 
 target_link_libraries(ctadaemonunittests-multiprocess
   ctatapedaemon
-  ctatapedaemoncommon
-  ctatapedaemoncommontests
   unitTestHelper)
 
 install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

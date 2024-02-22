@@ -26,12 +26,12 @@ target_link_libraries(ctatapedaemoncommon
 set_property(TARGET ctatapedaemoncommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedaemoncommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-add_library(ctatapedaemoncommontests SHARED
+add_library(ctatapedaemoncommonunittests SHARED
   TapedConfigurationTests.cpp
 )
 
-set_property(TARGET ctatapedaemoncommontests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapedaemoncommontests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctatapedaemoncommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedaemoncommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctatapedaemoncommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install(TARGETS ctatapedaemoncommontests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedaemoncommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
