@@ -41,6 +41,7 @@ public:
   void deleteLogParams(const std::list<std::string> &paramNames) override;
   void resetLogParams() override;
   void labelError(const std::string& unitName, const std::string& message) override;
+  std::optional<std::string> recvBroadcast(const time_t s_pollTimeout) override;
 private:
   server::SocketPair & m_socketPair;
 };

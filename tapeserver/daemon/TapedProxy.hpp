@@ -30,7 +30,7 @@ namespace cta::tape::daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
- * possible notifications sent back to main tape daemon (taped)
+ * possible notifications sent back to main tape daemon (taped), as well as the notifications received from it
  */
 class TapedProxy {
 public:
@@ -87,6 +87,15 @@ public:
    */
   virtual void labelError(const std::string &unitName,
     const std::string &message) = 0;
+
+  /**
+   * Wait for a broadcast message to be received through the proxy.
+   * This is a blocking operation, should be performed from a separate thread or with a timeout of zero.
+   *
+   * TODO: Returning a string is probably not the best option...
+   * TODO: Check WatchdogMessage.proto for an example on how to this with protobuf
+   */
+  virtual std::optional<std::string> recvBroadcast(const time_t s_pollTimeout) = 0;
 
 }; // class TapeserverProxy
 
