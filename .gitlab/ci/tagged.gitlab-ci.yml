@@ -1,6 +1,6 @@
 cta_tagged_rpm:
-  only:
-    - tags
+  rules:
+    - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
   stage: build:tagged_rpm
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -12,6 +12,36 @@ cta_tagged_rpm:
     - yum install -y git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
+    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+    - mkdir build_tagged_rpm
+    - cd build_tagged_rpm
+    - CTA_VERSION=${TAG_VERSION} cmake3 -DVCS_VERSION=${TAG_RELEASE} ${CMAKE_OPTIONS} ..
+    - make cta_rpm
+  artifacts:
+    expire_in: 30 days
+    paths:
+    - build_tagged_rpm/RPM/RPMS
+
+cta_tagged_rpm_alma9:
+  rules:
+    - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
+  stage: build:tagged_rpm
+  retry: 1
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  before_script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
+    - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
+    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+  script:
+    - yum -y install epel-release almalinux-release-devel git
+    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+    - yum -y install yum-plugin-versionlock
+    - git submodule update --init --recursive
+    - ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_tagged_rpm

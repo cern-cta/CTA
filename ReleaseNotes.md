@@ -6,6 +6,7 @@
 
 ### Alma9 Migration
 - cta/CTA#614 - Alma9 pipeline fails on the kubernetes tests
+- cta/CTA#600 - Setup the Alma9 release pipeline
 
 # v4.10.9.0-1
 
