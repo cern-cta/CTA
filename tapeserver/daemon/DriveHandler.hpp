@@ -76,6 +76,8 @@ public:
   void kill() override;
   SubprocessHandler::ProcessingStatus processEvent() override;
   SubprocessHandler::ProcessingStatus processSigChild() override;
+  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override;
+  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override;
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
 private:

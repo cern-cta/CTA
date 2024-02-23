@@ -50,6 +50,11 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+  /**
+   * Refresh the underlying logger setup
+   */
+  void refresh() final;
+
 protected:
   /**
    * Mutex used to protect the critical section of the StringLogger object.
@@ -60,6 +65,11 @@ protected:
    * The output file handle
    */
   int m_fd = -1;
+
+  /**
+   * Log file path
+   */
+  std::string_view m_filePath;
 
   /**
    * Writes the specified msg to the underlying logging system
