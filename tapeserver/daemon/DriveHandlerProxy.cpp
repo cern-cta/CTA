@@ -77,6 +77,19 @@ void DriveHandlerProxy::labelError(const std::string& unitName, const std::strin
   throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
 }
 
+std::optional<std::string> DriveHandlerProxy::recvBroadcast(const time_t s_pollTimeout) {
+  server::SocketPair::pollMap pollList;
+  pollList["0"]= &m_socketPair;
+  try {
+    server::SocketPair::poll(pollList, s_pollTimeout, server::SocketPair::Side::child);
+  } catch (server::SocketPair::Timeout &) {
+    // Timing out while waiting for message is not a problem for us
+    // Return empty object
+    return std::optional<std::string>();
+  }
+  return m_socketPair.receive();
+}
+
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);

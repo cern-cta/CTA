@@ -513,8 +513,9 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Drive
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processBroadcastRecv(const std::string& msg) {
-  // TODO: Handle broadcast
-  throw cta::exception::Exception("In DriveHandler::processBroadcastRecv(): should not have been called");
+  // TODO: Use protobuf and serialize
+  m_socketPair->send(msg);
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
