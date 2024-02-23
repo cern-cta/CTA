@@ -8,6 +8,7 @@
 - cta/CTA#614 - Alma9 pipeline fails on the kubernetes tests
 - cta/CTA#600 - Setup the Alma9 release pipeline
 - cta/CTA#618 - Fix xrootd4 pipeline
+- cta/CTA#617 - Create a specific ci job for cta system tests
 
 ### Continuous Integration
 - cta/CTA#358 - Add GFAL2 HTTP system tests
