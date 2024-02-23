@@ -217,6 +217,23 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
+// SignalHandler::getBroadcastSendRequest
+//------------------------------------------------------------------------------
+std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> MaintenanceHandler::getBroadcastSendRequest() {
+  // This subclass does not need to do broadcast requests.
+  // If this function is called it means something went wrong.
+  throw cta::exception::Exception("In MaintenanceHandler::getBroadcastSendRequest(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::processBroadcastRecv
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcastRecv(const std::string& msg) {
+  // TODO: Handle broadcast!
+  throw cta::exception::Exception("In MaintenanceHandler::processBroadcastRecv(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
 // MaintenanceHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {

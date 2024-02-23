@@ -54,6 +54,11 @@ public:
    * method until the call to fork() has completed
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
+
+  /**
+   * Refresh the underlying logger setup
+   */
+  void refresh() final { /* intentionally-blank override of pure virtual method */ }
   
 protected:
   /**
