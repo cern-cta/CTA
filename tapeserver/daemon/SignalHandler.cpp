@@ -46,6 +46,8 @@ SubprocessHandler("signalHandler"), m_processManager(pm) {
       "In SignalHandler::SignalHandler(): signalfd() failed");
   // We can already register the file descriptor
   m_processManager.addFile(m_sigFd, this);
+  // Set shutdownComplete because SignalHandler is always ready to leave at all times
+  m_processingStatus.shutdownComplete = true;
 }
 
 //------------------------------------------------------------------------------
@@ -66,10 +68,7 @@ SignalHandler::~SignalHandler() {
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::getInitialStatus() {
   // On initiation, we expect nothing but signals, i.e. default status
-  // except we are considered shutdown at all times.
-  SubprocessHandler::ProcessingStatus ret;
-  ret.shutdownComplete = true;
-  return ret;
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +102,6 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGHUP:
   case SIGQUIT:
   case SIGPIPE:
-  case SIGUSR1:
   case SIGUSR2:
   case SIGTSTP:
   case SIGTTIN:
@@ -134,20 +132,27 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     m_sigChildPending = true;
     m_processManager.logContext().log(log::INFO, "In signal handler, received SIGCHLD and propagations to other handlers");
     break;
+  case SIGUSR1:
+    // A log rotate is needed.
+    // We need to broadcast this information to all other subprocesses.
+    // Flag will be cleared when broadcast is read.
+    m_broadcastRequested = true;
+    m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1 to request a log rotation");
+    break;
   }
-  SubprocessHandler::ProcessingStatus ret;
+  //SubprocessHandler::ProcessingStatus ret;
   // If the shutdown was not acknowledged (by receiving it ourselves), we ask
   // for it
-  ret.shutdownRequested = m_shutdownRequested && !m_shutdownAcknowlegded;
+  m_processingStatus.shutdownRequested = m_shutdownRequested && !m_shutdownAcknowlegded;
   // Compute the timeout if shutdown was requested. Else, it is end of times.
   if (m_shutdownRequested) {
-    ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+    m_processingStatus.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
   } else {
-    ret.nextTimeout = decltype(ret.nextTimeout)::max();
+    m_processingStatus.nextTimeout = decltype(m_processingStatus.nextTimeout)::max();
   }
-  ret.sigChild = m_sigChildPending;
-  ret.shutdownComplete = true; // We are always ready to leave.
-  return ret;
+  m_processingStatus.sigChild = m_sigChildPending;
+  m_processingStatus.broadcastRequested = m_broadcastRequested;
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
@@ -173,10 +178,8 @@ void SignalHandler::postForkCleanup() {
 SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
   // If we reach timeout, it means it's time to kill child processes
   m_processManager.logContext().log(log::INFO, "In signal handler, initiating subprocess kill after timeout on shutdown");
-  SubprocessHandler::ProcessingStatus ret;
-  ret.killRequested = true;
-  ret.shutdownComplete = true;
-  return ret;
+  m_processingStatus.killRequested = true;
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
@@ -185,12 +188,31 @@ SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
 SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
   // Our sigchild is now acknowledged
   m_sigChildPending = false;
-  SubprocessHandler::ProcessingStatus ret;
-  ret.shutdownComplete = true;
   if (m_shutdownRequested) {
-    ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+    m_processingStatus.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
   }
-  return ret;
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::getBroadcastSendRequest
+//------------------------------------------------------------------------------
+std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> SignalHandler::getBroadcastSendRequest() {
+  auto optionalMsg = std::optional<std::string>();
+  if (m_broadcastRequested) {
+    m_broadcastRequested = false;
+    optionalMsg = broadcastmsg::LOG_ROTATE_REQ_MSG;
+  }
+  m_processingStatus.broadcastRequested = false;
+  return std::pair(m_processingStatus, optionalMsg);
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::processBroadcastRecv
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus SignalHandler::processBroadcastRecv(const std::string& msg) {
+  // TODO: Handle broadcast to itself!
+  throw cta::exception::Exception("In SignalHandler::processBroadcastRecv(): should not have been called");
 }
 
 //------------------------------------------------------------------------------
@@ -199,14 +221,11 @@ SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
 SubprocessHandler::ProcessingStatus SignalHandler::shutdown() {
   // We received (back) our own shutdown: consider it acknowledged
   m_shutdownAcknowlegded = true;
-  SubprocessHandler::ProcessingStatus ret;
-  ret.shutdownComplete = true;
   // if we ever asked for shutdown, we have a timeout
   if (m_shutdownRequested) {
-    ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+    m_processingStatus.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
   }
-  ret.sigChild = m_sigChildPending;
-  return ret;
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------

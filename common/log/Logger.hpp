@@ -104,6 +104,11 @@ public:
   virtual void prepareForFork() = 0;
 
   /**
+   * Refresh the underlying logger setup
+   */
+  virtual void refresh()  = 0;
+
+  /**
    * Writes a message into the CTA logging system
    *
    * Exceptions are not thrown in case of failure. Failures are silently ignored in order to not impact the processing.
