@@ -50,3 +50,11 @@ deleteLogParams(const std::string &unitName,
 void castor::messages::TapeserverProxyDummy::labelError(
   const std::string &unitName, const std::string &message) {
 }
+
+//------------------------------------------------------------------------------
+// recvBroadcast
+//------------------------------------------------------------------------------
+std::optional<std::string> castor::messages::TapeserverProxyDummy::recvBroadcast(const time_t s_pollTimeout) {
+  // TODO
+  return std::optional<std::string>();
+}
