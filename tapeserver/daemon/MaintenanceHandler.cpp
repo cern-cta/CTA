@@ -229,8 +229,10 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Maint
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcastRecv(const std::string& msg) {
-  // TODO: Handle broadcast!
-  throw cta::exception::Exception("In MaintenanceHandler::processBroadcastRecv(): should not have been called");
+  // TODO: Use protobuf and serialize
+  // TODO: In the maintenance process both ends of the socket are already used (unlike in the drive handler).
+  // TODO: Therefore, we need to either create a new socketpair, or adapt how the child end of the socket is used...
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
