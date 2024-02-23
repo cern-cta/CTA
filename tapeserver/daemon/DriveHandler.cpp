@@ -501,6 +501,23 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
+// SignalHandler::getBroadcastSendRequest
+//------------------------------------------------------------------------------
+std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> DriveHandler::getBroadcastSendRequest() {
+  // This subclass does not need to do broadcast requests.
+  // If this function is called it means something went wrong.
+  throw cta::exception::Exception("In DriveHandler::getBroadcastSendRequest(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::processBroadcastRecv
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processBroadcastRecv(const std::string& msg) {
+  // TODO: Handle broadcast
+  throw cta::exception::Exception("In DriveHandler::processBroadcastRecv(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
 // DriveHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {

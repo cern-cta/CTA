@@ -110,6 +110,17 @@ public:
     return ret;
   }
 
+  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override {
+    // This subclass does not need to do broadcast requests.
+    // If this function is called it means something went wrong.
+    throw cta::exception::Exception("In ProbeSubprocess::getBroadcastSendRequest(): should not have been called");
+  }
+
+  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override {
+    // TODO: Handle broadcast!
+    throw cta::exception::Exception("In ProbeSubprocess::processBroadcastRecv(): should not have been called");
+  }
+
   void kill() override {
     // Send kill signal to child.
     ::kill(m_childProcess, SIGKILL);
@@ -226,6 +237,16 @@ public:
     return ret;
   }
 
+  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override {
+    // This subclass does not need to do broadcast requests.
+    // If this function is called it means something went wrong.
+    throw cta::exception::Exception("In ProbeSubprocess::getBroadcastSendRequest(): should not have been called");
+  }
+
+  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override {
+    // TODO: Handle broadcast! Test it!
+    throw cta::exception::Exception("In ProbeSubprocess::processBroadcastRecv(): should not have been called");
+  }
   
   SubprocessHandler::ProcessingStatus processEvent() override {
     throw cta::exception::Exception("In ProbeSubprocess::processEvent(): should not have been called");
