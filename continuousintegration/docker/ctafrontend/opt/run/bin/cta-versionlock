@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from collections import defaultdict
-from rpmUtils.miscutils import splitFilename
+import hawkey
 import argparse
 import json
 import os.path
@@ -49,6 +49,16 @@ usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
   to prevent cta-versionlock to alter versionlock.list create a %s file.\n \
   " % (sys.argv[0], sys.argv[0], sys.argv[0], no_vlock))
   exit(1)
+
+def splitFilename(rpm_file):
+  rpm_base_filename = os.path.basename(rpm_file)
+  nevra = hawkey.split_nevra(rpm_base_filename[:-len(".rpm")])
+  name = nevra.name
+  version = nevra.version
+  release = str(nevra.release)
+  epoch = str(nevra.epoch)
+  arch = nevra.arch
+  return (name, version, release, epoch, arch)
 
 START_EXPR = "\s*#+\s*%s-START\s*#+"
 END_EXPR = "\s*#+\s*%s-END\s*#+"

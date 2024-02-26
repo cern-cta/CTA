@@ -22,7 +22,7 @@ variables:
   - if [[ ${XROOTD_VERSION} -eq 4 ]];
     then echo "Using XRootD version 4";
       echo "Installing python3 for cta-versionlock script";
-      yum install -y python3 yum-utils;
+      yum install -y python3;
       ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
       yum-config-manager --enable cta-ci-xroot;
       yum-config-manager --disable cta-ci-xrootd5;
