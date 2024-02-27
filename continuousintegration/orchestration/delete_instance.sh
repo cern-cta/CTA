@@ -93,6 +93,7 @@ if [ $collectlogs == 1 ] ; then
     echo "Saving logs as artifacts"
     mkdir -p ../../pod_logs/${instance}
     cp -r ${tmpdir}/* ../../pod_logs/${instance}
+    kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../pod_logs/${instance}/trackerdb.db
   fi
 else
   # Do not Collect logs

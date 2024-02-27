@@ -58,7 +58,9 @@ echo "Copying test scripts to client pod"
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
 
-NB_FILES=10000
+kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_helper.sh && admin_kinit"
+
+NB_FILES=5000
 FILE_SIZE_KB=15
 NB_PROCS=100
 
@@ -71,7 +73,7 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r"
+clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c gfal2"
 
 # Tests
 # Check for xrd vesion as xrd gfal plugin only runs under xrd version 5.
@@ -81,7 +83,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-xrootd"
 
     echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
-    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL} -c gfal2"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
     echo
     echo "Track progress of test"
@@ -93,7 +95,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Archiving files: xrdcp as user1"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+   kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo
     echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
@@ -113,28 +115,60 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+
     echo "$(date +%s): Waiting for tracker process to finish. "
     wait "${TRACKER_PID}"
     if [[ $? == 1 ]]; then
-    echo "Some files were lost during tape workflow."
-    kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+      echo "Some files were lost during tape workflow."
+      kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
     exit 1
+  fi
 fi
 
+# Test gfal2 https plugin
+echo "Installing gfal2-plugin-http for http gfal test."
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
+echo "Enable insecure certs for gfal2"
+kubectl -n ${NAMESPACE} exec client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
+echo "Setting up environment for gfal-https tests"
+GFAL2_PROTOCOL='https'
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
-fi
+echo
+echo "Track progress of test"
+(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
+)&
+TRACKER_PID=$!
 
+echo
+echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
+echo " Archiving files: gfal-copy as user1 via https"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-# Test gfal http plugin.
-#GFAL2_PROTOCOL='https'
-# echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests
-# kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
-# echo "Installing gfal2-plugin-http for http gfal test."
-# kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http" || exit 1
-#echo
-#echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
-#echo " Archiving files: xrdcp as user1"
-#echo " Retrieving files with gfal https"
-#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh && ${TEST_POSTRUN}" || exit 1
-#kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+ echo
+echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+echo "  Retrieving files with gfal-bringonline via https protocol"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+    echo
+    echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+    echo "  Evicting files with gfal-evict as poweruser via https protocol"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+    echo
+    echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+    echo "  Deleting files with gfal-rm as user1 via https protocol"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+    echo "$(date +%s): Waiting for tracker process to finish. "
+    wait "${TRACKER_PID}"
+    if [[ $? == 1 ]]; then
+      echo "Some files were lost during tape workflow."
+      exit 1
+    fi
+
 exit 0

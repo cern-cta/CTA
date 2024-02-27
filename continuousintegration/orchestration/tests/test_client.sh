@@ -161,12 +161,8 @@ echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
 if [[ $? == 1 ]]; then
   echo "Some files were lost during tape workflow."
- kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
  exit 1
 fi
-
-# Copy results to gitlab artifacts.
-kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"
