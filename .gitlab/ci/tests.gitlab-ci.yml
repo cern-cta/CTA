@@ -25,6 +25,25 @@ cta_valgrind:
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
     - /usr/bin/cta-unitPlusSystemTests.sh
 
+cta_system_tests:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "OFF"
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - yum -y install yum-plugin-priorities createrepo
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
+    - /usr/bin/cta-systemTests
+
 dbunittests_postgresql:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -104,6 +123,32 @@ cta_valgrind_alma9:
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
     - /usr/bin/cta-unitPlusSystemTests.sh
 
+cta_system_tests_alma9:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "ON"
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  before_script:
+    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+    - yum -y install wget
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+  script:
+    - yum -y install createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
+    - /usr/bin/cta-systemTests
 
 dbunittests_postgresql_alma9:
   rules:
