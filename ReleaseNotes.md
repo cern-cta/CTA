@@ -9,6 +9,9 @@
 - cta/CTA#600 - Setup the Alma9 release pipeline
 - cta/CTA#618 - Fix xrootd4 pipeline
 
+### Continuous Integration
+- cta/CTA#358 - Add GFAL2 HTTP system tests
+
 # v4.10.9.0-1
 
 ### Features
