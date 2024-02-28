@@ -32,19 +32,15 @@
   script:
     - yum install -y devtoolset-11 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
-    - yum install -y git wget
+    - yum install -y git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} -DSKIP_UNIT_TESTS=1 ..
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_rpm
-    - echo "Download my eos version"
-    - wget https://cernbox.cern.ch/remote.php/dav/public-files/PDJp3K7CF1WilhH/RPM.tar.gz
-    - tar -xzf RPM.tar.gz
-    - find RPM -name "eos-*.rpm" -exec mv {} build_rpm/RPM/RPMS/x86_64 \;
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
