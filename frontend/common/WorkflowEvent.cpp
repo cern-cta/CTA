@@ -407,6 +407,9 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     checksum::ProtobufToChecksumBlob(m_event.file().csb(), csb);
     request.checksumBlob = csb;
   }
+  if (m_event.file().size() != 0) {
+    request.diskFileSize    = m_event.file().size();
+  }
   request.requester.name    = m_event.cli().user().username();
   request.requester.group   = m_event.cli().user().groupname();
   std::string lpath         = m_event.file().lpath();
