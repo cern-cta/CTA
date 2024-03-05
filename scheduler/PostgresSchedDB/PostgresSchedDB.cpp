@@ -54,7 +54,7 @@ void PostgresSchedDB::waitSubthreadsComplete()
 
 void PostgresSchedDB::ping()
 {
-  PostgresSchedulerSchema schema;
+  cta::postgresscheddb::PostgresSchedulerSchema schema;
   auto schedulerSchemaVersion = schema.getSchemaVersion();
   // we might prefer to verify the schema version
 }
