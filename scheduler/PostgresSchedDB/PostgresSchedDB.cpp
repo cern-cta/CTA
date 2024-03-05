@@ -55,7 +55,8 @@ void PostgresSchedDB::ping()
 {
   try {
     // we might prefer to check schema version instead
-    const auto names = m_connPool.getTableNames();
+    auto conn = m_connPool.getConn();
+    const auto names = conn.getTableNames();
     for(auto &name : names) {
       if("cta_scheduler" == name) {
         break;
