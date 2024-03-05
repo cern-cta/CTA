@@ -71,8 +71,7 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   PostgresSchedDB/sql/ArchiveJobQueue.cpp
   PostgresSchedDB/sql/RetrieveJobQueue.cpp
   PostgresSchedDB/sql/RepackJobQueue.cpp
-  PostgresSchedDB/sql/Transaction.cpp
-  PostgresSchedDB/schema/PostgresSchedulerSchema.cpp)
+  PostgresSchedDB/sql/Transaction.cpp)
 
 # End of definitions specific to Postgres scheduler lib compilation
 
