@@ -63,6 +63,7 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   void waitSubthreadsComplete() override;
 
+  /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;
 
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
