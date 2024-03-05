@@ -54,7 +54,7 @@ void PostgresSchedDB::waitSubthreadsComplete()
 void PostgresSchedDB::ping()
 {
   try {
-    // we might prefer to check schema version instead
+    // TO-DO: we might prefer to check schema version instead
     auto conn = m_connPool.getConn();
     const auto names = conn.getTableNames();
     bool found_scheddb = false;
@@ -63,7 +63,7 @@ void PostgresSchedDB::ping()
         found_scheddb = true;
       }
     }
-    if !found_scheduler {
+    if(!found_scheduler) {
       throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
   } catch(exception::Exception &ex) {
