@@ -61,7 +61,7 @@ void PostgresSchedDB::ping()
       if("cta_scheduler" == name) {
         break;
       } else {
-        throw cta::exception::Exception("Did not find cta_scheduler table in the PostgresDB. Found: " + name.c_str());
+        throw cta::exception::Exception("Did not find cta_scheduler table in the PostgresDB. Found: " + name);
       }
     }
   } catch(exception::Exception &ex) {
