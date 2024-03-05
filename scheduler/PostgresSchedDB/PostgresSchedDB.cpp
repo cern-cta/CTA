@@ -28,7 +28,6 @@
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/RepackRequest.hpp"
-#include "scheduler/PostgresSchedDB/schema/PostgresSchedulerSchema.hpp"
 
 namespace cta {
 
@@ -54,9 +53,20 @@ void PostgresSchedDB::waitSubthreadsComplete()
 
 void PostgresSchedDB::ping()
 {
-  cta::postgresscheddb::PostgresSchedulerSchema schema;
-  auto schedulerSchemaVersion = schema.getSchemaVersion();
-  // we might prefer to verify the schema version
+  try {
+    // we might prefer to check schema version instead
+    const auto names = m_connPool.getTableNames();
+    for(auto &name : names) {
+      if("cta_scheduler" == name) {
+        break;
+      } else {
+        throw cta::exception::Exception("Did not find cta_scheduler table in the PostgresDB.");
+      }
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
