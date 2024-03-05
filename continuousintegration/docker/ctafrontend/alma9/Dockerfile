@@ -16,7 +16,7 @@
 # CTA generic image for system tests
 # FROM must be the first command in Dockerfile!!
 
-FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:20231201-2
 
 # my environment variables
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
