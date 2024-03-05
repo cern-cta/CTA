@@ -28,6 +28,7 @@
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/RepackRequest.hpp"
+#include "scheduler/PostgresSchedDB/schema/PostgresSchedulerSchema.hpp"
 
 namespace cta {
 
@@ -53,7 +54,9 @@ void PostgresSchedDB::waitSubthreadsComplete()
 
 void PostgresSchedDB::ping()
 {
-   throw cta::exception::Exception("Not implemented");
+  PostgresSchedulerSchema schema;
+  auto schedulerSchemaVersion = schema.getSchemaVersion();
+  // we might prefer to verify the schema version
 }
 
 std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
@@ -444,7 +447,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 {
   utils::Timer t;
   utils::Timer t2;
-
+  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): starting to fetch mount info.");
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
 
   auto &txn = static_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
@@ -497,10 +500,11 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
+    lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): pushing back potential mount to the vector.");
     tmdi.potentialMounts.push_back(pm);
   }
 
-
+  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): getting drive state.");
   // Collect information about existing and next mounts. If a next mount exists the drive "counts double",
   // but the corresponding drive is either about to mount, or about to replace its current mount.
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
@@ -561,7 +565,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
   log::ScopedParamContainer params(lc);
   params.add("queueFetchTime", registerFetchTime)
         .add("processingTime", registerProcessingTime);
-    lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
+  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
 }
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> PostgresSchedDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext)
