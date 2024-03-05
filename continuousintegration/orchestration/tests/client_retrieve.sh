@@ -26,11 +26,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
   xrdfs_call=$(eval echo "${retrieve}")
-  xrdfs_call+=" 2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME"
+  xrdfs_call+=" 2>${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME"
 
-  xrdfs_success="rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
+  xrdfs_success="rm ${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME "
 
-  xrdfs_error=" echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME "
+  xrdfs_error=" echo ERROR with xrootd prepare stage for file ${subdir}/${subdir}TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME "
 
   command_str="${xrdfs_call} && ${xrdfs_success} || ${xrdfs_error}"
 
@@ -39,9 +39,9 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo Done.
 
   #xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME"
-  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME"  
+  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
 
-  xrdfs_error=" echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME"
+  xrdfs_error=" echo ERROR with xrootd xattr get for file ${subdir}TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
 
   command_str="${xrdfs_call} || ${xrdfs_error}"
 
