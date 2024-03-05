@@ -58,7 +58,7 @@ void PostgresSchedDB::ping()
     auto conn = m_connPool.getConn();
     const auto names = conn.getTableNames();
     for(auto &name : names) {
-      if("cta_scheduler" == name) {
+      if("CTA_SCHEDULER" == name) {
         break;
       } else {
         throw cta::exception::Exception("Did not find cta_scheduler table in the PostgresDB. Found: " + name);
