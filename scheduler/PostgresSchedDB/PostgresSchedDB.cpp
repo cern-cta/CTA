@@ -63,7 +63,7 @@ void PostgresSchedDB::ping()
         found_scheddb = true;
       }
     }
-    if(!found_scheduler) {
+    if(!found_scheddb) {
       throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
   } catch(exception::Exception &ex) {
