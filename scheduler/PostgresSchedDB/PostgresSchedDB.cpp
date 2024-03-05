@@ -54,15 +54,17 @@ void PostgresSchedDB::waitSubthreadsComplete()
 void PostgresSchedDB::ping()
 {
   try {
-    // we might prefer to check schema version instead
+    // TO-DO: we might prefer to check schema version instead
     auto conn = m_connPool.getConn();
     const auto names = conn.getTableNames();
+    bool found_scheddb = false;
     for(auto &name : names) {
-      if("cta_scheduler" == name) {
-        break;
-      } else {
-        throw cta::exception::Exception("Did not find cta_scheduler table in the PostgresDB. Found: " + name.c_str());
+      if ("CTA_SCHEDULER" == name) {
+        found_scheddb = true;
       }
+    }
+    if(!found_scheddb) {
+      throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
