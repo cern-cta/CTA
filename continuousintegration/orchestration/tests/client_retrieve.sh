@@ -38,13 +38,21 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   echo Done.
 
+  # DANGER: compatibility matrix hell... See:
+  # - xattr removed from Fsctl breaks CTA CI - EOS-6073
+  # - Errors for EOS 5.2.8 - CTA#615
+  # Broken if eos > 5.2.13
+  # xrdcp *hack* is the only common bit...
   #xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME"
-  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
+  # Only for xrootd client version > 5 and EOS version > 5.2.13
+  # xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
+  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
 
   xrdfs_error=" echo ERROR with xrootd xattr get for file ${subdir}TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
 
   command_str="${xrdfs_call} || ${xrdfs_error}"
 
+  # We should better deal with errors
   seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
 
