@@ -407,7 +407,11 @@ for ((i=0; i<1000; i++)); do
   [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+for ((i=0; i<1000; i++)); do
+  echo -n "."
+  kubectl --namespace=${instance} exec ctafrontend -- bash -c "cat /etc/passwd" | grep -q cta && break
+  sleep 1
+done
 kubectl --namespace=${instance} exec ctaeos -- grep ${EOSINSTANCE} /etc/eos.keytab | sed "s/daemon/${EOSINSTANCE}/g" |\
 kubectl --namespace=${instance} exec -i ctafrontend -- \
 bash -c "cat > /etc/cta/eos.sss.keytab.tmp; chmod 400 /etc/cta/eos.sss.keytab.tmp; chown cta /etc/cta/eos.sss.keytab.tmp; mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab"
