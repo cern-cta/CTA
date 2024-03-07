@@ -188,7 +188,28 @@ SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummar
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  rdbms::Rset resultSet;
+  postgresscheddb::Transaction txn(m_connPool);
+
+  // retrieve batch up to file limit
+  resultSet = cta::postgresscheddb::sql::RetrieveJobQueueRow::select(
+          txn, postgresscheddb::RetrieveJobStatus::RJS_ToTransferForUser, filesRequested);
+
+  std::list<cta::postgresscheddb::sql::RetrieveJobQueueRow> jobs;
+  while(resultSet.next()) {
+    jobs.emplace_back(resultSet);
+  }
+  // Construct the return value
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  for (const auto &j : jobs) {
+    auto rj = std::make_unique<postgresscheddb::RetrieveJob>(/* j.jobId */);
+    rj->selectedCopyNb = j.copyNb;
+    rj->archiveFile = j.archiveFile;
+    rj->m_mount = j.mountId;
+    rj->retrieveRequest = j.retrieveRequest;
+    ret.emplace_back(std::move(rj));
+  }
+  return ret;
 }
 
 void PostgresSchedDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext &lc)

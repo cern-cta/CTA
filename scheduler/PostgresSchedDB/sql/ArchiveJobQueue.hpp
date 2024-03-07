@@ -391,7 +391,7 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE MOUNT_ID IS NULL"
+            "WHERE MOUNT_ID IS NULL "
             "AND STATUS = :STATUS "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
