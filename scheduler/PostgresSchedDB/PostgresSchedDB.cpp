@@ -155,11 +155,13 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   //
   // Iterate over all archive queues
   rdbms::Rset resultSet;
+  postgresscheddb::Transaction txn(m_connPool);
+
   // retrieve batch up to file limit
   resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          m_txn, ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
+          txn, postgresscheddb::ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
 
-  std::list<sql::ArchiveJobQueueRow> jobs;
+  std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   while(resultSet.next()) {
     jobs.emplace_back(resultSet);
   }
@@ -172,13 +174,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
     aj->archiveReportURL = j.archiveReportUrl;
     aj->errorReportURL = j.archiveErrorReportUrl;
     aj->srcURL = j.srcUrl;
-    aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-    aj->tapeFile.vid = mountInfo.vid;
-    aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
-// m_jobOwned ?
     aj->m_mountId = mountInfo.mountId;
     aj->m_tapePool = mountInfo.tapePool;
-// reportType ?
     ret.emplace_back(std::move(aj));
   }
   return ret;
