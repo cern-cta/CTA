@@ -347,7 +347,7 @@ struct RetrieveJobQueueRow {
         "VID = :VID "
         "AND STATUS = :STATUS "
         "AND MOUNT_ID IS NULL "
-    "ORDER BY ACTIVE_PRIORITY DESC, JOB_ID "
+    "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
     auto stmt = txn.conn().createStmt(sql);
@@ -416,7 +416,7 @@ struct RetrieveJobQueueRow {
             "WHERE "
             "STATUS = :STATUS "
             "AND MOUNT_ID IS NULL "
-            "ORDER BY ACTIVE_PRIORITY DESC, JOB_ID "
+            "ORDER BY PRIORITY DESC, JOB_ID "
             "LIMIT :LIMIT";
 
     auto stmt = txn.conn().createStmt(sql);
