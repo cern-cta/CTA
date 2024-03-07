@@ -174,8 +174,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
     aj->archiveReportURL = j.archiveReportUrl;
     aj->errorReportURL = j.archiveErrorReportUrl;
     aj->srcURL = j.srcUrl;
-    aj->m_mountId = mountInfo.mountId;
-    aj->m_tapePool = mountInfo.tapePool;
+    aj->m_mountId = j.mountId;
+    aj->m_tapePool = j.tapePool;
     ret.emplace_back(std::move(aj));
   }
   return ret;
