@@ -379,9 +379,8 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
 {
-
-
-   throw cta::exception::Exception("Not implemented");
+  std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
+  return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToReportBatch(
