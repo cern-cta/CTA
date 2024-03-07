@@ -11,6 +11,7 @@
       allow_failure: false
 
 .kubernetes_test:
+  retry: 1
   before_script:
     - echo "Invalidating default common before_script for kubernetes_test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
