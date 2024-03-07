@@ -373,11 +373,14 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 
 std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
 {
-   throw cta::exception::Exception("Not implemented");
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret();
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
 {
+
+
    throw cta::exception::Exception("Not implemented");
 }
 
