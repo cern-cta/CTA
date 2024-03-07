@@ -23,6 +23,8 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobSummary.hpp"
+#include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "scheduler/PostgresSchedDB/ArchiveJob.hpp"
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/TapeMountDecisionInfo.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
@@ -142,7 +144,44 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> PostgresSchedDB::getArc
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-   throw cta::exception::Exception("Not implemented");
+  // this is reporting the first batch of 500 job encountered nothing more for the moment,
+  // the OStoreDB does more careful selection  ...
+  // I need to get the list of all the job in the queue of archive jobs
+  // if empty I just return
+  // if not, then I select all jobs of 'type' - not clear what does this mean for objectstore
+  // `common::dataStructures::JobQueueType::JobsToReportToUser` seems to map to AJS_ToTransferForUser status
+  // first tapepool I encounter and report it - where is the ownership saved ?
+  // Shall this not report only jobs which this tape server `owns` how is this concept implemented now ?
+  //
+  // Iterate over all archive queues
+  rdbms::Rset resultSet;
+  // retrieve batch up to file limit
+  resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          m_txn, ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
+
+  std::list<sql::ArchiveJobQueueRow> jobs;
+  while(resultSet.next()) {
+    jobs.emplace_back(resultSet);
+  }
+  // Construct the return value
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  for (const auto &j : jobs) {
+    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
+    aj->tapeFile.copyNb = j.copyNb;
+    aj->archiveFile = j.archiveFile;
+    aj->archiveReportURL = j.archiveReportUrl;
+    aj->errorReportURL = j.archiveErrorReportUrl;
+    aj->srcURL = j.srcUrl;
+    aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+    aj->tapeFile.vid = mountInfo.vid;
+    aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+// m_jobOwned ?
+    aj->m_mountId = mountInfo.mountId;
+    aj->m_tapePool = mountInfo.tapePool;
+// reportType ?
+    ret.emplace_back(std::move(aj));
+  }
+  return ret;
 }
 
 SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummary(log::LogContext &logContext)
