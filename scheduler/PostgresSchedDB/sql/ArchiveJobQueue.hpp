@@ -351,6 +351,59 @@ struct ArchiveJobQueueRow {
   }
 
   /**
+   * Select not owned jobs from the queue ordered by tapepool
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param limit      Maximum number of rows to return
+   *
+   * @return  result set
+   */
+  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, uint64_t limit) {
+    const char *const sql =
+            "SELECT "
+            "JOB_ID AS JOB_ID,"
+            "MOUNT_ID AS MOUNT_ID,"
+            "STATUS AS STATUS,"
+            "TAPE_POOL AS TAPE_POOL,"
+            "MOUNT_POLICY AS MOUNT_POLICY,"
+            "PRIORITY AS PRIORITY,"
+            "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
+            "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+            "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+            "COPY_NB AS COPY_NB,"
+            "START_TIME AS START_TIME,"
+            "CHECKSUMBLOB AS CHECKSUMBLOB,"
+            "CREATION_TIME AS CREATION_TIME,"
+            "DISK_INSTANCE AS DISK_INSTANCE,"
+            "DISK_FILE_ID AS DISK_FILE_ID,"
+            "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
+            "DISK_FILE_GID AS DISK_FILE_GID,"
+            "DISK_FILE_PATH AS DISK_FILE_PATH,"
+            "ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,"
+            "ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,"
+            "REQUESTER_NAME AS REQUESTER_NAME,"
+            "REQUESTER_GROUP AS REQUESTER_GROUP,"
+            "SRC_URL AS SRC_URL,"
+            "STORAGE_CLASS AS STORAGE_CLASS,"
+            "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
+            "TOTAL_RETRIES AS TOTAL_RETRIES,"
+            "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
+            "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
+            "FROM ARCHIVE_JOB_QUEUE "
+            "WHERE MOUNT_ID IS NULL "
+            "AND STATUS = :STATUS "
+            "ORDER BY PRIORITY DESC, TAPE_POOL "
+            "LIMIT :LIMIT";
+
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint32(":LIMIT", limit);
+
+    return stmt.executeQuery();
+  }
+
+  /**
    * Assign a mount ID to the specified rows
    *
    * @param txn        Transaction to use for this query
