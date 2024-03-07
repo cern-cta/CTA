@@ -373,7 +373,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 
 std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
 {
-  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret();
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret;
   return ret;
 }
 
