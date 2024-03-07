@@ -189,6 +189,7 @@ SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummar
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc)
 {
+  // placeholder implementation which NEEDS TO CHANGE TO MAKE MORE SENSE
   rdbms::Rset resultSet;
   postgresscheddb::Transaction txn(m_connPool);
 
@@ -204,9 +205,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for (const auto &j : jobs) {
     auto rj = std::make_unique<postgresscheddb::RetrieveJob>(/* j.jobId */);
-    rj->selectedCopyNb = j.copyNb;
+    rj->selectedCopyNb = j.actCopyNb;
     rj->archiveFile = j.archiveFile;
-    rj->m_mount = j.mountId;
     rj->retrieveRequest = j.retrieveRequest;
     ret.emplace_back(std::move(rj));
   }
