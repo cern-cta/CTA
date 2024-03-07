@@ -28,6 +28,7 @@
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/TapeMountDecisionInfo.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveJob.hpp"
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/RepackRequest.hpp"
 
@@ -193,7 +194,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
 
   // retrieve batch up to file limit
   resultSet = cta::postgresscheddb::sql::RetrieveJobQueueRow::select(
-          txn, postgresscheddb::RetrieveJobStatus::RJS_ToTransferForUser, filesRequested);
+          txn, postgresscheddb::RetrieveJobStatus::RJS_ToTransfer, filesRequested);
 
   std::list<cta::postgresscheddb::sql::RetrieveJobQueueRow> jobs;
   while(resultSet.next()) {
