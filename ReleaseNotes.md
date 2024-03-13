@@ -1,4 +1,4 @@
-# v4.NEXT
+# v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features
 - cta/CTA#573 - Add configuration on CTA SSI frontend to block user and/or repack operations
@@ -15,7 +15,7 @@
 - cta/CTA#623 - Avoid race condition during ci for alma9
 - cta/CTA#628 - Retry system tests in the ci
 
-# v4.10.9.0-1
+# v4.10.9.0-1 / v5.10.9.0-1
 
 ### Features
 - cta/CTA#154 - Update RetrieveJob to support completion report
@@ -66,7 +66,7 @@
 - cta/CTA#552 - Decouple objectstore lock timeout errors from the scheduler code
 - cta/CTA#375 - Remove old CASTOR doc files
 
-# v4.10.8-1
+# v4.10.8-1 / v5.10.8-1
 
 ### Features
 - cta/CTA#61 - Unit test for DriveHandler and CleanerSession
@@ -79,7 +79,7 @@
 ### Continuous Integration
 - cta/CTA#515 - Upgrade eos to 4.8.105/5.1.28
 
-# v4.10.7-1
+# v4.10.7-1 / v5.10.7-1
 
 ### Bug Fixes
 - cta/CTA#460 - Fix "trying to unlock an unlocked lock" error
@@ -105,17 +105,17 @@
 - cta/CTA#352 - Test rollback Catalogue Version
 - cta/CTA#446 - Upgrade eos to 4.8.105/5.1.29
 
-# v4.10.6-1
+# v4.10.6-1 / v5.10.6-1
 
 ### Bug Fixes
 - cta/CTA#510 - Remove critical constrain after update heartbeat
 
-# v4.10.5-1
+# v4.10.5-1 / v5.10.5-1
 
 ### Bug Fixes
 - cta/CTA#494 - Workaround for scheduler crashing
 
-# v4.10.4-1
+# v4.10.4-1 / v5.10.4-1
 
 ### Features
 - cta/CTA#487 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
@@ -123,17 +123,17 @@
 ### Bug Fixes
 - cta/CTA#486 - Fix cppcheck new errors
 
-# v4.10.3-1
+# v4.10.3-1 / v5.10.3-1
 
 ### Bug Fixes
 - cta/CTA#471 - Fix device statistics from LTO drives
 
-# v4.10.2-1
+# v4.10.2-1 / v5.10.2-1
 
 ### Bug Fixes
 - cta/CTA#470 - Scheduler crashing when look for a Virtual Organization with empty Tape Pool Name
 
-# v4.10.1-1
+# v4.10.1-1 / v5.10.1-1
 
 ### Bug Fixes
 - cta/CTA#114 - Return catalogue schema compatibility to single version only
@@ -178,7 +178,7 @@
 - cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 - cta/CTA#431 - Improvements to the `cta-admin physicallibrary` command
 
-# v4.10.0-2
+# v4.10.0-2 / v5.10.0-2
 
 ## Summary
 This release is a repackaging of `v4.10.0-1``, which removes any usage of the CTA catalogue version 13.0.
@@ -187,7 +187,7 @@ CTA catalogue migration is intended to be made directly from version 12.0 to 14.
 ### Catalogue Schema
 - cta/CTA#442 - Update CTA catalogue schema to version 14.0
 
-# v4.10.0-1
+# v4.10.0-1 / v5.10.0-1
 
 ### Features
 - cta/CTA#395 - Create gitlab job for code format check
@@ -196,27 +196,27 @@ CTA catalogue migration is intended to be made directly from version 12.0 to 14.
 - cta/CTA#397 - Rework catalogue release procedure and deployment path
 - cta/CTA#442 - Update CTA catalogue schema to version 14.0
 
-# v4.9.0-1
+# v4.9.0-1 / v5.9.0-1
 
 ## Summary
 This release is the same as `v4.8.10-2`, for catalogue v13 release.
 
-# v4.8.10-2
+# v4.8.10-2 / v5.8.10-2
 
 ### Bug Fixes
 - cta/CTA#402 - Schema verify fails for postgres in catalogue v13
 
-# v4.8.10-1
+# v4.8.10-1 / v5.8.10-1
 
 ### Bug Fixes
 - cta/CTA#114 - Do not fail CTA taped when using older catalogue schema versions
 
-# v4.8.9-1
+# v4.8.9-1 / v5.8.9-1
 
 ### Catalogue Schema
 - cta/CTA#387 - Update CTA catalogue schema to version 13.0
 
-# v4.8.8-2
+# v4.8.8-2 / v5.8.8-2
 
 ### Bug Fixes
 - cta/CTA#379 - Fix tagging release CI script for xrootd5
@@ -224,7 +224,7 @@ This release is the same as `v4.8.10-2`, for catalogue v13 release.
 ### Continuous Integration
 - cta/CTA#378 - Add http tape REST API compliance tests
 
-# v4.8.8-1
+# v4.8.8-1 / v5.8.8-1
 
 ### Features
 - cta/CTA#78 - Remove gRPC and ability to change the storage class in EOS from the cta-change-storage-class C++ script
@@ -250,7 +250,7 @@ This release is the same as `v4.8.10-2`, for catalogue v13 release.
 - cta/CTA#297 - Refactor client pod tests and switched test tracking status to sqlite db
 - cta/CTA#332 - Add systemtests for cta-admin commands
 
-# v4.8.7-1
+# v4.8.7-1 / v5.8.7-1
 
 ### Features
 - cta/CTA#93  - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
@@ -275,13 +275,13 @@ This release is the same as `v4.8.10-2`, for catalogue v13 release.
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
 - cta/CTA#330 - Fix no tape block movement regression
 
-# v4.8.6-1
+# v4.8.6-1 / v5.8.6-1
 
 ### Bug Fixes
 - cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
 - cta/CTA#325 - Fix logging for "no tape block movement" message
 
-# v4.8.5-1
+# v4.8.5-1 / v5.8.5-1
 
 ## Summary
 ### Features
@@ -323,7 +323,7 @@ This release is the same as `v4.8.10-2`, for catalogue v13 release.
 - cta/CTA#286 - Upgrade eos to 4.8.98/5.1.9 fixing operation critical eosreport see EOS-5367
 - cta/CTA#298 - Remove docs CI stage, moved to submodule
 
-# v4.8.4-1
+# v4.8.4-1 / v5.8.4-1
 
 ## Summary
 This release reduces the number of DB queries issued to the CTA catalogue.
@@ -331,7 +331,7 @@ This release reduces the number of DB queries issued to the CTA catalogue.
 - cta/CTA#275 - Avoid DB queries via getTapesByVid in OStoreDB::fetchMountInfo
 - cta/CTA#274 - Remove unnecessary catalogue DB queries from QueueCleanupRunner
 
-# v4.8.3-1
+# v4.8.3-1 / v5.8.3-1
 
 ## Summary
 This release is the same as '4.8.2-1', except for the addition of some DB query counters which will be used for profiling purposes. \
@@ -339,19 +339,19 @@ The counters are expected to be removed in a future release, when the analysis i
 ### Bug Fixes
 - cta/CTA#155 - Tape server querying DB at very high rate (log query-count patch)
 
-# v4.8.2-1
+# v4.8.2-1 / v5.8.2-1
 
 ## Summary
 ### Features
 - cta/CTA#155 - Tape server querying DB at very high rate
 
-# v4.8.1-1
+# v4.8.1-1 / v5.8.1-1
 
 ## Summary
 ### Bug fixes
 - cta/CTA#243 - Modify new queue cleanup protobuf fields from 'required' to 'optional'
 
-# v4.8.0-1
+# v4.8.0-1 / v5.8.0-1
 
 ## Summary
 This CTA release contains significant changes related to repacking, including the addition of new final and temporary states.
@@ -368,7 +368,7 @@ It may make be incompatible with pre-existing operational tools that relied on t
 - cta/CTA#223 - Remove vid check to improve run time of cta-verify-file, fix possible _S_construct null not valid error
 - cta/CTA#13 - Fix `cta-catalogue-schema-verify` checking of NOT NULL constraints in Postgres
 
-# v4.7.14-1
+# v4.7.14-1 / v5.7.14-1
 
 ## Summary
 ### Features
@@ -378,19 +378,19 @@ It may make be incompatible with pre-existing operational tools that relied on t
 ### Bug fixes
 - cta/CTA#209 - handle if $HOME is not defined when choosing config file for cta-admin
 
-# v4.7.13-3
+# v4.7.13-3 / v5.7.13-3
 
 ## Summary
 ### Building and Packaging
 - cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
 
-# v4.7.13-2
+# v4.7.13-2 / v5.7.13-2
 
 ## Summary
 ### Building and Packaging
 - cta/CTA#207 - Fix tag pipeline
 
-# v4.7.13-1
+# v4.7.13-1 / v5.7.13-1
 
 ## Summary
 ### Features
@@ -421,13 +421,13 @@ It may make be incompatible with pre-existing operational tools that relied on t
 - cta/CTA#182 - Fix cta_valgrind error
 - cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
 
-# v4.7.12-2
+# v4.7.12-2 / v5.7.12-2
 
 ## Summary
 ### Building and Packaging
 - cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
 
-# v4.7.12-1
+# v4.7.12-1 / v5.7.12-1
 
 ## Summary
 ### Features
