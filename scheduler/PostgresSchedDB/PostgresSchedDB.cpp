@@ -356,12 +356,14 @@ bool PostgresSchedDB::repackExists() {
 
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
 {
-   throw cta::exception::Exception("Not implemented");
+  std::list<common::dataStructures::RepackInfo> ret;
+  return ret;
 }
 
 common::dataStructures::RepackInfo PostgresSchedDB::getRepackInfo(const std::string& vid)
 {
-   throw cta::exception::Exception("Not implemented");
+  common::dataStructures::RepackInfo ret;
+  return ret;
 }
 
 void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
