@@ -34,7 +34,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   for(bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE; ) {
     log::TimingList timings;
     utils::Timer t2, roundTime;
-
+    lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): getting next archive jobs to report from Scheduler DB");
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
     if (archiveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
