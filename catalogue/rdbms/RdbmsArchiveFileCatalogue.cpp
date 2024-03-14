@@ -895,6 +895,8 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
     throw cta::exception::Exception(msg.str());
   }
   if(deleteRequest.diskFileSize.has_value()) {
+    log::LogContext lc(m_log);
+    lc.log(log::INFO, "JorgeTest: deleteRequest.diskFileSize.has_value() is true");
     if (deleteRequest.diskFileSize.value() != archiveFile.fileSize) {
       std::ostringstream msg;
       msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
@@ -919,8 +921,6 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
     }
   }
   if(deleteRequest.diskFilePath.empty()){
-    log::LogContext lc(m_log);
-    lc.log(log::INFO, "JorgeTest: deleteRequest.diskFilePath.empty() is true");
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
         << " to the recycle-bin because the disk file path has not been provided.";
