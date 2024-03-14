@@ -407,6 +407,11 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     checksum::ProtobufToChecksumBlob(m_event.file().csb(), csb);
     request.checksumBlob = csb;
   }
+  
+  // Log with file size
+  log::ScopedParamContainer spc(m_lc);
+  spc.add("fileSize", m_event.file().size());
+  m_lc.log(log::DEBUG, "In WorkflowEvent::processDELETE(): received delete request.");
   if (m_event.file().size() != 0) {
     request.diskFileSize    = m_event.file().size();
   }
