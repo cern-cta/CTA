@@ -34,12 +34,14 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   for(bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE; ) {
     log::TimingList timings;
     utils::Timer t2, roundTime;
-
+    lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): getting next archive jobs to report from Scheduler DB");
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
     if (archiveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", archiveJobsToReport.size());
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process archive reports.");
+    } else {
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): archiveJobsToReport no size.");
     }
     is_done = archiveJobsToReport.empty();
     if(!archiveJobsToReport.empty()) {
@@ -48,6 +50,8 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       log::ScopedParamContainer params(lc);
       params.add("roundTime", roundTime.secs());
       lc.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): did one round of archive reports.");
+    } else {
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): archiveJobsToReport is empty.");
     }
 
     auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(BATCH_SIZE, lc);
@@ -55,6 +59,8 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", retrieveJobsToReport.size());
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
+    } else {
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): retrieveJobsToReport no size.");
     }
     is_done = is_done && retrieveJobsToReport.empty();
     if(!retrieveJobsToReport.empty()) {
@@ -63,14 +69,18 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       log::ScopedParamContainer params(lc);
       params.add("roundTime", roundTime.secs());
       lc.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): did one round of retrieve reports.");
+    } else {
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): retrieveJobsToReport is empty.");
     }
   }
   log::ScopedParamContainer params(lc);  
   auto passTime = t.secs();
   params.add("roundCount", roundCount)
         .add("passTime", passTime);
+  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - before time check.");
   if (passTime > 1)
     lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
+  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - after time check.");
 }
 
 } // namespace cta

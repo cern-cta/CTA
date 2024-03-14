@@ -156,15 +156,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   // Iterate over all archive queues
   rdbms::Rset resultSet;
   postgresscheddb::Transaction txn(m_connPool);
-
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
           txn, postgresscheddb::ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
-
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   while(resultSet.next()) {
     jobs.emplace_back(resultSet);
   }
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
@@ -178,6 +179,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
     aj->m_tapePool = j.tapePool;
     ret.emplace_back(std::move(aj));
   }
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Archive Jobs filled, before return.");
+
   return ret;
 }
 
