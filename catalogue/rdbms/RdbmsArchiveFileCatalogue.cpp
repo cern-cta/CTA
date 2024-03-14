@@ -895,8 +895,6 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
     throw cta::exception::Exception(msg.str());
   }
   if(deleteRequest.diskFileSize.has_value()) {
-    log::LogContext lc(m_log);
-    lc.log(log::INFO, "JorgeTest: deleteRequest.diskFileSize.has_value() is true");
     if (deleteRequest.diskFileSize.value() != archiveFile.fileSize) {
       std::ostringstream msg;
       msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
@@ -908,8 +906,6 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
     }
   }
   if (deleteRequest.checksumBlob.has_value()) {
-    log::LogContext lc(m_log);
-    lc.log(log::INFO, "JorgeTest: deleteRequest.checksumBlob.has_value() is true");
     if (deleteRequest.checksumBlob != archiveFile.checksumBlob) {
       std::ostringstream msg;
       msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
