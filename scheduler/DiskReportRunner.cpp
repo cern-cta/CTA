@@ -77,8 +77,10 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   auto passTime = t.secs();
   params.add("roundCount", roundCount)
         .add("passTime", passTime);
+  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - before time check.");
   if (passTime > 1)
     lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
+  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - after time check.");
 }
 
 } // namespace cta
