@@ -452,22 +452,26 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextRe
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc)
 {
-  throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextFailedRetrieveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextFailedRetrieveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextFailedArchiveRepackReportBatch(log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextFailedArchiveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextFailedArchiveRepackReportBatch(): no report found.");
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> PostgresSchedDB::getRepackReportBatches(log::LogContext &lc)
