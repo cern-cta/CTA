@@ -375,30 +375,50 @@ void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
    throw cta::exception::Exception("Not implemented");
 }
 
-std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatistics()
-{
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() getting no RepackStatisticsNoLock !");
-  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
-  // Ensure existence of stats for important statuses
+//------------------------------------------------------------------------------
+// PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+//------------------------------------------------------------------------------
+PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() {}
+
+//------------------------------------------------------------------------------
+// PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
+//------------------------------------------------------------------------------
+auto PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(
+        size_t requestCount, log::LogContext& lc) -> PromotionToToExpandResult {
+  lc.log(log::WARNING, "PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() this is a dummy implementation!");
+  PromotionToToExpandResult ret;
   typedef common::dataStructures::RepackInfo::Status Status;
-  for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    (*ret)[s] = 0;
-  }
+  ret.pendingBefore = at(Status::Pending);
+  ret.toEnpandBefore = at(Status::ToExpand);
   return ret;
 }
 
-std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
-{
+//------------------------------------------------------------------------------
+// PostgresSchedDB::populateRepackRequestsStatistics()
+//------------------------------------------------------------------------------
+void PostgresSchedDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats) {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
-  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
+  lc.log(log::WARNING, "PostgresSchedDB::populateRepackRequestsStatistics() this is a dummy implementation!");
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    (*ret)[s] = 0;
+    stats[s] = 0;
   }
+}
+
+auto PostgresSchedDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
+  auto typedRet = std::make_unique<PostgresSchedDB::RepackRequestPromotionStatisticsNoLock>();
+  populateRepackRequestsStatistics(*typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
   return ret;
+}
+
+auto PostgresSchedDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() getting no RepackStatisticsNoLock !");
+  return getRepackStatisticsNoLock();
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
@@ -412,7 +432,6 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepack
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext &logContext)
 {
-  // Construct an EMPTY return value - TO BE IMPLEMENTED
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() getting no NextRetrieveJobsToReportBatch !");
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
