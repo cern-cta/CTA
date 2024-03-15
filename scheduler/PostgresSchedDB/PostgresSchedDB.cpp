@@ -383,7 +383,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    ret[s] = 0;
+    *ret[s] = 0;
   }
   return ret;
 }
@@ -396,7 +396,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    ret[s] = 0;
+    *ret[s] = 0;
   }
   return ret;
 }
