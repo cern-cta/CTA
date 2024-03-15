@@ -452,7 +452,8 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextRe
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc)
 {
-  throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc)
