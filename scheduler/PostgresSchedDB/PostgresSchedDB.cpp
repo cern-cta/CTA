@@ -377,14 +377,27 @@ void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
 
 std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatistics()
 {
-   throw cta::exception::Exception("Not implemented");
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() getting no RepackStatisticsNoLock !");
+  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status;
+  for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
+    (*ret)[s] = 0;
+  }
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
 {
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
-  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret;
+  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status;
+  for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
+    (*ret)[s] = 0;
+  }
   return ret;
 }
 
