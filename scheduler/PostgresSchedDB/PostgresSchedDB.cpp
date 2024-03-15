@@ -446,12 +446,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackReportBatch() dummy implementation !");
+  return nullptr
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception("Not implemented");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc)
@@ -471,7 +472,9 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextFa
 
 std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> PostgresSchedDB::getRepackReportBatches(log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackReportBatches() dummy implementation !");
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> ret;
+  return ret;
 }
 
 void PostgresSchedDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase::RetrieveJob*> & jobsBatch,
