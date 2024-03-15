@@ -892,6 +892,9 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
         "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
         << " requestDiskInstance=" << deleteRequest.diskInstance << " archiveFileDiskInstance=" <<
         archiveFile.diskInstance;
+    log::LogContext lc(m_log);
+    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the disk instance of the request "
+      "does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
   if(deleteRequest.diskFileSize.has_value() && deleteRequest.diskFileSize.value() != archiveFile.fileSize) {
@@ -901,6 +904,9 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
         "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
         << " requestDiskFileSize=" << deleteRequest.diskFileSize.value() << " archiveFileDiskFileSize=" <<
         archiveFile.fileSize;
+    log::LogContext lc(m_log);
+    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the disk file size of the "
+      "request does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
   if (deleteRequest.checksumBlob.has_value() && deleteRequest.checksumBlob.value() != archiveFile.checksumBlob) {
@@ -910,6 +916,9 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
         "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
         << " requestChecksum=" << deleteRequest.checksumBlob.value().serialize() << " archiveFileChecksum=" <<
         archiveFile.checksumBlob.serialize();
+    log::LogContext lc(m_log);
+    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the checksum of the request "
+      "does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
   if(deleteRequest.diskFilePath.empty()){
