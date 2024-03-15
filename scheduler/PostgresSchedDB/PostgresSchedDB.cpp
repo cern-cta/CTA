@@ -356,12 +356,16 @@ bool PostgresSchedDB::repackExists() {
 
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
 {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() getting no repack info list !");
   std::list<common::dataStructures::RepackInfo> ret;
   return ret;
 }
 
 common::dataStructures::RepackInfo PostgresSchedDB::getRepackInfo(const std::string& vid)
 {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() getting no repack info !");
   common::dataStructures::RepackInfo ret;
   return ret;
 }
@@ -378,12 +382,16 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 
 std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
 {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
   std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret;
   return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
 {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackJobToExpand() getting no NextRepackJobToExpand !");
   std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
   return ret;
 }
@@ -392,6 +400,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
     uint64_t filesRequested, log::LogContext &logContext)
 {
   // Construct an EMPTY return value - TO BE IMPLEMENTED
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() getting no NextRetrieveJobsToReportBatch !");
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   return ret;
 }
