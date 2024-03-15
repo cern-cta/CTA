@@ -176,13 +176,40 @@ class PostgresSchedDB: public SchedulerDatabase {
 
 private:
 
-   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
 
-   std::string m_ownerId;
-   rdbms::ConnPool m_connPool;
-   catalogue::Catalogue&  m_catalogue;
-   log::Logger&           m_logger;
-   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+  std::string m_ownerId;
+  rdbms::ConnPool m_connPool;
+  catalogue::Catalogue&  m_catalogue;
+  log::Logger&           m_logger;
+  std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+
+  /**
+  * Candidate for redesign/removal once we start improving Scheduler algorithm
+  * A class holding a lock on the pending repack request queue. This is the first
+  * container we will have to lock if we decide to pop a/some request(s)
+  */
+  class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
+    friend class PostgresSchedDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
+    virtual ~RepackRequestPromotionStatistics() = default;
+  private:
+    RepackRequestPromotionStatistics();
+  };
+
+  /**
+  * Candidate for redesign/removal once we start improving Scheduler algorithm
+  */
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
+    friend class PostgresSchedDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override {
+      throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
+    }
+    virtual ~RepackRequestPromotionStatisticsNoLock() = default;
+  };
+
 };
 
 }  // namespace cta
