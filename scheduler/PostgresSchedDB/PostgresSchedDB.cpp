@@ -447,7 +447,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextRepackReportBatch(log::LogContext& lc)
 {
   lc.log(log::WARNING, "PostgresSchedDB::getNextRepackReportBatch() dummy implementation !");
-  return nullptr
+  return nullptr;
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc)
