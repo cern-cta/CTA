@@ -379,11 +379,11 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 {
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() getting no RepackStatisticsNoLock !");
-  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret;
+  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    *ret[s] = 0;
+    (*ret)[s] = 0;
   }
   return ret;
 }
@@ -392,11 +392,11 @@ std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::get
 {
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
-  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret;
+  auto ret = std::make_unique<SchedulerDatabase::RepackRequestStatistics>();
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
-    *ret[s] = 0;
+    (*ret)[s] = 0;
   }
   return ret;
 }
