@@ -184,6 +184,8 @@ private:
   log::Logger&           m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
+  void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
+
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first

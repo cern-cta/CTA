@@ -432,7 +432,6 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepack
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext &logContext)
 {
-  // Construct an EMPTY return value - TO BE IMPLEMENTED
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() getting no NextRetrieveJobsToReportBatch !");
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
