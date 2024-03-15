@@ -319,6 +319,8 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       cleanupRunner.runOnePass(m_processManager.logContext());
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
+      m_processManager.logContext().log(log::DEBUG,
+                                        "In MaintenanceHandler::exceptionThrowingRunChild(): After diskReportRunner.runOnePass().");
       if(runRepackRequestManager()){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
       }
@@ -391,6 +393,7 @@ MaintenanceHandler::~MaintenanceHandler() {
 // MaintenanceHandler::runRepackRequestManager
 //------------------------------------------------------------------------------
 bool MaintenanceHandler::runRepackRequestManager() const {
+  m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::runRepackRequestManager(): asking if to run the repack manager or not.");
   return m_tapedConfig.useRepackManagement.value() == "yes";
 }
 
