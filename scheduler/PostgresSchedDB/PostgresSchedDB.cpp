@@ -169,7 +169,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
       jobs.emplace_back(resultSet);
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
-      logContext.log(log::CRITICAL, std::to_string("In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: ") + bt);
+      logContext.log(log::CRITICAL, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
     }
     logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back.");
   }
