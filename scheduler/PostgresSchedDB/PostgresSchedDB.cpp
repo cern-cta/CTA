@@ -162,8 +162,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
           txn, postgresscheddb::ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   while(resultSet.next()) {
-    jobs.emplace_back(resultSet);
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next Result is fetched.");
+    try {
+      jobs.emplace_back(resultSet);
+    } catch (cta::exception::Exception & e) {
+      std::string bt = e.backtrace();
+      logContext.log(log::CRITICAL, std::to_string("In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: ") + bt);
+    }
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back.");
   }
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
   // Construct the return value
@@ -357,7 +365,7 @@ bool PostgresSchedDB::repackExists() {
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
 {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() getting no repack info list !");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() dummy implementation !");
   std::list<common::dataStructures::RepackInfo> ret;
   return ret;
 }
@@ -365,7 +373,7 @@ std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
 common::dataStructures::RepackInfo PostgresSchedDB::getRepackInfo(const std::string& vid)
 {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() getting no repack info !");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() dummy implementation !");
   common::dataStructures::RepackInfo ret;
   return ret;
 }
@@ -385,7 +393,7 @@ PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatist
 //------------------------------------------------------------------------------
 auto PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(
         size_t requestCount, log::LogContext& lc) -> PromotionToToExpandResult {
-  lc.log(log::WARNING, "PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() this is a dummy implementation!");
+  lc.log(log::WARNING, "PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() dummy implementation !");
   PromotionToToExpandResult ret;
   typedef common::dataStructures::RepackInfo::Status Status;
   ret.pendingBefore = at(Status::Pending);
@@ -398,7 +406,7 @@ auto PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsFo
 //------------------------------------------------------------------------------
 void PostgresSchedDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats) {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::populateRepackRequestsStatistics() this is a dummy implementation!");
+  lc.log(log::WARNING, "PostgresSchedDB::populateRepackRequestsStatistics() dummy implementation !");
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
@@ -408,7 +416,7 @@ void PostgresSchedDB::populateRepackRequestsStatistics(SchedulerDatabase::Repack
 
 auto PostgresSchedDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() getting no RepackStatisticsNoLock !");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() dummy implementation !");
   auto typedRet = std::make_unique<PostgresSchedDB::RepackRequestPromotionStatisticsNoLock>();
   populateRepackRequestsStatistics(*typedRet);
   std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
@@ -417,14 +425,14 @@ auto PostgresSchedDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDa
 
 auto PostgresSchedDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() getting no RepackStatisticsNoLock !");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() dummy implementation !");
   return getRepackStatisticsNoLock();
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
 {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackJobToExpand() getting no NextRepackJobToExpand !");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackJobToExpand() dummy implementation !");
   std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
   return ret;
 }
@@ -433,7 +441,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
     uint64_t filesRequested, log::LogContext &logContext)
 {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() getting no NextRetrieveJobsToReportBatch !");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() dummy implementation !");
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   return ret;
 }
