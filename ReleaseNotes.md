@@ -1,4 +1,9 @@
-# v4.10.9.0-1
+# v4.10.9.1-1 / v5.10.9.1-1
+
+### Bug Fixes
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+
+# v4.10.9.0-1 / v5.10.9.0-1
 
 ### Features
 - cta/CTA#154 - Update RetrieveJob to support completion report
