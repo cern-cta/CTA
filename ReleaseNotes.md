@@ -15,6 +15,11 @@
 - cta/CTA#623 - Avoid race condition during ci for alma9
 - cta/CTA#628 - Retry system tests in the ci
 
+# v4.10.9.1-1 / v5.10.9.1-1
+
+### Bug Fixes
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+
 # v4.10.9.0-1 / v5.10.9.0-1
 
 ### Features
