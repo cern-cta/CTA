@@ -23,8 +23,9 @@
 #include <stdint.h>
 #include <string>
 
+#include "common/checksum/ChecksumBlob.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
-#include "ArchiveFile.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -49,7 +50,8 @@ struct DeleteArchiveRequest {
   time_t recycleTime;
   //In the case the ArchiveFile does not exist yet, it will not be set
   std::optional<ArchiveFile> archiveFile;
-
+  std::optional<uint64_t> diskFileSize;
+  std::optional<checksum::ChecksumBlob> checksumBlob;
 }; // struct DeleteArchiveRequest
 
 std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj);

@@ -4,6 +4,9 @@
 - cta/CTA#573 - Add configuration on CTA SSI frontend to block user and/or repack operations
 - cta/CTA#576 - Read current TPCONFIG configuration from cta-taped.conf
 
+### Bug Fixes
+- cta/CTA#485 - Check disk file metadata on delete requests
+
 ### Alma9 Migration
 - cta/CTA#614 - Alma9 pipeline fails on the kubernetes tests
 - cta/CTA#600 - Setup the Alma9 release pipeline
