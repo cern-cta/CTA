@@ -122,13 +122,15 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
   // starts the configured number of thread workers for Objectstore
   log::LogContext lc(m_logger);
   log::ScopedParamContainer params(lc);
-  params.add("osThreadPoolSize", osThreadPoolSize.value())
-        .add("osThreadStackSize_MB", osThreadStackSize.value());
   if (osThreadPoolSize.has_value()) {
+    params.add("osThreadPoolSize", osThreadPoolSize.value());
     OStoreDB::setThreadNumber(osThreadPoolSize.value(), osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
     lc.log(log::INFO, "Objectstore thread pool initialised.");
   } else if (osThreadStackSize.has_value()) {
+    params.add("osThreadStackSize_MB", osThreadStackSize.value());
     lc.log(log::WARNING, "Missing cta.schedulerdb.numberofthreads in the configuration. Objectstore thread pool will not be initialised.");
+  } else {
+    lc.log(log::WARNING, "Missing cta.schedulerdb.numberofthreads and cta.schedulerdb.threadstacksize_mb in the configuration. Objectstore thread pool will not be initialised.");
   }
   OStoreDB::setBottomHalfQueueSize(25000);
 }
