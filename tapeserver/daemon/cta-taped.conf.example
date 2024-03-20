@@ -114,6 +114,12 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # taped MountCriteria 500000000000,10000
 
 #
+# TAPED CACHE TIMEOUT OPTIONS
+#
+# taped TapeCacheMaxAgeSecs 600
+# taped RetrieveQueueCacheMaxAgeSecs 10
+
+#
 # DISK FILE ACCESS OPTIONS
 #
 
