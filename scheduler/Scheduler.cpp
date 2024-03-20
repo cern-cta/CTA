@@ -2141,7 +2141,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
 
-  m_db.clearRetrieveQueueStatisticsCache(vid);
+  m_db.clearStatisticsCache(vid);
 }
 
 //------------------------------------------------------------------------------

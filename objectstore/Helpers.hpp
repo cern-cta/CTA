@@ -110,13 +110,21 @@ class Helpers {
   static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
 
   /**
-   * Allows to flush the RetrieveQueueStatisticsCache
-   * TO BE USED BY UNIT TESTS !
+   * Allows to flush the statistics caches
+   * Required by the unit tests
    */
-  static void flushRetrieveQueueStatisticsCache();
-  static void flushRetrieveQueueStatisticsCacheForVid(const std::string & vid);
+  static void flushStatisticsCache();
+  static void flushStatisticsCacheForVid(const std::string & vid);
 
- private:
+  /**
+   * Helper function to set the time between cache updates.
+   * Set to zero to disable entirely the caching capabilities.
+   * Useful to reducing the value during tests.
+   */
+  static void setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs);
+  static void setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs);
+
+private:
   /** A struct holding together tape statistics and an update time */
   struct TapeStatusWithTime {
     common::dataStructures::Tape tapeStatus;
@@ -139,8 +147,8 @@ class Helpers {
   /** The stats for the queues */
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
-  static const time_t c_tapeCacheMaxAge = 600;
-  static const time_t c_retrieveQueueCacheMaxAge = 10;
+  static time_t g_tapeCacheMaxAge;
+  static time_t g_retrieveQueueCacheMaxAge;
   static void logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
     const std::string& message = "");
 

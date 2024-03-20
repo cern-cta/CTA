@@ -58,7 +58,10 @@ class Helpers {
                 uint64_t bytes,
                 uint64_t priority);
 
-  static void flushRetrieveQueueStatisticsCacheForVid(const std::string & vid);
+  static void flushStatisticsCacheForVid(const std::string & vid);
+
+  static void setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs);
+  static void setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs);
 
   /** A struct holding together RetrieveQueueStatistics, tape status and an update time. */
   struct RetrieveQueueStatisticsWithTime {
@@ -89,8 +92,8 @@ private:
   static std::map<std::string, RetrieveQueueStatisticsWithTime, std::less<>> g_retrieveQueueStatistics;
 
   /** Time between cache updates */
-  static const time_t c_tapeCacheMaxAge = 600;
-  static const time_t c_retrieveQueueCacheMaxAge = 10;
+  static time_t g_tapeCacheMaxAge;
+  static time_t g_retrieveQueueCacheMaxAge;
 
   static void logUpdateCacheIfNeeded(
                 const bool                             entryCreation,
