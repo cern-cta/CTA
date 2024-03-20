@@ -152,7 +152,7 @@ public:
   }
 
   virtual void TearDown() {
-    cta::objectstore::Helpers::flushRetrieveQueueStatisticsCache();
+    cta::objectstore::Helpers::flushStatisticsCache();
     m_scheduler.reset();
     m_db.reset();
     m_catalogue.reset();

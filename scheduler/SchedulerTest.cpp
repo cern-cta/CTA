@@ -163,7 +163,7 @@ public:
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
-    objectstore::Helpers::flushRetrieveQueueStatisticsCache();
+    objectstore::Helpers::flushStatisticsCache();
   }
 
   virtual void TearDown() {

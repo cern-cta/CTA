@@ -433,7 +433,9 @@ class OStoreDB: public SchedulerDatabase {
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
 
-  void clearRetrieveQueueStatisticsCache(const std::string& vid) override;
+  void clearStatisticsCache(const std::string& vid) override;
+
+  void setStatisticsCacheConfig(const StatisticsCacheConfig & conf) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);

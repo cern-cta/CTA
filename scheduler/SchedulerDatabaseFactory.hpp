@@ -214,8 +214,12 @@ public:
     return m_SchedDB->getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-  void clearRetrieveQueueStatisticsCache(const std::string & vid) override {
-    return m_SchedDB->clearRetrieveQueueStatisticsCache(vid);
+  void clearStatisticsCache(const std::string & vid) override {
+    return m_SchedDB->clearStatisticsCache(vid);
+  }
+
+  void setStatisticsCacheConfig(const StatisticsCacheConfig & conf) override {
+    return m_SchedDB->setStatisticsCacheConfig(conf);
   }
 
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,

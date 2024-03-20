@@ -166,9 +166,14 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> PostgresSchedDB::getRetrie
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::clearRetrieveQueueStatisticsCache(const std::string & vid)
+void PostgresSchedDB::clearStatisticsCache(const std::string & vid)
 {
-  postgresscheddb::Helpers::flushRetrieveQueueStatisticsCacheForVid(vid);
+  postgresscheddb::Helpers::flushStatisticsCacheForVid(vid);
+}
+
+void PostgresSchedDB::setStatisticsCacheConfig(const StatisticsCacheConfig & conf)
+{
+
 }
 
 SchedulerDatabase::RetrieveRequestInfo PostgresSchedDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
