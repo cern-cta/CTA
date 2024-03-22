@@ -27,6 +27,9 @@
 ### Bug Fixes
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 
+### Code Quality
+- cta/CTA#575 - Remove rados metrics logging
+
 # v4.10.9.0-1 / v5.10.9.0-1
 
 ### Features
