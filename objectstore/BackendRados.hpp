@@ -122,22 +122,9 @@ private:
 
 public:
   ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us=0) override;
-
   ScopedLock * lockShared(const std::string& name, uint64_t timeout_us=0) override;
-private:
-    void addMeasurements(const Measurements & measurements);
-  private:
-    struct CumulatedMesurements: public Measurements {
-      size_t totalCalls = 0;
-      size_t minAttempts = 0;
-      size_t maxAttempts = 0;
-      double minTotalTime = 0;
-      double maxTotalTime = 0;
-    };
-    CumulatedMesurements m_measurements;
-    threading::Mutex m_mutex;
-  };
 
+private:
   /**
    * A class handling the watch part when waiting for a lock.
    */
@@ -162,7 +149,6 @@ private:
       bool m_promiseSet = false;
       std::promise<void> m_promise;
       std::future<void> m_future;
-      RadosTimeoutLogger m_radosTimeoutLogger;
       std::string m_name;
     };
     std::unique_ptr<Internal> m_internal;
@@ -236,9 +222,6 @@ public:
     static void createExclusiveCallback(librados::completion_t completion, void *pThis);
     /** Callback for stat operation, handling potential retries after EEXIST */
     static void statCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
-    /** Timer for retries (created only when needed */
   };
 
   Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
@@ -287,8 +270,6 @@ public:
     static void commitCallback(librados::completion_t completion, void *pThis);
     /** The fourth callback operation (after unlocking) */
     static void unlockCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
@@ -317,8 +298,6 @@ public:
     std::string m_lockClient;
     /** The second callback operation (after deleting) */
     static void deleteCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
@@ -354,8 +333,6 @@ public:
     ::librados::bufferlist m_radosBufferList;
     /** The callback for the fetch operation */
     static void fetchCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
