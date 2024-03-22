@@ -51,7 +51,7 @@ NB_RETRIEVES_EXTRA=2
 NB_FILES=4
 
 
-if /opt/eos/xrootd/bin/xrdcp -V 2>&1 | grep -q -e '^v*4\.'); then
+if /opt/eos/xrootd/bin/xrdcp -V 2>&1 | grep -q -e '^v*4\.'; then
    echo "Test disabled on eos 4 versions"
    exit 0
 fi
