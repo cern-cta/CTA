@@ -632,6 +632,7 @@ void BackendRados::AsyncCreator::createExclusiveCallback(librados::completion_t 
         // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
         // We will stat-poll the object and retry the create as soon as it's gone.
         // Prepare the retry timer (it will be used in the stat step).
+        if(!ac.m_retryTimer) ac.m_retryTimer.reset(new utils::Timer());
         int rc;
         librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
         throwOnReturnedErrnoOrThrownStdException([&rc, &ac, &aioc]() {
@@ -692,6 +693,14 @@ void BackendRados::AsyncCreator::statCallback(librados::completion_t completion,
             << " size=" << ac.m_size << " time=" << ac.m_time;
         throw en;
       } else {
+        // The object is indeed zero-sized. We can just retry stat (for 10s max)
+        if (ac.m_retryTimer && (ac.m_retryTimer->secs() > 10)) {
+          exception::Errnum en(EEXIST, "In BackendRados::AsyncCreator::statCallback: Object is still here after 10s: ");
+          en.getMessage() << ac.m_name << "After statRet=" << -rados_aio_get_return_value(completion)
+              << " size=" << ac.m_size << " time=" << ac.m_time;
+          throw en;
+        }
+
         int rc;
         librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
         throwOnReturnedErrnoOrThrownStdException([&rc, &ac, &aioc]() {
