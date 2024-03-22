@@ -1,14 +1,14 @@
 #!/usr/bin/python2
 
 from collections import defaultdict
-from rpmUtils.miscutils import splitFilename
+import hawkey
 import argparse
 import json
 import os.path
 import re
 import rpm
 import sys
-import yum
+import dnf
 
 conf_file = '/etc/cta/cta-release.conf'
 
@@ -163,8 +163,30 @@ def readVer(filelist):
       for p in plist:
         if p == "" or p.startswith('#'):
           continue
-        (n, v, r, e, a) = splitFilename(p)
-        versions[fname][n] = [e, v, r, a]
+
+        # Trim .rpm extension if need
+        if p[-4:] == ".rpm":
+            p = p[:-4]
+
+        arch_idx = p.rfind(".")
+        arch = p[arch_idx+1:]
+
+        release_idx = p[:arch_idx].rfind("-")
+        release = p[release_idx+1:arch_idx]
+
+        version_idx = p[:release_idx].rfind("-")
+        release = p[version_idx+1:release_idx]
+
+        epoch_idx = p.find(":")
+        if epoch_idx == -1:
+          epoch = ""
+        else:
+          epoch = filename[:epoch_idx]
+
+        name = p[epoch_idx+1:version_idx]
+
+        versions[fname][name] = [epoch, version, release, arch]
+
   return versions
 
 # Compare versions in both versionlock lists
