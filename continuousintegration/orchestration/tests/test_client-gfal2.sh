@@ -152,23 +152,34 @@ echo "  Retrieving files with gfal-bringonline via https protocol"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo
-    echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-    echo "  Evicting files with gfal-evict as poweruser via https protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+echo
+echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+echo "  Evicting files with gfal-evict as poweruser via https protocol"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo
-    echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-    echo "  Deleting files with gfal-rm as user1 via https protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+echo
+echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+echo "  Deleting files with gfal-rm as user1 via https protocol"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo "$(date +%s): Waiting for tracker process to finish. "
-    wait "${TRACKER_PID}"
-    if [[ $? == 1 ]]; then
-      echo "Some files were lost during tape workflow."
-      exit 1
-    fi
+echo "$(date +%s): Waiting for tracker process to finish. "
+wait "${TRACKER_PID}"
+if [[ $? == 1 ]]; then
+  echo "Some files were lost during tape workflow."
+  exit 1
+fi
+
+# Test activity
+TEST_PRERUN=". /root/client_env "
+
+echo
+echo "Launching gfal_activity_check.sh on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PREPRUN} && /root/gfal_acitivity_check.sh"
+
+echo "Checking activity was set..."
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ctaeos:/root/
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh
 
 exit 0

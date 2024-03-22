@@ -21,8 +21,10 @@
 
 ### Continuous Integration
 - cta/CTA#358 - Add GFAL2 HTTP system tests
+- cta/CTA#597 - Validate staging activity field metadata is correctly set with gfal2 
 - cta/CTA#623 - Avoid race condition during ci for alma9
 - cta/CTA#628 - Retry system tests in the ci
+
 
 ### Bug Fixes
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
