@@ -151,7 +151,7 @@ echo "Value should be ${EXPECTED_COUNTER_VAL} for each file"
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v value=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
   echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${EXPECTED_COUNTER_VAL} for some files:"
   cat ${FAILED_LIST}
   exit 1
@@ -189,7 +189,7 @@ echo "Value should be ${EXPECTED_COUNTER_VAL} for each file"
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v value=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
   echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${EXPECTED_COUNTER_VAL} for some files:"
   cat ${FAILED_LIST}
   exit 1
@@ -212,8 +212,8 @@ for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; ex
 
   rm -f ${FAILED_LIST}
   touch ${FAILED_LIST}
-  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v value=${expected_counter_val} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
-  echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${EXPECTED_COUNTER_VAL} for some files:"
+  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${expected_counter_val} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+  echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${expected_counter_val} for some files:"
     cat ${FAILED_LIST}
     exit 1
   fi
