@@ -33,6 +33,7 @@
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
 #else
+#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #endif
@@ -920,5 +921,12 @@ INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestVFS, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryVFS)));
 #endif
 
+#ifdef TEST_RADOS
+static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
+
+INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestRados, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryRados)));
 #endif
+#endif
+
 } // namespace unitTests
