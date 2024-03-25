@@ -180,6 +180,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
+  log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
   threading/CondVarTest.cpp

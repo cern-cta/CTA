@@ -35,6 +35,10 @@ const std::string &Param::getValue() const noexcept {
   return m_value;
 }
 
+const Param::VarValueType &Param::getVarValue() const noexcept {
+  return m_value_v;
+}
+
 template<>
 void Param::setValue<uint8_t>(const uint8_t& value) noexcept {
   std::stringstream oss;
