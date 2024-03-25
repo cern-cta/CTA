@@ -21,6 +21,7 @@
 #include "rados/librados.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/BlockingQueue.hpp"
+#include "common/Timer.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include <future>
@@ -222,7 +223,7 @@ public:
     static void createExclusiveCallback(librados::completion_t completion, void *pThis);
     /** Callback for stat operation, handling potential retries after EEXIST */
     static void statCallback(librados::completion_t completion, void *pThis);
-     /** Timer for retries (created only when needed */
+    /** Timer for retries (created only when needed */
     std::unique_ptr<cta::utils::Timer> m_retryTimer;
   };
 
