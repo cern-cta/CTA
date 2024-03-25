@@ -1,3 +1,9 @@
+# Next
+
+### Continuous Integration
+- cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
+- cta/CTA#647 - Upgrade eos-5 to eos-5.2.21-1
+
 # v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features
