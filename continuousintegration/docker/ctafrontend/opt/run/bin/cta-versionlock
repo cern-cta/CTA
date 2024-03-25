@@ -54,7 +54,6 @@ END_EXPR = "\s*#+\s*%s-END\s*#+"
 
 dnfb = dnf.Base()
 dnfb.read_all_repos()
-dnfb.fill_sack()
 
 repos_all = [repo.id for repo in dnfb.repos.get_matching("cta-*")]
 
@@ -88,10 +87,37 @@ def get_repo_set_for_cta_version(cta_xrootd_version):
 
 def switch_repos(repo_id_list, enable):
   for repo_id in repo_id_list:
-    yb.repos.enableRepo(repo_id) if enable else yb.repos.disableRepo(repo_id)
-    repo_obj = yb.repos.findRepos(repo_id)[0]
-    with open(repo_obj.repofile, "w") as f:
-      repo_obj.write(f, always=("enabled",))
+    repo_obj = dnfb.repos.get_matching(repo_id)[0]
+    repo_obj.enable() if enable else repo_obj.disable()
+
+    # Get all lines in the file
+    with open(repo_obj.repofile, 'r') as f:
+      file_repo_lines = f.readlines()
+
+    # Look for the line we want to change
+    line_counter = 0
+    in_repo = False
+    for line in file_repo_lines:
+      # We have found the current repo, search for the flag
+      # and update it. If it is not there, throw exception.
+      if line == '[{}]'.format(repo_id):
+        in_repo = True
+
+      if in_repo and line[0] == '[':
+        raise RuntimeError("Could not find `enabled` flag for repo {} in repofile {}".format(repo_id, repo_obj.repofile))
+
+      # We are in the line we want to modify
+      if line.startswith('enabled'):
+        break
+
+      line_counter += 1
+
+    # Edit the line we want to change
+    file_repo_lines[line_counter] = 'enabled=1\n' if enabled else 'enabled=0\n'
+
+    # Overwrite the file
+    with open(repo_obj.repofile, 'w') as f:
+      f.writelines(file_repo_lines)
 
 def enable_repos(repo_id_list):
   switch_repos(repo_id_list, True)
