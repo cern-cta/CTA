@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 
 from collections import defaultdict
-import hawkey
 import argparse
 import json
 import os.path
@@ -53,10 +52,11 @@ usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
 START_EXPR = "\s*#+\s*%s-START\s*#+"
 END_EXPR = "\s*#+\s*%s-END\s*#+"
 
-yb = yum.YumBase()
-yb.preconf.debuglevel = 0
-yb.preconf.errorlevel = 0
-repos_all = [repo.id for repo in yb.repos.findRepos("cta-*")]
+dnfb = dnf.Base()
+dnfb.read_all_repos()
+dnfb.fill_sack()
+
+repos_all = [repo.id for repo in dnfb.repos.get_matching("cta-*")]
 
 # if path doesn't exist, create it
 if not os.path.exists(os.path.dirname(conf_file)):
@@ -301,22 +301,22 @@ if (not eos_version and not xrootd_version)  and (action == 'config'):
 message = defaultdict(dict)
 
 if (args.command == 'config'):
-  if eos_version is 4:
+  if eos_version == 4:
     message['title'] = "Enabling EOS-4 dependencies"
     cta_conf_json["eos_major_version"] = 4
     switch_packages(versionlock_file, "EOS-4", True)
     switch_packages(versionlock_file, "EOS-5", False)
-  elif eos_version is 5:
+  elif eos_version == 5:
     message['title'] = "Enabling EOS-5 dependencies"
     cta_conf_json["eos_major_version"] = 5
     switch_packages(versionlock_file, "EOS-4", False)
     switch_packages(versionlock_file, "EOS-5", True)
-  if xrootd_version is 4:
+  if xrootd_version == 4:
     message['title'] = "Enabling XROOTD-4 dependencies"
     cta_conf_json["xrootd_major_version"] = 4
     switch_packages(versionlock_file, "XROOTD-4", True)
     switch_packages(versionlock_file, "XROOTD-5", False)
-  elif xrootd_version is 5:
+  elif xrootd_version == 5:
     message['title'] = "Enabling XROOTD-5 dependencies"
     cta_conf_json["xrootd_major_version"] = 5
     switch_packages(versionlock_file, "XROOTD-4", False)
