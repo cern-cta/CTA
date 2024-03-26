@@ -154,7 +154,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   // Shall this not report only jobs which this tape server `owns` how is this concept implemented now ?
   //
   // Iterate over all archive queues
-  rdbms::Rset resultSet;
+  rdbms::Rset resultSet_ForTransfer;
+  rdbms::Rset resultSet_ForFailure;
   postgresscheddb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
