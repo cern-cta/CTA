@@ -124,9 +124,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       try {
         lc.log(cta::log::DEBUG, "Transition from down to up starting.");
         auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
-        lc.log(cta::log::DEBUG, "Got desired drive state");
         if (!desiredState.up) {
-          lc.log(cta::log::DEBUG, "Desired drive state is NOT UP, trying to set it UP");
+          lc.log(cta::log::DEBUG, "Desired drive state is NOT UP, setting it DOWN");
           downUpTransition = true;
           // Refresh the status to trigger the timeout update
           m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
@@ -136,6 +135,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
           // TODO: parametrize the duration?
           sleep(5);
         } else {
+          lc.log(cta::log::DEBUG, "Desired drive state is UP.");
           break;
         }
       } catch (cta::Scheduler::NoSuchDrive &e) {
