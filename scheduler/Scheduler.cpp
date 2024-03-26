@@ -833,6 +833,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   utils::Timer t;
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
   for (const auto & driveState : driveStates) {
+    lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName + " against existing: " + driveState.driveName);
     if (driveState.driveName == driveName) {
       const auto schedulerDbTime = t.secs();
       if (schedulerDbTime > 1) {
