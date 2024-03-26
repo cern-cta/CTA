@@ -833,6 +833,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   utils::Timer t;
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
   for (const auto & driveState : driveStates) {
+    lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName + " against existing: " + driveState.driveName);
     if (driveState.driveName == driveName) {
       const auto schedulerDbTime = t.secs();
       if (schedulerDbTime > 1) {
@@ -920,12 +921,12 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   utils::Timer t;
   m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(nullptr), lc);
   auto schedulerDbTime = t.secs();
-  if (schedulerDbTime > 1) {
+  //if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
     spc.add("drive", driveInfo.driveName)
        .add("schedulerDbTime", schedulerDbTime);
     lc.log(log::DEBUG, "In Scheduler::reportDriveStatus(): success.");
-  }
+  //}
 }
 
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
