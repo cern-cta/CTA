@@ -23,6 +23,7 @@
 #include <optional>
 #include <stdint.h>
 #include <string>
+#include <any>
 
 namespace cta::rdbms {
 
@@ -259,6 +260,17 @@ public:
   std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
 
   /**
+   * Returns the value of the specified column as an std::any type.
+   *
+   * This method will return a null column value as an optional with no value.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
+   */
+  std::optional<std::any> columnAny(const std::string &colName) const;
+
+  /**
    * Returns the value of the specified column as a boolean.
    *
    * Please note that the underlying database column type is expected to be a
@@ -294,6 +306,17 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   std::optional<double> columnOptionalDouble(const std::string &colName) const;
+
+  /**
+   * Returns the value of the specified column as a any type.
+   *
+   * This method will return a null column value as an optional with no value.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
+   */
+  std::optional<std::any> columnOptional(const std::string& colName) const;
 
 private:
 

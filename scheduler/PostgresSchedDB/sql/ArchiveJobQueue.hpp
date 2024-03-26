@@ -24,42 +24,30 @@
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 
 #include <vector>
+#include <any>
 
 namespace cta::postgresscheddb::sql {
 
-struct ArchiveJobQueueRow {
-  uint64_t jobId = 0;
-  uint64_t mountId = 0;
-  ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
-  std::string tapePool;
-  std::string mountPolicy;
-  uint64_t priority = 0;
-  uint64_t minArchiveRequestAge = 0;
-  uint8_t copyNb = 0;
-  time_t startTime = 0;                       //!< Time the job was inserted into the queue
-  std::string archiveReportUrl;
-  std::string archiveErrorReportUrl;
-  std::string requesterName;
-  std::string requesterGroup;
-  std::string srcUrl;
-  uint32_t retriesWithinMount = 0;
-  uint32_t totalRetries = 0;
-  uint64_t lastMountWithFailure = 0;
-  uint32_t maxTotalRetries = 0;
+  struct ArchiveJobQueueRow {
 
-  uint32_t maxRetriesWithinMount = 0;
-  uint32_t maxReportRetries = 0;
-  uint32_t totalReportRetries = 0;
-  std::vector<std::string> failureLogs;
-  std::vector<std::string> reportFailureLogs;
-  bool is_repack = false;
-  uint64_t repackId = 0;
-  std::string repackFilebufUrl;
-  uint64_t repackFseq = 0;
-  std::string repackDestVid;
-  
+  public:
 
-  common::dataStructures::ArchiveFile archiveFile;
+    // Template member function to get the value of a column by index
+    template<typename T>
+    T getColumn(ArchColIdx column_index) const {
+      return std::any_cast<T>(row[static_cast<size_t>(column_index)]);
+    }
+
+    // Template member function to set the value of a column by index
+    template<typename T>
+    void setColumn(ArchColIdx column_index, const T& value) {
+      row[static_cast<size_t>(column_index)] = value;
+    }
+
+    const std::vector<std::any>& row;
+    ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
+    bool is_repack = false;
+    common::dataStructures::ArchiveFile archiveFile;
 
   ArchiveJobQueueRow()
   {
@@ -70,6 +58,8 @@ struct ArchiveJobQueueRow {
        archiveFile.diskFileInfo.gid = 0;
        archiveFile.creationTime = 0;
   }
+  // Constructor to initialize the row with column values
+  ArchiveJobQueueRow(const std::vector<std::any>& data) : row(data) {}
 
   /**
    * Constructor from row
@@ -81,6 +71,32 @@ struct ArchiveJobQueueRow {
   }
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
+    for (const auto& key : ArchColIdx) {
+      std::any value;
+      try {
+        value = rset.columnAny(TO_STRING(key));
+        if (value.has_value()) {
+          if (value.type() == typeid(int)) {
+            int intValue = std::any_cast<int>(value);
+            std::cout << "Retrieved int value: " << intValue << std::endl;
+          } else if (value.type() == typeid(double)) {
+            double doubleValue = std::any_cast<double>(value);
+            std::cout << "Retrieved double value: " << doubleValue << std::endl;
+          } else if (value.type() == typeid(std::string)) {
+            std::string stringValue = std::any_cast<std::string>(value);
+            std::cout << "Retrieved string value: " << stringValue << std::endl;
+          } else {
+            std::cout << "Retrieved value has an unsupported type" << std::endl;
+          }
+        } else {
+          std::cout << "Retrieved value is null" << std::endl;
+        }
+      } catch (exception::Exception &ex)
+
+      }
+      row.setColumn(key, rset.columnAny());
+    }
+
     jobId                     = rset.columnUint64("JOB_ID");
     mountId                   = rset.columnUint64("MOUNT_ID");
     status                    = from_string<ArchiveJobStatus>(

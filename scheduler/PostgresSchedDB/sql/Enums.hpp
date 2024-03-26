@@ -109,6 +109,97 @@ constexpr std::array<const char*, 6> const StringsRepackJobStatus = {
   "RRS_Complete",
   "RRS_Failed"
 };
+
+// ============================== Archive Queue Job Column Indices  ===========================
+
+enum class ArchColIdx {
+  JOB_ID,
+  ARCHIVE_REQID,
+  STATUS,
+  CREATION_TIME,
+  MOUNT_POLICY,
+  VID,
+  MOUNT_ID,
+  START_TIME,
+  PRIORITY,
+  STORAGE_CLASS,
+  MIN_ARCHIVE_REQUEST_AGE,
+  COPY_NB,
+  SIZE_IN_BYTES,
+  ARCHIVE_FILE_ID,
+  CHECKSUMBLOB,
+  REQUESTER_NAME,
+  REQUESTER_GROUP,
+  SRC_URL,
+  DISK_INSTANCE,
+  DISK_FILE_PATH,
+  DISK_FILE_ID,
+  DISK_FILE_GID,
+  DISK_FILE_OWNER_UID,
+  REPACK_REQID,
+  IS_REPACK,
+  ARCHIVE_ERROR_REPORT_URL,
+  ARCHIVE_REPORT_URL,
+  FAILURE_REPORT_LOG,
+  FAILURE_LOG,
+  REPACK_DEST_VID,
+  IS_REPORTDECIDED,
+  TOTAL_RETRIES,
+  MAX_TOTAL_RETRIES,
+  RETRIES_WITHIN_MOUNT,
+  MAX_RETRIES_WITHIN_MOUNT,
+  LAST_MOUNT_WITH_FAILURE,
+  TOTAL_REPORT_RETRIES,
+  MAX_REPORT_RETRIES,
+  TAPE_POOL,
+  REPACK_FILEBUF_URL,
+  REPACK_FSEQ
+};
+
+constexpr std::array<const char*, 41> const StringsArchColIdx = {
+          "JOB_ID",
+          "ARCHIVE_REQID",
+          "STATUS",
+          "CREATION_TIME",
+          "MOUNT_POLICY",
+          "VID",
+          "MOUNT_ID",
+          "START_TIME",
+          "PRIORITY",
+          "STORAGE_CLASS",
+          "MIN_ARCHIVE_REQUEST_AGE",
+          "COPY_NB",
+          "SIZE_IN_BYTES",
+          "ARCHIVE_FILE_ID",
+          "CHECKSUMBLOB",
+          "REQUESTER_NAME",
+          "REQUESTER_GROUP",
+          "SRC_URL",
+          "DISK_INSTANCE",
+          "DISK_FILE_PATH",
+          "DISK_FILE_ID",
+          "DISK_FILE_GID",
+          "DISK_FILE_OWNER_UID",
+          "REPACK_REQID",
+          "IS_REPACK",
+          "ARCHIVE_ERROR_REPORT_URL",
+          "ARCHIVE_REPORT_URL",
+          "FAILURE_REPORT_LOG",
+          "FAILURE_LOG",
+          "REPACK_DEST_VID",
+          "IS_REPORTDECIDED",
+          "TOTAL_RETRIES",
+          "MAX_TOTAL_RETRIES",
+          "RETRIES_WITHIN_MOUNT",
+          "MAX_RETRIES_WITHIN_MOUNT",
+          "LAST_MOUNT_WITH_FAILURE",
+          "TOTAL_REPORT_RETRIES",
+          "MAX_REPORT_RETRIES",
+          "TAPE_POOL",
+          "REPACK_FILEBUF_URL",
+          "REPACK_FSEQ"
+};
+
 } // namespace cta::postgresscheddb
 
 
@@ -118,5 +209,6 @@ TO_STRING(ArchiveJobStatus)
 // TO_STRING(JobQueueType)
 TO_STRING(RetrieveJobStatus)
 TO_STRING(RepackJobStatus)
+TO_STRING(ArchColIdx)
 
 } // namespace cta

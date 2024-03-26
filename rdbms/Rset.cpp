@@ -404,4 +404,39 @@ std::optional<double> Rset::columnOptionalDouble(const std::string &colName) con
   }
 }
 
+//------------------------------------------------------------------------------
+// columnAny
+//------------------------------------------------------------------------------
+std::any columnAny(const std::string& colName) const {
+  try {
+    if (!m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+
+    std::optional<std::any> col = columnOptional(colName);
+    if (col.has_value()) {
+      return col.value();
+    } else {
+      throw NullDbValue("Database column " + colName + " contains a null value");
+    }
+  } catch (exception::Exception &ex) {
+    std::string errorMessage = std::string(__FUNCTION__) + " failed: " + ex.what();
+    throw ex.getMessage().str(errorMessage);
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnOptional
+//------------------------------------------------------------------------------
+std::optional<std::any> columnOptional(const std::string& colName) const {
+  try {
+    if (!m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+    return m_impl->columnOptional(colName);
+  } catch (exception::Exception &ex) {
+    std::string errorMessage = std::string(__FUNCTION__) + " failed: " + ex.what();
+    throw ex.getMessage().str(errorMessage);
+  }
+}
 } // namespace cta::rdbms
