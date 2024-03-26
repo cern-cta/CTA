@@ -921,12 +921,12 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   utils::Timer t;
   m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(nullptr), lc);
   auto schedulerDbTime = t.secs();
-  //if (schedulerDbTime > 1) {
+  if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
     spc.add("drive", driveInfo.driveName)
        .add("schedulerDbTime", schedulerDbTime);
     lc.log(log::DEBUG, "In Scheduler::reportDriveStatus(): success.");
-  //}
+  }
 }
 
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
