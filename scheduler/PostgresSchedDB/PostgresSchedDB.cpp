@@ -145,12 +145,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
      log::LogContext & logContext)
 {
   // this is reporting the first batch of 500 job encountered nothing more for the moment,
-  // the OStoreDB does more careful selection  ...
-  // I need to get the list of all the job in the queue of archive jobs
   // if empty I just return
-  // if not, then I select all jobs of 'type' - not clear what does this mean for objectstore
-  // `common::dataStructures::JobQueueType::JobsToReportToUser` seems to map to AJS_ToTransferForUser status
-  // first tapepool I encounter and report it - where is the ownership saved ?
+  // if not, then I select all jobs of type
+  // `common::dataStructures::JobQueueType::JobsToReportToUser` seems to map to
+  // AJS_ToReportToUserForTransfer and AJS_ToReportToUserForFailure status
+  // First tapepool I encounter and report it - where is the ownership saved ?
   // Shall this not report only jobs which this tape server `owns` how is this concept implemented now ?
   //
   // Iterate over all archive queues
@@ -161,8 +160,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   // retrieve batch up to file limit
   resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
           txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
-  resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
+  //resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+  //        txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
@@ -175,16 +174,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
       logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
     }
     logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
-  }
-  while(resultSet_ForFailure.next()) {
-    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForFailure is fetched.");
-    try {
-      jobs.emplace_back(resultSet_ForFailure);
-    } catch (cta::exception::Exception & e) {
-      std::string bt = e.backtrace();
-      logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
-    }
-    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForFailure.");
   }
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
   // Construct the return value
