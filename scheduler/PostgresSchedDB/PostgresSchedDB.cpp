@@ -158,20 +158,32 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   postgresscheddb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
-  resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          txn, postgresscheddb::ArchiveJobStatus::AJS_ToTransferForUser, filesRequested);
+  resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
+  resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
-  while(resultSet.next()) {
-    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next Result is fetched.");
+  while(resultSet_ForTransfer.next()) {
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
     try {
-      jobs.emplace_back(resultSet);
+      jobs.emplace_back(resultSet_ForTransfer);
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
       logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
     }
-    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back.");
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
+  }
+  while(resultSet_ForFailure.next()) {
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForFailure is fetched.");
+    try {
+      jobs.emplace_back(resultSet_ForFailure);
+    } catch (cta::exception::Exception & e) {
+      std::string bt = e.backtrace();
+      logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    }
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForFailure.");
   }
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
   // Construct the return value
