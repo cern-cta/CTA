@@ -118,7 +118,18 @@ struct ArchiveJobQueueRow {
     maxTotalRetries           = rset.columnUint16("MAX_TOTAL_RETRIES");
     return *this;
   }
+  void update(Transaction &txn) const{
+    const char *const sql =
+            "UPDATE ARCHIVE_JOB_QUEUE SET "
+            "MOUNT_ID = :MOUNT_ID "
+            "WHERE "
+            " JOB_ID IN (SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE ORDER BY RANDOM() "
+            " LIMIT 1)";
 
+    stmt = txn.conn().createStmt(sql);
+    stmt.bindUint64(":MOUNT_ID", 1000);
+    stmt.executeQuery();
+  }
   void insert(Transaction &txn) const {
     // does not set mountId or jobId
     const char *const sql =
