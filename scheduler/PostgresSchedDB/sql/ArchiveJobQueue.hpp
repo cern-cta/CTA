@@ -85,7 +85,7 @@ struct ArchiveJobQueueRow {
     jobId                     = rset.columnUint64("JOB_ID");
     try {
       mountId = rset.columnUint64("MOUNT_ID");
-    } catch (cta::rdbms::NullDbValue){
+    } catch (const cta::rdbms::NullDbValue ex&){
       mountId                   = 0;
     }
     status                    = from_string<ArchiveJobStatus>(
