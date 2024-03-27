@@ -117,10 +117,8 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   }
 
   utils::Timer timerinsert;
-  for (int i = 0; i < 100000; ++i) {
-    // Insert the object into the DB
-    aReq->insert();
-  }
+  // Insert the object into the DB
+  aReq->insert();
   // Commit the transaction
   aReq->commit();
   log::ScopedParamContainer params(logContext);
