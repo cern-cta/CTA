@@ -126,7 +126,7 @@ struct ArchiveJobQueueRow {
             " JOB_ID IN (SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE ORDER BY RANDOM() "
             " LIMIT 1)";
 
-    stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.conn().createStmt(sql);
     stmt.bindUint64(":MOUNT_ID", 1000);
     stmt.executeQuery();
   }
