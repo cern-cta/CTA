@@ -17,6 +17,7 @@
 
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "common/Timer.hpp"
 
 namespace cta::postgresscheddb {
 
@@ -49,17 +50,50 @@ void ArchiveRequest::insert() {
     ajr.maxTotalRetries = aj.maxTotalRetries;
 
     log::ScopedParamContainer params(m_lc);
-    ajr.addParamsToLogContext(params);
+    //ajr.addParamsToLogContext(params);
 
     try {
-      ajr.insert(*m_txn);
+      cta::utils::Timer timerinsert;
+      for (int i = 0; i < 100000; ++i) {
+        ajr.insert(*m_txn);
+      }
+      params.add("Insert10to5TimeSec", timerinsert.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 100 000x insert().");
+      cta::utils::Timer timerupdate;
+      for (int i = 0; i < 10; ++i) {
+        ajr.update(*m_txn);
+      }
+      params.add("Update10to5TimeSec", timerupdate.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::update(): 10x update().");
+      cta::utils::Timer timerinsert2;
+      for (int i = 0; i < 1000000; ++i) {
+        ajr.insert(*m_txn);
+      }
+      params.add("Insert10to6TimeSec", timerinsert2.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 1 000 000x insert().");
+
+      cta::utils::Timer timerdelete;
+      for (int i = 0; i < 100000; ++i) {
+        ajr.deleterow(*m_txn);
+      }
+      params.add("Delete10to5TimeSec", timerdelete.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 100 000x delete().");
+
+      cta::utils::Timer timerdelete2;
+      for (int i = 0; i < 1000000; ++i) {
+        ajr.deleterow(*m_txn);
+      }
+      params.add("Delete10to6TimeSec", timerdelete2.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 1 000 000x delete().");
+
+      // ajr.update(*m_txn); //for testing only
     } catch(exception::Exception &ex) {
       params.add("exeptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
       throw;
     }
 
-    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
+    //m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
 }
 
