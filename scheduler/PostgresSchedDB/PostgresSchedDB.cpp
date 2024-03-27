@@ -116,11 +116,16 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
     throw postgresscheddb::ArchiveRequestHasNoCopies("In PostgresSchedDB::queueArchive: the archive request has no copies");
   }
 
-  // Insert the object into the DB
-  aReq->insert();
-
-  // Commit the transaction
-  aReq->commit();
+  utils::Timer timerinsert;
+  for (int i = 0; i < 100000; ++i) {
+    // Insert the object into the DB
+    aReq->insert();
+    // Commit the transaction
+    aReq->commit();
+  }
+  log::ScopedParamContainer params(logContext);
+  params.add("Insert10to5TimeSec", timerinsert.secs());
+  logContext.log(log::DEBUG, "In PostgresSchedDB::queueArchive(): 100 000x insert()commit().");
 
   return aReq->getIdStr();
 }
