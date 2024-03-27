@@ -52,7 +52,13 @@ void ArchiveRequest::insert() {
     //ajr.addParamsToLogContext(params);
 
     try {
-      ajr.insert(*m_txn);
+      utils::Timer timerinsert;
+      for (int i = 0; i < 100000; ++i) {
+        ajr.insert(*m_txn);
+      }
+      params.add("Insert10to5TimeSec", timerinsert.secs());
+      m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 100 000x insert().");
+
       // ajr.update(*m_txn); //for testing only
     } catch(exception::Exception &ex) {
       params.add("exeptionMessage", ex.getMessageValue());
