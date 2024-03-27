@@ -18,6 +18,7 @@
 #pragma once
 
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
+#include "rdbms/NullDbValue.hpp"
 
 namespace cta::postgresscheddb::sql {
 
@@ -44,7 +45,11 @@ struct ArchiveJobSummaryRow {
   }
 
   ArchiveJobSummaryRow& operator=(const rdbms::Rset &rset) {
-    mountId              = rset.columnUint64("MOUNT_ID");
+    try {
+      mountId = rset.columnUint64("MOUNT_ID");
+    } catch (const cta::rdbms::NullDbValue& ex){
+      mountId                   = 0;
+    }
     status               = from_string<ArchiveJobStatus>(
                            rset.columnString("STATUS") );
     tapePool             = rset.columnString("TAPE_POOL");

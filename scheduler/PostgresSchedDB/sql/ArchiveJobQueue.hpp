@@ -22,6 +22,7 @@
 #include "common/checksum/ChecksumBlob.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
+#include "rdbms/NullDbValue.hpp"
 
 #include <vector>
 
@@ -82,7 +83,11 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    //mountId                   = rset.columnUint64("MOUNT_ID");
+    try {
+      mountId = rset.columnUint64("MOUNT_ID");
+    } catch (const cta::rdbms::NullDbValue& ex){
+      mountId                   = 0;
+    }
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
