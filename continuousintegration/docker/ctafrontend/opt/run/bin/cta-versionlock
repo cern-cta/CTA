@@ -1,13 +1,13 @@
 #!/usr/bin/python2
 
 from collections import defaultdict
+from os import walk
 import argparse
 import json
 import os.path
 import re
 import rpm
 import sys
-import dnf
 
 conf_file = '/etc/cta/cta-release.conf'
 
@@ -52,10 +52,22 @@ usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
 START_EXPR = "\s*#+\s*%s-START\s*#+"
 END_EXPR = "\s*#+\s*%s-END\s*#+"
 
-dnfb = dnf.Base()
-dnfb.read_all_repos()
+# Directories that were checked by yum package:
+#   '/etc/yum/repos.d/', '/etc/yum.repos.d/'
+repos_all=[]
+repo_file_dict={}
+list_dir=['/etc/yum/repos.d', '/etc/yum.repos.d/']
+for repo_dir in list_dir:
+  file_list = next(walk(repo_dir), (None, None, []))[2]
+  for file_name in file_list:
+    if file_name.endswith('.repo'):
+      with open("{}{}".format(repo_dir, file_name), 'r') as f:
+        # look for every repo entry in the file
+        for line in f.readlines():
+          if line.startswith('[cta-') and line.endswith(']\n'):
+            repos_all.append(line[1:-2])
+            repo_file_dict[line[1:-2]] = "{}{}".format(repo_dir, file_name)
 
-repos_all = [repo.id for repo in dnfb.repos.get_matching("cta-*")]
 
 # if path doesn't exist, create it
 if not os.path.exists(os.path.dirname(conf_file)):
@@ -87,11 +99,8 @@ def get_repo_set_for_cta_version(cta_xrootd_version):
 
 def switch_repos(repo_id_list, enable):
   for repo_id in repo_id_list:
-    repo_obj = dnfb.repos.get_matching(repo_id)[0]
-    repo_obj.enable() if enable else repo_obj.disable()
-
     # Get all lines in the file
-    with open(repo_obj.repofile, 'r') as f:
+    with open(repo_file_dict[repo_id], 'r') as f:
       file_repo_lines = f.readlines()
 
     # Look for the line we want to change
@@ -100,7 +109,7 @@ def switch_repos(repo_id_list, enable):
     for line in file_repo_lines:
       # We have found the current repo, search for the flag
       # and update it. If it is not there, throw exception.
-      if line == '[{}]'.format(repo_id):
+      if line.startswith('[{}]'.format(repo_id)):
         in_repo = True
 
       if in_repo and line[0] == '[':
