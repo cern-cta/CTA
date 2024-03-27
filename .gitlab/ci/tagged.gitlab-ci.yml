@@ -66,7 +66,7 @@ publish_tagged_rpm:
     - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH="/eos/user/c/ctareg/www/cta-repo" HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
     - if [ "${ALMA9}" == "OFF" ]; then echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; exit 0; fi
     - echo "Publishing to public CTA 'testing' repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
 
 release_public_rpm:
   stage: release_rpm
