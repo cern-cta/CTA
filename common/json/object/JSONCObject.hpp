@@ -29,7 +29,7 @@ namespace cta::utils::json::object {
  * 
  * The same json_object pointer is used to read from a JSON string
  * and to create a JSON string. Hence this pointer is reinitialized at each call
- * to buildFromJSON() and getJSON()
+ * to buildFromJSON() and getKeyValueJSON()
  */
 class JSONCObject : public JSONObject {
 public:

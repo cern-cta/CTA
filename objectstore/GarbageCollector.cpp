@@ -190,7 +190,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, const std::
   arl.release();
   {
     log::ScopedParamContainer params2(lc);
-    for (auto p: agentDetails) params2.add(p.getName(), p.getValue());
+    for (auto p: agentDetails) params2.add(p.getName(), p.getVariant());
     lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
   }
   // Return all objects owned by the agent to their respective backup owners

@@ -206,19 +206,18 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
 
   // Process parameters
   for(auto& param : params) {
-    // If parameter name is an empty string, set the value to "Undefined"
-    const std::string name = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
-
-    // Process the parameter value
-    const std::string value = cleanString(param.getValueStr(), false);
-
     // Write the name and value to the buffer
     switch(m_logFormat) {
       case LogFormat::DEFAULT:
-        os << name << "=\"" << value << "\" ";
+        {
+          // If parameter name is an empty string, set the value to "Undefined"
+          const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
+          const std::string value_str = cleanString(param.getValue(), false);
+          os << name_str << "=\"" << value_str << "\" ";
+        }
         break;
       case LogFormat::JSON:
-        os << ",\"" << name << "\":\"" << value << "\"";
+        os << ",\"" << param.getKeyValueJSON();
     }
   }
 

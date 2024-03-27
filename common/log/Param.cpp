@@ -30,49 +30,55 @@ const std::string &Param::getName() const noexcept {
 }
 
 //------------------------------------------------------------------------------
-// getValue
+// getVariant
 //------------------------------------------------------------------------------
-const ParamValType &Param::getValue() const noexcept {
+const ParamValType &Param::getVariant() const noexcept {
   return m_value;
 }
 
 //------------------------------------------------------------------------------
-// getValueStr
+// getValue
 //------------------------------------------------------------------------------
-std::string Param::getValueStr(bool jsonify) const noexcept {
+std::string Param::getValue() const noexcept {
   std::ostringstream oss;
-  if (jsonify) {
-    if (m_value.has_value()) {
-      std::visit([&oss](auto &&arg) {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, bool>) {
-          oss << (arg ? "true" : "false");
-        } else if constexpr (std::is_same_v<T, std::string>) {
-          oss << "\"" << arg << "\"";
-        } else if constexpr (std::is_same_v<T, int64_t>) {
-          oss << arg;
-        } else if constexpr (std::is_floating_point_v<T>) {
-          oss << floatingPointFormatting(arg);
-        } else {
-          static_assert(always_false<T>::value, "Type not supported");
-        }
-      }, m_value.value());
-    } else {
-      oss << "null";
-    }
+  if (m_value.has_value()) {
+    std::visit([&oss](auto &&arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_floating_point_v<T>) {
+        oss << floatingPointFormatting(arg);
+      } else {
+        oss << arg;
+      }
+    }, m_value.value());
   } else {
-    if (m_value.has_value()) {
-      std::visit([&oss](auto &&arg) {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_floating_point_v<T>) {
-          oss << floatingPointFormatting(arg);
-        } else {
-          oss << arg;
-        }
-      }, m_value.value());
-    } else {
-      oss << "";
-    }
+    oss << "";
+  }
+  return oss.str();
+}
+
+//------------------------------------------------------------------------------
+// getKeyValueJSON
+//------------------------------------------------------------------------------
+std::string Param::getKeyValueJSON() const noexcept {
+  std::ostringstream oss;
+  oss << "\"" << m_name << "\":";
+  if (m_value.has_value()) {
+    std::visit([&oss](auto &&arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, bool>) {
+        oss << (arg ? "true" : "false");
+      } else if constexpr (std::is_same_v<T, std::string>) {
+        oss << "\"" << arg << "\"";
+      } else if constexpr (std::is_same_v<T, int64_t>) {
+        oss << arg;
+      } else if constexpr (std::is_floating_point_v<T>) {
+        oss << floatingPointFormatting(arg);
+      } else {
+        static_assert(always_false<T>::value, "Type not supported");
+      }
+    }, m_value.value());
+  } else {
+    oss << "null";
   }
   return oss.str();
 }

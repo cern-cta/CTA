@@ -61,7 +61,7 @@ void PostgresColumn::setFieldByteA(rdbms::Conn &conn, const size_t index, const 
 }
 
 //------------------------------------------------------------------------------
-// getValue
+// getVariant
 //------------------------------------------------------------------------------
 const char *PostgresColumn::getValue(size_t index) const {
   try {

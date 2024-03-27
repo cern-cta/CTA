@@ -102,14 +102,19 @@ public:
   const std::string &getName() const noexcept;
 
   /**
-   * Returns a const reference to the variant of the parameter.
-   */
-  const ParamValType &getValue() const noexcept;
-
-  /**
    * Returns the value of the parameter as a string.
    */
-  std::string getValueStr(bool jsonify=false) const noexcept;
+  std::string getValue() const noexcept;
+
+  /**
+   * Returns the parameter as a key-value JSON string.
+   */
+  std::string getKeyValueJSON() const noexcept;
+
+  /**
+   * Returns a const reference to the variant of the parameter.
+   */
+  const ParamValType &getVariant() const noexcept;
 
 protected:
 
