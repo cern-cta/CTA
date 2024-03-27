@@ -16,15 +16,29 @@
 #               submit itself to any jurisdiction.
 
 # Archive some file.
-dd id=/dev/urandom of=/root/test_act bs=15K count=1
-xrdcp /root/test_act root://${EOSINSTANCE}/${EOSDIR}/test_act
+dd if=/dev/urandom of=/root/test_act bs=15K count=1
+xrdcp /root/test_act root://${EOSINSTANCE}/${EOSDIR}/test_valid_instance
+xrdcp /root/test_act root://${EOSINSTANCE}/${EOSDIR}/test_invalid_instance
 
 # Query .well-known tape rest api endpoint to get the sitename
 site_name=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
 
-metadata="{${sitename}: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"
+valid_metadata="{${site_name}: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"
 
 echo "Metadata contents: ${metadata}"
 
-# Bring online
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${metadata}" "davs://${EOSINSTANCE}:8444/${EOSDIR}/test_act"
+# Bring online with valid activity
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${metadata}" "davs://${EOSINSTANCE}:8444/${EOSDIR}/test_valid_instance"
+
+# Evict
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOSINSTANCE}:8444/${EOS_DIR}/test_valid_instance
+
+# Bring online for different instance: No activity should be logged
+valid_metadata="{NotTheSiteName: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"
+
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${metadata}" "davs://${EOSINSTANCE}:8444/${EOSDIR}/test_invalid_instance"
+
+
+
+# Evict the retrieved file
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOSINSTANCE}:8444/${EOS_DIR}/test_invalid_instance

@@ -20,7 +20,7 @@
 echo "Looking for http staging activity..."
 activity_http=$(cat $(find /var/eos/report/$(date +%Y)/$(date +%m)/ | grep '.eosreport') | grep 'event=stage' | grep 'activity=CTA-Test-HTTP-CI-TEST-activity-passing' | wc -l)
 
-if [${activity} -eq 0 ]; then
+if ["${activity_http}" -eq 0 ]; then
     echo "Activity for http not found in eosreport"
     exit 1
 fi

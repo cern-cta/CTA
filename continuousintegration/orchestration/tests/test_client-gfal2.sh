@@ -186,11 +186,10 @@ TEST_PRERUN=". /root/client_env "
 
 echo
 echo "Launching gfal_activity_check.sh on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PREPRUN} && /root/gfal_acitivity_check.sh"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/gfal_acitivity_check.sh"  || exit 1
 
 echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ctaeos:/root/
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh
->>>>>>> 842935a99a (Activity checking tests)
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
 exit 0
