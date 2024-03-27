@@ -53,8 +53,23 @@ TEST_F(LoggerParamTypeTest, TestParams_int64_t) {
   params_results.push_back({Param("std::optional<int64_t>" , std::optional<int64_t>(-456)),-456});
 
   for (auto & [param, expected_val] : params_results) {
-    ASSERT_TRUE(std::holds_alternative<int64_t>(param.getVarValue())) << "Failed testing Param type of '"  << param.getName() << "'";
-    ASSERT_EQ(std::get<int64_t>(param.getVarValue()), expected_val)   << "Failed testing Param value of '" << param.getName() << "'";
+    ASSERT_TRUE(std::holds_alternative<int64_t>(param.getValue().value())) << "Failed testing Param type of '"  << param.getName() << "'";
+    ASSERT_EQ(std::get<int64_t>(param.getValue().value()), expected_val)   << "Failed testing Param value of '" << param.getName() << "'";
+  }
+}
+
+TEST_F(LoggerParamTypeTest, TestParams_float) {
+
+  // All of these will be stored as `double`
+  // Keep a list of params and expected results
+  std::list<std::pair<Param, float>> params_results;
+  params_results.push_back({Param("float" , static_cast<float>(1000.123)) , 1000.123});
+  // Test optional values too
+  params_results.push_back({Param("std::optional<float>" , std::optional<float>(123.456))  , 123.456});
+
+  for (auto & [param, expected_val] : params_results) {
+    ASSERT_TRUE(std::holds_alternative<float>(param.getValue().value()))     << "Failed testing Param type of '"  << param.getName() << "'";
+    ASSERT_FLOAT_EQ(std::get<float>(param.getValue().value()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
   }
 }
 
@@ -63,15 +78,15 @@ TEST_F(LoggerParamTypeTest, TestParams_double) {
   // All of these will be stored as `double`
   // Keep a list of params and expected results
   std::list<std::pair<Param, double>> params_results;
-  params_results.push_back({Param("float" , static_cast<float>(1000.123)) , 1000.123});
-  params_results.push_back({Param("double", static_cast<double>(2000.234)), 2000.234});
+  params_results.push_back({Param("double"     , static_cast<double>(1000.123))     , 1000.123});
+  params_results.push_back({Param("long double", static_cast<long double>(2000.234)), 2000.234});
   // Test optional values too
-  params_results.push_back({Param("std::optional<float>" , std::optional<float>(123.456))  , 123.456});
-  params_results.push_back({Param("std::optional<double>", std::optional<double>(-456.789)),-456.789});
+  params_results.push_back({Param("std::optional<double>"     , std::optional<double>(123.456))      , 123.456});
+  params_results.push_back({Param("std::optional<long double>", std::optional<long double>(-456.789)),-456.789});
 
   for (auto & [param, expected_val] : params_results) {
-    ASSERT_TRUE(std::holds_alternative<double>(param.getVarValue()))     << "Failed testing Param type of '"  << param.getName() << "'";
-    ASSERT_FLOAT_EQ(std::get<double>(param.getVarValue()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
+    ASSERT_TRUE(std::holds_alternative<double>(param.getValue().value()))      << "Failed testing Param type of '"  << param.getName() << "'";
+    ASSERT_DOUBLE_EQ(std::get<double>(param.getValue().value()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
   }
 }
 
@@ -87,8 +102,8 @@ TEST_F(LoggerParamTypeTest, TestParams_bool) {
   params_results.push_back({Param("std::optional<bool> false", std::optional<bool>(false)), false});
 
   for (auto & [param, expected_val] : params_results) {
-    ASSERT_TRUE(std::holds_alternative<bool>(param.getVarValue()))     << "Failed testing Param type of '"  << param.getName() << "'";
-    ASSERT_EQ(std::get<bool>(param.getVarValue()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
+    ASSERT_TRUE(std::holds_alternative<bool>(param.getValue().value()))     << "Failed testing Param type of '"  << param.getName() << "'";
+    ASSERT_EQ(std::get<bool>(param.getValue().value()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
   }
 }
 
@@ -104,8 +119,8 @@ TEST_F(LoggerParamTypeTest, TestParams_string) {
   params_results.push_back({Param("std::optional<std::string>" , std::optional<std::string>("optional_str")) , "optional_str"});
 
   for (auto & [param, expected_val] : params_results) {
-    ASSERT_TRUE(std::holds_alternative<std::string>(param.getVarValue())) << "Failed testing Param type of '"  << param.getName() << "'";
-    ASSERT_EQ(std::get<std::string>(param.getVarValue()), expected_val)   << "Failed testing Param value of '" << param.getName() << "'";
+    ASSERT_TRUE(std::holds_alternative<std::string>(param.getValue().value())) << "Failed testing Param type of '"  << param.getName() << "'";
+    ASSERT_EQ(std::get<std::string>(param.getValue().value()), expected_val)   << "Failed testing Param value of '" << param.getName() << "'";
   }
 }
 
@@ -121,8 +136,7 @@ TEST_F(LoggerParamTypeTest, TestParams_nullopt) {
   params.push_back(Param("std::nullopt"               , std::nullopt));
 
   for (auto & param : params) {
-    ASSERT_TRUE(std::holds_alternative<std::nullopt_t>(param.getVarValue())) << "Failed testing Param type of '"  << param.getName() << "'";
-    ASSERT_FALSE(std::optional<bool>(std::get<std::nullopt_t>(param.getVarValue())).has_value()) << "Failed testing Param value of '" << param.getName() << "'";
+    ASSERT_FALSE(param.getValue().has_value()) << "Failed testing Param type of empty '"  << param.getName() << "'";
   }
 }
 

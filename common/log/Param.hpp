@@ -21,9 +21,31 @@
 #include <optional>
 #include <variant>
 #include <sstream>
+#include <iomanip>
 #include <string.h>
 
 namespace cta::log {
+
+/**
+ * A JSON element can be one of the following types (https://www.json.org/json-en.html):
+ *  - object
+ *  - array
+ *  - string
+ *  - number
+ *  - `true`
+ *  - `false`
+ *  - `null`
+ *
+ *  In order to be able to preserve to correctly log there types - and, in addition, distinguish floats from
+ *  integers - we will support the following types in a variant variable:
+ *  - string
+ *  - int64_t
+ *  - double
+ *  - float
+ *  - bool
+ *  - nullopt_t
+ */
+using ParamValType = std::optional<std::variant<std::string, int64_t, double, float, bool>>;
 
 /**
  * A name/value parameter for the CASTOR logging system.
@@ -31,26 +53,6 @@ namespace cta::log {
 class Param {
 
 public:
-
-  /**
-   * A JSON element can be one of the following types (https://www.json.org/json-en.html):
-   *  - object
-   *  - array
-   *  - string
-   *  - number
-   *  - `true`
-   *  - `false`
-   *  - `null`
-   *
-   *  In order to be able to preserve to correctly log there types - and, in addition, distinguish floats from
-   *  integers - we will support the following types in a variant variable:
-   *  - string
-   *  - int64_t
-   *  - double
-   *  - bool
-   *  - nullopt_t
-   */
-  using VarValueType = std::variant<std::string, int64_t, double, bool, std::nullopt_t>;
 
   /**
    * Constructor.
@@ -69,35 +71,28 @@ public:
    */
   template <typename T>
   void setValue (const T &value) noexcept {
-    if constexpr (is_optional_type<T>::value) {
+    if constexpr (std::is_same_v<T, ParamValType>) {
+      m_value = value;
+    } else if constexpr (is_optional_type<T>::value) {
       if (value.has_value()) {
         setValue(value.value());
       } else {
         setValue(std::nullopt);
       }
     } else if constexpr (std::is_same_v<T, bool>) {
-      std::stringstream oss;
-      oss << value;
-      m_value = oss.str();
-      m_value_v = static_cast<bool>(value);
+      m_value = static_cast<bool>(value);
     } else if constexpr (std::is_integral_v<T>) {
-      std::stringstream oss;
-      oss << value;
-      m_value = oss.str();
-      m_value_v = static_cast<int64_t>(value);
+      m_value = static_cast<int64_t>(value);
+    } else if constexpr (std::is_same_v<T, float>) {
+      m_value = static_cast<float>(value);
     } else if constexpr (std::is_floating_point_v<T>) {
-      std::stringstream oss;
-      oss << value;
-      m_value = oss.str();
-      m_value_v = static_cast<double>(value);
+      m_value = static_cast<double>(value);
     } else if constexpr (std::is_same_v<T, std::nullopt_t>) {
-      m_value = "";
-      m_value_v = std::nullopt;
+      m_value = std::nullopt;
     } else {
-      std::stringstream oss;
+      std::ostringstream oss;
       oss << value;
       m_value = oss.str();
-      m_value_v = oss.str();
     }
   }
 
@@ -107,21 +102,21 @@ public:
   const std::string &getName() const noexcept;
 
   /**
-   * Returns a const reference to the value of the parameter.
+   * Returns a const reference to the variant of the parameter.
    */
-  const std::string &getValue() const noexcept;
+  const ParamValType &getValue() const noexcept;
 
   /**
-   * Returns a const reference to the value of the parameter.
+   * Returns the value of the parameter as a string.
    */
-  const VarValueType &getVarValue() const noexcept;
+  std::string getValueStr(bool jsonify=false) const noexcept;
 
 protected:
 
   /**
    * `is_optional_type<T>` will be used to detect, at compile time, if a variable is of type `std::optional`
    */
-  // Assume T is not std::optional by defaulrt
+  // Assume T is not std::optional by default
   template<typename T>
   struct is_optional_type : std::false_type {};
 
@@ -129,30 +124,46 @@ protected:
   template<typename T>
   struct is_optional_type<std::optional<T>> : std::true_type {};
 
+  // A helper template that is always false
+  template<typename T>
+  struct always_false : std::false_type {};
+
   /**
    * Name of the parameter
    */
   std::string m_name;
 
   /**
-   * The value of the parameter.
-   */
-  std::string m_value;
-
-  /**
    * The value of the parameter in the original type
    */
-  VarValueType m_value_v;
+  ParamValType m_value;
 
+  /**
+   * Helper class to format floating-point values
+   */
+  template<typename T>
+  class floatingPointFormatting {
+  public:
+    explicit floatingPointFormatting(T value) : m_value(value) {
+      static_assert(std::is_floating_point_v<T>, "Template parameter must be a floating point type.");
+    }
+
+    friend std::ostream& operator<<(std::ostream& oss, const floatingPointFormatting& fp) {
+      constexpr int nr_digits = std::numeric_limits<T>::digits10;
+      std::ostringstream oss_tmp;
+      oss_tmp << std::setprecision(nr_digits) << fp.m_value;
+      // Find if value contains a '.' or 'e/E', making it clear that it's a floating-point value
+      if (oss_tmp.str().find_first_of(".eE") == std::string::npos) {
+        // If not, append ".0" to make it clear that it's a floating point
+        oss_tmp << ".0";
+      }
+      oss << oss_tmp.str();
+      return oss;
+    }
+
+  private:
+    T m_value;
+  };
 }; // class Param
-
-/**
- * An helper class allowing the construction of a Param class with sprintf
- * formatting for a double.
- */
-class ParamDoubleSnprintf: public Param {
-public:
-  ParamDoubleSnprintf(std::string_view name, const double value);
-}; // class ParamDoubleSnprintf
 
 } // namespace cta::log

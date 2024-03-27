@@ -17,7 +17,8 @@
 
 #include "common/log/Param.hpp"
 
-#include <cstdio>
+#include <iostream>
+#include <iomanip>
 
 namespace cta::log {
 
@@ -31,19 +32,54 @@ const std::string &Param::getName() const noexcept {
 //------------------------------------------------------------------------------
 // getValue
 //------------------------------------------------------------------------------
-const std::string &Param::getValue() const noexcept {
+const ParamValType &Param::getValue() const noexcept {
   return m_value;
 }
 
-const Param::VarValueType &Param::getVarValue() const noexcept {
-  return m_value_v;
+//------------------------------------------------------------------------------
+// getValueStr
+//------------------------------------------------------------------------------
+std::string Param::getValueStr(bool jsonify) const noexcept {
+  std::ostringstream oss;
+  if (jsonify) {
+    if (m_value.has_value()) {
+      std::visit([&oss](auto &&arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, bool>) {
+          oss << (arg ? "true" : "false");
+        } else if constexpr (std::is_same_v<T, std::string>) {
+          oss << "\"" << arg << "\"";
+        } else if constexpr (std::is_same_v<T, int64_t>) {
+          oss << arg;
+        } else if constexpr (std::is_floating_point_v<T>) {
+          oss << floatingPointFormatting(arg);
+        } else {
+          static_assert(always_false<T>::value, "Type not supported");
+        }
+      }, m_value.value());
+    } else {
+      oss << "null";
+    }
+  } else {
+    if (m_value.has_value()) {
+      std::visit([&oss](auto &&arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_floating_point_v<T>) {
+          oss << floatingPointFormatting(arg);
+        } else {
+          oss << arg;
+        }
+      }, m_value.value());
+    } else {
+      oss << "";
+    }
+  }
+  return oss.str();
 }
 
 template<>
-void Param::setValue<uint8_t>(const uint8_t& value) noexcept {
-  std::stringstream oss;
-  oss << static_cast<int>(value);
-  m_value = oss.str();
+void Param::setValue<ParamValType>(const ParamValType& value) noexcept {
+  m_value = value;
 }
 
 } // namespace cta::log

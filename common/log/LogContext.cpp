@@ -113,7 +113,7 @@ std::ostream & operator << (std::ostream & os,
     } else {
       first = false;
     }
-    os << p->getName() << "=" << p->getValue();
+    os << p->getName() << "=" << p->getValueStr();
   }
   return os;
 }

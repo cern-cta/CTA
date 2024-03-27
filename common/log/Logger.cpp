@@ -210,7 +210,7 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
     const std::string name = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
 
     // Process the parameter value
-    const std::string value = cleanString(param.getValue(), false);
+    const std::string value = cleanString(param.getValueStr(), false);
 
     // Write the name and value to the buffer
     switch(m_logFormat) {
