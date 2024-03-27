@@ -305,6 +305,9 @@ Shared libraries required to access the CTA catalogue
 %{_libdir}/libctacatalogue.so*
 %{_libdir}/libctadropschemacmd.so*
 %{_libdir}/libctardbms.so*
+%{_libdir}/libctardbmsocci.so*
+%{_libdir}/libctardbmssqlite.so*
+%{_libdir}/libctardbmspostgres.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctaschemachecker.so*
 %{_libdir}/libctastatistics.so*
