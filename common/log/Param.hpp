@@ -22,6 +22,7 @@
 #include <variant>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <string.h>
 
 namespace cta::log {
