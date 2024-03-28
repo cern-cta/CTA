@@ -171,8 +171,8 @@ std::string Logger::createMsgHeader(const struct timeval& timeStamp) const {
          << m_programName << ": ";
       break;
     case LogFormat::JSON:
-      os << R"("epoch_time":")" << timeStamp.tv_sec
-         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(",)"
+      os << R"("epoch_time":)" << timeStamp.tv_sec
+         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
          << R"("hostname":")" << m_hostName << R"(",)"
          << R"("program":")" << m_programName << R"(",)";
@@ -212,12 +212,12 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
         {
           // If parameter name is an empty string, set the value to "Undefined"
           const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
-          const std::string value_str = cleanString(param.getValue(), false);
+          const std::string value_str = cleanString(param.getValueStr(), false);
           os << name_str << "=\"" << value_str << "\" ";
         }
         break;
       case LogFormat::JSON:
-        os << ",\"" << param.getKeyValueJSON();
+        os << "," << param.getKeyValueJSON();
     }
   }
 

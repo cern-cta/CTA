@@ -38,7 +38,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithAString) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", "Value")));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("Value"), param->getValue());
+  ASSERT_EQ(std::string("Value"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":\"Value\""), param->getKeyValueJSON());
 }
 
@@ -48,7 +48,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithAStringNoName) {
 
   ASSERT_NO_THROW(param.reset(new Param("", "Value")));
   ASSERT_EQ(std::string(""), param->getName());
-  ASSERT_EQ(std::string("Value"), param->getValue());
+  ASSERT_EQ(std::string("Value"), param->getValueStr());
   ASSERT_EQ(std::string("\"\":\"Value\""), param->getKeyValueJSON());
 }
 
@@ -58,7 +58,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithAnInt) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1234)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1234"), param->getValue());
+  ASSERT_EQ(std::string("1234"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1234"), param->getKeyValueJSON());
 }
 
@@ -68,7 +68,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithAFloat) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1234.12f)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1234.12"), param->getValue());
+  ASSERT_EQ(std::string("1234.12"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1234.12"), param->getKeyValueJSON());
 }
 
@@ -78,7 +78,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithADouble1) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1234.123456789)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1234.123456789"), param->getValue());
+  ASSERT_EQ(std::string("1234.123456789"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1234.123456789"), param->getKeyValueJSON());
 }
 
@@ -88,7 +88,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithADouble2) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1234.0000)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1234.0"), param->getValue());
+  ASSERT_EQ(std::string("1234.0"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1234.0"), param->getKeyValueJSON());
 }
 
@@ -98,7 +98,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithADouble3) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 0.0000)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("0.0"), param->getValue());
+  ASSERT_EQ(std::string("0.0"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":0.0"), param->getKeyValueJSON());
 }
 
@@ -108,7 +108,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithADouble4) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1.234e-20)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1.234e-20"), param->getValue());
+  ASSERT_EQ(std::string("1.234e-20"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1.234e-20"), param->getKeyValueJSON());
 }
 
@@ -119,7 +119,7 @@ TEST_F(cta_log_ParamTest, testConstructorWithADouble5) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1e+30)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1e+30"), param->getValue());
+  ASSERT_EQ(std::string("1e+30"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1e+30"), param->getKeyValueJSON());
 }
 

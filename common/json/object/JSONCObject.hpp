@@ -29,7 +29,7 @@ namespace cta::utils::json::object {
  * 
  * The same json_object pointer is used to read from a JSON string
  * and to create a JSON string. Hence this pointer is reinitialized at each call
- * to buildFromJSON() and getKeyValueJSON()
+ * to buildFromJSON() and getJSON()
  */
 class JSONCObject : public JSONObject {
 public:
@@ -69,7 +69,14 @@ protected:
    * Destroy then initialize the JSON-C representation
    */
   void reinitializeJSONCObject();
-  
+
+  /**
+   * This method allows to get JSON-C type of the object
+   * @param key the key to return the JSON-C type of the object
+   * @return the JSON-C representation of the object associated to the key passed in parameter
+   */
+  json_type getJSONObjectType(const std::string& key);
+
   /**
    * This method allows to get the value from the JSON-C representation of the object
    * @params key the key to get the object from it

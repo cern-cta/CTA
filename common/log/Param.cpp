@@ -30,16 +30,16 @@ const std::string &Param::getName() const noexcept {
 }
 
 //------------------------------------------------------------------------------
-// getVariant
+// getValueVariant
 //------------------------------------------------------------------------------
-const ParamValType &Param::getVariant() const noexcept {
+const ParamValType &Param::getValueVariant() const noexcept {
   return m_value;
 }
 
 //------------------------------------------------------------------------------
-// getValue
+// getValueStr
 //------------------------------------------------------------------------------
-std::string Param::getValue() const noexcept {
+std::string Param::getValueStr() const noexcept {
   std::ostringstream oss;
   if (m_value.has_value()) {
     std::visit([&oss](auto &&arg) {

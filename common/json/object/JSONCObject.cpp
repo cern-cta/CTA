@@ -55,6 +55,15 @@ void JSONCObject::reinitializeJSONCObject() {
   initializeJSONCObject();
 }
 
+json_type JSONCObject::getJSONObjectType(const std::string& key){
+  json_object * objectRet;
+  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+    return json_object_get_type(objectRet);
+  }
+  std::string errMsg = "In JSONCParser::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
+  throw cta::exception::JSONObjectException(errMsg);
+}
+
 json_object * JSONCObject::getJSONObject(const std::string& key){
   json_object * objectRet;
   if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
@@ -77,7 +86,7 @@ uint64_t JSONCObject::jsonGetValue(const std::string & key){
 }
 
 template<>
-time_t JSONCObject::jsonGetValue(const std::string & key){
+int64_t JSONCObject::jsonGetValue(const std::string & key){
   json_object * jsonObj = getJSONObject(key);
   return json_object_get_int64(jsonObj);
 }
@@ -86,6 +95,12 @@ template<>
 double JSONCObject::jsonGetValue(const std::string & key){
   json_object * jsonObj = getJSONObject(key);
   return json_object_get_double(jsonObj);
+}
+
+template<>
+bool JSONCObject::jsonGetValue(const std::string & key){
+  json_object * jsonObj = getJSONObject(key);
+  return json_object_get_boolean(jsonObj);
 }
 
 template<>

@@ -104,7 +104,7 @@ public:
   /**
    * Returns the value of the parameter as a string.
    */
-  std::string getValue() const noexcept;
+  std::string getValueStr() const noexcept;
 
   /**
    * Returns the parameter as a key-value JSON string.
@@ -114,7 +114,7 @@ public:
   /**
    * Returns a const reference to the variant of the parameter.
    */
-  const ParamValType &getVariant() const noexcept;
+  const ParamValType &getValueVariant() const noexcept;
 
 protected:
 
