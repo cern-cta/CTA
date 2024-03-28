@@ -74,14 +74,14 @@ void ArchiveRequest::insert() {
 
       cta::utils::Timer timerdelete;
       for (int i = 0; i < 100000; ++i) {
-        ajr.delete(*m_txn);
+        ajr.deleterow(*m_txn);
       }
       params.add("Delete10to5TimeSec", timerdelete.secs());
       m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 100 000x delete().");
 
       cta::utils::Timer timerdelete2;
       for (int i = 0; i < 1000000; ++i) {
-        ajr.delete(*m_txn);
+        ajr.deleterow(*m_txn);
       }
       params.add("Delete10to6TimeSec", timerdelete2.secs());
       m_lc.log(log::DEBUG, "In PostgresSchedDB::ArchiveRequest::insert(): 1 000 000x delete().");

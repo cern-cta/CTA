@@ -131,7 +131,7 @@ struct ArchiveJobQueueRow {
     stmt.executeQuery();
   }
 
-  void delete(Transaction &txn) const{
+  void deleterow(Transaction &txn) const{
     const char *const sql =
             "DELETE FROM ARCHIVE_JOB_QUEUE\n"
             "WHERE "
