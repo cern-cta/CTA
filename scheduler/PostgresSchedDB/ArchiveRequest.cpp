@@ -17,6 +17,7 @@
 
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "common/Timer.hpp"
 
 namespace cta::postgresscheddb {
 
@@ -52,7 +53,7 @@ void ArchiveRequest::insert() {
     //ajr.addParamsToLogContext(params);
 
     try {
-      utils::Timer timerinsert;
+      cta::utils::Timer timerinsert;
       for (int i = 0; i < 100000; ++i) {
         ajr.insert(*m_txn);
       }
