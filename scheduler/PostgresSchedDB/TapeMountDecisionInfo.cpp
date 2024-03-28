@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/sql/Mounts.hpp"
+//#include <chrono>
 
 namespace cta::postgresscheddb {
 
@@ -70,21 +71,22 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   }
 
   // Get the next Mount Id
-  auto newmount = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
+  auto newMountId = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
 
-  if (!newmount.next()) {
-    throw exception::Exception("In TapeMountDecisionInfo::"
-      "createArchiveMount(): count not insert mount");
-  }
+  // Get the current time point
+  //auto now = std::chrono::system_clock::now();
+  // Convert the time point to milliseconds since the epoch
+  //auto millis_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-  cta::postgresscheddb::sql::MountsRow newMount(newmount);
+
+  //cta::postgresscheddb::sql::MountsRow newMount(newmount);
 
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
   am.mountInfo.mountType       = mount.type;
   am.mountInfo.drive           = driveName;
   am.mountInfo.host            = hostName;
-  am.mountInfo.mountId         = newMount.mountId;
+  am.mountInfo.mountId         = newMountId;
   am.mountInfo.tapePool        = tape.tapePool;
   am.mountInfo.logicalLibrary  = logicalLibrary;
   am.mountInfo.vid             = tape.vid;
@@ -96,7 +98,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // todo : check
-  commit();
+  //commit();
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
@@ -119,14 +121,9 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   }
 
   // Get the next Mount Id
-  auto newmount = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
+  auto newMountId = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
 
-  if (!newmount.next()) {
-    throw exception::Exception("In TapeMountDecisionInfo::"
-      "createArchiveMount(): count not insert mount");
-  }
-
-  cta::postgresscheddb::sql::MountsRow newMount(newmount);
+  //cta::postgresscheddb::sql::MountsRow newMount(newmount);
 
   // Fill up the mount info
   rm.mountInfo.vid               = mount.vid;
@@ -138,7 +135,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   rm.mountInfo.activity          = mount.activity;
   rm.mountInfo.tapePool          = mount.tapePool;
   rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
-  rm.mountInfo.mountId           = newMount.mountId;
+  rm.mountInfo.mountId           = newMountId;
   rm.mountInfo.drive             = driveName;
   rm.mountInfo.logicalLibrary    = logicalLibrary;
   rm.mountInfo.host              = hostName;

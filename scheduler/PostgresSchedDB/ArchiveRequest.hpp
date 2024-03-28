@@ -64,7 +64,10 @@ public:
   void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
   common::dataStructures::MountPolicy getMountPolicy() const;
 
-  std::string getIdStr() const { return "?"; }
+  // 'bogus' string is returned to EOS as Archive request ID
+  // because we do not need a unique ID for Archive request since we can lookup
+  // any archive request by archive file ID and instance name in Relational DB
+  std::string getIdStr() const { return "bogus"; }
   
   struct JobDump {
     uint32_t copyNb;
