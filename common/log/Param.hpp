@@ -44,7 +44,7 @@ namespace cta::log {
  *  - double
  *  - float
  *  - bool
- *  - nullopt_t
+ *  - nullopt_t (using the std::optional<>)
  */
 using ParamValType = std::optional<std::variant<std::string, int64_t, uint64_t, float, double, bool>>;
 

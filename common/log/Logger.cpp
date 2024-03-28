@@ -43,8 +43,8 @@ Logger::~Logger() = default;
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, nullptr);
+  // Get current time with high precision
+  auto timeStamp = std::chrono::system_clock::now();
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
@@ -158,21 +158,32 @@ void Logger::setStaticParams(const std::map<std::string, std::string> &staticPar
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(const struct timeval& timeStamp) const {
+std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
+  using namespace std::chrono;
   std::ostringstream os;
+
+  // Get second part
+  auto ts_s_fraction = duration_cast<seconds>(timeStamp.time_since_epoch()).count();
+  // Get nanoseconds part
+  auto ts_ns_fraction = duration_cast<nanoseconds>(timeStamp.time_since_epoch()).count() % 1000000000;
+
+  // Convert to time_t for compatibility with ctime functions
+  time_t ts_t = system_clock::to_time_t(timeStamp);
+
+  // Convert to localtime
   struct tm localTime;
-  localtime_r(&timeStamp.tv_sec, &localTime);
+  localtime_r(&ts_t, &localTime);
 
   switch(m_logFormat) {
     case LogFormat::DEFAULT:
       os << std::put_time(&localTime, "%b %e %T")
-         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << ' '
+         << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << ' '
          << m_hostName << " "
          << m_programName << ": ";
       break;
     case LogFormat::JSON:
-      os << R"("epoch_time":)" << timeStamp.tv_sec
-         << '.' << std::setfill('0') << std::setw(6) << timeStamp.tv_usec << R"(,)"
+      os << R"("epoch_time":)" << ts_s_fraction
+         << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
          << R"("hostname":")" << m_hostName << R"(",)"
          << R"("program":")" << m_programName << R"(",)";
