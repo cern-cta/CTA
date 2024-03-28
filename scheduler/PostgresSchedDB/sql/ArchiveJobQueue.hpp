@@ -130,6 +130,17 @@ struct ArchiveJobQueueRow {
     stmt.bindUint64(":MOUNT_ID", 1000);
     stmt.executeQuery();
   }
+
+  void delete(Transaction &txn) const{
+    const char *const sql =
+            "DELETE FROM ARCHIVE_JOB_QUEUE\n"
+            "WHERE "
+            " JOB_ID IN (SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE ORDER BY RANDOM() "
+            " LIMIT 1)";
+
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.executeQuery();
+  }
   void insert(Transaction &txn) const {
     // does not set mountId or jobId
     const char *const sql =
