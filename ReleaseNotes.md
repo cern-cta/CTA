@@ -4,6 +4,9 @@
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#647 - Upgrade eos-5 to eos-5.2.21-1
 
+### Alma9 Migration
+- cta/CTA#590 - Migrate cta-versionlock script to Python3
+
 # v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features
