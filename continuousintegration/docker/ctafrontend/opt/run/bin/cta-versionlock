@@ -107,13 +107,13 @@ def switch_repos(repo_id_list, enable):
     line_counter = 0
     in_repo = False
     for line in file_repo_lines:
-      # We have found the current repo, search for the flag
+      # We have found the current repo, search for the `enabled` flag
       # and update it. If it is not there, throw exception.
       if line.startswith('[{}]'.format(repo_id)):
         in_repo = True
 
       if in_repo and line[0] == '[':
-        raise RuntimeError("Could not find `enabled` flag for repo {} in repofile {}".format(repo_id, repo_obj.repofile))
+        raise RuntimeError("Could not find `enabled` flag for repo {} in repofile {}".format(repo_id, repo_file_dict[repo_id]))
 
       # We are in the line we want to modify
       if line.startswith('enabled'):
@@ -125,7 +125,7 @@ def switch_repos(repo_id_list, enable):
     file_repo_lines[line_counter] = 'enabled=1\n' if enabled else 'enabled=0\n'
 
     # Overwrite the file
-    with open(repo_obj.repofile, 'w') as f:
+    with open(repo_file_dict[repo_id], 'w') as f:
       f.writelines(file_repo_lines)
 
 def enable_repos(repo_id_list):
