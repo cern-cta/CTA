@@ -122,8 +122,8 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   // Commit the transaction
   aReq->commit();
   log::ScopedParamContainer params(logContext);
-  params.add("Insert10to5TimeSec", timerinsert.secs());
-  logContext.log(log::DEBUG, "In PostgresSchedDB::queueArchive(): 100 000x insert()commit().");
+  params.add("InsertCommitTimeSec", timerinsert.secs());
+  logContext.log(log::DEBUG, "In PostgresSchedDB::queueArchive(): insert() and commit() done.");
 
   return aReq->getIdStr();
 }
