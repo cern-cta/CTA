@@ -34,10 +34,6 @@ TEST_F(LoggerParamTypeTest, TestParams_int64_t) {
   // All of these will be stored as `int64_t`
   // Keep a list of params and expected results
   std::list<std::pair<Param, int64_t>> params_results;
-  params_results.push_back({Param("uint8_t" , static_cast<uint8_t>(10u))  , 10});
-  params_results.push_back({Param("uint16_t", static_cast<uint16_t>(20u)) , 20});
-  params_results.push_back({Param("uint32_t", static_cast<uint32_t>(30u)) , 30});
-  params_results.push_back({Param("uint64_t", static_cast<uint64_t>(40u)) , 40});
   params_results.push_back({Param("int8_t"  , static_cast<int8_t>(-10))   ,-10});
   params_results.push_back({Param("int16_t" , static_cast<int16_t>(-20))  ,-20});
   params_results.push_back({Param("int32_t" , static_cast<int32_t>(-30))  ,-30});
@@ -45,16 +41,38 @@ TEST_F(LoggerParamTypeTest, TestParams_int64_t) {
   params_results.push_back({Param("int"     , static_cast<int>(50))       , 50});
   params_results.push_back({Param("short"   , static_cast<short>(60))     , 60});
   params_results.push_back({Param("long"    , static_cast<long>(70))      , 70});
-  // Char will be treated as integers, since they fulfil `std::is_integral_v<T>`.
+  // Chars will be treated as integers, since they fulfil `std::is_integral_v<T>`.
   // Change them to be stored as strings only if there is a clear use-case.
   params_results.push_back({Param("char", 'a'), 97});
   // Test optional values too
-  params_results.push_back({Param("std::optional<uint64_t>", std::optional<uint64_t>(123)), 123});
   params_results.push_back({Param("std::optional<int64_t>" , std::optional<int64_t>(-456)),-456});
 
   for (auto & [param, expected_val] : params_results) {
     ASSERT_TRUE(std::holds_alternative<int64_t>(param.getValueVariant().value())) << "Failed testing Param type of '" << param.getName() << "'";
     ASSERT_EQ(std::get<int64_t>(param.getValueVariant().value()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
+  }
+}
+
+TEST_F(LoggerParamTypeTest, TestParams_uint64_t) {
+
+  // All of these will be stored as `uint64_t`
+  // Keep a list of params and expected results
+  std::list<std::pair<Param, int64_t>> params_results;
+  params_results.push_back({Param("uint8_t"       , static_cast<uint8_t>(10u))  , 10u});
+  params_results.push_back({Param("uint16_t"      , static_cast<uint16_t>(20u)) , 20u});
+  params_results.push_back({Param("uint32_t"      , static_cast<uint32_t>(30u)) , 30u});
+  params_results.push_back({Param("uint64_t"      , static_cast<uint64_t>(40u)) , 40u});
+  params_results.push_back({Param("unsigned int"  , static_cast<unsigned int>(50))  , 50u});
+  params_results.push_back({Param("unsigned short", static_cast<unsigned short>(60)), 60u});
+  params_results.push_back({Param("unsigned long" , static_cast<unsigned long>(70)) , 70u});
+  // Unsigned chars will be treated as integers, since they fulfil `std::is_integral_v<T>`.
+  params_results.push_back({Param("unsigned char", static_cast<unsigned char>(0x7F)), 127u});
+  // Test optional values too
+  params_results.push_back({Param("std::optional<uint64_t>", std::optional<uint64_t>(123)), 123u});
+
+  for (auto & [param, expected_val] : params_results) {
+    ASSERT_TRUE(std::holds_alternative<uint64_t>(param.getValueVariant().value())) << "Failed testing Param type of '" << param.getName() << "'";
+    ASSERT_EQ(std::get<uint64_t>(param.getValueVariant().value()), expected_val) << "Failed testing Param value of '" << param.getName() << "'";
   }
 }
 

@@ -36,16 +36,17 @@ namespace cta::log {
  *  - `false`
  *  - `null`
  *
- *  In order to be able to preserve to correctly log there types - and, in addition, distinguish floats from
+ *  In order to preserve correctly the log parameter types and values - in addition to distinguishing floats from
  *  integers - we will support the following types in a variant variable:
  *  - string
  *  - int64_t
+ *  - uint64_t
  *  - double
  *  - float
  *  - bool
  *  - nullopt_t
  */
-using ParamValType = std::optional<std::variant<std::string, int64_t, double, float, bool>>;
+using ParamValType = std::optional<std::variant<std::string, int64_t, uint64_t, float, double, bool>>;
 
 /**
  * A name/value parameter for the CASTOR logging system.
@@ -82,7 +83,11 @@ public:
     } else if constexpr (std::is_same_v<T, bool>) {
       m_value = static_cast<bool>(value);
     } else if constexpr (std::is_integral_v<T>) {
-      m_value = static_cast<int64_t>(value);
+      if constexpr (std::is_signed_v<T>) {
+        m_value = static_cast<int64_t>(value);
+      } else {
+        m_value = static_cast<uint64_t>(value);
+      }
     } else if constexpr (std::is_same_v<T, float>) {
       m_value = static_cast<float>(value);
     } else if constexpr (std::is_floating_point_v<T>) {

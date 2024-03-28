@@ -56,10 +56,33 @@ TEST_F(cta_log_ParamTest, testConstructorWithAnInt) {
   using namespace cta::log;
   std::unique_ptr<Param> param;
 
-  ASSERT_NO_THROW(param.reset(new Param("Name", 1234)));
+  ASSERT_NO_THROW(param.reset(new Param("Name", -1234)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("-1234"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":-1234"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithAnUInt) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1234u)));
   ASSERT_EQ(std::string("Name"), param->getName());
   ASSERT_EQ(std::string("1234"), param->getValueStr());
   ASSERT_EQ(std::string("\"Name\":1234"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithALargeUInt) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  // Confirm assumption that max uint64_t cannot fit in a int64_t
+  ASSERT_EQ("-1", std::to_string(static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", std::numeric_limits<uint64_t>::max())));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::to_string(std::numeric_limits<uint64_t>::max()), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":") + std::to_string(std::numeric_limits<uint64_t>::max()), param->getKeyValueJSON());
 }
 
 TEST_F(cta_log_ParamTest, testConstructorWithAFloat) {

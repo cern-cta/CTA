@@ -69,7 +69,7 @@ std::string Param::getKeyValueJSON() const noexcept {
         oss << (arg ? "true" : "false");
       } else if constexpr (std::is_same_v<T, std::string>) {
         oss << "\"" << arg << "\"";
-      } else if constexpr (std::is_same_v<T, int64_t>) {
+      } else if constexpr (std::is_integral_v<T>) {
         oss << arg;
       } else if constexpr (std::is_floating_point_v<T>) {
         oss << floatingPointFormatting(arg);
