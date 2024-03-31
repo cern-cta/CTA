@@ -123,7 +123,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   // Get the next Mount Id
   auto newMountId = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
 
-  cta::postgresscheddb::sql::MountsRow newMount(newmount);
+  //cta::postgresscheddb::sql::MountsRow newMount(newmount);
 
   // Fill up the mount info
   rm.mountInfo.vid               = mount.vid;
