@@ -56,8 +56,7 @@ struct MountsRow {
    */
   static uint64_t insertMountAndSelect(Transaction &txn, const std::string& owner) {
     try {
-      const char *const sql =
-              "select NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID";
+      const char *const sql = "select NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID";
       auto stmt = txn.conn().createStmt(sql);
       auto rset = stmt.executeQuery();
       if(!rset.next()) {
@@ -77,7 +76,6 @@ struct MountsRow {
     //  "MOUNT_ID,"
     //  "EXTRACT(EPOCH FROM CREATION_TIME AT TIME ZONE 'UTC')::BIGINT AS CREATION_TIMESTAMP,"
     //  "OWNER";
-//
     //auto stmt = txn.conn().createStmt(sql);
     //stmt.bindString(":OWNER", owner);
 
