@@ -36,14 +36,14 @@ struct MountsRow {
     *this = rset;
   }
 
-  MountsRow& operator=(const rdbms::Rset &rset) {
-    mountId      = rset.columnUint64("MOUNT_ID");
+  MountsRow &operator=(const rdbms::Rset &rset) {
+    mountId = rset.columnUint64("MOUNT_ID");
     creationTime = rset.columnUint64("CREATION_TIMESTAMP");
-    owner        = rset.columnString("OWNER");
+    owner = rset.columnString("OWNER");
     return *this;
   }
 
-  void addParamsToLogContext(log::ScopedParamContainer& params) const {
+  void addParamsToLogContext(log::ScopedParamContainer &params) const {
     params.add("mountId", mountId);
     params.add("creationTime", creationTime);
     params.add("owner", owner);
@@ -54,18 +54,18 @@ struct MountsRow {
    *
    * @return result set containing the one row in the table
    */
-  static uint64_t insertMountAndSelect(Transaction &txn, const std::string& owner) {
+  static uint64_t insertMountAndSelect(Transaction &txn, const std::string &owner) {
     try {
       const char *const sql = "select NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID";
       auto stmt = txn.conn().createStmt(sql);
       auto rset = stmt.executeQuery();
-      if(!rset.next()) {
+      if (!rset.next()) {
         throw exception::Exception("Result set is unexpectedly empty");
       }
       return rset.columnUint64("MOUNT_ID");
-    } catch(exception::UserError &) {
+    } catch (exception::UserError &) {
       throw;
-    } catch(exception::Exception &ex) {
+    } catch (exception::Exception &ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
     }
@@ -80,6 +80,7 @@ struct MountsRow {
     //stmt.bindString(":OWNER", owner);
 
     //return stmt.executeQuery();
+  };
 };
 
 } // namespace cta::postgresscheddb::sql
