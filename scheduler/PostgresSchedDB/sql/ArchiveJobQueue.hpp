@@ -249,7 +249,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
 
     const char *const sql =
     "SELECT "
@@ -308,7 +308,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
@@ -365,7 +365,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, uint64_t limit) {
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
     const char *const sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"

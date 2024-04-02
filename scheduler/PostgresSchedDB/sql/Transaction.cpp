@@ -47,11 +47,14 @@ void Transaction::abort() {
   m_begin = false;
 }
 
+rdbms::Conn &Transaction::getNonTxnConn() {
+  return connPool.getConn();
+}
+
 rdbms::Conn &Transaction::conn() {
   if (!m_begin) {
     throw SQLError(std::string("No transaction"));
   }
   return m_conn;
 }
-
 } // namespace cta::postgresscheddb
