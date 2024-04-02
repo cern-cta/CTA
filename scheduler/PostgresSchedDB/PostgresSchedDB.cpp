@@ -149,14 +149,15 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
 {
   rdbms::Rset resultSet_ForTransfer;
   rdbms::Rset resultSet_ForFailure;
-  auto sqlconn = m_connPool.getConn();
+  auto sqlconn_fortransfer = m_connPool.getConn();
+  auto sqlconn_forfailure = m_connPool.getConn();
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          sqlconn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
+          sqlconn_fortransfer, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
   resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          sqlconn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
+          sqlconn_forfailure, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
