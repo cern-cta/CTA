@@ -20,7 +20,7 @@
 namespace cta::postgresscheddb {
 
 Transaction::Transaction(rdbms::ConnPool &connPool) :
-  m_conn(connPool.getConn())
+  m_conn(connPool.getConn()), m_connPool(connPool)
 {
   m_conn.executeNonQuery("BEGIN");
 }
@@ -48,7 +48,7 @@ void Transaction::abort() {
 }
 
 rdbms::Conn &Transaction::getNonTxnConn() {
-  return std::move(connPool.getConn());
+  return m_connPool.getConn();
 }
 
 rdbms::Conn &Transaction::conn() {

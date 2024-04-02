@@ -78,7 +78,8 @@ public:
   ~Transaction() noexcept;
 
 private:
-  
+
+  rdbms::ConnPool &m_connPool;
   rdbms::Conn m_conn;
   bool m_begin = true;
 };
