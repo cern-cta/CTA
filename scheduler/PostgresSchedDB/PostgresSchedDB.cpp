@@ -149,7 +149,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
 {
   rdbms::Rset resultSet_ForTransfer;
   rdbms::Rset resultSet_ForFailure;
-  auto& sqlconn = m_connPool.getConn();
+  auto sqlconn = m_connPool.getConn();
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
