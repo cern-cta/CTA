@@ -20,6 +20,7 @@
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
 
+#include <chrono>
 #include <atomic>
 #include <list>
 #include <map>
@@ -202,6 +203,12 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
+
+  /**
+   * Timestamp type
+   */
+  using TimestampT = decltype(std::chrono::system_clock::now());
+
   /**
    * Creates and returns the header of a log message
    *
@@ -210,7 +217,7 @@ private:
    * @param timeStamp   Timestamp of the message
    * @return            Message header
    */
-  std::string createMsgHeader(const struct timeval& timeStamp) const;
+  std::string createMsgHeader(const TimestampT& timeStamp) const;
 
   /**
    * Creates and returns the body of a log message

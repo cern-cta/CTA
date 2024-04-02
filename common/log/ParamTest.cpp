@@ -38,16 +38,112 @@ TEST_F(cta_log_ParamTest, testConstructorWithAString) {
 
   ASSERT_NO_THROW(param.reset(new Param("Name", "Value")));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("Value"), param->getValue());
+  ASSERT_EQ(std::string("Value"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":\"Value\""), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithAStringNoName) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("", "Value")));
+  ASSERT_EQ(std::string(""), param->getName());
+  ASSERT_EQ(std::string("Value"), param->getValueStr());
+  ASSERT_EQ(std::string("\"\":\"Value\""), param->getKeyValueJSON());
 }
 
 TEST_F(cta_log_ParamTest, testConstructorWithAnInt) {
   using namespace cta::log;
   std::unique_ptr<Param> param;
 
-  ASSERT_NO_THROW(param.reset(new Param("Name", 1234)));
+  ASSERT_NO_THROW(param.reset(new Param("Name", -1234)));
   ASSERT_EQ(std::string("Name"), param->getName());
-  ASSERT_EQ(std::string("1234"), param->getValue());
+  ASSERT_EQ(std::string("-1234"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":-1234"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithAnUInt) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1234u)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1234"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1234"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithALargeUInt) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  // Confirm assumption that max uint64_t cannot fit in a int64_t
+  ASSERT_EQ("-1", std::to_string(static_cast<int64_t>(std::numeric_limits<uint64_t>::max())));
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", std::numeric_limits<uint64_t>::max())));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::to_string(std::numeric_limits<uint64_t>::max()), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":") + std::to_string(std::numeric_limits<uint64_t>::max()), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithAFloat) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1234.12f)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1234.12"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1234.12"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithADouble1) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1234.123456789)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1234.123456789"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1234.123456789"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithADouble2) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1234.0000)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1234.0"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1234.0"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithADouble3) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 0.0000)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("0.0"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":0.0"), param->getKeyValueJSON());
+}
+
+TEST_F(cta_log_ParamTest, testConstructorWithADouble4) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1.234e-20)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1.234e-20"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1.234e-20"), param->getKeyValueJSON());
+}
+
+
+TEST_F(cta_log_ParamTest, testConstructorWithADouble5) {
+  using namespace cta::log;
+  std::unique_ptr<Param> param;
+
+  ASSERT_NO_THROW(param.reset(new Param("Name", 1e+30)));
+  ASSERT_EQ(std::string("Name"), param->getName());
+  ASSERT_EQ(std::string("1e+30"), param->getValueStr());
+  ASSERT_EQ(std::string("\"Name\":1e+30"), param->getKeyValueJSON());
 }
 
 } // namespace unitTests
