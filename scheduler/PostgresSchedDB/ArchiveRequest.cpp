@@ -50,17 +50,17 @@ void ArchiveRequest::insert() {
     ajr.maxTotalRetries = aj.maxTotalRetries;
 
     log::ScopedParamContainer params(m_lc);
-    //ajr.addParamsToLogContext(params);
+    ajr.addParamsToLogContext(params);
 
     try {
-        ajr.insert(*m_txn);
+      ajr.insert(*m_txn);
     } catch(exception::Exception &ex) {
       params.add("exeptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
       throw;
     }
 
-    //m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
+    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
 }
 

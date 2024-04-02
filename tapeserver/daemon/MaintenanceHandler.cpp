@@ -393,7 +393,6 @@ MaintenanceHandler::~MaintenanceHandler() {
 // MaintenanceHandler::runRepackRequestManager
 //------------------------------------------------------------------------------
 bool MaintenanceHandler::runRepackRequestManager() const {
-  m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::runRepackRequestManager(): asking if to run the repack manager or not.");
   return m_tapedConfig.useRepackManagement.value() == "yes";
 }
 

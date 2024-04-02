@@ -71,15 +71,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   }
 
   // Get the next Mount Id
-  auto newMountId = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
-
-  // Get the current time point
-  //auto now = std::chrono::system_clock::now();
-  // Convert the time point to milliseconds since the epoch
-  //auto millis_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-
-
-  //cta::postgresscheddb::sql::MountsRow newMount(newmount);
+  auto newMountId = cta::postgresscheddb::sql::MountsRow::getNextMountID(m_txn);
 
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
@@ -96,9 +88,6 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   am.mountInfo.vendor          = tape.vendor;
   am.mountInfo.capacityInBytes = tape.capacityInBytes;
   am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
-
-  // todo : check
-  //commit();
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
@@ -121,9 +110,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   }
 
   // Get the next Mount Id
-  auto newMountId = cta::postgresscheddb::sql::MountsRow::insertMountAndSelect(m_txn, hostName);
-
-  //cta::postgresscheddb::sql::MountsRow newMount(newmount);
+  auto newMountId = cta::postgresscheddb::sql::MountsRow::getNextMountID(m_txn);
 
   // Fill up the mount info
   rm.mountInfo.vid               = mount.vid;
@@ -139,9 +126,6 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   rm.mountInfo.drive             = driveName;
   rm.mountInfo.logicalLibrary    = logicalLibrary;
   rm.mountInfo.host              = hostName;
-
-  // todo: check
-  commit();
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());
