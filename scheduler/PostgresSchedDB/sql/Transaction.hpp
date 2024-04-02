@@ -45,7 +45,8 @@ public:
   rdbms::Conn &conn();
 
   /**
-   * Get new connection for non-transactions, such as SELECT
+   * Commit any pending transactions
+   * and return the connection
    *
    * @return connection
    */
@@ -63,6 +64,11 @@ public:
    * Commit the transaction
    */
   void commit();
+
+  /**
+   * Start new transaction unless it has started already
+   */
+  void start();
 
   /**
    * Abort and roll back the transaction

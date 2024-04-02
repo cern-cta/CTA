@@ -22,7 +22,7 @@ namespace cta::postgresscheddb {
 Transaction::Transaction(rdbms::ConnPool &connPool) :
   m_conn(connPool.getConn()), m_conn_non_txn(connPool.getConn())
 {
-  m_conn.executeNonQuery("BEGIN");
+  start();
 }
 
 Transaction::~Transaction() { 
@@ -37,6 +37,13 @@ void Transaction::lockGlobal(uint64_t lockId) {
   stmt.executeQuery();
 }
 
+void Transaction::start() {
+  if (!m_begin) {
+    m_conn.executeNonQuery("BEGIN");
+    m_begin = true;
+  }
+}
+
 void Transaction::commit() {
   m_conn.commit();
   m_begin = false;
@@ -48,7 +55,12 @@ void Transaction::abort() {
 }
 
 rdbms::Conn &Transaction::getNonTxnConn() {
-  return m_conn_non_txn;
+  if (!m_begin) {
+    return m_conn;
+  } else {
+    commit();
+    return m_conn;
+  }
 }
 
 rdbms::Conn &Transaction::conn() {

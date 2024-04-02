@@ -32,7 +32,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 {
 
   rdbms::Rset resultSet;
-  // make the txn connection commit and can  any pending transactions
+  // make the txn connection commit and can any pending transactions
   auto& nonTxnConn = m_txn.getNonTxnConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
@@ -54,6 +54,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   }
 
   // mark the jobs in the batch as owned
+  m_txn.start();
   sql::ArchiveJobQueueRow::updateMountId(m_txn, jobs, mountInfo.mountId);
   m_txn.commit();
 
