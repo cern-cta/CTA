@@ -1,4 +1,11 @@
-# Next
+# v4.NEXT / v5.NEXT
+
+## Features
+- cta/CTA#646 - JSON logging with correct field types
+
+### Bug Fixes
+- cta/CTA#485 - Check disk file metadata on delete requests
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
@@ -9,9 +16,6 @@
 ### Features
 - cta/CTA#573 - Add configuration on CTA SSI frontend to block user and/or repack operations
 - cta/CTA#576 - Read current TPCONFIG configuration from cta-taped.conf
-
-### Bug Fixes
-- cta/CTA#485 - Check disk file metadata on delete requests
 
 ### Alma9 Migration
 - cta/CTA#614 - Alma9 pipeline fails on the kubernetes tests
@@ -24,9 +28,6 @@
 - cta/CTA#623 - Avoid race condition during ci for alma9
 - cta/CTA#628 - Retry system tests in the ci
 - cta/operations#1296 - Convention for CTA repositories
-
-### Bug Fixes
-- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 
 # v4.10.9.0-1 / v5.10.9.0-1
 

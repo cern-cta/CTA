@@ -60,7 +60,7 @@ json_type JSONCObject::getJSONObjectType(const std::string& key){
   if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
     return json_object_get_type(objectRet);
   }
-  std::string errMsg = "In JSONCParser::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
+  std::string errMsg = "In JSONCObject::getJSONObjectType(), the provided json does not contain any key named \""+key+"\".";
   throw cta::exception::JSONObjectException(errMsg);
 }
 
@@ -69,7 +69,7 @@ json_object * JSONCObject::getJSONObject(const std::string& key){
   if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
     return objectRet;
   }
-  std::string errMsg = "In JSONCParser::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
+  std::string errMsg = "In JSONCObject::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
   throw cta::exception::JSONObjectException(errMsg);
 }
 
