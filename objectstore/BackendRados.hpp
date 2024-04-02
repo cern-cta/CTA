@@ -21,6 +21,7 @@
 #include "rados/librados.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/BlockingQueue.hpp"
+#include "common/Timer.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include <future>
@@ -29,23 +30,6 @@
 #define BACKOFF (1)
 #define NOTIFY (2)
 #define RADOS_LOCKING_STRATEGY BACKOFF
-
-// Define this to get long response times logging.
-#define RADOS_SLOW_CALLS_LOGGING
-#define RADOS_SLOW_CALLS_LOGGING_FILE "/var/tmp/cta-rados-slow-calls.log"
-#define RADOS_SLOW_CALL_TIMEOUT 1
-
-#ifdef RADOS_SLOW_CALLS_LOGGING
-#include "common/Timer.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
-#include <fstream>
-#include <iomanip>
-#include <algorithm>
-#include <syscall.h>
-#endif //RADOS_SLOW_CALLS_LOGGING
-
-#define RADOS_LOCK_PERFORMANCE_LOGGING_FILE "/var/tmp/cta-rados-locking.log"
 
 namespace cta::objectstore {
 
@@ -138,86 +122,9 @@ private:
 
 public:
   ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us=0) override;
-
   ScopedLock * lockShared(const std::string& name, uint64_t timeout_us=0) override;
+
 private:
-  /**
-   * A class for logging the calls to rados taking too long.
-   * If RADOS_SLOW_CALLS_LOGGING is not defined, this is just an empty shell.
-   */
-  class RadosTimeoutLogger {
-  public:
-    void logIfNeeded(const std::string & radosCall, const std::string & objectName) {
-      #ifdef RADOS_SLOW_CALLS_LOGGING
-      if (m_timer.secs() >= RADOS_SLOW_CALL_TIMEOUT) {
-        cta::threading::MutexLocker ml(g_mutex);
-        std::ofstream logFile(RADOS_SLOW_CALLS_LOGGING_FILE, std::ofstream::app);
-
-        auto now = std::chrono::system_clock::now();
-        auto duration = now.time_since_epoch();
-        std::time_t end_time = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-        duration -= std::chrono::seconds(end_time);
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
-
-        char date[80];
-        int len = strftime(date, 80, "%b %e %T", localtime(&end_time));
-        snprintf(date+len, 79-len, ".%06ld ", us);
-
-        logFile << date << " PID=\"" << ::getpid() << "\" TID=\"" << syscall(SYS_gettid) << "\" op=\"" << radosCall
-                << "\" obj=\"" << objectName << "\" duration=\"" << m_timer.secs() << "\"" << std::endl;
-      }
-      #endif //RADOS_SLOW_CALLS_LOGGING
-    }
-    void reset() {
-      #ifdef RADOS_SLOW_CALLS_LOGGING
-      m_timer.reset();
-      #endif //RADOS_SLOW_CALLS_LOGGING
-    }
-  private:
-    #ifdef RADOS_SLOW_CALLS_LOGGING
-    cta::utils::Timer m_timer;
-    static cta::threading::Mutex g_mutex;
-    #endif //RADOS_SLOW_CALLS_LOGGING
-  };
-
-  /**
-   * A class for logging lock timings and performance
-   */
-  class RadosLockTimingLogger {
-  public:
-    struct Measurements {
-      size_t attempts = 0;
-      size_t waitCount = 0;
-      double totalTime = 0;
-      double totalLatency = 0;
-      double minLatency = 0;
-      double maxLatency = 0;
-      double totalWaitTime = 0;
-      double minWaitTime = 0;
-      double maxWaitTime = 0;
-      double totalLatencyMultiplier = 0;
-      double minLatencyMultiplier = 0;
-      double maxLatencyMultiplier = 0;
-      void addSuccess (double latency, double time);
-      void addAttempt(double latency, double waitTime, double latencyMultiplier);
-   };
-    void addMeasurements(const Measurements & measurements);
-    void logIfNeeded();
-    ~RadosLockTimingLogger();
-  private:
-    struct CumulatedMesurements: public Measurements {
-      size_t totalCalls = 0;
-      size_t minAttempts = 0;
-      size_t maxAttempts = 0;
-      double minTotalTime = 0;
-      double maxTotalTime = 0;
-    };
-    CumulatedMesurements m_measurements;
-    threading::Mutex m_mutex;
-    utils::Timer m_timer;
-  };
-  static RadosLockTimingLogger g_RadosLockTimingLogger;
-
   /**
    * A class handling the watch part when waiting for a lock.
    */
@@ -242,7 +149,6 @@ private:
       bool m_promiseSet = false;
       std::promise<void> m_promise;
       std::future<void> m_future;
-      RadosTimeoutLogger m_radosTimeoutLogger;
       std::string m_name;
     };
     std::unique_ptr<Internal> m_internal;
@@ -316,8 +222,6 @@ public:
     static void createExclusiveCallback(librados::completion_t completion, void *pThis);
     /** Callback for stat operation, handling potential retries after EEXIST */
     static void statCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
     /** Timer for retries (created only when needed */
     std::unique_ptr<cta::utils::Timer> m_retryTimer;
   };
@@ -368,8 +272,6 @@ public:
     static void commitCallback(librados::completion_t completion, void *pThis);
     /** The fourth callback operation (after unlocking) */
     static void unlockCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
@@ -398,8 +300,6 @@ public:
     std::string m_lockClient;
     /** The second callback operation (after deleting) */
     static void deleteCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
@@ -435,8 +335,6 @@ public:
     ::librados::bufferlist m_radosBufferList;
     /** The callback for the fetch operation */
     static void fetchCallback(librados::completion_t completion, void *pThis);
-    /** Instrumentation for rados calls timing */
-    RadosTimeoutLogger m_radosTimeoutLogger;
   };
 
   Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
