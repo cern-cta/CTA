@@ -188,6 +188,10 @@ echo
 echo "Launching gfal_activity_check.sh on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/gfal_activity_check.sh"  || exit 1
 
+echo
+echo "Launching xrootd_activity_check.sh on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash - c "${TEST_PRERUN} && /root/xrootd_activity_check.sh" || exit 1
+
 echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ctaeos:/root/
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh || exit 1

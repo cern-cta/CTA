@@ -16,9 +16,9 @@
 #               submit itself to any jurisdiction.
 
 # Archive some files.
-dd if=/dev/urandom of=/root/test_act bs=15K count=1
-xrdcp /root/test_act root://${EOSINSTANCE}/${EOS_DIR}/test_valid_instance
-xrdcp /root/test_act root://${EOSINSTANCE}/${EOS_DIR}/test_invalid_instance
+dd if=/dev/urandom of=/root/test_act_gfal bs=15K count=1
+xrdcp /root/test_act_gfal root://${EOSINSTANCE}/${EOS_DIR}/test_valid_instance
+xrdcp /root/test_act_gfal root://${EOSINSTANCE}/${EOS_DIR}/test_invalid_instance
 
 # Query .well-known tape rest api endpoint to get the sitename
 site_name=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
