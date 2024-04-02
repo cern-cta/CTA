@@ -1,3 +1,8 @@
+# v4.10.10.1-1 / v5.10.10.1-1
+
+## Features
+- cta/CTA#646 - JSON logging with correct field types
+
 # v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features

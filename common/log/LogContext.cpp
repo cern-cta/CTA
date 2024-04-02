@@ -33,7 +33,7 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
   if (i != m_params.end()) {
-    i->setValue(param.getValue());
+    i->setValue(param.getValueVariant());
   } else {
     m_params.push_back(param);
   }
@@ -44,7 +44,7 @@ void LogContext::moveToTheEndIfPresent(std::string_view paramName) noexcept {
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
   if (i != m_params.end()) {    
-    const Param param(paramName,i->getValue());
+    const Param param(paramName, i->getValueVariant());
     m_params.erase(i);
     m_params.push_back(param);
   }
@@ -113,7 +113,7 @@ std::ostream & operator << (std::ostream & os,
     } else {
       first = false;
     }
-    os << p->getName() << "=" << p->getValue();
+    os << p->getName() << "=" << p->getValueStr();
   }
   return os;
 }

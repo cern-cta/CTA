@@ -17,7 +17,8 @@
 
 #include "common/log/Param.hpp"
 
-#include <cstdio>
+#include <iostream>
+#include <iomanip>
 
 namespace cta::log {
 
@@ -29,17 +30,62 @@ const std::string &Param::getName() const noexcept {
 }
 
 //------------------------------------------------------------------------------
-// getValue
+// getValueVariant
 //------------------------------------------------------------------------------
-const std::string &Param::getValue() const noexcept {
+const ParamValType &Param::getValueVariant() const noexcept {
   return m_value;
 }
 
+//------------------------------------------------------------------------------
+// getValueStr
+//------------------------------------------------------------------------------
+std::string Param::getValueStr() const noexcept {
+  std::ostringstream oss;
+  if (m_value.has_value()) {
+    std::visit([&oss](auto &&arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_floating_point_v<T>) {
+        oss << floatingPointFormatting(arg);
+      } else {
+        oss << arg;
+      }
+    }, m_value.value());
+  } else {
+    oss << "";
+  }
+  return oss.str();
+}
+
+//------------------------------------------------------------------------------
+// getKeyValueJSON
+//------------------------------------------------------------------------------
+std::string Param::getKeyValueJSON() const noexcept {
+  std::ostringstream oss;
+  oss << "\"" << m_name << "\":";
+  if (m_value.has_value()) {
+    std::visit([&oss](auto &&arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, bool>) {
+        oss << (arg ? "true" : "false");
+      } else if constexpr (std::is_same_v<T, std::string>) {
+        oss << "\"" << arg << "\"";
+      } else if constexpr (std::is_integral_v<T>) {
+        oss << arg;
+      } else if constexpr (std::is_floating_point_v<T>) {
+        oss << floatingPointFormatting(arg);
+      } else {
+        static_assert(always_false<T>::value, "Type not supported");
+      }
+    }, m_value.value());
+  } else {
+    oss << "null";
+  }
+  return oss.str();
+}
+
 template<>
-void Param::setValue<uint8_t>(const uint8_t& value) noexcept {
-  std::stringstream oss;
-  oss << static_cast<int>(value);
-  m_value = oss.str();
+void Param::setValue<ParamValType>(const ParamValType& value) noexcept {
+  m_value = value;
 }
 
 } // namespace cta::log

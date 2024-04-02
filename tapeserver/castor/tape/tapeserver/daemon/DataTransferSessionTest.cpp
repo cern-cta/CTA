@@ -643,8 +643,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -841,8 +841,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -1041,8 +1041,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -1231,8 +1231,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -1420,8 +1420,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -1610,8 +1610,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -1803,8 +1803,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2126,8 +2126,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2276,8 +2276,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2436,8 +2436,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
                                          "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                          "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                         "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                         "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                          "mountReadTransients=\"10\" "
                                          "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                          "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2597,8 +2597,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
                                          "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                          "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                         "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                         "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                          "mountReadTransients=\"10\" "
                                          "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                          "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2758,8 +2758,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
                                          "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                          "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                         "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                         "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                          "mountReadTransients=\"10\" "
                                          "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                          "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -2926,8 +2926,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -3104,8 +3104,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
@@ -3272,8 +3272,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
+                                               "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));

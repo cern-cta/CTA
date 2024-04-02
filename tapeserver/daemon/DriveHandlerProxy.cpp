@@ -33,7 +33,7 @@ void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::lis
   for (auto & p: params) {
     auto * lp = watchdogMessage.mutable_addedlogparams()->Add();
     lp->set_name(p.getName());
-    lp->set_value(p.getValue());
+    lp->set_value(p.getValueStr());
   }
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
