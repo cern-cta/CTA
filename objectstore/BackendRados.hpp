@@ -31,7 +31,6 @@
 #define NOTIFY (2)
 #define RADOS_LOCKING_STRATEGY BACKOFF
 
-// Define this to get long response times logging.
 namespace cta::objectstore {
 
 /**
