@@ -56,7 +56,7 @@ struct MountsRow {
    *
    * @return     Mount ID number
    */
-  static uint64_t getNextMountId(Transaction &txn) {
+  static uint64_t getNextMountID(Transaction &txn) {
     try {
       const char *const sql = "select NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID";
       auto stmt = txn.conn().createStmt(sql);

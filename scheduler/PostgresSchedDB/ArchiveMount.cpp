@@ -33,7 +33,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 
   rdbms::Rset resultSet;
   // make the txn connection commit and can  any pending transactions
-  rdbms::Conn nonTxnConn = m_txn.getNonTxnConn();
+  auto nonTxnConn = m_txn.getNonTxnConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
