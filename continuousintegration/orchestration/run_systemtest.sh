@@ -46,6 +46,9 @@ cleanup_namespaces=0
 # By default assume that ORACLE_SUPPORT is ON
 # if this script is running outside of gitlab CI
 test -z ${ORACLE_SUPPORT+x} && ORACLE_SUPPORT="ON"
+# By default assume that SCHED_TYPE is "objectstore"
+# if this script is running outside of gitlab CI
+test -z ${SCHED_TYPE+x} && SCHED_TYPE="objectstore"
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
@@ -166,6 +169,7 @@ if [ $useoracle == 1 ] ; then
     fi
 fi
 
+# SCHED_TYPE is an external variable of the gitlab-ci to use postgres scheduler backend if CTA is compiled with it
 if [ $SCHED_TYPE == "pgsched" ] ; then
   schedstore_configmap="internal_pgsched.yaml"
   CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_configmap}"
