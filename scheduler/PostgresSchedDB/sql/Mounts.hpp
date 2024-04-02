@@ -52,9 +52,11 @@ struct MountsRow {
   /**
    * Increment Mount Id and return the new value
    *
-   * @return result set containing the one row in the table
+   * @param txn  Transaction to use for this query
+   *
+   * @return     Mount ID number
    */
-  static uint64_t insertMountAndSelect(Transaction &txn, const std::string &owner) {
+  static uint64_t getNextMountId(Transaction &txn) {
     try {
       const char *const sql = "select NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID";
       auto stmt = txn.conn().createStmt(sql);
@@ -69,17 +71,6 @@ struct MountsRow {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
     }
-    //const char *const sql = "INSERT INTO TAPE_MOUNTS ("
-    //  "OWNER) VALUES ("
-    //  ":OWNER"
-    //  ") RETURNING "
-    //  "MOUNT_ID,"
-    //  "EXTRACT(EPOCH FROM CREATION_TIME AT TIME ZONE 'UTC')::BIGINT AS CREATION_TIMESTAMP,"
-    //  "OWNER";
-    //auto stmt = txn.conn().createStmt(sql);
-    //stmt.bindString(":OWNER", owner);
-
-    //return stmt.executeQuery();
   };
 };
 

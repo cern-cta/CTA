@@ -64,9 +64,10 @@ public:
   void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
   common::dataStructures::MountPolicy getMountPolicy() const;
 
-  // 'bogus' string is returned to EOS as Archive request ID
-  // because we do not need a unique ID for Archive request since we can lookup
-  // any archive request by archive file ID and instance name in Relational DB
+  /* 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID
+   * We do not need a unique ID for Archive Request anymore to lookup the backend,
+   * using Relational DB, we can use archive file ID and instance name for the lookup.
+   */
   std::string getIdStr() const { return "bogus"; }
   
   struct JobDump {

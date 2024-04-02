@@ -23,6 +23,7 @@
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "rdbms/NullDbValue.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <vector>
 
@@ -118,29 +119,7 @@ struct ArchiveJobQueueRow {
     maxTotalRetries           = rset.columnUint16("MAX_TOTAL_RETRIES");
     return *this;
   }
-  void update(Transaction &txn) const{
-    const char *const sql =
-            "UPDATE ARCHIVE_JOB_QUEUE SET "
-            "MOUNT_ID = :MOUNT_ID "
-            "WHERE "
-            " JOB_ID IN (SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE ORDER BY RANDOM() "
-            " LIMIT 1)";
 
-    auto stmt = txn.conn().createStmt(sql);
-    stmt.bindUint64(":MOUNT_ID", 1000);
-    stmt.executeQuery();
-  }
-
-  void deleterow(Transaction &txn) const{
-    const char *const sql =
-            "DELETE FROM ARCHIVE_JOB_QUEUE\n"
-            "WHERE "
-            " JOB_ID IN (SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE ORDER BY RANDOM() "
-            " LIMIT 1)";
-
-    auto stmt = txn.conn().createStmt(sql);
-    stmt.executeQuery();
-  }
   void insert(Transaction &txn) const {
     // does not set mountId or jobId
     const char *const sql =
@@ -263,14 +242,14 @@ struct ArchiveJobQueueRow {
   /**
    * Select unowned jobs from the queue
    *
-   * @param txn        Transaction to use for this query
+   * @param conn       Connection to the DB backend
    * @param status     Archive Job Status to select on
    * @param tapepool   Tapepool to select on
    * @param limit      Maximum number of rows to return
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
+  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
 
     const char *const sql =
     "SELECT "
@@ -310,7 +289,7 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":LIMIT", limit);
@@ -321,7 +300,7 @@ struct ArchiveJobQueueRow {
   /**
    * Select owned jobs from the queue
    *
-   * @param txn        Transaction to use for this query
+   * @param conn       Connection to the backend database
    * @param status     Archive Job Status to select on
    * @param tapepool   Tapepool to select on
    * @param mount_id   Mount id which owns this job
@@ -329,7 +308,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
+  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
@@ -368,7 +347,7 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":MOUNT_ID", mount_id);
@@ -380,13 +359,13 @@ struct ArchiveJobQueueRow {
   /**
    * Select not owned jobs from the queue ordered by tapepool
    *
-   * @param txn        Transaction to use for this query
+   * @param conn       Connection to the backend database
    * @param status     Archive Job Status to select on
    * @param limit      Maximum number of rows to return
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, uint64_t limit) {
+  static rdbms::Rset select(Conn &conn, ArchiveJobStatus status, uint64_t limit) {
     const char *const sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
@@ -423,7 +402,7 @@ struct ArchiveJobQueueRow {
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
 

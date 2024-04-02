@@ -76,6 +76,16 @@ class PostgresSchedDB: public SchedulerDatabase {
   std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
     common::dataStructures::JobQueueType queueType) const override;
 
+  /** Get all archive queues with status:
+   * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
+   * CHECK: how this reporting works for OStoreDB and make sure
+   * no selection criteria are missed (tapePool, hostname etc.)
+   *
+   * @param filesRequested  number of rows to be reported from the scheduler DB
+   * @param logContext      logging context
+   *
+   * @return                list of pointers to ArchiveJob objects to be reported
+   */
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext & logContext) override;
 

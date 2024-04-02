@@ -147,31 +147,27 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> PostgresSchedDB::getArc
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-  // this is reporting the first batch of 500 job encountered nothing more for the moment,
-  // if empty I just return
-  // if not, then I select all jobs of type
-  // `common::dataStructures::JobQueueType::JobsToReportToUser` seems to map to
-  // AJS_ToReportToUserForTransfer and AJS_ToReportToUserForFailure status
-  // First tapepool I encounter and report it - where is the ownership saved ?
-  // Shall this not report only jobs which this tape server `owns` how is this concept implemented now ?
-  //
-  // Iterate over all archive queues
   rdbms::Rset resultSet_ForTransfer;
   rdbms::Rset resultSet_ForFailure;
-  postgresscheddb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-          txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
-  //resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-  //        txn, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
-  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row.");
+          m_connPool.getConn(), postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
+  resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          m_connPool.getConn(), postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
   std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
-  while(resultSet_ForTransfer.next()) {
+  while(resultSet_ForTransfer.next() || resultSet_ForFailure.next()) {
     logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
     try {
-      jobs.emplace_back(resultSet_ForTransfer);
+      if(!resultSet_ForTransfer.isEmpty()){
+        jobs.emplace_back(resultSet_ForTransfer);
+      }
+      if(!resultSet_ForFailure.isEmpty()){
+        jobs.emplace_back(resultSet_ForFailure);
+      }
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
       logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
@@ -184,7 +180,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   for (const auto &j : jobs) {
     auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
     aj->tapeFile.copyNb = j.copyNb;
-    aj->archiveFile = j.archiveFile;
+    aj->archiveFile = j.archi     veFile;
     aj->archiveReportURL = j.archiveReportUrl;
     aj->errorReportURL = j.archiveErrorReportUrl;
     aj->srcURL = j.srcUrl;
@@ -567,7 +563,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 {
   utils::Timer t;
   utils::Timer t2;
-  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): starting to fetch mount info.");
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): starting to fetch mount info.");
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
 
   auto &txn = static_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
@@ -620,11 +616,11 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
-    lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): pushing back potential mount to the vector.");
+    lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): pushing back potential mount to the vector.");
     tmdi.potentialMounts.push_back(pm);
   }
 
-  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): getting drive state.");
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): getting drive state.");
   // Collect information about existing and next mounts. If a next mount exists the drive "counts double",
   // but the corresponding drive is either about to mount, or about to replace its current mount.
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
@@ -685,7 +681,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
   log::ScopedParamContainer params(lc);
   params.add("queueFetchTime", registerFetchTime)
         .add("processingTime", registerProcessingTime);
-  lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
 }
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> PostgresSchedDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext)
