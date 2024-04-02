@@ -37,13 +37,19 @@ public:
    */
   Transaction &operator=(const Transaction &) = delete;
 
+  /**
+   * Get the transactional connection
+   *
+   * @return txn connection
+   */
   rdbms::Conn &conn();
+
   /**
    * Get new connection for non-transactions, such as SELECT
    *
    * @return connection
    */
-  rdbms::Conn &getNonTxtConn();
+  rdbms::Conn &getNonTxnConn();
   /**
    * Take out a global advisory transaction lock
    *
