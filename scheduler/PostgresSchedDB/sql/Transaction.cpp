@@ -48,7 +48,7 @@ void Transaction::abort() {
 }
 
 rdbms::Conn &Transaction::getNonTxnConn() {
-  return connPool.getConn();
+  return std::move(connPool.getConn());
 }
 
 rdbms::Conn &Transaction::conn() {
