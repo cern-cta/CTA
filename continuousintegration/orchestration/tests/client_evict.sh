@@ -38,8 +38,6 @@ while read -r line; do
   XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0  xrdfs ${EOSINSTANCE} prepare -e ${EOS_DIR}/${subdir}/${subdir}${resubmit_file_name}
 done < "${failed_tmp}"
 
-rm $failed_tmp
-
 LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
