@@ -499,5 +499,26 @@ namespace cta::utils {
    */
   std::string decimalToHexadecimal(const std::string &decimalNumber);
 
+  /**
+   * Checks if a string is a valid UUID.
+   *
+   * A valid UUID is a string that is exactly 36 characters long and adheres to the
+   * 8-4-4-4-12 format, where each number represents the number of hexadecimal digits
+   * in each section of the UUID. The sections are separated by hyphens.
+   *
+   * @param uuid The string to check.
+   * @return `true` if the string is a valid UUID, `false` otherwise.
+   */
+  bool isValidUUID(const std::string &uuid);
 
+  /**
+   * Checks if a string is a valid hexadecimal number.
+   *
+   * A valid hexadecimal number is a string that contains only hexadecimal digits (0-9, a-f, A-F).
+   * The string can optionally start with the prefix "0x" or "0X".
+   *
+   * @param hexadecimal The string to check.
+   * @return `true` if the string is a valid hexadecimal number, `false` otherwise.
+   */
+  bool isValidHex(const std::string &hexadecimal);
 } // namespace cta::utils

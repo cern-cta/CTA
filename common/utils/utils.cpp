@@ -1017,4 +1017,34 @@ std::string decimalToHexadecimal(const std::string &decimalNumber) {
   return fxIdStream.str();
 }
 
+// Check if uuid is correct 
+bool isValidUUID(const std::string &uuid) {
+  if (uuid.empty()) {
+    return false;
+  }
+  const Regex uuidRegex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+                        "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+  return uuidRegex.has_match(uuid);
+}
+
+// Check if Hexadecimal is correct
+bool isValidHex(const std::string &hex) {
+    if (hex.length() < 1) {
+        return false;
+    }
+
+    size_t start = 0;
+    if (hex.length() > 2 && hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X')) {
+        start = 2;
+    }
+
+    for (size_t i = start; i < hex.length(); i++) {
+        if (!std::isxdigit(hex[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 } // namespace cta::utils
