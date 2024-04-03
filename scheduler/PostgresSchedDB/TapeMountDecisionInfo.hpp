@@ -29,11 +29,17 @@
 #include <cstdint>
 #include <time.h>
 
+#ifndef TAPEMOUNTDECISIONINFO_H
+#define TAPEMOUNTDECISIONINFO_H
+#endif /* TAPEMOUNTDECISIONINFO_H */
+
+
 namespace cta::postgresscheddb {
+
+class ArchiveMount;
 
 class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  friend class cta::PostgresSchedDB;
-
  public:
    explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
@@ -54,7 +60,7 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     /** Commit decision and release scheduler global lock */
     void commit();
 
-    PostgresSchedDB& m_PostgresSchedDB;
+    cta::PostgresSchedDB& m_PostgresSchedDB;
     Transaction m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;

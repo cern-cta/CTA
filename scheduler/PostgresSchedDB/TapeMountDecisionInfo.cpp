@@ -61,7 +61,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
         "createArchiveMount(): unexpected mount type.");
   }
 
-  auto privateRet = std::make_unique<postgresscheddb::ArchiveMount>(m_ownerId, m_txn, queueType);
+  auto privateRet = std::make_unique<postgresscheddb::ArchiveMount>(m_PostgresSchedDB, m_ownerId, m_txn, queueType);
 
   auto &am = *privateRet;
   // Check we hold the scheduling lock

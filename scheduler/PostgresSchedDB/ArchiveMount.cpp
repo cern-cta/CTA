@@ -82,7 +82,26 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 void ArchiveMount::setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
                                 time_t completionTime, const std::optional<std::string>& reason)
 {
-   throw cta::exception::Exception("Not implemented");
+  // We just report the drive status as instructed by the tape thread.
+  // Reset the drive state.
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = mountInfo.drive;
+  driveInfo.logicalLibrary = mountInfo.logicalLibrary;
+  driveInfo.host = mountInfo.host;
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = mountType;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = status;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
+  inputs.reason = reason;
+  // TODO: statistics!
+  inputs.byteTransferred = 0;
+  inputs.filesTransferred = 0;
+  log::LogContext lc(m_PostgresSchedDB.m_logger);
+  m_PostgresSchedDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
 }
 
 void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats)

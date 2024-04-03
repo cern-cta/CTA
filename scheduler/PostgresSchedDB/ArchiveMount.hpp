@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 
 #include <list>
 #include <memory>
@@ -30,15 +30,18 @@
 #include <cstdint>
 #include <time.h>
 
+
 namespace cta::postgresscheddb {
+
+class TapeMountDecisionInfo;
 
 class ArchiveMount : public SchedulerDatabase::ArchiveMount {
  friend class cta::PostgresSchedDB;
-
+ friend class TapeMountDecisionInfo;
  public:
 
-   ArchiveMount(const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
-      m_ownerId(ownerId), m_txn(txn), m_queueType(queueType) { }
+   ArchiveMount(PostgresSchedDB &pdb, const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
+                m_PostgresSchedDB(pdb), m_ownerId(ownerId), m_txn(txn), m_queueType(queueType) { }
 
    const MountInfo & getMountInfo() override;
 
@@ -46,7 +49,7 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
       uint64_t bytesRequested, log::LogContext& logContext) override;
 
    void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                                time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
+                       time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
 
    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
 
@@ -55,6 +58,7 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
 
 private:
 
+   cta::PostgresSchedDB& m_PostgresSchedDB;
    const std::string& m_ownerId;
    Transaction& m_txn;
    common::dataStructures::JobQueueType m_queueType;
