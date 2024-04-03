@@ -85,7 +85,6 @@ public:
 
 private:
 
-  rdbms::Conn m_conn_non_txn;
   rdbms::Conn m_conn;
   bool m_begin = true;
 };

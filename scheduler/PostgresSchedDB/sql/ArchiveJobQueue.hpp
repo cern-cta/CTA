@@ -117,6 +117,7 @@ struct ArchiveJobQueueRow {
   }
 
   void insert(Transaction &txn) const {
+
     // does not set mountId or jobId
     const char *const sql =
       "INSERT INTO ARCHIVE_JOB_QUEUE("
@@ -202,6 +203,7 @@ struct ArchiveJobQueueRow {
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
 
     stmt.executeNonQuery();
+
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
@@ -409,10 +411,10 @@ struct ArchiveJobQueueRow {
    * Assign a mount ID to the specified rows
    *
    * @param txn        Transaction to use for this query
-   * @param rowList    List of table rows to claim for the new owner
+   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @param mountId    Mount ID to assign
    */
-  static void updateMountId(Transaction &txn, const std::list<ArchiveJobQueueRow>& rowList, uint64_t mountId);
+  static void updateMountID(Transaction &txn, const std::string& jobIDs, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql
