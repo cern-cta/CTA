@@ -932,9 +932,6 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     checksumType  = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
     checksumValue = tfls_item.af().checksum().begin()->value();
   }
-  auto fid = strtol(tfls_item.df().disk_id().c_str(), nullptr, 10);
-  std::stringstream fxid;
-  fxid << std::hex << fid;
 
   push_back(
     tfls_item.af().archive_id(),
@@ -943,7 +940,7 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     tfls_item.tf().f_seq(),
     tfls_item.tf().block_id(),
     tfls_item.df().disk_instance(),
-    fxid.str(),
+    tfls_item.df().disk_id(),
     dataSizeToStr(tfls_item.af().size()),
     checksumType,
     checksumValue,
@@ -1207,9 +1204,6 @@ void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
     checksumType  = descriptor->FindValueByNumber(rtfls_item.checksum().begin()->type())->name();
     checksumValue = rtfls_item.checksum().begin()->value();
   }
-  auto fid = strtol(rtfls_item.disk_file_id().c_str(), nullptr, 10);
-  std::stringstream fxid;
-  fxid << std::hex << fid;
 
   push_back(
     rtfls_item.archive_file_id(),
@@ -1218,7 +1212,7 @@ void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
     rtfls_item.fseq(),
     rtfls_item.block_id(),
     rtfls_item.disk_instance(),
-    fxid.str(),
+    rtfls_item.disk_file_id(),
     dataSizeToStr(rtfls_item.size_in_bytes()),
     checksumType,
     checksumValue,
