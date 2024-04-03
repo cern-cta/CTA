@@ -277,7 +277,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     reportPacker.disableBulk(); //no bulk needed anymore
     RecallWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *retrieveMount,
                             m_driveConfig.unitName, logContext);
-
     RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
 
     TapeReadSingleThread readSingleThread(*drive, m_mediaChanger, reporter, m_volInfo,
@@ -287,7 +286,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
                                           m_dataTransferConfig.tapeLoadTimeout,
                                           m_scheduler.getCatalogue());
-
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
                                    watchDog,
@@ -298,9 +296,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                     m_dataTransferConfig.bulkRequestRecallMaxBytes, logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type of the client
+
     readSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setWatchdog(watchDog);
-
     taskInjector.setDriveInterface(readSingleThread.getDriveReference());
 
     // We are now ready to put everything in motion. First step is to check
@@ -437,13 +435,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_dataTransferConfig.tapeLoadTimeout,
                                             m_scheduler.getCatalogue());
 
-
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                   m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                   m_dataTransferConfig.bulkRequestMigrationMaxBytes,
                                   watchDog,
                                   logContext,
                                   m_dataTransferConfig.xrootTimeout);
+
     MigrationTaskInjector taskInjector(memoryManager, threadPool, writeSingleThread, *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                        m_dataTransferConfig.bulkRequestMigrationMaxBytes, logContext);
@@ -451,9 +449,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
     writeSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setWatchdog(watchDog);
     cta::utils::Timer timer;
-
     bool noFilesToMigrate = false;
     if (taskInjector.synchronousInjection(noFilesToMigrate)) {
+      logContext.log(cta::log::DEBUG, "After if taskInjector.synchronousInjection()");
       const uint64_t firstFseqFromClient = taskInjector.firstFseqToWrite();
 
       // The last fseq written on the tape is the first file's fseq minus one
@@ -508,6 +506,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
+
       // Empty mount, hardware safe
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, logContext);

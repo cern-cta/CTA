@@ -20,7 +20,6 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 
 #include <memory>
@@ -29,13 +28,19 @@
 #include <cstdint>
 #include <time.h>
 
+#ifndef TAPEMOUNTDECISIONINFO_H
+#define TAPEMOUNTDECISIONINFO_H
+#endif /* TAPEMOUNTDECISIONINFO_H */
+
+
 namespace cta::postgresscheddb {
+
+class ArchiveMount;
 
 class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  friend class cta::PostgresSchedDB;
-
  public:
-   explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
+   explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
                                                                        const catalogue::TapeForWriting& tape,
@@ -54,8 +59,8 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     /** Commit decision and release scheduler global lock */
     void commit();
 
-    PostgresSchedDB& m_PostgresSchedDB;
-    Transaction m_txn;
+    cta::PostgresSchedDB& m_PostgresSchedDB;
+    postgresscheddb::Transaction m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;
     log::Logger&           m_logger;

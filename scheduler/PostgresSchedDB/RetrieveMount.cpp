@@ -47,7 +47,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNex
   }
 
   // mark the jobs in the batch as owned
-  sql::RetrieveJobQueueRow::updateMountId(m_txn, jobs, mountInfo.mountId);
+  sql::RetrieveJobQueueRow::updateMountID(m_txn, jobs, mountInfo.mountId);
   m_txn.commit();
 
   // Construct the return value
