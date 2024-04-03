@@ -73,8 +73,7 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
   
   if (diskFileId){
-    if (auto fid = diskFileId.value();
-      !utils::isValidDecimal(fid) && !utils::isValidUUID(fid) && !utils::isValidHex(fid)) {
+    if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
       throw cta::exception::UserError(fid + " is not a valid file ID");
     }
 

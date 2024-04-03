@@ -1047,4 +1047,14 @@ bool isValidHex(const std::string &hex) {
     return true;
 }
 
+bool isValidID(const std::string& id) {
+  if (id.empty()) {
+    return false;
+  }
+  if (!cta::utils::isValidDecimal(id) && !cta::utils::isValidUUID(id) && !cta::utils::isValidHex(id)) {
+    return false;
+  }
+  return true;
+}
+
 } // namespace cta::utils

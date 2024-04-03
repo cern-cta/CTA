@@ -68,8 +68,7 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
   if(diskFileId.has_value()) {
-    if (auto fid = diskFileId.value();
-      !utils::isValidDecimal(fid) && !utils::isValidUUID(fid) && !utils::isValidHex(fid)) {
+    if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
       throw cta::exception::UserError(fid + " is not a valid file ID");
     }
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();

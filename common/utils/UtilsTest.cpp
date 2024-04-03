@@ -932,4 +932,26 @@ TEST_F(cta_UtilsTest, IsValidHex) {
   EXPECT_FALSE(cta::utils::isValidHex(invalidHex2));
 }
 
+TEST_F(cta_UtilsTest, IsValidID) {
+  // Test with valid decimal ID
+  std::string validDecimalID = "1234567890";
+  EXPECT_TRUE(cta::utils::isValidID(validDecimalID));
+
+  // Test with valid UUID ID
+  std::string validUUIDID = "123e4567-e89b-12d3-a456-426614174000";
+  EXPECT_TRUE(cta::utils::isValidID(validUUIDID));
+
+  // Test with valid hexadecimal ID
+  std::string validHexID = "0x1A2B3C4D";
+  EXPECT_TRUE(cta::utils::isValidID(validHexID));
+
+  // Test with invalid ID (contains non-decimal, non-hex characters)
+  std::string invalidID1 = "1A2B3C4G";
+  EXPECT_FALSE(cta::utils::isValidID(invalidID1));
+
+  // Test with empty string
+  std::string invalidID2 = "";
+  EXPECT_FALSE(cta::utils::isValidID(invalidID2));
+}
+
 } // namespace unitTests
