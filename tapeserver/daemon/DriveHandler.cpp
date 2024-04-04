@@ -758,7 +758,7 @@ int DriveHandler::runChild() {
     while (terminateThreadFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) {
       server::SocketPair::pollMap pollList;
       auto message = driveHandlerProxy->recvBroadcast(0);
-      if (message == "refresh_log_file") {
+      if (message == broadcastmsg::LOG_ROTATE_REQ_MSG) {
         m_processManager.logContext().logger().refresh();
       }
     }
