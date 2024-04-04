@@ -23,7 +23,7 @@ echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -
 # We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
 for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
   command_str=$(eval echo "${evict}")
-  command_str+=" > /dev/null"
+  command_str+=" 1>/dev/null"
   seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=100 -n 100 -iTEST_FILE_NAME bash -c "$command_str"
 done
 
