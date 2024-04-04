@@ -1,12 +1,6 @@
 ctageneric_docker:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - when: always
+  except:
+    - tags
   stage: build:dockerimage
   image:
     name: gitlab-registry.cern.ch/ci-tools/docker-image-builder

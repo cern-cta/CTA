@@ -14,8 +14,6 @@ cta_valgrind:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
       allow_failure: false
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -34,8 +32,6 @@ cta_system_tests:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
     - if: $ALMA9 == "OFF"
   variables:
     CTAREPODIR: /tmp/repo
@@ -53,8 +49,6 @@ dbunittests_postgresql:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - if: $ALMA9 == "OFF"
   stage: test
@@ -110,8 +104,6 @@ cta_valgrind_alma9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
       allow_failure: false
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
@@ -138,8 +130,6 @@ cta_system_tests_alma9:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
     - if: $ALMA9 == "ON"
   variables:
     CTAREPODIR: /tmp/repo
@@ -165,8 +155,6 @@ dbunittests_postgresql_alma9:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - if: $ALMA9 == "ON"
   stage: test
