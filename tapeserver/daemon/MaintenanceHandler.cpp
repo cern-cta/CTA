@@ -354,9 +354,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
         std::string message = m_socketPair->receive();
-        if (message == "shutdown") {
+        if (message == broadcastmsg::SHUTDOWN_MSG) {
           receivedShutdownMessage=true;
-        } else if (message == "refresh_log_file") {
+        } else if (message == broadcastmsg::LOG_ROTATE_REQ_MSG) {
           m_processManager.logContext().logger().refresh();
         }
       } catch (server::SocketPair::Timeout &) {

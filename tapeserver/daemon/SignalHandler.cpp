@@ -211,7 +211,9 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Signa
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processBroadcastRecv(const std::string& msg) {
-  m_processManager.logContext().logger().refresh();
+  if (msg == broadcastmsg::LOG_ROTATE_REQ_MSG) {
+    m_processManager.logContext().logger().refresh();
+  }
   return m_processingStatus;
 }
 
