@@ -126,8 +126,7 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
   SourcedParameter.cpp
-  threading/Async.cpp
-  threading/ChildProcess.cpp
+        threading/ChildProcess.cpp
   threading/CondVar.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
@@ -187,8 +186,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
 # threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
   threading/ThreadingMTTests.cpp
   threading/ThreadingTests.cpp
-  threading/AsyncTests.cpp
-  utils/GetOptThreadSafeTest.cpp
+        utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
