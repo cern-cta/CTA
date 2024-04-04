@@ -211,8 +211,8 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Signa
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processBroadcastRecv(const std::string& msg) {
-  // TODO: Handle broadcast to itself!
-  throw cta::exception::Exception("In SignalHandler::processBroadcastRecv(): should not have been called");
+  m_processManager.logContext().logger().refresh();
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
