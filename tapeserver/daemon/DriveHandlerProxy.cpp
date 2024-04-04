@@ -20,9 +20,7 @@
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
-  m_socketPair.close(server::SocketPair::Side::parent);  
-}
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {}
 
 // TODO: me might want to group the messages to reduce the rate.
 
@@ -81,7 +79,7 @@ std::optional<std::string> DriveHandlerProxy::recvBroadcast(const time_t s_pollT
   server::SocketPair::pollMap pollList;
   pollList["0"]= &m_socketPair;
   try {
-    server::SocketPair::poll(pollList, s_pollTimeout, server::SocketPair::Side::child);
+    server::SocketPair::poll(pollList, s_pollTimeout, server::SocketPair::Side::parent);
   } catch (server::SocketPair::Timeout &) {
     // Timing out while waiting for message is not a problem for us
     // Return empty object

@@ -232,6 +232,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcastRecv(con
   // TODO: Use protobuf and serialize
   // TODO: In the maintenance process both ends of the socket are already used (unlike in the drive handler).
   // TODO: Therefore, we need to either create a new socketpair, or adapt how the child end of the socket is used...
+  m_socketPair->send(msg);
   return m_processingStatus;
 }
 
@@ -335,7 +336,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   try {
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
-    bool receivedMessage=false;
+    bool receivedShutdownMessage=false;
     do {
       utils::Timer t;
       m_processManager.logContext().log(log::DEBUG,
@@ -352,7 +353,12 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
                                         "In MaintenanceHandler::exceptionThrowingRunChild(): After runRepackRequestManager().");
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
-       receivedMessage=true;
+        std::string message = m_socketPair->receive();
+        if (message == "shutdown") {
+          receivedShutdownMessage=true;
+        } else if (message == "refresh_log_file") {
+          m_processManager.logContext().logger().refresh();
+        }
       } catch (server::SocketPair::Timeout &) {
         // Timing out while waiting for message is not a problem for us
         // as we retry in the next loop iteration.
@@ -360,7 +366,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       m_processManager.logContext().log(log::DEBUG,
                                         "In MaintenanceHandler::exceptionThrowingRunChild(): Waiting for a message ended.");
 
-    } while (!receivedMessage);
+    } while (!receivedShutdownMessage);
     m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
@@ -395,7 +401,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::shutdown(): no socket pair");
   } else {
     m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
-    m_socketPair->send("\0");
+    m_socketPair->send("shutdown");
   }
   return m_processingStatus;
 }
