@@ -38,7 +38,7 @@ if [[ ${LEFTOVER} -ne 0 ]]; then
   echo "$LEFTOVER files not evicted, trying a second time."
   for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
     for file in $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d1::t1' | awk -F' ' '{print $10}'); do
-      echo "${file}" | xargs --max-procs=1 -n1 -iTEST_FILE_NAME bash -c "$command_str"
+      echo "${file:${#subdir}}" | xargs --max-procs=1 -n1 -iTEST_FILE_NAME bash -c "$command_str"
     done
   done
 fi
