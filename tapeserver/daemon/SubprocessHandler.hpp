@@ -104,6 +104,7 @@ public:
 
 namespace broadcastmsg {
   constexpr const char* const LOG_ROTATE_REQ_MSG  = "LOG_ROTATE_REQ";
+  constexpr const char* const SHUTDOWN_MSG = "SHUTDOWN";
 }
 
 } // namespace cta::tape::daemon
