@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <chrono>
 #include <sys/wait.h>
 #include <sys/prctl.h>
 
@@ -739,7 +740,27 @@ int DriveHandler::runChild() {
     }
   }
 
-  return executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
+  // Spawn a simple thread here to look for broadcasted messages
+  std::promise<void> terminateThreadPromise;
+  auto terminateThreadFuture = terminateThreadPromise.get_future();
+
+  auto recvBroadcastThreadFut = std::async(std::launch::async, [this, &driveHandlerProxy, &terminateThreadFuture]{
+    while (terminateThreadFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) {
+      server::SocketPair::pollMap pollList;
+      auto message = driveHandlerProxy->recvBroadcast(0);
+      if (message == "refresh_log_file") {
+        m_processManager.logContext().logger().refresh();
+      }
+    }
+  });
+
+  auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
+
+  // Stop thread that is looking for broadcast
+  terminateThreadPromise.set_value();
+  recvBroadcastThreadFut.wait();
+
+  return ret;
 }
 
 //------------------------------------------------------------------------------

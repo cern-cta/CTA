@@ -34,21 +34,19 @@ public:
     
   /// Get status: initial status: we want to fork the subprocess
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
-    SubprocessHandler::ProcessingStatus ret;
-    ret.forkRequested = true;
-    return ret;
+    m_processingStatus.forkRequested = true;
+    return m_processingStatus;
   }
 
   SubprocessHandler::ProcessingStatus fork() override {
-    SubprocessHandler::ProcessingStatus ret;
     m_childProcess = ::fork();
     cta::exception::Errnum::throwOnMinusOne(m_childProcess, 
         "In EchoSubprocess::fork(): failed to fork(): ");
     if (!m_childProcess) { // We are on the child side
       // We can close the parent's socket side.
       m_socketPair.close(cta::server::SocketPair::Side::parent);
-      ret.forkState = SubprocessHandler::ForkState::child;
-      return ret;
+      m_processingStatus.forkState = SubprocessHandler::ForkState::child;
+      return m_processingStatus;
     }
     // Parent side, close child socket side
     m_socketPair.close(cta::server::SocketPair::Side::child);
@@ -65,9 +63,9 @@ public:
     // Register the file descriptor.
     m_processManager.addFile(m_socketPair.getFdForAccess(cta::server::SocketPair::Side::child), this);
     m_socketPairRegistered=true;
-    ret.nextTimeout = m_subprocessLaunchTime + m_timeoutLength;
-    ret.forkState = SubprocessHandler::ForkState::parent;
-    return ret;
+    m_processingStatus.nextTimeout = m_subprocessLaunchTime + m_timeoutLength;
+    m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
+    return m_processingStatus;
   }
   
   void postForkCleanup() override {
@@ -117,8 +115,7 @@ public:
   }
 
   SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override {
-    // TODO: Handle broadcast!
-    throw cta::exception::Exception("In ProbeSubprocess::processBroadcastRecv(): should not have been called");
+    return m_processingStatus;
   }
 
   void kill() override {
@@ -154,10 +151,9 @@ public:
       ::waitpid(m_childProcess, nullptr, 0);
       m_subprocessComplete = true;
     } catch (...) {}
-    SubprocessHandler::ProcessingStatus ret;
     unregisterSocketpair();
-    ret.shutdownComplete = m_subprocessComplete;
-    return ret;
+    m_processingStatus.shutdownComplete = m_subprocessComplete;
+    return m_processingStatus;
   }
   
   SubprocessHandler::ProcessingStatus processTimeout() override {
@@ -166,10 +162,9 @@ public:
   
   SubprocessHandler::ProcessingStatus shutdown() override {
     // Nothing to do as the sub process will exit on its own.
-    SubprocessHandler::ProcessingStatus ret;
     ::waitpid(m_childProcess, nullptr, 0);
-    ret.shutdownComplete = true;
-    return ret;
+    m_processingStatus.shutdownComplete = true;
+    return m_processingStatus;
   }
   
 private:
@@ -179,6 +174,7 @@ private:
   cta::tape::daemon::ProcessManager & m_processManager;
   bool m_subprocesLaunched=false;
   bool m_subprocessComplete=false;
+  SubprocessHandler::ProcessingStatus m_processingStatus;
   std::chrono::time_point<std::chrono::steady_clock> m_subprocessLaunchTime;
   const std::chrono::seconds m_timeoutLength = std::chrono::seconds(2);
   ::pid_t m_childProcess;
@@ -208,9 +204,8 @@ public:
   virtual ~ProbeSubprocess() = default;
   
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
-    SubprocessHandler::ProcessingStatus ret;
-    ret.shutdownComplete = m_shutdownAsked && m_honorShutdown;
-    return ret;
+    m_processingStatus.shutdownComplete = m_shutdownAsked && m_honorShutdown;
+    return m_processingStatus;
   }
   
   void postForkCleanup() override { }
@@ -221,9 +216,8 @@ public:
   
   SubprocessHandler::ProcessingStatus shutdown() override {
     m_shutdownAsked=true;
-    SubprocessHandler::ProcessingStatus ret;
-    ret.shutdownComplete=m_honorShutdown;
-    return ret;
+    m_processingStatus.shutdownComplete=m_honorShutdown;
+    return m_processingStatus;
   }
 
   void kill() override {
@@ -232,9 +226,8 @@ public:
   
   SubprocessHandler::ProcessingStatus processSigChild() override {
     m_sigChildReceived = true;
-    SubprocessHandler::ProcessingStatus ret;
-    ret.shutdownComplete = m_shutdownAsked && m_honorShutdown;
-    return ret;
+    m_processingStatus.shutdownComplete = m_shutdownAsked && m_honorShutdown;
+    return m_processingStatus;
   }
 
   std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override {
@@ -273,6 +266,7 @@ private:
   bool m_killAsked=false;
   bool m_honorShutdown=true;
   bool m_sigChildReceived=false;
+  SubprocessHandler::ProcessingStatus m_processingStatus;
 };
 
 }
