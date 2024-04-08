@@ -30,33 +30,39 @@ const SchedulerDatabase::ArchiveMount::MountInfo &ArchiveMount::getMountInfo()
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext)
 {
-
+  logContext.log(cta::log;DEBUG, "Entering ArchiveMount::getNextJobBatch()");
   rdbms::Rset resultSet;
   // make the txn connection commit and can any pending transactions
   auto& nonTxnConn = m_txn.getNonTxnConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
+    logContext.log(cta::log;DEBUG, "Query JobsToTransferForUser ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
             nonTxnConn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
 
   } else {
+    logContext.log(cta::log;DEBUG, "Query ArchiveJobQueueRow ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
             nonTxnConn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
   }
-
+  logContext.log(cta::log;DEBUG, "Filling jobs in ArchiveMount::getNextJobBatch()");
   std::list<sql::ArchiveJobQueueRow> jobs;
+  std::string jobIDsString;
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
     jobs.emplace_back(resultSet);
+    jobIDsString += std::to_string(resultSet.columnUint64("JOB_ID")) + ",";
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }
-
+  jobIDsString.pop_back();  // Remove the trailing comma
+  logContext.log(cta::log;DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountId");
   // mark the jobs in the batch as owned
   m_txn.start();
-  sql::ArchiveJobQueueRow::updateMountId(m_txn, jobs, mountInfo.mountId);
+  sql::ArchiveJobQueueRow::updateMountId(m_txn, jobIDsString, mountInfo.mountId);
   m_txn.commit();
+  logContext.log(cta::log;DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountId" + jobIDsString);
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;

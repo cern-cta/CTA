@@ -413,10 +413,10 @@ struct ArchiveJobQueueRow {
    * Assign a mount ID to the specified rows
    *
    * @param txn        Transaction to use for this query
-   * @param rowList    List of table rows to claim for the new owner
+   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @param mountId    Mount ID to assign
    */
-  static void updateMountId(Transaction &txn, const std::list<ArchiveJobQueueRow>& rowList, uint64_t mountId);
+  static void updateMountId(Transaction &txn, const std::string& jobIDs, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql
