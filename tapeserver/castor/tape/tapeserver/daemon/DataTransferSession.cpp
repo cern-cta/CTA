@@ -451,10 +451,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
     writeSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setWatchdog(watchDog);
     cta::utils::Timer timer;
-    logContext.log(cta::log;DEBUG, "Before if taskInjector.synchronousInjection()");
+    logContext.log(cta::log:DEBUG, "Before if taskInjector.synchronousInjection()");
     bool noFilesToMigrate = false;
     if (taskInjector.synchronousInjection(noFilesToMigrate)) {
-      logContext.log(cta::log;DEBUG, "After if taskInjector.synchronousInjection()");
+      logContext.log(cta::log:DEBUG, "After if taskInjector.synchronousInjection()");
       const uint64_t firstFseqFromClient = taskInjector.firstFseqToWrite();
 
       // The last fseq written on the tape is the first file's fseq minus one
