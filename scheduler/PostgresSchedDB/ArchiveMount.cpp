@@ -32,14 +32,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 {
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
   rdbms::Rset resultSet;
-  // make the txn connection commit and can any pending transactions
-  auto& nonTxnConn = m_txn.getNonTxnConn();
+  // fetch a non transactional connection from the PGSCHED connection pool
+  auto& nonTxnConn = m_PostgresSchedDB.m_connPool.getConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
     logContext.log(cta::log::DEBUG, "Query JobsToTransferForUser ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
             nonTxnConn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
-
+    logContext.log(cta::log::DEBUG, "After first selection of AJS_ToTransferForUser ArchiveMount::getNextJobBatch()");
   } else {
     logContext.log(cta::log::DEBUG, "Query ArchiveJobQueueRow ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
