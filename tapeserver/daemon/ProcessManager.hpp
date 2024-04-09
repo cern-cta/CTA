@@ -69,8 +69,8 @@ private:
   RunPartStatus runForkManagement();
   /// subpart for run(): handle SIGCHLD
   RunPartStatus runSigChildManagement();
-  /// subpart for run(): handle broadcast requests
-  RunPartStatus runBroadcastManagement();
+  /// subpart for run(): handle refresh logger requests
+  RunPartStatus runRefreshLoggerManagement();
   /// subpart for run(): handle events and timeouts. Does not return any value.
   void runEventLoop();
 };
