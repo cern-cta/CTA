@@ -42,8 +42,7 @@ public:
 
   void resetLogParams() override;
 
-  std::optional<std::string> recvBroadcast(const time_t s_pollTimeout) override;
-
+  void addBroadcastHandler(std::function<void(std::string)> handler) override;
 }; // class TapeserverProxyDummy
 
 } // namespace castor::messages

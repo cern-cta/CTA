@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <string>
 #include <list>
+#include <functional>
 
 namespace cta::tape::daemon {
 
@@ -89,13 +90,11 @@ public:
     const std::string &message) = 0;
 
   /**
-   * Wait for a broadcast message to be received through the proxy.
-   * This is a blocking operation, should be performed from a separate thread or with a timeout of zero.
+   * Add a callback function to handle messages received from the parent process.
    *
-   * TODO: Returning a string is probably not the best option...
-   * TODO: Check WatchdogMessage.proto for an example on how to this with protobuf
+   * @param handler to be run a broadcast message is received
    */
-  virtual std::optional<std::string> recvBroadcast(const time_t s_pollTimeout) = 0;
+  virtual void addBroadcastHandler(std::function<void(std::string)> handler) = 0;
 
 }; // class TapeserverProxy
 
