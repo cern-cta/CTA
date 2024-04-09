@@ -90,11 +90,11 @@ public:
     const std::string &message) = 0;
 
   /**
-   * Add a callback function to handle messages received from the parent process.
+   * Add a callback function to handle the request to refresh the logger.
    *
-   * @param handler to be run a broadcast message is received
+   * @param handler to be run to refresh the logger
    */
-  virtual void addBroadcastHandler(std::function<void(std::string)> handler) = 0;
+  virtual void setRefreshLoggerHandler(std::function<void()> handler) = 0;
 
 }; // class TapeserverProxy
 

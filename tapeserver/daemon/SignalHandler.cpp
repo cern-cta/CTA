@@ -133,11 +133,11 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     m_processManager.logContext().log(log::INFO, "In signal handler, received SIGCHLD and propagations to other handlers");
     break;
   case SIGUSR1:
-    // A log rotate is needed.
+    // A logger refresh (i.e. log rotation) is needed.
     // We need to broadcast this information to all other subprocesses.
     // Flag will be cleared when broadcast is read.
-    m_broadcastRequested = true;
-    m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1 to request a log rotation");
+    m_refreshLoggerRequested = true;
+    m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1 to request a logger refresh");
     break;
   }
   //SubprocessHandler::ProcessingStatus ret;
@@ -151,7 +151,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     m_processingStatus.nextTimeout = decltype(m_processingStatus.nextTimeout)::max();
   }
   m_processingStatus.sigChild = m_sigChildPending;
-  m_processingStatus.broadcastRequested = m_broadcastRequested;
+  m_processingStatus.refreshLoggerRequested = m_refreshLoggerRequested;
   return m_processingStatus;
 }
 
@@ -195,25 +195,22 @@ SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::getBroadcastSendRequest
+// SignalHandler::processRefreshLoggerRequest
 //------------------------------------------------------------------------------
-std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> SignalHandler::getBroadcastSendRequest() {
+SubprocessHandler::ProcessingStatus SignalHandler::processRefreshLoggerRequest() {
   auto optionalMsg = std::optional<std::string>();
-  if (m_broadcastRequested) {
-    m_broadcastRequested = false;
-    optionalMsg = broadcastmsg::LOG_REFRESH_REQ_MSG;
+  if (m_refreshLoggerRequested) {
+    m_refreshLoggerRequested = false;
   }
-  m_processingStatus.broadcastRequested = false;
-  return std::pair(m_processingStatus, optionalMsg);
+  m_processingStatus.refreshLoggerRequested = false;
+  return m_processingStatus;
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::processBroadcastRecv
+// SignalHandler::refreshLogger
 //------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus SignalHandler::processBroadcastRecv(const std::string& msg) {
-  if (msg == broadcastmsg::LOG_REFRESH_REQ_MSG) {
-    m_processManager.logContext().logger().refresh();
-  }
+SubprocessHandler::ProcessingStatus SignalHandler::refreshLogger() {
+  m_processManager.logContext().logger().refresh();
   return m_processingStatus;
 }
 

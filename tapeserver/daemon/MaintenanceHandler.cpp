@@ -217,19 +217,19 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::getBroadcastSendRequest
+// SignalHandler::processRefreshLoggerRequest
 //------------------------------------------------------------------------------
-std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> MaintenanceHandler::getBroadcastSendRequest() {
-  // This subclass does not need to do broadcast requests.
+SubprocessHandler::ProcessingStatus MaintenanceHandler::processRefreshLoggerRequest() {
+  // This subclass does not need to do refresh logger requests.
   // If this function is called it means something went wrong.
-  throw cta::exception::Exception("In MaintenanceHandler::getBroadcastSendRequest(): should not have been called");
+  throw cta::exception::Exception("In MaintenanceHandler::processRefreshLoggerRequest(): should not have been called");
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::processBroadcastRecv
+// SignalHandler::refreshLogger
 //------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcastRecv(const std::string& msg) {
-  m_socketPair->send(msg);
+SubprocessHandler::ProcessingStatus MaintenanceHandler::refreshLogger() {
+  m_socketPair->send(REFRESH_LOGGER_MSG);
   return m_processingStatus;
 }
 
@@ -353,7 +353,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         std::string message = m_socketPair->receive();
         if (message == SHUTDOWN_MSG) {
           receivedShutdownMessage=true;
-        } else if (message == broadcastmsg::LOG_REFRESH_REQ_MSG) {
+        } else if (message == REFRESH_LOGGER_MSG) {
           m_processManager.logContext().logger().refresh();
         }
       } catch (server::SocketPair::Timeout &) {

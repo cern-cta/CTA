@@ -502,20 +502,19 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::getBroadcastSendRequest
+// SignalHandler::processRefreshLoggerRequest
 //------------------------------------------------------------------------------
-std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> DriveHandler::getBroadcastSendRequest() {
-  // This subclass does not need to do broadcast requests.
+SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() {
+  // This subclass does not need to do refresh logger requests.
   // If this function is called it means something went wrong.
-  throw cta::exception::Exception("In DriveHandler::getBroadcastSendRequest(): should not have been called");
+  throw cta::exception::Exception("In DriveHandler::processRefreshLoggerRequest(): should not have been called");
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::processBroadcastRecv
+// SignalHandler::refreshLogger
 //------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processBroadcastRecv(const std::string& msg) {
-  // TODO: Use protobuf and serialize
-  m_socketPair->send(msg);
+SubprocessHandler::ProcessingStatus DriveHandler::refreshLogger() {
+  m_socketPair->send("\0");
   return m_processingStatus;
 }
 
@@ -751,10 +750,8 @@ int DriveHandler::runChild() {
   }
 
   // Add handler for when we receive a message to refresh the logger
-  driveHandlerProxy->addBroadcastHandler([this](std::string message){
-    if (message == broadcastmsg::LOG_REFRESH_REQ_MSG) {
-      m_processManager.logContext().logger().refresh();
-    }
+  driveHandlerProxy->setRefreshLoggerHandler([this]() {
+    m_processManager.logContext().logger().refresh();
   });
 
   resetLogParams(driveHandlerProxy.get());

@@ -25,11 +25,11 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
 }
 
 DriveHandlerProxy::~DriveHandlerProxy() {
-  if (m_broadcastClosingSock) {
-    m_broadcastClosing = true;
+  if (m_refreshLoggerClosingSock) {
+    m_refreshLoggerClosing = true;
     // Send a signal to stop the waiting thread
-    m_broadcastClosingSock->send("\0", server::SocketPair::Side::child);
-    m_broadcastAsyncFut.wait();
+    m_refreshLoggerClosingSock->send("\0", server::SocketPair::Side::child);
+    m_refreshLoggerAsyncFut.wait();
   }
 }
 
@@ -84,36 +84,29 @@ void DriveHandlerProxy::labelError(const std::string& unitName, const std::strin
   throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
 }
 
-void DriveHandlerProxy::addBroadcastHandler(std::function<void(std::string)> handler) {
-  // Setup async thread to handle incoming broadcasted messages
-  if (!m_broadcastClosingSock) {
-    m_broadcastClosingSock = std::make_unique<cta::server::SocketPair>();
-    m_broadcastAsyncFut = std::async(std::launch::async, [this] {
-      constexpr int BROADCAST_POLL_TIMEOUT = 10;
+void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
+  // Setup async thread to handle incoming requests to refresh the logger
+  if (!m_refreshLoggerHandler) {
+    m_refreshLoggerHandler = handler;
+    m_refreshLoggerClosingSock = std::make_unique<cta::server::SocketPair>();
+    m_refreshLoggerAsyncFut = std::async(std::launch::async, [this] {
       server::SocketPair::pollMap pollList;
       pollList["0"] = &m_socketPair;
-      pollList["1"] = m_broadcastClosingSock.get();
-      while (!m_broadcastClosing) {
+      pollList["1"] = m_refreshLoggerClosingSock.get();
+      while (!m_refreshLoggerClosing) {
         try {
-          server::SocketPair::poll(pollList, BROADCAST_POLL_TIMEOUT, server::SocketPair::Side::parent);
+          server::SocketPair::poll(pollList, 300, server::SocketPair::Side::parent); // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
         } catch (server::SocketPair::Timeout &) {
           // Do nothing
           continue;
         }
-        if (m_socketPair.pollFlag()) {
-          std::lock_guard lck(m_broadcastMutex);
-          auto message = m_socketPair.receive();
-          for (auto &handler: m_broadcastHandlerList) {
-            handler(message);
-          }
-        }
+        m_socketPair.receive();
+        auto handler = m_refreshLoggerHandler.value();
+        handler();
       }
     });
-  }
-
-  {
-    std::lock_guard lck(m_broadcastMutex);
-    this->m_broadcastHandlerList.push_back(handler);
+  } else {
+    throw cta::exception::Exception("In DriveHandlerProxy::setRefreshLoggerHandler(): refresh logger handler is already set");
   }
 }
 
