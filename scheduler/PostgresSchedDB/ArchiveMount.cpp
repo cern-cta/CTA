@@ -33,7 +33,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
   rdbms::Rset resultSet;
   // fetch a non transactional connection from the PGSCHED connection pool
-  auto& nonTxnConn = m_PostgresSchedDB.m_connPool.getConn();
+  auto nonTxnConn = m_PostgresSchedDB.m_connPool.getConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
     logContext.log(cta::log::DEBUG, "Query JobsToTransferForUser ArchiveMount::getNextJobBatch()");
