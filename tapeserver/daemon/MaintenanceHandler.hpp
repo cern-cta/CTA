@@ -65,6 +65,8 @@ private:
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
   /** The poll period for the garbage collector */
   static const time_t s_pollInterval = 10;
+
+  static constexpr const char* const SHUTDOWN_MSG = "SHUTDOWN";
 };
 
 } // namespace cta::tape::daemon
