@@ -740,27 +740,14 @@ int DriveHandler::runChild() {
     }
   }
 
-  // Spawn a simple thread here to look for broadcasted messages
-  std::promise<void> terminateThreadPromise;
-  auto terminateThreadFuture = terminateThreadPromise.get_future();
-
-  auto recvBroadcastThreadFut = std::async(std::launch::async, [this, &driveHandlerProxy, &terminateThreadFuture]{
-    while (terminateThreadFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) {
-      server::SocketPair::pollMap pollList;
-      auto message = driveHandlerProxy->recvBroadcast(0);
-      if (message == broadcastmsg::LOG_ROTATE_REQ_MSG) {
-        m_processManager.logContext().logger().refresh();
-      }
+  // Add handler for when we receive a message to refresh the logger
+  driveHandlerProxy->addBroadcastHandler([this](std::string message){
+    if (message == broadcastmsg::LOG_REFRESH_REQ_MSG) {
+      m_processManager.logContext().logger().refresh();
     }
   });
 
-  auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
-
-  // Stop thread that is looking for broadcast
-  terminateThreadPromise.set_value();
-  recvBroadcastThreadFut.wait();
-
-  return ret;
+  return executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 }
 
 //------------------------------------------------------------------------------

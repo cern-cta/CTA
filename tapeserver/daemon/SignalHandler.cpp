@@ -201,7 +201,7 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Signa
   auto optionalMsg = std::optional<std::string>();
   if (m_broadcastRequested) {
     m_broadcastRequested = false;
-    optionalMsg = broadcastmsg::LOG_ROTATE_REQ_MSG;
+    optionalMsg = broadcastmsg::LOG_REFRESH_REQ_MSG;
   }
   m_processingStatus.broadcastRequested = false;
   return std::pair(m_processingStatus, optionalMsg);
@@ -211,7 +211,7 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Signa
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processBroadcastRecv(const std::string& msg) {
-  if (msg == broadcastmsg::LOG_ROTATE_REQ_MSG) {
+  if (msg == broadcastmsg::LOG_REFRESH_REQ_MSG) {
     m_processManager.logContext().logger().refresh();
   }
   return m_processingStatus;
