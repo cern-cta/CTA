@@ -229,9 +229,6 @@ std::pair<SubprocessHandler::ProcessingStatus, std::optional<std::string>> Maint
 // SignalHandler::processBroadcastRecv
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processBroadcastRecv(const std::string& msg) {
-  // TODO: Use protobuf and serialize
-  // TODO: In the maintenance process both ends of the socket are already used (unlike in the drive handler).
-  // TODO: Therefore, we need to either create a new socketpair, or adapt how the child end of the socket is used...
   m_socketPair->send(msg);
   return m_processingStatus;
 }
@@ -354,9 +351,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
         std::string message = m_socketPair->receive();
-        if (message == broadcastmsg::SHUTDOWN_MSG) {
+        if (message == SHUTDOWN_MSG) {
           receivedShutdownMessage=true;
-        } else if (message == broadcastmsg::LOG_ROTATE_REQ_MSG) {
+        } else if (message == broadcastmsg::LOG_REFRESH_REQ_MSG) {
           m_processManager.logContext().logger().refresh();
         }
       } catch (server::SocketPair::Timeout &) {
@@ -401,7 +398,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::shutdown(): no socket pair");
   } else {
     m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
-    m_socketPair->send("shutdown");
+    m_socketPair->send(SHUTDOWN_MSG);
   }
   return m_processingStatus;
 }

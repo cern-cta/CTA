@@ -24,7 +24,14 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
   m_socketPair.close(server::SocketPair::Side::parent);
 }
 
-// TODO: me might want to group the messages to reduce the rate.
+DriveHandlerProxy::~DriveHandlerProxy() {
+  if (m_broadcastClosingSock) {
+    m_broadcastClosing = true;
+    // Send a signal to stop the waiting thread
+    m_broadcastClosingSock->send("\0", server::SocketPair::Side::child);
+    m_broadcastAsyncFut.wait();
+  }
+}
 
 void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
   serializers::WatchdogMessage watchdogMessage;
@@ -77,17 +84,37 @@ void DriveHandlerProxy::labelError(const std::string& unitName, const std::strin
   throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
 }
 
-std::optional<std::string> DriveHandlerProxy::recvBroadcast(const time_t s_pollTimeout) {
-  server::SocketPair::pollMap pollList;
-  pollList["0"]= &m_socketPair;
-  try {
-    server::SocketPair::poll(pollList, s_pollTimeout, server::SocketPair::Side::parent);
-  } catch (server::SocketPair::Timeout &) {
-    // Timing out while waiting for message is not a problem for us
-    // Return empty object
-    return std::optional<std::string>();
+void DriveHandlerProxy::addBroadcastHandler(std::function<void(std::string)> handler) {
+  // Setup async thread to handle incoming broadcasted messages
+  if (!m_broadcastClosingSock) {
+    m_broadcastClosingSock = std::make_unique<cta::server::SocketPair>();
+    m_broadcastAsyncFut = std::async(std::launch::async, [this] {
+      constexpr int BROADCAST_POLL_TIMEOUT = 10;
+      server::SocketPair::pollMap pollList;
+      pollList["0"] = &m_socketPair;
+      pollList["1"] = m_broadcastClosingSock.get();
+      while (!m_broadcastClosing) {
+        try {
+          server::SocketPair::poll(pollList, BROADCAST_POLL_TIMEOUT, server::SocketPair::Side::parent);
+        } catch (server::SocketPair::Timeout &) {
+          // Do nothing
+          continue;
+        }
+        if (m_socketPair.pollFlag()) {
+          std::lock_guard lck(m_broadcastMutex);
+          auto message = m_socketPair.receive();
+          for (auto &handler: m_broadcastHandlerList) {
+            handler(message);
+          }
+        }
+      }
+    });
   }
-  return m_socketPair.receive();
+
+  {
+    std::lock_guard lck(m_broadcastMutex);
+    this->m_broadcastHandlerList.push_back(handler);
+  }
 }
 
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
