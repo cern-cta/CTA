@@ -52,6 +52,6 @@ void castor::messages::TapeserverProxyDummy::labelError(
 }
 
 //------------------------------------------------------------------------------
-// addBroadcastHandler
+// setRefreshLoggerHandler
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::addBroadcastHandler(std::function<void(std::string)> handler) {}
+void castor::messages::TapeserverProxyDummy::setRefreshLoggerHandler(std::function<void()> handler) {}

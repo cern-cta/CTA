@@ -42,7 +42,7 @@ public:
   void labelError(const std::string &unitName,
     const std::string &message) override;
 
-  void addBroadcastHandler(std::function<void(std::string)> handler) override;
+  void setRefreshLoggerHandler(std::function<void()> handler) override;
 }; // class TapeserverProxyDummy
 
 } // namespace castor::messages
