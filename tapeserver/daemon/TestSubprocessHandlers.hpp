@@ -108,13 +108,13 @@ public:
     return ret;
   }
 
-  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override {
-    // This subclass does not need to do broadcast requests.
+  ProcessingStatus processRefreshLoggerRequest() override {
+    // This subclass does not need to do refresh logger requests.
     // If this function is called it means something went wrong.
-    throw cta::exception::Exception("In ProbeSubprocess::getBroadcastSendRequest(): should not have been called");
+    throw cta::exception::Exception("In ProbeSubprocess::processRefreshLoggerRequest(): should not have been called");
   }
 
-  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override {
+  ProcessingStatus refreshLogger() override {
     return m_processingStatus;
   }
 
@@ -230,15 +230,14 @@ public:
     return m_processingStatus;
   }
 
-  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override {
-    // This subclass does not need to do broadcast requests.
+  ProcessingStatus processRefreshLoggerRequest() override {
+    // This subclass does not need to do refresh logger requests.
     // If this function is called it means something went wrong.
-    throw cta::exception::Exception("In ProbeSubprocess::getBroadcastSendRequest(): should not have been called");
+    throw cta::exception::Exception("In ProbeSubprocess::processRefreshLoggerRequest(): should not have been called");
   }
 
-  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override {
-    // TODO: Handle broadcast! Test it!
-    throw cta::exception::Exception("In ProbeSubprocess::processBroadcastRecv(): should not have been called");
+  ProcessingStatus refreshLogger() override {
+    throw cta::exception::Exception("In ProbeSubprocess::refreshLogger(): should not have been called");
   }
   
   SubprocessHandler::ProcessingStatus processEvent() override {

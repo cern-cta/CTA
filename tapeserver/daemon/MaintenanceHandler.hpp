@@ -32,17 +32,17 @@ class MaintenanceHandler: public SubprocessHandler {
 public:
   MaintenanceHandler(const common::TapedConfiguration & tapedConfig, ProcessManager & pm);
   virtual ~MaintenanceHandler();
-  SubprocessHandler::ProcessingStatus getInitialStatus() override;
-  SubprocessHandler::ProcessingStatus fork() override;
+  ProcessingStatus getInitialStatus() override;
+  ProcessingStatus fork() override;
   void postForkCleanup() override;
   int runChild() noexcept override;
-  SubprocessHandler::ProcessingStatus shutdown() override;
+  ProcessingStatus shutdown() override;
   void kill() override;
-  SubprocessHandler::ProcessingStatus processEvent() override;
-  SubprocessHandler::ProcessingStatus processSigChild() override;
-  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override;
-  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override;
-  SubprocessHandler::ProcessingStatus processTimeout() override;
+  ProcessingStatus processEvent() override;
+  ProcessingStatus processSigChild() override;
+  ProcessingStatus processRefreshLoggerRequest() override;
+  ProcessingStatus refreshLogger() override;
+  ProcessingStatus processTimeout() override;
 private:
   void exceptionThrowingRunChild();
   
@@ -56,7 +56,7 @@ private:
   /** The parameters */
   const common::TapedConfiguration & m_tapedConfig;
   /** The current state we report to process manager */
-  SubprocessHandler::ProcessingStatus m_processingStatus;
+  ProcessingStatus m_processingStatus;
   /** PID for the subprocess */
   pid_t m_pid=-1;
   /** Keep track of the shutdown state */
@@ -67,6 +67,7 @@ private:
   static const time_t s_pollInterval = 10;
 
   static constexpr const char* const SHUTDOWN_MSG = "SHUTDOWN";
+  static constexpr const char* const REFRESH_LOGGER_MSG = "REFRESH_LOGGER";
 };
 
 } // namespace cta::tape::daemon
