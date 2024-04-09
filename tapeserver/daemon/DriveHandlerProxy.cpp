@@ -20,7 +20,9 @@
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {}
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
+  m_socketPair.close(server::SocketPair::Side::parent);
+}
 
 // TODO: me might want to group the messages to reduce the rate.
 
