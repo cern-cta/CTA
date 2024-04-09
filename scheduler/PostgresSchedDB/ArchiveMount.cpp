@@ -60,6 +60,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountId");
   // mark the jobs in the batch as owned
   sql::ArchiveJobQueueRow::updateMountId(m_txn, jobIDsString, mountInfo.mountId);
+  m_txn.commit();
   logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountId" + jobIDsString);
 
   // Construct the return value
