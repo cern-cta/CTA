@@ -344,11 +344,10 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
     auto key = cta::admin::OptionString::FXID;
     auto new_opt = admincmd.add_option_str();
 
-    // Convert diskFileId from base 10 to base 16 before transmitting to CTA
     if (!utils::isValidID(file.disk_file_id())) {
       throw std::runtime_error(file.disk_file_id() + " is not a valid disk file ID");
     }
-    params.emplace_back("fxid", file.disk_file_id());
+    params.emplace_back("fid", file.disk_file_id());
     new_opt->set_key(key);
     new_opt->set_value(file.disk_file_id());
   }
