@@ -43,16 +43,15 @@ public:
   void deleteLogParams(const std::list<std::string> &paramNames) override;
   void resetLogParams() override;
   void labelError(const std::string& unitName, const std::string& message) override;
-  void addBroadcastHandler(std::function<void(std::string)> handler) override;
+  void setRefreshLoggerHandler(std::function<void()> handler) override;
 private:
   server::SocketPair & m_socketPair;
 
-  // Handle broadcasting of messages from parent to child process
-  std::unique_ptr<server::SocketPair> m_broadcastClosingSock;
-  std::list<std::function<void(std::string)>> m_broadcastHandlerList;
-  std::mutex m_broadcastMutex;
-  std::future<void> m_broadcastAsyncFut;
-  std::atomic<bool> m_broadcastClosing = false;
+  // Handle broadcasting of refresh loger messages from parent to child process
+  std::unique_ptr<server::SocketPair> m_refreshLoggerClosingSock;
+  std::optional<std::function<void()>> m_refreshLoggerHandler;
+  std::future<void> m_refreshLoggerAsyncFut;
+  std::atomic<bool> m_refreshLoggerClosing = false;
 };
 
 } // namespace cta::tape::daemon

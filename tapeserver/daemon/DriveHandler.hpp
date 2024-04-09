@@ -68,17 +68,17 @@ public:
   DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
   ~DriveHandler() override = default;
 
-  SubprocessHandler::ProcessingStatus getInitialStatus() override;
-  SubprocessHandler::ProcessingStatus fork() override;
+  ProcessingStatus getInitialStatus() override;
+  ProcessingStatus fork() override;
   void postForkCleanup() override;
   int runChild() override;
-  SubprocessHandler::ProcessingStatus shutdown() override;
+  ProcessingStatus shutdown() override;
   void kill() override;
-  SubprocessHandler::ProcessingStatus processEvent() override;
-  SubprocessHandler::ProcessingStatus processSigChild() override;
-  std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() override;
-  SubprocessHandler::ProcessingStatus processBroadcastRecv(const std::string& msg) override;
-  SubprocessHandler::ProcessingStatus processTimeout() override;
+  ProcessingStatus processEvent() override;
+  ProcessingStatus processSigChild() override;
+  ProcessingStatus processRefreshLoggerRequest() override;
+  ProcessingStatus refreshLogger() override;
+  ProcessingStatus processTimeout() override;
 
 private:
   // Reference to the process manager
@@ -109,7 +109,7 @@ private:
   // Current session's parameters: they are accumulated during session's lifetime and logged as session ends
 
   // The current state we report to process manager
-  SubprocessHandler::ProcessingStatus m_processingStatus;
+  ProcessingStatus m_processingStatus;
   // Convenience type
   typedef std::chrono::milliseconds Timeout;
   // Values for the state change timeouts where applicable
@@ -145,7 +145,7 @@ private:
   std::unique_ptr<SchedulerDB_t> m_sched_db;
 
   // Computation of the next timeout (depending on the state)
-  decltype(SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout();
+  decltype(ProcessingStatus::nextTimeout) nextTimeout();
 
   // Reset log parameters both on child and parent process
   void resetLogParams(cta::tape::daemon::TapedProxy* driveHandlerProxy);

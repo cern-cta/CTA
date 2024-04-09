@@ -63,12 +63,12 @@ public:
   /** The return type for the functions (getStatus, handleEvent, handleTimeout)
    * that will return a status */
   struct ProcessingStatus {
-    bool shutdownRequested = false; ///< Does the process handler require to shutdown all processes?
-    bool shutdownComplete = false;  ///< Did this process complete its shutdown?
-    bool killRequested = false;     ///< Does the process handler require killing all processes
-    bool forkRequested = false;     ///< Does the process handler request to fork a new process?
-    bool broadcastRequested = false;///< Does the process handler request a message to be broadcast to other subprocesses?
-    bool sigChild = false;          ///< Did the process see a SIGCHLD? Used by signal handler only.
+    bool shutdownRequested = false;      ///< Does the process handler require to shutdown all processes?
+    bool shutdownComplete = false;       ///< Did this process complete its shutdown?
+    bool killRequested = false;          ///< Does the process handler require killing all processes
+    bool forkRequested = false;          ///< Does the process handler request to fork a new process?
+    bool refreshLoggerRequested = false; ///< Does the process handler request the logger to be refreshed by all subprocesses?
+    bool sigChild = false;               ///< Did the process see a SIGCHLD? Used by signal handler only.
     /// Instant of the next timeout for the process handler. Defaults to end of times.
     std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
     /// A extra state variable used in the return value of fork()
@@ -82,10 +82,10 @@ public:
   virtual ProcessingStatus processTimeout() = 0;
   /** Function called when SIGCHLD is received */
   virtual ProcessingStatus processSigChild() = 0;
-  /** Function called when a subprocess requests a message to be broadcast to all other subprocesses */
-  virtual std::pair<ProcessingStatus, std::optional<std::string>> getBroadcastSendRequest() = 0;
-  /** Function called when a subprocess requests a message to be broadcast to all other subprocesses */
-  virtual ProcessingStatus processBroadcastRecv(const std::string& msg) = 0;
+  /** Function called when a subprocess requests the logger to be refreshed in all subprocesses */
+  virtual ProcessingStatus processRefreshLoggerRequest() = 0;
+  /** Function called to refreshed the logger of a subprocess */
+  virtual ProcessingStatus refreshLogger() = 0;
   /** Instructs the handler to initiate a clean shutdown and update its status */
   virtual ProcessingStatus shutdown() = 0;
   /** Instructs the handler to kill its subprocess immediately. The process 
@@ -101,9 +101,5 @@ public:
    * call exit() itself */
   virtual int runChild() = 0;
 };
-
-namespace broadcastmsg {
-  constexpr const char* const LOG_REFRESH_REQ_MSG  = "LOG_REFRESH_REQ";
-}
 
 } // namespace cta::tape::daemon
