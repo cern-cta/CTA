@@ -57,9 +57,6 @@ void castor::messages::TapeserverProxyDummy::labelError(
 }
 
 //------------------------------------------------------------------------------
-// recvBroadcast
+// addBroadcastHandler
 //------------------------------------------------------------------------------
-std::optional<std::string> castor::messages::TapeserverProxyDummy::recvBroadcast(const time_t s_pollTimeout) {
-  // TODO
-  return std::optional<std::string>();
-}
+void castor::messages::TapeserverProxyDummy::addBroadcastHandler(std::function<void(std::string)> handler) {}

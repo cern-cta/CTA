@@ -82,7 +82,7 @@ public:
   MOCK_METHOD1(deleteLogParams, void(const std::list<std::string>& paramNames));
   MOCK_METHOD0(resetLogParams, void());
   MOCK_METHOD2(labelError, void(const std::string& unitName, const std::string& message));
-  MOCK_METHOD((std::optional<std::string>), recvBroadcast, (const time_t s_pollTimeout));
+  MOCK_METHOD(void, addBroadcastHandler, (std::function<void(std::string)> handler));
 };
 
 class ProcessManagerMock : public cta::tape::daemon::ProcessManager {
