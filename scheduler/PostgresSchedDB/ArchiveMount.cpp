@@ -58,6 +58,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   }
   jobIDsString.pop_back();  // Remove the trailing comma
   logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountId");
+  logContext.log(cta::log::DEBUG, "JOBIDS string looks like this: " + jobIDsString + "END.");
   // mark the jobs in the batch as owned
   sql::ArchiveJobQueueRow::updateMountId(m_txn, jobIDsString, mountInfo.mountId);
   m_txn.commit();
