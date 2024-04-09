@@ -30,7 +30,7 @@ void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::string& jobI
     "WHERE "
     " JOB_ID IN (" + jobIDs + ")";
 
-  auto stmt = txn.conn().createStmt(sql.c_str());
+  auto stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeQuery();
 }
