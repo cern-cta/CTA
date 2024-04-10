@@ -10,6 +10,7 @@
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#647 - Upgrade eos-5 to eos-5.2.21-1
+- cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
 
 ### Code Quality
 - cta/CTA#575 - Remove rados metrics logging
