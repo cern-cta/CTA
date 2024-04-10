@@ -56,7 +56,7 @@ usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
       [-p <gitlab pipeline ID>] [-i <docker image tag>] \
-      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U]
+      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q]
 
 Options:
   -S    Use systemd to manage services inside containers
@@ -66,6 +66,7 @@ Options:
   -U    Run database unit test only
   -u    Prepare the pods to run the liquibase test
   -T    Execute tests for external tape formats
+  -Q    Create the cluster using the last ctageneric image from main
 EOF
 exit 1
 }
