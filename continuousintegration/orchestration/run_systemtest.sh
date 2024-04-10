@@ -56,7 +56,8 @@ usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -i <docker image tag>] \
       [-t <systemtest timeout in seconds>] [-e <eos_configmap>] \
       [-a <additional_k8_resources>] [-k] [-O] \
-      [-D | -d <database_configmap>] [-S] [-U]
+      [-D | -d <database_configmap>] [-S] [-U] \
+      [-Q]
 
 Options:
   -k    keep namespace after systemtest_script run if successful
@@ -68,7 +69,7 @@ Options:
   -C    Cleanup leftover kubernetes namespaces
   -u    Prepare the pods to run the liquibase test
   -T    Execute tests for external tape formats
-
+  -Q    Create the cluster using the last ctageneric image from main
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
 EOF
@@ -80,7 +81,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCT" o; do
+while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCTQ" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -129,6 +130,9 @@ while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCT" o; do
             ;;
         T)
             CREATE_OPTS="${CREATE_OPTS} -T"
+            ;;
+        Q)
+            CREATE_OPTS="${CREATE_OPTS} -Q"
             ;;
         *)
             usage

@@ -17,6 +17,7 @@ variables:
   CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
   ALMA9: "OFF"
+  SYSTEMTESTS_ONLY: "FALSE"
 
 .prepare-xrootd4: &prepare-xrootd4
   - if [[ ${XROOTD_VERSION} -eq 4 ]];
