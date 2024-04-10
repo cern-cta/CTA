@@ -1029,19 +1029,17 @@ bool isValidUUID(const std::string &uuid) {
 
 // Check if Hexadecimal is correct
 bool isValidHex(const std::string &hex) {
-    if (hex.length() < 1) {
-        return false;
-    }
+    if (hex.empty()) return false;
 
     size_t start = 0;
     if (hex.length() > 2 && hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X')) {
-        start = 2;
+      start = 2;
     }
 
     for (size_t i = start; i < hex.length(); i++) {
-        if (!std::isxdigit(hex[i])) {
-            return false;
-        }
+      if (!std::isxdigit(hex[i])) {
+        return false;
+      }
     }
 
     return true;
