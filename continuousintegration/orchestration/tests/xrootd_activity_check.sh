@@ -19,7 +19,7 @@
 dd if=/dev/urandom of=/root/test_act_xrd bs=15K count=1
 xrdcp /root/test_act_xrd root://${EOSINSTANCE}/${EOS_DIR}/test_act_xrd
 
-wait_for_archive ${EOS_INSTANCE} ${EOS_DIR}/test_act_xrd
+wait_for_archive ${EOSINSTANCE} ${EOS_DIR}/test_act_xrd
 
 # Retrieve with activity
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/test_act_xrd?activity=XRootD_Act
