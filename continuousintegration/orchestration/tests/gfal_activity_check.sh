@@ -21,7 +21,7 @@ xrdcp /root/test_act_gfal root://${EOSINSTANCE}/${EOS_DIR}/test_valid_instance
 xrdcp /root/test_act_gfal root://${EOSINSTANCE}/${EOS_DIR}/test_invalid_instance
 
 # Wait for files to be on tape
-wait_for_archive root://${EOSINSTANCE}/${EOS_DIR}/test_valid_instance root://${EOSINSTANCE}/${EOS_DIR}/test_invalid_instance
+wait_for_archive ${EOS_INSTANCE} ${EOS_DIR}/test_valid_instance ${EOS_DIR}/test_invalid_instance
 
 # Query .well-known tape rest api endpoint to get the sitename
 site_name=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
