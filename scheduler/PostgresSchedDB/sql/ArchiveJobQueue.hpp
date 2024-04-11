@@ -416,7 +416,7 @@ struct ArchiveJobQueueRow {
    * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @param mountId    Mount ID to assign
    */
-  static void updateMountId(Transaction &txn, const std::string& jobIDs, uint64_t mountId);
+  static void updateMountID(Transaction &txn, const std::string& jobIDs, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql

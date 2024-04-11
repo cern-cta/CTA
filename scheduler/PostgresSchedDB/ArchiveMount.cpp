@@ -19,6 +19,8 @@
 #include "scheduler/PostgresSchedDB/ArchiveJob.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
+
 
 namespace cta::postgresscheddb {
 
@@ -33,17 +35,17 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
   rdbms::Rset resultSet;
   // fetch a non transactional connection from the PGSCHED connection pool
-  auto nonTxnConn = m_PostgresSchedDB.m_connPool.getConn();
+  auto conn = m_PostgresSchedDB.m_connPool.getConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
     logContext.log(cta::log::DEBUG, "Query JobsToTransferForUser ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-            nonTxnConn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
+            conn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
     logContext.log(cta::log::DEBUG, "After first selection of AJS_ToTransferForUser ArchiveMount::getNextJobBatch()");
   } else {
     logContext.log(cta::log::DEBUG, "Query ArchiveJobQueueRow ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-            nonTxnConn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
+            conn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
   }
   logContext.log(cta::log::DEBUG, "Filling jobs in ArchiveMount::getNextJobBatch()");
   std::list<sql::ArchiveJobQueueRow> jobs;
@@ -60,16 +62,24 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     if(totalBytes >= bytesRequested) break;
   }
   jobIDsString.pop_back();  // Remove the trailing comma
-  logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountId");
-  logContext.log(cta::log::DEBUG, "JOBIDS string looks like this: " + jobIDsString + "END and mountID line this:" + std::to_string(mountInfo.mountId) + "END");
+  logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountID");
+  if (!jobIDsString.empty()) {
+    // this shall be condition for the update otherwise we do not need to get any connection
+    // we shall move the condition here rather than relying on updateMountID to return doing nothing
+    logContext.log(cta::log::DEBUG, "JOBIDS string looks like this: " + jobIDsString + "END and mountID line this:" +
+                                    std::to_string(mountInfo.mountId) + "END");
+  }
   // mark the jobs in the batch as owned
   try {
-    sql::ArchiveJobQueueRow::updateMountId(m_txn, jobIDsString, mountInfo.mountId);
-    m_txn.commit();
+    conn = m_PostgresSchedDB.m_connPool.getConn();
+    cta::postgresscheddb::sql::Transaction& txn;
+    txn(conn);
+    sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
+    txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::DEBUG, "In sql::ArchiveJobQueueRow::updateMountId: failed to update MOunt ID." + ex.getMessageValue());
+    logContext.log(cta::log::DEBUG, "In sql::ArchiveJobQueueRow::updateMountID: failed to update MOunt ID." + ex.getMessageValue());
   }
-  logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountId" + jobIDsString);
+  logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountID" + jobIDsString);
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;

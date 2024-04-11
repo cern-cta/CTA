@@ -20,7 +20,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 
@@ -40,8 +39,8 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
  friend class TapeMountDecisionInfo;
  public:
 
-   ArchiveMount(PostgresSchedDB &pdb, const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
-                m_PostgresSchedDB(pdb), m_ownerId(ownerId), m_txn(txn), m_queueType(queueType) { }
+   ArchiveMount(PostgresSchedDB &pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType) :
+                m_PostgresSchedDB(pdb), m_ownerId(ownerId), m_queueType(queueType) { }
 
    const MountInfo & getMountInfo() override;
 
@@ -60,7 +59,6 @@ private:
 
    cta::PostgresSchedDB& m_PostgresSchedDB;
    const std::string& m_ownerId;
-   Transaction& m_txn;
    common::dataStructures::JobQueueType m_queueType;
 };
 

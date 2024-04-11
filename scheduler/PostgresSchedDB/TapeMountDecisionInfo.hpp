@@ -20,7 +20,6 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 
 #include <memory>
@@ -61,7 +60,8 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     void commit();
 
     cta::PostgresSchedDB& m_PostgresSchedDB;
-    Transaction m_txn;
+    rdbms::ConnPool &m_connPool;
+    std::unique_ptr<postgresscheddb::Transaction> m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;
     log::Logger&           m_logger;

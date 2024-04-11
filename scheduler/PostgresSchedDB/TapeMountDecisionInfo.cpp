@@ -21,17 +21,19 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/sql/Mounts.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 //#include <chrono>
 
 namespace cta::postgresscheddb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_PostgresSchedDB(pdb),
-  m_txn(cp),
+  m_connPool(cp),
   m_ownerId(ownerId),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
 {
+  m_txn = std::make_unique<postgresscheddb::Transaction>(m_connPool);
 }
 
 std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createArchiveMount(
@@ -61,7 +63,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
         "createArchiveMount(): unexpected mount type.");
   }
 
-  auto privateRet = std::make_unique<postgresscheddb::ArchiveMount>(m_PostgresSchedDB, m_ownerId, m_txn, queueType);
+  auto privateRet = std::make_unique<postgresscheddb::ArchiveMount>(m_PostgresSchedDB, m_ownerId, queueType);
 
   auto &am = *privateRet;
   // Check we hold the scheduling lock

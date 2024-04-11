@@ -433,7 +433,7 @@ struct RetrieveJobQueueRow {
    * @param rowList    List of table rows to claim for the new owner
    * @param mountId    Mount ID to assign
    */
-  static void updateMountId(Transaction &txn, const std::list<RetrieveJobQueueRow>& rowList, uint64_t mountId);
+  static void updateMountID(Transaction &txn, const std::list<RetrieveJobQueueRow>& rowList, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql

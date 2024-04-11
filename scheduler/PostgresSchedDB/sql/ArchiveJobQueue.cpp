@@ -21,7 +21,7 @@
 
 namespace cta::postgresscheddb::sql {
 
-void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::string& jobIDs, uint64_t mountId) {
+void ArchiveJobQueueRow::updateMountID(Transaction &txn, const std::string& jobIDs, uint64_t mountId) {
   if(jobIDs.empty()) return;
   txn.start();
   std::string sql =
