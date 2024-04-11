@@ -61,7 +61,7 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
 
     cta::PostgresSchedDB& m_PostgresSchedDB;
     rdbms::ConnPool &m_connPool;
-    postgresscheddb::Transaction& m_txn;
+    postgresscheddb::Transaction m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;
     log::Logger&           m_logger;
