@@ -34,7 +34,7 @@ elif [[ "${CLI_TARGET}" == "gfal2-root" ]]; then
 
   evict_prefix='root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/${subdir}'
   evict_count=1
-  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 gfal-evict '
+  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 gfal-evict FILE_LIST'
 
   delete='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-rm -r root://${EOSINSTANCE}/${EOS_DIR} 1>/dev/null &'
 
@@ -47,7 +47,7 @@ elif [[ "${CLI_TARGET}" == "gfal2-https" ]]; then
 
   evict_prefix='https://${EOSINSTANCE}:8444/${EOS_DIR}/${subdir}/${subdir}'
   evict_count=1
-  evict='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict '
+  evict='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict FILE_LIST'
 
   delete='BEARER_TOKEN=${TOKEN} gfal-rm -r https://${EOSINSTANCE}:8444/${EOS_DIR} 1>/dev/null &'
 fi
