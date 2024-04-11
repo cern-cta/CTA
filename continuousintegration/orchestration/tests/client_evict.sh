@@ -34,6 +34,22 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
 done
 
+# Resubmit leftover requests
+if [[ ${LEFTOVER} -ne 0 ]]; then
+  echo "$LEFTOVER files not evicted, trying a second time."
+  for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
+    for file in $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d1::t1' | awk -F' ' '{print $10}'); do
+      echo "${file:${#subdir}}" | sed "s~^~${evict_eval}~" | xargs --max-procs=1 -IFILE_LIST  bash -c "$command_str"
+    done
+  done
+fi
+
+# Check again for leftovers
+LEFTOVER=0
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+done
+
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS ${evict}"
 
