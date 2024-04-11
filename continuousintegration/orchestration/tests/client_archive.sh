@@ -107,7 +107,3 @@ if [[ ${ARCHIVED} -ne ${TO_BE_ARCHIVED} ]]; then
 fi
 
 echo "Archiving done."
-echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
-echo "###"

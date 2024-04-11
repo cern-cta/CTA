@@ -97,17 +97,32 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+    echo "###"
+    echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+    sleep 10
+    echo "###"
+
     echo
     echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Retrieving files with gfal-bringonline via root protocol"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+    echo "###"
+    echo "Sleeping 10 seconds to allow MGM-FST communication to settle after retrieval."
+    sleep 10
+    echo "###"
+
     echo
     echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Evicting files with gfal-evict via root protocol"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+    echo "###"
+    echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+    sleep 10
+    echo "###"
 
     echo
     echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
@@ -146,29 +161,44 @@ echo " Archiving files: gfal-copy as user1 via https"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
- echo
+echo "###"
+echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 10
+echo "###"
+
+echo
 echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Retrieving files with gfal-bringonline via https protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo
-    echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-    echo "  Evicting files with gfal-evict as poweruser via https protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+echo "###"
+echo "Sleeping 10 seconds to allow MGM-FST communication to settle after retrieval."
+sleep 10
+echo "###"
 
-    echo
-    echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-    echo "  Deleting files with gfal-rm as user1 via https protocol"
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-    kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+echo
+echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+echo "  Evicting files with gfal-evict as poweruser via https protocol"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo "$(date +%s): Waiting for tracker process to finish. "
-    wait "${TRACKER_PID}"
-    if [[ $? == 1 ]]; then
-      echo "Some files were lost during tape workflow."
-      exit 1
-    fi
+echo "###"
+echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 10
+echo "###"
+
+echo
+echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+echo "  Deleting files with gfal-rm as user1 via https protocol"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+echo "$(date +%s): Waiting for tracker process to finish. "
+wait "${TRACKER_PID}"
+if [[ $? == 1 ]]; then
+    echo "Some files were lost during tape workflow."
+    exit 1
+fi
 
 exit 0
