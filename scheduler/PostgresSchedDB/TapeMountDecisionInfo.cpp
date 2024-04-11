@@ -29,11 +29,11 @@ namespace cta::postgresscheddb {
 TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_PostgresSchedDB(pdb),
   m_connPool(cp),
+  m_txn(cp),
   m_ownerId(ownerId),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
 {
-  m_txn = std::make_unique<postgresscheddb::Transaction>(m_connPool);
 }
 
 std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createArchiveMount(
