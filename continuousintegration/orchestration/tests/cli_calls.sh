@@ -23,7 +23,7 @@ if [[ "${CLI_TARGET}" == "xrd" ]]; then
 
   evict_prefix='${EOS_DIR}/${subdir}/${subdir}'
   evict_count=40
-  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0  xrdfs ${EOSINSTANCE} prepare -e {}'
+  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0  xrdfs ${EOSINSTANCE} prepare -e FILE_LIST'
 
   delete='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &'
 

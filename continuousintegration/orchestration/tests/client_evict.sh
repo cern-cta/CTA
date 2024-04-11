@@ -24,27 +24,11 @@ echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -
 for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
   command_str=$(eval echo "${evict}")
   prefix_eval=$(eval echo "${evict_prefix}")
-  seq -w 0 $((${NB_FILES} - 1)) | sed "s~^~${evict_prefix}~" | xargs -n $evict_count echo | xargs --max-procs=10 -I{} bash -c "${command_str}"
+  seq -w 0 $((${NB_FILES} - 1)) | sed "s~^~${previx_eval}~" | xargs -n $evict_count echo | xargs --max-procs=10 -IFILE_LIST bash -c "${command_str}"
 done
 
 sleep 1
 
-LEFTOVER=0
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
-done
-
-# Resubmit leftover requests
-if [[ ${LEFTOVER} -ne 0 ]]; then
-  echo "$LEFTOVER files not evicted, trying a second time."
-  for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
-    for file in $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d1::t1' | awk -F' ' '{print $10}'); do
-      echo "${file:${#subdir}}" | sed "s~^~${evict_prefix}~" | xargs --max-procs=1  bash -c "$command_str"
-    done
-  done
-fi
-
-# Check again for leftovers
 LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
