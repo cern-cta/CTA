@@ -71,9 +71,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   }
   // mark the jobs in the batch as owned
   try {
-    conn = m_PostgresSchedDB.m_connPool.getConn();
-    cta::postgresscheddb::Transaction& txn;
-    txn(conn);
+    cta::postgresscheddb::Transaction& txn(m_PostgresSchedDB.m_connPool);
     sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
     txn.commit();
   } catch (exception::Exception& ex) {
