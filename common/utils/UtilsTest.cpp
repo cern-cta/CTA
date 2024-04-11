@@ -900,4 +900,58 @@ TEST_F(cta_UtilsTest, appendParameterXRootFileURL){
   ASSERT_EQ(fileURLTest+"&oss.asize=15360",fileURL);
 }
 
+TEST_F(cta_UtilsTest, IsValidUUID) {
+  // Test with valid UUID
+  std::string validUUID = "123e4567-e89b-12d3-a456-426614174000";
+  EXPECT_TRUE(cta::utils::isValidUUID(validUUID));
+
+  // Test with invalid UUID (length not correct)
+  std::string invalidUUID1 = "123e4567-e89b-12d3-a456-42661417400";
+  EXPECT_FALSE(cta::utils::isValidUUID(invalidUUID1));
+
+  // Test with invalid UUID (characters not correct)
+  std::string invalidUUID2 = "123e4567-e89b-12d3-a456-42661417400G";
+  EXPECT_FALSE(cta::utils::isValidUUID(invalidUUID2));
+}
+
+TEST_F(cta_UtilsTest, IsValidHex) {
+  // Test with valid hexadecimal
+  std::string validHex1 = "1A2B3C4D";
+  EXPECT_TRUE(cta::utils::isValidHex(validHex1));
+
+  // Test with valid hexadecimal
+  std::string validHex2 = "0x1A2B3C4D";
+  EXPECT_TRUE(cta::utils::isValidHex(validHex2));
+
+  // Test with invalid hexadecimal (contains non-hex characters)
+  std::string invalidHex1 = "1A2B3C4G";
+  EXPECT_FALSE(cta::utils::isValidHex(invalidHex1));
+
+  // Test with empty string
+  std::string invalidHex2 = "";
+  EXPECT_FALSE(cta::utils::isValidHex(invalidHex2));
+}
+
+TEST_F(cta_UtilsTest, IsValidID) {
+  // Test with valid decimal ID
+  std::string validDecimalID = "1234567890";
+  EXPECT_TRUE(cta::utils::isValidID(validDecimalID));
+
+  // Test with valid UUID ID
+  std::string validUUIDID = "123e4567-e89b-12d3-a456-426614174000";
+  EXPECT_TRUE(cta::utils::isValidID(validUUIDID));
+
+  // Test with valid hexadecimal ID
+  std::string validHexID = "0x1A2B3C4D";
+  EXPECT_TRUE(cta::utils::isValidID(validHexID));
+
+  // Test with invalid ID (contains non-decimal, non-hex characters)
+  std::string invalidID1 = "1A2B3C4G";
+  EXPECT_FALSE(cta::utils::isValidID(invalidID1));
+
+  // Test with empty string
+  std::string invalidID2 = "";
+  EXPECT_FALSE(cta::utils::isValidID(invalidID2));
+}
+
 } // namespace unitTests
