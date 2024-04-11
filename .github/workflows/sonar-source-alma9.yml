@@ -1,0 +1,103 @@
+name: Sonar Source Analysis
+
+on:
+  schedule:
+    # Every day at 3 am
+    - cron: '0 3 * * *'
+  push:
+    branches:
+      - 661-update-sonarcloud-github-workflow-to-alma-9
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: Sonar Source Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: almalinux:9.3
+    
+    env:
+      XROOTD_VERSION: 5
+      SCHED_TYPE: objectstore
+      ORACLE_SUPPORT: ON
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf -y update
+          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock yum-plugin-versionlock
+          dnf -y install wget git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip ninja-build which nodejs
+
+      - name: Download CTA
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Install sonar-scanner and build-wrapper
+        uses: SonarSource/sonarcloud-github-c-cpp@v2
+
+      - name: Install CTA dependencies
+        run: |
+          export CMAKE_OPTIONS
+          export CTA_VERSION
+          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
+          cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+          cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v//;s/-.*$//')
+            export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
+            echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
+          fi
+          xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+          if [[ ${xrootd_version} == 4 ]]; then
+            echo "Setting to compile with XRootD version 4"
+            XROOTD_VERSION=4
+          fi
+          if [[ ${XROOTD_VERSION} -eq 4 ]]; then
+            echo "Using XRootD version 4"
+            ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4
+            yum-config-manager --enable cta-ci-xroot
+            yum-config-manager --disable cta-ci-xrootd5
+          else
+            echo "Using XRootD version 5"
+          fi
+          CTA_VERSION=$XROOTD_VERSION
+          if [[ ${SCHED_TYPE} != "objectstore" ]]; then
+            echo "Using specified scheduler database type $SCHED_TYPE"
+            sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
+            sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3)
+            CTA_VERSION="${CTA_VERSION}${sched_version}"
+            CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} "
+          fi
+          if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+            echo "Disabling Oracle Support"
+            CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
+          fi
+          git config --global --add safe.directory $(pwd)
+          git submodule update --init --recursive
+          ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
+          mkdir build_srpm
+          cd build_srpm
+          echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"
+          echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
+          echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
+          cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          make cta_srpm
+
+      - name: Run build-wrapper
+        run: |
+          cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+          yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+          mkdir build_rpm
+          cd build_rpm
+          cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
+
+      - name: Run sonar-scanner
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
