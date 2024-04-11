@@ -40,7 +40,7 @@ class ArchiveMount;
 class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  friend class cta::PostgresSchedDB;
  public:
-   explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
+   explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
                                                                        const catalogue::TapeForWriting& tape,
@@ -60,7 +60,6 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     void commit();
 
     cta::PostgresSchedDB& m_PostgresSchedDB;
-    rdbms::ConnPool &m_connPool;
     postgresscheddb::Transaction m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;

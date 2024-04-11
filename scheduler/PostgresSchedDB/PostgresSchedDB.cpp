@@ -513,7 +513,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return.
-  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger);
+  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // Take an exclusive lock on the scheduling

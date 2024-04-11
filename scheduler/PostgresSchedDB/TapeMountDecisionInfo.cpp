@@ -26,9 +26,8 @@
 
 namespace cta::postgresscheddb {
 
-TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
+TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_PostgresSchedDB(pdb),
-  m_connPool(cp),
   m_txn(pdb.m_connPool),
   m_ownerId(ownerId),
   m_logger(logger),
