@@ -10,6 +10,7 @@
       when: on_success
       allow_failure: false
 
+
 .kubernetes_test:
   retry: 1
   before_script:
@@ -19,7 +20,8 @@
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
-    - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS}
+    - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
+    - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS} ${ONLY_SYSTEST_OPT}
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
