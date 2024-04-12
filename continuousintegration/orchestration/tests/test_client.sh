@@ -127,7 +127,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
+sleep 65
 echo "###"
 
 echo
@@ -139,7 +139,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after retrieval."
-sleep 10
+sleep 65
 echo "###"
 
 echo
@@ -151,7 +151,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
+sleep 65
 echo "###"
 
 echo
