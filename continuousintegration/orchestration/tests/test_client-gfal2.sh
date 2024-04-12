@@ -99,7 +99,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
 
     echo "###"
     echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-    sleep 65
+    sleep 10
     echo "###"
 
     echo
@@ -109,7 +109,7 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
     echo "###"
-    echo "Sleeping 10 seconds to allow MGM-FST communication to settle after retrieval."
+    echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
     sleep 65
     echo "###"
 
@@ -118,11 +118,6 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     echo "  Evicting files with gfal-evict via root protocol"
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-    echo "###"
-    echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-    sleep 65
-    echo "###"
 
     echo
     echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
@@ -163,7 +158,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 65
+sleep 10
 echo "###"
 
 echo
@@ -173,7 +168,7 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after retrieval."
+echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
 sleep 65
 echo "###"
 
@@ -182,11 +177,6 @@ echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Evicting files with gfal-evict as poweruser via https protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 65
-echo "###"
 
 echo
 echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
