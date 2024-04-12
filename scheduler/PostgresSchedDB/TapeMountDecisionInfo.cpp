@@ -73,7 +73,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
 
   // Get the next Mount Id
   auto newMountId = cta::postgresscheddb::sql::MountsRow::getNextMountID(m_txn);
-
+  commit();
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
   am.mountInfo.mountType       = mount.type;
@@ -112,7 +112,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
 
   // Get the next Mount Id
   auto newMountId = cta::postgresscheddb::sql::MountsRow::getNextMountID(m_txn);
-  m_txn.commit();
+  commit();
 
   // Fill up the mount info
   rm.mountInfo.vid               = mount.vid;
