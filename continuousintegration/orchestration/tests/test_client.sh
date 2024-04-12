@@ -125,6 +125,10 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_a
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo "###"
+echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 10
+echo "###"
 
 echo
 echo "Launching client_retrieve.sh on client pod"
@@ -133,6 +137,10 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_r
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo "###"
+echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
+sleep 65
+echo "###"
 
 echo
 echo "Launching client_evict.sh on client pod"
@@ -140,7 +148,6 @@ echo " Evicting files: xrdfs as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
 
 echo
 echo "Launching client_abortPrepare.sh on client pod"
