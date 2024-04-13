@@ -292,9 +292,11 @@ for step in $SEQUENCE; do
         ;;
     archive)
         trackArchive
+        sleep 10
         ;;
     retrieve)
         trackPrepare
+        sleep 65
         ;;
     evict)
         trackEvict
