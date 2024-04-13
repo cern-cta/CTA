@@ -51,7 +51,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Installing gfal2 utility"
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-util" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-util sqlite" || exit 1
 
 echo
 echo "Copying test scripts to client pod"

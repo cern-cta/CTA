@@ -56,6 +56,8 @@ if [[ ${PREPARE} -eq 1 ]]; then
   fi
 fi
 
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install sqlite" || exit 1
+
 echo
 echo "Copying test scripts to client pod."
 kubectl -n ${NAMESPACE} cp . client:/root/
