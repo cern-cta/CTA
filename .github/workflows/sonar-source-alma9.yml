@@ -90,6 +90,7 @@ jobs:
       - name: Run build-wrapper
         run: |
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+          dnf config-manager --set-enabled crb
           yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
           mkdir build_rpm
           cd build_rpm
