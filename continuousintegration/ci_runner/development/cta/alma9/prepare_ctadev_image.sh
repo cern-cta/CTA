@@ -21,4 +21,4 @@ if [ -n "$1" ]; then
 fi
 
 # Pass to docker the version of CTA to build
-docker build -f Dockerfile -t ctadev:dev $version_arg .
+podman build -f Dockerfile -t ctadev:dev $version_arg .
