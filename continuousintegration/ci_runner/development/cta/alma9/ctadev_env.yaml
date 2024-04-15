@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctadev-env
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ctadev
+  template:
+    metadata:
+      labels:
+        app: ctadev
+    spec:
+      containers:
+        - name: ctadev-container
+          image: ctadev:dev
+          ports:
+            - containerPort: 22

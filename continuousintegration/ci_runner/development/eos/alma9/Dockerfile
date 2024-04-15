@@ -39,7 +39,7 @@ RUN set -ex; \
     rm -rf /eos; \
     yum clean all;
 
-COPY ./entrypoint.sh /entrypoint.sh
-COPY ./entrypoint_rpm.sh /entrypoint_rpm.sh
+COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint_rpm.sh /entrypoint_rpm.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]
