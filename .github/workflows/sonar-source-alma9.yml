@@ -6,7 +6,7 @@ on:
     - cron: '0 3 * * *'
   push:
     branches:
-      - 661-update-sonarcloud-github-workflow-to-alma-9
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -31,7 +31,7 @@ jobs:
           dnf -y --enablerepo=crb install wget git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build
 
       - name: Download CTA
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
