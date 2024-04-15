@@ -12,8 +12,18 @@ spec:
       labels:
         app: ctadev
     spec:
+      terminationGracePeriodSeconds: 5
       containers:
-        - name: ctadev-container
-          image: ctadev:dev
-          ports:
-            - containerPort: 22
+      - name: ctadev-container
+        image: ${IMAGE_TAG}
+        command: ["sleep"]
+        args: ["infinity"]  # Keeps the container running
+        ports:
+        - containerPort: 22
+        volumeMounts:
+        - mountPath: /data
+          name: shared-volume
+      volumes:
+      - name: shared-volume
+        hostPath:
+          path: /data

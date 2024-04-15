@@ -17,6 +17,10 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 ARG CTA_VERSION=main
 
+ENV SHARED_DIR="/shared"
+
+WORKDIR /home/ctadev
+
 COPY ./repos/ /etc/yum.repos.d/
 
 RUN set -ex; \
@@ -38,7 +42,9 @@ RUN set -ex; \
     mkdir build_srpm; \
     cd build_srpm; \
     cmake3 -DPackageOnly:Bool=true ../CTA_setup; \
-    make cta_srpm; \
+    make cta_srpm;
+
+RUN set -ex; \
     yum-builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;
 
 RUN set -ex; \

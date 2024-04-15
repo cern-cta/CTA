@@ -15,10 +15,16 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# If $1 is null then error message
+image_tag="dev"
 if [ -n "$1" ]; then
     version_arg="--build-arg CTA_VERSION=$1"
+    image_tag="${image_tag}-$1"
 fi
 
 # Pass to docker the version of CTA to build
-podman build -f Dockerfile -t ctadev:dev $version_arg .
+podman build -f Dockerfile -t ctadev:${image_tag} ${version_arg} .
+
+# Load new image to minikube
+podman save localhost/ctadev:${image_tag} -o ${image_tag}.tar
+minikube image load ${image_tag}.tar
+rm ${image_tag}.tar
