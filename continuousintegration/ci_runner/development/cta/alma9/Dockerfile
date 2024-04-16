@@ -17,16 +17,14 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 ARG CTA_VERSION=main
 
-ENV SHARED_DIR="/shared"
-
-WORKDIR /home/ctadev
-
 COPY ./repos/ /etc/yum.repos.d/
 
 RUN set -ex; \
     dnf -y update; \
     dnf -y install epel-release almalinux-release-devel git; \
-    dnf -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils;
+    dnf -y install git vim wget gcc gcc-c++ cmake3 make rpm-build yum-utils openssh-server;
+
+RUN mkdir -p shared;
 
 RUN set -ex; \
     git clone https://gitlab.cern.ch/cta/CTA.git CTA_setup; \
@@ -50,3 +48,10 @@ RUN set -ex; \
 RUN set -ex; \
     rm -rf build_srpm; \
     rm -rf CTA_setup;
+
+# Setup SSH server
+RUN /usr/bin/ssh-keygen -A; \
+    rm /run/nologin;
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
