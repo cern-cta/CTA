@@ -72,7 +72,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // mark the jobs in the batch as owned
   try {
     cta::postgresscheddb::Transaction txn(m_PostgresSchedDB.m_connPool);
-    txn.lockGlobal();
+    txn.lockGlobal(0);
     sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
     txn.commit();
   } catch (exception::Exception& ex) {
