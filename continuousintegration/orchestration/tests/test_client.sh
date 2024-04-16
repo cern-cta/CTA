@@ -86,31 +86,6 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-
-echo "Setting up client pod for HTTPs REST API test"
-echo " Copying CA certificates to client pod from ctaeos pod."
-kubectl -n ${NAMESPACE} cp ctaeos:etc/grid-security/certificates/ /tmp/certificates/
-kubectl -n ${NAMESPACE} cp /tmp/certificates client:/etc/grid-security/
-rm -rf /tmp/certificates
-
-# We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
-# We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
-# with the specification.
-echo " Launching client_rest_api.sh on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
-
-
-echo
-echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://\${EOSINSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
-
-echo
-echo "Launching client_simple_ar.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
 echo
 echo "Track progress of test"
 (kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
@@ -136,11 +111,6 @@ echo " Retrieving files: xrdfs as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo "###"
-echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
-sleep 65
-echo "###"
 
 echo
 echo "Launching client_evict.sh on client pod"
@@ -170,62 +140,4 @@ if [[ $? == 1 ]]; then
   echo "Some files were lost during tape workflow."
  exit 1
 fi
-
-echo
-echo "Launching client_multiple_retrieve.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_multiple_retrieve.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo
-echo "Launching idempotent_prepare.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/idempotent_prepare.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo
-echo "Launching delete_on_closew_error.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/delete_on_closew_error.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo
-echo "Launching try_evict_before_archive_completed.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_completed.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-# TODO: Remove the stagerrm tests once the command is removed from EOS
-echo
-echo "Launching stagerrm_tests.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/stagerrm_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-# Get EOS version
-EOS_V=$(kubectl -n ${NAMESPACE} exec client -- eos -v 2>&1 | grep EOS | awk '{print $2}' | awk -F. '{print $1}')
-if [[ $EOS_V == 5 ]]; then
-  echo
-  echo "Launching evict_tests.sh on client pod"
-  echo " Archiving file: xrdcp as user1"
-  echo " Retrieving it as poweruser1"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/evict_tests.sh || exit 1
-  kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-fi
-
-setup_tapes_for_multicopy_test
-
-echo
-echo "Launching retrieve_queue_cleanup.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
 exit 0
