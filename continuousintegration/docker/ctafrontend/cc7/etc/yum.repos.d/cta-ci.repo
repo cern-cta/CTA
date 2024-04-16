@@ -1,3 +1,10 @@
+[eos-repo]
+name=EOS CI Commit Repo
+baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/commit/el-7/$basearch/
+priority=3
+gpgcheck=0
+enabled=1
+
 [cta-ci-ceph-octopus]
 name=CTA CI repo ceph-octopus cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/ceph-octopus
