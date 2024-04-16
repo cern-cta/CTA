@@ -273,13 +273,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
+    logContext.log(cta::log::DEBUG, "Creating report Packer");
     RecallReportPacker reportPacker(retrieveMount, logContext);
+    logContext.log(cta::log::DEBUG, "Report Packer disableBulk");
     reportPacker.disableBulk(); //no bulk needed anymore
+    logContext.log(cta::log::DEBUG, "RecallWatchDog watchdog");
     RecallWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *retrieveMount,
                             m_driveConfig.unitName, logContext);
-
+    logContext.log(cta::log::DEBUG, "Creating RecallMemoryManager");
     RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
 
+    logContext.log(cta::log::DEBUG, "Creating TapeReadSingleThread");
     TapeReadSingleThread readSingleThread(*drive, m_mediaChanger, reporter, m_volInfo,
                                           m_dataTransferConfig.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext,
                                           reportPacker,
@@ -287,19 +291,26 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
                                           m_dataTransferConfig.tapeLoadTimeout,
                                           m_scheduler.getCatalogue());
-
+    logContext.log(cta::log::DEBUG, "Creating DiskWriteThreadPool");
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
                                    watchDog,
                                    logContext,
                                    m_dataTransferConfig.xrootTimeout);
+    logContext.log(cta::log::DEBUG, "Creating RecallTaskInjector");
     RecallTaskInjector taskInjector(memoryManager, readSingleThread, threadPool, *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
                                     m_dataTransferConfig.bulkRequestRecallMaxBytes, logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type of the client
+    logContext.log(cta::log::DEBUG, "Creating readSingleThread setTaskInjector");
+
     readSingleThread.setTaskInjector(&taskInjector);
+
+    logContext.log(cta::log::DEBUG, "Creating reportPacker.setWatchdog(watchDog);");
+
     reportPacker.setWatchdog(watchDog);
+    logContext.log(cta::log::DEBUG, "Creating taskInjector.setDriveInterface;");
 
     taskInjector.setDriveInterface(readSingleThread.getDriveReference());
 
@@ -324,20 +335,39 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     //only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
     if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
+      logContext.log(cta::log::DEBUG, "readSingleThread.setWaitForInstructionsTime;");
+
       readSingleThread.setWaitForInstructionsTime(timer.secs());
+      logContext.log(cta::log::DEBUG, "watchDog.startThread();");
+
       watchDog.startThread();
+      logContext.log(cta::log::DEBUG, "readSingleThread.startThreads");
       readSingleThread.startThreads();
+      logContext.log(cta::log::DEBUG, "threadPool.startThreads");
       threadPool.startThreads();
+      logContext.log(cta::log::DEBUG, "reportPacker.startThreads");
       reportPacker.startThreads();
+      logContext.log(cta::log::DEBUG, "taskInjector.startThreads");
       taskInjector.startThreads();
+      logContext.log(cta::log::DEBUG, "reporter.startThreads");
       reporter.startThreads();
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
+      logContext.log(cta::log::DEBUG, "taskInjector.waitThreads()");
+
       taskInjector.waitThreads();
+      logContext.log(cta::log::DEBUG, "threadPool.waitThreads()");
       threadPool.waitThreads();
+      logContext.log(cta::log::DEBUG, "readSingleThread.waitThreads()");
       readSingleThread.waitThreads();
+      logContext.log(cta::log::DEBUG, "reportPacker.waitThread()");
+
       reportPacker.waitThread();
+      logContext.log(cta::log::DEBUG, "reporter.waitThreads();");
+
       reporter.waitThreads();
+      logContext.log(cta::log::DEBUG, "watchDog.stopAndWaitThread");
+
       watchDog.stopAndWaitThread();
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state

@@ -49,7 +49,7 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
                                     LogContext::ScopedParam(m_lc, Param("fSeq", job->tapeFile.fSeq)),
                                     LogContext::ScopedParam(m_lc, Param("path", job->srcURL))};
     tape::utils::suppresUnusedVariable(sp);
-
+    m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::injectBulkMigrations:  " + std::to_string(fileSize));
     const uint64_t neededBlock = howManyBlocksNeeded(fileSize, blockCapacity);
 
     // We give owner ship on the archive job to the tape write task (as last user).
@@ -164,11 +164,13 @@ void MigrationTaskInjector::WorkerThread::run() {
         throw castor::tape::tapeserver::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
+      m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive Mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
       uint64_t files = jobs.size();
       uint64_t bytes = 0;
       for (auto& j : jobs) bytes += j->archiveFile.fileSize;
       if (jobs.empty()) {
+        m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): No jobs were found");
         if (req.lastCall) {
           m_parent.m_lc.log(cta::log::INFO, "No more file to migrate: triggering the end of session.");
           m_parent.signalEndDataMovement();
@@ -180,7 +182,7 @@ void MigrationTaskInjector::WorkerThread::run() {
         }
       }
       else {
-
+        m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
         m_parent.injectBulkMigrations(jobs);
         // Decide on continuation
