@@ -158,7 +158,15 @@ fi
 
 # We are going to run with repository based images (they have rpms embedded)
 if [[ ${systest_only} -eq 1 ]]; then
-  COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
+  if [[ ${SYSTEMTESTS_ONLY_SOURCE} == "BRANCH" ]]; then
+    BRANCH_NAME=${CI_COMMIT_BRANCH}
+  fi
+  echo "Getting commit id from branch name: ${BRANCH_NAME}"
+  # I don't like how I am doing this at the moment, but for now it is enough. We get the last commit ID and then we look for the ctageneric that matched commit id and conditions. The current problem is what happens if there was no image generated for the combination of paramters, should we fall back to a previous one/main or fail? Failing should be the way to go.
+  COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits?ref_name=${BRANCH_NAME}" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
+  # Filter by OS version
+  COMMITID="${COMMITID}_ALMA-${ALMA9}"
+  echo "Commit ID with OS version: ${COMMITID}"
 else
   COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi

@@ -17,7 +17,8 @@ variables:
   CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
   ALMA9: "OFF"
-  SYSTEMTESTS_ONLY: "FALSE"
+  SYSTEMTESTS_ONLY: "FALSE" # Should be either FALSE, MAIN or BRANCH?
+  SYSTEMTEST_ONLY_SOURCE: "MAIN"  # Should be either MAIN or BRANCH.
 
 .prepare-xrootd4: &prepare-xrootd4
   - if [[ ${XROOTD_VERSION} -eq 4 ]];
