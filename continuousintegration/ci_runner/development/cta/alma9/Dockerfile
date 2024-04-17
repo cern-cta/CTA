@@ -23,7 +23,7 @@ RUN mkdir -p shared;
 
 RUN set -ex; \
     dnf -y update; \
-    dnf -y install epel-release almalinux-release-devel git vim wget cmake3 dnf-utils openssh-server; \
+    dnf -y install epel-release almalinux-release-devel git vim wget cmake3 dnf-utils ccache openssh-server; \
     dnf -y group install "Development Tools";
 
 RUN set -ex; \
