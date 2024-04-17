@@ -15,14 +15,11 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# If $1 is null then error message
-if [ -z "$1" ]; then
-    echo "Error: No argument supplied"
-    echo "Usage: ./prepare_eos_builder.sh <eos_version>"
-    exit 1
+image_tag="dev"
+if [ -n "$1" ]; then
+    version_arg="--build-arg EOS_VERSION=$1"
+    image_tag="${image_tag}-$1"
 fi
 
-version=$1
-
-# Pass to docker the version of eos to build
-docker build -f Dockerfile -t eosbuilder:dev --build-arg EOS_VERSION=$version .
+# Pass to docker the version of EOS to build
+podman build -f Dockerfile -t eosdev:${image_tag} ${version_arg} .

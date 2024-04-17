@@ -23,8 +23,3 @@ fi
 
 # Pass to docker the version of CTA to build
 podman build -f Dockerfile -t ctadev:${image_tag} ${version_arg} .
-
-# Load new image to minikube
-podman save localhost/ctadev:${image_tag} -o ${image_tag}.tar
-minikube image load ${image_tag}.tar
-rm ${image_tag}.tar

@@ -19,12 +19,12 @@ ARG CTA_VERSION=main
 
 COPY ./repos/ /etc/yum.repos.d/
 
+RUN mkdir -p shared;
+
 RUN set -ex; \
     dnf -y update; \
-    dnf -y install epel-release almalinux-release-devel git; \
-    dnf -y install git vim wget gcc gcc-c++ cmake3 make rpm-build yum-utils openssh-server;
-
-RUN mkdir -p shared;
+    dnf -y install epel-release almalinux-release-devel git vim cmake3 dnf-utils openssh-server; \
+    dnf -y group install "Development Tools";
 
 RUN set -ex; \
     git clone https://gitlab.cern.ch/cta/CTA.git CTA_setup; \

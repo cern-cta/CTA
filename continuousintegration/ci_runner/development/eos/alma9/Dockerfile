@@ -13,33 +13,41 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 ARG EOS_VERSION=master
 
-RUN yum install -y git which;
+COPY ./repos/ /etc/yum.repos.d/
 
-WORKDIR /eos
+RUN mkdir -p shared;
 
 RUN set -ex; \
-    git clone https://gitlab.cern.ch/dss/eos.git /eos; \
+    dnf -y update; \
+    dnf -y install epel-release almalinux-release-devel git vim cmake3 dnf-utils openssh-server; \
+    dnf -y group install "Development Tools";
+
+RUN set -ex; \
+    git clone https://gitlab.cern.ch/dss/eos.git /EOS_setup; \
+    cd EOS_setup; \
     git checkout ${EOS_VERSION}; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \
-    cd /eos; \
-    sed -e 's/sudo\ //g' ./utils/centos7-dev-environment.sh > /tmp/centos7-dev-environment.sh; \
-    # Remove reboot and quarkdb installation
-    sed '/reboot -h now/d' -i /tmp/centos7-dev-environment.sh; \
-    sed '/install -y quarkdb/d' -i /tmp/centos7-dev-environment.sh; \
-    chmod +x /tmp/centos7-dev-environment.sh; \
-    /tmp/centos7-dev-environment.sh;
+    mkdir build_srpm; \
+    cd build_srpm; \
+    cmake3 -DPACKAGEONLY:Bool=true ../EOS_setup; \
+    make srpm;
 
 RUN set -ex; \
-    rm -rf /eos; \
-    yum clean all;
+    yum-builddep -y --nogpgcheck build_srpm/SRPMS/*;
 
-COPY entrypoint.sh /entrypoint.sh
-COPY entrypoint_rpm.sh /entrypoint_rpm.sh
+RUN set -ex; \
+    rm -rf build_srpm; \
+    rm -rf EOS_setup;
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+# Setup SSH server for remote access
+RUN /usr/bin/ssh-keygen -A; \
+    rm /run/nologin;
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
