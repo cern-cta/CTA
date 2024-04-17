@@ -40,10 +40,12 @@ namespace catalogue {
  */
 class MetadataGetter {
 protected:
-  void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
-  void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
-  void removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
-  void removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
+  void removeObjectNameContaining(std::list<std::string>& objects,
+    const std::list<std::string> &wordsToTriggerRemoval) const;
+  void removeObjectNameNotContaining(std::list<std::string>& objects,
+    const std::list<std::string> &wordsNotToTriggerRemoval) const;
+  void removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const;
+  void removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const;
 public:
   virtual std::list<std::string> getIndexNames() = 0;
   virtual std::list<std::string> getTableNames() = 0;
@@ -62,10 +64,10 @@ protected:
 public:
   explicit DatabaseMetadataGetter(cta::rdbms::Conn & conn);
   SchemaVersion getCatalogueVersion();
-  virtual std::list<std::string> getIndexNames();
-  virtual std::list<std::string> getTableNames();
-  virtual std::map<std::string, std::string> getColumns(const std::string& tableName);
-  virtual std::list<std::string> getConstraintNames(const std::string& tableName);
+  std::list<std::string> getIndexNames() override;
+  std::list<std::string> getTableNames() override;
+  std::map<std::string, std::string> getColumns(const std::string& tableName) override;
+  std::list<std::string> getConstraintNames(const std::string& tableName) override;
   virtual std::list<std::string> getParallelTableNames();
   virtual cta::rdbms::Login::DbType getDbType() = 0;
   virtual std::list<std::string> getStoredProcedures();
@@ -131,7 +133,7 @@ public:
  * This class is used to filter the Metadata that comes from the SQLite schema regarding the dbType we are currently checking
  */
 class SchemaMetadataGetter: public MetadataGetter{
-protected:
+private:
   std::unique_ptr<SQLiteDatabaseMetadataGetter> m_sqliteDatabaseMetadataGetter;
   // The database type we would like to compare the SQLite schema against (used for filtering the results)
   cta::rdbms::Login::DbType m_dbType;

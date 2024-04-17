@@ -25,29 +25,33 @@ namespace cta::catalogue {
 // Default destructor for abstract base class
 MetadataGetter::~MetadataGetter() = default;
 
-void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
+void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects,
+  const std::list<std::string> &wordsToTriggerRemoval) const {
   objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
-    return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),[&object](const std::string &wordTriggeringRemoval){
-      return object.find(wordTriggeringRemoval) != std::string::npos;
+    return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),
+      [&object](std::string_view wordTriggeringRemoval){
+        return object.find(wordTriggeringRemoval) != std::string::npos;
     }) != wordsToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval){
+void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects,
+  const std::list<std::string> &wordsNotToTriggerRemoval) const {
   objects.remove_if([&wordsNotToTriggerRemoval](const std::string &object){
-    return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),[&object](const std::string &wordsNotToTriggeringRemoval){
-      return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
+    return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),
+      [&object](std::string_view wordsNotToTriggeringRemoval){
+        return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
     }) != wordsNotToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const {
   objects.remove_if([&regex](const std::string &object){
     return !regex.has_match(object);
   });
 }
 
-void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const {
   objects.remove_if([&regex](const std::string &object){
     return regex.has_match(object);
   });
@@ -96,7 +100,7 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
                               .status(schemaStatus);
         }
       }
-    } catch (const cta::exception::Exception &ex){
+    } catch (const cta::exception::Exception&){
     }
     return schemaVersionBuilder.build();
   } else {
@@ -263,15 +267,15 @@ std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
 }
 
 DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
-  typedef rdbms::Login::DbType DbType;
+  using DbType = rdbms::Login::DbType;
   switch(dbType){
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
-      return new SQLiteDatabaseMetadataGetter(conn);
+      return std::make_unique<SQLiteDatabaseMetadataGetter>(conn).release();
     case DbType::DBTYPE_ORACLE:
-      return new OracleDatabaseMetadataGetter(conn);
+      return std::make_unique<OracleDatabaseMetadataGetter>(conn).release();
     case DbType::DBTYPE_POSTGRESQL:
-      return new PostgresDatabaseMetadataGetter(conn);
+      return std::make_unique<PostgresDatabaseMetadataGetter>(conn).release();
     default:
       throw cta::exception::Exception("In CatalogueMetadataGetterFactory::create(), can't get CatalogueMetadataGetter for dbType "+rdbms::Login::dbTypeToString(dbType));
   }

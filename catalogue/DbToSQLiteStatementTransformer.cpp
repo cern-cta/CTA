@@ -31,9 +31,9 @@ namespace cta::catalogue {
 CreateGlobalTempTableToSQLiteStatementTransformer::CreateGlobalTempTableToSQLiteStatementTransformer(const std::string &statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
-  utils::searchAndReplace(m_statement,"GLOBAL TEMPORARY","TEMPORARY");
-  utils::searchAndReplace(m_statement,"ON COMMIT DELETE ROWS;",";");
-  return m_statement;
+  utils::searchAndReplace(getStatement(),"GLOBAL TEMPORARY","TEMPORARY");
+  utils::searchAndReplace(getStatement(),"ON COMMIT DELETE ROWS;",";");
+  return getStatement();
 }
 /*****************************************************/
 /* CreateGlobalTempTableToSQLiteStatementTransformer */
@@ -45,11 +45,11 @@ std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
 IndexStatementTransformer::IndexStatementTransformer(const std::string& statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string IndexStatementTransformer::transform(){
-  utils::searchAndReplace(m_statement,"UNIQUE "," ");
+  utils::searchAndReplace(getStatement(),"UNIQUE "," ");
   // This is a bit crude, but it will work so long as we don't have indexes with multiple nested functions...
   std::regex lowerRegex("LOWER\\(([^\\)]*)\\)");
-  m_statement = std::regex_replace(m_statement, lowerRegex, "\\1", std::regex_constants::format_sed);
-  return m_statement;
+  getStatement() = std::regex_replace(getStatement(), lowerRegex, "\\1", std::regex_constants::format_sed);
+  return getStatement();
 }
 /*****************************/
 /* IndexStatementTransformer */
@@ -96,10 +96,10 @@ std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFa
 const std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToSQLiteStatementTransformerFactory::regexToStatementMap = DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap();
 
 DbToSQLiteStatementTransformerFactory::StatementType DbToSQLiteStatementTransformerFactory::statementToStatementType(const std::string &statement){
-  for(auto &kv: regexToStatementMap){
-    utils::Regex regexToTest(kv.first);
-    if(regexToTest.exec(statement).size() != 0){
-      return kv.second;
+  for(const auto& [regex, type]: regexToStatementMap){
+    utils::Regex regexToTest(regex);
+    if(!regexToTest.exec(statement).empty()){
+      return type;
     }
   }
   return StatementType::SKIP;

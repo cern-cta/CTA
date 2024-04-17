@@ -18,6 +18,7 @@
 #include "catalogue/CmdLineTool.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
+#include <cstring>
 #include <unistd.h>
 
 namespace cta::catalogue {
@@ -43,11 +44,12 @@ CmdLineTool::~CmdLineTool() = default;
 // getUsername
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getUsername() {
-  char buf[256];
+  std::string buf(256, '\0');
 
-  if(getlogin_r(buf, sizeof(buf))) {
+  if(getlogin_r(&buf[0], buf.size())) {
     return "UNKNOWN";
   } else {
+    buf.resize(strlen(buf.c_str()));  // Resize the string to remove extra null characters
     return buf;
   }
 }
@@ -56,12 +58,12 @@ std::string CmdLineTool::getUsername() {
 // getHostname
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getHostname() {
-  char buf[256];
+  std::string buf(256, '\0');
 
-  if(gethostname(buf, sizeof(buf))) {
+  if(gethostname(&buf[0], buf.size())) {
     return "UNKNOWN";
   } else {
-    buf[sizeof(buf) - 1] = '\0';
+    buf.resize(strlen(buf.c_str()));  // Resize the string to remove extra null characters
     return buf;
   }
 }

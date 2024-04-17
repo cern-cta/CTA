@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "catalogue/CatalogueItorImpl.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -33,14 +35,12 @@ template <typename Item>
 class CatalogueItor {
 public:
 
-  typedef CatalogueItorImpl<Item> Impl;
+  using Impl = CatalogueItorImpl<Item>;
 
   /**
    * Constructor.
    */
-  CatalogueItor():
-    m_impl(nullptr) {
-  }
+  CatalogueItor() = default;
 
   /**
    * Constructor.
@@ -48,49 +48,26 @@ public:
    * @param impl The object actually implementing this iterator.
    */
   explicit CatalogueItor(Impl *const impl) : m_impl(impl) {
-    if(nullptr == impl) {
+    if (nullptr == impl) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
     }
   }
 
   /**
-   * Deletion of copy constructor.
-   */
-  CatalogueItor(const CatalogueItor &) = delete;
-
-  /**
-   * Move constructor.
-   *
-   * @param other The other object to be moved.
-   */
-  CatalogueItor(CatalogueItor &&other):
-    m_impl(other.m_impl) {
-    other.m_impl = nullptr;
-  }
-
-  /**
    * Destructor.
    */
-  ~CatalogueItor() {
-    delete m_impl;
-  }
+  ~CatalogueItor() = default;
 
-  /**
-   * Deletion of copy assignment.
-   */
-  CatalogueItor &operator=(const CatalogueItor &) = delete;
+  // copy constructor
+  CatalogueItor(const CatalogueItor &rhs) = delete;
 
-  /**
-   * Move assignment.
-   */
-  CatalogueItor &operator=(CatalogueItor &&rhs) {
-    // Protect against self assignment
-    if(this != &rhs) {
-      // Avoid memory leak
-      delete m_impl;
+  // move constructor
+  CatalogueItor(CatalogueItor &&rhs) noexcept : m_impl(std::move(rhs.m_impl)) {}
 
-      m_impl = rhs.m_impl;
-      rhs.m_impl = nullptr;
+  // move assignment
+  CatalogueItor &operator=(CatalogueItor &&rhs) noexcept {
+    if (this != &rhs) {
+      m_impl = std::move(rhs.m_impl);
     }
     return *this;
   }
@@ -120,7 +97,7 @@ private:
   /**
    * The object actually implementing this iterator.
    */
-  Impl *m_impl;
+  std::unique_ptr<Impl> m_impl;
 
 }; // class CatalogueItor
 

@@ -57,7 +57,7 @@ struct CreateTapeAttributes {
   /**
    * True if the tape is full.
    */
-  bool full;
+  bool full = false;
 
   /**
    * Optional comment about the tape.
@@ -84,9 +84,7 @@ struct CreateTapeAttributes {
    *
    * Sets the value of all boolean member-variables to false.
    */
-  CreateTapeAttributes():
-    full(false) {
-  }
+  CreateTapeAttributes() = default;
 }; // struct CreateTapeAttributes
 
 } // namespace cta::catalogue
