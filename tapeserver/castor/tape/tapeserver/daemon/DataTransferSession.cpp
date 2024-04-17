@@ -445,11 +445,18 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
   {
     //dereferencing configLine is safe, because if configLine were not valid,
     //then findDrive would have return nullptr and we would have not end up there
+    logContext.log(cta::log::DEBUG, "Creating MigrationMemoryManager");
     MigrationMemoryManager memoryManager(m_dataTransferConfig.nbBufs,
                                          m_dataTransferConfig.bufsz, logContext);
+    logContext.log(cta::log::DEBUG, "Creating MigrationReportPacker");
+
     MigrationReportPacker reportPacker(archiveMount, logContext);
+    logContext.log(cta::log::DEBUG, "Creating MigrationWatchDog");
+
     MigrationWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *archiveMount,
                                m_driveConfig.unitName, logContext);
+    logContext.log(cta::log::DEBUG, "Creating TapeWriteSingleThread");
+
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
                                             reporter,
@@ -467,6 +474,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_dataTransferConfig.tapeLoadTimeout,
                                             m_scheduler.getCatalogue());
 
+    logContext.log(cta::log::DEBUG, "Creating DiskReadThreadPool");
 
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                   m_dataTransferConfig.bulkRequestMigrationMaxFiles,
@@ -474,6 +482,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                   watchDog,
                                   logContext,
                                   m_dataTransferConfig.xrootTimeout);
+    logContext.log(cta::log::DEBUG, "Creating MigrationTaskInjector");
+
     MigrationTaskInjector taskInjector(memoryManager, threadPool, writeSingleThread, *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                        m_dataTransferConfig.bulkRequestMigrationMaxBytes, logContext);
@@ -492,20 +502,45 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 
       // We have something to do: start the session by starting all the threads.
       memoryManager.startThreads();
+      logContext.log(cta::log::DEBUG, "threadPool.startThreads();");
       threadPool.startThreads();
+      logContext.log(cta::log::DEBUG, "watchDog.startThreads();");
       watchDog.startThread();
+      logContext.log(cta::log::DEBUG, "writeSingleThread.setWaitForInstructionsTime");
       writeSingleThread.setWaitForInstructionsTime(timer.secs());
+      logContext.log(cta::log::DEBUG, "writeSingleThread.startThreads");
+
       writeSingleThread.startThreads();
+      logContext.log(cta::log::DEBUG, "reportPacker.startThreads");
+
       reportPacker.startThreads();
+      logContext.log(cta::log::DEBUG, "taskInjector.startThreads");
+
       taskInjector.startThreads();
+      logContext.log(cta::log::DEBUG, "reporter.startThreads");
+
       reporter.startThreads();
+      logContext.log(cta::log::DEBUG, "taskInjector.waitThreads");
+
       // Synchronise with end of threads
       taskInjector.waitThreads();
+      logContext.log(cta::log::DEBUG, "writeSingleThread.waitThreads");
+
       writeSingleThread.waitThreads();
+      logContext.log(cta::log::DEBUG, "threadPool.waitThreads");
+
       threadPool.waitThreads();
+      logContext.log(cta::log::DEBUG, "memoryManager.waitThreads");
+
       memoryManager.waitThreads();
+      logContext.log(cta::log::DEBUG, "reportPacker.waitThreads");
+
       reportPacker.waitThread();
+      logContext.log(cta::log::DEBUG, "reporter.waitThreads");
+
       reporter.waitThreads();
+      logContext.log(cta::log::DEBUG, "watchDog.stopAndWaitThread");
+
       watchDog.stopAndWaitThread();
 
       return writeSingleThread.getHardwareStatus();
@@ -539,6 +574,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
+
       // Empty mount, hardware safe
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, logContext);
