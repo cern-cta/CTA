@@ -61,9 +61,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }
-  jobIDsString.pop_back();  // Remove the trailing comma
   logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountID");
   if (!jobIDsString.empty()) {
+    jobIDsString.pop_back(); // Remove the trailing comma
     // this shall be condition for the update otherwise we do not need to get any connection
     // we shall move the condition here rather than relying on updateMountID to return doing nothing
     logContext.log(cta::log::DEBUG, "JOBIDS string looks like this: " + jobIDsString + "END and mountID line this:" +
