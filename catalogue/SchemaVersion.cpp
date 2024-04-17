@@ -20,9 +20,6 @@
 
 namespace cta::catalogue {
 
-SchemaVersion::SchemaVersion() :
-  m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}
-
 template<>
 std::string SchemaVersion::getSchemaVersion() const {
   return std::to_string(m_schemaVersionMajor)+"."+std::to_string(m_schemaVersionMinor);
@@ -50,9 +47,9 @@ SchemaVersion::MajorMinor SchemaVersion::getSchemaVersionNext() const {
 template<>
 std::string SchemaVersion::getStatus() const {
   switch(m_status){
-    case PRODUCTION:
+    case Status::PRODUCTION:
       return "PRODUCTION";
-    case UPGRADING:
+    case Status::UPGRADING:
       return "UPGRADING";
     default:
       throw cta::exception::Exception("In SchemaVersion::getStatus(), wrong status");

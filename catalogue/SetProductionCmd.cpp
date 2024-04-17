@@ -69,7 +69,7 @@ void SetProductionCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 // isProductionSettable
 //------------------------------------------------------------------------------
-bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn){
+bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn) const {
   //Check that the IS_PRODUCTION column is there
   cta::catalogue::SchemaChecker::Builder builder("catalogue",login.dbType,conn);
   auto schemaChecker = builder.build();
@@ -80,7 +80,7 @@ bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login & login, cta
 //------------------------------------------------------------------------------
 // setProductionFlag
 //------------------------------------------------------------------------------
-void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) {
+void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) const {
   const char *  const sql = "UPDATE CTA_CATALOGUE SET IS_PRODUCTION='1'";
   try {
     conn.executeNonQuery(sql);

@@ -61,7 +61,7 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
     return getAllStatementsFromSchema(schema->sql);
 }
 
-std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) {
+std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) const {
   std::list<std::string> statements;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
@@ -69,7 +69,7 @@ std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(con
     while (std::string::npos != (findResult = schema.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(schema.substr(searchPos, stmtLen));
+      const std::string sqlStmt = utils::trimString(std::string_view(schema).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
       if (0 < sqlStmt.size()) {  // Ignore empty statements
@@ -82,7 +82,7 @@ std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(con
   return statements;
 }
 
-std::string SchemaSqlStatementsReader::getDatabaseType() {
+std::string SchemaSqlStatementsReader::getDatabaseType() const {
   switch (m_dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
     case rdbms::Login::DBTYPE_SQLITE:
@@ -125,13 +125,13 @@ std::list<std::string> MapSqlStatementsReader::getStatements() {
   std::map<std::string, std::string> mapVersionSchemas;
   try {
     mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
-  } catch (const std::out_of_range &ex) {
+  } catch (const std::out_of_range&) {
     throw cta::exception::Exception("No schema has been found for version number "+m_catalogueVersion);
   }
   try {
     std::string schema = mapVersionSchemas.at(getDatabaseType());
     return getAllStatementsFromSchema(schema);
-  } catch (const std::out_of_range &ex) {
+  } catch (const std::out_of_range&) {
     throw cta::exception::Exception("No schema has been found for database type "+getDatabaseType());
   }
 }

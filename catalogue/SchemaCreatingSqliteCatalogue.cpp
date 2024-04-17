@@ -42,7 +42,7 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
 //------------------------------------------------------------------------------
 // createCatalogueSchema
 //------------------------------------------------------------------------------
-void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
+void SchemaCreatingSqliteCatalogue::createCatalogueSchema() const {
   try {
     const SqliteCatalogueSchema schema;
     auto conn = m_connPool->getConn();
@@ -55,7 +55,7 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) {
+void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
@@ -63,7 +63,7 @@ void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const s
     while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
+      const std::string sqlStmt = utils::trimString(std::string_view(sqlStmts).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements

@@ -39,6 +39,13 @@ namespace cta::catalogue {
 class SchemaChecker {
 public:
   /**
+   * Constructor of the SchemaChecker class
+   * @param dbType the type of the database to check against
+   * @param conn the connection of the database to check
+   */
+  SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+
+  /**
    * Destructor
    */
   virtual ~SchemaChecker() = default;
@@ -126,13 +133,6 @@ public:
   };
 
 private:
-  /**
-   * Constructor of the SchemaChecker class
-   * @param dbType the type of the database to check against
-   * @param conn the connection of the database to check
-   */
-  SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
-
   const std::string m_databaseToCheckName;
   /**
    * Catalogue-to-check database type

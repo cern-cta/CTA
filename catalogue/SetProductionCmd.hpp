@@ -57,13 +57,13 @@ private:
    * @param conn the connection to the database
    * @return true if the IS_PRODUCTION flag is settable, false otherwise
    */
-  bool isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn);
+  bool isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn) const;
   
   /**
    * Set the IS_PRODUCTION flag to true on the CTA Catalogue
    * @param conn the connection to the CTA Catalogue database
    */
-  void setProductionFlag(cta::rdbms::Conn & conn);
+  void setProductionFlag(cta::rdbms::Conn & conn) const;
 };
 
 } // namespace cta::catalogue

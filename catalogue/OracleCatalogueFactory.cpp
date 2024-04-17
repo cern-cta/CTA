@@ -43,7 +43,7 @@ OracleCatalogueFactory::OracleCatalogueFactory(
   if (rdbms::Login::DBTYPE_ORACLE != login.dbType) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_ORACLE actual=" <<
-      login.dbTypeToString(login.dbType);
+      rdbms::Login::dbTypeToString(login.dbType);
     throw ex;
   }
 }

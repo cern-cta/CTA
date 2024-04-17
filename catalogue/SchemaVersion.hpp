@@ -28,12 +28,14 @@ class SchemaVersion {
 public:
   class Builder;
 
-  typedef std::pair<uint64_t,uint64_t> MajorMinor;
+  using MajorMinor = std::pair<uint64_t,uint64_t>;
 
-  enum Status{
+  enum class Status{
     UPGRADING,
     PRODUCTION
   };
+
+  SchemaVersion() = default;
 
   virtual ~SchemaVersion() = default;
 
@@ -45,12 +47,11 @@ public:
   T getStatus() const;
 
 private:
-  uint64_t m_schemaVersionMajor;
-  uint64_t m_schemaVersionMinor;
+  uint64_t m_schemaVersionMajor = 0;
+  uint64_t m_schemaVersionMinor = 0;
+  SchemaVersion::Status m_status = Status::UPGRADING;
   std::optional<uint64_t> m_nextSchemaVersionMajor;
   std::optional<uint64_t> m_nextSchemaVersionMinor;
-  SchemaVersion::Status m_status;
-  SchemaVersion();
 };
 
 class SchemaVersion::Builder{

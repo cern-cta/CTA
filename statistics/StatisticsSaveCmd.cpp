@@ -83,13 +83,12 @@ void StatisticsSaveCmd::verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLi
   }
 }
 
-void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn* catalogueConn, cta::rdbms::Login::DbType dbType) {
-  using cta::catalogue::SchemaCheckerResult;
+void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn* catalogueConn, cta::rdbms::Login::DbType dbType) const {
   // Check that the catalogue contains the table TAPE with the columns we need
   cta::catalogue::SchemaChecker::Builder catalogueCheckerBuilder("catalogue", dbType, *catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
 
-  SchemaCheckerResult result = catalogueChecker->checkTableContainsColumns("TAPE", {
+  catalogue::SchemaCheckerResult result = catalogueChecker->checkTableContainsColumns("TAPE", {
                                                                                     "NB_MASTER_FILES",
                                                                                     "MASTER_DATA_IN_BYTES",
                                                                                     "NB_COPY_NB_1",
@@ -100,7 +99,7 @@ void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn* catalogueConn, ct
                                                                                    });
   result += catalogueChecker->checkTableContainsColumns("TAPE_POOL", {"VIRTUAL_ORGANIZATION_ID"});
 
-  if (result.getStatus() == SchemaCheckerResult::FAILED) {
+  if (result.getStatus() == catalogue::SchemaCheckerResult::Status::FAILED) {
     result.displayErrors(std::cerr);
     throw cta::exception::Exception("Catalogue schema checking failed.");
   }
