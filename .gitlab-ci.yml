@@ -17,7 +17,7 @@ variables:
   CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
   ALMA9: "OFF"
-  SYSTEMTESTS_ONLY: "FALSE"
+  SYSTEMTESTS_ONLY: "FALSE" # Either FALSE or the image tag id
   SYSTEMTESTS_ONLY_TESTS: "ALL"
 
 .prepare-xrootd4: &prepare-xrootd4
