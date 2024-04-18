@@ -49,9 +49,6 @@ updatedatabasetest=0
 # By default doesn't run the tests for external tape formats
 runexternaltapetests=0
 
-# Create an instance for
-systest_only=0
-
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
@@ -157,7 +154,7 @@ if [ "$updatedatabasetest" == "1" ] ; then
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
-if [[ ${systest_only} -ne 1 ]]; then
+if [[ -z ${CUSTOM_IMAGE_TAG} ]]; then
   COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi
 
