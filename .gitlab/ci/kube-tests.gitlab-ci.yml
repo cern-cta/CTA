@@ -10,6 +10,16 @@
       when: on_success
       allow_failure: false
 
+dummy_test:
+  stage: test
+  rules:
+    - if: ${SYSTEMTESTS_ONLY} == "FALSE"
+      when: never
+    - when: always
+  script:
+    - echo "Cannot succeed pipeline running only system tests"
+    - exit 1
+  
 .kubernetes_test:
   retry: 1
   before_script:
@@ -62,15 +72,7 @@ client-eos5:
       when: never
     - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*client.*/
       when: never
-    - if: $SYSTEMTESTS_ONLY != "FALSE"
-      allow_failure: true
     - when: always
-  after_script:
-    - if [[ ${SYSTEMTESTS_ONLY} != "FALSE" ]]; then
-    -   exit 1
-    - fi
-
-
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
