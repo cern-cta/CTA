@@ -6,7 +6,7 @@
       when: never
     - if: $ALMA9 == "ON"
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $SYSTEMTESTS_ONLY != "FALSE"
       when: never
   artifacts:
     expire_in: 30 days
