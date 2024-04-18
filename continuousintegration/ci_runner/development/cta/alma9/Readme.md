@@ -19,11 +19,11 @@ podman images
 
 To launch one of them (detached), proceed with:
 ```bash
-./start_ctadev.sh [-p <port>] [-v <volumemount>] <image>
+./start_ctadev.sh [-p <port>] [-v <mount>] <image>
 ```
 
 The `<port>` parameter can be used to forward port `<port>` on the localhost to port `22` on the container. This can be used by ssh clients to access the container through a network. \
-The `<volumemount>` parameter can be used to mount a volume. By default, it's `~/shared:/root/shared:Z`.
+The `<mount>` parameter can be used to mount a local directory to the container directory `/shared`.
 The `<image>` is the image of the container that we want to run.
 
 ##### 2.1 Setup `ssh` server
