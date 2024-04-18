@@ -106,15 +106,22 @@ public:
     unloadAll();
   }
 
+  bool isRegistered(const std::string& strPluginName) const {
+    return m_umapPlugins.find(strPluginName) != m_umapPlugins.end();
+  }
+
   void registerPlugin(std::unique_ptr<plugin::Interface<BASE_TYPE>> upInterface) {
     const std::string strPluginName = upInterface->template GET<plugin::DATA::PLUGIN_NAME>(); 
-    if (m_umapPlugins.find(strPluginName) != m_umapPlugins.end()) {
+    if (isRegistered(strPluginName)) {
       throw std::logic_error("A plugin with the name: " + strPluginName + " is already registered");
     }
     m_umapPlugins.emplace(strPluginName, std::move(upInterface));  
   }
 
   const plugin::Interface<BASE_TYPE>& plugin(const std::string& strPluginName) const {
+    if (!isRegistered(strPluginName)) {
+      throw std::logic_error("A plugin with the name: " + strPluginName + " is not registered");
+    }
     return *m_umapPlugins.at(strPluginName);
   }
 
