@@ -18,7 +18,6 @@ jobs:
       image: almalinux:9
     
     env:
-      XROOTD_VERSION: 5
       SCHED_TYPE: objectstore
       ORACLE_SUPPORT: ON
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
@@ -51,9 +50,8 @@ jobs:
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
             echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
           fi
-          XROOTD_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
-          echo "Using XRootD version ${XROOTD_VERSION}"
-          CTA_VERSION=$XROOTD_VERSION
+          CTA_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
+          echo "Using XRootD version ${CTA_VERSION}"
           if [[ ${SCHED_TYPE} != "objectstore" ]]; then
             echo "Using specified scheduler database type $SCHED_TYPE"
             sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
