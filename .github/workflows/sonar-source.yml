@@ -13,12 +13,11 @@ on:
 jobs:
   build:
     name: Sonar Source Analysis
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
-      image: centos:7
+      image: almalinux:9
     
     env:
-      XROOTD_VERSION: 4
       SCHED_TYPE: objectstore
       ORACLE_SUPPORT: ON
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
@@ -26,23 +25,12 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          yum -y update
-          yum -y install centos-release-scl epel-release yum-plugin-priorities yum-plugin-versionlock
-          yum -y install devtoolset-11 cmake3 make rpm-build git unzip ninja-build which
-          yum -y remove git*
-          yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo-1.10-1.x86_64.rpm
-          yum -y install git
-          curl -sL https://rpm.nodesource.com/setup_16.x | bash -
-          yum -y install nodejs
-          node -v
-          ls /etc/yum.repos.d
-          rm -f /etc/yum.repos.d/nodesource*
-          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh
-          chmod +x cmake-3.26.4-linux-x86_64.sh
-          ./cmake-3.26.4-linux-x86_64.sh --skip-license --prefix=/usr/local
+          dnf -y update
+          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock yum-plugin-versionlock
+          dnf -y --enablerepo=crb install wget git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build
 
       - name: Download CTA
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
@@ -54,24 +42,15 @@ jobs:
           export CMAKE_OPTIONS
           export CTA_VERSION
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
-          cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+          cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+          rm -f /etc/yum.repos.d/database.repo
+          cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
+            echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
           fi
-          xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-          if [[ ${xrootd_version} == 5 ]]; then
-            echo "Setting to compile with XRootD version 5"
-            XROOTD_VERSION=5
-          fi
-          if [[ ${XROOTD_VERSION} -eq 5 ]]; then
-            echo "Using XRootD version 5"
-            ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd5
-            yum-config-manager --enable cta-ci-xrootd5
-          else
-            echo "Using XRootD version 4"
-          fi
-          CTA_VERSION=$XROOTD_VERSION
+          CTA_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
           if [[ ${SCHED_TYPE} != "objectstore" ]]; then
             echo "Using specified scheduler database type $SCHED_TYPE"
             sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
@@ -85,23 +64,24 @@ jobs:
           fi
           git config --global --add safe.directory $(pwd)
           git submodule update --init --recursive
+          # This is a temporary hack because Oracle has not made the correct RPMs available in a repo. Once the RPMs are
+          # available, they should be installed using the package manager in the usual way. See issue cta/CTA#608.
+          ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
           mkdir build_srpm
           cd build_srpm
           echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"
           echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
           echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
-          source /opt/rh/devtoolset-11/enable
           cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
 
       - name: Run build-wrapper
         run: |
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-          cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+          dnf config-manager --set-enabled crb
           yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
           mkdir build_rpm
           cd build_rpm
-          source /opt/rh/devtoolset-11/enable
           cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
