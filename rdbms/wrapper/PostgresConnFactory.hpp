@@ -29,6 +29,8 @@ namespace cta::rdbms::wrapper {
 class PostgresConnFactory: public ConnFactory {
 public:
 
+  PostgresConnFactory() = default;
+
   /**
    * Constructor
    *
@@ -40,6 +42,11 @@ public:
    * Destructor.
    */
   ~PostgresConnFactory() override = default;
+
+  /**
+   * Initilize
+   */
+  void init(const std::string& strConnInfo) override;
 
   /**
    * Returns a newly created database connection.

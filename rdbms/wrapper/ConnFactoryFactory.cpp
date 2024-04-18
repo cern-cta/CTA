@@ -20,8 +20,9 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/wrapper/PostgresConnFactory.hpp"
+//#include "rdbms/wrapper/PostgresConnFactory.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
+#include "plugin-manager/PluginManager.hpp"
 
 #ifdef SUPPORT_OCCI
   #include "rdbms/wrapper/OcciConnFactory.hpp"
@@ -34,6 +35,9 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
+    static cta::plugin::Manager<rdbms::wrapper::ConnFactory> pm;
+    std::unique_ptr<ConnFactory> upConnFactory;
+
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
       return std::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
@@ -46,7 +50,13 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     case Login::DBTYPE_SQLITE:
       return std::make_unique<SqliteConnFactory>(login.database);
     case Login::DBTYPE_POSTGRESQL:
-      return std::make_unique<PostgresConnFactory>(login.database);
+      pm.load("ctardbmspostgres.so")
+        .bootstrap("factory");
+
+      upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory");
+      
+      return upConnFactory;
+
     case Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:
