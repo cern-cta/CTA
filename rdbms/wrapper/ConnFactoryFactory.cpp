@@ -50,7 +50,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     case Login::DBTYPE_SQLITE:
       return std::make_unique<SqliteConnFactory>(login.database);
     case Login::DBTYPE_POSTGRESQL:
-      pm.load("ctardbmspostgres.so")
+      pm.load("libctardbmspostgres.so")
         .bootstrap("factory");
 
       upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory");
