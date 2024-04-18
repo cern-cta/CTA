@@ -10,16 +10,16 @@ EOF
 exit 1
 }
 
-port=2222
-volume_mount="${HOME}/shared:/root/shared:Z"
+port_arg=""
+volume_mount_arg=""
 
 while getopts "p:v:" o; do
     case "${o}" in
         p)
-            port=${OPTARG}
+            port_arg="-p ${OPTARG}:22"
             ;;
         v)
-            volumen_mount=${OPTARG}
+            volume_mount_arg="-v ${OPTARG}:/shared:Z"
             ;;
         *)
             usage
@@ -33,8 +33,8 @@ if [ -z "$1" ]; then
 fi
 
 image_tag=$1
-echo "podman run -d -it -p ${port}:22 -v ${volume_mount} ${image_tag}"
-container_id=$(podman run -d --platform linux/amd64 -it -p ${port}:22 -v ${volume_mount} ${image_tag})
+echo "podman run -d -it ${port_arg} ${volume_mount_arg} ${image_tag}"
+container_id=$(podman run -d -it ${port_arg} ${volume_mount_arg} ${image_tag})
 echo "Container ID: ${container_id:0:12}"
 echo ""
 echo "Container running in detached mode"
