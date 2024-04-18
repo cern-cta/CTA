@@ -121,6 +121,7 @@ while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ:" o; do
             ;;
         Q)
             CUSTOM_IMAGE_TAG=${OPTARG}
+            echo "In create_instance.sh custom_image_tag:${CUSTOM_IMAGE_TAG}"
             ;;
         *)
             usage
@@ -154,11 +155,11 @@ if [ "$updatedatabasetest" == "1" ] ; then
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
-if [[ -z ${CUSTOM_IMAGE_TAG} ]]; then
+if [[ ! -z ${CUSTOM_IMAGE_TAG} ]]; then
   COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi
 
-if [[ -z "${CUSTOM_IMAGE_TAG}" ]]; then
+if [[ ! -z "${CUSTOM_IMAGE_TAG}" ]]; then
   echo "Creating instance from inage tag ${CUSTOM_IMAGE_TAG}"
   imagetag=${CUSTOM_IMAGE_TAG}
 elif [ ! -z "${pipelineid}" ]; then

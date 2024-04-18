@@ -133,6 +133,7 @@ while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCTQ:" o; do
             ;;
         Q)
             CREATE_OPTS="${CREATE_OPTS} -Q ${OPTARG}"
+            echo "In run_systemtest.sh custom_image_tag: -Q ${OPTARG}"
             ;;
         *)
             usage
