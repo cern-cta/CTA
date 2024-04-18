@@ -61,7 +61,7 @@ client-eos5:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY !~ /.*client.*/
+    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*client.*/
       when: never
     - when: always
   variables:
@@ -85,7 +85,7 @@ client-gfal2-eos5:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY !~ /.*client-gfal2.*/
+    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*client-gfal2.*/
       when: never
     - when: always
   variables:
@@ -108,7 +108,7 @@ repack-eos5:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY !~ /.*repack.*/
+    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*repack.*/
       when: never
     - when: always
   variables:
@@ -124,7 +124,7 @@ dbunittests-oracle:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY !~ /.*dbunittests-oracle.*/
+    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*dbunittests-oracle.*/
       when: never
     - when: always
   variables:
@@ -175,7 +175,7 @@ cta-admin:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY !~ /.*cta-admin.*/
+    - if: $SYSTEMTESTS_ONLY_TESTS != "ALL" && $SYSTEMTESTS_ONLY_TESTS !~ /.*cta-admin.*/
       when: never
     - when: always
   variables:
