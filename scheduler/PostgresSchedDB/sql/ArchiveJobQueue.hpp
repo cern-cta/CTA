@@ -121,6 +121,7 @@ struct ArchiveJobQueueRow {
   }
 
   void insert(Transaction &txn) const {
+
     // does not set mountId or jobId
     const char *const sql =
       "INSERT INTO ARCHIVE_JOB_QUEUE("
@@ -206,6 +207,7 @@ struct ArchiveJobQueueRow {
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
 
     stmt.executeNonQuery();
+
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {

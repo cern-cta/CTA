@@ -227,6 +227,8 @@ private:
     }
     virtual ~RepackRequestPromotionStatisticsNoLock() = default;
   };
+  static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob* job);
+  static RetriveJob* castFromSchedDBJob(SchedulerDatabase::RetriveJob* job);
 
 };
 
