@@ -22,4 +22,4 @@ if [ -n "$1" ]; then
 fi
 
 # Pass to docker the version of EOS to build
-podman build -f Dockerfile -t eosdev:${image_tag} ${version_arg} .
+podman build --platform linux/amd64 -f Dockerfile -t eosdev:${image_tag} ${version_arg} .
