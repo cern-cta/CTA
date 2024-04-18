@@ -53,7 +53,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       pm.load("ctardbmspostgres.so")
         .bootstrap("factory");
 
-      upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory");
+      upConnFactory = pm.plugin("libctardbmspostgres").create("PostgresConnFactory");
       upConnFactory->init(login.database);
 
       return upConnFactory;
