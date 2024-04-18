@@ -51,7 +51,6 @@ jobs:
             echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
           fi
           CTA_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
-          echo "Using XRootD version ${CTA_VERSION}"
           if [[ ${SCHED_TYPE} != "objectstore" ]]; then
             echo "Using specified scheduler database type $SCHED_TYPE"
             sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
