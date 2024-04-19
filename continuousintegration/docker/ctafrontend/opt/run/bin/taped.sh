@@ -42,7 +42,7 @@ echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVENAMES[${driveslot}]}.conf"
 
 # cta-taped setup
-  echo "taped BufferSizeBytes 262144" > "${TAPED_CONF_FILE}"
+  echo "taped BufferSizeBytes 1572864" > "${TAPED_CONF_FILE}"
   echo "taped BufferCount 200" >> "${TAPED_CONF_FILE}"
   echo "taped MountCriteria 2000000, 100" >> "${TAPED_CONF_FILE}"
   echo "taped WatchdogIdleSessionTimer 2" >> "${TAPED_CONF_FILE}" # Make tape servers more responsive, thus improving CI test speed

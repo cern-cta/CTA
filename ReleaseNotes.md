@@ -14,6 +14,7 @@
 - cta/CTA#647 - Upgrade eos-5 to eos-5.2.21-1
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
 - cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
+- cta/CTA#673 - Increase buffer size in CI for Enstore tests
 
 ### Code Quality
 - cta/CTA#575 - Remove rados metrics logging
