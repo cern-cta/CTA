@@ -18,6 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
+#include "common/dataStructures/LabelFormatSerDeser.hpp"
 
 namespace cta::xrd {
 
@@ -112,6 +113,7 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_full(tape.full);
     tape_item->set_dirty(tape.dirty);
     tape_item->set_from_castor(tape.isFromCastor);
+    tape_item->set_label_format(cta::admin::LabelFormatToProtobuf(tape.labelFormat));
     tape_item->set_read_mount_count(tape.readMountCount);
     tape_item->set_write_mount_count(tape.writeMountCount);
     tape_item->set_nb_master_files(tape.nbMasterFiles);
