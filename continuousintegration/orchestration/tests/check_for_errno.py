@@ -55,7 +55,7 @@ if len(failed_requests):
                      and line.find("errno=0") == -1):
                     # Clean log line
                     clean_log_split = ' '.join(line.split())
-                    clean_log_split = clean_log_split(' ')
+                    clean_log_split = clean_log_split.split(' ')
                     function = clean_log_split[3]
                     source = clean_log_split[8]
                     errno_setter = clean_log_split[15]
