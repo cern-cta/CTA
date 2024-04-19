@@ -6,6 +6,7 @@
 - cta/CTA#641 - Archive workflow of Postgres Scheduler DB can write a file to tape
 - cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
 - cta/CTA#667 - Sonarcloud code smells in catalogue
+- cta/CTA#670 - Add the ability to read EnstoreLarge tapes
 
 ### Bug Fixes
 - cta/CTA#485 - Check disk file metadata on delete requests
