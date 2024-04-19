@@ -109,7 +109,9 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 echo
 echo "Launching client_evict.sh on client pod"
 echo " Evicting files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec ctaeos -- bash -c 'eos debug debug "*"'
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash -c 'eos debug info "*"'
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
