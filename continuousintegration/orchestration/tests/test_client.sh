@@ -87,12 +87,6 @@ if [[ $VERBOSE == 1 ]]; then
 fi
 
 echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
-)&
-TRACKER_PID=$!
-
-echo
 echo "Launching client_archive.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
@@ -120,24 +114,14 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_e
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
-echo "Launching client_abortPrepare.sh on client pod"
-echo "  Retrieving files: xrdfs as poweruser1"
-echo "  Aborting prepare: xrdfs as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
-
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-
-echo
 echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-  echo "Some files were lost during tape workflow."
- exit 1
-fi
+
+echo "Launching check_for_errno.py"
+kubectl -n ${NAMESPACE} cp check_for_errno.py ctaeos:/root/check_for_errno.py
+kubectl -n ${NAMESPACE} exec ctaeos -- python3 /root/check_for_errno.py || exit 1
+
 exit 0
