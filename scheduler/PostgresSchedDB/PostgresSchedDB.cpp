@@ -19,13 +19,15 @@
 #include "scheduler/Scheduler.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveJob.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobSummary.hpp"
+#include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "scheduler/PostgresSchedDB/ArchiveJob.hpp"
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/TapeMountDecisionInfo.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveJob.hpp"
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/RepackRequest.hpp"
 
@@ -53,7 +55,23 @@ void PostgresSchedDB::waitSubthreadsComplete()
 
 void PostgresSchedDB::ping()
 {
-   throw cta::exception::Exception("Not implemented");
+  try {
+    // TO-DO: we might prefer to check schema version instead
+    auto conn = m_connPool.getConn();
+    const auto names = conn.getTableNames();
+    bool found_scheddb = false;
+    for(auto &name : names) {
+      if ("CTA_SCHEDULER" == name) {
+        found_scheddb = true;
+      }
+    }
+    if(!found_scheddb) {
+      throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
@@ -98,11 +116,14 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
     throw postgresscheddb::ArchiveRequestHasNoCopies("In PostgresSchedDB::queueArchive: the archive request has no copies");
   }
 
+  utils::Timer timerinsert;
   // Insert the object into the DB
   aReq->insert();
-
   // Commit the transaction
   aReq->commit();
+  log::ScopedParamContainer params(logContext);
+  params.add("InsertCommitTimeSec", timerinsert.secs());
+  logContext.log(log::DEBUG, "In PostgresSchedDB::queueArchive(): insert() and commit() done.");
 
   return aReq->getIdStr();
 }
@@ -126,7 +147,52 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> PostgresSchedDB::getArc
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-   throw cta::exception::Exception("Not implemented");
+  rdbms::Rset resultSet_ForTransfer;
+  rdbms::Rset resultSet_ForFailure;
+  auto sqlconn_fortransfer = m_connPool.getConn();
+  auto sqlconn_forfailure = m_connPool.getConn();
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
+  // retrieve batch up to file limit
+  resultSet_ForTransfer = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          sqlconn_fortransfer, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
+  resultSet_ForFailure = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
+          sqlconn_forfailure, postgresscheddb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
+  std::list<cta::postgresscheddb::sql::ArchiveJobQueueRow> jobs;
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
+  while(resultSet_ForTransfer.next() || resultSet_ForFailure.next()) {
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
+    try {
+      if(!resultSet_ForTransfer.isEmpty()){
+        jobs.emplace_back(resultSet_ForTransfer);
+      }
+      if(!resultSet_ForFailure.isEmpty()){
+        jobs.emplace_back(resultSet_ForFailure);
+      }
+    } catch (cta::exception::Exception & e) {
+      std::string bt = e.backtrace();
+      logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    }
+    logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
+  }
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
+  // Construct the return value
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  for (const auto &j : jobs) {
+    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
+    aj->tapeFile.copyNb = j.copyNb;
+    aj->archiveFile = j.archiveFile;
+    aj->archiveReportURL = j.archiveReportUrl;
+    aj->errorReportURL = j.archiveErrorReportUrl;
+    aj->srcURL = j.srcUrl;
+    aj->m_mountId = j.mountId;
+    aj->m_tapePool = j.tapePool;
+    ret.emplace_back(std::move(aj));
+  }
+  logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Archive Jobs filled, before return.");
+
+  return ret;
 }
 
 SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummary(log::LogContext &logContext)
@@ -136,7 +202,7 @@ SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummar
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception("Not implemented");
 }
 
 void PostgresSchedDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext &lc)
@@ -301,12 +367,18 @@ bool PostgresSchedDB::repackExists() {
 
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
 {
-   throw cta::exception::Exception("Not implemented");
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() dummy implementation !");
+  std::list<common::dataStructures::RepackInfo> ret;
+  return ret;
 }
 
 common::dataStructures::RepackInfo PostgresSchedDB::getRepackInfo(const std::string& vid)
 {
-   throw cta::exception::Exception("Not implemented");
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackInfo() dummy implementation !");
+  common::dataStructures::RepackInfo ret;
+  return ret;
 }
 
 void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
@@ -314,25 +386,67 @@ void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
    throw cta::exception::Exception("Not implemented");
 }
 
-std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatistics()
-{
-   throw cta::exception::Exception("Not implemented");
+//------------------------------------------------------------------------------
+// PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+//------------------------------------------------------------------------------
+PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() {}
+
+//------------------------------------------------------------------------------
+// PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
+//------------------------------------------------------------------------------
+auto PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(
+        size_t requestCount, log::LogContext& lc) -> PromotionToToExpandResult {
+  lc.log(log::WARNING, "PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() dummy implementation !");
+  PromotionToToExpandResult ret;
+  typedef common::dataStructures::RepackInfo::Status Status;
+  ret.pendingBefore = at(Status::Pending);
+  ret.toEnpandBefore = at(Status::ToExpand);
+  return ret;
 }
 
-std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> PostgresSchedDB::getRepackStatisticsNoLock()
-{
-   throw cta::exception::Exception("Not implemented");
+//------------------------------------------------------------------------------
+// PostgresSchedDB::populateRepackRequestsStatistics()
+//------------------------------------------------------------------------------
+void PostgresSchedDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats) {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::populateRepackRequestsStatistics() dummy implementation !");
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status;
+  for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
+    stats[s] = 0;
+  }
+}
+
+auto PostgresSchedDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatisticsNoLock() dummy implementation !");
+  auto typedRet = std::make_unique<PostgresSchedDB::RepackRequestPromotionStatisticsNoLock>();
+  populateRepackRequestsStatistics(*typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  return ret;
+}
+
+auto PostgresSchedDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackStatistics() dummy implementation !");
+  return getRepackStatisticsNoLock();
 }
 
 std::unique_ptr<SchedulerDatabase::RepackRequest> PostgresSchedDB::getNextRepackJobToExpand()
 {
-   throw cta::exception::Exception("Not implemented");
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackJobToExpand() dummy implementation !");
+  std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
+  return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext &logContext)
 {
-   throw cta::exception::Exception("Not implemented");
+  log::LogContext lc(m_logger);
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRetrieveJobsToReportBatch() dummy implementation !");
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsFailedBatch(
@@ -343,32 +457,39 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::getN
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextRepackReportBatch() dummy implementation !");
+  return nullptr;
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextSuccessfulArchiveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextFailedRetrieveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextFailedRetrieveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> PostgresSchedDB::getNextFailedArchiveRepackReportBatch(log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getNextFailedArchiveRepackReportBatch() dummy implementation !");
+  throw NoRepackReportBatchFound("In PostgresSchedDB::getNextFailedArchiveRepackReportBatch(): no report found.");
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> PostgresSchedDB::getRepackReportBatches(log::LogContext &lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "PostgresSchedDB::getRepackReportBatches() dummy implementation !");
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> ret;
+  return ret;
 }
 
 void PostgresSchedDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase::RetrieveJob*> & jobsBatch,
@@ -444,7 +565,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 {
   utils::Timer t;
   utils::Timer t2;
-
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): starting to fetch mount info.");
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
 
   auto &txn = static_cast<postgresscheddb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
@@ -497,10 +618,11 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
+    lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): pushing back potential mount to the vector.");
     tmdi.potentialMounts.push_back(pm);
   }
 
-
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): getting drive state.");
   // Collect information about existing and next mounts. If a next mount exists the drive "counts double",
   // but the corresponding drive is either about to mount, or about to replace its current mount.
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
@@ -561,7 +683,7 @@ void PostgresSchedDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& t
   log::ScopedParamContainer params(lc);
   params.add("queueFetchTime", registerFetchTime)
         .add("processingTime", registerProcessingTime);
-    lc.log(log::INFO, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
+  lc.log(log::DEBUG, "In PostgresSchedDB::fetchMountInfo(): fetched the drive register.");
 }
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> PostgresSchedDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext)

@@ -17,6 +17,7 @@
 
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "common/Timer.hpp"
 
 namespace cta::postgresscheddb {
 

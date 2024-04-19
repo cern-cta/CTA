@@ -22,6 +22,8 @@
 #include "common/checksum/ChecksumBlob.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
+#include "rdbms/NullDbValue.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <vector>
 
@@ -82,7 +84,7 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    mountId                   = rset.columnUint64("MOUNT_ID");
+    mountId = rset.columnOptionalUint64("MOUNT_ID").value_or(0);
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
@@ -236,14 +238,14 @@ struct ArchiveJobQueueRow {
   /**
    * Select unowned jobs from the queue
    *
-   * @param txn        Transaction to use for this query
+   * @param conn       Connection to the DB backend
    * @param status     Archive Job Status to select on
    * @param tapepool   Tapepool to select on
    * @param limit      Maximum number of rows to return
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
 
     const char *const sql =
     "SELECT "
@@ -283,7 +285,7 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":LIMIT", limit);
@@ -294,7 +296,7 @@ struct ArchiveJobQueueRow {
   /**
    * Select owned jobs from the queue
    *
-   * @param txn        Transaction to use for this query
+   * @param conn       Connection to the backend database
    * @param status     Archive Job Status to select on
    * @param tapepool   Tapepool to select on
    * @param mount_id   Mount id which owns this job
@@ -302,7 +304,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
@@ -341,10 +343,63 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":MOUNT_ID", mount_id);
+    stmt.bindUint32(":LIMIT", limit);
+
+    return stmt.executeQuery();
+  }
+
+  /**
+   * Select not owned jobs from the queue ordered by tapepool
+   *
+   * @param conn       Connection to the backend database
+   * @param status     Archive Job Status to select on
+   * @param limit      Maximum number of rows to return
+   *
+   * @return  result set
+   */
+  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
+    const char *const sql =
+            "SELECT "
+            "JOB_ID AS JOB_ID,"
+            "MOUNT_ID AS MOUNT_ID,"
+            "STATUS AS STATUS,"
+            "TAPE_POOL AS TAPE_POOL,"
+            "MOUNT_POLICY AS MOUNT_POLICY,"
+            "PRIORITY AS PRIORITY,"
+            "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
+            "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+            "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+            "COPY_NB AS COPY_NB,"
+            "START_TIME AS START_TIME,"
+            "CHECKSUMBLOB AS CHECKSUMBLOB,"
+            "CREATION_TIME AS CREATION_TIME,"
+            "DISK_INSTANCE AS DISK_INSTANCE,"
+            "DISK_FILE_ID AS DISK_FILE_ID,"
+            "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
+            "DISK_FILE_GID AS DISK_FILE_GID,"
+            "DISK_FILE_PATH AS DISK_FILE_PATH,"
+            "ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,"
+            "ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,"
+            "REQUESTER_NAME AS REQUESTER_NAME,"
+            "REQUESTER_GROUP AS REQUESTER_GROUP,"
+            "SRC_URL AS SRC_URL,"
+            "STORAGE_CLASS AS STORAGE_CLASS,"
+            "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
+            "TOTAL_RETRIES AS TOTAL_RETRIES,"
+            "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
+            "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
+            "FROM ARCHIVE_JOB_QUEUE "
+            "WHERE MOUNT_ID IS NULL "
+            "AND STATUS = :STATUS "
+            "ORDER BY PRIORITY DESC, TAPE_POOL "
+            "LIMIT :LIMIT";
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();

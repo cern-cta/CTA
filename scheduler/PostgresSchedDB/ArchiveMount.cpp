@@ -32,15 +32,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 {
 
   rdbms::Rset resultSet;
-
+  // make the txn connection commit and can any pending transactions
+  auto& nonTxnConn = m_txn.getNonTxnConn();
   // retrieve batch up to file limit
   if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-      m_txn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
+            nonTxnConn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
 
   } else {
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-      m_txn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
+            nonTxnConn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
   }
 
   std::list<sql::ArchiveJobQueueRow> jobs;
@@ -53,6 +54,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   }
 
   // mark the jobs in the batch as owned
+  m_txn.start();
   sql::ArchiveJobQueueRow::updateMountId(m_txn, jobs, mountInfo.mountId);
   m_txn.commit();
 

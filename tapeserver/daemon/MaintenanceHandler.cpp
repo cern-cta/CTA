@@ -319,9 +319,13 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       cleanupRunner.runOnePass(m_processManager.logContext());
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
+      m_processManager.logContext().log(log::DEBUG,
+                                        "In MaintenanceHandler::exceptionThrowingRunChild(): After diskReportRunner.runOnePass().");
       if(runRepackRequestManager()){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
       }
+      m_processManager.logContext().log(log::DEBUG,
+                                        "In MaintenanceHandler::exceptionThrowingRunChild(): After runRepackRequestManager().");
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
        receivedMessage=true;
@@ -329,6 +333,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         // Timing out while waiting for message is not a problem for us
         // as we retry in the next loop iteration.
       }
+      m_processManager.logContext().log(log::DEBUG,
+                                        "In MaintenanceHandler::exceptionThrowingRunChild(): Waiting for a message ended.");
+
     } while (!receivedMessage);
     m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");

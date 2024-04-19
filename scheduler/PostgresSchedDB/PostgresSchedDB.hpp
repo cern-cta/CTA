@@ -63,6 +63,7 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   void waitSubthreadsComplete() override;
 
+  /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;
 
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
@@ -75,6 +76,16 @@ class PostgresSchedDB: public SchedulerDatabase {
   std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
     common::dataStructures::JobQueueType queueType) const override;
 
+  /** Get all archive queues with status:
+   * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
+   * CHECK: how this reporting works for OStoreDB and make sure
+   * no selection criteria are missed (tapePool, hostname etc.)
+   *
+   * @param filesRequested  number of rows to be reported from the scheduler DB
+   * @param logContext      logging context
+   *
+   * @return                list of pointers to ArchiveJob objects to be reported
+   */
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext & logContext) override;
 
@@ -175,13 +186,42 @@ class PostgresSchedDB: public SchedulerDatabase {
 
 private:
 
-   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
 
-   std::string m_ownerId;
-   rdbms::ConnPool m_connPool;
-   catalogue::Catalogue&  m_catalogue;
-   log::Logger&           m_logger;
-   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+  std::string m_ownerId;
+  rdbms::ConnPool m_connPool;
+  catalogue::Catalogue&  m_catalogue;
+  log::Logger&           m_logger;
+  std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+
+  void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
+
+  /**
+  * Candidate for redesign/removal once we start improving Scheduler algorithm
+  * A class holding a lock on the pending repack request queue. This is the first
+  * container we will have to lock if we decide to pop a/some request(s)
+  */
+  class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
+    friend class PostgresSchedDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
+    virtual ~RepackRequestPromotionStatistics() = default;
+  private:
+    RepackRequestPromotionStatistics();
+  };
+
+  /**
+  * Candidate for redesign/removal once we start improving Scheduler algorithm
+  */
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
+    friend class PostgresSchedDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override {
+      throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
+    }
+    virtual ~RepackRequestPromotionStatisticsNoLock() = default;
+  };
+
 };
 
 }  // namespace cta

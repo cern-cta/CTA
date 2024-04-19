@@ -37,8 +37,20 @@ public:
    */
   Transaction &operator=(const Transaction &) = delete;
 
+  /**
+   * Get the transactional connection
+   *
+   * @return txn connection
+   */
   rdbms::Conn &conn();
 
+  /**
+   * Commit any pending transactions
+   * and return the connection
+   *
+   * @return connection
+   */
+  rdbms::Conn &getNonTxnConn();
   /**
    * Take out a global advisory transaction lock
    *
@@ -54,6 +66,11 @@ public:
   void commit();
 
   /**
+   * Start new transaction unless it has started already
+   */
+  void start();
+
+  /**
    * Abort and roll back the transaction
    */
   void abort();
@@ -67,7 +84,8 @@ public:
   ~Transaction() noexcept;
 
 private:
-  
+
+  rdbms::Conn m_conn_non_txn;
   rdbms::Conn m_conn;
   bool m_begin = true;
 };
