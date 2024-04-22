@@ -30,8 +30,8 @@ RUN set -ex; \
     dnf -y group install "Development Tools";
 
 RUN set -ex; \
-    git clone https://gitlab.cern.ch/cta/CTA.git CTA_setup; \
-    cd CTA_setup; \
+    git clone https://gitlab.cern.ch/cta/CTA.git cta; \
+    cd cta; \
     git checkout ${CTA_VERSION}; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
@@ -42,15 +42,14 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir build_srpm; \
     cd build_srpm; \
-    cmake3 -DPackageOnly:Bool=true ../CTA_setup; \
+    cmake3 -DPackageOnly:Bool=true ../cta; \
     make cta_srpm;
 
 RUN set -ex; \
     yum-builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;
 
 RUN set -ex; \
-    rm -rf build_srpm; \
-    rm -rf CTA_setup;
+    rm -rf build_srpm;
 
 # Setup SSH server
 RUN /usr/bin/ssh-keygen -A; \
