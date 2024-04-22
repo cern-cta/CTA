@@ -18,10 +18,13 @@
 #include "scheduler/PostgresSchedDB/ArchiveMount.hpp"
 #include "scheduler/PostgresSchedDB/ArchiveJob.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 
+#include <unordered_map>
 
 namespace cta::postgresscheddb {
 
@@ -148,199 +151,8 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
 void ArchiveMount::setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc)
 {
-  std::set<cta::postgresscheddb::ArchiveJob*> jobsToQueueForReportingToUser, jobsToQueueForReportingToRepack, failedJobsToQueueForReportingForRepack;
-  std::unordered_map<std::string, std::vector<uint64_t>> ajToUnown;
-
-  utils::Timer t;
-  log::TimingList timingList;
-  // We will asynchronously report the archive jobs (which MUST be postgresscheddb Jobs).
-  // We let the exceptions through as failing to report is fatal.
-  auto jobsBatchItor = jobsBatch.begin();
-  while (jobsBatchItor != jobsBatch.end()) {
-    log::ScopedParamContainer(lc)
-            .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
-            .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
-            .add("archiveFileID", std::to_string(castFromSchedDBJob(jobsBatchItor->get())->archiveFile.archiveFileID))
-            .add("diskInstance", castFromSchedDBJob(jobsBatchItor->get())->archiveFile.diskInstance)
-            .log(log::INFO,
-                 "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
-    try {
-      castFromSchedDBJob(jobsBatchItor->get())->asyncSucceedTransfer();
-      jobsBatchItor++;
-    } catch (cta::exception::NoSuchObject& ex) {
-      jobsBatch.erase(jobsBatchItor++);
-      log::ScopedParamContainer(lc)
-              .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
-              .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
-              .add("archiveFileID", std::to_string(castFromSchedDBJob(jobsBatchItor->get())->archiveFile.archiveFileID))
-              .add("diskInstance", castFromSchedDBJob(jobsBatchItor->get())->archiveFile.diskInstance)
-              .add("exceptionMessage", ex.getMessageValue())
-              .log(log::WARNING,
-                   "In postgresscheddb::RetrieveMount::setJobBatchTransferred(): async succeed transfer failed, "
-                   "job does not exist in the Scheduler DB.");
-    }
-  }
-
-  timingList.insertAndReset("asyncSucceedLaunchTime", t);
-  // We will only know whether we need to queue the requests for user for reporting after updating request. So on a first
-  // pass we update the request and on the second, we will queue a batch of them to the report queue. Report queues
-  // are per VID and not tape pool: this limits contention (one tape written to at a time per mount, so the queuing should
-  // be without contention.
-  // Jobs that do not require queuing are done from our perspective and we should just remove them from agent ownership.
-  // Jobs for repack always get reported.
-  jobsBatchItor = jobsBatch.begin();
-  while (jobsBatchItor != jobsBatch.end()) {
-    try {
-      castFromSchedDBJob(jobsBatchItor->get())->waitAsyncSucceed();
-      auto repackInfo = castFromSchedDBJob(jobsBatchItor->get())->getRepackInfoAfterAsyncSuccess();
-      if (repackInfo.isRepack) {
-        jobsToQueueForReportingToRepack.insert(castFromSchedDBJob(jobsBatchItor->get()));
-      } else {
-        if (castFromSchedDBJob(jobsBatchItor->get())->isLastAfterAsyncSuccess())
-          jobsToQueueForReportingToUser.insert(castFromSchedDBJob(jobsBatchItor->get()));
-        else
-          ajToUnown[castFromSchedDBJob(jobsBatchItor->get())->archiveFile.diskInstance].push_back(castFromSchedDBJob(jobsBatchItor->get())->archiveFile.archiveFileID);
-      }
-      jobsBatchItor++;
-    } catch (cta::exception::NoSuchObject& ex) {
-      jobsBatch.erase(jobsBatchItor++);
-      log::ScopedParamContainer(lc)
-              .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
-              .add("exceptionMessage", ex.getMessageValue())
-              .log(log::WARNING,
-                   "In postgresscheddb::RetrieveMount::setJobBatchTransferred(): wait async succeed transfer failed, "
-                   "job does not exist in the Scheduler DB.");
-    }
-  }
-  timingList.insertAndReset("asyncSucceedCompletionTime", t);
-  if (jobsToQueueForReportingToUser.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReportForUser> AqtrCa;
-    AqtrCa aqtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-    std::map<std::string, AqtrCa::InsertedElement::list> insertedElementsLists;
-    for (auto& j : jobsToQueueForReportingToUser) {
-      insertedElementsLists[j->tapeFile.vid].emplace_back(AqtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb,
-                                                                                  j->archiveFile, std::nullopt, std::nullopt});
-      log::ScopedParamContainer(lc)
-              .add("tapeVid", j->tapeFile.vid)
-              .add("fileId", j->archiveFile.archiveFileID)
-              .add("requestObject", j->m_archiveRequest.getAddressIfSet())
-              .log(log::INFO,
-                   "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): will queue request for reporting to user.");
-    }
-    for (auto& list : insertedElementsLists) {
-      try {
-        utils::Timer tLocal;
-        aqtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
-        log::ScopedParamContainer(lc)
-                .add("tapeVid", list.first)
-                .add("jobs", list.second.size())
-                .add("enqueueTime", t.secs())
-                .log(log::INFO,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for "
-                     "reporting to user.");
-      } catch (cta::exception::Exception& ex) {
-        log::ScopedParamContainer(lc)
-                .add("tapeVid", list.first)
-                .add("exceptionMSG", ex.getMessageValue())
-                .log(log::ERR,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests "
-                     "for reporting to user.");
-        lc.logBacktrace(log::INFO, ex.backtrace());
-      }
-    }
-    timingList.insertAndReset("queueingToReportToUserTime", t);
-  }
-  if (jobsToQueueForReportingToRepack.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReportToRepackForSuccess> AqtrtrCa;
-    AqtrtrCa aqtrtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-    std::map<std::string, AqtrtrCa::InsertedElement::list> insertedElementsLists;
-    for (auto& j : jobsToQueueForReportingToRepack) {
-      insertedElementsLists[j->getRepackInfoAfterAsyncSuccess().repackRequestAddress].emplace_back(AqtrtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb,
-                                                                                                                             j->archiveFile, std::nullopt, std::nullopt});
-      log::ScopedParamContainer(lc)
-              .add("repackRequestAddress", j->getRepackInfoAfterAsyncSuccess().repackRequestAddress)
-              .add("fileId", j->archiveFile.archiveFileID)
-              .add("requestObject", j->m_archiveRequest.getAddressIfSet())
-              .log(log::INFO,
-                   "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): will queue request for reporting "
-                   "to repack.");
-    }
-    for (auto& list : insertedElementsLists) {
-      int currentTotalRetries = 0;
-      int maxRetries = 10;
-      retry:
-      try {
-        utils::Timer tLocal;
-        aqtrtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
-        log::ScopedParamContainer(lc)
-                .add("repackRequestAddress", list.first)
-                .add("jobs", list.second.size())
-                .add("enqueueTime", t.secs())
-                .log(log::INFO,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for "
-                     "reporting to repack.");
-      } catch (cta::exception::NoSuchObject& ex) {
-        log::ScopedParamContainer(lc)
-                .add("tapeVid", list.first)
-                .add("exceptionMSG", ex.getMessageValue())
-                .log(log::WARNING,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
-                     "reporting to repack, jobs do not exist in the Scheduler DB.");
-      } catch (const AqtrtrCa::OwnershipSwitchFailure& ex) {
-        //We are in the case where the ownership of the elements could not have been change (most probably because of a Rados lockbackoff error)
-        //We will then retry 10 times to requeue the failed jobs
-        log::ScopedParamContainer(lc)
-                .add("tapeVid", list.first)
-                .add("numberOfRetries", currentTotalRetries)
-                .add("numberOfFailedToQueueElements", ex.failedElements.size())
-                .add("exceptionMSG", ex.getMessageValue())
-                .log(log::WARNING,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): unable to queue some elements "
-                     "because of an ownership switch failure, retrying another time");
-        typedef objectstore::ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::OpFailure<AqtrtrCa::InsertedElement> OpFailure;
-        list.second.remove_if([&ex](const AqtrtrCa::InsertedElement& elt) {
-          //Remove the elements that are NOT in the failed elements list so that we only retry the failed elements
-          return std::find_if(ex.failedElements.begin(),ex.failedElements.end(),[&elt](const OpFailure& insertedElement){
-            return elt.archiveRequest->getAddressIfSet() == insertedElement.element->archiveRequest->getAddressIfSet() && elt.copyNb == insertedElement.element->copyNb;
-          }) == ex.failedElements.end();
-        });
-        currentTotalRetries++;
-        if(currentTotalRetries <= maxRetries){
-          goto retry;
-        } else {
-          //All the retries have been done, throw an exception for logging the backtrace
-          //afterwards
-          throw cta::exception::Exception(ex.getMessageValue());
-        }
-      } catch (cta::exception::Exception& ex) {
-        log::ScopedParamContainer(lc)
-                .add("tapeVid", list.first)
-                .add("exceptionMSG", ex.getMessageValue())
-                .log(log::ERR,
-                     "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
-                     "reporting to repack.");
-        lc.logBacktrace(log::INFO, ex.backtrace());
-      }
-    }
-    timingList.insertAndReset("queueingToReportToRepackTime", t);
-  }
-  // sort list by instance name
-  ajToUnown.sort([](const auto& a, const auto& b) {
-    return a.first < b.first;
-  });
-
-  if (ajToUnown.size()) {
-    m_oStoreDB.m_agentReference->removeBatchFromOwnership(ajToUnown, m_oStoreDB.m_objectStore);
-    timingList.insertAndReset("removeFromOwnershipTime", t);
-  }
-
-  log::ScopedParamContainer params(lc);
-  params.add("QueuedRequests", jobsToQueueForReportingToUser.size())
-          .add("PartiallyCompleteRequests", ajToUnown.size());
-  timingList.addToLog(params);
-  lc.log(log::INFO,
-         "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests successful and "
-         "queued for reporting.");
+  lc.log(log::WARNING,
+         "In postgresscheddb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests passes as dummy implementation !");
 }
 
 } // namespace cta::postgresscheddb
