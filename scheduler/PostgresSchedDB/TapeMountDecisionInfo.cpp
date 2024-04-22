@@ -21,7 +21,6 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 #include "scheduler/PostgresSchedDB/sql/Mounts.hpp"
-//#include <chrono>
 
 namespace cta::postgresscheddb {
 
