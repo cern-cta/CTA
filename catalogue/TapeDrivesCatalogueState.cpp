@@ -198,7 +198,7 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivity = std::nullopt;
+  driveState.currentActivity = "";
   if (inputs.reason) driveState.reasonUpDown = inputs.reason;
 }
 
@@ -228,7 +228,7 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivity = std::nullopt;
+  driveState.currentActivity = "";
   if (inputs.reason) driveState.reasonUpDown = inputs.reason;
 }
 
@@ -257,7 +257,7 @@ void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivity = std::nullopt;
+  driveState.currentActivity = "";
 }
 
 void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDrive & driveState,
@@ -440,7 +440,7 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid = inputs.vid.empty() ? std::nullopt : std::optional<std::string>(inputs.vid);
   driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
-  driveState.currentActivity = std::nullopt;
+  driveState.currentActivity = "";
   driveState.currentVo = inputs.vo.empty() ? std::nullopt : std::optional<std::string>(inputs.vo);
 }
 
@@ -468,7 +468,7 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.driveStatus = common::dataStructures::DriveStatus::Shutdown;
   driveState.currentVid = inputs.vid.empty() ? std::nullopt : std::optional<std::string>(inputs.vid);
   driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
-  driveState.currentActivity = std::nullopt;
+  driveState.currentActivity = "";
   driveState.currentVo = inputs.vo.empty() ? std::nullopt : std::optional<std::string>(inputs.vo);
 }
 
