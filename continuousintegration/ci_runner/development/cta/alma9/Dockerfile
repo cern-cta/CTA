@@ -16,6 +16,8 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 ARG CTA_VERSION=main
+RUN set -ex; \
+    echo "CTA version is ${CTA_VERSION}";
 
 COPY ./repos/ /etc/yum.repos.d/
 

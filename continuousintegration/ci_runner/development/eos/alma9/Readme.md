@@ -8,7 +8,7 @@ This script will build the docker image that can be used for EOS development:
 ./prepare_eosdev_image.sh [<eos_version>]
 ```
 The `<eos_version>` is the version of EOS to get the dependencies from. It can be a commit, branch or a tag. \
-If not defined, `<eos_version>` will default to `master`.
+If not defined, `<eos_version>` will default to `master`. However, for EOS development, it's recommended to use a tagged commit instead of `master` (it's guaranteed to be more stable).
 
 #### 2. Run the docker image
 
@@ -87,3 +87,7 @@ In order to make the RPMs available to the host dev machine, copy them to the `s
 ```bash
 cp eos_rpm/RPMS/x86_64/* /root/shared/
 ```
+
+#### 4. Other notes
+
+For EOS development it's best to modify the files in the same development development environment where they are build (ie. do both changes and build inside the container). Developing on a local machine, and synching the files to be built on a remote host will probably lead to build issues.
