@@ -45,11 +45,7 @@ struct ArchiveJobSummaryRow {
   }
 
   ArchiveJobSummaryRow& operator=(const rdbms::Rset &rset) {
-    try {
-      mountId = rset.columnUint64("MOUNT_ID");
-    } catch (const cta::rdbms::NullDbValue& ex){
-      mountId                   = 0;
-    }
+    mountId = rset.columnOptionalUint64("MOUNT_ID").value_or(0);
     status               = from_string<ArchiveJobStatus>(
                            rset.columnString("STATUS") );
     tapePool             = rset.columnString("TAPE_POOL");
