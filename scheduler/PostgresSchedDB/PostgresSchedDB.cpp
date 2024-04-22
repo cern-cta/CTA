@@ -23,6 +23,7 @@
 #include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobSummary.hpp"
 #include "scheduler/PostgresSchedDB/sql/ArchiveJobQueue.hpp"
+#include "scheduler/PostgresSchedDB/ArchiveJob.hpp"
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/TapeMountDecisionInfo.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
