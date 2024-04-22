@@ -7,6 +7,7 @@
 ### Bug Fixes
 - cta/CTA#485 - Check disk file metadata on delete requests
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+- cta/CTA#666 - Fix drive status activity field not being properly reset
 
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
