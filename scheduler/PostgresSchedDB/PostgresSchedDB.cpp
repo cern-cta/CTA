@@ -389,7 +389,7 @@ void PostgresSchedDB::cancelRepack(const std::string& vid, log::LogContext & lc)
 //------------------------------------------------------------------------------
 // PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 //------------------------------------------------------------------------------
-PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() {}
+PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() = default;
 
 //------------------------------------------------------------------------------
 // PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
@@ -398,7 +398,7 @@ auto PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsFo
         size_t requestCount, log::LogContext& lc) -> PromotionToToExpandResult {
   lc.log(log::WARNING, "PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() dummy implementation !");
   PromotionToToExpandResult ret;
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   ret.pendingBefore = at(Status::Pending);
   ret.toEnpandBefore = at(Status::ToExpand);
   return ret;
@@ -411,7 +411,7 @@ void PostgresSchedDB::populateRepackRequestsStatistics(SchedulerDatabase::Repack
   log::LogContext lc(m_logger);
   lc.log(log::WARNING, "PostgresSchedDB::populateRepackRequestsStatistics() dummy implementation !");
   // Ensure existence of stats for important statuses
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
     stats[s] = 0;
   }

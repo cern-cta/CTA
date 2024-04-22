@@ -65,7 +65,8 @@ struct MountsRow {
         throw exception::Exception("Result set is unexpectedly empty");
       }
       return rset.columnUint64("MOUNT_ID");
-    } catch (exception::UserError &) {
+    } catch (exception::UserError &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
     } catch (exception::Exception &ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
