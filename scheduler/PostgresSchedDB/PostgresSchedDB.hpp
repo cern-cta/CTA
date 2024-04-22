@@ -205,7 +205,7 @@ private:
     friend class PostgresSchedDB;
   public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
-    ~RepackRequestPromotionStatistics() = default override;
+    ~RepackRequestPromotionStatistics() override = default;
   private:
     RepackRequestPromotionStatistics();
   };
@@ -219,7 +219,7 @@ private:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override {
       throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
     }
-    ~RepackRequestPromotionStatisticsNoLock() = default override;
+    ~RepackRequestPromotionStatisticsNoLock() override = default;
   };
 
 };
