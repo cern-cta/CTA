@@ -36,7 +36,7 @@ RUN set -ex; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \
-    cd CTA_setup; \
+    cd cta; \
     ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh;
 
 RUN set -ex; \
