@@ -31,7 +31,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBFactory.hpp"
 #else
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
@@ -909,9 +909,9 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
 #endif
 
 #ifdef CTA_PGSCHED
-static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
-INSTANTIATE_TEST_CASE_P(PostgresSchedDBSchedulerDatabaseTest, SchedulerDatabaseTest,
-  ::testing::Values(SchedulerDatabaseTestParam(PostgresSchedDBFactoryStatic)));
+static cta::RelationalDBFactory RelationalDBFactoryStatic;
+INSTANTIATE_TEST_CASE_P(RelationalDBSchedulerDatabaseTest, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(RelationalDBFactoryStatic)));
 #else
 #define TEST_VFS
 #ifdef TEST_VFS
