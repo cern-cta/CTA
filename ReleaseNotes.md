@@ -16,6 +16,7 @@
 
 ### Code Quality
 - cta/CTA#575 - Remove rados metrics logging
+- cta/CTA#675 - Renaming PostgresSchedDB to RelationalDB and introducing rdbms directory model to the Scheduler DB code
 
 # v4.10.10.0-1 / v5.10.10.0-1
 

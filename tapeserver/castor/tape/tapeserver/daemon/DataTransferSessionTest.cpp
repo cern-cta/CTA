@@ -66,7 +66,7 @@
 #include "tests/TempFile.hpp"
 
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBFactory.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
@@ -3400,10 +3400,10 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
 #endif
 
 #ifdef CTA_PGSCHED
-static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
+static cta::RelationalDBFactory RelationalDBFactoryStatic;
 
-INSTANTIATE_TEST_CASE_P(PostgresSchedDBPlusMockSchedulerTest, DataTransferSessionTest,
-                        ::testing::Values(DataTransferSessionTestParam(PostgresSchedDBFactoryStatic)));
+INSTANTIATE_TEST_CASE_P(RelationalDBPlusMockSchedulerTest, DataTransferSessionTest,
+                        ::testing::Values(DataTransferSessionTestParam(RelationalDBFactoryStatic)));
 #else
 #define TEST_VFS
 #ifdef TEST_VFS

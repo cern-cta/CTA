@@ -28,7 +28,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "rdbms/Login.hpp"
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif

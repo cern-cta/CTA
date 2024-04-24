@@ -50,7 +50,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBFactory.hpp"
 #endif
 
 #ifdef STDOUT_LOGGING
@@ -3142,10 +3142,10 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, DISABLED_triggerTapeStateCh
 }
 
 #ifdef CTA_PGSCHED
-static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
+static cta::RelationalDBFactory RelationalDBFactoryStatic;
 
 INSTANTIATE_TEST_CASE_P(PostgresSchedulerDBPlusMockGenericSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(PostgresSchedDBFactoryStatic)));
+  ::testing::Values(SchedulerTestParam(RelationalDBFactoryStatic)));
 #else
 #error Generic SchedulerTest not configured for current scheduler type
 #endif
