@@ -31,7 +31,7 @@ namespace cta::postgresscheddb::sql {
 
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
-  uint64_t mountId = 0;
+  std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
@@ -84,7 +84,7 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    mountId = rset.columnOptionalUint64("MOUNT_ID").value_or(0);
+    mountId = rset.columnOptionalUint64("MOUNT_ID");
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
@@ -208,7 +208,7 @@ struct ArchiveJobQueueRow {
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     // does not set jobId
-    params.add("mountId", mountId);
+    params.add("mountId", mountId.has_value() ? *mountId : "no value");
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
     params.add("mountPolicy", mountPolicy);

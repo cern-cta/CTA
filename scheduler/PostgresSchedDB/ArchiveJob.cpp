@@ -21,6 +21,8 @@
 namespace cta::postgresscheddb {
 
 ArchiveJob::ArchiveJob() = default;
+ArchiveJob::ArchiveJob(bool jobOwned, uint64_t jobID, uint64_t mountID, std::string_view tapePool) :
+           m_jobOwned(jobOwned), m_mountId(mountID), m_jobId(jobID), m_tapePool(tapePool) { };
 
 void ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
 {
