@@ -30,6 +30,9 @@
 ## Features
 - cta/CTA#646 - JSON logging with correct field types
 
+### Bug Fixes
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+
 # v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features
