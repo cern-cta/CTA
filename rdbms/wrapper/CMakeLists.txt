@@ -108,11 +108,9 @@ set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
-  ctardbmssqlite
-  ctardbmspostgres)
+)
 
 if (OCCI_SUPPORT)
-  target_link_libraries (ctardbmswrapper ctardbmsocci)
   set_property (TARGET ctardbmswrapper APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif()
 
