@@ -196,14 +196,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
-    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
+    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportUrl;
     aj->errorReportURL = j.archiveErrorReportUrl;
     aj->srcURL = j.srcUrl;
-    aj->m_mountId = j.mountId;
-    aj->m_tapePool = j.tapePool;
     ret.emplace_back(std::move(aj));
   }
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Archive Jobs filled, before return.");
