@@ -73,23 +73,6 @@ void PostgresSchedDB::ping()
   }
 }
 
-PostgresSchedDB::ArchiveJob* PostgresSchedDB::castFromSchedDBJob(SchedulerDatabase::ArchiveJob* job) {
-  PostgresSchedDB::ArchiveJob* ret = dynamic_cast<PostgresSchedDB::ArchiveJob*>(job);
-    if (!ret) throw cta::exception::Exception("In PostgresSchedDB::castFromSchedDBJob(ArchiveJob*): wrong type.");
-    return ret;
-}
-
-PostgresSchedDB::RetrieveJob* PostgresSchedDB::castFromSchedDBJob(SchedulerDatabase::RetrieveJob* job) {
-  PostgresSchedDB::RetrieveJob* ret = dynamic_cast<PostgresSchedDB::RetrieveJob*>(job);
-  if (!ret) {
-    std::string unexpectedType = typeid(*job).name();
-    throw cta::exception::Exception(
-            "In PostgresSchedDB::RetrieveMount::castFromSchedDBJob(): unexpected retrieve job type while casting: " + unexpectedType
-    );
-  }
-  return ret;
-}
-
 std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {

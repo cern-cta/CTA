@@ -49,7 +49,7 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
                                     LogContext::ScopedParam(m_lc, Param("fSeq", job->tapeFile.fSeq)),
                                     LogContext::ScopedParam(m_lc, Param("path", job->srcURL))};
     tape::utils::suppresUnusedVariable(sp);
-    m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::injectBulkMigrations:  " + std::to_string(fileSize));
+    m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::injectBulkMigrations file size: " + std::to_string(fileSize));
     const uint64_t neededBlock = howManyBlocksNeeded(fileSize, blockCapacity);
 
     // We give owner ship on the archive job to the tape write task (as last user).
