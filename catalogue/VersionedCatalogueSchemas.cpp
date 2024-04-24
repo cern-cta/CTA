@@ -24,7 +24,7 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OracleVersionedCatalogueSchema::OracleVersionedCatalogueSchema(std::string schemaVersion) {
+OracleVersionedCatalogueSchema::OracleVersionedCatalogueSchema(const std::string& schemaVersion) {
     try {
       sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("oracle");
     } catch(std::out_of_range &) {
@@ -35,7 +35,7 @@ OracleVersionedCatalogueSchema::OracleVersionedCatalogueSchema(std::string schem
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresVersionedCatalogueSchema::PostgresVersionedCatalogueSchema(std::string schemaVersion) {
+PostgresVersionedCatalogueSchema::PostgresVersionedCatalogueSchema(const std::string& schemaVersion) {
     try {
       sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("postgres");
     } catch(std::out_of_range &) {

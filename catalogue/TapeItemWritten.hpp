@@ -32,7 +32,7 @@ struct TapeItemWritten {
    *
    * Sets the value of all integer member-variables to zero.
    */
-  TapeItemWritten();
+  TapeItemWritten() = default;
   
   /**
    * Default virtual destructor to make the object polymorphic
@@ -69,7 +69,7 @@ struct TapeItemWritten {
   /**
    * The position of the item on tape in the form of its file sequence number.
    */
-  uint64_t fSeq;
+  uint64_t fSeq = 0;
   
   /**
    * The name of the tape drive that wrote the item.

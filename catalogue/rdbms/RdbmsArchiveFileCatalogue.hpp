@@ -134,7 +134,7 @@ protected:
   virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,
     const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
 
-  void deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request);
+  void deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request) const;
 
 protected:
   log::Logger &m_log;
@@ -278,7 +278,7 @@ private:
    * @param deleteRequest, the deleteRequest to check the consistency.
    * @param archiveFile the ArchiveFile to delete to check the deleteRequest consistency against.
    */
-  void checkDeleteRequestConsistency(const cta::common::dataStructures::DeleteArchiveRequest deleteRequest,
+  void checkDeleteRequestConsistency(const cta::common::dataStructures::DeleteArchiveRequest& deleteRequest,
     const cta::common::dataStructures::ArchiveFile & archiveFile) const;
 
   friend class RdbmsFileRecycleLogCatalogue;
@@ -324,7 +324,7 @@ private:
    * @param archiveFileId The identifier of the archive file.
    * @return A list of tape file vid and corresponding tape state pairs
    */
-  const std::list<std::pair<std::string, std::string>> getTapeFileStateListForArchiveFileId(rdbms::Conn &conn,
+  std::list<std::pair<std::string, std::string>> getTapeFileStateListForArchiveFileId(rdbms::Conn &conn,
     const uint64_t archiveFileId) const;
 };
 

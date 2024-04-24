@@ -37,7 +37,7 @@ struct TapeForWriting {
    *
    * Sets the value of all boolean member-variables to false.
    */
-  TapeForWriting();
+  TapeForWriting() = default;
 
   /**
    * Equality operator.
@@ -77,17 +77,17 @@ struct TapeForWriting {
   /**
    * The file sequence number of the last file successfully written to the tape.
    */
-  uint64_t lastFSeq;
+  uint64_t lastFSeq = 0;
 
   /**
    * The capacity of the tape in bytes.
    */
-  uint64_t capacityInBytes;
+  uint64_t capacityInBytes = 0;
 
   /**
    * The total amount of data written to the tape in bytes.
    */
-  uint64_t dataOnTapeInBytes;
+  uint64_t dataOnTapeInBytes = 0;
 
   /**
    * The format type of the tape.

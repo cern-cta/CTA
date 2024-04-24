@@ -26,9 +26,7 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SetProductionCmdLineArgs::SetProductionCmdLineArgs(const int argc, char *const *const argv):
-  help(false) 
-{
+SetProductionCmdLineArgs::SetProductionCmdLineArgs(const int argc, char *const *const argv) {
   static struct option longopts[] = {
     { "help",  no_argument, nullptr, 'h' },
     { nullptr,           0, nullptr, 0 }
@@ -64,7 +62,7 @@ SetProductionCmdLineArgs::SetProductionCmdLineArgs(const int argc, char *const *
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << opt;
         throw ex;
       }
     } // switch(opt)
@@ -76,10 +74,8 @@ SetProductionCmdLineArgs::SetProductionCmdLineArgs(const int argc, char *const *
   }
 
   // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
   // Check the number of arguments
-  if(nbArgs != 1) {
+  if(const int nbArgs = argc - optind; nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;

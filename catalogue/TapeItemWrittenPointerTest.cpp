@@ -26,10 +26,12 @@ namespace unitTests {
 class cta_catalogue_TapeItemWrittenPointerTest : public ::testing::Test {
 protected:
 
-  virtual void SetUp() {
+  void SetUp() final {
+    // nothing to do
   }
 
-  virtual void TearDown() {
+  void TearDown() final {
+    // nothing to do
   }
 };
 

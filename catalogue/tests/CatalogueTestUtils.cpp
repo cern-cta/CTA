@@ -74,124 +74,89 @@ std::unique_ptr<cta::catalogue::Catalogue> CatalogueTestUtils::createCatalogue(
 }
 
 void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc) {
-  {
-    const auto adminUsers = catalogue->AdminUser()->getAdminUsers();
-    for(auto &adminUser: adminUsers) {
-      catalogue->AdminUser()->deleteAdminUser(adminUser.name);
-    }
+  const auto adminUsers = catalogue->AdminUser()->getAdminUsers();
+  for(auto &adminUser: adminUsers) {
+    catalogue->AdminUser()->deleteAdminUser(adminUser.name);
   }
-  {
-    const auto archiveRoutes = catalogue->ArchiveRoute()->getArchiveRoutes();
-    for(auto &archiveRoute: archiveRoutes) {
-      catalogue->ArchiveRoute()->deleteArchiveRoute(archiveRoute.storageClassName,
-        archiveRoute.copyNb);
-    }
+  const auto archiveRoutes = catalogue->ArchiveRoute()->getArchiveRoutes();
+  for(auto &archiveRoute: archiveRoutes) {
+    catalogue->ArchiveRoute()->deleteArchiveRoute(archiveRoute.storageClassName,
+      archiveRoute.copyNb);
   }
-  {
-    const auto rules = catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules();
-    for(const auto &rule: rules) {
-      catalogue->RequesterActivityMountRule()->deleteRequesterActivityMountRule(rule.diskInstance, rule.name,
-        rule.activityRegex);
-    }
+  const auto amRules = catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules();
+  for(const auto &rule: amRules) {
+    catalogue->RequesterActivityMountRule()->deleteRequesterActivityMountRule(rule.diskInstance, rule.name,
+      rule.activityRegex);
   }
-  {
-    const auto rules = catalogue->RequesterMountRule()->getRequesterMountRules();
-    for(const auto &rule: rules) {
-      catalogue->RequesterMountRule()->deleteRequesterMountRule(rule.diskInstance, rule.name);
-    }
+  const auto rmRules = catalogue->RequesterMountRule()->getRequesterMountRules();
+  for(const auto &rule: rmRules) {
+    catalogue->RequesterMountRule()->deleteRequesterMountRule(rule.diskInstance, rule.name);
   }
-  {
-    const auto rules = catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
-    for(const auto &rule: rules) {
-      catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
-    }
+  const auto rgmRules = catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
+  for(const auto &rule: rgmRules) {
+    catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
   }
-  {
-    // The iterator returned from catalogue->ArchiveFile()->getArchiveFilesItor() will lock
-    // an SQLite file database, so copy all of its results into a list in
-    // order to release the lock before moving on to deleting database rows
-    auto itor = catalogue->ArchiveFile()->getArchiveFilesItor();
-    std::list<cta::common::dataStructures::ArchiveFile> archiveFiles;
-    while(itor.hasMore()) {
-      archiveFiles.push_back(itor.next());
-    }
-
-    for(const auto &archiveFile: archiveFiles) {
-      catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance,
-        archiveFile.archiveFileID, *lc);
-    }
+  // The iterator returned from catalogue->ArchiveFile()->getArchiveFilesItor() will lock
+  // an SQLite file database, so copy all of its results into a list in
+  // order to release the lock before moving on to deleting database rows
+  auto afItor = catalogue->ArchiveFile()->getArchiveFilesItor();
+  std::list<cta::common::dataStructures::ArchiveFile> archiveFiles;
+  while(afItor.hasMore()) {
+    archiveFiles.push_back(afItor.next());
   }
 
-  {
-    //Delete all the entries from the recycle log table
-    auto itor = catalogue->FileRecycleLog()->getFileRecycleLogItor();
-    while(itor.hasMore()){
-      catalogue->FileRecycleLog()->deleteFilesFromRecycleLog(itor.next().vid, *lc);
-    }
+  for(const auto &archiveFile: archiveFiles) {
+    catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance,
+      archiveFile.archiveFileID, *lc);
   }
-  {
-    const auto tapes = catalogue->Tape()->getTapes();
-    for(const auto &tape: tapes) {
-      catalogue->Tape()->deleteTape(tape.vid);
-    }
+  //Delete all the entries from the recycle log table
+  auto frlItor = catalogue->FileRecycleLog()->getFileRecycleLogItor();
+  while(frlItor.hasMore()){
+    catalogue->FileRecycleLog()->deleteFilesFromRecycleLog(frlItor.next().vid, *lc);
   }
-  {
-    const auto mediaTypes = catalogue->MediaType()->getMediaTypes();
-    for(const auto &mediaType: mediaTypes) {
-      catalogue->MediaType()->deleteMediaType(mediaType.name);
-    }
+  const auto tapes = catalogue->Tape()->getTapes();
+  for(const auto &tape: tapes) {
+    catalogue->Tape()->deleteTape(tape.vid);
   }
-  {
-    const auto storageClasses = catalogue->StorageClass()->getStorageClasses();
-    for(const auto &storageClass: storageClasses) {
-      catalogue->StorageClass()->deleteStorageClass(storageClass.name);
-    }
+  const auto mediaTypes = catalogue->MediaType()->getMediaTypes();
+  for(const auto &mediaType: mediaTypes) {
+    catalogue->MediaType()->deleteMediaType(mediaType.name);
   }
-  {
-    const auto tapePools = catalogue->TapePool()->getTapePools();
-    for(const auto &tapePool: tapePools) {
-      catalogue->TapePool()->deleteTapePool(tapePool.name);
-    }
+  const auto storageClasses = catalogue->StorageClass()->getStorageClasses();
+  for(const auto &storageClass: storageClasses) {
+    catalogue->StorageClass()->deleteStorageClass(storageClass.name);
   }
-  {
-    const auto logicalLibraries = catalogue->LogicalLibrary()->getLogicalLibraries();
-    for(const auto &logicalLibrary: logicalLibraries) {
-      catalogue->LogicalLibrary()->deleteLogicalLibrary(logicalLibrary.name);
-    }
-    const auto physicalLibraries = catalogue->PhysicalLibrary()->getPhysicalLibraries();
-    for(const auto &physicalLibrary: physicalLibraries) {
-      catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
-    }
+  const auto tapePools = catalogue->TapePool()->getTapePools();
+  for(const auto &tapePool: tapePools) {
+    catalogue->TapePool()->deleteTapePool(tapePool.name);
   }
-  {
-    const auto mountPolicies = catalogue->MountPolicy()->getMountPolicies();
-    for(const auto &mountPolicy: mountPolicies) {
-      catalogue->MountPolicy()->deleteMountPolicy(mountPolicy.name);
-    }
+  const auto logicalLibraries = catalogue->LogicalLibrary()->getLogicalLibraries();
+  for(const auto &logicalLibrary: logicalLibraries) {
+    catalogue->LogicalLibrary()->deleteLogicalLibrary(logicalLibrary.name);
   }
-  {
-    const auto diskSystems = catalogue->DiskSystem()->getAllDiskSystems();
-    for(const auto &ds: diskSystems) {
-      catalogue->DiskSystem()->deleteDiskSystem(ds.name);
-    }
+  const auto physicalLibraries = catalogue->PhysicalLibrary()->getPhysicalLibraries();
+  for(const auto &physicalLibrary: physicalLibraries) {
+    catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
   }
-  {
-    const auto diskInstanceSpaces = catalogue->DiskInstanceSpace()->getAllDiskInstanceSpaces();
-    for(const auto &dis: diskInstanceSpaces) {
-      catalogue->DiskInstanceSpace()->deleteDiskInstanceSpace(dis.name, dis.diskInstance);
-    }
+  const auto mountPolicies = catalogue->MountPolicy()->getMountPolicies();
+  for(const auto &mountPolicy: mountPolicies) {
+    catalogue->MountPolicy()->deleteMountPolicy(mountPolicy.name);
   }
-  {
-    const auto virtualOrganizations = catalogue->VO()->getVirtualOrganizations();
-    for(const auto &vo: virtualOrganizations) {
-      catalogue->VO()->deleteVirtualOrganization(vo.name);
-    }
+  const auto diskSystems = catalogue->DiskSystem()->getAllDiskSystems();
+  for(const auto &ds: diskSystems) {
+    catalogue->DiskSystem()->deleteDiskSystem(ds.name);
   }
-  {
-    const auto diskInstances = catalogue->DiskInstance()->getAllDiskInstances();
-    for(const auto &di: diskInstances) {
-      catalogue->DiskInstance()->deleteDiskInstance(di.name);
-    }
+  const auto diskInstanceSpaces = catalogue->DiskInstanceSpace()->getAllDiskInstanceSpaces();
+  for(const auto &dis: diskInstanceSpaces) {
+    catalogue->DiskInstanceSpace()->deleteDiskInstanceSpace(dis.name, dis.diskInstance);
+  }
+  const auto virtualOrganizations = catalogue->VO()->getVirtualOrganizations();
+  for(const auto &vo: virtualOrganizations) {
+    catalogue->VO()->deleteVirtualOrganization(vo.name);
+  }
+  const auto diskInstances = catalogue->DiskInstance()->getAllDiskInstances();
+  for(const auto &di: diskInstances) {
+    catalogue->DiskInstance()->deleteDiskInstance(di.name);
   }
   checkWipedDatabase(catalogue);
 }

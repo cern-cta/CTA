@@ -93,15 +93,13 @@ void RdbmsAdminUserCatalogue::createAdminUser(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const {
+bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const {
   try {
     const char *const sql =
       "SELECT "
@@ -114,8 +112,6 @@ bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::stri
     stmt.bindString(":ADMIN_USER_NAME", adminUsername);
     auto rset = stmt.executeQuery();
     return rset.next();
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -133,8 +129,6 @@ void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
     }
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -180,8 +174,6 @@ std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUs
     }
 
     return admins;
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -221,8 +213,6 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
     }
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -246,8 +236,6 @@ bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::Sec
     stmt.bindString(":ADMIN_USER_NAME", admin.username);
     auto rset = stmt.executeQuery();
     return rset.next();
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -259,8 +247,6 @@ bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::Securi
   try {
     auto l_getNonCachedValue = [this,&admin] { return isNonCachedAdmin(admin); };
     return m_isAdminCache.getCachedValue(admin, l_getNonCachedValue).value;
-  } catch(exception::UserError&) {
-    throw;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -270,8 +256,6 @@ bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::Securi
 bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
   try {
     return isCachedAdmin(admin);
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

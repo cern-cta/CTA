@@ -4824,43 +4824,41 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
 
-    {
-      auto mItor = m.find(file1Written.archiveFileId);
-      ASSERT_NE(m.end(), mItor);
+    auto mItor = m.find(file1Written.archiveFileId);
+    ASSERT_NE(m.end(), mItor);
 
-      const cta::common::dataStructures::ArchiveFile archiveFile = mItor->second;
+    const cta::common::dataStructures::ArchiveFile archiveFile = mItor->second;
 
-      ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-      ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
-      ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-      ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
-      ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
+    ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
-      ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
 
-      ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
-      ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
-      ASSERT_EQ(2, archiveFile.tapeFiles.size());
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
-      auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-      ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-      const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
-      ASSERT_EQ(file1Written.vid, tapeFile1.vid);
-      ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
-      ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-      ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
-      ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
+    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
-      auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-      ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-      const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
-      ASSERT_EQ(file2Written.vid, tapeFile2.vid);
-      ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
-      ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-      ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
-      ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
-    }
+    auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
+    const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    ASSERT_EQ(file2Written.vid, tapeFile2.vid);
+    ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
+    ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
   {

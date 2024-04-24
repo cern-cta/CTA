@@ -65,7 +65,7 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+  bool tableExists(const std::string& tableName, rdbms::Conn &conn) const;
 
   /*
    * Returns true if the catalogue is upgrading
@@ -73,7 +73,7 @@ private:
    * @param conn The database connection
    * @return True if the catalogue is upgrading
    */
-  bool isUpgrading(rdbms::Conn *conn);
+  bool isUpgrading(rdbms::Conn *conn) const;
 };
 
 } // namespace cta::catalogue

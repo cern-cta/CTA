@@ -21,23 +21,6 @@
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-TapePool::TapePool():
-  nbPartialTapes(0),
-  encryption(false),
-  nbTapes(0),
-  nbEmptyTapes(0),
-  nbDisabledTapes(0),
-  nbFullTapes(0),
-  nbReadOnlyTapes(0),
-  nbWritableTapes(0),
-  capacityBytes(0),
-  dataBytes(0),
-  nbPhysicalFiles(0) {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool TapePool::operator==(const TapePool &rhs) const {

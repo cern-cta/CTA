@@ -32,7 +32,7 @@ protected:
     Argcv(): argc(0), argv(nullptr) {
     }
   };
-  typedef std::list<Argcv*> ArgcvList;
+  using ArgcvList = std::list<Argcv*>;
   ArgcvList m_argsList;
 
   /**

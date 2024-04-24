@@ -57,7 +57,7 @@ private:
    * @param adminUsername The name of the admin user.
    * @return True if the admin user exists.
    */
-  bool adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const;
+  bool adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const;
 
   /**
    * Returns a cached version of the result of calling isAdmin().

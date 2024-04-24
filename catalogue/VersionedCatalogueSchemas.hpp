@@ -27,14 +27,14 @@ struct OracleVersionedCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor
    */
-  explicit OracleVersionedCatalogueSchema(std::string catalogueVersion);
+  explicit OracleVersionedCatalogueSchema(const std::string& catalogueVersion);
 };
 
 struct PostgresVersionedCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor
    */
-  explicit PostgresVersionedCatalogueSchema(std::string catalogueVersion);
+  explicit PostgresVersionedCatalogueSchema(const std::string& catalogueVersion);
 };
 
 } // namespace cta::catalogue
