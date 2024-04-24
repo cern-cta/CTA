@@ -227,9 +227,6 @@ private:
     }
     ~RepackRequestPromotionStatisticsNoLock() override = default;
   };
-  static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob* job);
-  static RetrieveJob* castFromSchedDBJob(SchedulerDatabase::RetrieveJob* job);
-
 };
 
 }  // namespace cta
