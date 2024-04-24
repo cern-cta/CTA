@@ -47,7 +47,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
             conn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
     logContext.log(cta::log::DEBUG, "After first selection of AJS_ToTransferForUser ArchiveMount::getNextJobBatch()");
   } else {
-    logContext.log(cta::log::DEBUG, "Query ArchiveJobQueueRow ArchiveMount::getNextJobBatch()");
+    logContext.log(cta::log::DEBUG, "Query JobsToTransferForRepack ArchiveMount::getNextJobBatch()");
     resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
             conn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
   }
@@ -57,50 +57,46 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
-    logContext.log(cta::log::DEBUG, "I see a selected job in the resultSet");
-    uint64_t myjobid =  resultSet.columnUint64("JOB_ID");
+    uint64_t assigned_jobid =  resultSet.columnUint64("JOB_ID");
     jobs.emplace_back(resultSet);
-    jobIDsString += std::to_string(myjobid) + ",";
+    jobs.back().jobId = assigned_jobid;
+    jobIDsString += std::to_string(assigned_jobid) + ",";
     logContext.log(cta::log::DEBUG, "jobIDsString: " + jobIDsString);
     totalBytes += jobs.back().archiveFile.fileSize;
     if(totalBytes >= bytesRequested) break;
   }
   logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountID");
-  if (!jobIDsString.empty()) {
-    jobIDsString.pop_back(); // Remove the trailing comma
-    // this shall be condition for the update otherwise we do not need to get any connection
-    // we shall move the condition here rather than relying on updateMountID to return doing nothing
-    logContext.log(cta::log::DEBUG, "JOBIDS string looks like this: " + jobIDsString + "END and mountID line this:" +
-                                    std::to_string(mountInfo.mountId) + "END");
-  }
-  // mark the jobs in the batch as owned
-  try {
-    cta::postgresscheddb::Transaction txn(m_PostgresSchedDB.m_connPool);
-    txn.lockGlobal(0);
-    sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
-    txn.commit();
-  } catch (exception::Exception& ex) {
-    logContext.log(cta::log::DEBUG, "In sql::ArchiveJobQueueRow::updateMountID: failed to update MOunt ID." + ex.getMessageValue());
-  }
-  logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountID" + jobIDsString);
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  for (const auto &j : jobs) {
-    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
-    aj->tapeFile.copyNb = j.copyNb;
-    aj->archiveFile = j.archiveFile;
-    aj->archiveReportURL = j.archiveReportUrl;
-    aj->errorReportURL = j.archiveErrorReportUrl;
-    aj->srcURL = j.srcUrl;
-    aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-    aj->tapeFile.vid = mountInfo.vid;
-    aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
-// m_jobOwned ?
-    aj->m_mountId = mountInfo.mountId;
-    aj->m_tapePool = mountInfo.tapePool;
-// reportType ?
-    ret.emplace_back(std::move(aj));
+
+  if (!jobIDsString.empty()) {
+    jobIDsString.pop_back(); // Remove the trailing comma
+    // mark the jobs in the batch as owned
+    try {
+      cta::postgresscheddb::Transaction txn(m_PostgresSchedDB.m_connPool);
+      txn.lockGlobal(0);
+      sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
+      txn.commit();
+      logContext.log(cta::log::DEBUG, "Finished to update Mount ID to: " + std::to_string(mountInfo.mountId)+ " for JOB IDs: " + jobIDsString);
+      for (const auto &j : jobs) {
+        auto aj = std::make_unique<postgresscheddb::ArchiveJob>(true, mountInfo.mountId, j.jobId, mountInfo.tapePool);
+        aj->tapeFile.copyNb = j.copyNb;
+        aj->archiveFile = j.archiveFile;
+        aj->archiveReportURL = j.archiveReportUrl;
+        aj->errorReportURL = j.archiveErrorReportUrl;
+        aj->srcURL = j.srcUrl;
+        aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+        aj->tapeFile.vid = mountInfo.vid;
+        aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+        // reportType ?
+        ret.emplace_back(std::move(aj));
+      }
+    } catch (exception::Exception& ex) {
+      logContext.log(cta::log::DEBUG, "In sql::ArchiveJobQueueRow::updateMountID: failed to update Mount ID." + ex.getMessageValue());
+    }
+    logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountID" + jobIDsString);
+  }
   }
   return ret;
 }
