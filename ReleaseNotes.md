@@ -3,6 +3,7 @@
 ## Features
 - cta/CTA#646 - JSON logging with correct field types
 - cta/CTA#350 - Change fxid to fid in command tools
+- cta/CTA#641 - Archive workflow of Postgres Scheduler DB can write a file to tape
 
 ### Bug Fixes
 - cta/CTA#485 - Check disk file metadata on delete requests
