@@ -173,7 +173,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Undetermined);
 
-    if(!nextMountTimeout){
+    if (!nextMountTimeout) {
       t.reset();
     }
 
