@@ -45,21 +45,6 @@ double cta::utils::Timer::secs(reset_t reset) {
 }
 
 //------------------------------------------------------------------------------
-// secs_orderOfMagnitude
-//------------------------------------------------------------------------------
-int cta::utils::Timer::secs_orderOfMagnitude(reset_t reset) {
-  int time_orderOfMagnitude = 0;
-  auto elapsedSeconds = static_cast<int>(usecs(reset) * 0.000001);
-
-  while (elapsedSeconds >= 10){
-    time_orderOfMagnitude++;
-    elapsedSeconds = static_cast<int>(elapsedSeconds * 0.1);
-  }
-
-  return time_orderOfMagnitude;
-}
-
-//------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
 void cta::utils::Timer::reset() {

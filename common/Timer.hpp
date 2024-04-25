@@ -59,12 +59,6 @@ public:
   double secs(reset_t reset = keepRunning);
 
   /**
-   * Gives the order of magnitude o the elapsed time.
-   * Optionally resets the counter.
-   */
-  int secs_orderOfMagnitude(reset_t reset = keepRunning);
-
-  /**
    * Resets the Timer reference's time to the current time.
    */
   void reset();

@@ -108,7 +108,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
-  cta::utils::Timer t;
   bool nextMountTimeout = false;
 
   // 2a) Determine if we want to mount at all (for now)
@@ -173,10 +172,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Undetermined);
 
-    if (!nextMountTimeout) {
-      t.reset();
-    }
-
     nextMountTimeout = false;
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
@@ -184,15 +179,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
     } catch (cta::exception::TimeoutException &e) {
-      lc.pushOrReplace(cta::log::Param("totalTime", std::to_string(t.secs())));
-
       // Print warning and try again, after refreshing the tape drive states
       lc.log(cta::log::WARNING,
-             "Timeout while getting new mount (" + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds reached). "
-               "Time order of magnitude while trying to get new mount is " + std::to_string(t.secs_orderOfMagnitude()) + ".");
+             "Timedout while scheduling new mount. Could not acquire global scheduler lock in  " + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds. ");
 
-      lc.erase("totalTime");
-
+      // We found a mount but got timedout while trying to acquire the global lock.
       nextMountTimeout = true;
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
@@ -206,6 +197,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       // Refresh the status to trigger the timeout update
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, lc);
+
+      // Only sleep if we didn't found work to do.
       if (!nextMountTimeout) {
         lc.log(cta::log::DEBUG, "No new mount found. (sleeping " + std::to_string(m_dataTransferConfig.wdIdleSessionTimer) + " seconds)");
         sleep(m_dataTransferConfig.wdIdleSessionTimer);
