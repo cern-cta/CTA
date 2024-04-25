@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 #include "Timer.hpp"
+#include <cmath>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -42,6 +43,21 @@ int64_t cta::utils::Timer::usecs(reset_t reset) {
 //------------------------------------------------------------------------------
 double cta::utils::Timer::secs(reset_t reset) {
   return usecs(reset) * 0.000001;
+}
+
+//------------------------------------------------------------------------------
+// secs_orderOfMagnitude
+//------------------------------------------------------------------------------
+int cta::utils::Timer::secs_orderOfMagnitude(reset_t reset) {
+  int time_orderOfMagnitude = 0;
+  auto elapsedSeconds = static_cast<int>(usecs(reset) * 0.000001);
+
+  while (elapsedSeconds >= 10){
+    time_orderOfMagnitude++;
+    elapsedSeconds = static_cast<int>(elapsedSeconds * 0.1);
+  }
+
+  return std::pow(10,time_orderOfMagnitude);
 }
 
 //------------------------------------------------------------------------------

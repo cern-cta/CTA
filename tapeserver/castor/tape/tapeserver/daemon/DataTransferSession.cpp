@@ -184,10 +184,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
     } catch (cta::exception::TimeoutException &e) {
+      lc.pushOrReplace(cta::log::Param("totalTime", std::to_string(t.secs())));
+
       // Print warning and try again, after refreshing the tape drive states
       lc.log(cta::log::WARNING,
              "Timeout while getting new mount (" + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds reached). "
-               "Total time trying to get new mount is " + std::to_string(t.secs()) + " seconds.");
+               "Time magnitude while trying to get new mount is " + std::to_string(t.secs_orderOfMagnitude()) + " seconds.");
+
+      lc.erase("totalTime");
+
       nextMountTimeout = true;
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");

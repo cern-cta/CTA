@@ -59,6 +59,12 @@ public:
   double secs(reset_t reset = keepRunning);
 
   /**
+   * Gives the elapsed time in seconds, rounded down to the closest order of
+   * magnitude (12345 -> 10000). Optionally resets the counter.
+   */
+  int secs_orderOfMagnitude(reset_t reset = keepRunning);
+
+  /**
    * Resets the Timer reference's time to the current time.
    */
   void reset();
