@@ -181,7 +181,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     } catch (cta::exception::TimeoutException &e) {
       // Print warning and try again, after refreshing the tape drive states
       lc.log(cta::log::WARNING,
-             "Timedout while scheduling new mount. Could not acquire global scheduler lock in  " + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds. ");
+             "Timedout while scheduling new mount. Could not acquire global scheduler lock in " + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds.");
 
       // We found a mount but got timedout while trying to acquire the global lock.
       nextMountTimeout = true;
