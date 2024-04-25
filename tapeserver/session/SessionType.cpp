@@ -30,6 +30,8 @@ std::string toString(SessionType type) {
     return "Label";
   case SessionType::Undetermined:
     return "Undetermined";
+  case SessionType::Cleanup:
+    return "Cleanup";
   default:
     {
       std::stringstream st;
