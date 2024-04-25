@@ -59,7 +59,7 @@ struct ArchiveJobSummaryRow {
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
-    params.add("mountId", mountId.has_value() ? std::to_string(*mountId) : "no value");
+    params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
     params.add("mountPolicy", mountPolicy);

@@ -21,14 +21,16 @@
 
 namespace cta::postgresscheddb::sql {
 
-void ArchiveJobQueueRow::updateMountID(Transaction &txn, const std::string& jobIDs, uint64_t mountId) {
+void ArchiveJobQueueRow::updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId) {
   if(jobIDs.empty()) return;
+  std::string sqlpart;
+  for (const auto &piece : jobIDs) sqlpart += piece;
   txn.start();
   std::string sql =
     "UPDATE ARCHIVE_JOB_QUEUE SET "
       "MOUNT_ID = :MOUNT_ID "
     "WHERE "
-    " JOB_ID IN (" + jobIDs + ")";
+    " JOB_ID IN (" + sqlpart + ")";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeQuery();

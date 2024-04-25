@@ -54,12 +54,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   logContext.log(cta::log::DEBUG, "Filling jobs in ArchiveMount::getNextJobBatch()");
   std::list<sql::ArchiveJobQueueRow> jobs;
   std::string jobIDsString;
+  std::list<std::string> jobIDsList;
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
   while(resultSet.next()) {
     uint64_t assigned_jobid =  resultSet.columnUint64("JOB_ID");
     jobs.emplace_back(resultSet);
     jobs.back().jobId = assigned_jobid;
+    jobIDsList.emplace_back(assigned_jobid);
     jobIDsString += std::to_string(assigned_jobid) + ",";
     logContext.log(cta::log::DEBUG, "jobIDsString: " + jobIDsString);
     totalBytes += jobs.back().archiveFile.fileSize;
@@ -76,7 +78,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     try {
       cta::postgresscheddb::Transaction txn(m_PostgresSchedDB.m_connPool);
       txn.lockGlobal(0);
-      sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsString, mountInfo.mountId);
+      sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsList, mountInfo.mountId);
       txn.commit();
       logContext.log(cta::log::DEBUG, "Finished to update Mount ID to: " + std::to_string(mountInfo.mountId)+ " for JOB IDs: " + jobIDsString);
       for (const auto &j : jobs) {

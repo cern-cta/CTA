@@ -208,7 +208,7 @@ struct ArchiveJobQueueRow {
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     // does not set jobId
-    params.add("mountId", mountId.has_value() ? std::to_string(*mountId) : "no value");
+    params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
     params.add("mountPolicy", mountPolicy);
@@ -414,7 +414,7 @@ struct ArchiveJobQueueRow {
    * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @param mountId    Mount ID to assign
    */
-  static void updateMountID(Transaction &txn, const std::string& jobIDs, uint64_t mountId);
+  static void updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql
