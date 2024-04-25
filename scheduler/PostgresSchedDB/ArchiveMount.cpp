@@ -61,7 +61,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     uint64_t assigned_jobid =  resultSet.columnUint64("JOB_ID");
     jobs.emplace_back(resultSet);
     jobs.back().jobId = assigned_jobid;
-    jobIDsList.emplace_back(assigned_jobid);
+    jobIDsList.emplace_back(std::to_string(assigned_jobid));
     jobIDsString += std::to_string(assigned_jobid) + ",";
     logContext.log(cta::log::DEBUG, "jobIDsString: " + jobIDsString);
     totalBytes += jobs.back().archiveFile.fileSize;
