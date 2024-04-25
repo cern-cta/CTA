@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 #include "Timer.hpp"
-#include <cmath>
 
 //------------------------------------------------------------------------------
 // constructor
