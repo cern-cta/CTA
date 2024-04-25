@@ -189,7 +189,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       // Print warning and try again, after refreshing the tape drive states
       lc.log(cta::log::WARNING,
              "Timeout while getting new mount (" + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds reached). "
-               "Time magnitude while trying to get new mount is " + std::to_string(t.secs_orderOfMagnitude()) + " seconds.");
+               "Time order of magnitude while trying to get new mount is " + std::to_string(t.secs_orderOfMagnitude()) + ".");
 
       lc.erase("totalTime");
 

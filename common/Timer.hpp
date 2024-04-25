@@ -59,8 +59,8 @@ public:
   double secs(reset_t reset = keepRunning);
 
   /**
-   * Gives the elapsed time in seconds, rounded down to the closest order of
-   * magnitude (12345 -> 10000). Optionally resets the counter.
+   * Gives the order of magnitude o the elapsed time.
+   * Optionally resets the counter.
    */
   int secs_orderOfMagnitude(reset_t reset = keepRunning);
 

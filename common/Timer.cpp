@@ -57,7 +57,7 @@ int cta::utils::Timer::secs_orderOfMagnitude(reset_t reset) {
     elapsedSeconds = static_cast<int>(elapsedSeconds * 0.1);
   }
 
-  return std::pow(10,time_orderOfMagnitude);
+  return time_orderOfMagnitude;
 }
 
 //------------------------------------------------------------------------------
