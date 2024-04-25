@@ -31,7 +31,7 @@ namespace cta::postgresscheddb::sql {
 
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
-  uint64_t mountId = 0;
+  std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
@@ -84,7 +84,7 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    mountId = rset.columnOptionalUint64("MOUNT_ID").value_or(0);
+    mountId = rset.columnOptionalUint64("MOUNT_ID");
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
@@ -117,6 +117,7 @@ struct ArchiveJobQueueRow {
   }
 
   void insert(Transaction &txn) const {
+
     // does not set mountId or jobId
     const char *const sql =
       "INSERT INTO ARCHIVE_JOB_QUEUE("
@@ -202,11 +203,12 @@ struct ArchiveJobQueueRow {
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
 
     stmt.executeNonQuery();
+
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     // does not set jobId
-    params.add("mountId", mountId);
+    params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
     params.add("mountPolicy", mountPolicy);
@@ -409,10 +411,10 @@ struct ArchiveJobQueueRow {
    * Assign a mount ID to the specified rows
    *
    * @param txn        Transaction to use for this query
-   * @param rowList    List of table rows to claim for the new owner
+   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @param mountId    Mount ID to assign
    */
-  static void updateMountId(Transaction &txn, const std::list<ArchiveJobQueueRow>& rowList, uint64_t mountId);
+  static void updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId);
 };
 
 } // namespace cta::postgresscheddb::sql

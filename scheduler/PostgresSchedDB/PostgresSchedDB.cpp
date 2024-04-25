@@ -27,7 +27,6 @@
 #include "scheduler/PostgresSchedDB/ArchiveRequest.hpp"
 #include "scheduler/PostgresSchedDB/TapeMountDecisionInfo.hpp"
 #include "scheduler/PostgresSchedDB/Helpers.hpp"
-#include "scheduler/PostgresSchedDB/RetrieveJob.hpp"
 #include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "scheduler/PostgresSchedDB/RepackRequest.hpp"
 
@@ -180,14 +179,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > PostgresSchedDB::getN
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
-    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(/* j.jobId */);
+    auto aj = std::make_unique<postgresscheddb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportUrl;
     aj->errorReportURL = j.archiveErrorReportUrl;
     aj->srcURL = j.srcUrl;
-    aj->m_mountId = j.mountId;
-    aj->m_tapePool = j.tapePool;
     ret.emplace_back(std::move(aj));
   }
   logContext.log(log::DEBUG, "In PostgresSchedDB::getNextArchiveJobsToReportBatch(): After Archive Jobs filled, before return.");
@@ -513,7 +510,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return.
-  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger);
+  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // Take an exclusive lock on the scheduling
@@ -544,7 +541,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return
-  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_connPool, m_ownerId, m_tapeDrivesState.get(), m_logger);
+  auto privateRet = std::make_unique<postgresscheddb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
 

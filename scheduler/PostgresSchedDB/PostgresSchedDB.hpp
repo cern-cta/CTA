@@ -25,6 +25,7 @@
 #include <tuple>
 #include <vector>
 
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -38,18 +39,22 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "common/utils/utils.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
+
 
 namespace cta {
 
-namespace catalogue {
-class Catalogue;
-}
+  namespace catalogue {
+    class Catalogue;
+  }
+  namespace postgresscheddb {
+    class ArchiveMount;
+    class TapeMountDecisionInfo;
+  }
 
 class PostgresSchedDB: public SchedulerDatabase {
  public:
@@ -60,7 +65,8 @@ class PostgresSchedDB: public SchedulerDatabase {
                    const uint64_t nbConns);
 
   ~PostgresSchedDB() override;
-
+  friend class cta::postgresscheddb::ArchiveMount;
+  friend class cta::postgresscheddb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
 
   /*============ Basic IO check: validate Postgres DB store access ===============*/
@@ -221,7 +227,6 @@ private:
     }
     ~RepackRequestPromotionStatisticsNoLock() override = default;
   };
-
 };
 
 }  // namespace cta
