@@ -78,7 +78,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     try {
       cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
       txn.lockGlobal(0);
-      sql::ArchiveJobQueueRow::updateMountID(txn, jobIDsList, mountInfo.mountId);
+      postgres::ArchiveJobQueueRow::updateMountID(txn, jobIDsList, mountInfo.mountId);
       txn.commit();
       logContext.log(cta::log::DEBUG, "Finished to update Mount ID to: " + std::to_string(mountInfo.mountId)+ " for JOB IDs: " + jobIDsString);
       for (const auto &j : jobs) {
