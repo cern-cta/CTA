@@ -17,7 +17,7 @@ cmake_minimum_required (VERSION 3.17)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${XROOTD_INCLUDE_DIR})
 
-add_subdirectory(PostgresSchedDB/schema)
+add_subdirectory(rdbms/schema)
 
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
@@ -54,24 +54,24 @@ set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 include_directories (${CMAKE_BINARY_DIR}/scheduler)
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
-  PostgresSchedDB/PostgresSchedDB.cpp
-  PostgresSchedDB/ArchiveMount.cpp
-  PostgresSchedDB/ArchiveJob.cpp
-  PostgresSchedDB/ArchiveJobQueueItor.cpp
-  PostgresSchedDB/ArchiveRequest.cpp
-  PostgresSchedDB/Helpers.cpp
-  PostgresSchedDB/RetrieveMount.cpp
-  PostgresSchedDB/RetrieveRequest.cpp
-  PostgresSchedDB/RetrieveJob.cpp
-  PostgresSchedDB/RetrieveJobQueueItor.cpp
-  PostgresSchedDB/RepackRequestPromotionStatistics.cpp
-  PostgresSchedDB/RepackRequest.cpp
-  PostgresSchedDB/RepackReportBatch.cpp
-  PostgresSchedDB/TapeMountDecisionInfo.cpp
-  PostgresSchedDB/sql/ArchiveJobQueue.cpp
-  PostgresSchedDB/sql/RetrieveJobQueue.cpp
-  PostgresSchedDB/sql/RepackJobQueue.cpp
-  PostgresSchedDB/sql/Transaction.cpp)
+  rdbms/RelationalDB.cpp
+  rdbms/ArchiveMount.cpp
+  rdbms/ArchiveJob.cpp
+  rdbms/ArchiveJobQueueItor.cpp
+  rdbms/ArchiveRequest.cpp
+  rdbms/Helpers.cpp
+  rdbms/RetrieveMount.cpp
+  rdbms/RetrieveRequest.cpp
+  rdbms/RetrieveJob.cpp
+  rdbms/RetrieveJobQueueItor.cpp
+  rdbms/RepackRequestPromotionStatistics.cpp
+  rdbms/RepackRequest.cpp
+  rdbms/RepackReportBatch.cpp
+  rdbms/TapeMountDecisionInfo.cpp
+  rdbms/postgres/ArchiveJobQueue.cpp
+  rdbms/postgres/RetrieveJobQueue.cpp
+  rdbms/postgres/RepackJobQueue.cpp
+  rdbms/postgres/Transaction.cpp)
 
 # End of definitions specific to Postgres scheduler lib compilation
 
@@ -107,7 +107,7 @@ else()
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     GenericSchedulerTest.cpp
-    PostgresSchedDB/PostgresSchedDBTest.cpp)
+    rdbms/RelationalDBTest.cpp)
 endif()
 
 target_link_libraries (ctaschedulerunittests ctascheduler)

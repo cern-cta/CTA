@@ -19,7 +19,7 @@
 
 #include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif

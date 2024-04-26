@@ -39,7 +39,7 @@
 #include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #ifdef CTA_PGSCHED
-#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"

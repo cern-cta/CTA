@@ -112,7 +112,7 @@ class SchedulerDatabase {
    * @param osThreadStackSize the thread stack size in MB
    */
   virtual void initConfig(const std::optional<int>& osThreadPoolSize, const std::optional<int>& osThreadStackSize) {
-    // intentionally empty, it is overriden in OStoreDB and shall have no implementation for PostgresSchedDB
+    // intentionally empty, it is overriden in OStoreDB and shall have no implementation for RelationalDB
   }
 
   /*============ Basic IO check: validate object store access ===============*/
