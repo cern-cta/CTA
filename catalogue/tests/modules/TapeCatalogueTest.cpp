@@ -1460,7 +1460,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState) {
 
   {
     //catalogue getTapesByVid test (set of VIDs)
-    std::set<std::string> vids = {vid};
+    std::set<std::string, std::less<>> vids = {vid};
     auto vidToTapeMap = m_catalogue->Tape()->getTapesByVid(vids);
     auto tape = vidToTapeMap.at(vid);
     ASSERT_EQ(vid,tape.vid);
@@ -3199,7 +3199,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   }
 
   {
-    std::set<std::string> vids;
+    std::set<std::string, std::less<>> vids;
     for(uint64_t i = 1; i <= nbTapes; i++) {
       std::ostringstream vid;
       vid << "VID" << i;
@@ -3245,19 +3245,19 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 
 TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape_set) {
 
-  std::set<std::string> vids = {{"non_existent_tape"}};
+  std::set<std::string, std::less<>> vids = {{"non_existent_tape"}};
   ASSERT_THROW(m_catalogue->Tape()->getTapesByVid(vids), cta::exception::Exception);
 }
 
 TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape_set_ignore_missing) {
   using namespace cta;
-  std::set<std::string> vids = {{"non_existent_tape"}};
+  std::set<std::string, std::less<>> vids = {{"non_existent_tape"}};
   ASSERT_NO_THROW(m_catalogue->Tape()->getTapesByVid(vids, true));
 }
 
 TEST_P(cta_catalogue_TapeTest, getTapesByVid_no_vids) {
 
-  std::set<std::string> vids;
+  std::set<std::string, std::less<>> vids;
   ASSERT_TRUE(m_catalogue->Tape()->getTapesByVid(vids).empty());
 }
 
@@ -3276,7 +3276,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByVid_1_tape) {
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 1;
-  std::set<std::string> allVids;
+  std::set<std::string, std::less<>> allVids;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
@@ -3332,7 +3332,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByVid_350_tapes) {
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 310;
-  std::set<std::string> allVids;
+  std::set<std::string, std::less<>> allVids;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
@@ -3375,7 +3375,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByVid_350_tapes) {
 
 TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_no_vids) {
 
-  std::set<std::string> vids;
+  std::set<std::string, std::less<>> vids;
   ASSERT_TRUE(m_catalogue->Tape()->getVidToLogicalLibrary(vids).empty());
 }
 
@@ -3394,7 +3394,7 @@ TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_1_tape) {
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 1;
-  std::set<std::string> allVids;
+  std::set<std::string, std::less<>> allVids;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
@@ -3437,7 +3437,7 @@ TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_310_tapes) {
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 310;
-  std::set<std::string> allVids;
+  std::set<std::string, std::less<>> allVids;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;

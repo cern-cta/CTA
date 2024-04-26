@@ -39,11 +39,11 @@ public:
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
 
-  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string, std::less<>> &vids) const override;
 
-  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const override;
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string, std::less<>> &vids, bool ignoreMissingVids) const override;
 
-  std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const override;
+  std::map<std::string, std::string, std::less<>> getVidToLogicalLibrary(const std::set<std::string, std::less<>> &vids) const override;
 
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
     cta::log::LogContext & lc) override;
@@ -112,7 +112,7 @@ public:
 
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
-  std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
+  std::map<std::string, common::dataStructures::Tape::State, std::less<>> m_tapeEnabling;
 };
 
 } // namespace cta::catalogue

@@ -122,7 +122,7 @@ std::list<std::string> DatabaseMetadataGetter::getIndexNames(){
   return indexNames;
 }
 
-std::map<std::string,std::string> DatabaseMetadataGetter::getColumns(const std::string& tableName){
+std::map<std::string,std::string,std::less<>> DatabaseMetadataGetter::getColumns(const std::string& tableName){
   return m_conn.getColumns(tableName);
 }
 
@@ -176,10 +176,10 @@ cta::rdbms::Login::DbType SQLiteDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_SQLITE;
 }
 
-std::set<std::string> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
   // This check is for indexes on columns used by foreign key constraints. It is an optimisation for
   // production DBs. No need to check it for SQLite.
-  return std::set<std::string>();
+  return std::set<std::string,std::less<>>();
 }
 
 OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
@@ -195,7 +195,7 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
   return tableNames;
 }
 
-std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> OracleDatabaseMetadataGetter::getMissingIndexes() {
   // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
   const char* const sql = "SELECT "
       "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
@@ -211,7 +211,7 @@ std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> columnNames;
+  std::set<std::string,std::less<>> columnNames;
   while(rset.next()) {
     columnNames.insert(rset.columnString("FQ_COL_NAME"));
   }
@@ -224,7 +224,7 @@ cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
 }
 
-std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   // Adapted from https://www.cybertec-postgresql.com/en/index-your-foreign-key/
   const char* const sql = "SELECT "
         "T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME "
@@ -259,7 +259,7 @@ std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> columnNames;
+  std::set<std::string,std::less<>> columnNames;
   while(rset.next()) {
     columnNames.insert(rset.columnString("FQ_COL_NAME"));
   }
@@ -294,7 +294,7 @@ std::list<std::string> SchemaMetadataGetter::getTableNames() {
   return m_sqliteDatabaseMetadataGetter->getTableNames();
 }
 
-std::map<std::string,std::string> SchemaMetadataGetter::getColumns(const std::string& tableName) {
+std::map<std::string,std::string,std::less<>> SchemaMetadataGetter::getColumns(const std::string& tableName) {
   return m_sqliteDatabaseMetadataGetter->getColumns(tableName);
 }
 

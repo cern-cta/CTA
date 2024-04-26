@@ -39,10 +39,10 @@ std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime, std::less<>> Hel
 
 std::string Helpers::selectBestVid4Retrieve
 (
-  const std::set<std::string>  &candidateVids,
-  cta::catalogue::Catalogue    &catalogue,
-  schedulerdb::Transaction     &txn,
-  bool                          isRepack
+  const std::set<std::string, std::less<>>  &candidateVids,
+  cta::catalogue::Catalogue                 &catalogue,
+  postgresscheddb::Transaction              &txn,
+  bool                                       isRepack
 )
 {
   // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here

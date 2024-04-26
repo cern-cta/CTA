@@ -38,10 +38,10 @@ class Helpers {
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
 
   static std::string selectBestVid4Retrieve(
-                const std::set<std::string>  &candidateVids,
-                cta::catalogue::Catalogue    &catalogue,
-                schedulerdb::Transaction &txn,
-                bool                          isRepack);
+                const std::set<std::string, std::less<>>  &candidateVids,
+                cta::catalogue::Catalogue                 &catalogue,
+                postgresscheddb::Transaction              &txn,
+                bool                                       isRepack);
 
   static std::list<SchedulerDatabase::RetrieveQueueStatistics> getRetrieveQueueStatistics(
                 const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,

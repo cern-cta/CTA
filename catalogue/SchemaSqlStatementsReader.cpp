@@ -107,7 +107,7 @@ std::string SchemaSqlStatementsReader::getDatabaseType() const {
 //////////////////////////////////////////////////////////////////
 // DirectoryVersionsSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
+std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() const {
   std::string schemaFilePath = getSchemaFilePath();
   std::ifstream schemaFile(schemaFilePath);
   if (schemaFile.fail()) {
@@ -122,7 +122,7 @@ std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
 // MapSqlStatementsReader
 //////////////////////////////////////////////////////////////////
 std::list<std::string> MapSqlStatementsReader::getStatements() {
-  std::map<std::string, std::string> mapVersionSchemas;
+  std::map<std::string, std::string, std::less<>> mapVersionSchemas;
   try {
     mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
   } catch (const std::out_of_range&) {

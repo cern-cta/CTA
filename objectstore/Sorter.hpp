@@ -209,7 +209,7 @@ private:
   threading::Mutex m_mutex;
 
   /* Retrieve-related methods */
-  std::set<std::string> getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor);
+  std::set<std::string, std::less<>> getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor);
   std::string getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor, const std::string& vid, const uint32_t copyNb);
   void queueRetrieveRequests(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
     std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);

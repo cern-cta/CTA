@@ -79,7 +79,7 @@ SchemaCheckerResult SchemaChecker::compareTablesLocatedInSchema(){
 }
 
 SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string>& columnNames){
-  std::map<std::string, std::string> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
+  std::map<std::string, std::string, std::less<>> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
   SchemaCheckerResult res;
   if(mapColumnsTypes.empty()){
     std::string error = "TABLE " + tableName +" does not exist.";

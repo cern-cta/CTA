@@ -32,7 +32,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   admin.username = "Queue cleanup runner";
   admin.host = cta::utils::getShortHostname();
 
-  auto queueVidSet = std::set<std::string>();
+  auto queueVidSet = std::set<std::string, std::less<>>();
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
   // Check, one-by-one, queues need to be cleaned up

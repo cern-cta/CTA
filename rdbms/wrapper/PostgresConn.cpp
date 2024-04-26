@@ -203,9 +203,9 @@ std::list<std::string> PostgresConn::getSequenceNames() {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> PostgresConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string, std::less<>> PostgresConn::getColumns(const std::string &tableName) {
   try {
-    std::map<std::string, std::string> columnNamesAndTypes;
+    std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     auto lowercaseTableName = tableName;
     utils::toLower(lowercaseTableName); // postgres work with lowercase
     const char *const sql =

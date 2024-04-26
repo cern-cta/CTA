@@ -1838,7 +1838,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   const auto schedulerDbTime = schedulerDbTimer.secs();
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
 
-  std::set<std::string> tapesWithAQueue;
+  std::set<std::string, std::less<>> tapesWithAQueue;
   for (const auto & pm: mountDecisionInfo->potentialMounts) {
     if(!pm.vid.empty()) {
       tapesWithAQueue.emplace(pm.vid);
@@ -1953,7 +1953,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   double catalogueGetVoTotalTime = 0.0;
 
   // Get tape info all at once
-  std::set<std::string> retrieveMountVids;
+  std::set<std::string, std::less<>> retrieveMountVids;
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       retrieveMountVids.insert(mountOrQueue.vid);

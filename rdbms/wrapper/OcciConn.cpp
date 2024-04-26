@@ -160,9 +160,9 @@ void OcciConn::rollback() {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> OcciConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::string &tableName) {
   try {
-    std::map<std::string, std::string> columnNamesAndTypes;
+    std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     const char *const sql =
       "SELECT "
         "COLUMN_NAME, "

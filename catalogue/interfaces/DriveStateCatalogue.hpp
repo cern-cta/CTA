@@ -96,7 +96,7 @@ public:
   /**
    * Gets the disk space reservations for all disk systems
    */
-  virtual std::map<std::string, uint64_t> getDiskSpaceReservations() const = 0;
+  virtual std::map<std::string, uint64_t, std::less<>> getDiskSpaceReservations() const = 0;
 
   /**
    * Adds to the current disk space reservation

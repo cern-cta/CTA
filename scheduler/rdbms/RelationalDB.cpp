@@ -242,7 +242,7 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
   schedulerdb::Transaction txn(m_connPool);
 
    // Get the best vid from the cache
-  std::set<std::string> candidateVids;
+  std::set<std::string, std::less<>> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
 
   SchedulerDatabase::RetrieveRequestInfo ret;

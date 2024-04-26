@@ -42,7 +42,7 @@ public:
   std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
 
 private:
-  std::map<std::string, common::dataStructures::DiskInstance> m_diskInstances;
+  std::map<std::string, common::dataStructures::DiskInstance, std::less<>> m_diskInstances;
 };
 
 } // namespace cta::catalogue

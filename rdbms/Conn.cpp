@@ -163,7 +163,7 @@ void Conn::rollback() {
 //------------------------------------------------------------------------------
 // getSchemaColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> Conn::getColumns(const std::string &tableName) const {
+std::map<std::string, std::string, std::less<>> Conn::getColumns(const std::string &tableName) const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getColumns(tableName);
   } else {

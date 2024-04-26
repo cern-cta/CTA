@@ -218,7 +218,7 @@ uint64_t RepackRequest::addSubrequestsAndUpdateStats(
 
         // The repack vid was not appropriate, let's try all candidates.
         if (bestVid.empty()) {
-          std::set<std::string> candidateVids;
+          std::set<std::string, std::less<>> candidateVids;
           for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
           try {
             bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, *m_txn, true);

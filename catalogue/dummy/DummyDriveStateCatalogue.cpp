@@ -97,8 +97,8 @@ void DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   m_tapeDriveStatus = tapeDrive;
 }
 
-std::map<std::string, uint64_t> DummyDriveStateCatalogue::getDiskSpaceReservations() const {
-  std::map<std::string, uint64_t> ret;
+std::map<std::string, uint64_t, std::less<>> DummyDriveStateCatalogue::getDiskSpaceReservations() const {
+  std::map<std::string, uint64_t, std::less<>> ret;
   const auto tdNames = getTapeDriveNames();
   for (const auto& driveName : tdNames) {
     const auto tdStatus = getTapeDrive(driveName);

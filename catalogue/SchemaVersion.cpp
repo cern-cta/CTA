@@ -97,7 +97,7 @@ SchemaVersion::Builder& SchemaVersion::Builder::status(const SchemaVersion::Stat
     return *this;
 }
 
-std::map<std::string,SchemaVersion::Status> SchemaVersion::Builder::s_mapStringStatus {
+std::map<std::string,SchemaVersion::Status,std::less<>> SchemaVersion::Builder::s_mapStringStatus {
   {"PRODUCTION",Status::PRODUCTION},
   {"UPGRADING",Status::UPGRADING}
 };

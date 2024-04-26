@@ -37,8 +37,8 @@ CatalogueSchema::CatalogueSchema(const std::string &sqlSchema): sql(sqlSchema) {
 //------------------------------------------------------------------------------
 // getSchemaColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> CatalogueSchema::getSchemaColumns(const std::string &tableName) const {
-  std::map<std::string, std::string> schemaColumnNames;
+std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumns(const std::string &tableName) const {
+  std::map<std::string, std::string, std::less<>> schemaColumnNames;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   const std::string columnTypes = 
@@ -178,9 +178,9 @@ std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
 //------------------------------------------------------------------------------
 // getSchemaVersion
 //------------------------------------------------------------------------------
-std::map<std::string, uint64_t> CatalogueSchema::getSchemaVersion() const {
+std::map<std::string, uint64_t, std::less<>> CatalogueSchema::getSchemaVersion() const {
   try {
-    std::map<std::string, uint64_t> schemaVersion;
+    std::map<std::string, uint64_t, std::less<>> schemaVersion;
     cta::utils::Regex schemaVersionRegex(
       "INSERT INTO CTA_CATALOGUE\\("
       "  SCHEMA_VERSION_MAJOR,"

@@ -91,7 +91,7 @@ class Helpers {
    * frequent access to the object store. The caching create a small inefficiency
    * to the algorithm, but will help performance drastically for a very similar result
    */
-  static std::string selectBestRetrieveQueue(const std::set<std::string> & candidateVids,
+  static std::string selectBestRetrieveQueue(const std::set<std::string, std::less<>> & candidateVids,
     cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false);
 
   /**

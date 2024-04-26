@@ -367,11 +367,12 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   }
 }
 
-common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
+common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids) const {
   return getTapesByVid(vids, false);
 }
 
-common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const {
+common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids,
+  bool ignoreMissingVids) const {
   try {
     common::dataStructures::VidToTapeMap vidToTapeMap;
 
@@ -435,9 +436,10 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   }
 }
 
-std::map<std::string, std::string> RdbmsTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string> &vids) const {
+std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogicalLibrary(
+  const std::set<std::string, std::less<>> &vids) const {
   try {
-    std::map<std::string, std::string> vidToLogicalLibrary;
+    std::map<std::string, std::string, std::less<>> vidToLogicalLibrary;
 
     if(vids.empty()) return vidToLogicalLibrary;
 
@@ -1939,7 +1941,7 @@ std::string RdbmsTapeCatalogue::getSelectVidToLogicalLibraryBy100Sql() const {
 }
 
 void RdbmsTapeCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults(rdbms::Stmt &stmt,
-std::map<std::string, std::string> &vidToLogicalLibrary) const {
+std::map<std::string, std::string, std::less<>> &vidToLogicalLibrary) const {
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");

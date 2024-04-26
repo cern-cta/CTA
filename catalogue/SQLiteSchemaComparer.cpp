@@ -31,7 +31,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckNam
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
   m_sqliteConn = std::move(m_sqliteConnPool->getConn());
   //Create the Metadata getter
-  std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter(new SQLiteDatabaseMetadataGetter(m_sqliteConn));
+  auto sqliteCatalogueMetadataGetter = std::make_unique<SQLiteDatabaseMetadataGetter>(m_sqliteConn);
   //Create the Schema Metadata Getter that will filter the SQLite schema metadata according to the catalogue database type we would like to compare
   m_schemaMetadataGetter.reset(new SchemaMetadataGetter(std::move(sqliteCatalogueMetadataGetter),catalogueMetadataGetter.getDbType()));
 }
@@ -62,8 +62,8 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTablesLocatedInSchema(){
   insertSchemaInSQLite();
   std::list<std::string> databaseTables = m_databaseMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
-  databaseTables.remove_if([schemaTables](const std::string& catalogueTable){
-    return std::find_if(schemaTables.begin(),schemaTables.end(),[catalogueTable](const std::string& schemaTable){
+  databaseTables.remove_if([&schemaTables](const std::string& catalogueTable){
+    return std::find_if(schemaTables.begin(),schemaTables.end(),[&catalogueTable](std::string_view schemaTable){
       return schemaTable == catalogueTable;
     }) == schemaTables.end();
   });
@@ -91,13 +91,13 @@ SchemaCheckerResult SQLiteSchemaComparer::compareIndexes() {
 }
 
 SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const LoggedItems& fromDatabase,
-  const LoggedItems& fromSQLite) {
+  const LoggedItems& fromSQLite) const {
   SchemaCheckerResult result;
-  const auto [itemsFromDatabase, logFromDataBase] = fromDatabase;
-  const auto [itemsFromSQLite, logFromSQLite] = fromSQLite;
+  const auto& [itemsFromDatabase, logFromDataBase] = fromDatabase;
+  const auto& [itemsFromSQLite, logFromSQLite] = fromSQLite;
 
   auto findMismatchs = [&result, &itemType](const Items& items, const Items& itemsToCompare, const std::string& message,
-    const Level& logLevel) -> void {
+    const Level& logLevel) {
     std::function<void(const std::string&)> addResult;
     if (logLevel == Level::Error) addResult = [&result](const std::string& msg) {result.addError(msg);};
     if (logLevel == Level::Warn) addResult = [&result](const std::string& msg) {result.addWarning(msg);};
@@ -118,10 +118,10 @@ SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string &itemTy
 
 SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& databaseTables, const std::list<std::string>& schemaTables){
   SchemaCheckerResult result;
-  std::map<std::string, std::map<std::string, std::string>> databaseTableColumns;
-  std::map<std::string, std::map<std::string, std::string>> schemaTableColumns;
-  std::map<std::string,std::list<std::string>> databaseTableConstraints;
-  std::map<std::string, std::list<std::string>> schemaTableConstraints;
+  std::map<std::string, std::map<std::string, std::string, std::less<>>, std::less<>> databaseTableColumns;
+  std::map<std::string, std::map<std::string, std::string, std::less<>>, std::less<>> schemaTableColumns;
+  std::map<std::string,std::list<std::string>,std::less<>> databaseTableConstraints;
+  std::map<std::string, std::list<std::string>,std::less<>> schemaTableConstraints;
 
   for(auto &databaseTable: databaseTables){
     databaseTableColumns[databaseTable] = m_databaseMetadataGetter.getColumns(databaseTable);
@@ -144,20 +144,17 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::str
   return result;
 }
 
-SchemaCheckerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type){
+SchemaCheckerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & schema1TableColumns,
+  const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type) const {
   SchemaCheckerResult result;
-  for(auto &kvFirstSchemaTableColumns: schema1TableColumns){
+  for(auto &[schema1TableName, mapSchema1ColumnType]: schema1TableColumns){
     //For each firstSchema table, get the corresponding secondSchema table
     //If it does not exist, add a difference and go ahead
     //otherwise, get the columns/types of the table from the firstSchema and do the comparison
     //against the columns/types of the same table from the secondSchema
-    std::string schema1TableName = kvFirstSchemaTableColumns.first;
     try {
-      std::map<std::string, std::string> mapSchema2ColumnType = schema2TableColumns.at(schema1TableName);
-      std::map<std::string, std::string> mapSchema1ColumnType = kvFirstSchemaTableColumns.second;
-      for(auto &kvFirstSchemaColumn: mapSchema1ColumnType){
-        std::string schema1ColumnName = kvFirstSchemaColumn.first;
-        std::string schema1ColumnType = kvFirstSchemaColumn.second;
+      std::map<std::string, std::string, std::less<>> mapSchema2ColumnType = schema2TableColumns.at(schema1TableName);
+      for(const auto &[schema1ColumnName, schema1ColumnType]: mapSchema1ColumnType){
         try {
           std::string schemaColumnType = mapSchema2ColumnType.at(schema1ColumnName);
           if( schema1ColumnType != schemaColumnType){

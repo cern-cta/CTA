@@ -40,8 +40,7 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
-  auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
-  if (it != driveNames.end()) {
+  if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
     m_catalogue.DriveState()->deleteTapeDrive(tapeDriveStatus.driveName);
   }
   tapeDriveStatus.ctaVersion = CTA_VERSION;
@@ -64,7 +63,7 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
         " host=" + tapeDrive.value().host +
         " already exists.");
     }
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception&) {
     // Drive does not exist
     // We can create it, do nothing then
   }
@@ -105,8 +104,7 @@ void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructure
 void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
   time_t reportTime, log::LogContext& lc, uint64_t mountSessionId, uint64_t byteTransferred,
-  uint64_t filesTransferred, const std::string& vid,
-  const std::string& tapepool, const std::string& vo) {
+  uint64_t filesTransferred, std::string_view vid, std::string_view tapepool, std::string_view vo) {
   using common::dataStructures::DriveStatus;
   // Wrap all the parameters together for easier manipulation by sub-functions
   ReportDriveStatusInputs inputs;
@@ -476,7 +474,7 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
-  const common::dataStructures::SecurityIdentity& identity) {
+  const common::dataStructures::SecurityIdentity& identity) const {
   const time_t reportTime = time(nullptr);
   common::dataStructures::TapeDrive tapeDriveStatus;
   tapeDriveStatus.driveName = driveInfo.driveName;

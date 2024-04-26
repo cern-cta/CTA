@@ -22,7 +22,7 @@ namespace cta::common::dataStructures {
 
 QueueAndMountSummary* QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary>& summaryList,
     MountType mountType, const std::string& tapePool, const std::string& vid,
-    const std::map<std::string, std::string>& vid_to_logical_library) {
+    const std::map<std::string, std::string, std::less<>>& vid_to_logical_library) {
   for(auto& summary : summaryList) {
     if((summary.tapePool == tapePool && summary.mountType == mountType && getMountBasicType(mountType) == MountType::ArchiveAllTypes) ||
        (summary.vid == vid && mountType == MountType::Retrieve)) {

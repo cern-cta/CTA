@@ -136,8 +136,6 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -170,8 +168,6 @@ void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageCl
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -225,8 +221,6 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
     }
 
     return routes;
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -238,8 +232,6 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
   try {
     auto conn = m_connPool->getConn();
     return getArchiveRoutes(conn, storageClassName, tapePoolName);
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -298,8 +290,6 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
     }
 
     return routes;
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -395,8 +385,6 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

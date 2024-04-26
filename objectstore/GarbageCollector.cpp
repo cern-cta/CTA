@@ -348,7 +348,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         std::shared_ptr<RetrieveRequest> rr(new RetrieveRequest(*obj));
         obj.reset();
         // Get the list of vids for non failed tape files.
-        std::set<std::string> candidateVids;
+        std::set<std::string, std::less<>> candidateVids;
         bool isRepack = rr->getRepackInfo().isRepack;
         for (auto & j: rr->dumpJobs()) {
           if(j.status==RetrieveJobStatus::RJS_ToTransfer) {

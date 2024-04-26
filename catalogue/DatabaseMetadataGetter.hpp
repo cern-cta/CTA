@@ -49,7 +49,7 @@ protected:
 public:
   virtual std::list<std::string> getIndexNames() = 0;
   virtual std::list<std::string> getTableNames() = 0;
-  virtual std::map<std::string, std::string> getColumns(const std::string& tableName) = 0;
+  virtual std::map<std::string, std::string,std::less<>> getColumns(const std::string& tableName) = 0;
   virtual std::list<std::string> getConstraintNames(const std::string& tableName) = 0;
   virtual ~MetadataGetter() = 0;
 };
@@ -66,7 +66,7 @@ public:
   SchemaVersion getCatalogueVersion();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
-  std::map<std::string, std::string> getColumns(const std::string& tableName) override;
+  std::map<std::string, std::string,std::less<>> getColumns(const std::string& tableName) override;
   std::list<std::string> getConstraintNames(const std::string& tableName) override;
   virtual std::list<std::string> getParallelTableNames();
   virtual cta::rdbms::Login::DbType getDbType() = 0;
@@ -82,7 +82,7 @@ public:
   /**
     * Returns a set of columns which are part of a foreign key constraint but have no index defined
     */
-  virtual std::set<std::string> getMissingIndexes() = 0;
+  virtual std::set<std::string,std::less<>> getMissingIndexes() = 0;
 };
 
 /**
@@ -94,7 +94,7 @@ public:
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   cta::rdbms::Login::DbType getDbType() override;
-  std::set<std::string> getMissingIndexes() override;
+  std::set<std::string,std::less<>> getMissingIndexes() override;
 };
 
 /**
@@ -105,7 +105,7 @@ public:
   explicit OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   cta::rdbms::Login::DbType getDbType() override;
   std::list<std::string> getTableNames() override;
-  std::set<std::string> getMissingIndexes() override;
+  std::set<std::string,std::less<>> getMissingIndexes() override;
 };
 
 /**
@@ -115,7 +115,7 @@ class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
   explicit PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   cta::rdbms::Login::DbType getDbType() override;
-  std::set<std::string> getMissingIndexes() override;
+  std::set<std::string,std::less<>> getMissingIndexes() override;
 };
 
 /**
@@ -141,7 +141,7 @@ public:
   SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType);
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
-  std::map<std::string, std::string> getColumns(const std::string& tableName) override;
+  std::map<std::string, std::string, std::less<>> getColumns(const std::string& tableName) override;
   std::list<std::string> getConstraintNames(const std::string& tableName) override;
 };
 

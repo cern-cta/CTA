@@ -924,8 +924,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
 //------------------------------------------------------------------------------
 // getDiskSpaceReservations
 //------------------------------------------------------------------------------
-std::map<std::string, uint64_t> RdbmsDriveStateCatalogue::getDiskSpaceReservations() const {
-  std::map<std::string, uint64_t> ret;
+std::map<std::string, uint64_t, std::less<>> RdbmsDriveStateCatalogue::getDiskSpaceReservations() const {
+  std::map<std::string, uint64_t, std::less<>> ret;
   const auto tdNames = getTapeDriveNames();
   for (const auto& driveName : tdNames) {
     const auto tdStatus = getTapeDrive(driveName);

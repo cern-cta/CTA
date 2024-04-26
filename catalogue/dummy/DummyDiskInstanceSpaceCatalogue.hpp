@@ -61,7 +61,7 @@ public:
 
 private:
   friend class DummyDiskSystemCatalogue;
-  static std::map<std::string, common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
+  static std::map<std::string, common::dataStructures::DiskInstanceSpace, std::less<>> m_diskInstanceSpaces;
 };
 
 }} // namespace cta::catalogue

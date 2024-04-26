@@ -87,9 +87,9 @@ public:
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransferred = std::numeric_limits<uint64_t>::max(),
     uint64_t filesTransferred = std::numeric_limits<uint64_t>::max(),
-    const std::string& vid = "",
-    const std::string& tapepool = "",
-    const std::string & vo = "");
+    std::string_view vid = "",
+    std::string_view tapepool = "",
+    std::string_view vo = "");
   void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs,
     log::LogContext &lc);
 
@@ -99,7 +99,7 @@ private:
   common::dataStructures::TapeDrive setTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
     const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
-    const common::dataStructures::SecurityIdentity& identity);
+    const common::dataStructures::SecurityIdentity& identity) const;
   void setDriveDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;
   void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;
   void setDriveProbing(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs) const;

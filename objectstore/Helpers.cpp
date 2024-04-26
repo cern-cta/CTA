@@ -364,8 +364,8 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 //------------------------------------------------------------------------------
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
-std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore, bool isRepack) {
+std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::less<>>& candidateVids,
+  cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack) {
   // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback

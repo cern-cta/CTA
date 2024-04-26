@@ -94,13 +94,13 @@ private:
     SKIP /*This statement is deleted*/
   };
 
-  static const std::map<std::string,StatementType> regexToStatementMap;
+  static const std::map<std::string,StatementType,std::less<>> regexToStatementMap;
   /**
    * Initialize a map in order to map a Regex to a StatementType
    * This will allow to know to what StatementType corresponds a statement
    * @return the initialized map<RegexString,StatementType>
    */
-  static std::map<std::string,StatementType> initializeRegexToStatementMap();
+  static std::map<std::string,StatementType,std::less<>> initializeRegexToStatementMap();
   /**
    * Returns the StatementType corresponding to the statement passed in parameter
    * @param statement the statement that we want to know its StatementType

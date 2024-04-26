@@ -248,7 +248,7 @@ void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, Agent
 void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   if(copyNb == std::nullopt) {
     // The job to queue is a ToTransfer job
-    std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
+    std::set<std::string, std::less<>> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
     bool isRepack = accessor.getIsRepack();
 
     if(candidateVidsToTransfer.empty()) {
@@ -331,9 +331,9 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
   }
 }
 
-std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor){
+std::set<std::string, std::less<>> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor){
   using serializers::RetrieveJobStatus;
-  std::set<std::string> candidateVids;
+  std::set<std::string, std::less<>> candidateVids;
   for(auto& j: requestAccessor.getJobs()){
     if(j.status == RetrieveJobStatus::RJS_ToTransfer){
       candidateVids.insert(requestAccessor.getArchiveFile().tapeFiles.at(j.copyNb).vid);

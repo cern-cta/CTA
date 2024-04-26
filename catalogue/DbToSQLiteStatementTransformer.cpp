@@ -93,7 +93,8 @@ std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFa
   return ret;
 }
 
-const std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToSQLiteStatementTransformerFactory::regexToStatementMap = DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap();
+const std::map<std::string, DbToSQLiteStatementTransformerFactory::StatementType, std::less<>>
+  DbToSQLiteStatementTransformerFactory::regexToStatementMap = DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap();
 
 DbToSQLiteStatementTransformerFactory::StatementType DbToSQLiteStatementTransformerFactory::statementToStatementType(const std::string &statement){
   for(const auto& [regex, type]: regexToStatementMap){
@@ -105,9 +106,9 @@ DbToSQLiteStatementTransformerFactory::StatementType DbToSQLiteStatementTransfor
   return StatementType::SKIP;
 }
 
-std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap()
+std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType, std::less<>> DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap()
 {
-  std::map<std::string,StatementType> ret;
+  std::map<std::string, StatementType, std::less<>> ret;
   ret["CREATE TABLE ([a-zA-Z_]+)"] = StatementType::CREATE_TABLE;
   ret["CREATE (UNIQUE )?INDEX ([a-zA-Z_]+)"] = StatementType::CREATE_INDEX;
   ret["CREATE GLOBAL TEMPORARY TABLE ([a-zA-Z_]+)"] = StatementType::CREATE_GLOBAL_TEMPORARY_TABLE;

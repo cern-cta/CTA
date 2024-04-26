@@ -74,7 +74,7 @@ private:
   * Return the schema located in SCHEMA_VERSION/dbType_catalogue_schema.sql
   * @return the string containing the sql statements for the creation of the schema
   */
-  std::string readSchemaFromFile();
+  std::string readSchemaFromFile() const;
   std::string getSchemaFilePath() const {
     const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
     return m_allSchemasVersionPath + m_catalogueVersion + "/" + getDatabaseType() + c_catalogueFileNameTrailer;

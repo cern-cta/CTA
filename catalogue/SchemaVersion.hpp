@@ -70,7 +70,7 @@ private:
 
   bool m_schemaVersionMajorSet = false;
   bool m_schemaVersionMinorSet = false;
-  static std::map<std::string, SchemaVersion::Status> s_mapStringStatus;
+  static std::map<std::string, SchemaVersion::Status, std::less<>> s_mapStringStatus;
 };
 
 } // namespace cta::catalogue
