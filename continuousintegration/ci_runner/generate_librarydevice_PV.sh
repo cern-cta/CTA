@@ -39,7 +39,7 @@ for device in $(grep mediumx ${tempdir}/lsscsi-g.dump | awk {'print $7'} | sed -
   scsi_host="$(echo $line | sed -e 's/^.//' | cut -d\: -f1)"
   scsi_channel="$(echo $line | cut -d\: -f2)"
 
-  drivenames=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | sed -e 's/^.[0-9]\+:\([0-9]\+\):\([0-9]\+\):.*/VDSTK\1\2/' | xargs -itoto echo -n " toto")
+  drivenames=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | sed -e 's/^.[0-9]\+:\([0-9]\+\):\([0-9]\+\):.*/ULT\1\2/' | xargs -itoto echo -n " toto")
   drivedevices=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")
 
 cat <<EOF > ${LIBRARY_DIR}/config/library-config-${device}.yaml
