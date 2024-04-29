@@ -46,7 +46,7 @@ namespace cta::taped {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandLine,
+static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration &commandLine,
   cta::log::Logger &log);
 
 //------------------------------------------------------------------------------
@@ -73,8 +73,8 @@ void logStartOfDaemon(cta::log::Logger &log,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const TapedConfiguration& globalConfig,
-                                 cta::log::Logger &log) {
+static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration& globalConfig,
+                                 cta::log::Logger &log, const daemon::CommandLineParams & commandLine) {
   using namespace cta::tape::daemon::common;
 
   logStartOfDaemon(log, commandLine);
@@ -148,14 +148,14 @@ int main(const int argc, char **const argv) {
     return EXIT_SUCCESS;
   }
 
-  TapedConfiguration globalConfig;
+  tape::daemon::common::TapedConfiguration globalConfig;
   std::unique_ptr<log::Logger> logPtr;
   try {
     const std::string shortHostName = utils::getShortHostname();
     logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     // Parse /etc/cta/cta-taped-unitName.conf parameters
     globalConfig =
-      TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, *logPtr);
+       tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
 
     // Set capabilities to change user and group id's.
     setProcessCapabilities("cap_setgid,cap_setuid+ep");
@@ -197,7 +197,7 @@ int main(const int argc, char **const argv) {
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
-    programRc = cta::taped::exceptionThrowingMain(globalConfig, log);
+    programRc = cta::taped::exceptionThrowingMain(globalConfig, log, *commandLine);
   } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
