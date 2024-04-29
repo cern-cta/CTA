@@ -41,7 +41,7 @@ std::string Helpers::selectBestVid4Retrieve
 (
   const std::set<std::string, std::less<>>  &candidateVids,
   cta::catalogue::Catalogue                 &catalogue,
-  postgresscheddb::Transaction              &txn,
+  schedulerdb::Transaction                  &txn,
   bool                                       isRepack
 )
 {
