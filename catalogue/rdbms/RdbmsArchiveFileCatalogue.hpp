@@ -136,7 +136,6 @@ protected:
 
   void deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request) const;
 
-protected:
   log::Logger &m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;

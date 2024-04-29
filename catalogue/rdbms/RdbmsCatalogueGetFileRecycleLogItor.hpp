@@ -75,7 +75,7 @@ private:
   /**
    * True if the result set is empty.
    */
-  bool m_rsetIsEmpty;
+  bool m_rsetIsEmpty = true;
 
   /**
    * True if hasMore() has been called and the corresponding call to next() has
@@ -84,7 +84,7 @@ private:
    * This member-variable is used to prevent next() being called before
    * hasMore().
    */
-  bool m_hasMoreHasBeenCalled;
+  bool m_hasMoreHasBeenCalled = false;
 
   /**
    * The database statement.
@@ -103,7 +103,7 @@ private:
    */
   void releaseDbResources() noexcept;
 
-  common::dataStructures::FileRecycleLog populateFileRecycleLog();
+  common::dataStructures::FileRecycleLog populateFileRecycleLog() const;
 };
 
 } // namespace cta::catalogue

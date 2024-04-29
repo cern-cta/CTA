@@ -37,185 +37,161 @@ void RdbmsAdminUserCatalogue::createAdminUser(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &username,
   const std::string &comment) {
-  try {
-    if (username.empty()) {
-      throw UserSpecifiedAnEmptyStringUsername("Cannot create admin user because the username is an empty string");
-    }
 
-    if (comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment("Cannot create admin user because the comment is an empty string");
-    }
-    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-
-    auto conn = m_connPool->getConn();
-    if (adminUserExists(conn, username)) {
-      throw exception::UserError(std::string("Cannot create admin user " + username +
-        " because an admin user with the same name already exists"));
-    }
-    const uint64_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO ADMIN_USER("
-        "ADMIN_USER_NAME,"
-
-        "USER_COMMENT,"
-
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
-
-        "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME)"
-      "VALUES("
-        ":ADMIN_USER_NAME,"
-
-        ":USER_COMMENT,"
-
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
-
-        ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql);
-
-    stmt.bindString(":ADMIN_USER_NAME", username);
-
-    stmt.bindString(":USER_COMMENT", trimmedComment);
-
-    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
-    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
-    stmt.bindUint64(":CREATION_LOG_TIME", now);
-
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if (username.empty()) {
+    throw UserSpecifiedAnEmptyStringUsername("Cannot create admin user because the username is an empty string");
   }
+
+  if (comment.empty()) {
+    throw UserSpecifiedAnEmptyStringComment("Cannot create admin user because the comment is an empty string");
+  }
+  const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+
+  auto conn = m_connPool->getConn();
+  if (adminUserExists(conn, username)) {
+    throw exception::UserError(std::string("Cannot create admin user " + username +
+      " because an admin user with the same name already exists"));
+  }
+  const uint64_t now = time(nullptr);
+  const char *const sql =
+    "INSERT INTO ADMIN_USER("
+      "ADMIN_USER_NAME,"
+
+      "USER_COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
+    "VALUES("
+      ":ADMIN_USER_NAME,"
+
+      ":USER_COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":LAST_UPDATE_USER_NAME,"
+      ":LAST_UPDATE_HOST_NAME,"
+      ":LAST_UPDATE_TIME)";
+  auto stmt = conn.createStmt(sql);
+
+  stmt.bindString(":ADMIN_USER_NAME", username);
+
+  stmt.bindString(":USER_COMMENT", trimmedComment);
+
+  stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+  stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+  stmt.bindUint64(":CREATION_LOG_TIME", now);
+
+  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+  stmt.bindUint64(":LAST_UPDATE_TIME", now);
+
+  stmt.executeNonQuery();
 }
 
 bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "ADMIN_USER_NAME AS ADMIN_USER_NAME "
-      "FROM "
-        "ADMIN_USER "
-      "WHERE "
-        "ADMIN_USER_NAME = :ADMIN_USER_NAME";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":ADMIN_USER_NAME", adminUsername);
-    auto rset = stmt.executeQuery();
-    return rset.next();
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  const char *const sql =
+    "SELECT "
+      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
+    "FROM "
+      "ADMIN_USER "
+    "WHERE "
+      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":ADMIN_USER_NAME", adminUsername);
+  auto rset = stmt.executeQuery();
+  return rset.next();
 }
 
 void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
-  try {
-    const char *const sql = "DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":ADMIN_USER_NAME", username);
-    stmt.executeNonQuery();
+  const char *const sql = "DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":ADMIN_USER_NAME", username);
+  stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if(0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
   }
 }
 
 std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUsers() const {
-  try {
-    std::list<common::dataStructures::AdminUser> admins;
-    const char *const sql =
-      "SELECT "
-        "ADMIN_USER_NAME AS ADMIN_USER_NAME,"
+  std::list<common::dataStructures::AdminUser> admins;
+  const char *const sql =
+    "SELECT "
+      "ADMIN_USER_NAME AS ADMIN_USER_NAME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "ADMIN_USER "
-      "ORDER BY "
-        "ADMIN_USER_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      common::dataStructures::AdminUser admin;
+      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+    "FROM "
+      "ADMIN_USER "
+    "ORDER BY "
+      "ADMIN_USER_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  while (rset.next()) {
+    common::dataStructures::AdminUser admin;
 
-      admin.name = rset.columnString("ADMIN_USER_NAME");
-      admin.comment = rset.columnString("USER_COMMENT");
-      admin.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      admin.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-      admin.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-      admin.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      admin.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-      admin.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+    admin.name = rset.columnString("ADMIN_USER_NAME");
+    admin.comment = rset.columnString("USER_COMMENT");
+    admin.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    admin.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    admin.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    admin.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    admin.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    admin.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
-      admins.push_back(admin);
-    }
-
-    return admins;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+    admins.push_back(admin);
   }
+
+  return admins;
 }
 
 void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
-  try {
-    if (username.empty()) {
-      throw UserSpecifiedAnEmptyStringUsername("Cannot modify admin user because the username is an empty string");
-    }
+  if (username.empty()) {
+    throw UserSpecifiedAnEmptyStringUsername("Cannot modify admin user because the username is an empty string");
+  }
 
-    if (comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment("Cannot modify admin user because the comment is an empty string");
-    }
-    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+  if (comment.empty()) {
+    throw UserSpecifiedAnEmptyStringComment("Cannot modify admin user because the comment is an empty string");
+  }
+  const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE ADMIN_USER SET "
-        "USER_COMMENT = :USER_COMMENT,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "ADMIN_USER_NAME = :ADMIN_USER_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", trimmedComment);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":ADMIN_USER_NAME", username);
-    stmt.executeNonQuery();
+  const time_t now = time(nullptr);
+  const char *const sql =
+    "UPDATE ADMIN_USER SET "
+      "USER_COMMENT = :USER_COMMENT,"
+      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+    "WHERE "
+      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":USER_COMMENT", trimmedComment);
+  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+  stmt.bindUint64(":LAST_UPDATE_TIME", now);
+  stmt.bindString(":ADMIN_USER_NAME", username);
+  stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if(0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
   }
 }
 
@@ -223,43 +199,28 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
 // isNonCachedAdmin
 //------------------------------------------------------------------------------
 bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "ADMIN_USER_NAME AS ADMIN_USER_NAME "
-      "FROM "
-        "ADMIN_USER "
-      "WHERE "
-        "ADMIN_USER_NAME = :ADMIN_USER_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":ADMIN_USER_NAME", admin.username);
-    auto rset = stmt.executeQuery();
-    return rset.next();
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  const char *const sql =
+    "SELECT "
+      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
+    "FROM "
+      "ADMIN_USER "
+    "WHERE "
+      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":ADMIN_USER_NAME", admin.username);
+  auto rset = stmt.executeQuery();
+  return rset.next();
 }
 
 bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentity &admin)
   const {
-  try {
-    auto l_getNonCachedValue = [this,&admin] { return isNonCachedAdmin(admin); };
-    return m_isAdminCache.getCachedValue(admin, l_getNonCachedValue).value;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  auto l_getNonCachedValue = [this,&admin] { return isNonCachedAdmin(admin); };
+  return m_isAdminCache.getCachedValue(admin, l_getNonCachedValue).value;
 }
 
 bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  try {
-    return isCachedAdmin(admin);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  return isCachedAdmin(admin);
 }
 
 } // namespace cta::catalogue
