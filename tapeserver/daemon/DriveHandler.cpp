@@ -325,13 +325,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     }
     // We expect to be woken up by the child's signal.
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("Message", ex.getMessageValue());
+    params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::DEBUG,
                                       "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("Message", ex.getMessageValue());
+    params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::ERR,
                                       "In DriveHandler::processEvent(): failed");
     return m_processingStatus;
@@ -422,9 +422,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     exception::Errnum::throwOnMinusOne(rc);
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
-    scoped.add("pid", m_pid)
+    scoped.add("subprocessPid", m_pid)
           .add("tapeDrive", m_driveConfig.unitName)
-          .add("Message", ex.getMessageValue())
+          .add("exceptionMessage", ex.getMessageValue())
           .add("SessionState", session::toString(m_sessionState))
           .add("SessionType", toString(m_sessionType));
     m_lc.log(log::WARNING, "In DriveHandler::processSigChild(): failed to get child process exit code. "
@@ -440,7 +440,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
       m_socketPair.reset(nullptr);
     }
-    params.add("pid", m_pid);
+    params.add("subprocessPid", m_pid);
     if (WIFEXITED(processStatus)) {
       // Child process exited properly.
       // The new child process should start a cleanup session if the exit status was not success.
@@ -713,7 +713,7 @@ int DriveHandler::runChild() {
       scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
       scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
-      params.add("Message", ex.getMessageValue())
+      params.add("exceptionMessage", ex.getMessageValue())
             .add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
       // This is a fatal error (failure to access the scheduler). Shut daemon down.
@@ -762,7 +762,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     } catch(const cta::exception::Exception &ex) {
       params.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_driveConfig.unitName)
-            .add("message", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue());
       m_lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
     }
     return exitShutdown();

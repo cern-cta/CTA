@@ -259,7 +259,7 @@ retry:
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet())
-            .add("Message", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
     } catch (RootEntry::NoSuchRetrieveQueue &ex) {
       // Somebody removed the queue in the meantime. Barely worth mentioning.
@@ -448,7 +448,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", cId)
           .add("queueObject", cont.getAddressIfSet())
-          .add("Message", ex.getMessageValue());
+          .add("exceptionMessage", ex.getMessageValue());
     lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     if(typeid(ex) == typeid(cta::objectstore::RootEntry::RetrieveQueueNotEmpty)){
       return false;

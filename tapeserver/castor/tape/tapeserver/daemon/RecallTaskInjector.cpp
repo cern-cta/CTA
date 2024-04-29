@@ -310,7 +310,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
           .add("requestedBytes",reqSize)
           .add("requestedFiles", reqFiles)
-          .add("message", ex.getMessageValue());
+          .add("exceptionMessage", ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
     return false;
   }
