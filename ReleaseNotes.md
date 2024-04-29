@@ -18,6 +18,7 @@
 - cta/CTA#647 - Upgrade eos-5 to eos-5.2.21-1
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
 - cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
+- cta/CTA#663 - Setup dev env containers for Alma9
 
 ### Code Quality
 - cta/CTA#575 - Remove rados metrics logging
