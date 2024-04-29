@@ -344,10 +344,8 @@ void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
     "WHERE "
       "STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME";
   auto conn = m_connPool->getConn();
-  if(newName != currentName){
-    if(RdbmsCatalogueUtils::storageClassExists(conn,newName)){
-      throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName +". The new name : " + newName+" already exists in the database.");
-    }
+  if(newName != currentName && RdbmsCatalogueUtils::storageClassExists(conn,newName)){
+    throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName +". The new name : " + newName+" already exists in the database.");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_STORAGE_CLASS_NAME", newName);

@@ -346,10 +346,8 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
     "WHERE "
       "VIRTUAL_ORGANIZATION_NAME = :CUR_VIRTUAL_ORGANIZATION_NAME";
   auto conn = m_connPool->getConn();
-  if(newVoName != currentVoName){
-    if(RdbmsCatalogueUtils::virtualOrganizationExists(conn,newVoName)){
-      throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName +". The new name : " + newVoName+" already exists in the database.");
-    }
+  if((newVoName != currentVoName) && RdbmsCatalogueUtils::virtualOrganizationExists(conn,newVoName)){
+    throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName +". The new name : " + newVoName+" already exists in the database.");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_VIRTUAL_ORGANIZATION_NAME", newVoName);

@@ -29,26 +29,21 @@ SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger &log,
   : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "LAST_FSEQ AS LAST_FSEQ "
-      "FROM "
-        "TAPE "
-      "WHERE "
-        "VID = :VID;";
+  const char *const sql =
+    "SELECT "
+      "LAST_FSEQ AS LAST_FSEQ "
+    "FROM "
+      "TAPE "
+    "WHERE "
+      "VID = :VID;";
 
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":VID", vid);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
-    }
-
-    return rset.columnUint64("LAST_FSEQ");
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
   }
+
+  return rset.columnUint64("LAST_FSEQ");
 }
 } // namespace cta::catalogue

@@ -42,19 +42,18 @@ void RdbmsDriveConfigCatalogue::createTapeDriveConfig(const std::string &tapeDri
   const std::string &keyName, const std::string &value, const std::string &source) {
   auto conn = m_connPool->getConn();
   const char *const sql =
-  "INSERT INTO DRIVE_CONFIG(" "\n"
-    "DRIVE_NAME,"             "\n"
-    "CATEGORY,"               "\n"
-    "KEY_NAME,"               "\n"
-    "VALUE,"                  "\n"
-    "SOURCE)"                 "\n"
-  "VALUES("                   "\n"
-    ":DRIVE_NAME,"            "\n"
-    ":CATEGORY,"              "\n"
-    ":KEY_NAME,"              "\n"
-    ":VALUE,"                 "\n"
-    ":SOURCE"                 "\n"
-  ")";
+  "INSERT INTO DRIVE_CONFIG( "
+    "DRIVE_NAME,"
+    "CATEGORY,"
+    "KEY_NAME,"
+    "VALUE,"
+    "SOURCE) "
+  "VALUES("
+    ":DRIVE_NAME,"
+    ":CATEGORY,"
+    ":KEY_NAME,"
+    ":VALUE,"
+    ":SOURCE)";
 
   auto stmt = conn.createStmt(sql);
 
@@ -100,7 +99,7 @@ std::list<std::pair<std::string, std::string>> RdbmsDriveConfigCatalogue::getTap
   while (rset.next()) {
     const std::string driveName = rset.columnString("DRIVE_NAME");
     const std::string key = rset.columnString("KEY_NAME");
-    namesAndKeys.push_back(std::make_pair(driveName, key));
+    namesAndKeys.emplace_back(driveName, key);
   }
   return namesAndKeys;
 }
@@ -150,8 +149,8 @@ std::optional<std::tuple<std::string, std::string, std::string>> RdbmsDriveConfi
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DRIVE_NAME", tapeDriveName);
   stmt.bindString(":KEY_NAME", keyName);
-  auto rset = stmt.executeQuery();
-  if (rset.next()) {
+  
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     const std::string category = rset.columnString("CATEGORY");
     std::string value = rset.columnString("VALUE");
     std::string source = rset.columnString("SOURCE");

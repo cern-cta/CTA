@@ -74,7 +74,7 @@ protected:
    */
   void restoreArchiveFileInRecycleLog(rdbms::Conn &conn,
     const cta::common::dataStructures::FileRecycleLog &fileRecycleLog,
-    const std::string &newFid, log::LogContext & lc);
+    std::string_view newFid, log::LogContext & lc);
 
   // TapeFile
   friend class OracleTapeFileCatalogue;
@@ -122,7 +122,6 @@ protected:
    */
   virtual uint64_t getNextFileRecyleLogId(rdbms::Conn & conn) const = 0;
 
-protected:
   log::Logger &m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
@@ -138,10 +137,10 @@ private:
     const RecycleTapeFileSearchCriteria & searchCriteria) const;
 
   void deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn,
-    const common::dataStructures::FileRecycleLog fileRecycleLog) const;
+    const common::dataStructures::FileRecycleLog& fileRecycleLog) const;
 
   friend class RdbmsTapeCatalogue;
-  void deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc);
+  void deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) const;
 
   /**
    * Insert the file passed in parameter in the FILE_RECYCLE_LOG table
@@ -156,7 +155,7 @@ private:
    * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
    */
   void copyArchiveFileToFileRecycleLog(rdbms::Conn & conn,
-    const common::dataStructures::DeleteArchiveRequest & request);
+    const common::dataStructures::DeleteArchiveRequest & request) const;
 
   /**
    * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
@@ -169,7 +168,7 @@ private:
    * @returns the list of inserted fileRecycleLog
    */
   std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn,
-    const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
+    const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId) const;
 };
 
 }} // namespace cta::catalogue

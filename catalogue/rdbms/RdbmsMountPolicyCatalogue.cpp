@@ -215,8 +215,8 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
       "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
-  auto rset = stmt.executeQuery();
-  if (rset.next()) {
+  
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     common::dataStructures::MountPolicy policy;
 
     policy.name = rset.columnString("MOUNT_POLICY_NAME");

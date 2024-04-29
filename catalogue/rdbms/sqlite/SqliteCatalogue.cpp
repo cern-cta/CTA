@@ -61,26 +61,21 @@ SqliteCatalogue::SqliteCatalogue(
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
 std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const {
-  try {
-    const std::string tempTableName = "TEMP.DISK_FXIDS";
+  const std::string tempTableName = "TEMP.DISK_FXIDS";
 
-    // Drop any prexisting temporary table and create a new one
-    conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
-    conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
+  // Drop any prexisting temporary table and create a new one
+  conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
+  conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
 
-    if(diskFileIds) {
-      auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
-      for(auto &diskFileId : diskFileIds.value()) {
-        stmt.bindString(":DISK_FILE_ID", diskFileId);
-        stmt.executeNonQuery();
-      }
+  if(diskFileIds) {
+    auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
+    for(auto &diskFileId : diskFileIds.value()) {
+      stmt.bindString(":DISK_FILE_ID", diskFileId);
+      stmt.executeNonQuery();
     }
-
-    return tempTableName;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
   }
+
+  return tempTableName;
 }
 
 } // namespace cta::catalogue

@@ -28,25 +28,18 @@ OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger &log,
   : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID "
-      "FROM "
-        "DUAL";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("Result set is unexpectedly empty"));
-    }
-
-    return rset.columnUint64("MEDIA_TYPE_ID");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "SELECT "
+      "MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID "
+    "FROM "
+      "DUAL";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception(std::string("Result set is unexpectedly empty"));
   }
+
+  return rset.columnUint64("MEDIA_TYPE_ID");
 }
 
 } // namespace cta::catalogue

@@ -99,8 +99,8 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
   const auto user = User(diskInstanceName, requesterName);
   auto conn = m_connPool->getConn();
   const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
-  const auto mountPolicy = mountPolicyCatalogue->getRequesterMountPolicy(conn, user);
-  if(mountPolicy) {
+  
+  if(const auto mountPolicy = mountPolicyCatalogue->getRequesterMountPolicy(conn, user); mountPolicy) {
     throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
       " to requester " + diskInstanceName + ":" + requesterName +
       " because the requester is already assigned to mount-policy " + mountPolicy->name);

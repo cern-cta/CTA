@@ -100,17 +100,17 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
   const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   auto conn = m_connPool->getConn();
-  {
-    const auto group = Group(diskInstanceName, requesterGroupName);
-    const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
-    const auto mountPolicy = mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group);
-    if (mountPolicy) {
-      throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-                                  " to requester-group " + diskInstanceName + ":" + requesterGroupName +
-                                  " because a rule already exists assigning the requester-group to mount-policy " +
-                                  mountPolicy->name);
-    }
+  
+  const auto group = Group(diskInstanceName, requesterGroupName);
+  const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
+  
+  if (const auto mountPolicy = mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group); mountPolicy) {
+    throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
+                                " to requester-group " + diskInstanceName + ":" + requesterGroupName +
+                                " because a rule already exists assigning the requester-group to mount-policy " +
+                                mountPolicy->name);
   }
+  
   if(!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
     throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
       diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");

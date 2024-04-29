@@ -28,21 +28,14 @@ PostgresVirtualOrganizationCatalogue::PostgresVirtualOrganizationCatalogue(log::
   : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
-  try {
-    const char *const sql =
-      "select NEXTVAL('VIRTUAL_ORGANIZATION_ID_SEQ') AS VIRTUAL_ORGANIZATION_ID";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if(!rset.next()) {
-      throw exception::Exception("Result set is unexpectedly empty");
-    }
-    return rset.columnUint64("VIRTUAL_ORGANIZATION_ID");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "select NEXTVAL('VIRTUAL_ORGANIZATION_ID_SEQ') AS VIRTUAL_ORGANIZATION_ID";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if(!rset.next()) {
+    throw exception::Exception("Result set is unexpectedly empty");
   }
+  return rset.columnUint64("VIRTUAL_ORGANIZATION_ID");
 }
 
 } // namespace cta::catalogue

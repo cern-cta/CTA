@@ -85,7 +85,7 @@ void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string 
     if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
     if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
     if(0 == event.size) throw exception::Exception("size is 0");
-    if(event.checksumBlob.length() == 0) throw exception::Exception("checksumBlob is an empty string");
+    if(event.checksumBlob.empty()) throw exception::Exception("checksumBlob is an empty string");
     if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
@@ -107,49 +107,47 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
     m_rdbmsCatalogue->FileRecycleLog().get());
   std::list<InsertFileRecycleLog> insertedFilesRecycleLog
     = fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn,tapeFile,archiveFileId);
-  {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO TAPE_FILE("
-        "VID,"
-        "FSEQ,"
-        "BLOCK_ID,"
-        "LOGICAL_SIZE_IN_BYTES,"
-        "COPY_NB,"
-        "CREATION_TIME,"
-        "ARCHIVE_FILE_ID)"
-      "VALUES("
-        ":VID,"
-        ":FSEQ,"
-        ":BLOCK_ID,"
-        ":LOGICAL_SIZE_IN_BYTES,"
-        ":COPY_NB,"
-        ":CREATION_TIME,"
-        ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql);
 
-    stmt.bindString(":VID", tapeFile.vid);
-    stmt.bindUint64(":FSEQ", tapeFile.fSeq);
-    stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
-    stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.fileSize);
-    stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
-    stmt.bindUint64(":CREATION_TIME", now);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    stmt.executeNonQuery();
-  }
-  {
-    for(auto& fileRecycleLog: insertedFilesRecycleLog){
-      const char *const sql =
-      "DELETE FROM "
-        "TAPE_FILE "
-      "WHERE "
-        "VID=:VID AND "
-        "FSEQ=:FSEQ";
-      auto stmt = conn.createStmt(sql);
-      stmt.bindString(":VID",fileRecycleLog.vid);
-      stmt.bindUint64(":FSEQ",fileRecycleLog.fSeq);
-      stmt.executeNonQuery();
-    }
+  const time_t now = time(nullptr);
+  const char *const sql =
+    "INSERT INTO TAPE_FILE("
+      "VID,"
+      "FSEQ,"
+      "BLOCK_ID,"
+      "LOGICAL_SIZE_IN_BYTES,"
+      "COPY_NB,"
+      "CREATION_TIME,"
+      "ARCHIVE_FILE_ID)"
+    "VALUES("
+      ":VID,"
+      ":FSEQ,"
+      ":BLOCK_ID,"
+      ":LOGICAL_SIZE_IN_BYTES,"
+      ":COPY_NB,"
+      ":CREATION_TIME,"
+      ":ARCHIVE_FILE_ID)";
+  auto stmt = conn.createStmt(sql);
+
+  stmt.bindString(":VID", tapeFile.vid);
+  stmt.bindUint64(":FSEQ", tapeFile.fSeq);
+  stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
+  stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.fileSize);
+  stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
+  stmt.bindUint64(":CREATION_TIME", now);
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+  stmt.executeNonQuery();
+
+  for(auto& fileRecycleLog: insertedFilesRecycleLog){
+    const char *const sql2 =
+    "DELETE FROM "
+      "TAPE_FILE "
+    "WHERE "
+      "VID=:VID AND "
+      "FSEQ=:FSEQ";
+    auto stmt2 = conn.createStmt(sql2);
+    stmt2.bindString(":VID",fileRecycleLog.vid);
+    stmt2.bindUint64(":FSEQ",fileRecycleLog.fSeq);
+    stmt2.executeNonQuery();
   }
   conn.commit();
 }
@@ -206,7 +204,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
         throw ex;
       }
       const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),
-        [](std::pair<std::string, std::string> state) {
+        [](const std::pair<std::string, std::string>& state) {
           return (state.second != "BROKEN")
                   && (state.second != "BROKEN_PENDING")
                   && (state.second != "EXPORTED")
@@ -219,11 +217,11 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
           << nonBrokenState->first;
         throw ex;
       }
-      const auto brokenState = tapeFileStateList.front();
+      const auto& [brokenTape, brokenState] = tapeFileStateList.front();
       //All tape files are on broken tapes, just generate an error about the first
       ex.getMessage() << "ERROR: File with archive file ID " << archiveFileId
-        << " exits in CTA namespace but is permanently unavailable on " << brokenState.second << " tape "
-        << brokenState.first;
+        << " exits in CTA namespace but is permanently unavailable on " << brokenState << " tape "
+        << brokenTape;
       throw ex;
     }
     if (mountPolicyName.has_value() && !mountPolicyName.value().empty()) {
@@ -273,7 +271,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
       //More than one may match the activity, so choose the one with highest retrieve priority
       mountPolicy = *std::max_element(mountPolicies.requesterActivityMountPolicies.begin(),
         mountPolicies.requesterActivityMountPolicies.end(),
-        [](const  common::dataStructures::MountPolicy &p1,  common::dataStructures::MountPolicy &p2) {
+        [](const common::dataStructures::MountPolicy &p1,  const common::dataStructures::MountPolicy &p2) {
           return p1.retrievePriority < p2.retrievePriority;
         });
     } else if(!mountPolicies.requesterMountPolicies.empty()) {

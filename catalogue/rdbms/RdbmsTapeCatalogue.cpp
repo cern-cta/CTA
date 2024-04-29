@@ -95,17 +95,15 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   std::string tapeState;
   try {
     tapeState = common::dataStructures::Tape::stateToString(tape.state);
-  } catch(cta::exception::Exception &ex) {
+  } catch(cta::exception::Exception&) {
     std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are: "
       + common::dataStructures::Tape::getAllPossibleStates();
     throw UserSpecifiedANonExistentTapeState(errorMsg);
   }
 
-  if(tape.state != common::dataStructures::Tape::ACTIVE){
-    if(!stateReason){
-      throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been "
-        "provided for the state " + tapeState);
-    }
+  if(tape.state != common::dataStructures::Tape::ACTIVE && !stateReason.has_value()) {
+    throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been "
+      "provided for the state " + tapeState);
   }
 
   auto conn = m_connPool->getConn();
@@ -231,7 +229,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
       .add("userComment", tape.comment ? tape.comment.value() : "")
       .add("purchaseOrder", tape.purchaseOrder ? tape.purchaseOrder.value() : "")
       .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
-      .add("stateReason",stateReason ? stateReason.value() : "")
+      .add("stateReason",stateReason.value_or(""))
       .add("stateUpdateTime",now)
       .add("stateModifiedBy",stateModifiedBy)
       .add("creationLogUserName", admin.username)
@@ -507,9 +505,8 @@ void RdbmsTapeCatalogue::checkTapeForLabel(const std::string &vid) {
 
   TapeSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
-  const auto tapes = getTapes(conn, searchCriteria);
-
-  if(tapes.empty()) {
+  
+  if(const auto tapes = getTapes(conn, searchCriteria); tapes.empty()) {
     throw exception::UserError(std::string("Cannot label tape ") + vid +
                                             " because it does not exist");
   }
@@ -709,7 +706,7 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("encryptionKeyName", optionalEncryptionKeyName ? optionalEncryptionKeyName.value() : "NULL")
+      .add("encryptionKeyName", optionalEncryptionKeyName.value_or("NULL"))
       .add("lastUpdateUserName", admin.username)
       .add("lastUpdateHostName", admin.host)
       .add("lastUpdateTime", now);
@@ -748,7 +745,7 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("optionalPurchaseOrder", optionalPurchaseOrder ? optionalPurchaseOrder.value() : "NULL")
+      .add("optionalPurchaseOrder", optionalPurchaseOrder.value_or("NULL"))
       .add("lastUpdateUserName", admin.username)
       .add("lastUpdateHostName", admin.host)
       .add("lastUpdateTime", now);
@@ -805,7 +802,7 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   std::string stateStr;
   try {
     stateStr = cta::common::dataStructures::Tape::stateToString(state);
-  } catch(cta::exception::Exception & ex){
+  } catch(cta::exception::Exception&){
     std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
     throw UserSpecifiedANonExistentTapeState(errorMsg);
   }
@@ -814,17 +811,15 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   if (prev_state.has_value()) {
     try {
       prevStateStr = cta::common::dataStructures::Tape::stateToString(prev_state.value());
-    } catch (cta::exception::Exception &ex) {
+    } catch (cta::exception::Exception&) {
       std::string errorMsg = "The previous state provided in parameter (" + std::to_string(prev_state.value()) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
   }
 
   //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
-  if(state != Tape::State::ACTIVE){
-    if(!trimmedReason){
-      throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
-    }
+  if(state != Tape::State::ACTIVE && !trimmedReason){
+    throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
   }
 
   std::string sql =
@@ -1092,7 +1087,7 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("userComment", trimmedComment ? trimmedComment.value() : "")
+      .add("userComment", trimmedComment.value_or(""))
       .add("lastUpdateUserName", admin.username)
       .add("lastUpdateHostName", admin.host)
       .add("lastUpdateTime", now);
@@ -1333,7 +1328,6 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "WHERE "
           "A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND "
           "B.DISK_FILE_ID IN (:DISK_FID0)"
-          //"B.DISK_FILE_ID IN (:DISK_FID0, :DISK_FID1, :DISK_FID2, :DISK_FID3, :DISK_FID4, :DISK_FID5, :DISK_FID6, :DISK_FID7, :DISK_FID8, :DISK_FID9)"
         ")";
     addedAWhereConstraint = true;
   }
@@ -1356,7 +1350,6 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   if(searchCriteria.physicalLibraryName) {
     if(addedAWhereConstraint) sql += " AND ";
     sql += " PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    addedAWhereConstraint = true;
   }
 
   sql += " ORDER BY TAPE.VID";
@@ -1377,16 +1370,16 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   try{
     if(searchCriteria.state)
       stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
-  } catch(cta::exception::Exception &ex){
+  } catch(cta::exception::Exception&){
     throw cta::exception::UserError(std::string("The state provided does not exist. Possible values are: ")
       + cta::common::dataStructures::Tape::getAllPossibleStates());
   }
 
   // Disk file ID lookup requires multiple queries
   std::vector<std::string>::const_iterator diskFileId_it;
-  std::set<std::string> vidsInList;
+  std::set<std::string, std::less<>> vidsInList;
   if(searchCriteria.diskFileIds) diskFileId_it = searchCriteria.diskFileIds.value().begin();
-  int num_queries = searchCriteria.diskFileIds ? searchCriteria.diskFileIds.value().size() : 1;
+  int num_queries = searchCriteria.diskFileIds ? static_cast<int>(searchCriteria.diskFileIds.value().size()) : 1;
 
   for(int i = 0; i < num_queries; ++i) {
     if(searchCriteria.diskFileIds) {
@@ -1432,7 +1425,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       tape.verificationStatus =  rset.columnOptionalString("VERIFICATION_STATUS");
 
       auto optionalComment = rset.columnOptionalString("USER_COMMENT");
-      tape.comment = optionalComment ? optionalComment.value() : "";
+      tape.comment = optionalComment.value_or("");
 
       tape.setState(rset.columnString("TAPE_STATE"));
       tape.stateReason = rset.columnOptionalString("STATE_REASON");
@@ -1460,8 +1453,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
 void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq) {
   threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
 
-  const uint64_t currentValue = getTapeLastFSeq(conn, vid);
-  if(lastFSeq != currentValue + 1) {
+  if(const uint64_t currentValue = getTapeLastFSeq(conn, vid); lastFSeq != currentValue + 1) {
     exception::Exception ex;
     ex.getMessage() << "The last FSeq MUST be incremented by exactly one: currentValue=" << currentValue <<
       ",nextValue=" << lastFSeq;
@@ -1659,7 +1651,7 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
     tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
     auto optionalComment = rset.columnOptionalString("USER_COMMENT");
-    tape.comment = optionalComment ? optionalComment.value() : "";
+    tape.comment = optionalComment.value_or("");
 
     tape.setState(rset.columnString("TAPE_STATE"));
     tape.stateReason = rset.columnOptionalString("STATE_REASON");

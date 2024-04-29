@@ -74,7 +74,7 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
   if (vid.empty()) throw exception::Exception("vid is an empty string");
 
   std::string sql =
-    "SELECT /*+ INDEX (TAPE_FILE TAPE_FILE_VID_IDX) */"
+    "SELECT /*+ INDEX (TAPE_FILE TAPE_FILE_VID_IDX) */ "
       "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
       "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
       "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
@@ -104,7 +104,7 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
     "INNER JOIN TAPE_POOL ON "
       "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
     "WHERE "
-      "TAPE_FILE.VID = :VID";
+      "TAPE_FILE.VID = :VID ";
 
   sql += "ORDER BY FSEQ";
 
