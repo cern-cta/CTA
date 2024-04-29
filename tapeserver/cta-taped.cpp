@@ -46,8 +46,8 @@ namespace cta::taped {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration &commandLine,
-  cta::log::Logger &log);
+static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration &glocalConfig,
+  cta::log::Logger &log, const daemon::CommandLineParams & commandLine);
 
 //------------------------------------------------------------------------------
 // The help string
@@ -161,14 +161,14 @@ int main(const int argc, char **const argv) {
     setProcessCapabilities("cap_setgid,cap_setuid+ep");
 
     // Set user and group
-    std::list<log::params> params = {
+    std::list<log::Param> params = {
       log::Param("userName",  globalConfig.daemonUserName.value),
-      log::Param("groupName", globalconfig.daemonGroupName.value)};
+      log::Param("groupName", globalConfig.daemonGroupName.value)};
     *log(log::INFO, "Setting user name and group name of current process", params);
 
     System::setUserAndGroup(globalConfig.daemonUserName.value,
                                  globalConfig.daemonGroupName.value);
-  } catch(cta::exception::Errnum &ex) {
+  } catch(exception::Errnum &ex) {
      // Failed call to uname to get short host name
   } catch(...) {
     return 1;
