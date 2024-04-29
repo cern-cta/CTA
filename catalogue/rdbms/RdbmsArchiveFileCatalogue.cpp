@@ -171,8 +171,8 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSea
   const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn,
     searchCriteria.diskFileIds);
   // Pass ownership of the connection to the Iterator object
-  auto impl = std::make_unique<RdbmsCatalogueGetArchiveFilesItor>(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
-  return ArchiveFileItor(impl.get());
+  auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
+  return ArchiveFileItor(impl);
 }
 
 common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileForDeletion(
