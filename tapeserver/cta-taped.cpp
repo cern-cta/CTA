@@ -20,6 +20,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -72,13 +73,11 @@ void logStartOfDaemon(cta::log::Logger &log,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
+static int exceptionThrowingMain(const TapedConfiguration& globalConfig,
+                                 cta::log::Logger &log) {
   using namespace cta::tape::daemon::common;
 
   logStartOfDaemon(log, commandLine);
-
-  // Parse /etc/cta/cta-taped-unitName.conf parameters
-  const TapedConfiguration globalConfig = TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
   // Set log lines to JSON format if configured and not overridden on command line
   if(commandLine.logFormat.empty()) {
@@ -149,8 +148,33 @@ int main(const int argc, char **const argv) {
     return EXIT_SUCCESS;
   }
 
-  // Try to instantiate the logging system API
+  TapedConfiguration globalConfig;
   std::unique_ptr<log::Logger> logPtr;
+  try {
+    const std::string shortHostName = utils::getShortHostname();
+    logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
+    // Parse /etc/cta/cta-taped-unitName.conf parameters
+    globalConfig =
+      TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, *logPtr);
+
+    // Set capabilities to change user and group id's.
+    setProcessCapabilities("cap_setgid,cap_setuid+ep");
+
+    // Set user and group
+    std::list<log::params> params = {
+      log::Param("userName",  globalConfig.daemonUserName.value),
+      log::Param("groupName", globalconfig.daemonGroupName.value)};
+    *log(log::INFO, "Setting user name and group name of current process", params);
+
+    System::setUserAndGroup(globalConfig.daemonUserName.value,
+                                 globalConfig.daemonGroupName.value);
+  } catch(cta::exception::Errnum &ex) {
+     // Failed call to uname to get short host name
+  } catch(...) {
+    return 1;
+  }
+
+  // Try to instantiate the logging system API
   try {
     const std::string shortHostName = utils::getShortHostname();
     if(commandLine->logToStdout) {
@@ -169,9 +193,11 @@ int main(const int argc, char **const argv) {
   }
   cta::log::Logger& log = *logPtr;
 
+  // Daemonize here
+
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
-    programRc = cta::taped::exceptionThrowingMain(*commandLine, log);
+    programRc = cta::taped::exceptionThrowingMain(globalConfig, log);
   } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};

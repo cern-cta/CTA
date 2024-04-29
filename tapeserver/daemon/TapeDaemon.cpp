@@ -80,19 +80,12 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
-  // Process must be able to change user now and should be permitted to perform
-  // raw IO in the future
-  setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-
-  const std::string userName = m_globalConfiguration.daemonUserName.value();
-  const std::string groupName = m_globalConfiguration.daemonGroupName.value();
-  daemonizeIfNotRunInForegroundAndSetUserAndGroup(userName, groupName);
-  setDumpable();
-
   // There is no longer any need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
   // future
   setProcessCapabilities("cap_sys_rawio+p");
+  daemonizeIfNotRunInForeground();
+  setDumpable();
 
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");
