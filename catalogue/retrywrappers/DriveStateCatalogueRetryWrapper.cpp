@@ -86,7 +86,7 @@ void DriveStateCatalogueRetryWrapper::deleteTapeDrive(const std::string &tapeDri
   }, m_maxTriesToConnect);
 }
 
-std::map<std::string, uint64_t> DriveStateCatalogueRetryWrapper::getDiskSpaceReservations() const {
+std::map<std::string, uint64_t, std::less<>> DriveStateCatalogueRetryWrapper::getDiskSpaceReservations() const {
   return retryOnLostConnection(m_log, [this] {
     return m_catalogue->DriveState()->getDiskSpaceReservations();
   }, m_maxTriesToConnect);

@@ -37,7 +37,7 @@ struct TapePool {
    * Constructor that sets all integer member-variables to 0 and booleans to
    * false.
    */
-  TapePool();
+  TapePool() = default;
 
   /**
    * Comparison operator.
@@ -66,53 +66,53 @@ struct TapePool {
   /**
    * The desired number of tapes that should be empty or partially filled.
    */
-  uint64_t nbPartialTapes;
+  uint64_t nbPartialTapes = 0;
 
   /**
    * True if the tapes within this tape pool should be encrypted.
    */
-  bool encryption;
+  bool encryption = false;
 
   /**
    * The total number of tapes in the pool.
    */
-  uint64_t nbTapes;
+  uint64_t nbTapes = 0;
 
   /**
    * The total number of empty tapes in the pool.
    */
-  uint64_t nbEmptyTapes;
+  uint64_t nbEmptyTapes = 0;
 
   /**
    * The total number of disabled tapes in the pool.
    */
-  uint64_t nbDisabledTapes;
+  uint64_t nbDisabledTapes = 0;
 
   /**
    * The total number of full tapes in the pool.
    */
-  uint64_t nbFullTapes;
+  uint64_t nbFullTapes = 0;
 
   /**
    * The total number of read-only tapes in the pool.
    */
-  uint64_t nbReadOnlyTapes;
+  uint64_t nbReadOnlyTapes = 0;
 
   /**
    * The total number of writable tapes in the pool.
    */
-  uint64_t nbWritableTapes;
+  uint64_t nbWritableTapes = 0;
 
   /**
    * The total capacity of all the tapes in the pool in bytes.
    */
-  uint64_t capacityBytes;
+  uint64_t capacityBytes = 0;
 
   /**
    * The total amount of compressed data written to all the tapes in the pool in
    * bytes.
    */
-  uint64_t dataBytes;
+  uint64_t dataBytes = 0;
 
   /**
    * The total number of physical files stored in the tape pool.
@@ -122,7 +122,7 @@ struct TapePool {
    * number of physical files on that tape and therefore does NOT decrement the
    * number of physical files stored in the tape pool containing that tape.
    */
-  uint64_t nbPhysicalFiles;
+  uint64_t nbPhysicalFiles = 0;
 
   /**
    * Optional value used by the tape pool supply mechanism.

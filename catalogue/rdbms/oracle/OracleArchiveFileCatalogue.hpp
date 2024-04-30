@@ -62,7 +62,7 @@ private:
    * @return A map from the identifier of each archive file to its size and checksum.
    */
   std::map<uint64_t, FileSizeAndChecksum> selectArchiveFileSizesAndChecksums(rdbms::Conn &conn,
-    const std::set<TapeFileWritten> &events);
+    const std::set<TapeFileWritten> &events) const;
 };  // class OracleArchiveFileCatalogue
 
 } // namespace cta::catalogue

@@ -26,10 +26,12 @@ namespace unitTests {
 class cta_catalogue_InMemoryCatalogue : public ::testing::Test {
 protected:
 
-  virtual void SetUp() {
+  void SetUp() override {
+    // nothing to do
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
+    // nothing to do
   }
 };
 

@@ -227,9 +227,9 @@ void SqliteConn::printSchema(std::ostream &os) {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std::string &tableName) {
   try {
-    std::map<std::string, std::string> columnNamesAndTypes;
+    std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     const char *const sql =
       "SELECT "
         "SQL AS SQL "

@@ -64,7 +64,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   result += catalogueChecker->checkTableContainsColumns("TAPE_FILE", {"VID", "ARCHIVE_FILE_ID", "FSEQ", "COPY_NB"});
   result += catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE", {"ARCHIVE_FILE_ID", "SIZE_IN_BYTES"});
 
-  if (result.getStatus() == cta::catalogue::SchemaCheckerResult::FAILED) {
+  if (result.getStatus() == catalogue::SchemaCheckerResult::Status::FAILED) {
     result.displayErrors(std::cerr);
     return EXIT_FAILURE;
   }

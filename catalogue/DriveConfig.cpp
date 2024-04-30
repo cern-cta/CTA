@@ -28,6 +28,7 @@ namespace cta {
 
 void DriveConfig::setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration &tapedConfiguration,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+  // const_cast is used to remove the const qualifier from the object
   auto *config = const_cast<cta::tape::daemon::common::TapedConfiguration *>(&tapedConfiguration);
 
   setConfigToDB(&config->daemonUserName, catalogue, tapeDriveName);

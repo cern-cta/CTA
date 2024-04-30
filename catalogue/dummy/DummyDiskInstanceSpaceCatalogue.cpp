@@ -25,7 +25,7 @@
 
 namespace cta::catalogue {
 
-std::map<std::string, common::dataStructures::DiskInstanceSpace> DummyDiskInstanceSpaceCatalogue::m_diskInstanceSpaces;
+std::map<std::string, common::dataStructures::DiskInstanceSpace, std::less<>> DummyDiskInstanceSpaceCatalogue::m_diskInstanceSpaces;
 
 void DummyDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string &name,
   const std::string &diskInstance) {

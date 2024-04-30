@@ -29,7 +29,7 @@ struct VerifySchemaCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool help;
+  bool help = false;
 
   /**
    * Path to the file containing the connection details of the catalogue

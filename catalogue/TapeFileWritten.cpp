@@ -20,18 +20,6 @@
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-TapeFileWritten::TapeFileWritten() :
-  archiveFileId(0),
-  diskFileOwnerUid(0),
-  diskFileGid(0),
-  size(0),
-  blockId(0),
-  copyNb(0) {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {

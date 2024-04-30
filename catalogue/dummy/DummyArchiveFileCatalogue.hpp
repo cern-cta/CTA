@@ -52,7 +52,7 @@ public:
     const std::string &newStorageClassName) const override;
 
   void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId,
-    const std::string &diskInstance) const;
+    const std::string &diskInstance) const override;
 
   void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
     log::LogContext & lc) override;\

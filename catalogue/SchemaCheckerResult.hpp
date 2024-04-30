@@ -34,7 +34,7 @@ public:
   /**
    * The comparison is either SUCCESS or FAILED
    */
-  enum Status {
+  enum class Status {
     SUCCESS,
     FAILED
   };

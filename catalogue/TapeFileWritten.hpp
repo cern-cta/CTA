@@ -34,7 +34,7 @@ struct TapeFileWritten: public TapeItemWritten {
    *
    * Sets the value of all integer member-variables to zero.
    */
-  TapeFileWritten();
+  TapeFileWritten() = default;
 
   /**
    * Equality operator.
@@ -46,7 +46,7 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * The unique identifier of the file being archived.
    */
-  uint64_t archiveFileId;
+  uint64_t archiveFileId = 0;
 
   /**
    * The instance name of the source disk system.
@@ -69,17 +69,17 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * The user name of the source disk file within its host disk system.
    */
-  uint32_t diskFileOwnerUid;
+  uint32_t diskFileOwnerUid = 0;
 
   /**
    * The group name of the source disk file within its host disk system.
    */
-  uint32_t diskFileGid;
+  uint32_t diskFileGid = 0;
 
   /**
    * The uncompressed size of the tape file in bytes.
    */
-  uint64_t size;
+  uint64_t size = 0;
 
   /**
    * Set of checksum types and values
@@ -95,12 +95,12 @@ struct TapeFileWritten: public TapeItemWritten {
    * The position of the file on tape in the form of its logical block
    * identifier.
    */
-  uint64_t blockId;
+  uint64_t blockId = 0;
 
   /**
    * The copy number of the tape file.
    */
-  uint8_t copyNb;
+  uint8_t copyNb = 0;
 
 }; // struct TapeFileWritten
 

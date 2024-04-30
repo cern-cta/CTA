@@ -61,8 +61,8 @@ struct CatalogueSchema {
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the catalogue schema.
    */
-  std::map<std::string, std::string> getSchemaColumns(const std::string &tableName) const;
-  
+  std::map<std::string, std::string, std::less<>> getSchemaColumns(const std::string &tableName) const;
+
   /**
    * Returns the names of all the indexes in the catalogue schema.
    *
@@ -86,7 +86,7 @@ struct CatalogueSchema {
    * 
    * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
    */
-  std::map<std::string, uint64_t> getSchemaVersion() const;
+  std::map<std::string, uint64_t, std::less<>> getSchemaVersion() const;
 };
 
 } // namespace cta::catalogue

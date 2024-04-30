@@ -30,6 +30,8 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
+#include <algorithm>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
@@ -52,11 +54,9 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(login, maxNbConns);
-  auto conn = connPool.getConn();;
+  auto conn = connPool.getConn();
 
-  const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
-
-  if(ctaCatalogueTableExists) {
+  if(tableExists("CTA_CATALOGUE", conn)) {
     std::cerr << "Cannot create the database schema because the CTA_CATALOGUE table already exists" << std::endl;
     return 1;
   }
@@ -110,14 +110,11 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool CreateSchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
+bool CreateSchemaCmd::tableExists(const std::string& tableName, rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  for(auto &name : names) {
-    if(tableName == name) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(names.begin(), names.end(), [&](const std::string_view& name) {
+    return tableName == name;
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +127,7 @@ void CreateSchemaCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) {
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
@@ -138,7 +135,7 @@ void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sq
     while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
+      const std::string sqlStmt = utils::trimString(std::string_view(sqlStmts).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements

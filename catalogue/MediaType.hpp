@@ -34,9 +34,12 @@ struct MediaType {
    * Sets the value of all integer member-variables to zero. Optional integer
    * member-variables are left as null.
    */
-  MediaType():
-    capacityInBytes(0) {
-  }
+  MediaType() = default;
+
+  /**
+   * The capacity in bytes.
+   */
+  std::uint64_t capacityInBytes = 0;
 
   /**
    * The name of the media type.
@@ -47,11 +50,6 @@ struct MediaType {
    * The cartridge.
    */
   std::string cartridge;
-
-  /**
-   * The capacity in bytes.
-   */
-  std::uint64_t capacityInBytes;
 
   /**
    * The primary SCSI density code.

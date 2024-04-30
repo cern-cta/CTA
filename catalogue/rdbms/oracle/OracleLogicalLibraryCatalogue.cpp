@@ -28,25 +28,18 @@ OracleLogicalLibraryCatalogue::OracleLogicalLibraryCatalogue(log::Logger &log,
   : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "LOGICAL_LIBRARY_ID_SEQ.NEXTVAL AS LOGICAL_LIBRARY_ID "
-      "FROM "
-        "DUAL";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("Result set is unexpectedly empty"));
-    }
-
-    return rset.columnUint64("LOGICAL_LIBRARY_ID");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "SELECT "
+      "LOGICAL_LIBRARY_ID_SEQ.NEXTVAL AS LOGICAL_LIBRARY_ID "
+    "FROM "
+      "DUAL";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception(std::string("Result set is unexpectedly empty"));
   }
+
+  return rset.columnUint64("LOGICAL_LIBRARY_ID");
 }
 
 } // namespace cta::catalogue

@@ -22,9 +22,9 @@ namespace cta::catalogue {
 
   class AllCatalogueSchema {
     public:
-      static std::map<std::string,std::map<std::string,std::string>> mapSchema;
+      static std::map<std::string,std::map<std::string,std::string,std::less<>>,std::less<>> mapSchema;
   };
 
-  std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
+  std::map<std::string,std::map<std::string,std::string,std::less<>>,std::less<>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
 
 } // namespace cta::catalogue

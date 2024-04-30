@@ -58,9 +58,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();
 
-  const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
-
-  if(!ctaCatalogueTableExists) {
+  if(!tableExists("CTA_CATALOGUE", conn)) {
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exist" << std::endl;
     return 1;
   }
@@ -93,14 +91,11 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
+bool VerifySchemaCmd::tableExists(const std::string& tableName, rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  for(const auto &name : names) {
-    if(tableName == name) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(names.begin(), names.end(), [&](const auto& name) {
+    return tableName == name;
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -110,7 +105,7 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
   VerifySchemaCmdLineArgs::printUsage(os);
 }
 
-bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) {
+bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) const {
   const char *const sql =
     "SELECT "
       "CTA_CATALOGUE.STATUS AS STATUS "

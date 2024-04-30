@@ -33,68 +33,55 @@ RdbmsSchemaCatalogue::RdbmsSchemaCatalogue(log::Logger &log, std::shared_ptr<rdb
   m_log(log), m_connPool(connPool) {}
 
 SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
-  try {
-    std::map<std::string, uint64_t> schemaVersion;
-    const char *const sql =
-      "SELECT "
-        "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
-        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
-        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
-        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
-        "CTA_CATALOGUE.STATUS AS STATUS "
-      "FROM "
-        "CTA_CATALOGUE";
+  std::map<std::string, uint64_t, std::less<>> schemaVersion;
+  const char *const sql =
+    "SELECT "
+      "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
+      "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
+      "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
+      "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
+      "CTA_CATALOGUE.STATUS AS STATUS "
+    "FROM "
+      "CTA_CATALOGUE";
 
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
 
-    if(rset.next()) {
-      SchemaVersion::Builder schemaVersionBuilder;
-      schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
-                          .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
-                          .status(rset.columnString("STATUS"));
-      auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
-      auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
-      if(schemaVersionMajorNext && schemaVersionMinorNext){
-        schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
-                            .nextSchemaVersionMinor(schemaVersionMinorNext.value());
-      }
-      return schemaVersionBuilder.build();
-    } else {
-      throw exception::Exception("CTA_CATALOGUE does not contain any row");
+  if(rset.next()) {
+    SchemaVersion::Builder schemaVersionBuilder;
+    schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
+                        .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
+                        .status(rset.columnString("STATUS"));
+    auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+    auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+    if(schemaVersionMajorNext && schemaVersionMinorNext){
+      schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                          .nextSchemaVersionMinor(schemaVersionMinorNext.value());
     }
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+    return schemaVersionBuilder.build();
+  } else {
+    throw exception::Exception("CTA_CATALOGUE does not contain any row");
   }
 }
 
 void RdbmsSchemaCatalogue::verifySchemaVersion() {
   const std::set<int> supported_versions{SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED};
-  try {
-    SchemaVersion schemaVersion = getSchemaVersion();
-    if(const auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>(); supported_versions.count(major) == 0){
-      std::ostringstream exceptionMsg;
-      std::ostringstream supported_versions_os;
-      std::copy(supported_versions.begin(), supported_versions.end(), std::ostream_iterator<int>(supported_versions_os, ", "));
-      exceptionMsg << "Catalogue schema MAJOR version not supported : Database schema version is "
-                   << major << "." << minor
-                   << ", supported CTA MAJOR versions are {" << supported_versions_os.str() << "}.";
-      throw WrongSchemaVersionException(exceptionMsg.str());
-    }
-    if(schemaVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
-      std::ostringstream exceptionMsg;
-      exceptionMsg << "Catalogue schema is in status " + schemaVersion.getStatus<std::string>()
-        + ", next schema version is " << schemaVersion.getSchemaVersionNext<std::string>();
-    }
-  } catch (exception::UserError &) {
-    throw;
-  } catch (exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  SchemaVersion schemaVersion = getSchemaVersion();
+  if(const auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
+    supported_versions.count(static_cast<int>(major)) == 0){
+    std::ostringstream exceptionMsg;
+    std::ostringstream supported_versions_os;
+    std::copy(supported_versions.begin(), supported_versions.end(), std::ostream_iterator<int>(supported_versions_os, ", "));
+    exceptionMsg << "Catalogue schema MAJOR version not supported : Database schema version is "
+                  << major << "." << minor
+                  << ", supported CTA MAJOR versions are {" << supported_versions_os.str() << "}.";
+    throw WrongSchemaVersionException(exceptionMsg.str());
+  }
+  if(schemaVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
+    std::ostringstream exceptionMsg;
+    exceptionMsg << "Catalogue schema is in status " + schemaVersion.getStatus<std::string>()
+      + ", next schema version is " << schemaVersion.getSchemaVersionNext<std::string>();
   }
 }
 
@@ -102,16 +89,7 @@ void RdbmsSchemaCatalogue::verifySchemaVersion() {
 // ping
 //------------------------------------------------------------------------------
 void RdbmsSchemaCatalogue::ping() {
-  try {
-    verifySchemaVersion();
-  } catch (WrongSchemaVersionException &){
-    throw;
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  verifySchemaVersion();
 }
 
 //------------------------------------------------------------------------------

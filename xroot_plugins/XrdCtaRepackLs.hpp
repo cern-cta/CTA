@@ -56,7 +56,7 @@ namespace cta::xrd {
 	      // Nothing to send, close the stream
 	      return 0;
 	    }
-      std::set<std::string> tapeVids;
+      std::set<std::string, std::less<>> tapeVids;
     	std::transform(m_repackList.begin(), m_repackList.end(),
                  std::inserter(tapeVids, tapeVids.begin()),
                  [](cta::common::dataStructures::RepackInfo &ri) {return ri.vid;});

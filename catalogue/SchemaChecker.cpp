@@ -39,15 +39,15 @@ SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream & stdOut
   SchemaCheckerResult totalResult;
   stdOut << "Schema version : " << m_databaseMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>() << std::endl;
   stdOut << "Checking indexes..." << std::endl;
-  cta::catalogue::SchemaCheckerResult resIndex = m_schemaComparer->compareIndexes();
+  SchemaCheckerResult resIndex = m_schemaComparer->compareIndexes();
   totalResult += resIndex;
   resIndex.displayErrors(stdErr);
-  stdOut <<"  "<<resIndex.statusToString(resIndex.getStatus())<<std::endl;
+  stdOut <<"  "<< SchemaCheckerResult::statusToString(resIndex.getStatus())<<std::endl;
     stdOut << "Checking tables, columns and constraints..." << std::endl;
-  cta::catalogue::SchemaCheckerResult resTables = m_schemaComparer->compareTables();
+  SchemaCheckerResult resTables = m_schemaComparer->compareTables();
   totalResult += resTables;
   resTables.displayErrors(stdErr);
-  stdOut <<"  "<<resTables.statusToString(resTables.getStatus())<<std::endl;
+  stdOut <<"  "<< SchemaCheckerResult::statusToString(resTables.getStatus())<<std::endl;
   stdOut << "Status of the checking : " << cta::catalogue::SchemaCheckerResult::statusToString(totalResult.getStatus()) << std::endl;
   return totalResult;
 }
@@ -55,7 +55,7 @@ SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream & stdOut
 SchemaCheckerResult SchemaChecker::warnParallelTables(){
   SchemaCheckerResult res;
   std::list<std::string> parallelTables = m_databaseMetadataGetter->getParallelTableNames();
-  for(auto& table:parallelTables) {
+  for(const auto& table:parallelTables) {
     std::string warning = "TABLE " + table + " is set as PARALLEL";
     res.addWarning(warning);
   }
@@ -64,8 +64,9 @@ SchemaCheckerResult SchemaChecker::warnParallelTables(){
 
 SchemaCheckerResult SchemaChecker::warnSchemaUpgrading(){
   SchemaCheckerResult res;
-  SchemaVersion catalogueVersion = m_databaseMetadataGetter->getCatalogueVersion();
-  if(catalogueVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
+  
+  if(SchemaVersion catalogueVersion = m_databaseMetadataGetter->getCatalogueVersion();
+    catalogueVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
     std::string warning = "The status of the schema is " + catalogueVersion.getStatus<std::string>() + ", the future version is " + catalogueVersion.getSchemaVersionNext<std::string>();
     res.addWarning(warning);
   }
@@ -78,7 +79,7 @@ SchemaCheckerResult SchemaChecker::compareTablesLocatedInSchema(){
 }
 
 SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string>& columnNames){
-  std::map<std::string, std::string> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
+  std::map<std::string, std::string, std::less<>> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
   SchemaCheckerResult res;
   if(mapColumnsTypes.empty()){
     std::string error = "TABLE " + tableName +" does not exist.";
@@ -97,7 +98,7 @@ SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& 
 SchemaCheckerResult SchemaChecker::warnProcedures() {
   SchemaCheckerResult res;
   std::list<std::string> procedureNames = m_databaseMetadataGetter->getStoredProcedures();
-  for(auto & procedure: procedureNames){
+  for(const auto & procedure: procedureNames){
     std::string warning = "PROCEDURE " + procedure + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
   }
@@ -107,7 +108,7 @@ SchemaCheckerResult SchemaChecker::warnProcedures() {
 SchemaCheckerResult SchemaChecker::warnSynonyms() {
   SchemaCheckerResult res;
   std::list<std::string> synonymsNames = m_databaseMetadataGetter->getSynonyms();
-  for(auto & synonym: synonymsNames){
+  for(const auto & synonym: synonymsNames){
     std::string warning = "SYNONYM " + synonym + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
   }
@@ -117,7 +118,7 @@ SchemaCheckerResult SchemaChecker::warnSynonyms() {
 SchemaCheckerResult SchemaChecker::warnTypes() {
   SchemaCheckerResult res;
   std::list<std::string> typeNames = m_databaseMetadataGetter->getTypes();
-  for(auto & type: typeNames) {
+  for (const auto & type: typeNames) {
     std::string warning = "TYPE " + type + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
   }
@@ -127,7 +128,7 @@ SchemaCheckerResult SchemaChecker::warnTypes() {
 SchemaCheckerResult SchemaChecker::warnErrorLoggingTables() {
   SchemaCheckerResult res;
   std::list<std::string> errorTables = m_databaseMetadataGetter->getErrorLoggingTables();
-  for(auto & errorTable: errorTables) {
+  for (const auto & errorTable: errorTables) {
     std::string warning = "Error logging table " + errorTable + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
   }
@@ -176,7 +177,7 @@ SchemaChecker::Builder& SchemaChecker::Builder::useCppSchemaStatementsReader(con
 }
 
 std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
-  std::unique_ptr<SchemaChecker> schemaChecker(new SchemaChecker(m_databaseToCheckName,m_dbType,m_catalogueConn));
+  auto schemaChecker = std::make_unique<SchemaChecker>(m_databaseToCheckName, m_dbType, m_catalogueConn);
   if(m_schemaComparer != nullptr){
     schemaChecker->m_schemaComparer = std::move(m_schemaComparer);
     schemaChecker->m_schemaComparer->setSchemaSqlStatementsReader(std::move(m_schemaSqlStatementsReader));

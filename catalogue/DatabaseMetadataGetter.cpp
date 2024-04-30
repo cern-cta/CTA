@@ -25,29 +25,33 @@ namespace cta::catalogue {
 // Default destructor for abstract base class
 MetadataGetter::~MetadataGetter() = default;
 
-void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
+void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects,
+  const std::list<std::string> &wordsToTriggerRemoval) const {
   objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
-    return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),[&object](const std::string &wordTriggeringRemoval){
-      return object.find(wordTriggeringRemoval) != std::string::npos;
+    return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),
+      [&object](std::string_view wordTriggeringRemoval){
+        return object.find(wordTriggeringRemoval) != std::string::npos;
     }) != wordsToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval){
+void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects,
+  const std::list<std::string> &wordsNotToTriggerRemoval) const {
   objects.remove_if([&wordsNotToTriggerRemoval](const std::string &object){
-    return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),[&object](const std::string &wordsNotToTriggeringRemoval){
-      return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
+    return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),
+      [&object](std::string_view wordsNotToTriggeringRemoval){
+        return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
     }) != wordsNotToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const {
   objects.remove_if([&regex](const std::string &object){
     return !regex.has_match(object);
   });
 }
 
-void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex) const {
   objects.remove_if([&regex](const std::string &object){
     return regex.has_match(object);
   });
@@ -96,7 +100,7 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
                               .status(schemaStatus);
         }
       }
-    } catch (const cta::exception::Exception &ex){
+    } catch (const cta::exception::Exception&){
     }
     return schemaVersionBuilder.build();
   } else {
@@ -118,7 +122,7 @@ std::list<std::string> DatabaseMetadataGetter::getIndexNames(){
   return indexNames;
 }
 
-std::map<std::string,std::string> DatabaseMetadataGetter::getColumns(const std::string& tableName){
+std::map<std::string,std::string,std::less<>> DatabaseMetadataGetter::getColumns(const std::string& tableName){
   return m_conn.getColumns(tableName);
 }
 
@@ -172,10 +176,10 @@ cta::rdbms::Login::DbType SQLiteDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_SQLITE;
 }
 
-std::set<std::string> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
   // This check is for indexes on columns used by foreign key constraints. It is an optimisation for
   // production DBs. No need to check it for SQLite.
-  return std::set<std::string>();
+  return std::set<std::string,std::less<>>();
 }
 
 OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
@@ -191,7 +195,7 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
   return tableNames;
 }
 
-std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> OracleDatabaseMetadataGetter::getMissingIndexes() {
   // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
   const char* const sql = "SELECT "
       "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
@@ -207,7 +211,7 @@ std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> columnNames;
+  std::set<std::string,std::less<>> columnNames;
   while(rset.next()) {
     columnNames.insert(rset.columnString("FQ_COL_NAME"));
   }
@@ -220,7 +224,7 @@ cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
 }
 
-std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
+std::set<std::string,std::less<>> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   // Adapted from https://www.cybertec-postgresql.com/en/index-your-foreign-key/
   const char* const sql = "SELECT "
         "T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME "
@@ -255,7 +259,7 @@ std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> columnNames;
+  std::set<std::string,std::less<>> columnNames;
   while(rset.next()) {
     columnNames.insert(rset.columnString("FQ_COL_NAME"));
   }
@@ -263,15 +267,15 @@ std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
 }
 
 DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
-  typedef rdbms::Login::DbType DbType;
+  using DbType = rdbms::Login::DbType;
   switch(dbType){
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
-      return new SQLiteDatabaseMetadataGetter(conn);
+      return std::make_unique<SQLiteDatabaseMetadataGetter>(conn).release();
     case DbType::DBTYPE_ORACLE:
-      return new OracleDatabaseMetadataGetter(conn);
+      return std::make_unique<OracleDatabaseMetadataGetter>(conn).release();
     case DbType::DBTYPE_POSTGRESQL:
-      return new PostgresDatabaseMetadataGetter(conn);
+      return std::make_unique<PostgresDatabaseMetadataGetter>(conn).release();
     default:
       throw cta::exception::Exception("In CatalogueMetadataGetterFactory::create(), can't get CatalogueMetadataGetter for dbType "+rdbms::Login::dbTypeToString(dbType));
   }
@@ -290,7 +294,7 @@ std::list<std::string> SchemaMetadataGetter::getTableNames() {
   return m_sqliteDatabaseMetadataGetter->getTableNames();
 }
 
-std::map<std::string,std::string> SchemaMetadataGetter::getColumns(const std::string& tableName) {
+std::map<std::string,std::string,std::less<>> SchemaMetadataGetter::getColumns(const std::string& tableName) {
   return m_sqliteDatabaseMetadataGetter->getColumns(tableName);
 }
 

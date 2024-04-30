@@ -42,74 +42,60 @@ OracleFileRecycleLogCatalogue::OracleFileRecycleLogCatalogue(log::Logger &log,
 //------------------------------------------------------------------------------
 void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   FileRecycleLogItor &fileRecycleLogItor, const std::string &newFid, log::LogContext & lc) {
-  try {
-    utils::Timer timer;
-    log::TimingList timingList;
+  utils::Timer timer;
+  log::TimingList timingList;
 
-    if (!fileRecycleLogItor.hasMore()) {
-      throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
-    }
-    auto fileRecycleLog = fileRecycleLogItor.next();
-    if (fileRecycleLogItor.hasMore()) {
-      // stop restoring more than one file at once
-      throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
-    }
-    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-
-    const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
-    if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
-      !archiveFilePtr) {
-      RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
-    } else {
-      if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
-        // copy with same copy_nb exists, cannot restore
-        UserSpecifiedExistingDeletedFileCopy ex;
-        ex.getMessage() << "Cannot restore file copy with archiveFileId "
-          << std::to_string(fileRecycleLog.archiveFileId)
-          << " and copy_nb " << std::to_string(fileRecycleLog.copyNb)
-          << " because a tapefile with same archiveFileId and copy_nb already exists";
-        throw ex;
-      }
-    }
-
-    RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
-
-    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    conn.commit();
-
-    log::ScopedParamContainer spc(lc);
-    timingList.insertAndReset("commitTime", timer);
-    timingList.addToLog(spc);
-    lc.log(log::INFO, "In OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog: "
-      "all file copies successfully restored.");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if (!fileRecycleLogItor.hasMore()) {
+    throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
   }
+  auto fileRecycleLog = fileRecycleLogItor.next();
+  if (fileRecycleLogItor.hasMore()) {
+    // stop restoring more than one file at once
+    throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
+  }
+  conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+
+  const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
+  if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
+    !archiveFilePtr) {
+    RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
+  } else {
+    if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
+      // copy with same copy_nb exists, cannot restore
+      UserSpecifiedExistingDeletedFileCopy ex;
+      ex.getMessage() << "Cannot restore file copy with archiveFileId "
+        << std::to_string(fileRecycleLog.archiveFileId)
+        << " and copy_nb " << std::to_string(fileRecycleLog.copyNb)
+        << " because a tapefile with same archiveFileId and copy_nb already exists";
+      throw ex;
+    }
+  }
+
+  RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+
+  conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+  conn.commit();
+
+  log::ScopedParamContainer spc(lc);
+  timingList.insertAndReset("commitTime", timer);
+  timingList.addToLog(spc);
+  lc.log(log::INFO, "In OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog: "
+    "all file copies successfully restored.");
 }
 
 uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
-      "FROM "
-        "DUAL";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("Result set is unexpectedly empty"));
-    }
-
-    return rset.columnUint64("FILE_RECYCLE_LOG_ID");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "SELECT "
+      "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
+    "FROM "
+      "DUAL";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception(std::string("Result set is unexpectedly empty"));
   }
+
+  return rset.columnUint64("FILE_RECYCLE_LOG_ID");
 }
 
 } // namespace cta::catalogue

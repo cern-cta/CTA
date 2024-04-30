@@ -64,8 +64,9 @@ std::optional<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTa
 
 std::list<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDrives() const {
   std::list<common::dataStructures::TapeDrive> tapeDrives;
-  const auto tapeDrive = getTapeDrive(m_tapeDriveStatus.driveName);
-  if (tapeDrive.has_value()) tapeDrives.push_back(tapeDrive.value());
+  if (const auto tapeDrive = getTapeDrive(m_tapeDriveStatus.driveName); tapeDrive.has_value()) {
+    tapeDrives.push_back(tapeDrive.value());
+  }
   return tapeDrives;
 }
 
@@ -96,8 +97,8 @@ void DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   m_tapeDriveStatus = tapeDrive;
 }
 
-std::map<std::string, uint64_t> DummyDriveStateCatalogue::getDiskSpaceReservations() const {
-  std::map<std::string, uint64_t> ret;
+std::map<std::string, uint64_t, std::less<>> DummyDriveStateCatalogue::getDiskSpaceReservations() const {
+  std::map<std::string, uint64_t, std::less<>> ret;
   const auto tdNames = getTapeDriveNames();
   for (const auto& driveName : tdNames) {
     const auto tdStatus = getTapeDrive(driveName);

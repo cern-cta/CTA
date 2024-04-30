@@ -156,269 +156,247 @@ void PostgresTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDeleteTransaction(
 }
 
 void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
-  try {
-    if (events.empty()) {
-      return;
-    }
-
-    auto firstEventItor = events.begin();
-    const auto &firstEvent = **firstEventItor;
-    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
-    const time_t now = time(nullptr);
-    auto conn = m_connPool->getConn();
-    rdbms::AutoRollback autoRollback(conn);
-
-    // Start DB transaction and create temporary tables TEMP_ARCHIVE_FILE_BATCH and TEMP_TAPE_FILE_BATCH.
-    // These two tables will exist only for the duration of the transaction.
-    // Set deferrable for second (disk instance, disk file id) constraint of the ARCHIVE_FILE table
-    // to avoid violation in the case of concurrent inserts of a previously not existing archive file.
-    beginCreateTemporarySetDeferred(conn);
-
-    const uint64_t lastFSeq = selectTapeForUpdateAndGetLastFSeq(conn, firstEvent.vid);
-    uint64_t expectedFSeq = lastFSeq + 1;
-    uint64_t totalLogicalBytesWritten = 0;
-
-    // We have a mix of files and items. Only files will be recorded, but items
-    // allow checking fSeq coherency.
-    // determine the number of files
-    size_t filesCount=std::count_if(events.cbegin(), events.cend(),
-        [](const TapeItemWrittenPointer &e) -> bool {return typeid(*e)==typeid(TapeFileWritten);});
-    TapeFileBatch tapeFileBatch(filesCount);
-
-    std::set<TapeFileWritten> fileEvents;
-
-    for (const auto &eventP: events) {
-      // Check for all item types.
-      const auto &event = *eventP;
-      checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
-
-      if (event.vid != firstEvent.vid) {
-        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
-      }
-
-      if (expectedFSeq != event.fSeq) {
-        exception::TapeFseqMismatch ex;
-        ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
-          event.fSeq;
-        throw ex;
-      }
-      expectedFSeq++;
-
-      try {
-        // If this is a file (as opposed to a placeholder), do the full processing.
-        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
-
-        checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
-
-        totalLogicalBytesWritten += fileEvent.size;
-
-        fileEvents.insert(fileEvent);
-      } catch (std::bad_cast&) {}
-    }
-
-    // Update the tape because all the necessary information is now available
-    auto lastEventItor = events.cend();
-    lastEventItor--;
-    const TapeItemWritten &lastEvent = **lastEventItor;
-    RdbmsCatalogueUtils::updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, filesCount,
-      lastEvent.tapeDrive);
-
-    // If we had only placeholders and no file recorded, we are done (but we still commit the update of the tape's fSeq).
-    if (fileEvents.empty()) {
-      conn.commit();
-      return;
-    }
-
-    // Create the archive file entries, skipping those that already exist
-    // However we don't currently lock existing rows, so this transaction may
-    // still fail later, in the face of certain concurrent modifications such
-    // as the deletion of one of the existing archive files for which we are
-    // inserting another tape file.
-    idempotentBatchInsertArchiveFiles(conn, fileEvents);
-
-    insertTapeFileBatchIntoTempTable(conn, fileEvents);
-
-    // Verify that the archive file entries in the catalogue database agree with
-    // the tape file written events
-    const auto archiveFileCatalogue = static_cast<PostgresArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
-    const auto fileSizesAndChecksums = archiveFileCatalogue->selectArchiveFileSizesAndChecksums(conn, fileEvents);
-    for (const auto &event: fileEvents) {
-      const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
-
-      std::ostringstream fileContext;
-      fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-        ", diskFileId=" << event.diskFileId;
-
-      // This should never happen
-      if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
-        exception::Exception ex;
-        ex.getMessage() << __FUNCTION__ << ": Failed to find archive file entry in the catalogue: " << fileContext.str();
-        throw ex;
-      }
-
-      const auto &fileSizeAndChecksum = fileSizeAndChecksumItor->second;
-
-      if(fileSizeAndChecksum.fileSize != event.size) {
-        catalogue::FileSizeMismatch ex;
-        ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
-          ", actual=" << event.size << ": " << fileContext.str();
-        m_log(log::ALERT, ex.getMessage().str());
-        throw ex;
-      }
-
-      fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
-    }
-
-    // Store the value of each field
-    uint32_t i = 0;
-    for (const auto &event: fileEvents) {
-      tapeFileBatch.vid.setFieldValue(i, event.vid);
-      tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
-      tapeFileBatch.blockId.setFieldValue(i, event.blockId);
-      tapeFileBatch.fileSize.setFieldValue(i, event.size);
-      tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
-      tapeFileBatch.creationTime.setFieldValue(i, now);
-      tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-      i++;
-    }
-
-    const char *const sql =
-    "CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH ("                        "\n"
-      "LIKE TAPE_FILE) "                                                             "\n"
-      "ON COMMIT DROP;"                                                              "\n"
-    "COPY TEMP_TAPE_FILE_INSERTION_BATCH("                                           "\n"
-      "VID,"                                                                         "\n"
-      "FSEQ,"                                                                        "\n"
-      "BLOCK_ID,"                                                                    "\n"
-      "LOGICAL_SIZE_IN_BYTES,"                                                       "\n"
-      "COPY_NB,"                                                                     "\n"
-      "CREATION_TIME,"                                                               "\n"
-      "ARCHIVE_FILE_ID) "                                                            "\n"
-    "FROM STDIN; --"                                                                 "\n"
-      "-- :VID,"                                                                     "\n"
-      "-- :FSEQ,"                                                                    "\n"
-      "-- :BLOCK_ID,"                                                                "\n"
-      "-- :LOGICAL_SIZE_IN_BYTES,"                                                   "\n"
-      "-- :COPY_NB,"                                                                 "\n"
-      "-- :CREATION_TIME,"                                                           "\n"
-      "-- :ARCHIVE_FILE_ID;"                                                         "\n";
-
-    auto stmt = conn.createStmt(sql);
-    rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
-    postgresStmt.setColumn(tapeFileBatch.vid);
-    postgresStmt.setColumn(tapeFileBatch.fSeq);
-    postgresStmt.setColumn(tapeFileBatch.blockId);
-    postgresStmt.setColumn(tapeFileBatch.fileSize);
-    postgresStmt.setColumn(tapeFileBatch.copyNb);
-    postgresStmt.setColumn(tapeFileBatch.creationTime);
-    postgresStmt.setColumn(tapeFileBatch.archiveFileId);
-
-    postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
-
-    auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
-
-    {
-      //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
-      const char * const insertTapeFileSql =
-        "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, "
-        "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "
-        "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, "
-        "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;";
-      conn.executeNonQuery(insertTapeFileSql);
-    }
-
-    for(auto & recycledFile: recycledFiles){
-      const char * const deleteTapeFileSql =
-      "DELETE FROM TAPE_FILE WHERE TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
-      auto deleteTapeFileStmt = conn.createStmt(deleteTapeFileSql);
-      deleteTapeFileStmt.bindString(":VID",recycledFile.vid);
-      deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fSeq);
-      deleteTapeFileStmt.executeNonQuery();
-    }
-
-    autoRollback.cancel();
-    conn.commit();
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if (events.empty()) {
+    return;
   }
+
+  auto firstEventItor = events.begin();
+  const auto &firstEvent = **firstEventItor;
+  checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+  const time_t now = time(nullptr);
+  auto conn = m_connPool->getConn();
+  rdbms::AutoRollback autoRollback(conn);
+
+  // Start DB transaction and create temporary tables TEMP_ARCHIVE_FILE_BATCH and TEMP_TAPE_FILE_BATCH.
+  // These two tables will exist only for the duration of the transaction.
+  // Set deferrable for second (disk instance, disk file id) constraint of the ARCHIVE_FILE table
+  // to avoid violation in the case of concurrent inserts of a previously not existing archive file.
+  beginCreateTemporarySetDeferred(conn);
+
+  const uint64_t lastFSeq = selectTapeForUpdateAndGetLastFSeq(conn, firstEvent.vid);
+  uint64_t expectedFSeq = lastFSeq + 1;
+  uint64_t totalLogicalBytesWritten = 0;
+
+  // We have a mix of files and items. Only files will be recorded, but items
+  // allow checking fSeq coherency.
+  // determine the number of files
+  size_t filesCount=std::count_if(events.cbegin(), events.cend(),
+      [](const TapeItemWrittenPointer &e) -> bool {return typeid(*e)==typeid(TapeFileWritten);});
+  TapeFileBatch tapeFileBatch(filesCount);
+
+  std::set<TapeFileWritten> fileEvents;
+
+  for (const auto &eventP: events) {
+    // Check for all item types.
+    const auto &event = *eventP;
+    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
+
+    if (event.vid != firstEvent.vid) {
+      throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
+    }
+
+    if (expectedFSeq != event.fSeq) {
+      exception::TapeFseqMismatch ex;
+      ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
+        event.fSeq;
+      throw ex;
+    }
+    expectedFSeq++;
+
+    try {
+      // If this is a file (as opposed to a placeholder), do the full processing.
+      const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
+
+      checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
+
+      totalLogicalBytesWritten += fileEvent.size;
+
+      fileEvents.insert(fileEvent);
+    } catch (std::bad_cast&) {}
+  }
+
+  // Update the tape because all the necessary information is now available
+  auto lastEventItor = events.cend();
+  lastEventItor--;
+  const TapeItemWritten &lastEvent = **lastEventItor;
+  RdbmsCatalogueUtils::updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, filesCount,
+    lastEvent.tapeDrive);
+
+  // If we had only placeholders and no file recorded, we are done (but we still commit the update of the tape's fSeq).
+  if (fileEvents.empty()) {
+    conn.commit();
+    return;
+  }
+
+  // Create the archive file entries, skipping those that already exist
+  // However we don't currently lock existing rows, so this transaction may
+  // still fail later, in the face of certain concurrent modifications such
+  // as the deletion of one of the existing archive files for which we are
+  // inserting another tape file.
+  idempotentBatchInsertArchiveFiles(conn, fileEvents);
+
+  insertTapeFileBatchIntoTempTable(conn, fileEvents);
+
+  // Verify that the archive file entries in the catalogue database agree with
+  // the tape file written events
+  const auto archiveFileCatalogue = static_cast<PostgresArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
+  const auto fileSizesAndChecksums = archiveFileCatalogue->selectArchiveFileSizesAndChecksums(conn, fileEvents);
+  for (const auto &event: fileEvents) {
+    const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
+
+    std::ostringstream fileContext;
+    fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
+      ", diskFileId=" << event.diskFileId;
+
+    // This should never happen
+    if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
+      exception::Exception ex;
+      ex.getMessage() << __FUNCTION__ << ": Failed to find archive file entry in the catalogue: " << fileContext.str();
+      throw ex;
+    }
+
+    const auto &fileSizeAndChecksum = fileSizeAndChecksumItor->second;
+
+    if(fileSizeAndChecksum.fileSize != event.size) {
+      catalogue::FileSizeMismatch ex;
+      ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
+        ", actual=" << event.size << ": " << fileContext.str();
+      m_log(log::ALERT, ex.getMessage().str());
+      throw ex;
+    }
+
+    fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
+  }
+
+  // Store the value of each field
+  uint32_t i = 0;
+  for (const auto &event: fileEvents) {
+    tapeFileBatch.vid.setFieldValue(i, event.vid);
+    tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
+    tapeFileBatch.blockId.setFieldValue(i, event.blockId);
+    tapeFileBatch.fileSize.setFieldValue(i, event.size);
+    tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
+    tapeFileBatch.creationTime.setFieldValue(i, now);
+    tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+    i++;
+  }
+
+  const char *const sql =
+  "CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH ("
+    "LIKE TAPE_FILE) "
+    "ON COMMIT DROP;"
+  "COPY TEMP_TAPE_FILE_INSERTION_BATCH("
+    "VID,"
+    "FSEQ,"
+    "BLOCK_ID,"
+    "LOGICAL_SIZE_IN_BYTES,"
+    "COPY_NB,"
+    "CREATION_TIME,"
+    "ARCHIVE_FILE_ID) "
+  "FROM STDIN; --"
+    "-- :VID,"
+    "-- :FSEQ,"
+    "-- :BLOCK_ID,"
+    "-- :LOGICAL_SIZE_IN_BYTES,"
+    "-- :COPY_NB,"
+    "-- :CREATION_TIME,"
+    "-- :ARCHIVE_FILE_ID;";
+
+  auto stmt = conn.createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+  postgresStmt.setColumn(tapeFileBatch.vid);
+  postgresStmt.setColumn(tapeFileBatch.fSeq);
+  postgresStmt.setColumn(tapeFileBatch.blockId);
+  postgresStmt.setColumn(tapeFileBatch.fileSize);
+  postgresStmt.setColumn(tapeFileBatch.copyNb);
+  postgresStmt.setColumn(tapeFileBatch.creationTime);
+  postgresStmt.setColumn(tapeFileBatch.archiveFileId);
+
+  postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
+
+  auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+
+  //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
+  const char * const insertTapeFileSql =
+    "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, "
+    "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "
+    "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, "
+    "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;";
+  conn.executeNonQuery(insertTapeFileSql);
+
+  for(auto & recycledFile: recycledFiles){
+    const char * const deleteTapeFileSql =
+    "DELETE FROM TAPE_FILE WHERE TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
+    auto deleteTapeFileStmt = conn.createStmt(deleteTapeFileSql);
+    deleteTapeFileStmt.bindString(":VID",recycledFile.vid);
+    deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fSeq);
+    deleteTapeFileStmt.executeNonQuery();
+  }
+
+  autoRollback.cancel();
+  conn.commit();
 }
 
 std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
   rdbms::Conn& conn){
   std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
-  try {
-    //Get the TAPE_FILE entry to put on the file recycle log
-    {
-      const char *const sql =
-        "SELECT "
-          "TAPE_FILE.VID AS VID,"
-          "TAPE_FILE.FSEQ AS FSEQ,"
-          "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-          "TAPE_FILE.COPY_NB AS COPY_NB,"
-          "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-          "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-        "FROM "
-          "TAPE_FILE "
-        "JOIN "
-          "TEMP_TAPE_FILE_INSERTION_BATCH "
-        "ON "
-          "TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB "
-        "WHERE "
-          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ";
-      auto stmt = conn.createStmt(sql);
-      auto rset = stmt.executeQuery();
-      while(rset.next()){
-        cta::catalogue::InsertFileRecycleLog fileRecycleLog;
-        fileRecycleLog.vid = rset.columnString("VID");
-        fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
-        fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
-        fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
-        fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
-        fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
-        fileRecycleLog.recycleLogTime = time(nullptr);
-        fileRecycleLogsToInsert.push_back(fileRecycleLog);
-      }
-    }
-    {
-      for(auto & fileRecycleLog: fileRecycleLogsToInsert){
-        const auto fileRecycleLogCatalogue
-          = static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
-        fileRecycleLogCatalogue->insertFileInFileRecycleLog(conn,fileRecycleLog);
-      }
-      return fileRecycleLogsToInsert;
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  //Get the TAPE_FILE entry to put on the file recycle log
+  const char *const sql =
+    "SELECT "
+      "TAPE_FILE.VID AS VID,"
+      "TAPE_FILE.FSEQ AS FSEQ,"
+      "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+      "TAPE_FILE.COPY_NB AS COPY_NB,"
+      "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+      "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+    "FROM "
+      "TAPE_FILE "
+    "JOIN "
+      "TEMP_TAPE_FILE_INSERTION_BATCH "
+    "ON "
+      "TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB "
+    "WHERE "
+      "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  while(rset.next()){
+    cta::catalogue::InsertFileRecycleLog fileRecycleLog;
+    fileRecycleLog.vid = rset.columnString("VID");
+    fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
+    fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
+    fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
+    fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+    fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
+    fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
+    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLogsToInsert.push_back(fileRecycleLog);
   }
+
+  for(const auto& fileRecycleLog: fileRecycleLogsToInsert){
+    const auto fileRecycleLogCatalogue
+      = static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
+    fileRecycleLogCatalogue->insertFileInFileRecycleLog(conn,fileRecycleLog);
+  }
+  return fileRecycleLogsToInsert;
 }
 
 uint64_t PostgresTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "LAST_FSEQ AS LAST_FSEQ "
-      "FROM "
-        "TAPE "
-      "WHERE "
-        "VID = :VID "
-      "FOR UPDATE";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":VID", vid);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
-    }
-
-    return rset.columnUint64("LAST_FSEQ");
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "SELECT "
+      "LAST_FSEQ AS LAST_FSEQ "
+    "FROM "
+      "TAPE "
+    "WHERE "
+      "VID = :VID "
+    "FOR UPDATE";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
   }
+
+  return rset.columnUint64("LAST_FSEQ");
 }
 
 void PostgresTapeFileCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &conn) const {
@@ -436,153 +414,138 @@ void PostgresTapeFileCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &con
 
 void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
   const std::set<TapeFileWritten> &events) const {
-  try {
-    ArchiveFileBatch archiveFileBatch(events.size());
-    const time_t now = time(nullptr);
+  ArchiveFileBatch archiveFileBatch(events.size());
+  const time_t now = time(nullptr);
 
-    // Store the value of each field
-    uint32_t i = 0;
-    for (const auto &event: events) {
-      archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-      archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
-      archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
-      archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
-      archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
-      archiveFileBatch.size.setFieldValue(i, event.size);
-      archiveFileBatch.checksumBlob.setFieldByteA(conn, i, event.checksumBlob.serialize());
-      // Keep transition ADLER32 checksum up-to-date if it exists
-      std::string adler32str;
-      try {
-        std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
-        uint32_t adler32 = strtoul(adler32hex.c_str(), nullptr, 16);
-        adler32str = std::to_string(adler32);
-      } catch(exception::ChecksumTypeMismatch &ex) {
-        adler32str = "0";
-      }
-      archiveFileBatch.checksumAdler32.setFieldValue(i, adler32str);
-      archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
-      archiveFileBatch.creationTime.setFieldValue(i, now);
-      archiveFileBatch.reconciliationTime.setFieldValue(i, now);
-      i++;
+  // Store the value of each field
+  uint32_t i = 0;
+  for (const auto &event: events) {
+    archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+    archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
+    archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
+    archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
+    archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
+    archiveFileBatch.size.setFieldValue(i, event.size);
+    archiveFileBatch.checksumBlob.setFieldByteA(conn, i, event.checksumBlob.serialize());
+    // Keep transition ADLER32 checksum up-to-date if it exists
+    std::string adler32str;
+    try {
+      std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
+      uint32_t adler32 = strtoul(adler32hex.c_str(), nullptr, 16);
+      adler32str = std::to_string(adler32);
+    } catch(exception::ChecksumTypeMismatch&) {
+      adler32str = "0";
     }
-
-    const char *const sql =
-      "COPY TEMP_ARCHIVE_FILE_BATCH("
-        "ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE_NAME,"
-        "DISK_FILE_ID,"
-        "DISK_FILE_UID,"
-        "DISK_FILE_GID,"
-        "SIZE_IN_BYTES,"
-        "CHECKSUM_BLOB,"
-        "CHECKSUM_ADLER32,"
-        "STORAGE_CLASS_NAME,"
-        "CREATION_TIME,"
-        "RECONCILIATION_TIME) "
-      "FROM STDIN --"
-        ":ARCHIVE_FILE_ID,"
-        ":DISK_INSTANCE_NAME,"
-        ":DISK_FILE_ID,"
-        ":DISK_FILE_UID,"
-        ":DISK_FILE_GID,"
-        ":SIZE_IN_BYTES,"
-        ":CHECKSUM_BLOB,"
-        ":CHECKSUM_ADLER32,"
-        ":STORAGE_CLASS_NAME,"
-        ":CREATION_TIME,"
-        ":RECONCILIATION_TIME";
-
-    auto stmt = conn.createStmt(sql);
-    rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
-
-    postgresStmt.setColumn(archiveFileBatch.archiveFileId);
-    postgresStmt.setColumn(archiveFileBatch.diskInstance);
-    postgresStmt.setColumn(archiveFileBatch.diskFileId);
-    postgresStmt.setColumn(archiveFileBatch.diskFileUser);
-    postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
-    postgresStmt.setColumn(archiveFileBatch.size);
-    postgresStmt.setColumn(archiveFileBatch.checksumBlob);
-    postgresStmt.setColumn(archiveFileBatch.checksumAdler32);
-    postgresStmt.setColumn(archiveFileBatch.storageClassName);
-    postgresStmt.setColumn(archiveFileBatch.creationTime);
-    postgresStmt.setColumn(archiveFileBatch.reconciliationTime);
-
-    postgresStmt.executeCopyInsert(archiveFileBatch.nbRows);
-
-    const char *const sql_insert =
-      "INSERT INTO ARCHIVE_FILE("
-        "ARCHIVE_FILE_ID,"
-  	"DISK_INSTANCE_NAME,"
-        "DISK_FILE_ID,"
-        "DISK_FILE_UID,"
-        "DISK_FILE_GID,"
-        "SIZE_IN_BYTES,"
-        "CHECKSUM_BLOB,"
-        "CHECKSUM_ADLER32,"
-        "STORAGE_CLASS_ID,"
-        "CREATION_TIME,"
-        "RECONCILIATION_TIME) "
-      "SELECT "
-        "A.ARCHIVE_FILE_ID,"
-        "A.DISK_INSTANCE_NAME,"
-        "A.DISK_FILE_ID,"
-        "A.DISK_FILE_UID,"
-        "A.DISK_FILE_GID,"
-        "A.SIZE_IN_BYTES,"
-        "A.CHECKSUM_BLOB,"
-        "A.CHECKSUM_ADLER32,"
-        "S.STORAGE_CLASS_ID,"
-        "A.CREATION_TIME,"
-        "A.RECONCILIATION_TIME "
-      "FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S "
-        "WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME "
-      "ORDER BY A.ARCHIVE_FILE_ID "
-      "ON CONFLICT (ARCHIVE_FILE_ID) DO NOTHING";
-
-    // Concerns for bulk insertion in archive_file: deadlock with concurrent
-    // inserts of previously not-existing entry for the same archive file,
-    // hence insert with ORDER BY to define an update order.
-
-    auto stmt_insert = conn.createStmt(sql_insert);
-    stmt_insert.executeNonQuery();
-
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+    archiveFileBatch.checksumAdler32.setFieldValue(i, adler32str);
+    archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
+    archiveFileBatch.creationTime.setFieldValue(i, now);
+    archiveFileBatch.reconciliationTime.setFieldValue(i, now);
+    i++;
   }
+
+  const char *const sql =
+    "COPY TEMP_ARCHIVE_FILE_BATCH("
+      "ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE_NAME,"
+      "DISK_FILE_ID,"
+      "DISK_FILE_UID,"
+      "DISK_FILE_GID,"
+      "SIZE_IN_BYTES,"
+      "CHECKSUM_BLOB,"
+      "CHECKSUM_ADLER32,"
+      "STORAGE_CLASS_NAME,"
+      "CREATION_TIME,"
+      "RECONCILIATION_TIME) "
+    "FROM STDIN --"
+      ":ARCHIVE_FILE_ID,"
+      ":DISK_INSTANCE_NAME,"
+      ":DISK_FILE_ID,"
+      ":DISK_FILE_UID,"
+      ":DISK_FILE_GID,"
+      ":SIZE_IN_BYTES,"
+      ":CHECKSUM_BLOB,"
+      ":CHECKSUM_ADLER32,"
+      ":STORAGE_CLASS_NAME,"
+      ":CREATION_TIME,"
+      ":RECONCILIATION_TIME";
+
+  auto stmt = conn.createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+
+  postgresStmt.setColumn(archiveFileBatch.archiveFileId);
+  postgresStmt.setColumn(archiveFileBatch.diskInstance);
+  postgresStmt.setColumn(archiveFileBatch.diskFileId);
+  postgresStmt.setColumn(archiveFileBatch.diskFileUser);
+  postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
+  postgresStmt.setColumn(archiveFileBatch.size);
+  postgresStmt.setColumn(archiveFileBatch.checksumBlob);
+  postgresStmt.setColumn(archiveFileBatch.checksumAdler32);
+  postgresStmt.setColumn(archiveFileBatch.storageClassName);
+  postgresStmt.setColumn(archiveFileBatch.creationTime);
+  postgresStmt.setColumn(archiveFileBatch.reconciliationTime);
+
+  postgresStmt.executeCopyInsert(archiveFileBatch.nbRows);
+
+  const char *const sql_insert =
+    "INSERT INTO ARCHIVE_FILE("
+      "ARCHIVE_FILE_ID,"
+  "DISK_INSTANCE_NAME,"
+      "DISK_FILE_ID,"
+      "DISK_FILE_UID,"
+      "DISK_FILE_GID,"
+      "SIZE_IN_BYTES,"
+      "CHECKSUM_BLOB,"
+      "CHECKSUM_ADLER32,"
+      "STORAGE_CLASS_ID,"
+      "CREATION_TIME,"
+      "RECONCILIATION_TIME) "
+    "SELECT "
+      "A.ARCHIVE_FILE_ID,"
+      "A.DISK_INSTANCE_NAME,"
+      "A.DISK_FILE_ID,"
+      "A.DISK_FILE_UID,"
+      "A.DISK_FILE_GID,"
+      "A.SIZE_IN_BYTES,"
+      "A.CHECKSUM_BLOB,"
+      "A.CHECKSUM_ADLER32,"
+      "S.STORAGE_CLASS_ID,"
+      "A.CREATION_TIME,"
+      "A.RECONCILIATION_TIME "
+    "FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S "
+      "WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME "
+    "ORDER BY A.ARCHIVE_FILE_ID "
+    "ON CONFLICT (ARCHIVE_FILE_ID) DO NOTHING";
+
+  // Concerns for bulk insertion in archive_file: deadlock with concurrent
+  // inserts of previously not-existing entry for the same archive file,
+  // hence insert with ORDER BY to define an update order.
+
+  auto stmt_insert = conn.createStmt(sql_insert);
+  stmt_insert.executeNonQuery();
 }
 
 void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &conn,
    const std::set<TapeFileWritten> &events) const {
-  try {
-    TempTapeFileBatch tempTapeFileBatch(events.size());
+  TempTapeFileBatch tempTapeFileBatch(events.size());
 
-    // Store the value of each field
-    uint32_t i = 0;
-    for (const auto &event: events) {
-      tempTapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-      i++;
-    }
-
-    const char *const sql =
-      "COPY TEMP_TAPE_FILE_BATCH("
-        "ARCHIVE_FILE_ID) "
-      "FROM STDIN --"
-        ":ARCHIVE_FILE_ID";
-
-    auto stmt = conn.createStmt(sql);
-    rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
-
-    postgresStmt.setColumn(tempTapeFileBatch.archiveFileId);
-    postgresStmt.executeCopyInsert(tempTapeFileBatch.nbRows);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  // Store the value of each field
+  uint32_t i = 0;
+  for (const auto &event: events) {
+    tempTapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+    i++;
   }
+
+  const char *const sql =
+    "COPY TEMP_TAPE_FILE_BATCH("
+      "ARCHIVE_FILE_ID) "
+    "FROM STDIN --"
+      ":ARCHIVE_FILE_ID";
+
+  auto stmt = conn.createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+
+  postgresStmt.setColumn(tempTapeFileBatch.archiveFileId);
+  postgresStmt.executeCopyInsert(tempTapeFileBatch.nbRows);
 }
 
 } // namespace cta::catalogue

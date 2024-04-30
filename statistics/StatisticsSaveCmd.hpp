@@ -59,7 +59,7 @@ class StatisticsSaveCmd : public catalogue::CmdLineTool {
    * @param catalogueDatabaseConn the connection to the Catalogue database
    * @param dbType the dbType of the Catalogue database
    */
-  void checkCatalogueSchema(cta::rdbms::Conn* catalogueDatabaseConn, cta::rdbms::Login::DbType dbType);
+  void checkCatalogueSchema(cta::rdbms::Conn* catalogueDatabaseConn, cta::rdbms::Login::DbType dbType) const;
 };
 
 } // namespace cta::statistics

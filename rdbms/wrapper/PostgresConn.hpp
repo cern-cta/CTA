@@ -165,7 +165,7 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  std::map<std::string, std::string> getColumns(const std::string &tableName) override;
+  std::map<std::string, std::string, std::less<>> getColumns(const std::string &tableName) override;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical

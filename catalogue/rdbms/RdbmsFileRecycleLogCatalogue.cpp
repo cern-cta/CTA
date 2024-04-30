@@ -45,44 +45,30 @@ RdbmsFileRecycleLogCatalogue::RdbmsFileRecycleLogCatalogue(log::Logger &log, std
 
 FileRecycleLogItor RdbmsFileRecycleLogCatalogue::getFileRecycleLogItor(
   const RecycleTapeFileSearchCriteria & searchCriteria) const {
-  try {
-    auto conn = m_rdbmsCatalogue->m_archiveFileListingConnPool->getConn();
-    checkRecycleTapeFileSearchCriteria(conn, searchCriteria);
-    const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(
-      conn, searchCriteria.diskFileIds);
-    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
-    return FileRecycleLogItor(impl);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  auto conn = m_rdbmsCatalogue->m_archiveFileListingConnPool->getConn();
+  checkRecycleTapeFileSearchCriteria(conn, searchCriteria);
+  const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(
+    conn, searchCriteria.diskFileIds);
+  auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
+  return FileRecycleLogItor(impl);
 }
 
 void RdbmsFileRecycleLogCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
   const std::string &newFid) {
-  try {
-    auto fileRecycleLogitor = getFileRecycleLogItor(searchCriteria);
-    auto conn = m_connPool->getConn();
-    log::LogContext lc(m_log);
-    restoreEntryInRecycleLog(conn, fileRecycleLogitor, newFid, lc);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  auto fileRecycleLogitor = getFileRecycleLogItor(searchCriteria);
+  auto conn = m_connPool->getConn();
+  log::LogContext lc(m_log);
+  restoreEntryInRecycleLog(conn, fileRecycleLogitor, newFid, lc);
 }
 
 void RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(rdbms::Conn &conn,
-  const cta::common::dataStructures::FileRecycleLog &fileRecycleLog, const std::string &newFid, log::LogContext & lc) {
+  const cta::common::dataStructures::FileRecycleLog &fileRecycleLog, std::string_view newFid, log::LogContext&) {
   cta::catalogue::ArchiveFileRowWithoutTimestamps row;
   row.diskFileId = newFid;
   row.archiveFileId = fileRecycleLog.archiveFileId;
   row.checksumBlob = fileRecycleLog.checksumBlob;
-  row.diskFileOwnerUid = fileRecycleLog.diskFileUid;
-  row.diskFileGid = fileRecycleLog.diskFileGid;
+  row.diskFileOwnerUid = static_cast<uint32_t>(fileRecycleLog.diskFileUid);
+  row.diskFileGid = static_cast<uint32_t>(fileRecycleLog.diskFileGid);
   row.diskInstance = fileRecycleLog.diskInstanceName;
   row.size = fileRecycleLog.sizeInBytes;
   row.storageClassName = fileRecycleLog.storageClassName;
@@ -91,108 +77,84 @@ void RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(rdbms::Conn &c
 
 void RdbmsFileRecycleLogCatalogue::checkRecycleTapeFileSearchCriteria(cta::rdbms::Conn &conn,
   const RecycleTapeFileSearchCriteria & searchCriteria) const {
-  if (searchCriteria.vid) {
-    if (!RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
+  if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
-    }
   }
 }
 
 void RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog(rdbms::Conn & conn,
   const common::dataStructures::FileRecycleLog &fileRecycleLog, log::LogContext & lc) const {
-  try {
-    utils::Timer timer;
-    log::TimingList timingList;
-    cta::common::dataStructures::TapeFile tapeFile;
-    tapeFile.vid = fileRecycleLog.vid;
-    tapeFile.fSeq = fileRecycleLog.fSeq;
-    tapeFile.copyNb = fileRecycleLog.copyNb;
-    tapeFile.blockId = fileRecycleLog.blockId;
-    tapeFile.fileSize = fileRecycleLog.sizeInBytes;
-    tapeFile.creationTime = fileRecycleLog.tapeFileCreationTime;
+  utils::Timer timer;
+  log::TimingList timingList;
+  cta::common::dataStructures::TapeFile tapeFile;
+  tapeFile.vid = fileRecycleLog.vid;
+  tapeFile.fSeq = fileRecycleLog.fSeq;
+  tapeFile.copyNb = fileRecycleLog.copyNb;
+  tapeFile.blockId = fileRecycleLog.blockId;
+  tapeFile.fileSize = fileRecycleLog.sizeInBytes;
+  tapeFile.creationTime = fileRecycleLog.tapeFileCreationTime;
 
-    static_cast<RdbmsTapeFileCatalogue*>(m_rdbmsCatalogue->TapeFile().get())->insertTapeFile(conn, tapeFile,
-      fileRecycleLog.archiveFileId);
-    timingList.insertAndReset("insertTapeFileTime", timer);
+  static_cast<RdbmsTapeFileCatalogue*>(m_rdbmsCatalogue->TapeFile().get())->insertTapeFile(conn, tapeFile,
+    fileRecycleLog.archiveFileId);
+  timingList.insertAndReset("insertTapeFileTime", timer);
 
-    deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
-    timingList.insertAndReset("deleteTapeFileCopyFromRecycleBinTime", timer);
+  deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
+  timingList.insertAndReset("deleteTapeFileCopyFromRecycleBinTime", timer);
 
-    log::ScopedParamContainer spc(lc);
-    spc.add("vid", tapeFile.vid);
-    spc.add("archiveFileId", fileRecycleLog.archiveFileId);
-    spc.add("fSeq", tapeFile.fSeq);
-    spc.add("copyNb", tapeFile.copyNb);
-    spc.add("fileSize", tapeFile.fileSize);
-    timingList.addToLog(spc);
-    lc.log(log::INFO, "In RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog: "
-      "File restored from the recycle log.");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  log::ScopedParamContainer spc(lc);
+  spc.add("vid", tapeFile.vid);
+  spc.add("archiveFileId", fileRecycleLog.archiveFileId);
+  spc.add("fSeq", tapeFile.fSeq);
+  spc.add("copyNb", tapeFile.copyNb);
+  spc.add("fileSize", tapeFile.fileSize);
+  timingList.addToLog(spc);
+  lc.log(log::INFO, "In RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog: "
+    "File restored from the recycle log.");
 }
 
 void RdbmsFileRecycleLogCatalogue::copyTapeFilesToFileRecycleLog(rdbms::Conn & conn,
   const common::dataStructures::ArchiveFile &archiveFile, const std::string &reason) const {
-  try {
-    for(auto &tapeFile: archiveFile.tapeFiles) {
-      //Create one file recycle log entry per tape file
-      InsertFileRecycleLog fileRecycleLog;
-      fileRecycleLog.vid = tapeFile.vid;
-      fileRecycleLog.fSeq = tapeFile.fSeq;
-      fileRecycleLog.blockId = tapeFile.blockId;
-      fileRecycleLog.copyNb = tapeFile.copyNb;
-      fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
-      fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
-      fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
-      fileRecycleLog.reasonLog = "(Deleted using cta-admin tf rm) " + reason;
-      fileRecycleLog.recycleLogTime = time(nullptr);
-      insertFileInFileRecycleLog(conn, fileRecycleLog);
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  for(auto &tapeFile: archiveFile.tapeFiles) {
+    //Create one file recycle log entry per tape file
+    InsertFileRecycleLog fileRecycleLog;
+    fileRecycleLog.vid = tapeFile.vid;
+    fileRecycleLog.fSeq = tapeFile.fSeq;
+    fileRecycleLog.blockId = tapeFile.blockId;
+    fileRecycleLog.copyNb = tapeFile.copyNb;
+    fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
+    fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
+    fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
+    fileRecycleLog.reasonLog = "(Deleted using cta-admin tf rm) " + reason;
+    fileRecycleLog.recycleLogTime = time(nullptr);
+    insertFileInFileRecycleLog(conn, fileRecycleLog);
   }
 }
 
 void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) {
-  try {
-    auto conn = m_connPool->getConn();
-    deleteFilesFromRecycleLog(conn,vid,lc);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  auto conn = m_connPool->getConn();
+  deleteFilesFromRecycleLog(conn,vid,lc);
 }
 
-void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) {
-  try {
-    const char *const deleteFilesFromRecycleLogSql =
-    "DELETE FROM "
-      "FILE_RECYCLE_LOG "
-    "WHERE "
-      "VID=:VID";
+void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) const {
+  const char *const deleteFilesFromRecycleLogSql =
+  "DELETE FROM "
+    "FILE_RECYCLE_LOG "
+  "WHERE "
+    "VID=:VID";
 
-    cta::utils::Timer t;
-    log::TimingList tl;
-    auto selectFileStmt = conn.createStmt(deleteFilesFromRecycleLogSql);
-    selectFileStmt.bindString(":VID",vid);
-    selectFileStmt.executeNonQuery();
-    uint64_t nbAffectedRows = selectFileStmt.getNbAffectedRows();
-    if(nbAffectedRows){
-      tl.insertAndReset("deleteFilesFromRecycleLogTime",t);
-      log::ScopedParamContainer spc(lc);
-      spc.add("vid",vid);
-      spc.add("nbFileRecycleLogDeleted",nbAffectedRows);
-      tl.addToLog(spc);
-      lc.log(cta::log::INFO,"In RdbmsCatalogue::deleteFilesFromRecycleLog(), file recycle log entries have been deleted.");
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  cta::utils::Timer t;
+  log::TimingList tl;
+  auto selectFileStmt = conn.createStmt(deleteFilesFromRecycleLogSql);
+  selectFileStmt.bindString(":VID",vid);
+  selectFileStmt.executeNonQuery();
+  uint64_t nbAffectedRows = selectFileStmt.getNbAffectedRows();
+  if(nbAffectedRows){
+    tl.insertAndReset("deleteFilesFromRecycleLogTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid",vid);
+    spc.add("nbFileRecycleLogDeleted",nbAffectedRows);
+    tl.addToLog(spc);
+    lc.log(cta::log::INFO,"In RdbmsCatalogue::deleteFilesFromRecycleLog(), file recycle log entries have been deleted.");
   }
 }
 
@@ -201,185 +163,158 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn,
 // deleteTapeFileCopyFromRecycleBin
 //------------------------------------------------------------------------------
 void RdbmsFileRecycleLogCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn,
-  const common::dataStructures::FileRecycleLog fileRecycleLog) const {
-  try {
-    const char *const deleteTapeFilesSql =
-    "DELETE FROM "
-      "FILE_RECYCLE_LOG "
-    "WHERE FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND "
-    "FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND "
-    "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+  const common::dataStructures::FileRecycleLog& fileRecycleLog) const {
+  const char *const deleteTapeFilesSql =
+  "DELETE FROM "
+    "FILE_RECYCLE_LOG "
+  "WHERE FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND "
+  "FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND "
+  "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
 
-    auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
-    deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID", fileRecycleLog.archiveFileId);
-    deleteTapeFilesStmt.bindString(":VID", fileRecycleLog.vid);
-    deleteTapeFilesStmt.bindUint64(":FSEQ", fileRecycleLog.fSeq);
-    deleteTapeFilesStmt.bindUint64(":COPY_NB", fileRecycleLog.copyNb);
-    deleteTapeFilesStmt.bindString(":DISK_INSTANCE_NAME", fileRecycleLog.diskInstanceName);
-    deleteTapeFilesStmt.executeNonQuery();
-
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
+  deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID", fileRecycleLog.archiveFileId);
+  deleteTapeFilesStmt.bindString(":VID", fileRecycleLog.vid);
+  deleteTapeFilesStmt.bindUint64(":FSEQ", fileRecycleLog.fSeq);
+  deleteTapeFilesStmt.bindUint64(":COPY_NB", fileRecycleLog.copyNb);
+  deleteTapeFilesStmt.bindString(":DISK_INSTANCE_NAME", fileRecycleLog.diskInstanceName);
+  deleteTapeFilesStmt.executeNonQuery();
 }
 
 void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
   const InsertFileRecycleLog& fileRecycleLog) const {
-  try{
-    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog, &m_log);
-    uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
-    const char *const sql =
-    "INSERT INTO FILE_RECYCLE_LOG("
-      "FILE_RECYCLE_LOG_ID,"
-      "VID,"
-      "FSEQ,"
-      "BLOCK_ID,"
-      "COPY_NB,"
-      "TAPE_FILE_CREATION_TIME,"
-      "ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE_NAME,"
-      "DISK_FILE_ID,"
-      "DISK_FILE_ID_WHEN_DELETED,"
-      "DISK_FILE_UID,"
-      "DISK_FILE_GID,"
-      "SIZE_IN_BYTES,"
-      "CHECKSUM_BLOB,"
-      "CHECKSUM_ADLER32,"
-      "STORAGE_CLASS_ID,"
-      "ARCHIVE_FILE_CREATION_TIME,"
-      "RECONCILIATION_TIME,"
-      "COLLOCATION_HINT,"
-      "DISK_FILE_PATH,"
-      "REASON_LOG,"
-      "RECYCLE_LOG_TIME"
-    ") SELECT "
-      ":FILE_RECYCLE_LOG_ID,"
-      ":VID,"
-      ":FSEQ,"
-      ":BLOCK_ID,"
-      ":COPY_NB,"
-      ":TAPE_FILE_CREATION_TIME,"
-      ":ARCHIVE_FILE_ID,"
-      "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-      "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
-      "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-      "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-      "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-      "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-      "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-      "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-      "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-      "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
-      ":DISK_FILE_PATH,"
-      ":REASON_LOG,"
-      ":RECYCLE_LOG_TIME "
-    "FROM "
-      "ARCHIVE_FILE "
-    "WHERE "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":FILE_RECYCLE_LOG_ID",fileRecycleLogId);
-    stmt.bindString(":VID",fileRecycleLog.vid);
-    stmt.bindUint64(":FSEQ",fileRecycleLog.fSeq);
-    stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
-    stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
-    stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
-    stmt.bindString(":DISK_FILE_PATH",fileRecycleLog.diskFilePath);
-    stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
-    stmt.bindString(":REASON_LOG",trimmedReason);
-    stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
-    stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog, &m_log);
+  uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
+  const char *const sql =
+  "INSERT INTO FILE_RECYCLE_LOG("
+    "FILE_RECYCLE_LOG_ID,"
+    "VID,"
+    "FSEQ,"
+    "BLOCK_ID,"
+    "COPY_NB,"
+    "TAPE_FILE_CREATION_TIME,"
+    "ARCHIVE_FILE_ID,"
+    "DISK_INSTANCE_NAME,"
+    "DISK_FILE_ID,"
+    "DISK_FILE_ID_WHEN_DELETED,"
+    "DISK_FILE_UID,"
+    "DISK_FILE_GID,"
+    "SIZE_IN_BYTES,"
+    "CHECKSUM_BLOB,"
+    "CHECKSUM_ADLER32,"
+    "STORAGE_CLASS_ID,"
+    "ARCHIVE_FILE_CREATION_TIME,"
+    "RECONCILIATION_TIME,"
+    "COLLOCATION_HINT,"
+    "DISK_FILE_PATH,"
+    "REASON_LOG,"
+    "RECYCLE_LOG_TIME"
+  ") SELECT "
+    ":FILE_RECYCLE_LOG_ID,"
+    ":VID,"
+    ":FSEQ,"
+    ":BLOCK_ID,"
+    ":COPY_NB,"
+    ":TAPE_FILE_CREATION_TIME,"
+    ":ARCHIVE_FILE_ID,"
+    "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+    "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+    "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
+    "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+    "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
+    "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+    "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+    "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
+    "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
+    "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+    "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+    "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
+    ":DISK_FILE_PATH,"
+    ":REASON_LOG,"
+    ":RECYCLE_LOG_TIME "
+  "FROM "
+    "ARCHIVE_FILE "
+  "WHERE "
+    "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindUint64(":FILE_RECYCLE_LOG_ID",fileRecycleLogId);
+  stmt.bindString(":VID",fileRecycleLog.vid);
+  stmt.bindUint64(":FSEQ",fileRecycleLog.fSeq);
+  stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
+  stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
+  stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
+  stmt.bindString(":DISK_FILE_PATH",fileRecycleLog.diskFilePath);
+  stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
+  stmt.bindString(":REASON_LOG",trimmedReason);
+  stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
+  stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
+  stmt.executeNonQuery();
 }
 
 //------------------------------------------------------------------------------
 // copyArchiveFileToFileRecycleLog
 //------------------------------------------------------------------------------
 void RdbmsFileRecycleLogCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn,
-  const common::dataStructures::DeleteArchiveRequest & request) {
-  try{
-    if(!request.archiveFile){
-      throw cta::exception::Exception("No archiveFile object has been set in the DeleteArchiveRequest object.");
-    }
-    const common::dataStructures::ArchiveFile & archiveFile = request.archiveFile.value();
+  const common::dataStructures::DeleteArchiveRequest & request) const {
+  if(!request.archiveFile){
+    throw cta::exception::Exception("No archiveFile object has been set in the DeleteArchiveRequest object.");
+  }
+  const common::dataStructures::ArchiveFile & archiveFile = request.archiveFile.value();
 
-    for(auto &tapeFile: archiveFile.tapeFiles){
-      //Create one file recycle log entry per tape file
-      InsertFileRecycleLog fileRecycleLog;
-      fileRecycleLog.vid = tapeFile.vid;
-      fileRecycleLog.fSeq = tapeFile.fSeq;
-      fileRecycleLog.blockId = tapeFile.blockId;
-      fileRecycleLog.copyNb = tapeFile.copyNb;
-      fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
-      fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
-      fileRecycleLog.diskFilePath = request.diskFilePath;
-      fileRecycleLog.reasonLog = InsertFileRecycleLog::getDeletionReasonLog(request.requester.name,request.diskInstance);
-      fileRecycleLog.recycleLogTime = time(nullptr);
-      insertFileInFileRecycleLog(conn,fileRecycleLog);
-    }
-
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  for(auto &tapeFile: archiveFile.tapeFiles){
+    //Create one file recycle log entry per tape file
+    InsertFileRecycleLog fileRecycleLog;
+    fileRecycleLog.vid = tapeFile.vid;
+    fileRecycleLog.fSeq = tapeFile.fSeq;
+    fileRecycleLog.blockId = tapeFile.blockId;
+    fileRecycleLog.copyNb = tapeFile.copyNb;
+    fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
+    fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
+    fileRecycleLog.diskFilePath = request.diskFilePath;
+    fileRecycleLog.reasonLog = InsertFileRecycleLog::getDeletionReasonLog(request.requester.name,request.diskInstance);
+    fileRecycleLog.recycleLogTime = time(nullptr);
+    insertFileInFileRecycleLog(conn,fileRecycleLog);
   }
 }
 
 std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
-  rdbms::Conn & conn,const common::dataStructures::TapeFile & tapefile, const uint64_t archiveFileId){
+  rdbms::Conn & conn,const common::dataStructures::TapeFile & tapefile, const uint64_t archiveFileId) const {
   std::list<InsertFileRecycleLog> fileRecycleLogsToInsert;
-  try {
-    //First, get the file to insert on the FILE_RECYCLE_LOG table
-    {
-      const char *const sql =
-      "SELECT "
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-      "FROM "
-        "TAPE_FILE "
-      "WHERE "
-        "TAPE_FILE.COPY_NB=:COPY_NB AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND (TAPE_FILE.VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ)";
+  //First, get the file to insert on the FILE_RECYCLE_LOG table
+  const char *const sql =
+  "SELECT "
+    "TAPE_FILE.VID AS VID,"
+    "TAPE_FILE.FSEQ AS FSEQ,"
+    "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+    "TAPE_FILE.COPY_NB AS COPY_NB,"
+    "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+    "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+  "FROM "
+    "TAPE_FILE "
+  "WHERE "
+    "TAPE_FILE.COPY_NB=:COPY_NB AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND (TAPE_FILE.VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ)";
 
-      auto stmt = conn.createStmt(sql);
-      stmt.bindUint8(":COPY_NB",tapefile.copyNb);
-      stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
-      stmt.bindString(":VID",tapefile.vid);
-      stmt.bindUint64(":FSEQ",tapefile.fSeq);
+  auto stmt = conn.createStmt(sql);
+  stmt.bindUint8(":COPY_NB",tapefile.copyNb);
+  stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
+  stmt.bindString(":VID",tapefile.vid);
+  stmt.bindUint64(":FSEQ",tapefile.fSeq);
 
-      auto rset = stmt.executeQuery();
-      while(rset.next()){
-        cta::catalogue::InsertFileRecycleLog fileRecycleLog;
-        fileRecycleLog.vid = rset.columnString("VID");
-        fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
-        fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
-        fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
-        fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
-        fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
-        fileRecycleLog.recycleLogTime = time(nullptr);
-        fileRecycleLogsToInsert.push_back(fileRecycleLog);
-      }
-    }
-    {
-      for(auto & fileRecycleLog: fileRecycleLogsToInsert){
-        insertFileInFileRecycleLog(conn, fileRecycleLog);
-      }
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  auto rset = stmt.executeQuery();
+  while(rset.next()){
+    cta::catalogue::InsertFileRecycleLog fileRecycleLog;
+    fileRecycleLog.vid = rset.columnString("VID");
+    fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
+    fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
+    fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
+    fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+    fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
+    fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
+    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLogsToInsert.push_back(fileRecycleLog);
+  }
+
+  for(const auto& fileRecycleLog: fileRecycleLogsToInsert){
+    insertFileInFileRecycleLog(conn, fileRecycleLog);
   }
   return fileRecycleLogsToInsert;
 }

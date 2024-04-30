@@ -32,7 +32,7 @@ protected:
     Argcv(): argc(0), argv(nullptr) {
     }
   };
-  typedef std::list<Argcv*> ArgcvList;
+  using ArgcvList = std::list<Argcv*>;
   ArgcvList m_argsList;
 
   /**
@@ -46,12 +46,12 @@ protected:
     return copy;
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     // Allow getopt_long to be called again
     optind = 0;
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // Allow getopt_long to be called again
     optind = 0;
 

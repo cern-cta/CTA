@@ -30,12 +30,12 @@ struct PollDatabaseCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool help;
+  bool help = false;
 
   /**
    * The total number of seconds the cta-database-pollshould run before exiting.
    */
-  uint64_t numberOfSecondsToKeepPolling;
+  uint64_t numberOfSecondsToKeepPolling = 0;
 
   /**
    * Path to the file containing the connection details of the catalogue

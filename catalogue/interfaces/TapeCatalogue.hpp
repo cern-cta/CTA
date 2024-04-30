@@ -94,7 +94,7 @@ public:
    * @param vids The tape volume identifiers (VIDs).
    * @return Map from tape volume identifier to tape.
    */
-  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string, std::less<>> &vids) const = 0;
 
   /**
    * Returns the tapes with the specified volume identifiers.
@@ -106,7 +106,8 @@ public:
    * @param ignoreMissingVids Allow non-existing VIDs to be ignored.
    * @return Map from tape volume identifier to tape.
    */
-  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const = 0;
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string, std::less<>> &vids,
+    bool ignoreMissingVids) const = 0;
 
   /**
    * Returns map from VID to logical library name for specified set of VIDs.
@@ -114,7 +115,8 @@ public:
    * @param vids The tape volume identifiers (VIDs).
    * @return map from VID to logical library name.
    */
-  virtual std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const = 0;
+  virtual std::map<std::string, std::string, std::less<>> getVidToLogicalLibrary(
+    const std::set<std::string, std::less<>> &vids) const = 0;
 
   /**
    * Reclaims the specified tape.

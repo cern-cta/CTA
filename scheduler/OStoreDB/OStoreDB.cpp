@@ -1440,7 +1440,7 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
   cta::utils::Timer timer;
   // Get the best vid from the cache
-  std::set<std::string> candidateVids;
+  std::set<std::string, std::less<>> candidateVids;
   for (auto& tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
   SchedulerDatabase::RetrieveRequestInfo ret;
   ret.selectedVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
@@ -5335,7 +5335,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
       auto  rfqc        = m_retrieveRequest.getRetrieveFileQueueCriteria();
       auto& af          = rfqc.archiveFile;
 
-      std::set<std::string> candidateVids;
+      std::set<std::string, std::less<>> candidateVids;
       for(auto& tf : af.tapeFiles) {
         if (m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure) {
           candidateVids.insert(tf.vid);
@@ -5402,7 +5402,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
       auto  rfqc        = m_retrieveRequest.getRetrieveFileQueueCriteria();
       auto& af          = rfqc.archiveFile;
 
-      std::set<std::string> candidateVids;
+      std::set<std::string, std::less<>> candidateVids;
       for(auto& tf : af.tapeFiles) {
         if(m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer) {
           candidateVids.insert(tf.vid);

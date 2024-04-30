@@ -29,30 +29,21 @@ SqliteTapePoolCatalogue::SqliteTapePoolCatalogue(log::Logger &log,
   : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t SqliteTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
-  try {
-    conn.executeNonQuery("INSERT INTO TAPE_POOL_ID VALUES(NULL)");
-    uint64_t tapePoolId = 0;
-    {
-      const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
-      auto stmt = conn.createStmt(sql);
-      auto rset = stmt.executeQuery();
-      if(!rset.next()) {
-        throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
-      }
-      tapePoolId = rset.columnUint64("ID");
-      if(rset.next()) {
-        throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
-      }
-    }
-    conn.executeNonQuery("DELETE FROM TAPE_POOL_ID");
-
-    return tapePoolId;
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  conn.executeNonQuery("INSERT INTO TAPE_POOL_ID VALUES(NULL)");
+  uint64_t tapePoolId = 0;
+  const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if(!rset.next()) {
+    throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
   }
+  tapePoolId = rset.columnUint64("ID");
+  if(rset.next()) {
+    throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
+  }
+  conn.executeNonQuery("DELETE FROM TAPE_POOL_ID");
+
+  return tapePoolId;
 }
 
 } // namespace cta::catalogue

@@ -42,15 +42,16 @@ std::list<common::dataStructures::Tape> DummyTapeCatalogue::getTapes(
 }
 
 common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std::string& vid) const {
-  std::set<std::string> vids = {vid};
+  std::set<std::string, std::less<>> vids = {vid};
   return getTapesByVid(vids);
 }
 
-common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
+common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids) const {
   return getTapesByVid(vids, false);
 }
 
-common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const {
+common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids,
+  bool ignoreMissingVids) const {
   // Minimal implementation of VidToMap for retrieve request unit tests. We just support
   // disabled status for the tapes.
   // If the tape is not listed, it is listed as enabled in the return value.
@@ -66,8 +67,8 @@ common::dataStructures::VidToTapeMap DummyTapeCatalogue::getTapesByVid(const std
   return ret;
 }
 
-std::map<std::string, std::string> DummyTapeCatalogue::getVidToLogicalLibrary(
-  const std::set<std::string> &vids) const {
+std::map<std::string, std::string, std::less<>> DummyTapeCatalogue::getVidToLogicalLibrary(
+  const std::set<std::string, std::less<>> &vids) const {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 

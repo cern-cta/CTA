@@ -66,7 +66,7 @@ public:
 
   void deleteTapeDrive(const std::string &tapeDriveName) override;
 
-  std::map<std::string, uint64_t> getDiskSpaceReservations() const override;
+  std::map<std::string, uint64_t, std::less<>> getDiskSpaceReservations() const override;
 
   void reserveDiskSpace(const std::string& driveName, const uint64_t mountId,
     const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;

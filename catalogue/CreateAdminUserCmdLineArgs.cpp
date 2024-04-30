@@ -26,8 +26,7 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *const *const argv) {
   static struct option longopts[] = {
     { "comment",  required_argument, nullptr, 'm' },
     { "help",           no_argument, nullptr, 'h' },
@@ -70,7 +69,7 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << opt;
         throw ex;
       }
     } // switch(opt)
@@ -90,10 +89,8 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
   }
 
   // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
-    // Check the number of arguments
-  if(nbArgs != 1) {
+  // Check the number of arguments
+  if(const int nbArgs = argc - optind; nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
@@ -120,7 +117,7 @@ void CreateAdminUserCmdLineArgs::printUsage(std::ostream &os) {
     "        Comment to describe the creation of the admin user" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<
-    "" << std::endl;;
+    "" << std::endl;
 }
 
 } // namespace cta::catalogue

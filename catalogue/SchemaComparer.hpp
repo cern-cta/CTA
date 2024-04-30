@@ -77,7 +77,7 @@ protected:
   const std::string  m_databaseToCheckName;
   cta::catalogue::DatabaseMetadataGetter & m_databaseMetadataGetter;
   std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
-  bool m_compareTableConstraints;
+  bool m_compareTableConstraints = true;
 };
 
 } // namespace cta::catalogue

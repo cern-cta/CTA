@@ -20,14 +20,6 @@
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ArchiveFileRowWithoutTimestamps::ArchiveFileRowWithoutTimestamps() :
-  archiveFileId(0),
-  size(0) {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool ArchiveFileRowWithoutTimestamps::operator==(const ArchiveFileRowWithoutTimestamps &rhs) const {

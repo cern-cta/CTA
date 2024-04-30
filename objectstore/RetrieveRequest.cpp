@@ -91,7 +91,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
   // Find the vids for active jobs in the request (to transfer ones).
   using serializers::RetrieveJobStatus;
-  std::set<std::string> candidateVids;
+  std::set<std::string, std::less<>> candidateVids;
   for (auto& j: m_payload.jobs()) {
     switch(j.status()){
       case RetrieveJobStatus::RJS_ToTransfer:

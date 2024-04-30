@@ -34,7 +34,7 @@ struct ArchiveFileRow {
    *
    * Sets the value of all integer member-variables to zero.
    */
-  ArchiveFileRow();
+  ArchiveFileRow() = default;
 
   /**
    * Equality operator.
@@ -46,7 +46,7 @@ struct ArchiveFileRow {
   /**
    * The unique identifier of the file being archived.
    */
-  uint64_t archiveFileId;
+  uint64_t archiveFileId = 0;
 
   /**
    * The instance name of the source disk system.
@@ -74,7 +74,7 @@ struct ArchiveFileRow {
   /**
    * The uncompressed size of the tape file in bytes.
    */
-  uint64_t size;
+  uint64_t size = 0;
   
   /**
    * Set of checksum types and values
@@ -89,12 +89,12 @@ struct ArchiveFileRow {
   /**
    * Creation time in seconds since the Unix epoch.
    */
-  time_t creationTime;
+  time_t creationTime = 0;
 
   /**
    * Reconciliation time in seconds since the Unix epoch.
    */
-  time_t reconciliationTime;
+  time_t reconciliationTime = 0;
 
 }; // struct ArchiveFileRow
 
