@@ -16,6 +16,7 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -24,6 +25,7 @@
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
+#include "common/processCap/ProcessCap.hpp"
 
 #include "version.h"
 
@@ -127,6 +129,23 @@ void logStartOfDaemon(cta::log::Logger &log,
 } // namespace cta::taped
 
 //------------------------------------------------------------------------------
+// setProcessCapabilities
+//------------------------------------------------------------------------------
+void setProcessCapabilities(const std::string &text, cta::log::Logger& log) {
+  try {
+    cta::server::ProcessCap capUtils;
+    capUtils.setProcText(text);
+    log(cta::log::INFO, "Set process capabilities",
+      {{"capabilities", capUtils.getProcText()}});
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities to '" << text <<
+      "': " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
@@ -155,19 +174,19 @@ int main(const int argc, char **const argv) {
     logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     // Parse /etc/cta/cta-taped-unitName.conf parameters
     globalConfig =
-       tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
+     tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
 
     // Set capabilities to change user and group id's.
-    setProcessCapabilities("cap_setgid,cap_setuid+ep");
+    setProcessCapabilities("cap_setgid,cap_setuid+ep", *logPtr);
 
     // Set user and group
     std::list<log::Param> params = {
-      log::Param("userName",  globalConfig.daemonUserName.value),
-      log::Param("groupName", globalConfig.daemonGroupName.value)};
-    *log(log::INFO, "Setting user name and group name of current process", params);
+      log::Param("userName",  globalConfig.daemonUserName.value()),
+      log::Param("groupName", globalConfig.daemonGroupName.value())};
+      (*logPtr)(log::INFO, "Setting user name and group name of current process", params);
 
-    System::setUserAndGroup(globalConfig.daemonUserName.value,
-                                 globalConfig.daemonGroupName.value);
+    System::setUserAndGroup(globalConfig.daemonUserName.value(),
+                                 globalConfig.daemonGroupName.value());
   } catch(exception::Errnum &ex) {
      // Failed call to uname to get short host name
   } catch(...) {
