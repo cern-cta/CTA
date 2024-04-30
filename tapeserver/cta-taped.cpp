@@ -177,7 +177,8 @@ int main(const int argc, char **const argv) {
      tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
 
     // Set capabilities to change user and group id's.
-    setProcessCapabilities("cap_setgid,cap_setuid+ep", *logPtr);
+    // We also need to set rawio capabilities here, after changing user and group  we will not be able to set it.
+    setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p", *logPtr);
 
     // Set user and group
     std::list<log::Param> params = {
