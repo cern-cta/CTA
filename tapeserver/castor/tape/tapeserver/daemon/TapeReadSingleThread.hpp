@@ -52,7 +52,6 @@ public:
                        TapeSessionReporter& reporter,
                        const VolumeInfo& volInfo,
                        uint64_t maxFilesRequest,
-                       cta::server::ProcessCap& capUtils,
                        RecallWatchDog& watchdog,
                        const cta::log::LogContext& logContext,
                        RecallReportPacker& reportPacker,

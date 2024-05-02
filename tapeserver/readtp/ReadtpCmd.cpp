@@ -24,6 +24,7 @@
 #include "common/Constants.hpp"
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/processCap/ProcessCap.cpp"
 #include "disk/DiskFile.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
@@ -185,16 +186,6 @@ std::list<std::string> ReadtpCmd::readListFromFile(const std::string &filename) 
   return str_list;
 }
 
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void ReadtpCmd::setProcessCapabilities(const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("capabilities", capabilities));
-  m_log(cta::log::DEBUG, "Set process capabilities", params);
-}
 
 //------------------------------------------------------------------------------
 // createDrive

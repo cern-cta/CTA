@@ -25,7 +25,6 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "common/threading/Thread.hpp"
 #include "Session.hpp"
 #include "TapeSessionStats.hpp"
@@ -47,10 +46,6 @@ class TapeSessionReporter;
 template<class Task>
 class TapeSingleThreadInterface : private cta::threading::Thread {
 private :
-  /**
-   * Utility to change the capabilities of the current tape thread
-   */
-  cta::server::ProcessCap& m_capUtils;
 protected:
   ///the queue of tasks 
   cta::threading::BlockingQueue<Task *> m_tasks;
@@ -271,18 +266,16 @@ public:
    * @param mc The media changer (=robot) that will (un)load/(un)mount the tape
    * @param gsr
    * @param volInfo All we need to know about the tape we are manipulating 
-   * @param capUtils
    * @param lc lc The log context, later on copied
    * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface& drive,
                             cta::mediachanger::MediaChangerFacade& mc, TapeSessionReporter& tsr,
                             const VolumeInfo& volInfo,
-                            cta::server::ProcessCap& capUtils, const cta::log::LogContext& lc,
+                            const cta::log::LogContext& lc,
                             const bool useEncryption,
                             const std::string& externalEncryptionKeyScript, const uint32_t tapeLoadTimeout)
-    : m_capUtils(capUtils),
-      m_drive(drive), m_mediaChanger(mc), m_reporter(tsr), m_vid(volInfo.vid), m_logContext(lc),
+    : m_drive(drive), m_mediaChanger(mc), m_reporter(tsr), m_vid(volInfo.vid), m_logContext(lc),
       m_volInfo(volInfo), m_hardwareStatus(Session::MARK_DRIVE_AS_UP),
       m_encryptionControl(useEncryption, externalEncryptionKeyScript), m_tapeLoadTimeout(tapeLoadTimeout) {}
 }; // class TapeSingleThreadInterface

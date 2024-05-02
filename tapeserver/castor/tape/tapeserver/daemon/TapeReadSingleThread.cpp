@@ -31,7 +31,6 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   TapeSessionReporter& reporter,
   const VolumeInfo& volInfo,
   uint64_t maxFilesRequest,
-  cta::server::ProcessCap& capUtils,
   RecallWatchDog& watchdog,
   const cta::log::LogContext& logContext,
   RecallReportPacker& reportPacker,
@@ -43,7 +42,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const uint32_t tapeLoadTimeout,
   cta::catalogue::Catalogue& catalogue) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mediaChanger, reporter, volInfo,
-                                          capUtils, logContext, useEncryption, externalEncryptionKeyScript,
+                                          logContext, useEncryption, externalEncryptionKeyScript,
                                           tapeLoadTimeout),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),

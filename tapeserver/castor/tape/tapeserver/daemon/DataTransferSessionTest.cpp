@@ -54,7 +54,6 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
@@ -614,10 +613,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, castorConf, scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -802,10 +800,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+    driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1020,10 +1017,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
-                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1205,10 +1201,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1394,10 +1389,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1584,10 +1578,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1777,10 +1770,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1958,9 +1950,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   castor::messages::TapeserverProxyDummy initialProcess;
-  cta::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", logger, mockSys,
-                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
@@ -2112,10 +2103,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
-                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2253,9 +2243,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   logToCheck += "";
@@ -2407,9 +2396,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess,  castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   logToCheck += "";
@@ -2572,9 +2560,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   logToCheck += "";
@@ -2728,9 +2715,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   logToCheck += "";
@@ -2894,9 +2880,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3058,9 +3043,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess,  castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3231,9 +3215,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3365,10 +3348,8 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::server::ProcessCapDummy capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   CleanerSession cleanerSession(
-    capUtils,
     mc,
     logger,
     driveConfig,

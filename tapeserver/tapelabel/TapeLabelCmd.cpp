@@ -19,6 +19,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Constants.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
@@ -383,7 +384,7 @@ void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface &
 // setProcessCapabilities
 //------------------------------------------------------------------------------
 void TapeLabelCmd::setProcessCapabilities(const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
+  cta::server::ProcessCap::setProcText(capabilities);
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("capabilities", capabilities));
   m_log(cta::log::INFO, "Label session set process capabilities", params);

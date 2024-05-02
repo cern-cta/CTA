@@ -80,7 +80,7 @@ protected:
    * @param userName The name of the user.
    * @param groupName The name of the group.
    */
-  void daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName, const std::string &groupName);
+  void daemonizeIfNotRunInForeground();
 
   /**
    * Object representing the API of the CASTOR logging system.

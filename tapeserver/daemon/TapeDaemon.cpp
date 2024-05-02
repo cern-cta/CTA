@@ -22,6 +22,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
@@ -35,10 +36,9 @@ namespace cta::tape::daemon {
 
 TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     log::Logger& log,
-    const common::TapedConfiguration& globalConfig,
-    cta::server::ProcessCap& capUtils):
+    const common::TapedConfiguration& globalConfig):
     cta::server::Daemon(log),
-    m_globalConfiguration(globalConfig), m_capUtils(capUtils),
+    m_globalConfiguration(globalConfig),
     m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
@@ -80,13 +80,7 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
-  // Process must be able to change user now and should be permitted to perform
-  // raw IO in the future
-  setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-
-  const std::string userName = m_globalConfiguration.daemonUserName.value();
-  const std::string groupName = m_globalConfiguration.daemonGroupName.value();
-  daemonizeIfNotRunInForegroundAndSetUserAndGroup(userName, groupName);
+  daemonizeIfNotRunInForeground();
   setDumpable();
 
   // There is no longer any need for the process to be able to change user,
@@ -158,9 +152,9 @@ void cta::tape::daemon::TapeDaemon::setDumpable() {
 void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
   const std::string &text) {
   try {
-    m_capUtils.setProcText(text);
+    cta::server::ProcessCap::setProcText(text);
     m_log(log::INFO, "Set process capabilities",
-      {{"capabilities", m_capUtils.getProcText()}});
+      {{"capabilities", cta::server::ProcessCap::getProcText()}});
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set process capabilities to '" << text <<

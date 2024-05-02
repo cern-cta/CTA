@@ -19,7 +19,6 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "DataTransferConfig.hpp"
@@ -52,7 +51,7 @@ public:
                       const cta::tape::daemon::DriveConfigEntry& driveConfig,
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
-                      cta::server::ProcessCap& capUtils, const DataTransferConfig& dataTransferConfig,
+                      const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
 
   /**
@@ -76,13 +75,6 @@ public:
    * completed.
    */
   EndOfSessionAction execute() override;
-
-  /**
-   * Sets the capabilities of the process and logs the result.
-   *
-   * @param capabilities The string representation of the capabilities.
-   */
-  void setProcessCapabilities(const std::string& capabilities);
 
   /** Temporary method used for debugging while building the session class */
   std::string getVid() const { return m_volInfo.vid; }
@@ -139,8 +131,6 @@ private:
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
   /** Reference to the tape server's parent process to report detailed status */
   cta::tape::daemon::TapedProxy& m_initialProcess;
-  /** Object providing utilities for working UNIX capabilities. */
-  cta::server::ProcessCap& m_capUtils;
   /** hostname, used to report status of the drive */
   const std::string m_hostname;
   /**

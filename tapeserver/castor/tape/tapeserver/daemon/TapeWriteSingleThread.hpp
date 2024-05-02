@@ -57,7 +57,6 @@ public:
     const VolumeInfo& volInfo,
     const cta::log::LogContext& logContext,
     MigrationReportPacker& reportPacker,
-    cta::server::ProcessCap& capUtils,
     uint64_t filesBeforeFlush,
     uint64_t bytesBeforeFlush,
     const bool useLbp,

@@ -32,6 +32,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <type_traits>
 
 namespace cta::taped {
 
@@ -99,15 +100,11 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
     log(log::INFO, "Set log mask", params);
   }
 
-  // Create the object providing utilities for working with UNIX capabilities
-  cta::server::ProcessCap capUtils;
-
   // Create the main tapeserverd object
   cta::tape::daemon::TapeDaemon daemon(
     commandLine,
     log,
-    globalConfig,
-    capUtils);
+    globalConfig);
 
   // Run the tapeserverd daemon
   return daemon.main();
@@ -149,10 +146,55 @@ int main(const int argc, char **const argv) {
     return EXIT_SUCCESS;
   }
 
-  // Try to instantiate the logging system API
-  std::unique_ptr<log::Logger> logPtr;
+  std::string shortHostName;
   try {
-    const std::string shortHostName = utils::getShortHostname();
+    shortHostName = utils::getShortHostname();
+  } catch (...) {
+    std::cerr << "Failed to get short host name";
+    return EXIT_FAILURE;
+  }
+
+  // Use a temporary stdoutlogger while setting some stuff
+  std::unique_ptr<log::Logger> logPtr;
+  logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
+
+  // Initial parse of config file
+  tape::daemon::common::TapedConfiguration globalConfig;
+  try {
+  globalConfig =
+      tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
+  } catch (...) {
+    // Something went wrong with the config file. Report it now.
+    return EXIT_FAILURE;
+  }
+
+  // Change process capabilities.
+  // Process must be able to change user now and rawio should be set now to be able to perform
+  // raw IO after change to non root user.
+  try {
+    cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
+    (*logPtr)(log::INFO, "Set process capabilities",
+                  {{"capabilites", cta::server::ProcessCap::getProcText()}});
+  } catch (cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities to '" << "cap_setgid,cap_setuid+ep cap_sys_rawio+p" <<
+      "': " << ne.getMessage().str();
+    return EXIT_FAILURE;
+  }
+
+  // Change user and group
+  const std::string userName = globalConfig.daemonUserName.value();
+  const std::string groupName = globalConfig.daemonGroupName.value();
+
+  try {
+    (*logPtr)(log::INFO, "Setting user name and group name of current process",
+                  {{"userName", userName}, {"groupName", groupName}});
+  } catch (exception::Exception& ex) {
+    return EXIT_FAILURE;
+  }
+
+  // Try to instantiate the logging system API
+  try {
     if(commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {

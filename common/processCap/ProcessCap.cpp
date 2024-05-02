@@ -22,28 +22,9 @@
 #include "common/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
-// getProcText
-//------------------------------------------------------------------------------
-std::string cta::server::ProcessCap::getProcText() {
-  cap_t cap;
-
-  try {
-    cap = getProc();
-    auto retval = toText(cap);
-    cap_free(cap);
-    return retval;
-  } catch(cta::exception::Exception& ne) {
-    cap_free(cap);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to get text representation of the capabilities of the process: " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getProc
 //------------------------------------------------------------------------------
-cap_t cta::server::ProcessCap::getProc() {
+static cap_t getProc() {
   cap_t cap = cap_get_proc();
   if(nullptr == cap) {
     cta::exception::Exception ex;
@@ -58,8 +39,7 @@ cap_t cta::server::ProcessCap::getProc() {
 //------------------------------------------------------------------------------
 // toText
 //------------------------------------------------------------------------------
-std::string cta::server::ProcessCap::toText(
-  const cap_t cap) {
+static std::string toText(const cap_t cap) {
   // Create a C++ string with the result of calling cap_to_text()
   char *const text = cap_to_text(cap, nullptr);
   if(nullptr == text) {
@@ -85,26 +65,9 @@ std::string cta::server::ProcessCap::toText(
 }
 
 //------------------------------------------------------------------------------
-// setProcText
-//------------------------------------------------------------------------------
-void cta::server::ProcessCap::setProcText(const std::string& text) {
-  cap_t cap;
-  try {
-    cap = fromText(text);
-    setProc(cap);
-    cap_free(cap);
-  } catch(cta::exception::Exception& ne) {
-    cap_free(cap);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set capabilities of process: " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // fromText
 //------------------------------------------------------------------------------
-cap_t cta::server::ProcessCap::fromText(const std::string &text) {
+cap_t fromText(const std::string &text) {
   const cap_t cap = cap_from_text(text.c_str());
   if(nullptr == cap) {
     cta::exception::Exception ex;
@@ -120,7 +83,7 @@ cap_t cta::server::ProcessCap::fromText(const std::string &text) {
 //------------------------------------------------------------------------------
 // setProc
 //------------------------------------------------------------------------------
-void cta::server::ProcessCap::setProc(const cap_t cap) {
+void setProc(const cap_t cap) {
   if(cap_set_proc(cap)) {
     cta::exception::Exception ex;
     ex.getMessage() <<
@@ -129,3 +92,42 @@ void cta::server::ProcessCap::setProc(const cap_t cap) {
     throw ex;
   }
 }
+
+namespace cta::server::ProcessCap{
+//------------------------------------------------------------------------------
+// getProcText
+//------------------------------------------------------------------------------
+std::string getProcText() {
+  cap_t cap;
+
+  try {
+    cap = getProc();
+    auto retval = toText(cap);
+    cap_free(cap);
+    return retval;
+  } catch(cta::exception::Exception& ne) {
+    cap_free(cap);
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to get text representation of the capabilities of the process: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// setProcText
+//------------------------------------------------------------------------------
+void setProcText(const std::string& text) {
+  cap_t cap;
+  try {
+    cap = fromText(text);
+    setProc(cap);
+    cap_free(cap);
+  } catch(cta::exception::Exception& ne) {
+    cap_free(cap);
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to set capabilities of process: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+} //namespace cta::server::ProcessCap
