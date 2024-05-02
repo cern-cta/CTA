@@ -20,6 +20,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
