@@ -97,7 +97,7 @@ private:
 
 };
 
-template<typename BASE_TYPE>
+template <typename BASE_TYPE, typename... IARGS>
 class Manager {
 
 public:
@@ -110,7 +110,7 @@ public:
     return m_umapPlugins.find(strPluginName) != m_umapPlugins.end();
   }
 
-  void registerPlugin(std::unique_ptr<plugin::Interface<BASE_TYPE>> upInterface) {
+  void registerPlugin(std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface) {
     const std::string strPluginName = upInterface->template GET<plugin::DATA::PLUGIN_NAME>(); 
     if (isRegistered(strPluginName)) {
       throw std::logic_error("A plugin with the name: " + strPluginName + " is already registered");
@@ -118,7 +118,7 @@ public:
     m_umapPlugins.emplace(strPluginName, std::move(upInterface));  
   }
 
-  const plugin::Interface<BASE_TYPE>& plugin(const std::string& strPluginName) const {
+  const plugin::Interface<BASE_TYPE, IARGS...>& plugin(const std::string& strPluginName) const {
     if (!isRegistered(strPluginName)) {
       throw std::logic_error("A plugin with the name: " + strPluginName + " is not registered");
     }
@@ -155,9 +155,9 @@ public:
   template<typename... ARGS>
   Manager&  bootstrap(const std::string& strEntryPoint, ARGS&... args) {
     loader().attach(strEntryPoint);
-    std::unique_ptr<cta::plugin::Interface<BASE_TYPE>> upInterface = std::make_unique<plugin::Interface<BASE_TYPE>>();
+    std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface = std::make_unique<plugin::Interface<BASE_TYPE, IARGS...>>();
     
-    loader().template call<void (*)(plugin::Interface<BASE_TYPE>&), void>(*upInterface, args...);
+    loader().template call<void (*)(plugin::Interface<BASE_TYPE, IARGS...>&), void>(*upInterface, args...);
     // Set / overload plugin file name
     upInterface->template SET<plugin::DATA::FILE_NAME>(m_strActiveLoader);
 
@@ -170,7 +170,7 @@ public:
 private:
   std::string m_strActiveLoader;
   std::unordered_map<std::string, plugin::Loader> m_umapLoaders;
-  std::unordered_map<std::string, std::unique_ptr<plugin::Interface<BASE_TYPE>>> m_umapPlugins;
+  std::unordered_map<std::string, std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>> m_umapPlugins;
 
   Loader& loader() {
     try {

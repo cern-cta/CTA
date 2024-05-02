@@ -21,6 +21,7 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 namespace cta::catalogue {
 
@@ -59,3 +60,18 @@ std::unique_ptr<Catalogue> PostgresqlCatalogueFactory::create() {
 }
 
 } // namespace cta::catalogue
+
+extern "C" {
+
+void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const cta::rdbms::Login&, const u_int64_t,
+      const u_int64_t, const u_int64_t>>& interface) {
+  
+  interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacataloguepostgres")
+    .CLASS<cta::catalogue::PostgresqlCatalogueFactory>("PostgresqlCatalogueFactory");
+}
+
+}// extern "C"
+

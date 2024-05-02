@@ -35,7 +35,9 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
-    static cta::plugin::Manager<rdbms::wrapper::ConnFactory> pm;
+    static cta::plugin::Manager<rdbms::wrapper::ConnFactory,
+      cta::plugin::Args<const std::string&>,
+      cta::plugin::Args<const std::string&, const std::string&, const std::string&>> pm;
     std::unique_ptr<ConnFactory> upConnFactory;
 
     switch (login.dbType) {
@@ -54,8 +56,8 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       if (!pm.isRegistered("ctardbmspostgres")) {
         pm.bootstrap("factory");
       }
-      upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory");
-      upConnFactory->init(login.database);
+      upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory", login.database);
+      //upConnFactory->init(login.database);
 
       return upConnFactory;
 

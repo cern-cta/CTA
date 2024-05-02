@@ -32,13 +32,6 @@ PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
 }
 
 //------------------------------------------------------------------------------
-// initialize
-//------------------------------------------------------------------------------
-void PostgresConnFactory::init(const std::string& strConnInfo) {
-  m_conninfo = strConnInfo;
-}
-
-//------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
@@ -53,7 +46,8 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
 
 extern "C" {
 
-void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory>& interface) {
+void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+    cta::plugin::Args<const std::string&> >& interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
     .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");
 }

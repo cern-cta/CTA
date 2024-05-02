@@ -22,6 +22,8 @@
 #include <type_traits>
 #include <memory>
 #include <functional>
+#include <tuple>
+#include <variant>
 #include <unordered_map>
 #include <string>
 
@@ -34,25 +36,20 @@ enum class DATA {
   PLUGIN_VERSION
 };
 
-template<typename... ARGS>
-struct Base {
-  virtual ~Base() = default;
+template<typename... ARGS> using Args = std::tuple<ARGS...>;
 
-  virtual void operator()(const ARGS&...) = 0;
-};
-
-template<typename BASE_TYPE>
+template<typename BASE_TYPE, typename... IARGS>
 class Interface {
 
 public:
 
-  template <plugin::DATA D>
+  template<plugin::DATA D>
   Interface& SET(const std::string& strValue) {
     m_umapData.emplace(D, strValue);
     return *this;
   }
 
-  template <plugin::DATA D>
+  template<plugin::DATA D>
   const std::string& GET() const {
     return m_umapData.at(D);
   }
@@ -62,18 +59,35 @@ public:
     if (!std::is_base_of<BASE_TYPE, TYPE>::value) { 
       throw std::invalid_argument("plugin type not supported");
     }
-    m_umapFactories.emplace(strClassName, []() -> std::unique_ptr<TYPE> { return std::make_unique<TYPE>(); });
+    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& args) ->
+        std::unique_ptr<TYPE> {
+          // Visit constructor variants of TYPE
+          std::unique_ptr<TYPE> upToType = std::visit([](auto&& arg) ->
+              std::unique_ptr<TYPE> {
+              // Unpack parameter pack (IARGS...) 
+              return std::apply(
+                      [](auto&&... unpackArgs) -> std::unique_ptr<TYPE> {
+                        return std::make_unique<TYPE>(unpackArgs...);
+                      }, arg);
+
+          }, args);
+        
+          return upToType;
+        });
+
     return *this;
   }
 
-  std::unique_ptr<BASE_TYPE> create(std::string strClassName) const {
-    return m_umapFactories.at(strClassName)();
+  template<typename... ARGS>
+  constexpr
+  std::unique_ptr<BASE_TYPE> create(const std::string& strClassName, ARGS&&... args) const {
+    return m_umapFactories.at(strClassName)(std::forward_as_tuple(args...));
   }
 
 private:
   std::unordered_map<DATA, std::string> m_umapData;
-  std::unordered_map<std::string, std::function<std::unique_ptr<BASE_TYPE> ()>> m_umapFactories;
+  std::unordered_map<std::string, std::function<std::unique_ptr<BASE_TYPE> (const std::variant<IARGS...>&)>> m_umapFactories;
+
 };
 
-}// namespace cta::plugin
-
+} // namespace cta::plugin
