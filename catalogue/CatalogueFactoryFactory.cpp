@@ -61,7 +61,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
       //return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-      pm.load("ctacataloguepostrgres.so");
+      pm.load("libctacataloguepostrgres.so");
       if (!pm.isRegistered("ctacataloguepostgres")) {
         pm.bootstrap("factory");
       }
