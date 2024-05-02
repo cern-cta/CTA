@@ -189,6 +189,7 @@ int main(const int argc, char **const argv) {
   try {
     (*logPtr)(log::INFO, "Setting user name and group name of current process",
                   {{"userName", userName}, {"groupName", groupName}});
+    cta::System::setUserAndGroup(userName, groupName);
   } catch (exception::Exception& ex) {
     return EXIT_FAILURE;
   }
