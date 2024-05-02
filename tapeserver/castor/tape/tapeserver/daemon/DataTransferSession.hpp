@@ -77,13 +77,6 @@ public:
    */
   EndOfSessionAction execute() override;
 
-  /**
-   * Sets the capabilities of the process and logs the result.
-   *
-   * @param capabilities The string representation of the capabilities.
-   */
-  void setProcessCapabilities(const std::string& capabilities);
-
   /** Temporary method used for debugging while building the session class */
   std::string getVid() const { return m_volInfo.vid; }
 

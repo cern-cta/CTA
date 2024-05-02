@@ -64,27 +64,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const
 }
 
 //------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-/**
- * This function will try to set the cap_sys_rawio capability that is needed
- * for by tape thread to access /dev/nst
- */
-void castor::tape::tapeserver::daemon::DataTransferSession::setProcessCapabilities(
-  const std::string& capabilities) {
-  cta::log::LogContext lc(m_log);
-  try {
-    m_capUtils.setProcText(capabilities);
-    cta::log::LogContext::ScopedParam sp(lc,
-                                         cta::log::Param("capabilities", m_capUtils.getProcText()));
-    lc.log(cta::log::INFO, "Set process capabilities for using tape");
-  } catch (const cta::exception::Exception& ne) {
-    lc.log(cta::log::ERR,
-           "Failed to set process capabilities for using the tape ");
-  }
-}
-
-//------------------------------------------------------------------------------
 //DataTransferSession::execute
 //------------------------------------------------------------------------------
 /**
@@ -102,8 +81,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
-
-  setProcessCapabilities("cap_sys_rawio+ep");
 
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 

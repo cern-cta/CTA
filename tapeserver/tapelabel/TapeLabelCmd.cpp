@@ -59,9 +59,13 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   m_log(cta::log::INFO, "Label session started", params);
   
   readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel, cmdLineArgs.m_unitName);
-   
-  setProcessCapabilities("cap_sys_rawio+ep");
-  
+
+  // Set process capabilities
+  m_capUtils.setProcText("cap_sys_rawio+ep");
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("capabilities", capabilities));
+  m_log(cta::log::INFO, "Label session set process capabilities", params);
+
   m_catalogue->Tape()->checkTapeForLabel(m_vid);
   
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
@@ -377,16 +381,6 @@ void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface &
   m_log(cta::log::INFO, "Label session rewinding tape", params);
   drive.rewind();
   m_log(cta::log::INFO, "Label session successfully rewound tape", params);
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void TapeLabelCmd::setProcessCapabilities(const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("capabilities", capabilities));
-  m_log(cta::log::INFO, "Label session set process capabilities", params);
 }
 
 //------------------------------------------------------------------------------

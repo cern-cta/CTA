@@ -117,9 +117,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerF
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
-  setProcessCapabilities("cap_sys_rawio+ep");
-
-  std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
+    std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
   try {
@@ -247,20 +245,6 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed getting tape alerts from the drive", params);
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
-  const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
-  {
-    std::list<cta::log::Param> params = {
-      cta::log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(cta::log::INFO, "Cleaner set process capabilities for using tape",
-      params);
-  }
 }
 
 //------------------------------------------------------------------------------

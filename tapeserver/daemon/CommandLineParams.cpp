@@ -66,10 +66,10 @@ CommandLineParams::CommandLineParams(int argc, char** argv) {
     }
   }
   if (logToStdout && !foreground) {
-    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
+    throw cta::exception::CommandLineNotParsed("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
   }
   if (logToFile && logToStdout) {
-    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to both stdout and file");
+    throw cta::exception::CommandLineNotParsed("In CommandLineParams::CommandLineParams(): cannot log to both stdout and file");
   }
 }
 

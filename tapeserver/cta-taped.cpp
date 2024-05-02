@@ -46,10 +46,8 @@ namespace cta::taped {
 //
 // @param argc The number of command-line arguments.
 // @param argv The command-line arguments.
-// @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration &glocalConfig,
-  cta::log::Logger &log, const daemon::CommandLineParams & commandLine);
+static int exceptionThrowingMain(const int argc, char *const *const argv);
 
 //------------------------------------------------------------------------------
 // The help string
@@ -73,12 +71,69 @@ void logStartOfDaemon(cta::log::Logger &log,
   const daemon::CommandLineParams& commandLine);
 
 //------------------------------------------------------------------------------
+// Set the process capabilities to the specieid `text` string
+//------------------------------------------------------------------------------
+void setProcessCapabilities(const std::string &text, cta::log::Logger& log);
+
+//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration& globalConfig,
-                                 cta::log::Logger &log, const daemon::CommandLineParams & commandLine) {
+static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta::tape::daemon::common;
 
+  // Interpret the command line
+  std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
+  commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
+
+  if(commandLine->helpRequested) {
+    std::cout << cta::taped::gHelpString << std::endl;
+    return EXIT_SUCCESS;
+  }
+
+  // Initial parse of the config file to check for user and group of the process.
+  tape::daemon::common::TapedConfiguration globalConfig;
+  std::unique_ptr<log::Logger> logPtr;
+
+  const std::string shortHostName = utils::getShortHostname();
+  logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
+  // This will not be logged into the file as it has not been opened yet. We will log it later when the daemon parses it.
+  globalConfig =
+    tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
+
+  // Create the object providing utilities for working with UNIX capabilities
+  cta::server::ProcessCap capUtils;
+
+  // Set capabilities to change user and group id's. We also need to set rawio capabilities here,
+  // after changing user and group  we will not be able to set it.
+  setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p", *logPtr);
+
+  // Set user and group
+  std::list<log::Param> params = {
+    log::Param("userName",  globalConfig.daemonUserName.value()),
+    log::Param("groupName", globalConfig.daemonGroupName.value())};
+  (*logPtr)(log::INFO, "Setting user name and group name of current process", params);
+
+  System::setUserAndGroup(globalConfig.daemonUserName.value(),
+                          globalConfig.daemonGroupName.value());
+
+  // Try to instantiate the logging system API
+  try {
+    if(commandLine->logToStdout) {
+      logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
+    } else if(commandLine->logToFile) {
+      logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
+    } else {
+      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
+    }
+    if(!commandLine->logFormat.empty()) {
+      logPtr->setLogFormat(commandLine->logFormat);
+    }
+  } catch(exception::Exception& ex) {
+    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
+    throw ex;
+  }
+
+  cta::log::Logger& log = *logPtr;
   logStartOfDaemon(log, commandLine);
 
   // Set log lines to JSON format if configured and not overridden on command line
@@ -99,9 +154,6 @@ static int exceptionThrowingMain(const tape::daemon::common::TapedConfiguration&
     std::list<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
     log(log::INFO, "Set log mask", params);
   }
-
-  // Create the object providing utilities for working with UNIX capabilities
-  cta::server::ProcessCap capUtils;
 
   // Create the main tapeserverd object
   cta::tape::daemon::TapeDaemon daemon(
@@ -126,7 +178,6 @@ void logStartOfDaemon(cta::log::Logger &log,
   log(log::INFO, "Starting cta-taped", params);
 }
 
-} // namespace cta::taped
 
 //------------------------------------------------------------------------------
 // setProcessCapabilities
@@ -145,79 +196,20 @@ void setProcessCapabilities(const std::string &text, cta::log::Logger& log) {
   }
 }
 
+} // namespace cta::taped
+
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
-  using namespace cta;
-
-  // Interpret the command line
-  std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
-  try {
-    commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
-  } catch (exception::Exception &ex) {
-    std::cerr <<
-      "Failed to interpret the command line parameters: " <<
-      ex.getMessage().str() << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if(commandLine->helpRequested) {
-    std::cout << cta::taped::gHelpString << std::endl;
-    return EXIT_SUCCESS;
-  }
-
-  tape::daemon::common::TapedConfiguration globalConfig;
-  std::unique_ptr<log::Logger> logPtr;
-  try {
-    const std::string shortHostName = utils::getShortHostname();
-    logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
-    // Parse /etc/cta/cta-taped-unitName.conf parameters
-    globalConfig =
-     tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
-
-    // Set capabilities to change user and group id's.
-    // We also need to set rawio capabilities here, after changing user and group  we will not be able to set it.
-    setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p", *logPtr);
-
-    // Set user and group
-    std::list<log::Param> params = {
-      log::Param("userName",  globalConfig.daemonUserName.value()),
-      log::Param("groupName", globalConfig.daemonGroupName.value())};
-      (*logPtr)(log::INFO, "Setting user name and group name of current process", params);
-
-    System::setUserAndGroup(globalConfig.daemonUserName.value(),
-                                 globalConfig.daemonGroupName.value());
-  } catch(exception::Errnum &ex) {
-     // Failed call to uname to get short host name
-  } catch(...) {
-    return 1;
-  }
-
-  // Try to instantiate the logging system API
-  try {
-    const std::string shortHostName = utils::getShortHostname();
-    if(commandLine->logToStdout) {
-      logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
-    } else if(commandLine->logToFile) {
-      logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
-    } else {
-      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
-    }
-    if(!commandLine->logFormat.empty()) {
-      logPtr->setLogFormat(commandLine->logFormat);
-    }
-  } catch(exception::Exception& ex) {
-    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
-    return EXIT_FAILURE;
-  }
-  cta::log::Logger& log = *logPtr;
-
-  // Daemonize here
-
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
-    programRc = cta::taped::exceptionThrowingMain(globalConfig, log, *commandLine);
+    programRc = cta::taped::exceptionThrowingMain(argc,argv);
+  } catch (exception::CommandLineNotParsed &ex) {
+    std::list<cta::log::Param> params = {
+      cta::log::Param("exceptionMessage", ex.getMessage.str())};
+    log(log::ERR, "Failed to interpret the command line paramters.");
+    sleep(1);
   } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
@@ -235,3 +227,4 @@ int main(const int argc, char **const argv) {
   google::protobuf::ShutdownProtobufLibrary();
   return programRc;
 }
+

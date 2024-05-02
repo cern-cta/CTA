@@ -135,13 +135,6 @@ private:
   std::string getNextDestinationUrl();
 
   /**
-   * Sets the capabilities of the process and logs the result.
-   *
-   * @param capabilities The string representation of the capabilities.
-   */
-  void setProcessCapabilities(const std::string &capabilities);
-
-  /**
    * Returns a Drive object representing the tape drive to be used to read
    * the tape.
    *

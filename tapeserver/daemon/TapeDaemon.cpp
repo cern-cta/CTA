@@ -83,9 +83,9 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // There is no longer any need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
   // future
-  setProcessCapabilities("cap_sys_rawio+p");
   daemonizeIfNotRunInForeground();
   setDumpable();
+  setProcessCapabilities("cap_sys_rawio+p");
 
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");

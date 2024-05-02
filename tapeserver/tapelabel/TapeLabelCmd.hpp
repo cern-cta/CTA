@@ -176,15 +176,7 @@ private:
    */
   void readAndSetConfiguration(const std::string &userName,
     const std::string &vid, const std::string &oldLabel,  const std::optional<std::string> &unitName);
-  
-  
-  /**
-   * Sets the capabilities of the process and logs the result.
-   *
-   * @param capabilities The string representation of the capabilities.
-   */
-  void setProcessCapabilities(const std::string &capabilities);
-  
+
   /**
    * Returns a Drive object representing the tape drive to be used to label
    * a tape.

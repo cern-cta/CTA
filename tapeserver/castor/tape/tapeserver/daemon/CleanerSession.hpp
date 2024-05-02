@@ -170,13 +170,6 @@ private:
   void cleanDrive(drive::DriveInterface &drive);
 
   /**
-    * Sets the capabilities of the process and logs the result.
-    *
-    * @param capabilities The string representation of the capabilities.
-    */
-  void setProcessCapabilities(const std::string &capabilities);
-
-  /**
     * Creates and returns the object that represents the tape drive to be
     * cleaned.
     *
