@@ -10,6 +10,7 @@
 ### Bug Fixes
 - cta/CTA#485 - Check disk file metadata on delete requests
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+- cta/CTA#645 - Fix new mount timeout log message
 - cta/CTA#666 - Fix drive status activity field not being properly reset
 - cta/CTA#502 - Fix string representation for Cleanup session type
 

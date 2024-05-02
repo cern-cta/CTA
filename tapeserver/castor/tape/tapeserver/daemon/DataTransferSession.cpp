@@ -185,9 +185,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       }
     } catch (cta::exception::TimeoutException &e) {
       // Print warning and try again, after refreshing the tape drive states
+      cta::log::ScopedParamContainer params(lc);
+      params.add("totalScheduleMountTime", std::to_string(t.secs()));
       lc.log(cta::log::WARNING,
-             "Timeout while getting new mount (" + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds reached). "
-               "Total time trying to get new mount is " + std::to_string(t.secs()) + " seconds.");
+             "Timed out while scheduling new mount. Could not acquire global scheduler lock in " + std::to_string(m_dataTransferConfig.wdGetNextMountMaxSecs) + " seconds.");
+
+      // We found a mount but got timedout while trying to acquire the global lock.
       nextMountTimeout = true;
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
@@ -201,6 +204,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       // Refresh the status to trigger the timeout update
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, lc);
+
+      // Only sleep if we didn't found work to do.
       if (!nextMountTimeout) {
         lc.log(cta::log::DEBUG, "No new mount found. (sleeping " + std::to_string(m_dataTransferConfig.wdIdleSessionTimer) + " seconds)");
         sleep(m_dataTransferConfig.wdIdleSessionTimer);
