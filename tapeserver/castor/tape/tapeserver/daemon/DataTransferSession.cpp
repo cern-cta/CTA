@@ -82,6 +82,18 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
+  // Make effective the raw I/O process capability.
+  try {
+    cta::server::ProcessCap::setProcText("cta_sys_rawio+ep");
+    cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("capabilities",
+                                             cta::server::ProcessCap::getProcText()));
+    lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
+  } catch (const cta::exception::Exception &ex) {
+    lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
+    // NOTE: Why are we letting the code continue from this point if we are not going to be able
+    // to do anything ??????????
+  }
+
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
