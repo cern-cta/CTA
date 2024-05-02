@@ -93,7 +93,7 @@ else
 export XrdSecPROTOCOL
 export XrdSecSSSKT
 
-tail -F /var/log/cta/cta-taped.log &
+tail -F "/var/log/cta/cta-taped-${DRIVENAMES[${driveslot}]}.log" &
 
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
