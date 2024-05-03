@@ -150,7 +150,7 @@ int main(const int argc, char **const argv) {
   std::string shortHostName;
   try {
     shortHostName = utils::getShortHostname();
-  } catch (exception:Errnum &ex) {
+  } catch (exception::Errnum &ex) {
     std::cerr << "Failed to get short host name." << ex.getMessage();
     return EXIT_FAILURE;
   }
