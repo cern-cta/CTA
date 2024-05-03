@@ -53,7 +53,7 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandL
 //------------------------------------------------------------------------------
 // The help string
 //------------------------------------------------------------------------------
-std::string gHelpString =
+const std::string gHelpString =
     "Usage: cta-taped [options]\n"
     "\n"
     "where options can be:\n"
@@ -150,8 +150,8 @@ int main(const int argc, char **const argv) {
   std::string shortHostName;
   try {
     shortHostName = utils::getShortHostname();
-  } catch (...) {
-    std::cerr << "Failed to get short host name";
+  } catch (exception:Errnum &ex) {
+    std::cerr << "Failed to get short host name." << ex.getMessage();
     return EXIT_FAILURE;
   }
 

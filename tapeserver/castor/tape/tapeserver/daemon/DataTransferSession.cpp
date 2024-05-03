@@ -90,8 +90,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
   } catch (const cta::exception::Exception &ex) {
     lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
-    // NOTE: Why are we letting the code continue from this point if we are not going to be able
-    // to do anything ??????????
   }
 
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
