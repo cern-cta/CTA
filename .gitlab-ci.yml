@@ -17,7 +17,8 @@ variables:
   CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
   ALMA9: "OFF"
-  SYSTEMTESTS_ONLY: "FALSE"
+  ONLY_RUN_SYSTEST: "FALSE" # Either FALSE of the image tag id from the registry.
+  SYSTEMTESTS_LIST: "ALL" # List of system tests to run in CI.
 
 .prepare-xrootd4: &prepare-xrootd4
   - if [[ ${XROOTD_VERSION} -eq 4 ]];

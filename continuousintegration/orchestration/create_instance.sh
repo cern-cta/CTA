@@ -49,14 +49,11 @@ updatedatabasetest=0
 # By default doesn't run the tests for external tape formats
 runexternaltapetests=0
 
-# Create an instance for
-systest_only=0
-
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
       [-p <gitlab pipeline ID>] [-i <docker image tag>] \
-      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q]
+      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q <cta registry image tag>]
 
 Options:
   -S    Use systemd to manage services inside containers
@@ -66,14 +63,14 @@ Options:
   -U    Run database unit test only
   -u    Prepare the pods to run the liquibase test
   -T    Execute tests for external tape formats
-  -Q    Create the cluster using the last ctageneric image from main
+  -Q    Create the cluster using the specified image tag
 EOF
 exit 1
 }
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ" o; do
+while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ:" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG}
@@ -123,7 +120,7 @@ while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ" o; do
             updatedatabasetest=1
             ;;
         Q)
-            systest_only=1
+            CUSTOM_IMAGE_TAG="${OPTARG}"
             ;;
         *)
             usage
@@ -157,15 +154,14 @@ if [ "$updatedatabasetest" == "1" ] ; then
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
-if [[ ${systest_only} -eq 1 ]]; then
-  COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
-else
+if [[ ! -z "${CUSTOM_IMAGE_TAG}" ]]; then
   COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi
-if [[ "${systest_only}" -eq 1 ]]; then
-  echo "Creating instance from image build for lastest commit on main ${COMMITID}"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | tail -n1)
-elif [ ! -z "${pipelineid}" ]; then
+
+if [[ -z "${CUSTOM_IMAGE_TAG}" ]]; then
+  echo "Creating instance from specified image tag ${CUSTOM_IMAGE_TAG}"
+  imagetag="${CUSTOM_IMAGE_TAG}"
+elif [ -z "${pipelineid}" ]; then
   echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
   imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
   # just a shortcut to avoid time lost checking against the docker registry...

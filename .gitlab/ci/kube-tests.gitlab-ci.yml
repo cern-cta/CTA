@@ -20,7 +20,7 @@
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
-    - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
+    - if [[ ${ONLY_RUN_SYSTEST} != "FALSE" ]]; then ONLY_SYSTEST_OPT='-Q ${SYSTEMTESTS_ONLY}' ; fi
     - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS} ${ONLY_SYSTEST_OPT}
   variables:
     TEST_SCRIPT:
@@ -35,6 +35,14 @@
     - kubernetes
     - mhvtl
 
+.except_tag_rules:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: always
+
 .eos4:
   extends:
     - .kubernetes_test
@@ -45,8 +53,21 @@
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
-client:
+FAIL_SYSTEST_ONLY:
   stage: test
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" || $ONLY_RUN_SYSTEST != "FALSE"
+      when: always
+  script:
+    - echo "Cannot succeed pipeline running only system tests."
+    - exit 1
+
+client-eos4:
+  stage: test
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-eos4.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   extends:
     - .eos4
   variables:
@@ -56,16 +77,22 @@ client-eos5:
   stage: test
   extends:
     - .kubernetes_test
-  except:
-    - tags
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-eos5.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-client-gfal2:
+client-gfal2-eos4:
   stage: test
   extends:
     - .eos4
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-gfal2-eos4.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
 
@@ -74,16 +101,22 @@ client-gfal2-eos5:
   stage: test
   extends:
     - .kubernetes_test
-  except:
-    - tags
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-gfal2-eos4.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-repack:
+repack-eos4:
   stage: test
   extends:
     - .eos4
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*repack-eos4.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
 
@@ -91,8 +124,10 @@ repack-eos5:
   stage: test
   extends:
     - .kubernetes_test
-  except:
-    - tags
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*repack-eos5.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -101,8 +136,10 @@ dbunittests-oracle:
   stage: test
   extends:
     - .kubernetes_test
-  except:
-    - tags
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*dbunittests-oracle.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
@@ -122,6 +159,9 @@ external-tape-formats:
   extends:
     - .kubernetes_test
   rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*external-tape-formats.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
     - !reference [.manual_rules, rules]
   variables:
     TEST_SCRIPT: "/usr/bin/true"
@@ -146,8 +186,10 @@ cta-admin:
   stage: test
   extends:
     - .kubernetes_test
-  except:
-    - tags
+  rules:
+    - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*cta-admin.*/
+      when: never
+    - !reference [.except_tag_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -157,7 +199,7 @@ regressioneos:
   extends:
     - .kubernetes_test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $ONLY_RUN_SYSTEST == "FALSE"
       when: on_success
       allow_failure: true
   variables:

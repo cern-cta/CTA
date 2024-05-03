@@ -4,7 +4,7 @@ cppcheck:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $ONLY_RUN_SYSTEST != "FALSE"
       when: never
     - when: always
   stage: analysis
@@ -26,7 +26,7 @@ cppcheck_report:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $ONLY_RUN_SYSTEST != "FALSE"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -49,7 +49,7 @@ clang_format:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $ONLY_RUN_SYSTEST != "FALSE"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -74,7 +74,7 @@ catalogue_schema_version_check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $ONLY_RUN_SYSTEST != "FALSE"
       when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
