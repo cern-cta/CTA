@@ -167,7 +167,7 @@ int main(const int argc, char **const argv) {
   } catch (cta::exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
+    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
@@ -181,7 +181,7 @@ int main(const int argc, char **const argv) {
   } catch (cta::exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
+    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
