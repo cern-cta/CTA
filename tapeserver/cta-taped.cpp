@@ -34,7 +34,6 @@
 #include <string>
 #include <iostream>
 #include <map>
-#include <type_traits>
 
 namespace cta::taped {
 
@@ -155,7 +154,8 @@ int main(const int argc, char **const argv) {
     return EXIT_FAILURE;
   }
 
-  // Use a temporary stdoutlogger while setting some stuff
+  // Use a temporary stdoutlogger to parse the config file before
+  // instantianting the logger system API.
   std::unique_ptr<log::Logger> logPtr;
   logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
 
@@ -172,8 +172,8 @@ int main(const int argc, char **const argv) {
   }
 
   // Change process capabilities.
-  // Process must be able to change user now and rawio should be set now to be able to perform
-  // raw IO after change to non root user.
+  // process must be able to change user and group now.
+  // rawio cap must be permitted now to be able to perform raw IO once we are no longer root.
   try {
     cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
     (*logPtr)(log::INFO, "Set process capabilities",
