@@ -193,10 +193,15 @@ int main(const int argc, char **const argv) {
     (*logPtr)(log::INFO, "Setting user name and group name of current process",
                   {{"userName", userName}, {"groupName", groupName}});
     cta::System::setUserAndGroup(userName, groupName);
+    // There is no longer any need for the process to be able to change user,
+    // however the process should still be permitted to make the raw IO
+    // capability effective in the future when needed.
+    cta::server::ProcessCap::setProcText("cat_sys_rawio+p");
+
   } catch (exception::Exception& ex) {
     std::list<log::Param> params = {
       log::Param("exceptionMessage", ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA exception while setting user and group, cta-taped cannot start", params);
+    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
@@ -216,6 +221,7 @@ int main(const int argc, char **const argv) {
     std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
+
   cta::log::Logger& log = *logPtr;
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.

@@ -83,11 +83,6 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   daemonizeIfNotRunInForeground();
   setDumpable();
 
-  // There is no longer any need for the process to be able to change user,
-  // however the process should still be permitted to perform raw IO in the
-  // future
-  setProcessCapabilities("cap_sys_rawio+p");
-
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");
   mainEventLoop();
@@ -142,23 +137,6 @@ void cta::tape::daemon::TapeDaemon::setDumpable() {
   if(!dumpable) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set dumpable attribute of process to true";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
-  const std::string &text) {
-  try {
-    cta::server::ProcessCap::setProcText(text);
-    m_log(log::INFO, "Set process capabilities",
-      {{"capabilities", cta::server::ProcessCap::getProcText()}});
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities to '" << text <<
-      "': " << ne.getMessage().str();
     throw ex;
   }
 }

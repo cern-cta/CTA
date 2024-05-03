@@ -77,12 +77,6 @@ protected:
   /** Sets the dumpable attribute of the current process to true. */
   void setDumpable();
 
-  /** Sets the capabilities of the current process.
-   *
-   * @text The string representation the capabilities that the current
-   * process should have. */
-  void setProcessCapabilities(const std::string &text);
-
   /** Socket pair used to send commands to the DriveProcess. */
   struct DriveSocketPair {
     /** Bi-directional socket used by the TapeDaemon parent process to send
