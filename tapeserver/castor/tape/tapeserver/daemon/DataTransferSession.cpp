@@ -84,7 +84,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 
   // Make effective the raw I/O process capability.
   try {
-    cta::server::ProcessCap::setProcText("cta_sys_rawio+ep");
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
     cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("capabilities",
                                              cta::server::ProcessCap::getProcText()));
     lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
