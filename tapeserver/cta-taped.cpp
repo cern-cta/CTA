@@ -164,8 +164,10 @@ int main(const int argc, char **const argv) {
   try {
   globalConfig =
       tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
-  } catch (...) {
-    // Something went wrong with the config file. Report it now.
+  } catch (cta::exception::Exception &ex) {
+    std::list<cta::log::Param> params = {
+      cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
@@ -176,10 +178,10 @@ int main(const int argc, char **const argv) {
     cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
     (*logPtr)(log::INFO, "Set process capabilities",
                   {{"capabilites", cta::server::ProcessCap::getProcText()}});
-  } catch (cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities to '" << "cap_setgid,cap_setuid+ep cap_sys_rawio+p" <<
-      "': " << ne.getMessage().str();
+  } catch (cta::exception::Exception &ex) {
+    std::list<cta::log::Param> params = {
+      cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
