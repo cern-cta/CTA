@@ -16,6 +16,7 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -150,7 +151,7 @@ int main(const int argc, char **const argv) {
   std::string shortHostName;
   try {
     shortHostName = utils::getShortHostname();
-  } catch (exception::Errnum &ex) {
+  } catch (const exception::Errnum &ex) {
     std::cerr << "Failed to get short host name." << ex.getMessage();
     return EXIT_FAILURE;
   }
@@ -164,7 +165,7 @@ int main(const int argc, char **const argv) {
   try {
   globalConfig =
       tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
-  } catch (cta::exception::Exception &ex) {
+  } catch (const cta::exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
@@ -178,7 +179,7 @@ int main(const int argc, char **const argv) {
     cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
     (*logPtr)(log::INFO, "Set process capabilities",
                   {{"capabilites", cta::server::ProcessCap::getProcText()}});
-  } catch (cta::exception::Exception &ex) {
+  } catch (const cta::exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
