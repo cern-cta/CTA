@@ -136,10 +136,9 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
   try {
     commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
-  } catch (exception::Exception &ex) {
-    std::cerr <<
-      "Failed to interpret the command line parameters: " <<
-      ex.getMessage().str() << std::endl;
+  } catch (const exception::Exception &ex) {
+    std::cerr << "Failed to interpret the command line parameters: "
+              << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -152,7 +151,7 @@ int main(const int argc, char **const argv) {
   try {
     shortHostName = utils::getShortHostname();
   } catch (const exception::Errnum &ex) {
-    std::cerr << "Failed to get short host name." << ex.getMessage();
+    std::cerr << "Failed to get short host name." << ex.getMessage().str();
     return EXIT_FAILURE;
   }
 
@@ -165,7 +164,7 @@ int main(const int argc, char **const argv) {
   try {
   globalConfig =
       tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
-  } catch (const cta::exception::Exception &ex) {
+  } catch (const exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
@@ -195,6 +194,9 @@ int main(const int argc, char **const argv) {
                   {{"userName", userName}, {"groupName", groupName}});
     cta::System::setUserAndGroup(userName, groupName);
   } catch (exception::Exception& ex) {
+    std::list<log::Param> params = {
+      log::Param("exceptionMessage", ex.getMessage().str())};
+    (*logPtr)(log::ERR, "Caught an unexpected CTA exception while setting user and group, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 
