@@ -24,7 +24,6 @@
 #include "common/Constants.hpp"
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/processCap/ProcessCap.cpp"
 #include "disk/DiskFile.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"

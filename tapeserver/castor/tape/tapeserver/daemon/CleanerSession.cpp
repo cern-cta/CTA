@@ -122,7 +122,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     std::list<cta::log::Param> params = {
       cta::log::Param("capabilities", cta::server::ProcessCap::getProcText())};
     m_log(cta::log::INFO, "CleanerSession made effective raw I/O capability to use tape",
-          capabilities);
+          params);
   }
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
