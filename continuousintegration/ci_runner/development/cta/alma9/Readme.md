@@ -17,10 +17,20 @@ To list the latest built images, run:
 podman images
 ```
 
+The output should look like this:
+```
+REPOSITORY                                       TAG         IMAGE ID      CREATED      SIZE
+localhost/ctadev                                 dev         78e0d6e583a3  2 days ago   1.84 GB
+gitlab-registry.cern.ch/linuxsupport/alma9-base  latest      dc893533419c  5 days ago   231 MB
+gcr.io/k8s-minikube/kicbase                      v0.0.43     619d67e74933  2 weeks ago  1.27 GB
+```
+
 To launch one of them (detached), proceed with:
 ```bash
 ./start_ctadev.sh [-p <port>] [-v <mount>] <image>
 ```
+
+For `<image>`, select `localhost/ctadev`
 
 The `<port>` parameter can be used to forward port `<port>` on the localhost to port `22` on the container. This can be used by ssh clients to access the container through a network. \
 The `<mount>` parameter can be used to mount a local directory to the container directory `/shared`.
