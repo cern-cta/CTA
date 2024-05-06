@@ -94,7 +94,7 @@ add_executable(cta-frontend-async-grpc
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
+          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
