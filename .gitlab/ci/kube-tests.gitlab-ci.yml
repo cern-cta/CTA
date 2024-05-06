@@ -10,6 +10,17 @@
       when: on_success
       allow_failure: false
 
+.except_tag_rules:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+
+.eos4_rules:
+  rules:
+    - if: $ALAM9 == "ON"
+      when: never
 
 .kubernetes_test:
   retry: 1
@@ -35,28 +46,6 @@
     - kubernetes
     - mhvtl
 
-.except_tag_rules:
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - when: on_success
-
-.eos4:
-  extends:
-    - .kubernetes_test
-  rules:
-    - if: $ALMA9 == "ON"
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - !reference [.manual_rules, rules]
-  variables:
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
-
 FAIL_SYSTEST_ONLY:
   stage: test
   rules:
@@ -66,6 +55,12 @@ FAIL_SYSTEST_ONLY:
     - echo "Cannot succeed pipeline running only system tests."
     - exit 1
 
+.eos4:
+  extends:
+    - .kubernetes_test
+  variables:
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
+
 client-eos4:
   stage: test
   extends:
@@ -73,6 +68,8 @@ client-eos4:
   rules:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-eos4.*/
       when: never
+    - !reference [.eos4_rules, rules]
+    - !reference [.manual_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
 
@@ -95,6 +92,8 @@ client-gfal2-eos4:
   rules:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-gfal2-eos4.*/
       when: never
+    - !reference [.eos4_rules, rules]
+    - !reference [.manual_rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
 
@@ -117,6 +116,8 @@ repack-eos4:
   rules:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*repack-eos4.*/
       when: never
+    - !reference [.eos4_rules, rules]
+    - !reference [.manual_rules, rules]
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
 
