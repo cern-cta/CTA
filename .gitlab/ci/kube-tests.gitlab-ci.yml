@@ -81,6 +81,7 @@ client-eos5:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-eos5.*/
       when: never
     - !reference [.except_tag_rules, rules]
+    - when: always
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -105,6 +106,8 @@ client-gfal2-eos5:
   rules:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-gfal2-eos4.*/
       when: never
+    - !reference [.except_tag_rules, rules]
+    - when: always
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -129,6 +132,7 @@ repack-eos5:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*repack-eos5.*/
       when: never
     - !reference [.except_tag_rules, rules]
+    - when: always
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -141,6 +145,7 @@ dbunittests-oracle:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*dbunittests-oracle.*/
       when: never
     - !reference [.except_tag_rules, rules]
+    - when: always
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
@@ -191,6 +196,7 @@ cta-admin:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*cta-admin.*/
       when: never
     - !reference [.except_tag_rules, rules]
+    - when: always
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
