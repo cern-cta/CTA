@@ -54,7 +54,6 @@
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - !reference [.manual_rules, rules]
-    - when: manual
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
