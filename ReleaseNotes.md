@@ -25,6 +25,14 @@
 - cta/CTA#575 - Remove rados metrics logging
 - cta/CTA#675 - Renaming PostgresSchedDB to RelationalDB and introducing rdbms directory model to the Scheduler DB code
 
+# v4.10.10.1-1 / v5.10.10.1-1
+
+## Features
+- cta/CTA#646 - JSON logging with correct field types
+
+### Bug Fixes
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
+
 # v4.10.10.0-1 / v5.10.10.0-1
 
 ### Features
@@ -42,6 +50,11 @@
 - cta/CTA#623 - Avoid race condition during ci for alma9
 - cta/CTA#628 - Retry system tests in the ci
 - cta/operations#1296 - Convention for CTA repositories
+
+# v4.10.9.1-1 / v5.10.9.1-1
+
+### Bug Fixes
+- cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 
 # v4.10.9.0-1 / v5.10.9.0-1
 
