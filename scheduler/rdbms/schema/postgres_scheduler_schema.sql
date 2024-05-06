@@ -31,7 +31,7 @@ CREATE TABLE CTA_SCHEDULER(
 );
 CREATE TABLE ARCHIVE_JOB_QUEUE(
 /* Common part with RETRIEVE table - request related info */
-  JOB_ID BIGSERIAL,
+  JOB_ID BIGSERIAL PRIMARY KEY,
 /* Common part with RETRIEVE and REPACK table - request related info */
   ARCHIVE_REQID BIGSERIAL,
   STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
@@ -75,6 +75,42 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
   TAPE_POOL VARCHAR(100) CONSTRAINT AJQ_TPN_NN NOT NULL,
   REPACK_FILEBUF_URL VARCHAR(2000),
   REPACK_FSEQ NUMERIC(20, 0)
+);
+CREATE INDEX IDX_MOUNT_ID ON ARCHIVE_JOB_QUEUE(MOUNT_ID);
+
+CREATE TABLE ARCHIVE_JOB_REPORTS(
+/* Common part with RETRIEVE table - request related info */
+                                  JOB_ID BIGSERIAL PRIMARY KEY,
+                                  STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
+                                  CREATION_TIME BIGINT,
+                                  MOUNT_ID BIGINT,
+                                  START_TIME BIGINT,
+                                  PRIORITY SMALLINT CONSTRAINT AJQ_MPAP_NN NOT NULL,
+                                  STORAGE_CLASS VARCHAR(100),
+                                  COPY_NB NUMERIC(3, 0),
+                                  SIZE_IN_BYTES BIGINT,
+                                  ARCHIVE_FILE_ID BIGINT,
+                                  CHECKSUMBLOB BYTEA,
+                                  REQUESTER_NAME VARCHAR(100),
+                                  REQUESTER_GROUP VARCHAR(100),
+                                  DISK_INSTANCE VARCHAR(100),
+                                  DISK_FILE_PATH VARCHAR(2000),
+                                  ARCHIVE_ERROR_REPORT_URL VARCHAR(2000),
+                                  ARCHIVE_REPORT_URL VARCHAR(2000),
+                                  FAILURE_REPORT_LOG TEXT,
+/* ARCHIVE specific columns */
+                                  FAILURE_LOG TEXT,
+                                  IS_REPORTDECIDED CHAR(1),
+                                  TOTAL_RETRIES SMALLINT,
+                                  MAX_TOTAL_RETRIES SMALLINT,
+                                  RETRIES_WITHIN_MOUNT SMALLINT,
+                                  MAX_RETRIES_WITHIN_MOUNT SMALLINT,
+                                  LAST_MOUNT_WITH_FAILURE BIGINT,
+                                  TOTAL_REPORT_RETRIES SMALLINT,
+                                  MAX_REPORT_RETRIES SMALLINT,
+                                  TAPE_POOL VARCHAR(100) CONSTRAINT AJQ_TPN_NN NOT NULL,
+                                  REPACK_FILEBUF_URL VARCHAR(2000),
+                                  REPACK_FSEQ NUMERIC(20, 0)
 );
 CREATE TABLE RETRIEVE_JOB_QUEUE(
   JOB_ID BIGSERIAL,
