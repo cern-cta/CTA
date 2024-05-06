@@ -196,7 +196,7 @@ int main(const int argc, char **const argv) {
     // There is no longer any need for the process to be able to change user,
     // however the process should still be permitted to make the raw IO
     // capability effective in the future when needed.
-    cta::server::ProcessCap::setProcText("cat_sys_rawio+p");
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
 
   } catch (exception::Exception& ex) {
     std::list<log::Param> params = {

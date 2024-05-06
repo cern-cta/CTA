@@ -67,7 +67,7 @@ static std::string toText(const cap_t cap) {
 //------------------------------------------------------------------------------
 // fromText
 //------------------------------------------------------------------------------
-cap_t fromText(const std::string &text) {
+static cap_t fromText(const std::string &text) {
   const cap_t cap = cap_from_text(text.c_str());
   if(nullptr == cap) {
     cta::exception::Exception ex;
@@ -83,7 +83,7 @@ cap_t fromText(const std::string &text) {
 //------------------------------------------------------------------------------
 // setProc
 //------------------------------------------------------------------------------
-void setProc(const cap_t cap) {
+static void setProc(const cap_t cap) {
   if(cap_set_proc(cap)) {
     cta::exception::Exception ex;
     ex.getMessage() <<
