@@ -154,11 +154,12 @@ if [ "$updatedatabasetest" == "1" ] ; then
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
-if [[ ! -z "${CUSTOM_IMAGE_TAG}" ]]; then
+if [[ -z "${CUSTOM_IMAGE_TAG}" ]]; then
   COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi
 
-if [[ -z "${CUSTOM_IMAGE_TAG}" ]]; then
+
+if [[ ! -z "${CUSTOM_IMAGE_TAG}" ]]; then
   echo "Creating instance from specified image tag ${CUSTOM_IMAGE_TAG}"
   imagetag="${CUSTOM_IMAGE_TAG}"
 elif [ -z "${pipelineid}" ]; then
@@ -173,6 +174,7 @@ else
   echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
   imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
 fi
+
 if [ "${imagetag}" == "" ]; then
   echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
   exit 1

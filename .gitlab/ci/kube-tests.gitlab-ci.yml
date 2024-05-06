@@ -41,7 +41,7 @@
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - when: always
+    - when: on_success
 
 .eos4:
   extends:
@@ -50,6 +50,7 @@
     - if: $ALMA9 == "ON"
       when: never
     - !reference [.manual_rules, rules]
+    - when: never
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
@@ -64,12 +65,12 @@ FAIL_SYSTEST_ONLY:
 
 client-eos4:
   stage: test
+  extends:
+    - .eos4
   rules:
     - if: $SYSTEMTESTS_LIST != "ALL" && $SYSTEMTESTS_LIST !~ /.*client-eos4.*/
       when: never
     - !reference [.except_tag_rules, rules]
-  extends:
-    - .eos4
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
 
