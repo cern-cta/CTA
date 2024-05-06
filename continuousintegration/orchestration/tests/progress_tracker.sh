@@ -56,7 +56,7 @@ trackArchive() {
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timed out during archive."; fi
+  if [[ $s == 90 ]]; then echo "WARNING: timed out during archive." && exit 1; fi
 }
 
 trackPrepare() {
@@ -99,7 +99,7 @@ trackPrepare() {
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timeout during stage." ; fi
+  if [[ $s == 90 ]]; then echo "WARNING: timeout during stage." && exit 1; fi
 
   base_evict=$evictCounter
 }
@@ -148,7 +148,7 @@ trackEvict() {
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timeout during evict." ; fi
+  if [[ $s == 90 ]]; then echo "WARNING: timeout during evict." && exit 1; fi
 
   base_evict=$evictCounter
 }
@@ -199,7 +199,7 @@ trackDelete() {
     done
   done
 
-  if [[ $s == 90 ]]; then echo "WARNING: timeout during delete." ; fi
+  if [[ $s == 90 ]]; then echo "WARNING: timeout during delete." && exit 1; fi
   base_evict=0
 }
 
