@@ -23,7 +23,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "disk/DiskFile.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
@@ -135,13 +134,6 @@ private:
   std::string getNextDestinationUrl();
 
   /**
-   * Sets the capabilities of the process and logs the result.
-   *
-   * @param capabilities The string representation of the capabilities.
-   */
-  void setProcessCapabilities(const std::string &capabilities);
-
-  /**
    * Returns a Drive object representing the tape drive to be used to read
    * the tape.
    *
@@ -248,11 +240,6 @@ private:
    * Unique pointer to the catalogue interface;
    */
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  
-  /**
-   * Object providing utilities for working UNIX capabilities.
-   */
-  cta::server::ProcessCap m_capUtils;
   
   /**
    * The system wrapper used to find the device and instantiate the drive object.

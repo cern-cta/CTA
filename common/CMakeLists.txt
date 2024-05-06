@@ -126,7 +126,6 @@ set (COMMON_LIB_SRC_FILES
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
   processCap/ProcessCap.cpp
-  processCap/ProcessCapDummy.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp

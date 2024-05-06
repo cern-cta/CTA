@@ -20,7 +20,6 @@
 #include "common/threading/Daemon.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
 
@@ -36,13 +35,11 @@ public:
   /** Constructor.
    * @param commandLine The parameters extracted from the command line.
    * @param log The object representing the API of the CTA logging system.
-   * @param globalConfig The configuration of the tape server.
-   * @param capUtils Object providing utilities for working UNIX capabilities. */
+   * @param globalConfig The configuration of the tape server. */
   TapeDaemon(
     const cta::daemon::CommandLineParams & commandLine,
     cta::log::Logger &log,
-    const common::TapedConfiguration &globalConfig,
-    cta::server::ProcessCap &capUtils);
+    const common::TapedConfiguration &globalConfig);
   
   virtual ~TapeDaemon();
 
@@ -79,12 +76,6 @@ protected:
 
   /** Sets the dumpable attribute of the current process to true. */
   void setDumpable();
-
-  /** Sets the capabilities of the current process.
-   *
-   * @text The string representation the capabilities that the current
-   * process should have. */
-  void setProcessCapabilities(const std::string &text);
 
   /** Socket pair used to send commands to the DriveProcess. */
   struct DriveSocketPair {
@@ -228,11 +219,6 @@ protected:
   
   /** The tape server's configuration */
   const common::TapedConfiguration& m_globalConfiguration;
-
-  /**
-   * Object providing utilities for working UNIX capabilities.
-   */
-  cta::server::ProcessCap &m_capUtils;
 
   /**
    * The name of the host on which the daemon is running.  This name is

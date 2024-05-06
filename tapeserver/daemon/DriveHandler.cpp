@@ -879,8 +879,6 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::Ta
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(
   cta::IScheduler* scheduler) const {
-  // Capabilities management.
-  cta::server::ProcessCap capUtils;
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(
     m_tapedConfig.rmcPort.value(),
@@ -889,7 +887,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
   castor::tape::System::realWrapper sWrapper;
   const auto cleanerSession = std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
-    capUtils,
     mediaChangerFacade,
     m_lc.logger(),
     m_driveConfig,
@@ -980,8 +977,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
   dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
 
-  // Capabilities management.
-  cta::server::ProcessCap capUtils;
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(
     m_tapedConfig.rmcPort.value(),
@@ -997,7 +992,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
     m_driveConfig,
     mediaChangerFacade,
     *driveHandlerProxy,
-    capUtils,
     dataTransferConfig,
     *(dynamic_cast<cta::Scheduler*>(scheduler))
   );

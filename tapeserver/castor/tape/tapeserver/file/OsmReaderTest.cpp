@@ -33,7 +33,6 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace {
@@ -166,7 +165,6 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::log::DummyLogger dummylogger("dummy", "unitTest");
   cta::log::StringLogger strlogger("string", "unitTest", cta::log::DEBUG);
   cta::log::StdoutLogger stdoutlogger("stdout", "unitTest");
-  cta::server::ProcessCapDummy capUtils;
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
   cta::tape::daemon::DriveConfigEntry driveConfig(m_devName, "TestLogicalLibrary", m_nstDev, "dummy");
@@ -174,7 +172,6 @@ TEST_F(OsmReaderTest, CleanDrive) {
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
 
   castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
-    capUtils,
     mc,
     strlogger,
     driveConfig,

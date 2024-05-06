@@ -47,10 +47,6 @@ namespace mediachanger {
 class MediaChangerFacade;
 }
 
-namespace server {
-class ProcessCap;
-}
-
 namespace tape::daemon {
 
 class DriveHandlerProxy;

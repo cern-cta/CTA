@@ -27,7 +27,6 @@
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMountDummy.hpp"
@@ -98,10 +97,9 @@ namespace unitTests
       cta::mediachanger::MediaChangerFacade & mc,
       tapeserver::daemon::TapeSessionReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo,
-      cta::server::ProcessCap& cap,
       const uint32_t tapeLoadTimeout,
       cta::log::LogContext & lc):
-    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, false, "", tapeLoadTimeout){}
+    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo, lc, false, "", tapeLoadTimeout){}
 
     ~FakeSingleTapeReadThread(){
       const unsigned int size= m_tasks.size();
@@ -171,8 +169,7 @@ namespace unitTests
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     castor::tape::tapeserver::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::DriveConfigEntry(),
                                                               "0.0.0.0", lc);
-    cta::server::ProcessCapDummy cap;
-    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, 60, lc);
+    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
     bool noFilesToRecall;
@@ -236,10 +233,9 @@ namespace unitTests
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
-    cta::server::ProcessCapDummy cap;
     castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::DriveConfigEntry(),
                                                               "0.0.0.0", lc);
-    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
+    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
     bool noFilesToRecall;

@@ -17,6 +17,7 @@
 
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -49,7 +50,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const
                                                                            const cta::tape::daemon::DriveConfigEntry& driveConfig,
                                                                            cta::mediachanger::MediaChangerFacade& mc,
                                                                            cta::tape::daemon::TapedProxy& initialProcess,
-                                                                           cta::server::ProcessCap& capUtils,
+
                                                                            const DataTransferConfig& dataTransferConfig,
                                                                            cta::Scheduler& scheduler) :
   m_log(log),
@@ -59,29 +60,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const
   m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
   m_mediaChanger(mc),
   m_initialProcess(initialProcess),
-  m_capUtils(capUtils),
   m_scheduler(scheduler) {
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-/**
- * This function will try to set the cap_sys_rawio capability that is needed
- * for by tape thread to access /dev/nst
- */
-void castor::tape::tapeserver::daemon::DataTransferSession::setProcessCapabilities(
-  const std::string& capabilities) {
-  cta::log::LogContext lc(m_log);
-  try {
-    m_capUtils.setProcText(capabilities);
-    cta::log::LogContext::ScopedParam sp(lc,
-                                         cta::log::Param("capabilities", m_capUtils.getProcText()));
-    lc.log(cta::log::INFO, "Set process capabilities for using tape");
-  } catch (const cta::exception::Exception& ne) {
-    lc.log(cta::log::ERR,
-           "Failed to set process capabilities for using the tape ");
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +82,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
-  setProcessCapabilities("cap_sys_rawio+ep");
+  // Make effective the raw I/O process capability.
+  try {
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
+    cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("capabilities",
+                                             cta::server::ProcessCap::getProcText()));
+    lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
+  } catch (const cta::exception::Exception &ex) {
+    lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
+  }
 
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
@@ -286,7 +273,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
 
     TapeReadSingleThread readSingleThread(*drive, m_mediaChanger, reporter, m_volInfo,
-                                          m_dataTransferConfig.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext,
+                                          m_dataTransferConfig.bulkRequestRecallMaxFiles,  watchDog, logContext,
                                           reportPacker,
                                           m_dataTransferConfig.useLbp, m_dataTransferConfig.useRAO, m_dataTransferConfig.useEncryption,
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
@@ -432,7 +419,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_volInfo,
                                             logContext,
                                             reportPacker,
-                                            m_capUtils,
                                             m_dataTransferConfig.maxFilesBeforeFlush,
                                             m_dataTransferConfig.maxBytesBeforeFlush,
                                             m_dataTransferConfig.useLbp,

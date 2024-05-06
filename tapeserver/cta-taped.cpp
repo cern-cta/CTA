@@ -16,10 +16,12 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -51,7 +53,7 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandL
 //------------------------------------------------------------------------------
 // The help string
 //------------------------------------------------------------------------------
-std::string gHelpString =
+const std::string gHelpString =
     "Usage: cta-taped [options]\n"
     "\n"
     "where options can be:\n"
@@ -99,15 +101,11 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
     log(log::INFO, "Set log mask", params);
   }
 
-  // Create the object providing utilities for working with UNIX capabilities
-  cta::server::ProcessCap capUtils;
-
   // Create the main tapeserverd object
   cta::tape::daemon::TapeDaemon daemon(
     commandLine,
     log,
-    globalConfig,
-    capUtils);
+    globalConfig);
 
   // Run the tapeserverd daemon
   return daemon.main();
@@ -137,10 +135,9 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
   try {
     commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
-  } catch (exception::Exception &ex) {
-    std::cerr <<
-      "Failed to interpret the command line parameters: " <<
-      ex.getMessage().str() << std::endl;
+  } catch (const exception::Exception &ex) {
+    std::cerr << "Failed to interpret the command line parameters: "
+              << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -149,10 +146,67 @@ int main(const int argc, char **const argv) {
     return EXIT_SUCCESS;
   }
 
-  // Try to instantiate the logging system API
-  std::unique_ptr<log::Logger> logPtr;
+  std::string shortHostName;
   try {
-    const std::string shortHostName = utils::getShortHostname();
+    shortHostName = utils::getShortHostname();
+  } catch (const exception::Errnum &ex) {
+    std::cerr << "Failed to get short host name." << ex.getMessage().str();
+    return EXIT_FAILURE;
+  }
+
+  // Use a temporary stdoutlogger to parse the config file before
+  // instantianting the logger system API.
+  std::unique_ptr<log::Logger> logPtr;
+  logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
+
+  // Initial parse of config file
+  tape::daemon::common::TapedConfiguration globalConfig;
+  try {
+  globalConfig =
+      tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
+  } catch (const exception::Exception &ex) {
+    std::list<cta::log::Param> params = {
+      cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
+    return EXIT_FAILURE;
+  }
+
+  // Change process capabilities.
+  // process must be able to change user and group now.
+  // rawio cap must be permitted now to be able to perform raw IO once we are no longer root.
+  try {
+    cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
+    (*logPtr)(log::INFO, "Set process capabilities",
+                  {{"capabilites", cta::server::ProcessCap::getProcText()}});
+  } catch (const cta::exception::Exception &ex) {
+    std::list<cta::log::Param> params = {
+      cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
+    return EXIT_FAILURE;
+  }
+
+  // Change user and group
+  const std::string userName = globalConfig.daemonUserName.value();
+  const std::string groupName = globalConfig.daemonGroupName.value();
+
+  try {
+    (*logPtr)(log::INFO, "Setting user name and group name of current process",
+                  {{"userName", userName}, {"groupName", groupName}});
+    cta::System::setUserAndGroup(userName, groupName);
+    // There is no longer any need for the process to be able to change user,
+    // however the process should still be permitted to make the raw IO
+    // capability effective in the future when needed.
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
+
+  } catch (exception::Exception& ex) {
+    std::list<log::Param> params = {
+      log::Param("exceptionMessage", ex.getMessage().str())};
+    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
+    return EXIT_FAILURE;
+  }
+
+  // Try to instantiate the logging system API
+  try {
     if(commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
@@ -167,6 +221,7 @@ int main(const int argc, char **const argv) {
     std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
+
   cta::log::Logger& log = *logPtr;
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.

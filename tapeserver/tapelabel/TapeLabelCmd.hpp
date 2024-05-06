@@ -22,7 +22,6 @@
 #include "common/CmdLineTool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
@@ -72,11 +71,6 @@ private:
    * Unique pointer to the catalogue interface;
    */
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  
-  /**
-   * Object providing utilities for working UNIX capabilities.
-   */
-  cta::server::ProcessCap m_capUtils;
   
   /**
    * The system wrapper used to find the device and instantiate the drive object.

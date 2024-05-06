@@ -30,7 +30,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   const VolumeInfo& volInfo,
   const cta::log::LogContext& logContext,
   MigrationReportPacker& reportPacker,
-  cta::server::ProcessCap& capUtils,
   uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
   const bool useLbp, const bool useEncryption,
   const std::string& externalEncryptionKeyScript,
@@ -38,7 +37,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   const uint64_t tapeLoadTimeout,
   cta::catalogue::Catalogue& catalogue) :
   TapeSingleThreadInterface<TapeWriteTask>(drive, mediaChanger, reporter, volInfo,
-                                           capUtils, logContext, useEncryption, externalEncryptionKeyScript, tapeLoadTimeout),
+                                           logContext, useEncryption, externalEncryptionKeyScript, tapeLoadTimeout),
   m_filesBeforeFlush(filesBeforeFlush),
   m_bytesBeforeFlush(bytesBeforeFlush),
   m_drive(drive),

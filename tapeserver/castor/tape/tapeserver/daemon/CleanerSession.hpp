@@ -21,7 +21,6 @@
 #include <string>
 
 #include "common/log/Logger.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
@@ -45,7 +44,6 @@ public:
   /**
     * Constructor
     *
-    * @param capUtils Object providing support for UNIX capabilities.
     * @param mc Object representing the media changer.
     * @param log Object representing the API to the CASTOR logging system.
     * @param driveConfig Configuration of the tape drive to be cleaned.
@@ -61,7 +59,6 @@ public:
     * @param catalogue the CTA catalogue
     */
   CleanerSession(
-    cta::server::ProcessCap &capUtils,
     cta::mediachanger::MediaChangerFacade &mc,
     cta::log::Logger &log,
     const cta::tape::daemon::DriveConfigEntry &driveConfig,
@@ -83,11 +80,6 @@ public:
   EndOfSessionAction execute() noexcept;
 
 private:
-  /**
-    * Object providing support for UNIX capabilities.
-    */
-  cta::server::ProcessCap &m_capUtils;
-
   /**
     * The object representing the media changer.
     */
@@ -168,13 +160,6 @@ private:
     * @param drive The tape drive.
     */
   void cleanDrive(drive::DriveInterface &drive);
-
-  /**
-    * Sets the capabilities of the process and logs the result.
-    *
-    * @param capabilities The string representation of the capabilities.
-    */
-  void setProcessCapabilities(const std::string &capabilities);
 
   /**
     * Creates and returns the object that represents the tape drive to be

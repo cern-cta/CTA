@@ -22,12 +22,12 @@
 #include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "common/processCap/ProcessCap.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
-  cta::server::ProcessCap &capUtils,
   cta::mediachanger::MediaChangerFacade &mc,
   cta::log::Logger &log,
   const cta::tape::daemon::DriveConfigEntry &driveConfig,
@@ -38,7 +38,6 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   const std::string & externalEncryptionKeyScript,
   cta::catalogue::Catalogue & catalogue,
   cta::Scheduler & scheduler):
-  m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
   m_driveConfig(driveConfig),
@@ -117,7 +116,14 @@ void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerF
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
-  setProcessCapabilities("cap_sys_rawio+ep");
+  // Make effective the raw I/O process capability.
+  {
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
+    std::list<cta::log::Param> params = {
+      cta::log::Param("capabilities", cta::server::ProcessCap::getProcText())};
+    m_log(cta::log::INFO, "CleanerSession made effective raw I/O capability to use tape",
+          params);
+  }
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
@@ -247,20 +253,6 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed getting tape alerts from the drive", params);
-}
-
-//------------------------------------------------------------------------------
-// setProcessCapabilities
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
-  const std::string &capabilities) {
-  m_capUtils.setProcText(capabilities);
-  {
-    std::list<cta::log::Param> params = {
-      cta::log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(cta::log::INFO, "Cleaner set process capabilities for using tape",
-      params);
-  }
 }
 
 //------------------------------------------------------------------------------
