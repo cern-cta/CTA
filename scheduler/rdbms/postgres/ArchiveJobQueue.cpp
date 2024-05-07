@@ -21,19 +21,30 @@
 
 namespace cta::schedulerdb::postgres {
 
-void ArchiveJobQueueRow::updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId) {
-  if(jobIDs.empty()) return;
-  std::string sqlpart;
-  for (const auto &piece : jobIDs) sqlpart += piece;
+rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, uint64_t limit){
   txn.start();
+  /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
+   * which will be released when the transaction ends
+   */
   std::string sql =
+    "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE; "
+    "WITH SET_SELECTION AS ( "
+      "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
+    "WHERE TAPE_POOL = :TAPE_POOL "
+    "AND STATUS = :STATUS "
+    "AND MOUNT_ID IS NULL "
+    "LIMIT :LIMIT"
+    "ORDER BY PRIORITY DESC, JOB_ID) "
     "UPDATE ARCHIVE_JOB_QUEUE SET "
       "MOUNT_ID = :MOUNT_ID "
-    "WHERE "
-    " JOB_ID IN (" + sqlpart + ")";
+    "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
+    "RETURNING SET_SELECTION.JOB_ID";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  stmt.bindUint32(":LIMIT", limit);
+  stmt.bindString(":TAPE_POOL", tapepool);
+  stmt.bindString(":STATUS", to_string(status));
+  return stmt.executeQuery();
 }
 
 } // namespace cta::schedulerdb::postgres

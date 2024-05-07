@@ -241,15 +241,17 @@ struct ArchiveJobQueueRow {
    * Select unowned jobs from the queue
    *
    * @param conn       Connection to the DB backend
-   * @param status     Archive Job Status to select on
-   * @param tapepool   Tapepool to select on
-   * @param limit      Maximum number of rows to return
-   *
+   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
-
-    const char *const sql =
+  static rdbms::Rset select(rdbms::Conn &conn, const std::list<std::string>& jobIDs) {
+    if(jobIDs.empty()) {
+      rdbms::Rset ret;
+      return ret;
+    }
+    std::string sqlpart;
+    for (const auto &piece : jobIDs) sqlpart += piece;
+    std::string sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
       "MOUNT_ID AS MOUNT_ID,"
@@ -281,17 +283,9 @@ struct ArchiveJobQueueRow {
       "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
-      "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = :STATUS "
-      "AND MOUNT_ID IS NULL "
-    "ORDER BY PRIORITY DESC, JOB_ID "
-      "LIMIT :LIMIT";
-
+       "JOB_ID IN (" + sqlpart + ") "
+    "ORDER BY PRIORITY DESC, JOB_ID";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":LIMIT", limit);
-
     return stmt.executeQuery();
   }
 
@@ -411,10 +405,14 @@ struct ArchiveJobQueueRow {
    * Assign a mount ID to the specified rows
    *
    * @param txn        Transaction to use for this query
-   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
+   * @param status     Archive Job Status to select on
+   * @param tapepool   Tapepool to select on
    * @param mountId    Mount ID to assign
+   * @param limit      Maximum number of rows to return
+   *
+   * @return  result set containing job IDs of the rows which were updated
    */
-  static void updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId);
+  static rdbms::Rset updateMountID(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, uint64_t limit);
 };
 
 } // namespace cta::schedulerdb::postgres
