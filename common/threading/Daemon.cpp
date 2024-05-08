@@ -80,8 +80,9 @@ void cta::server::Daemon::daemonizeIfNotRunInForeground() {
     // For the time being we don't and leave it to the initd script to change
     // to a suitable directory for us.
 
-    // Change the file mode mask: block EXECUTE permission for USER and all permissions for GROUP and OTHER
-    umask(0177);
+    // Change the file mode mask: block all permissions for GROUP and OTHER.
+    // USER requires rwx permission to create local directories for repack.
+    umask(077);
 
     // Run the daemon in a new session
     cta::exception::Errnum::throwOnMinusOne(setsid(),
