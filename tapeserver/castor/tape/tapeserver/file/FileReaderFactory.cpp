@@ -20,6 +20,7 @@
 
 #include "castor/tape/tapeserver/file/CtaFileReader.hpp"
 #include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
+#include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
 #include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/OsmFileReader.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
@@ -42,6 +43,10 @@ std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, 
     }
     case LabelFormat::Enstore: {
       reader = std::make_unique<EnstoreFileReader>(readSession, fileToRecall);
+      break;
+    }
+    case LabelFormat::EnstoreLarge: {
+      reader = std::make_unique<EnstoreLargeFileReader>(readSession, fileToRecall);
       break;
     }
     default: {

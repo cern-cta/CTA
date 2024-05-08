@@ -30,7 +30,8 @@ struct Label {
   enum class Format : std::uint8_t {
     CTA = 0x00,
     OSM = 0x01,
-    Enstore = 0x02
+    Enstore = 0x02, 
+    EnstoreLarge = 0x03
   };
 
   static Format validateFormat(const std::optional<std::uint8_t>& ouiFormat, const std::string& strContext) {
@@ -43,6 +44,7 @@ struct Label {
       case Format::CTA:
       case Format::OSM:
       case Format::Enstore:
+      case Format::EnstoreLarge:
         return format;
       default:
       {

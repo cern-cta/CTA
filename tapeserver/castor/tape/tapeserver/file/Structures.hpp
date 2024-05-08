@@ -165,7 +165,7 @@ namespace castor::tape::tapeFile {
        * Throws an exception if the common field of the structures does
        * not match expectations.
        */
-      void verifyCommon() const ;
+      void verifyCommon(const bool skipFSecCheck = false) const ;
     public:
 
       /**
@@ -212,7 +212,7 @@ namespace castor::tape::tapeFile {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const ;
+      void verify(const bool skipFSecCheck = false) const ;
     };
 
     class EOF1 : public HDR1EOF1 {
@@ -233,7 +233,7 @@ namespace castor::tape::tapeFile {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const ;
+      void verify(const bool skipFSecCheck = false) const ;
     };
     
     class HDR1PRELABEL : public HDR1EOF1 {
@@ -286,7 +286,7 @@ namespace castor::tape::tapeFile {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verifyCommon() const ;
+      void verifyCommon(const char *const formatCharacter = "F") const ;
     public:
       /**
        * @return    The block length 
@@ -312,7 +312,7 @@ namespace castor::tape::tapeFile {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const ;
+      void verify(const char *const formatCharacter = "F") const ;
     };
 
     class EOF2 : public HDR2EOF2 {
@@ -331,7 +331,7 @@ namespace castor::tape::tapeFile {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const ;
+      void verify(const char *const formatCharacter = "F") const ;
     };
 
     // The common part of the UHL1 and UTL1 labels

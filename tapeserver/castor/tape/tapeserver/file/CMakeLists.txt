@@ -35,6 +35,8 @@ set(TAPESERVER_FILE_LIBRARY_SRCS
   OsmReadSession.cpp
   EnstoreFileReader.cpp
   EnstoreReadSession.cpp
+  EnstoreLargeFileReader.cpp
+  EnstoreLargeReadSession.cpp
   OsmFileStructure.cpp
   CpioFileHeaderStructure.cpp
   ReadSession.cpp

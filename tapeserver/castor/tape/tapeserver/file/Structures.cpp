@@ -82,7 +82,7 @@ void tapeFile::HDR1EOF1::fillCommon(std::string fileId, std::string VSN, int fSe
   setString(m_sysCode, std::string("CTA ") + CTA_VERSION);
 }
 
-void tapeFile::HDR1EOF1::verifyCommon()
+void tapeFile::HDR1EOF1::verifyCommon(const bool skipFSecCheck)
   const  {
 
   if (!cmpString(m_fileId, ""))
@@ -92,10 +92,12 @@ void tapeFile::HDR1EOF1::verifyCommon()
   if (!cmpString(m_VSN, ""))
     throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
-  if (cmpString(m_fSec, "0001"))
-    throw cta::exception::Exception(
-          std::string("Failed verify for the fSec: ") +
-          tapeFile::toString(m_fSec));
+  if (!skipFSecCheck) {
+    if (cmpString(m_fSec, "0001"))
+      throw cta::exception::Exception(
+            std::string("Failed verify for the fSec: ") +
+            tapeFile::toString(m_fSec));
+  };
   if (!cmpString(m_fSeq, ""))
     throw cta::exception::Exception(
           std::string("Failed verify for the fSeq: ") +
@@ -137,7 +139,7 @@ void tapeFile::HDR1::fill(
   fillCommon(fileId, VSN, fSeq);
 }
 
-void tapeFile::HDR1::verify() const  {
+void tapeFile::HDR1::verify(const bool skipFSecCheck) const  {
   if (cmpString(m_label, "HDR1"))
     throw cta::exception::Exception(std::string("Failed verify for the HDR1: ") +
           tapeFile::toString(m_label));
@@ -145,7 +147,7 @@ void tapeFile::HDR1::verify() const  {
     throw cta::exception::Exception(std::string("Failed verify for the blockCount: ") +
           tapeFile::toString(m_blockCount));
 
-  verifyCommon();
+  verifyCommon(skipFSecCheck);
 }
 
 void tapeFile::HDR1PRELABEL::fill(std::string VSN) {
@@ -182,7 +184,7 @@ void tapeFile::EOF1::fill(
   fillCommon(fileId, VSN, fSeq);
 }
 
-void tapeFile::EOF1::verify() const  {
+void tapeFile::EOF1::verify(const bool skipFSecCheck) const  {
   if (cmpString(m_label, "EOF1"))
     throw cta::exception::Exception(std::string("Failed verify for the EOF1: ") +
           tapeFile::toString(m_label));
@@ -191,7 +193,7 @@ void tapeFile::EOF1::verify() const  {
           std::string("Failed verify for the blockCount: ") +
           tapeFile::toString(m_blockCount));
 
-  verifyCommon();
+  verifyCommon(skipFSecCheck);
 }
 
 void tapeFile::HDR2EOF2::fillCommon(int blockLength, bool driveHasCompression) {
@@ -207,12 +209,13 @@ void tapeFile::HDR2EOF2::fillCommon(int blockLength, bool driveHasCompression) {
   setString(m_aulId, "00");
 }
 
-void tapeFile::HDR2EOF2::verifyCommon() 
+void tapeFile::HDR2EOF2::verifyCommon(const char *const formatCharacter) 
   const  {
-  if (cmpString(m_recordFormat, "F"))
+  if (cmpString(m_recordFormat, formatCharacter)) {
     throw cta::exception::Exception(
           std::string("Failed verify for the recordFormat: ") +
           tapeFile::toString(m_recordFormat));
+  };
   if (!cmpString(m_blockLength, ""))
     throw cta::exception::Exception(
           std::string("Failed verify for the blockLength: ") +
@@ -238,12 +241,12 @@ void tapeFile::HDR2::fill(int blockLength, bool driveHasCompression) {
   
   fillCommon(blockLength, driveHasCompression);
 }
-void tapeFile::HDR2::verify() const  {
+void tapeFile::HDR2::verify(const char *const formatCharacter) const  {
   if (cmpString(m_label, "HDR2"))
     throw cta::exception::Exception(std::string("Failed verify for the HDR2: ") +
           tapeFile::toString(m_label));
 
-  verifyCommon();
+  verifyCommon(formatCharacter);
 }
 
 void tapeFile::EOF2::fill(int blockLength, bool driveHasCompression) {
@@ -252,12 +255,12 @@ void tapeFile::EOF2::fill(int blockLength, bool driveHasCompression) {
   fillCommon(blockLength, driveHasCompression);
 }
 
-void tapeFile::EOF2::verify() const  {
+void tapeFile::EOF2::verify(const char *const formatCharacter) const  {
   if (cmpString(m_label, "EOF2"))
     throw cta::exception::Exception(std::string("Failed verify for the EOF2: ") +
           tapeFile::toString(m_label));
 
-  verifyCommon();
+  verifyCommon(formatCharacter);
 }
 
 void tapeFile::UHL1UTL1::fillCommon(int fSeq,
