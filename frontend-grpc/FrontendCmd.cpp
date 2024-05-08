@@ -31,7 +31,6 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/log/SyslogLogger.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Configuration.hpp"
@@ -298,4 +297,3 @@ int main(const int argc, char **argv) {
   return cmd.main(argc, argv);
   
 }
-

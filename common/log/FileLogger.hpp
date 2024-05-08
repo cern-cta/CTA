@@ -67,9 +67,7 @@ protected:
    * This method is to be implemented by concrete sub-classes of the Logger class.
    *
    * Please note it is the responsibility of a concrete sub-class to decide
-   * whether or not to use the specified log message header.  For example, the
-   * SysLogLogger sub-class does not use the header.  Instead it relies on
-   * rsyslog to provide a header.
+   * whether or not to use the specified log message header.
    *
    * @param header The header of the message to be logged. It is the responsibility of the concrete sub-class.
    * @param body The body of the message to be logged.

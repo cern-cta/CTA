@@ -16,7 +16,6 @@
  */
 
 #include "common/log/StringLogger.hpp"
-#include "common/log/SyslogLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
 
 namespace cta::log {

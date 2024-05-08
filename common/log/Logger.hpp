@@ -185,7 +185,7 @@ protected:
    * Writes the specified msg to the underlying logging system
    *
    * It is the responsibility of the concrete sub-classes to decide whether or not to use the specified log message
-   * header. The SysLogLogger sub-class does not use the header, relying instead on rsyslog to provide a header.
+   * header.
    *
    * @param header The header of the message to be logged
    * @param body   The body of the message to be logged

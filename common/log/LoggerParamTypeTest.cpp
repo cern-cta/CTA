@@ -15,10 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/log/SyslogLogger.hpp"
-#include "common/log/TestingSyslogLogger.hpp"
 #include "common/log/Param.hpp"
-
+#include <list>
 #include <gtest/gtest.h>
 #include <memory>
 #include <sys/time.h>
