@@ -19,7 +19,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
@@ -211,8 +210,6 @@ int main(const int argc, char **const argv) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if(commandLine->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
-    } else {
-      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }
     if(!commandLine->logFormat.empty()) {
       logPtr->setLogFormat(commandLine->logFormat);

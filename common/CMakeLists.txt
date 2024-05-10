@@ -120,7 +120,6 @@ set (COMMON_LIB_SRC_FILES
   log/PriorityMaps.cpp
   log/StdoutLogger.cpp
   log/StringLogger.cpp
-  log/SyslogLogger.cpp
   log/TimingList.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
@@ -178,7 +177,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LogLevelTest.cpp
   log/ParamTest.cpp
   log/JsonTest.cpp
-  log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp

@@ -23,7 +23,6 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/log/SyslogLogger.hpp"
 #include "FrontendService.hpp"
 #include "Config.hpp"
 
@@ -52,10 +51,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     auto loggerLevel = loggerLevelStr.has_value() ? log::toLogLevel(loggerLevelStr.value()) : log::INFO;
 
     // Set the log context
-    if(loggerURL.value() == "syslog:") {
-      m_log = std::make_unique<log::SyslogLogger>(shortHostname, "cta-frontend", loggerLevel);
-      logToSyslog = 1;
-    } else if(loggerURL.value() == "stdout:") {
+    if(loggerURL.value() == "stdout:") {
       m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend");
       logToStdout = 1;
     } else if(loggerURL.value().substr(0, 5) == "file:") {
