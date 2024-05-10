@@ -114,7 +114,7 @@ echo OK
 
 # this now useless as dummy NFS PV were replaced by local volumes
 # those are recycled automatically
-./recycle_librarydevice_PV.sh
+# ./recycle_librarydevice_PV.sh
 
 echo "Status of library pool after test:"
 kubectl get pv
