@@ -80,7 +80,7 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
    } catch(cta::exception::UserError &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
       m_metadata.set_message_txt(ex.getMessageValue());
-      lc.log(cta::log::ERR, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
+      lc.log(cta::log::INFO, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
    } catch(cta::exception::Exception &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.getMessageValue());

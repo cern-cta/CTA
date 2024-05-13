@@ -17,7 +17,7 @@
 
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/utils.hpp"
-#include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 
 namespace cta::common::dataStructures {
@@ -129,7 +129,7 @@ Tape::State Tape::stringToState(const std::string& stateStr, bool hidePendingSta
   try {
     return Tape::STRING_TO_STATE_MAP.at(stateUpperCase);
   } catch(std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates(hidePendingStates));
+    throw cta::exception::UserError(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates(hidePendingStates));
   }
 }
 
