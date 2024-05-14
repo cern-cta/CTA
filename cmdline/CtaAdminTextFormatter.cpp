@@ -971,7 +971,9 @@ void TextFormatter::printTapePoolLsHeader() {
     "m.user",
     "m.host",
     "m.time",
-    "comment"
+    "comment",
+    "supply_source",
+    "supply_destination"
   );
 }
 
@@ -983,6 +985,19 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
   double use_percent = tpls_item.capacity_bytes() > 0 ?
     (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
 
+  /* aggregate the repeated fields into a single comma-separated list for tabular output */
+  std::string supply_source_agg = "";
+  std::string supply_dest_agg = "";
+  for (int i = 0; i < tpls_item.supply_source_size(); i++){
+    if (i > 0)
+      supply_source_agg += ",";
+    supply_source_agg += tpls_item.supply_source(i);
+  }
+  for (int i = 0; i < tpls_item.supply_destination_size(); i++){
+    if (i > 0)
+      supply_dest_agg += ",";
+    supply_dest_agg += tpls_item.supply_destination(i);
+  }
   push_back(
     tpls_item.name(),
     tpls_item.vo(),
@@ -1001,7 +1016,9 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
     tpls_item.modified().username(),
     tpls_item.modified().host(),
     timeToStr(tpls_item.modified().time()),
-    tpls_item.comment()
+    tpls_item.comment(),
+    supply_source_agg,
+    supply_dest_agg
   );
 }
 
