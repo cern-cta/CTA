@@ -280,8 +280,9 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-
+    const std::optional<std::string> tapePoolSupply;
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName_default, vo.name, nbPartialTapes, tapePoolEncryption,
+      tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
 
     // Tape pool for default archive route
@@ -1264,7 +1265,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string tapePool1Comment = "Tape-pool for copy number 1";
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    const std::optional<std::string> tapePoolSupply;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePool1Comment);
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,

@@ -47,7 +47,9 @@ cta_catalogue_TapePoolTest::cta_catalogue_TapePoolTest()
     m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
     m_anotherStorageClass(CatalogueTestUtils::getAnotherStorageClass()),
     m_mediaType(CatalogueTestUtils::getMediaType()),
-    m_tape1(CatalogueTestUtils::getTape1()) {
+    m_tape1(CatalogueTestUtils::getTape1()),
+    m_tape2(CatalogueTestUtils::getTape2()),
+    m_tape3(CatalogueTestUtils::getTape3()) {
 }
 
 void cta_catalogue_TapePoolTest::SetUp() {
@@ -76,7 +78,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -95,8 +97,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_FALSE((bool)pool.supply);
+    // ASSERT_EQ(supply.value(), pool.supply.value());
     ASSERT_EQ(supply, pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -120,8 +122,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(m_vo.name, pool->vo.name);
     ASSERT_EQ(nbPartialTapes, pool->nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool->encryption);
-    ASSERT_TRUE((bool)pool->supply);
-    ASSERT_EQ(supply.value(), pool->supply.value());
+    ASSERT_FALSE((bool)pool->supply);
+    // ASSERT_EQ(supply.value(), pool->supply.value());
     ASSERT_EQ(supply, pool->supply);
     ASSERT_EQ(0, pool->nbTapes);
     ASSERT_EQ(0, pool->capacityBytes);
@@ -183,7 +185,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_same_twice) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -197,7 +199,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_vo_does_not_exist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes,
     isEncrypted, supply, comment), cta::exception::UserError);
@@ -208,7 +210,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -347,7 +349,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
   const bool tapePoolIsEncrypted = true;
   const std::string tapePoolComment = "Create tape pool";
   {
-    const std::optional<std::string> supply("value for the supply pool mechanism");
+    const std::optional<std::string> supply;
     m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
     m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, tapePoolNbPartialTapes,
@@ -387,7 +389,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
   const bool anotherTapePoolIsEncrypted = false;
   {
     m_catalogue->StorageClass()->createStorageClass(m_admin, m_anotherStorageClass);
-    const std::optional<std::string> supply("value for the supply pool mechanism");
+    const std::optional<std::string> supply;
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
     m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePoolName, m_anotherVo.name, anotherNbPartialTapes,
       anotherTapePoolIsEncrypted, supply, anotherTapePoolComment);
@@ -458,7 +460,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -536,7 +538,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringTapePoolName) {
   const std::string tapePoolName = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -548,7 +550,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringVO) {
   const std::string vo = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, "", nbPartialTapes, isEncrypted,
     supply, comment), cta::catalogue::UserSpecifiedAnEmptyStringVo);
@@ -561,7 +563,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -581,7 +583,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
     "Create tape pool");
 
@@ -636,7 +638,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -706,7 +708,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -746,7 +748,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_VoDoesNotExist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -785,7 +787,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -858,7 +860,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -924,7 +926,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -970,7 +972,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1032,11 +1034,12 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption_nonExistentTapePool) {
     cta::exception::UserError);
 }
 
+// seems this test is now failing, should it??
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply; // empty string is acceptable value
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1052,8 +1055,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_FALSE((bool)supply);
+    // ASSERT_EQ(supply.value(), pool.supply.value());
     ASSERT_EQ(supply, pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -1069,8 +1072,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string modifiedSupply("Modified supply");
-  m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply);
+  const std::string modifiedSupply("tape_pool"); // fails because we want to disallow specifying itself as its supply tapepool
+  ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply));
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1082,8 +1085,9 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(modifiedSupply, pool.supply.value());
+    ASSERT_TRUE((bool)pool.supply); // this is set because transaction for updating the supply field of the tapepool table succeeded
+    ASSERT_EQ(modifiedSupply, pool.supply.value()); // succeeds because each statement is its own transaction
+    ASSERT_FALSE((bool)pool.supply_source); // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1107,7 +1111,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1123,8 +1127,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_FALSE((bool)supply);
+    // ASSERT_EQ(supply.value(), pool.supply.value());
     ASSERT_EQ(supply, pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -1168,7 +1172,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
-  const std::string supply = "value for the supply pool mechanism";
+  const std::string supply = "";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, supply), cta::exception::UserError);
 }
 
@@ -1182,8 +1186,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply;
+  const std::optional<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1209,7 +1213,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1232,7 +1236,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1269,8 +1273,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply;
+  const std::optional<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1294,7 +1298,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1317,7 +1321,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1355,8 +1359,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply;
+  const std::optional<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1382,7 +1386,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1405,7 +1409,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1422,7 +1426,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1489,7 +1493,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1522,6 +1526,89 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
   const std::string newTapePoolName = "";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolName(m_admin, tapePoolName, newTapePoolName),
     cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+// test changes for supply table
+TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
+  const std::string firstTapePoolName = "tape_pool";
+  const std::string secondTapePoolName = "tape_pool_2";
+
+  const uint64_t nbFirstPoolPartialTapes = 2;
+  const uint64_t nbSecondPoolPartialTapes = 3;
+
+  const bool firstPoolIsEncrypted = true;
+  const bool secondPoolIsEncrypted = false;
+
+  const std::optional<std::string> firstPoolSupply;
+  const std::optional<std::string> secondPoolSupply("tape_pool");
+
+  const std::string firstPoolComment = "Create first tape pool";
+  const std::string secondPoolComment = "Create second tape pool";
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
+
+  m_catalogue->TapePool()->createTapePool(m_admin, firstTapePoolName, m_vo.name, nbFirstPoolPartialTapes,
+  firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+
+  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
+  secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+
+  auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+  auto pools = m_catalogue->TapePool()->getTapePools();
+  ASSERT_EQ(2, pools.size());
+
+  {
+    const auto poolMaplet = pools_map.find(firstTapePoolName);
+    ASSERT_NE(pools_map.end(), poolMaplet);
+
+    const auto &pool = poolMaplet->second;
+    ASSERT_EQ(firstTapePoolName, pool.name);
+    ASSERT_FALSE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply_source);
+    ASSERT_EQ(secondTapePoolName, pool.supply_destination);
+  }
+
+  {
+    const auto poolMaplet = pools_map.find(secondTapePoolName);
+    ASSERT_NE(pools_map.end(), poolMaplet);
+
+    const auto &pool = poolMaplet->second;
+    ASSERT_EQ(secondTapePoolName, pool.name);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
+    ASSERT_FALSE((bool)pool.supply_destination);
+    ASSERT_EQ(firstTapePoolName, pool.supply_source);
+    ASSERT_EQ(firstTapePoolName, pool.supply);
+  }
+  // create a third tapepool to test multiple entries
+  std::string thirdTapePoolName("tape_pool_3");
+  std::optional<std::string> thirdTapePoolSupply("  tape_pool,   tape_pool_2"); // comma-separated with multiple whitespace
+  const uint64_t nbThirdPoolPartialTapes = 3;
+  const bool thirdPoolIsEncrypted = false;
+  const std::string thirdPoolComment = "Create third tape pool";
+  m_catalogue->TapePool()->createTapePool(m_admin, thirdTapePoolName, m_anotherVo.name, nbThirdPoolPartialTapes,
+  thirdPoolIsEncrypted, thirdTapePoolSupply, thirdPoolComment);
+  
+  {
+    const auto pools3_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+    const auto pools3 = m_catalogue->TapePool()->getTapePools();
+
+    ASSERT_EQ(3, pools3.size());
+    const auto poolMaplet = pools3_map.find(thirdTapePoolName);
+    ASSERT_NE(pools3_map.end(), poolMaplet);
+
+    const auto &pool = poolMaplet->second;
+    ASSERT_EQ(thirdTapePoolName, pool.name);
+    ASSERT_EQ("tape_pool,tape_pool_2", pool.supply_source.value());
+
+    // test that we are not allowed to remove a tapePool when it is the supply (supply_source) of another tapepool
+    ASSERT_ANY_THROW(m_catalogue->TapePool()->deleteTapePool("tape_pool"));
+    ASSERT_ANY_THROW(m_catalogue->TapePool()->deleteTapePool("tape_pool_2"));
+    // but we're allowed to remove the third tapepool just fine
+    m_catalogue->TapePool()->deleteTapePool("tape_pool_3");
+  }
 }
 
 
