@@ -197,6 +197,7 @@
 - cta/CTA#682 - Generate taped's log file with correct owner and group
 - cta/CTA#683 - Fix problems with field consistency in json logging
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
+- cta/CTA#690 - Log tape state as string in CleanerSession
 - cta/CTA#693 - Fix tapeserver tool regressions
 - cta/CTA#704 - Fix special character encoding in json logging
 - cta/CTA#733 - Fix missing target lib for frontend-grpc to compile with Postgres Scheduler DB
