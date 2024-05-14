@@ -23,6 +23,7 @@
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/dataStructures/Tape.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -172,7 +173,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         } else if (curr_state == Tape::ACTIVE){
           m_catalogue.Tape()->modifyTapeState(admin, m_vid, Tape::DISABLED, curr_state, disabledReason);
         } else {
-          cta::log::Param param("currState", curr_state);
+          cta::log::Param param("currState", common::dataStructures::Tape::STATE_TO_STRING_MAP (curr_state));
           params.push_back(param);
           m_log(cta::log::ERR, "In CleanerSession::exceptionThrowingExecute(), failed to disable the tape. Current tape state can't be disabled automatically.", params);
         }
