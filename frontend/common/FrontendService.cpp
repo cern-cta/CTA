@@ -180,7 +180,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
-  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1024 * 1024 * 1024 : 0;
+  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1000 * 1000 * 1000 : 0;
 
   {
     // Log cta.archivefile.max_size_gb
