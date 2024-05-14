@@ -178,7 +178,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
           m_log(cta::log::ERR, "In CleanerSession::exceptionThrowingExecute(), failed to disable the tape. Current tape state can't be disabled automatically.", params);
         }
       } catch(cta::exception::Exception &ex) {
-        params.emplace_back(cta::log::Param("exceptionMsg", ex.getMessageValue());
+        params.emplace_back(cta::log::Param("exceptionMsg", ex.getMessageValue()));
         m_log(cta::log::ERR, "In CleanerSession::exceptionThrowingExecute(), failed to disable the tape.", params);
       }
     }
