@@ -55,6 +55,8 @@ public:
     const std::string &newName) override;
 
   bool tapePoolExists(const std::string& tapePoolName) const override;
+
+  void verifyTapePoolSupply(const std::string &supply) override;
 };
 
 } // namespace cta::catalogue

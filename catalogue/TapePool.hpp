@@ -126,6 +126,7 @@ struct TapePool {
 
   /**
    * Optional value used by the tape pool supply mechanism.
+   * TODO: deprecate this field, since it's replaced by the TAPE_POOL_SUPPLY catalogue table
    */
   std::optional<std::string> supply;
 
@@ -143,6 +144,10 @@ struct TapePool {
    * The comment.
    */
   std::string comment;
+
+  /* Comma-separated list of values that this tapepool acts as supplier to */
+  std::optional<std::string> supply_source;
+  std::optional<std::string> supply_destination;
 
 }; // struct TapePool
 

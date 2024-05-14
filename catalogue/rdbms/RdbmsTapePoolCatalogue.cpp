@@ -40,6 +40,7 @@ RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr
   RdbmsCatalogue *rdbmsCatalogue)
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
+// TODO: Update this to include the modifications to the TAPE_POOL_SUPPLY table
 void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
   const std::optional<std::string> &supply, const std::string &comment) {
@@ -127,6 +128,93 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
   stmt.executeNonQuery();
+  // maybe I should skip this in tests that supply a placeholder value?
+  populateSupplyTable(conn, name, supply.value_or(""));
+}
+
+/**
+ * Returns true if the given supply string is a list of comma-separated values.
+ */
+void RdbmsTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
+  const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
+
+  bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
+  if (!valid)
+  {
+    throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because user specified an invalid supply string");
+  }
+  // for every submatch, call tapePoolExists
+  std::regex pattern_between_commas("\\s*([^,]+)\\s*,?");
+  auto it_begin = std::sregex_iterator(supply.begin(), supply.end(), pattern_between_commas);
+  auto it_end = std::sregex_iterator();
+
+  for (std::sregex_iterator it = it_begin; it != it_end; ++it){
+    std::smatch match = *it;
+    bool exists = tapePoolExists(match[1]);
+    if (!exists)
+    {
+      throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because tape pool \"" + std::string(match[1]) + "\" does not exist");
+    }
+  }
+}
+
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const {
+  std::string sql =
+  "SELECT TP.TAPE_POOL_ID AS SUPPLY_DEST_TAPE_POOL_ID,"
+  "     TP.TAPE_POOL_NAME AS SUPPLY_DEST_TAPE_POOL_NAME,"
+  "     TP_SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
+  "     TP_SRC.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME "
+  "FROM TAPE_POOL TP "
+  "INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID "
+  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
+  "INNER JOIN TAPE_POOL TP_SRC ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  auto rset = stmt.executeQuery();
+
+  std::string sources = "";
+  while (rset.next()) {
+    if (sources == "")
+      sources = rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
+    else
+    {
+      sources += ",";
+      sources += rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
+    }
+  }
+  return sources;
+}
+
+// Problem: the SELECT query apparently returns nothing, even though there is something in the db
+// actually confirmed that this works properly, returns the destinations string filled in. The problem must be
+// in getTapePools
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
+  std::string sql =
+  "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
+  "    TP.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME,"
+  "    TP_DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID,"
+  "    TP_DEST.TAPE_POOL_NAME AS SUPPLY_DESTINATION_TAPE_POOL_NAME "
+  "FROM TAPE_POOL TP "
+  "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID "
+  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
+  "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  auto rset = stmt.executeQuery();
+
+  std::string destinations = "";
+  while (rset.next()) {
+    if (destinations == "")
+      destinations = rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
+    else
+    {
+      destinations += ",";
+      destinations += rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
+    }
+  }
+  return destinations;
 }
 
 void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
@@ -183,6 +271,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   }
 
   std::list<TapePool> pools;
+  // the following query needs to be rewritten
   std::string sql =
     "SELECT "
       "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -274,7 +363,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     TapePool pool;
-
+    // for each result in this rset, I would need to do a new query to get the tape pool supply
     pool.name = rset.columnString("TAPE_POOL_NAME");
     pool.vo.name = rset.columnString("VO");
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
@@ -295,8 +384,13 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
+    /* we have to set the fields supply_source and supply_destination after we're done processing this resultset */
     pools.push_back(pool);
+  }
+
+  for (auto &pool : pools) {
+    pool.supply_source = getTapePoolSupplySources(conn, pool.name);
+    pool.supply_destination = getTapePoolSupplyDestinations(conn, pool.name);
   }
 
   return pools;
@@ -388,6 +482,9 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+  // we should be done with this rset now, but will verify with a test
+  pool.supply_source = getTapePoolSupplySources(conn, tapePoolName);
+  pool.supply_destination = getTapePoolSupplyDestinations(conn, tapePoolName);
 
   return pool;
 }
@@ -523,6 +620,65 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   }
 }
 
+void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::string supply) {
+  // extract the matches, which have been verified at this point
+  const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
+  std::vector<std::string> verified_matches;
+  bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
+  if (!valid && !supply.empty())
+  {
+    throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because user specified an invalid supply string");
+  }
+  // for every submatch, call tapePoolExists
+  std::regex pattern_between_commas("\\s*([^,]+)\\s*,?");
+  auto it_begin = std::sregex_iterator(supply.begin(), supply.end(), pattern_between_commas);
+  auto it_end = std::sregex_iterator();
+
+  for (std::sregex_iterator it = it_begin; it != it_end; ++it){
+    std::smatch match = *it;
+    bool exists = RdbmsCatalogueUtils::tapePoolExists(conn, match[1]);
+    if (!exists)
+    {
+      throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because tape pool \"" + std::string(match[1]) + "\" does not exist");
+    }
+    verified_matches.push_back(std::string(match[1]));
+  }
+
+  /* wipe the previous supply sources for this tapepool, as we are resetting them now */
+  std::string sql_drop_old = 
+  "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
+  "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME)";
+  auto stmt_delete = conn.createStmt(sql_drop_old);
+  stmt_delete.bindString(":TAPE_POOL_NAME", tapePoolName);
+  stmt_delete.executeNonQuery();
+
+  for (auto match : verified_matches) {
+    // ideally we'd like to have an ON CONFLICT DO NOTHING insert, but Oracle does not support it. Requires MERGE instead
+    // PostgreSQL only supports the MERGE command since version 15. So, we have to jump through hoops here a little bit
+    // WE use the WHERE NOT EXISTS "trick" because of that
+
+    std::string sql = 
+    "INSERT INTO TAPE_POOL_SUPPLY (SUPPLY_SOURCE_TAPE_POOL_ID, SUPPLY_DESTINATION_TAPE_POOL_ID) "
+    " SELECT SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID, DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID "
+    " FROM "
+    " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_SOURCE_NAME) SRC, "
+    " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_DESTINATION_NAME) DEST "
+    " WHERE NOT EXISTS ( "
+    "    SELECT 1 "
+    "    FROM TAPE_POOL_SUPPLY "
+    "    WHERE SUPPLY_SOURCE_TAPE_POOL_ID = SRC.TAPE_POOL_ID "
+    "    AND SUPPLY_DESTINATION_TAPE_POOL_ID = DEST.TAPE_POOL_ID"
+    ")";
+
+    // bindstring
+    auto stmt_insert = conn.createStmt(sql);
+    stmt_insert.bindString(":SUPPLY_SOURCE_NAME", match);
+    stmt_insert.bindString(":SUPPLY_DESTINATION_NAME", tapePoolName);
+    stmt_insert.executeNonQuery();
+  }
+}
+
+// make your changes here
 void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &supply) {
   if(name.empty()) {
@@ -532,6 +688,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
 
   std::optional<std::string> optionalSupply;
   if(!supply.empty()) {
+    verifyTapePoolSupply(supply); // could throw exception, but probably won't
     optionalSupply = supply;
   }
 
@@ -556,6 +713,9 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   if(0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
   }
+
+  // Also update the tape_pool_supply table, at this point I've verified them
+  populateSupplyTable(conn, name, supply);
 }
 
 void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin,
