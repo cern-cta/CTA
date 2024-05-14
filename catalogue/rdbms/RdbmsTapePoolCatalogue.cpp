@@ -129,6 +129,32 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   stmt.executeNonQuery();
 }
 
+/**
+ * Returns true if the given supply string is a list of comma-separated values.
+ */
+void RdbmsTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
+  const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
+
+  bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
+  if (!valid)
+  {
+    throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because user specified an invalid supply string");
+  }
+  // for every submatch, call tapePoolExists
+  std::regex pattern_between_commas("\\s*([^,]+)\\s*,?");
+  auto it_begin = std::sregex_iterator(supply.begin(), supply.end(), pattern_between_commas);
+  auto it_end = std::sregex_iterator();
+
+  for (std::sregex_iterator it = it_begin; it != it_end; ++it){
+    std::smatch match = *it;
+    bool exists = tapePoolExists(match[1]);
+    if (!exists)
+    {
+      throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because tape pool \"" + std::string(match[1]) + "\" does not exist");
+    }
+  }
+}
+
 void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
   auto conn = m_connPool->getConn();
 
@@ -523,6 +549,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   }
 }
 
+// make your changes here
 void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &supply) {
   if(name.empty()) {
@@ -532,6 +559,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
 
   std::optional<std::string> optionalSupply;
   if(!supply.empty()) {
+    verifyTapePoolSupply(supply); // could throw exception, but probably won't
     optionalSupply = supply;
   }
 

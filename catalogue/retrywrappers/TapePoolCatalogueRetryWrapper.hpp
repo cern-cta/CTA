@@ -63,6 +63,7 @@ public:
     const std::string &newName) override;
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
+  void verifyTapePoolSupply(const std::string &supply) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;

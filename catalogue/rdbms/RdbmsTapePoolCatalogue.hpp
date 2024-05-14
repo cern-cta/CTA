@@ -70,6 +70,8 @@ public:
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
 
+  void verifyTapePoolSupply(const std::string &supply) override;
+
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
 

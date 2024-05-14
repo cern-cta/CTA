@@ -20,6 +20,7 @@
 #include <list>
 #include <optional>
 #include <string>
+#include <regex>
 
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "common/exception/UserError.hpp"
@@ -38,6 +39,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringTapePoolName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyTapePool);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapePool);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedInvalidSupplyField);
 
 class TapePoolCatalogue {
 public:
@@ -79,6 +81,7 @@ public:
    * @return True if the tape pool exists.
    */
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
+  virtual void verifyTapePoolSupply(const std::string &supply) = 0;
 };
 
 }} // namespace cta::catalogue

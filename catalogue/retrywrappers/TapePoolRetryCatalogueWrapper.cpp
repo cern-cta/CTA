@@ -103,4 +103,26 @@ bool TapePoolCatalogueRetryWrapper::tapePoolExists(const std::string &tapePoolNa
   }, m_maxTriesToConnect);
 }
 
+void TapePoolCatalogueRetryWrapper::verifyTapePoolSupply(const std::string &supply) {
+  return retryOnLostConnection(m_log, [this,&supply] {
+    // return m_catalogue->TapePool()->tapePoolExists(supply);
+    const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
+
+    bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
+    if (!valid)
+    {
+      throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because user specified an invalid supply string");
+    }
+    // for every submatch, call tapePoolExists
+    std::regex pattern_between_commas("\\s*([^,]+)\\s*,?");
+    auto it_begin = std::sregex_iterator(supply.begin(), supply.end(), pattern_between_commas);
+    auto it_end = std::sregex_iterator();
+
+    for (std::sregex_iterator it = it_begin; it != it_end; ++it){
+      std::smatch match = *it;
+      m_catalogue->TapePool()->tapePoolExists(match[1]);
+    }
+  }, m_maxTriesToConnect);
+}
+
 } // namespace cta::catalogue
