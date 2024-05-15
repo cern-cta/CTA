@@ -94,7 +94,7 @@ SCHEMA_VERSION_MAJOR.SCHEMA_VERSION_MINOR
 *Example: 1.0, 1.1, 2.0*
 
 **WARNING**
-    The changing of the *SCHEMA_VERSION_MAJOR* number has to be modified **ONLY** if the changes made to the schema are [not backward-compatible](https://eoscta.docs.cern.ch/catalogue/upgrade/backward_incompatible_upgrades/) with the currently running version of CTA.
+    The changing of the *SCHEMA_VERSION_MAJOR* number has to be modified **ONLY** if the changes made to the schema are [not backward-compatible](https://eoscta.docs.cern.ch/catalogue/updating_the_schema/backward_incompatible_upgrades/) with the currently running version of CTA.
 
 **DANGER**
     While starting, CTA will check the *SCHEMA_VERSION_MAJOR* schema version it is supposed to run against. If the *SCHEMA_VERSION_MAJOR* is not the correct one, CTA will not start.
