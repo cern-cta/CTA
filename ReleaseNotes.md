@@ -10,11 +10,11 @@
 
 ### Bug Fixes
 - cta/CTA#485 - Check disk file metadata on delete requests
-- cta/CTA#502 - Fix string representation for Cleanup session type
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 - cta/CTA#645 - Fix new mount timeout log message
 - cta/CTA#656 - Improve naming of taped's drive threads
 - cta/CTA#666 - Fix drive status activity field not being properly reset
+- cta/CTA#678 - Fix string representation for Cleanup session type
 - cta/CTA#682 - Generate taped's log file with correct owner and group
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
 
