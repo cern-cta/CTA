@@ -18,6 +18,7 @@
 - cta/CTA#682 - Generate taped's log file with correct owner and group
 - cta/CTA#683 - Fix problems with field consistency in json logging
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
+- cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024
 
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
