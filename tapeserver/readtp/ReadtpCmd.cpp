@@ -103,11 +103,10 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_fSeqRangeList = cmdLineArgs.m_fSeqRangeList;
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
-  std::optional<std::string> unitName = cmdLineArgs.m_unitName.value();
 
   // Read taped config file
   const cta::tape::daemon::common::TapedConfiguration driveConfig
-  = cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(unitName, m_log);
+  = cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(cmdLineArgs.m_unitName, m_log);
 
   // Configure drive
   m_devFilename = driveConfig.driveDevice.value();
