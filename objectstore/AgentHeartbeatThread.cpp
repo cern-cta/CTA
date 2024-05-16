@@ -60,7 +60,7 @@ void AgentHeartbeatThread::run() {
     }
   } catch (cta::exception::Exception & ex) {
     log::ScopedParamContainer params(lc);
-    params.add("Message", ex.getMessageValue());
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting.");
     lc.logBacktrace(log::INFO, ex.backtrace());
     ::exit(EXIT_FAILURE);

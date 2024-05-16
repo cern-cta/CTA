@@ -16,6 +16,7 @@
 - cta/CTA#666 - Fix drive status activity field not being properly reset
 - cta/CTA#678 - Fix string representation for Cleanup session type
 - cta/CTA#682 - Generate taped's log file with correct owner and group
+- cta/CTA#683 - Fix problems with field consistency in json logging
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
 
 ### Continuous Integration

@@ -119,7 +119,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
             {
               log::ScopedParamContainer params(lc);
               params.add("tag", m_tag);
-              params.add("message", strErrorMsg);
+              params.add("errorMessage", strErrorMsg);
               lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Response error.");
             }
             strErrorMsg.clear();
@@ -178,7 +178,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
             {
               log::ScopedParamContainer params(lc);
               params.add("tag", m_tag);
-              params.add("message", m_grpcStatus.error_message());
+              params.add("errorMessage", m_grpcStatus.error_message());
               lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): gRPC Error");
             }
             break;

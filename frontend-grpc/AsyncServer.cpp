@@ -185,7 +185,7 @@ void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
     } catch(const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("thread", uiId);
-      params.add("message", ex.getMessageValue());
+      params.add("exceptionMessage", ex.getMessageValue());
       lc.log(log::ERR, "grpc::AsyncServer::process(): Got an exception.");
     }
   }

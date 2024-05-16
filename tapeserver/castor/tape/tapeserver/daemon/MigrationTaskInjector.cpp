@@ -116,7 +116,7 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
     scoped.add("transactionId", m_archiveMount.getMountTransactionId())
       .add("byteSizeThreshold", m_maxBytes)
       .add("maxFiles", m_maxFiles)
-      .add("message", ex.getMessageValue());
+      .add("exceptionMessage", ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToMigrate");
     return false;
   }

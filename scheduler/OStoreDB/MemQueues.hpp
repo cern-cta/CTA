@@ -368,7 +368,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       std::rethrow_exception(std::current_exception());
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("message", ex.getMessageValue());
+      params.add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
     } catch (std::exception & ex) {
       log::ScopedParamContainer params(logContext);

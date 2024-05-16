@@ -71,7 +71,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   std::list<cta::log::Param> params = {
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
-    cta::log::Param("message", errorMessage)};
+    cta::log::Param("exceptionMessage", errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed, the drive is going down.", params);
 
   // Putting the drive down
@@ -81,7 +81,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     std::list<cta::log::Param> params = {
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
-    cta::log::Param("message", ex.getMessageValue())};
+    cta::log::Param("exceptionMessage", ex.getMessageValue())};
     m_log(cta::log::ERR, "Cleaner failed. Failed to put the drive down", params);
   }
 
@@ -251,7 +251,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
   std::list<cta::log::Param> params = {
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
-    cta::log::Param("message", errorMessage)};
+    cta::log::Param("exceptionMessage", errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed getting tape alerts from the drive", params);
 }
 
@@ -291,7 +291,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(dri
     drive.waitUntilReady(m_tapeLoadTimeout);
     m_log(cta::log::INFO, "Cleaner detected drive is ready", params);
   } catch (cta::exception::Exception &ex) {
-    params.push_back(cta::log::Param("message", ex.getMessage().str()));
+    params.push_back(cta::log::Param("exceptionMessage", ex.getMessage().str()));
     m_log(cta::log::INFO, "Cleaner caught non-fatal exception whilst waiting for"
       " drive to become ready", params);
   }

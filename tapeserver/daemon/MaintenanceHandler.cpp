@@ -166,8 +166,8 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
     exception::Errnum::throwOnMinusOne(rc);
   } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer exParams(m_processManager.logContext());
-    exParams.add("pid", m_pid)
-          .add("Message", ex.getMessageValue());
+    exParams.add("subprocessPid", m_pid)
+          .add("exceptionMessage", ex.getMessageValue());
     m_processManager.logContext().log(log::WARNING,
         "In MaintenanceHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
     return m_processingStatus;
@@ -178,7 +178,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
     // How well did it finish? (exit() or killed?)
     // The socket pair will be reopened on the next fork. Clean it up.
     m_socketPair.reset(nullptr);
-    params.add("pid", m_pid);
+    params.add("subprocessPid", m_pid);
     if (WIFEXITED(processStatus)) {
       // Child process exited properly. The new child process will not need to start
       // a cleanup session.
@@ -341,7 +341,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
     log::ScopedParamContainer exParams(m_processManager.logContext());
-    exParams.add("Message", ex.getMessageValue());
+    exParams.add("exceptionMessage", ex.getMessageValue());
     m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
 
@@ -349,7 +349,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     throw ex;
   } catch(std::exception &ex) {
     log::ScopedParamContainer exParams(m_processManager.logContext());
-    exParams.add("Message", ex.what());
+    exParams.add("exceptionMessage", ex.what());
     m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
     throw ex;
@@ -383,7 +383,7 @@ MaintenanceHandler::~MaintenanceHandler() {
   // If we still have a child process (should not), just stop it the hard way.
   if (-1 != m_pid) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("pid", m_pid);
+    params.add("subprocessPid", m_pid);
     ::kill(m_pid, SIGKILL);
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::~MaintenanceHandler(): killed leftover subprocess");
   }

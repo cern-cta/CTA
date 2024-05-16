@@ -227,7 +227,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     lc.log(cta::log::INFO, "In cta::frontend::grpc::server::FrontendCmd::main(): Connected to catalog.");
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
-    params.add("message", ex.getMessageValue());
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
   }
@@ -262,12 +262,12 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     server.run(spServerCredentials, spAuthProcessor);
   } catch(const cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
-    params.add("message", e.getMessageValue());
+    params.add("exceptionMessage", e.getMessageValue());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
   } catch(const std::exception& e) {
     log::ScopedParamContainer params(lc);
-    params.add("message", e.what());
+    params.add("exceptionMessage", e.what());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
   }

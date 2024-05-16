@@ -207,8 +207,8 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
       break;
     case LogFormat::JSON:
         os << R"("log_level":")" << logLevel << R"(",)"
-           << R"("pid":")" << pid << R"(",)"
-           << R"("tid":")" << tid << R"(",)"
+           << R"("pid":)" << pid << R"(,)"
+           << R"("tid":)" << tid << R"(,)"
            << R"("message":")" << msg << R"(")";
   }
 
