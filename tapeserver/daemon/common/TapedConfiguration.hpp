@@ -32,11 +32,11 @@ namespace cta::tape::daemon::common {
  * to spawn a transfer session per drive.
  */
 struct TapedConfiguration {
-  static TapedConfiguration createFromCtaConf(
+  static TapedConfiguration createFromConfigPath(
           const std::string &configFilePath,
           cta::log::Logger &log=gDummyLogger);
 
-  static TapedConfiguration createFromCtaConf(
+  static TapedConfiguration createFromOptionalDriveName(
           const std::optional<std::string> &unitName,
           cta::log::Logger & log = gDummyLogger);
 

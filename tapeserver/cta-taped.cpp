@@ -79,7 +79,7 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
   logStartOfDaemon(log, commandLine);
 
   // Parse /etc/cta/cta-taped-unitName.conf parameters
-  const TapedConfiguration globalConfig = TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
+  const TapedConfiguration globalConfig = TapedConfiguration::createFromConfigPath(commandLine.configFileLocation, log);
 
   // Set log lines to JSON format if configured and not overridden on command line
   if(commandLine.logFormat.empty()) {
@@ -162,7 +162,7 @@ int main(const int argc, char **const argv) {
   tape::daemon::common::TapedConfiguration globalConfig;
   try {
   globalConfig =
-      tape::daemon::common::TapedConfiguration::createFromCtaConf(commandLine->configFileLocation, *logPtr);
+      tape::daemon::common::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
   } catch (const exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
