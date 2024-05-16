@@ -573,7 +573,8 @@ int DriveHandler::runChild() {
 
   // Set the thread name for process ID:
   std::string threadName = "cta-tpd-";
-  threadName += m_driveConfig.unitName;
+  const auto pos = m_driveConfig.unitName.find_last_of('-');
+  threadName += m_driveConfig.unitName.substr(pos+1);
   prctl(PR_SET_NAME, threadName.c_str());
 
   // Create the channel to talk back to the parent process.
