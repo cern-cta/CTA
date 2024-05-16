@@ -121,6 +121,12 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
     driveConfig.rmcRequestAttempts.value());
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
+  // Configure encryption
+  const std::string externalEncryptionKeyScript = driveConfig.externalEncryptionKeyScript.value();
+  const bool useEncryption = driveConfig.useEncryption.value() == "yes";
+  m_encryptionControl = std::make_unique<castor::tape::tapeserver::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
+
+
   // Configure catalogue
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(CATALOGUE_CONFIG_PATH);
   const uint64_t nbConns = 1;
@@ -569,15 +575,6 @@ void ReadtpCmd::rewindDrive(
 void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
                                     castor::tape::tapeserver::drive::DriveInterface &drive) {
   try {
-    const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
-
-    // Config file needed to find the cta-get-encryption-key script
-    const cta::tape::daemon::common::TapedConfiguration tapedConfig =
-      cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, m_dummyLog);
-    const std::string externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
-    const bool useEncryption = tapedConfig.useEncryption.value() == "yes";
-    m_encryptionControl = std::make_unique<castor::tape::tapeserver::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
-
     // We want those scoped params to last for the whole mount.
     // This will allow each session to be logged with its encryption
     // status:
