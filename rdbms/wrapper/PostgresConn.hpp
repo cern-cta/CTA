@@ -149,7 +149,7 @@ public:
   std::list<std::string> getSynonymNames() override;
 
   /**
-   * Returns the type names of the database
+   * Returns the type names of the database (in the public schema)
    * 
    * If the underlying database technologies does not support type informations
    * this method simply returns an empty list.
@@ -157,6 +157,16 @@ public:
    * @return the list of the names of the types in the database
    */
   std::list<std::string> getTypeNames() override;
+
+  /**
+ * Returns the view names of the database (in the public schema)
+ *
+ * If the underlying database technologies does not support view informations
+ * this method simply returns an empty list.
+ *
+ * @return the list of the names of the views in the database
+ */
+  std::list<std::string> getViewNames() override;
   
   /**
    * Returns the names of all the column and their type as a map for the given 

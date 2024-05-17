@@ -293,4 +293,15 @@ std::list<std::string> Conn::getTypeNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getViewNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getViewNames() {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getViewNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
 } // namespace cta::rdbms

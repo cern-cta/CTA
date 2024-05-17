@@ -110,6 +110,8 @@ void DropSchemaCmd::dropSchedulerSchema(const rdbms::Login::DbType &dbType, rdbm
     default:
       dropDatabaseSequences(conn);
       dropDatabaseTables(conn);
+      dropDatabaseTypes(conn);
+      dropDatabaseViews(conn);
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -128,7 +130,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       auto tables = conn.getTableNames();
       tables.remove("CTA_SCHEDULER");  // Remove CTA_SCHEDULER to drop it at the end
       for (const auto &table : tables) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + table + std::string(" CASCADE"));
+        conn.executeNonQuery(std::string("DROP TABLE IF EXISTS ") + table + std::string(" CASCADE"));
         m_out << "Dropped table " << table << std::endl;
         droppedAtLeastOneTable = true;
       }
@@ -139,7 +141,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (tables.size() != 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_SCHEDULER.");
     }
-    conn.executeNonQuery("DROP TABLE CTA_SCHEDULER");
+    conn.executeNonQuery("DROP TABLE IF EXISTS CTA_SCHEDULER");
     m_out << "Dropped table CTA_SCHEDULER" << std::endl;
 
     tables = conn.getTableNames();
@@ -159,8 +161,40 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
   try {
     std::list<std::string> sequences = conn.getSequenceNames();
     for(const auto& sequence : sequences) {
-      conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence + std::string(" CASCADE"));
+      conn.executeNonQuery(std::string("DROP SEQUENCE IF EXISTS ") + sequence + std::string(" CASCADE"));
       m_out << "Dropped sequence " << sequence << std::endl;
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropDatabaseSequences
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropDatabaseViews(rdbms::Conn &conn) {
+  try {
+    std::list<std::string> dbviews = conn.getViewNames();
+    for(const auto& dbview : dbviews) {
+      conn.executeNonQuery(std::string("DROP VIEW IF EXISTS ") + dbview + std::string(" CASCADE"));
+      m_out << "Dropped view " << dbview << std::endl;
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropDatabaseSequences
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropDatabaseTypes(rdbms::Conn &conn) {
+  try {
+    std::list<std::string> dbtypes = conn.getTypeNames();
+    for(const auto& dbtype : dbtypes) {
+      conn.executeNonQuery(std::string("DROP TYPE IF EXISTS ") + dbtype + std::string(" CASCADE"));
+      m_out << "Dropped type " << dbtype << std::endl;
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
