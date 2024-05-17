@@ -93,6 +93,20 @@ private:
   void dropDatabaseTables(rdbms::Conn &conn);
 
   /**
+   * Drops all database views
+   *
+   * @param conn The database connection.
+   */
+  void dropDatabaseViews(rdbms::Conn &conn);
+
+  /**
+   * Drops all database types.
+   *
+   * @param conn The database connection.
+   */
+  void dropDatabaseTypes(rdbms::Conn &conn);
+
+  /**
    * Drops the database sequences with the specified names.
    *
    * @param conn The database connection.

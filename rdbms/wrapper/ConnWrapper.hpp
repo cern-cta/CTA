@@ -194,6 +194,16 @@ public:
    * @return the list of the names of the types in the database
    */
   virtual std::list<std::string> getTypeNames() = 0;
+
+  /**
+   * Returns the view names of the database
+   *
+   * If the underlying database technologies does not support type informations
+   * this method simply returns an empty list.
+   *
+   * @return the list of the names of the views in the database
+   */
+  virtual std::list<std::string> getViewNames() = 0;
   
 }; // class ConnWrapper
 

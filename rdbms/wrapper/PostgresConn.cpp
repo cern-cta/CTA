@@ -388,6 +388,49 @@ std::list<std::string> PostgresConn::getSynonymNames() {
 // getTypeNames
 //------------------------------------------------------------------------------
 std::list<std::string> PostgresConn::getTypeNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+            "SELECT "
+            "TYPNAME "
+            "FROM "
+            "PG_TYPE "
+            "WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("TYPNAME");
+      names.push_back(name.value());
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+  return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getTypeNames
+//------------------------------------------------------------------------------
+std::list<std::string> PostgresConn::getViewNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+            "SELECT "
+            "TABLE_NAME "
+            "FROM "
+            "INFORMATION_SCHEMA.VIEWS "
+            "WHERE table_schema = 'public'";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("TABLE_NAME");
+      names.push_back(name.value());
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
   return std::list<std::string>();
 }
 
