@@ -406,7 +406,7 @@ std::list<std::string> OcciConn::getTypeNames() {
 //------------------------------------------------------------------------------
 // getViewNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getViewNames() {
+std::list<std::string> OcciConn::getViewNames() {
   return std::list<std::string>();
 }
 
