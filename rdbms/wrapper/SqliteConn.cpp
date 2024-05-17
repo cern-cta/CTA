@@ -451,5 +451,11 @@ std::list<std::string> SqliteConn::getTypeNames() {
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getViewNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getViewNames() {
+  return std::list<std::string>();
+}
 
 } // namespace cta::rdbms::wrapper
