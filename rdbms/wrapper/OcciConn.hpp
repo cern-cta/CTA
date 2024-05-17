@@ -205,6 +205,16 @@ public:
    */
   std::list<std::string> getTypeNames() override;
 
+  /**
+   * Returns the view names of the database
+   *
+   * If the underlying database technologies does not support type informations
+   * this method simply returns an empty list.
+   *
+   * @return the list of the names of the views in the database
+   */
+  std::list<std::string> getViewNames() override;
+
 private:
 
   friend OcciStmt;
