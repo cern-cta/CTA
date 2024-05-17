@@ -19,7 +19,7 @@
 - cta/CTA#682 - Generate taped's log file with correct owner and group
 - cta/CTA#683 - Fix problems with field consistency in json logging
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
-- cta/CTA#693 - Fix readtp aborting when no drive name is specified
+- cta/CTA#693 - Fix tapeserver tool regressions
 
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
