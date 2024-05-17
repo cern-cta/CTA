@@ -47,7 +47,9 @@ cta_catalogue_TapePoolTest::cta_catalogue_TapePoolTest()
     m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
     m_anotherStorageClass(CatalogueTestUtils::getAnotherStorageClass()),
     m_mediaType(CatalogueTestUtils::getMediaType()),
-    m_tape1(CatalogueTestUtils::getTape1()) {
+    m_tape1(CatalogueTestUtils::getTape1()),
+    m_tape2(CatalogueTestUtils::getTape2()),
+    m_tape3(CatalogueTestUtils::getTape3()) {
 }
 
 void cta_catalogue_TapePoolTest::SetUp() {
