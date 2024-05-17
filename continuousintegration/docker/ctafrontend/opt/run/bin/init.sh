@@ -63,6 +63,8 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
     echo "Postgres scheduler config file content: "
     cat /etc/cta/cta-scheduler.conf
+    echo "Droping the scheduler DB schema"
+    echo "yes" | cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf || die "ERROR: Could not drop scheduler schema. cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf FAILED"
     echo "Creating the scheduler DB schema"
     cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else
@@ -76,7 +78,7 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
     rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls
   fi
 else
-  echo "Reusing objectstore (no check)"
+  echo "Reusing the existing scheduling backend (no check)"
 fi
 
 echo "Configuring database:"
