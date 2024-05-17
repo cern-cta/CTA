@@ -41,7 +41,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
     "RETURNING SET_SELECTION.JOB_ID";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.bindUint32(":LIMIT", limit);
+  stmt.bindUint64(":LIMIT", limit);
   stmt.bindString(":TAPE_POOL", tapepool);
   stmt.bindString(":STATUS", to_string(status));
   return stmt.executeQuery();
