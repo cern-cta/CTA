@@ -128,7 +128,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       auto tables = conn.getTableNames();
       tables.remove("CTA_SCHEDULER");  // Remove CTA_SCHEDULER to drop it at the end
       for (const auto &table : tables) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + table);
+        conn.executeNonQuery(std::string("DROP TABLE ") + table + std::string(" CASCADE"));
         m_out << "Dropped table " << table << std::endl;
         droppedAtLeastOneTable = true;
       }
@@ -159,7 +159,7 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
   try {
     std::list<std::string> sequences = conn.getSequenceNames();
     for(const auto& sequence : sequences) {
-      conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
+      conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence + std::string(" CASCADE"));
       m_out << "Dropped sequence " << sequence << std::endl;
     }
   } catch(exception::Exception &ex) {
