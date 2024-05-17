@@ -2030,7 +2030,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
   try {
     ri.setAddress(re.getRepackIndexAddress());
   } catch (cta::exception::Exception& ) {
-    throw exception::UserError("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
+    throw exception::UserError("No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
   auto rrAddresses = ri.getRepackRequestsAddresses();
@@ -2045,7 +2045,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
       } catch (cta::exception::Exception& ) {}
     }
   }
-  throw exception::UserError("In OStoreDB::getRepackInfo(): No repack request for this VID.");
+  throw exception::UserError("No repack request for this VID.");
 }
 
 //------------------------------------------------------------------------------
@@ -3362,7 +3362,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
   try {
     ri.setAddress(re.getRepackIndexAddress());
   } catch (cta::exception::Exception& ) {
-    throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
+    throw exception::UserError("No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
   auto rrAddresses = ri.getRepackRequestsAddresses();
@@ -3415,7 +3415,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
       }
     }
   }
-  throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID.");
+  throw exception::UserError("No repack request for this VID.");
 }
 
 //------------------------------------------------------------------------------

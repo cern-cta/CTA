@@ -31,6 +31,7 @@
 - cta/CTA#575 - Remove rados metrics logging
 - cta/CTA#675 - Renaming PostgresSchedDB to RelationalDB and introducing rdbms directory model to the Scheduler DB code
 - cta/CTA#687 - Remove SyslogLogger
+- cta/CTA#459 - Remove function name from UserError exception messages
 
 # v4.10.10.1-1 / v5.10.10.1-1
 

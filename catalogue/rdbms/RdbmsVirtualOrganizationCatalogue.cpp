@@ -327,7 +327,7 @@ std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizat
   virtualOrganization.isRepackVo = rset.columnOptionalBool("IS_REPACK_VO").value_or(false);
 
   if(rset.next()){
-    throw exception::UserError("In RdbmsCatalogue::getDefaultVirtualOrganizationForRepack() found more that one default Virtual Organization for repack.");
+    throw exception::UserError("Found more that one default Virtual Organization for repack.");
   }
 
   return virtualOrganization;
