@@ -112,9 +112,9 @@ std::string TapedConfiguration::getFirstDriveName() {
 }
 
 //------------------------------------------------------------------------------
-// TapedConfiguration::createFromCtaConf w path
+// TapedConfiguration::createFromConfigPath
 //------------------------------------------------------------------------------
-TapedConfiguration TapedConfiguration::createFromCtaConf(
+TapedConfiguration TapedConfiguration::createFromConfigPath(
   const std::string &driveTapedConfigPath, cta::log::Logger &log) {
   TapedConfiguration ret;
 
@@ -229,12 +229,12 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   return ret;
 }
 
-TapedConfiguration TapedConfiguration::createFromCtaConf(
+TapedConfiguration TapedConfiguration::createFromOptionalDriveName(
   const std::optional<std::string> &unitName, cta::log::Logger &log) {
   // Get the config file path
   const std::string driveTapedConfigPath = getDriveConfigFile(unitName, log);
 
-  return createFromCtaConf(driveTapedConfigPath, log);
+  return createFromConfigPath(driveTapedConfigPath, log);
 }
 
 //------------------------------------------------------------------------------

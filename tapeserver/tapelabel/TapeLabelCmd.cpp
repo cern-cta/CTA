@@ -401,7 +401,7 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
 
   // Read taped config file
   const cta::tape::daemon::common::TapedConfiguration driveConfig
-    = cta::tape::daemon::common::TapedConfiguration::createFromCtaConf(unitName, m_log);
+    = cta::tape::daemon::common::TapedConfiguration::createFromOptionalDriveName(unitName, m_log);
 
   // Configure drive
   m_devFilename = driveConfig.driveDevice.value();
