@@ -18,6 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/OcciEnvSingleton.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -45,3 +46,15 @@ std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
 }
 
 } // namespace cta::rdbms::wrapper
+
+extern "C" {
+
+void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+    cta::plugin::Args<const std::string&>,
+    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+
+  interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmsocci")
+    .CLASS<cta::rdbms::wrapper::OcciConnFactory>("OcciConnFactory");
+}
+
+}// extern "C"

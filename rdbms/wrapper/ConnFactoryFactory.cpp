@@ -38,14 +38,18 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     static cta::plugin::Manager<rdbms::wrapper::ConnFactory,
       cta::plugin::Args<const std::string&>,
       cta::plugin::Args<const std::string&, const std::string&, const std::string&>> pm;
-    std::unique_ptr<ConnFactory> upConnFactory;
 
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
       return std::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
     case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      return std::make_unique<OcciConnFactory>(login.username, login.password, login.database);
+      //return std::make_unique<OcciConnFactory>(login.username, login.password, login.database);
+      pm.load("libctardbmsocci.so");
+      if (!pm.isRegistered("ctardbmsocci")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctardbmsocci").make("OcciConnFactory", login.username, login.password, login.database);
 #else
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
@@ -56,11 +60,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       if (!pm.isRegistered("ctardbmspostgres")) {
         pm.bootstrap("factory");
       }
-      upConnFactory = pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login.database);
-      //upConnFactory->init(login.database);
-
-      return upConnFactory;
-
+      return pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login.database);
     case Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

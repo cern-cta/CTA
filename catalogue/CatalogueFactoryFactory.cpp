@@ -54,8 +54,13 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
-        maxTriesToConnect);
+//      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
+//        maxTriesToConnect);
+      pm.load("libctacatalogueocci.so");
+      if (!pm.isRegistered("ctacatalogueocci")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueocci").make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
 #else
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
