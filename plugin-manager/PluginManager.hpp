@@ -40,7 +40,7 @@ public:
   Loader& load(const std::string& strFile) {
     m_strFile = strFile;
     if (m_pHandler) {
-      throw std::logic_error("An attempt to load a library before unloading the previous one");
+      throw std::logic_error("An attempt to load a library before unloading the previous one.");
     }  
     // RTLD_NOW ensures that all the symbols are resolved immediately. This means that
 	  // if a symbol cannot be found, the program will crash now instead of later.
@@ -64,7 +64,7 @@ public:
 
   Loader& attach(const std::string& strEntryPointName) {
     if (!m_pHandler) {
-      throw std::runtime_error("Null pointer exception");
+      throw std::runtime_error("Null pointer exception.");
     }
 
     dlerror(); // to clear any old error conditions
@@ -83,7 +83,7 @@ public:
   template<typename HANDLER, typename RETURN, typename... ARGS>
   RETURN call(ARGS&... args) {
     if (!m_pFun) {
-      throw std::runtime_error("Null pointer exception: an entry funcrion is not attached");
+      throw std::runtime_error("Null pointer exception: an entry funcrion is not attached.");
     }
     HANDLER pFun = reinterpret_cast<HANDLER>(m_pFun);
     return pFun(args...);
@@ -113,14 +113,14 @@ public:
   void registerPlugin(std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface) {
     const std::string strPluginName = upInterface->template GET<plugin::DATA::PLUGIN_NAME>(); 
     if (isRegistered(strPluginName)) {
-      throw std::logic_error("A plugin with the name: " + strPluginName + " is already registered");
+      throw std::logic_error("A plugin with the name: " + strPluginName + " is already registered.");
     }
     m_umapPlugins.emplace(strPluginName, std::move(upInterface));  
   }
 
   const plugin::Interface<BASE_TYPE, IARGS...>& plugin(const std::string& strPluginName) const {
     if (!isRegistered(strPluginName)) {
-      throw std::logic_error("A plugin with the name: " + strPluginName + " is not registered");
+      throw std::logic_error("A plugin with the name: " + strPluginName + " is not registered.");
     }
     return *m_umapPlugins.at(strPluginName);
   }
@@ -176,10 +176,10 @@ private:
     try {
       return m_umapLoaders.at(m_strActiveLoader);
     } catch(const std::out_of_range& oor) {
-      throw std::runtime_error("Loader " + m_strActiveLoader + " does not exists");
+      throw std::runtime_error("Loader " + m_strActiveLoader + " does not exists.");
     }
   }
 
 };
- 
+
 } // namespace cta::plugin

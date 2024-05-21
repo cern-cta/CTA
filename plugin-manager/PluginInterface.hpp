@@ -57,30 +57,32 @@ public:
   template<typename TYPE>
   Interface& CLASS(const std::string& strClassName) {
     if (!std::is_base_of<BASE_TYPE, TYPE>::value) { 
-      throw std::invalid_argument("plugin type not supported");
+      throw std::invalid_argument("Plugin type not supported.");
     }
-    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& args) ->
-        std::unique_ptr<TYPE> {
-          // Visit constructor variants of TYPE
-          std::unique_ptr<TYPE> upToType = std::visit([](auto&& arg) ->
-              std::unique_ptr<TYPE> {
-              // Unpack parameter pack (IARGS...) 
-              return std::apply(
-                      [](auto&&... unpackArgs) -> std::unique_ptr<TYPE> {
-                        return std::make_unique<TYPE>(unpackArgs...);
-                      }, arg);
+    
+    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& args) -> std::unique_ptr<TYPE> {
+      try {
+        std::unique_ptr<TYPE> upType = std::visit([](auto&& arg) ->
+          std::unique_ptr<TYPE> {
+          // unpack parameter pack (IARGS...) 
+          return std::apply([](auto&&... unpackArgs) -> std::unique_ptr<TYPE> {
+                   return make<TYPE>(unpackArgs...);
+                 }, arg);
+        }, args);
 
-          }, args);
-        
-          return upToType;
-        });
+        return upType;
+
+      } catch (const std::bad_variant_access& e) {
+        throw std::logic_error("Invalid plugin interface.");
+      }
+    });
 
     return *this;
   }
 
   template<typename... ARGS>
   constexpr
-  std::unique_ptr<BASE_TYPE> create(const std::string& strClassName, ARGS&&... args) const {
+  std::unique_ptr<BASE_TYPE> make(const std::string& strClassName, ARGS&&... args) const {
     return m_umapFactories.at(strClassName)(std::forward_as_tuple(args...));
   }
 
@@ -88,6 +90,23 @@ private:
   std::unordered_map<DATA, std::string> m_umapData;
   std::unordered_map<std::string, std::function<std::unique_ptr<BASE_TYPE> (const std::variant<IARGS...>&)>> m_umapFactories;
 
-};
+  /**
+   * A static partial specialized template for instantiating a class
+   * to be captured by the lambda function if a class can be constructible
+   */
+  template<typename TYPE, typename... ARGS>
+  static std::enable_if_t<std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... args) {
+    return std::make_unique<TYPE>(args...);
+  }
+  /**
+   * A static partial specialized template for instantiating a class
+   * to be captured by the lambda function if a class cannot be constructible 
+   */
+  template<typename TYPE, typename... ARGS>
+  static std::enable_if_t<!std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... ) {
+    throw std::logic_error("The class cannot be instantiated. No constructor has been implemented for the given parameter set.");
+  }
 
+};
+ 
 } // namespace cta::plugin
