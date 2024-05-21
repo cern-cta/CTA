@@ -66,9 +66,16 @@ extern "C" {
 void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
     cta::plugin::Args<
       cta::log::Logger&,
-      const cta::rdbms::Login&, const u_int64_t,
-      const u_int64_t, const u_int64_t>>& interface) {
-  
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const cta::rdbms::Login&,
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>>& interface) {
+ 
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacataloguepostgres")
     .CLASS<cta::catalogue::PostgresqlCatalogueFactory>("PostgresqlCatalogueFactory");
 }

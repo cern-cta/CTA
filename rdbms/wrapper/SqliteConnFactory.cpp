@@ -18,6 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -40,3 +41,15 @@ std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
 }
 
 } // namespace cta::rdbms::wrapper
+
+extern "C" {
+
+void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+    cta::plugin::Args<const std::string&>,
+    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+
+  interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmssqlite")
+    .CLASS<cta::rdbms::wrapper::SqliteConnFactory>("SqliteConnFactory");
+}
+
+}// extern "C"

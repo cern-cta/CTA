@@ -45,17 +45,27 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   static cta::plugin::Manager<cta::catalogue::CatalogueFactory,
     cta::plugin::Args<
       cta::log::Logger&,
-      const cta::rdbms::Login&, const u_int64_t,
-      const u_int64_t, const u_int64_t>> pm;
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const cta::rdbms::Login&,
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>> pm;
 
   try {
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      pm.load("libctacatalogueinmemory.so");
+      if (!pm.isRegistered("ctacatalogueinmemory")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-//      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
-//        maxTriesToConnect);
       pm.load("libctacatalogueocci.so");
       if (!pm.isRegistered("ctacatalogueocci")) {
         pm.bootstrap("factory");
@@ -65,14 +75,11 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
-      //return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
       pm.load("libctacataloguepostrgres.so");
       if (!pm.isRegistered("ctacataloguepostgres")) {
         pm.bootstrap("factory");
       }
       return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
- 
-
     case rdbms::Login::DBTYPE_SQLITE:
       throw exception::Exception("Sqlite file based databases are not supported");
     case rdbms::Login::DBTYPE_NONE:
