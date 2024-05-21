@@ -65,7 +65,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       if (!pm.isRegistered("ctacataloguepostgres")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctacataloguepostgres").create("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
  
 
     case rdbms::Login::DBTYPE_SQLITE:

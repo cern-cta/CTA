@@ -56,7 +56,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       if (!pm.isRegistered("ctardbmspostgres")) {
         pm.bootstrap("factory");
       }
-      upConnFactory = pm.plugin("ctardbmspostgres").create("PostgresConnFactory", login.database);
+      upConnFactory = pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login.database);
       //upConnFactory->init(login.database);
 
       return upConnFactory;

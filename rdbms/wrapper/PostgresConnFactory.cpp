@@ -47,7 +47,9 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
 extern "C" {
 
 void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const std::string&> >& interface) {
+    cta::plugin::Args<const std::string&>,
+    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
     .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");
 }
