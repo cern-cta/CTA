@@ -18,17 +18,12 @@
 #include <string>
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/InMemoryCatalogueFactory.hpp"
-#include "catalogue/PostgresqlCatalogueFactory.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "common/log/Logger.hpp"
+#include "rdbms/Login.hpp"
 #include "plugin-manager/PluginManager.hpp"
-
-#ifdef SUPPORT_OCCI
-  #include "catalogue/OracleCatalogueFactory.hpp"
-#endif
-
 
 namespace cta::catalogue {
 
@@ -58,12 +53,11 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   try {
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
       pm.load("libctacatalogueinmemory.so");
       if (!pm.isRegistered("ctacatalogueinmemory")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
       pm.load("libctacatalogueocci.so");

@@ -20,13 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
-//#include "rdbms/wrapper/PostgresConnFactory.hpp"
-#include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "plugin-manager/PluginManager.hpp"
-
-#ifdef SUPPORT_OCCI
-  #include "rdbms/wrapper/OcciConnFactory.hpp"
-#endif
 
 namespace cta::rdbms::wrapper {
 
@@ -41,11 +35,14 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
 
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
+    {
+      const std::string FILE_NAME = "file::memory:?cache=shared";
       pm.load("libctardbmssqlite.so");
       if (!pm.isRegistered("ctardbmssqlite")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", "file::memory:?cache=shared");
+      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", FILE_NAME);
+    }
     case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
       pm.load("libctardbmsocci.so");
