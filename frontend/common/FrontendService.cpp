@@ -76,7 +76,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     std::map<std::string, std::string> staticParamMap;
     const auto instanceName = config.getOptionValueStr("cta.instance_name");
     const auto backendName =  config.getOptionValueStr("cta.schedulerdb.scheduler_backend_name");
-    if (insatnceName.has_value()){
+    if (instanceName.has_value()){
       staticParamMap["instanceName"]  = instanceName.value();
     }
     if (backendName.has_value()){
