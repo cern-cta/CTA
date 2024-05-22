@@ -4,11 +4,11 @@
 
 
 # Unique string to identify CTA's catalogue instance the tape daemon is serving.
-# cta.instance_name production
-#
+cta.instance_name production
+
 # The unique string to identify the backend scheduler resources. It can be structured as:
 # "[ceph|postgres|vfs][User|Repack]".
-# cta.schedulerdb.scheduler_backend_name cephUser
+cta.schedulerdb.scheduler_backend_name cephUser
 
 
 # CTA ObjectStore options
