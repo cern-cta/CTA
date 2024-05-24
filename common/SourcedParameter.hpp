@@ -80,9 +80,9 @@ public:
   }
 
   const C & value() const { return m_value; }
-  const std::string & category() { return m_category; }
-  const std::string & key() { return m_key; }
-  const std::string & source() { return m_source; }
+  const std::string & category() const { return m_category; }
+  const std::string & key() const { return m_key; }
+  const std::string & source() const { return m_source; }
 
   void log(log::Logger & logger) {
     // We log each parameter from a fresh context

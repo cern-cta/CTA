@@ -41,15 +41,15 @@ class DriveConfig {
  private:
   static void checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
     const std::string& key);
-  static void setConfigToDB(cta::SourcedParameter<std::string>* sourcedParameter,
+  static void setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
-  static void setConfigToDB(cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>* sourcedParameter,
+  static void setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
-  static void setConfigToDB(cta::SourcedParameter<std::uint32_t>* sourcedParameter,
+  static void setConfigToDB(const cta::SourcedParameter<std::uint32_t>& sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
-  static void setConfigToDB(cta::SourcedParameter<std::uint64_t>* sourcedParameter,
+  static void setConfigToDB(const cta::SourcedParameter<std::uint64_t>& sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
-  static void setConfigToDB(cta::SourcedParameter<std::time_t>* sourcedParameter,
+  static void setConfigToDB(const cta::SourcedParameter<std::time_t>& sourcedParameter,
     catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
 };  // class DriveConfig
 
