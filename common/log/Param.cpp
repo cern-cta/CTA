@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 namespace cta::log {
 
@@ -68,7 +69,7 @@ std::string Param::getKeyValueJSON() const noexcept {
       if constexpr (std::is_same_v<T, bool>) {
         oss << (arg ? "true" : "false");
       } else if constexpr (std::is_same_v<T, std::string>) {
-        oss << "\"" << arg << "\"";
+        oss << "\"" << stringFormattingJSON(arg) << "\"";
       } else if constexpr (std::is_integral_v<T>) {
         oss << arg;
       } else if constexpr (std::is_floating_point_v<T>) {
@@ -86,6 +87,37 @@ std::string Param::getKeyValueJSON() const noexcept {
 template<>
 void Param::setValue<ParamValType>(const ParamValType& value) noexcept {
   m_value = value;
+}
+
+//------------------------------------------------------------------------------
+// stringFormattingJSON nested class
+//------------------------------------------------------------------------------
+Param::stringFormattingJSON::stringFormattingJSON(const std::string& str) : m_value(str) {}
+
+//------------------------------------------------------------------------------
+// stringFormattingJSON << operator overload
+//------------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& fp) {
+  std::ostringstream oss_tmp;
+  for (char c : fp.m_value) {
+    switch (c) {
+    case '\"': oss_tmp << "\\\""; break;
+    case '\\': oss_tmp << "\\\\"; break;
+    case '\b': oss_tmp << "\\b"; break;
+    case '\f': oss_tmp << "\\f"; break;
+    case '\n': oss_tmp << "\\n"; break;
+    case '\r': oss_tmp << "\\r"; break;
+    case '\t': oss_tmp << "\\t"; break;
+    default:
+      if ('\x00' <= c && c <= '\x1f') {
+        oss_tmp << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
+      } else {
+        oss_tmp << c;
+      }
+    }
+  }
+  oss << oss_tmp.str();
+  return oss;
 }
 
 } // namespace cta::log
