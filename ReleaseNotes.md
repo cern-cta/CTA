@@ -20,6 +20,7 @@
 - cta/CTA#683 - Fix problems with field consistency in json logging
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
 - cta/CTA#693 - Fix tapeserver tool regressions
+- cta/CTA#704 - Fix special character encoding in json logging
 
 ### Continuous Integration
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)

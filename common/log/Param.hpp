@@ -150,6 +150,19 @@ protected:
   ParamValType m_value;
 
   /**
+   * Helper class to format string values in JSON
+   */
+  class stringFormattingJSON {
+  public:
+    explicit stringFormattingJSON(const std::string& str);
+    friend std::ostream& operator<<(std::ostream& oss, const stringFormattingJSON& fp);
+  private:
+    const std::string & m_value;
+  };
+
+  friend std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& fp);
+
+  /**
    * Helper class to format floating-point values
    */
   template<typename T>
