@@ -61,17 +61,6 @@ public:
   // copy constructor
   CatalogueItor(const CatalogueItor &rhs) = delete;
 
-  // move constructor
-  CatalogueItor(CatalogueItor &&rhs) noexcept : m_impl(std::move(rhs.m_impl)) {}
-
-  // move assignment
-  CatalogueItor &operator=(CatalogueItor &&rhs) noexcept {
-    if (this != &rhs) {
-      m_impl = std::move(rhs.m_impl);
-    }
-    return *this;
-  }
-
   /**
    * Returns true if a call to next would return another item.
    */
