@@ -101,16 +101,16 @@ std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& f
   std::ostringstream oss_tmp;
   for (char c : fp.m_value) {
     switch (c) {
-    case '\"': oss_tmp << "\\\""; break;
-    case '\\': oss_tmp << "\\\\"; break;
-    case '\b': oss_tmp << "\\b"; break;
-    case '\f': oss_tmp << "\\f"; break;
-    case '\n': oss_tmp << "\\n"; break;
-    case '\r': oss_tmp << "\\r"; break;
-    case '\t': oss_tmp << "\\t"; break;
+    case '\"': oss_tmp << R"(\")"; break;
+    case '\\': oss_tmp << R"(\\)"; break;
+    case '\b': oss_tmp << R"(\b)"; break;
+    case '\f': oss_tmp << R"(\f)"; break;
+    case '\n': oss_tmp << R"(\n)"; break;
+    case '\r': oss_tmp << R"(\r)"; break;
+    case '\t': oss_tmp << R"(\t)"; break;
     default:
       if ('\x00' <= c && c <= '\x1f') {
-        oss_tmp << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
+        oss_tmp << R"(\u)" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
       } else {
         oss_tmp << c;
       }
