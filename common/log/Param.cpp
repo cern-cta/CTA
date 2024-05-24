@@ -62,7 +62,7 @@ std::string Param::getValueStr() const noexcept {
 //------------------------------------------------------------------------------
 std::string Param::getKeyValueJSON() const noexcept {
   std::ostringstream oss;
-  oss << "\"" << m_name << "\":";
+  oss << "\"" << stringFormattingJSON(m_name) << "\":";
   if (m_value.has_value()) {
     std::visit([&oss](auto &&arg) {
       using T = std::decay_t<decltype(arg)>;

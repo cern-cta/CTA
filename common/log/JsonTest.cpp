@@ -151,4 +151,49 @@ TEST_F(cta_log_JsonTest, testJsonPrinting) {
   ASSERT_EQ(0, jObjB.jsonGetValueProbe<int64_t>("ParamsB_null"));
 }
 
+TEST_F(cta_log_JsonTest, testJsonStringEscape) {
+  using namespace cta::log;
+
+  // Prepare the logger for inspection
+  StringLogger logger("dummy", "cta_log_JsonTest", cta::log::DEBUG);
+  LogContext logContext(logger);
+  logger.setLogFormat("json");
+
+  {
+    cta::log::ScopedParamContainer paramsA(logContext);
+    paramsA.add("key_\"", "value_\"");
+    paramsA.add("key_\\", "value_\\");
+    paramsA.add("key_\b", "value_\b");
+    paramsA.add("key_\n", "value_\n");
+    paramsA.add("key_\f", "value_\f");
+    paramsA.add("key_\r", "value_\r");
+    paramsA.add("key_\t", "value_\t");
+    paramsA.add("key_\x00", "value_\x00");
+    paramsA.add("key_\x1f", "value_\x1f");
+    paramsA.add("key_\x20", "value_\x20"); //This is a whitespace character
+    logContext.log(INFO, "Testing escaped values");
+  }
+
+  std::string logLine = logger.getLog();
+
+  JSONCObjectProbe jObj;
+  jObj.buildFromJSON(logLine);
+
+  // Check that JSON is parsed correctly
+  ASSERT_NO_THROW(jObj.getJSON());
+
+  // Check expected keys and values
+  // Strings should be converted back to cpp with the escape characters correctly decoded
+  ASSERT_EQ("value_\"", jObj.jsonGetValueProbe<std::string>("key_\""));
+  ASSERT_EQ("value_\\", jObj.jsonGetValueProbe<std::string>("key_\\"));
+  ASSERT_EQ("value_\b", jObj.jsonGetValueProbe<std::string>("key_\b"));
+  ASSERT_EQ("value_\n", jObj.jsonGetValueProbe<std::string>("key_\n"));
+  ASSERT_EQ("value_\f", jObj.jsonGetValueProbe<std::string>("key_\f"));
+  ASSERT_EQ("value_\r", jObj.jsonGetValueProbe<std::string>("key_\r"));
+  ASSERT_EQ("value_\t", jObj.jsonGetValueProbe<std::string>("key_\t"));
+  ASSERT_EQ("value_\x00", jObj.jsonGetValueProbe<std::string>("key_\x00"));
+  ASSERT_EQ("value_\x1f", jObj.jsonGetValueProbe<std::string>("key_\x1f"));
+  ASSERT_EQ("value_ ", jObj.jsonGetValueProbe<std::string>("key_ "));
+}
+
 } // namespace unitTests
