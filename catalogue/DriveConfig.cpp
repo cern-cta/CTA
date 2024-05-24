@@ -28,38 +28,35 @@ namespace cta {
 
 void DriveConfig::setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration &tapedConfiguration,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  // const_cast is used to remove the const qualifier from the object
-  auto *config = const_cast<cta::tape::daemon::common::TapedConfiguration *>(&tapedConfiguration);
-
-  setConfigToDB(&config->daemonUserName, catalogue, tapeDriveName);
-  setConfigToDB(&config->daemonGroupName, catalogue, tapeDriveName);
-  setConfigToDB(&config->logMask, catalogue, tapeDriveName);
-  setConfigToDB(&config->bufferSizeBytes, catalogue, tapeDriveName);
-  setConfigToDB(&config->bufferCount, catalogue, tapeDriveName);
-  setConfigToDB(&config->archiveFetchBytesFiles, catalogue, tapeDriveName);
-  setConfigToDB(&config->archiveFlushBytesFiles, catalogue, tapeDriveName);
-  setConfigToDB(&config->retrieveFetchBytesFiles, catalogue, tapeDriveName);
-  setConfigToDB(&config->mountCriteria, catalogue, tapeDriveName);
-  setConfigToDB(&config->nbDiskThreads, catalogue, tapeDriveName);
-  setConfigToDB(&config->useRAO, catalogue, tapeDriveName);
-  setConfigToDB(&config->raoLtoAlgorithm, catalogue, tapeDriveName);
-  setConfigToDB(&config->useEncryption, catalogue, tapeDriveName);
-  setConfigToDB(&config->externalEncryptionKeyScript, catalogue, tapeDriveName);
-  setConfigToDB(&config->raoLtoOptions, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdScheduleMaxSecs, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdMountMaxSecs, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdNoBlockMoveMaxSecs, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdIdleSessionTimer, catalogue, tapeDriveName);
-  setConfigToDB(&config->backendPath, catalogue, tapeDriveName);
-  setConfigToDB(&config->fileCatalogConfigFile, catalogue, tapeDriveName);
-  setConfigToDB(&config->authenticationProtocol, catalogue, tapeDriveName);
-  setConfigToDB(&config->authenticationSSSKeytab, catalogue, tapeDriveName);
-  setConfigToDB(&config->useRepackManagement, catalogue, tapeDriveName);
-  setConfigToDB(&config->useMaintenanceProcess, catalogue, tapeDriveName);
-  setConfigToDB(&config->repackMaxRequestsToExpand, catalogue, tapeDriveName);
-  setConfigToDB(&config->externalFreeDiskSpaceScript, catalogue, tapeDriveName);
-  setConfigToDB(&config->tapeLoadTimeout, catalogue, tapeDriveName);
-  setConfigToDB(&config->wdGetNextMountMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.daemonUserName, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.daemonGroupName, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.logMask, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.bufferSizeBytes, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.bufferCount, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.archiveFetchBytesFiles, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.archiveFlushBytesFiles, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.retrieveFetchBytesFiles, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.mountCriteria, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.nbDiskThreads, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.useRAO, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.raoLtoAlgorithm, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.useEncryption, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.externalEncryptionKeyScript, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.raoLtoOptions, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.wdScheduleMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.wdMountMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.wdNoBlockMoveMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.wdIdleSessionTimer, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.backendPath, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.fileCatalogConfigFile, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.authenticationProtocol, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.authenticationSSSKeytab, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.useRepackManagement, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.useMaintenanceProcess, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.repackMaxRequestsToExpand, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.externalFreeDiskSpaceScript, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.tapeLoadTimeout, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.wdGetNextMountMaxSecs, catalogue, tapeDriveName);
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
@@ -74,46 +71,46 @@ void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::st
   }
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<std::string>* sourcedParameter,
+void DriveConfig::setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter->key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), sourcedParameter->key(),
-    sourcedParameter->value(), sourcedParameter->source());
+  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
+    sourcedParameter.value(), sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>* sourcedParameter,
+void DriveConfig::setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  std::string key = sourcedParameter->key();
+  std::string key = sourcedParameter.key();
   cta::utils::searchAndReplace(key, "Bytes", "");
   cta::utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Files"));
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), key,
-    std::to_string(sourcedParameter->value().maxFiles), sourcedParameter->source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
+    std::to_string(sourcedParameter.value().maxFiles), sourcedParameter.source());
   cta::utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Bytes"));
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), key,
-    std::to_string(sourcedParameter->value().maxBytes), sourcedParameter->source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
+    std::to_string(sourcedParameter.value().maxBytes), sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<uint32_t>* sourcedParameter,
+void DriveConfig::setConfigToDB(const cta::SourcedParameter<uint32_t>& sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter->key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), sourcedParameter->key(),
-    std::to_string(sourcedParameter->value()), sourcedParameter->source());
+  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
+    std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<uint64_t>* sourcedParameter,
+void DriveConfig::setConfigToDB(const cta::SourcedParameter<uint64_t>& sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter->key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), sourcedParameter->key(),
-    std::to_string(sourcedParameter->value()), sourcedParameter->source());
+  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
+    std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(cta::SourcedParameter<time_t>* sourcedParameter,
+void DriveConfig::setConfigToDB(const cta::SourcedParameter<time_t>& sourcedParameter,
   catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
-  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter->key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter->category(), sourcedParameter->key(),
-    std::to_string(sourcedParameter->value()), sourcedParameter->source());
+  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
+    std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
 }  // namespace cta
