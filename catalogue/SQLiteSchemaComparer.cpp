@@ -38,7 +38,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckNam
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
   //Release the connection before the connPool is deleted
-  m_sqliteConn.~Conn();
+  m_sqliteConn.reset();
   m_sqliteConnPool.reset();
 }
 
