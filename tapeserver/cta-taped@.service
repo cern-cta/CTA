@@ -1,0 +1,15 @@
+[Unit]
+Description=CERN Tape Archive (CTA) tape drive daemon for drive %i
+PartOf=cta-taped.service
+After=syslog.target network-online.target cta-taped.service
+
+[Service]
+EnvironmentFile=-/etc/sysconfig/cta-taped
+ExecStart=/usr/bin/cta-taped --log-format=json --log-to-file=/var/log/cta/cta-taped-%i.log --config=/etc/cta/cta-taped-%i.conf ${CTA_TAPED_OPTIONS}
+LimitCORE=infinity
+OOMScoreAdjust=-1000
+Type=forking
+Restart=no
+
+[Install]
+WantedBy=cta-taped.service

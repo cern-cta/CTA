@@ -2,6 +2,7 @@
 
 ### Features
 - cta/CTA#565 - Improve logging of 'Tape session finished' message
+- cta/CTA#700 - Update provided cta-taped service files 
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions

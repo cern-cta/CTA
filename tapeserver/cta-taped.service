@@ -4,11 +4,8 @@ After=syslog.target network-online.target
 
 [Service]
 EnvironmentFile=-/etc/sysconfig/cta-taped
-ExecStart=/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}
-LimitCORE=infinity
-OOMScoreAdjust=-1000
-Type=forking
-Restart=no
+ExecStart=/bin/true
+RemainAfterExit=yes
 
 [Install]
 WantedBy=default.target
