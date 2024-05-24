@@ -59,7 +59,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size() <= 0) {
+      if(sqlStmt.size() <= 0) {
         // Ignore empty statements
         continue;
       }
