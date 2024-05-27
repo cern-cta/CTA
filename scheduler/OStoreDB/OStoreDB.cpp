@@ -1433,8 +1433,12 @@ void OStoreDB::clearStatisticsCache(const std::string& vid) {
 // OStoreDB::setStatisticsCacheConfig()
 //------------------------------------------------------------------------------
 void OStoreDB::setStatisticsCacheConfig(const StatisticsCacheConfig & conf) {
-  Helpers::setRetrieveQueueCacheMaxAgeSecs(conf.retrieveQueueCacheMaxAgeSecs);
-  Helpers::setTapeCacheMaxAgeSecs(conf.tapeCacheMaxAgeSecs);
+  if (conf.retrieveQueueCacheMaxAgeSecs.has_value()) {
+    Helpers::setRetrieveQueueCacheMaxAgeSecs(conf.retrieveQueueCacheMaxAgeSecs.value());
+  }
+  if (conf.tapeCacheMaxAgeSecs.has_value()) {
+    Helpers::setTapeCacheMaxAgeSecs(conf.tapeCacheMaxAgeSecs.value());
+  }
 }
 
 //------------------------------------------------------------------------------

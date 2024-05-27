@@ -346,8 +346,8 @@ class SchedulerDatabase {
   virtual void clearStatisticsCache(const std::string & vid) = 0;
 
   struct StatisticsCacheConfig {
-    time_t tapeCacheMaxAgeSecs;
-    time_t retrieveQueueCacheMaxAgeSecs;
+    std::optional<time_t> tapeCacheMaxAgeSecs;
+    std::optional<time_t> retrieveQueueCacheMaxAgeSecs;
   };
 
   /**

@@ -115,6 +115,8 @@ private:
 
   bool                                          m_acceptRepackRequests;    //!< Flag to allow the processing of repack requests
   bool                                          m_acceptUserRequests;      //!< Flag to allow the processing of user requests
+  std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
+  std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
