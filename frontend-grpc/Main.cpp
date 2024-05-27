@@ -129,13 +129,13 @@ int main(const int argc, char *const *const argv) {
     {
       std::map<std::string, std::string> staticParamMap;
       try {
-        staticParamMap["instance"] = config.getConfEntString("General", "Instance");
+        staticParamMap["instance"] = config.getConfEntString("general", "InstanceName");
       } catch (cta::exception::Exception &) {
         // Instance name was not set, log this as info.
         lc.log(log::INFO, "Instance name was not specified in the cofiguration file.");
       }
       try {
-        staticParamMap["sched_bakcend"] = config.getConfEntString("ObjectStore", "BackendPath") ;
+        staticParamMap["sched_bakcend"] = config.getConfEntString("general", "SchedulerBackendName") ;
       } catch (cta::exception::Exception &) {
         // Scheduler backend name was not set, log this as info.
         lc.log(log::INFO, "Scheduler backend name was not specified in the configuratoin file.");

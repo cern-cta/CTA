@@ -78,10 +78,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     const auto backendName =  config.getOptionValueStr("cta.schedulerdb.scheduler_backend_name");
 
     if (instanceName.has_value()){
-      staticParamMap["instanceName"]  = instanceName.value();
+      staticParamMap["instance"]  = instanceName.value();
     }
     if (backendName.has_value()){
-      staticParamMap["backendName"] = backendName.value();
+      staticParamMap["sched_backend"] = backendName.value();
     }
     if (!staticParamMap.empty()){
       log.setStaticParams(staticParamMap);
