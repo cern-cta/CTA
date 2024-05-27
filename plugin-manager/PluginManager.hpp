@@ -125,6 +125,15 @@ public:
     return *m_umapPlugins.at(strPluginName);
   }
 
+  std::vector<std::reference_wrapper<const std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>>> plugins() {
+    std::vector<std::reference_wrapper<const std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>>> vPlugins;
+
+    for (auto& iter : m_umapPlugins) {
+      vPlugins.push_back(std::cref<std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>>(iter.second));
+    }
+    return vPlugins;
+  }
+
   Manager& load(const std::string& strFile) {
     m_strActiveLoader = strFile;
     if (m_umapLoaders.find(m_strActiveLoader) == m_umapLoaders.end()) {
