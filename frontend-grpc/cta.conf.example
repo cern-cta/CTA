@@ -15,7 +15,7 @@
 
 ObjectStore BackendPath /path/to/local/objectstore
 
-#  TLS related variables. Only used when frontend is run with TLS (-t/--tsl flag).
+#  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
 
 #  TLS service key file
 #gRPC TlsKey /path/to/key
