@@ -36,13 +36,11 @@ cat <<EOF > /etc/cta/cta.conf
 ObjectStore BackendPath ${OBJECTSTOREURL}
 EOF
 
-
 cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 #
 # Config properties of cta-frontend-grpc
 #
 # port number to accept TCP connections
-GRPC_PORT=17017
 
 # change to '--tls' to enable
 GRPC_USE_TLS=""
@@ -82,7 +80,7 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
   source /tmp/cta-frontend_env
 
-  runuser --shell='/bin/bash' --session-command='cd ~cta; ' cta
+  runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc' cta
   echo "ctafrontend died"
   sleep infinity
 else

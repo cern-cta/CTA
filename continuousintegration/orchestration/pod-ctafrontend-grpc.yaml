@@ -42,7 +42,7 @@ spec:
       # RW access needed to volumes
       privileged: true
     ports:
-    - containerPort: 10956
+    - containerPort: 17017
       name: ctafront-grpc
       protocol: TCP
   volumes:
