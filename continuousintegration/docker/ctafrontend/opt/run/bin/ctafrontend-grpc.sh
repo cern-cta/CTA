@@ -22,7 +22,7 @@ yum-config-manager --enable ceph
 
 # Install missing RPMs
 # cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common cta-frontend-grpc
+yum -y install cta-debuginfo cta-catalogueutils ceph-common cta-frontend-grpc
 
 
 /opt/run/bin/init_objectstore.sh
@@ -52,14 +52,6 @@ EOF
 
 echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
-
-# Wait for the keytab files to be pushed in by the creation script
-echo -n "Waiting for /etc/cta/eos.sss.keytab."
-for ((;;)); do test -e /etc/cta/eos.sss.keytab && break; sleep 1; echo -n .; done
-echo OK
-echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
-for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
-echo OK
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
