@@ -36,6 +36,7 @@ install (FILES cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
 install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
 install (FILES cta-taped.service DESTINATION /etc/systemd/system)
+install (FILES cta-taped@.service DESTINATION /etc/systemd/system)
 
 # CTA's cta-taped system tests.
 add_library(cta-tapedSystemTests SHARED
