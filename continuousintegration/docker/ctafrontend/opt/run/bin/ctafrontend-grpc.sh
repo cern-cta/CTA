@@ -67,7 +67,7 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
   source /tmp/cta-frontend_env
 
-  runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc' cta
+  runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
   echo "ctafrontend died"
   sleep infinity
 else
