@@ -43,7 +43,7 @@ spec:
       privileged: true
     ports:
     - containerPort: 10956
-      name: ctafrontend-grpc
+      name: ctafront-grpc
       protocol: TCP
   volumes:
   - name: shared
