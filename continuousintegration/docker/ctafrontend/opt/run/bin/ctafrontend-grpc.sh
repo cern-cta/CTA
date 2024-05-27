@@ -61,8 +61,6 @@ echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
 for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-echo "Core files are available as $(cat /proc/sys/kernel/core_pattern) so that those are available as artifacts"
-
 # Configuring  grpc for cta-admin tapefile disk filename resolution
 echo -n "Configuring grpc to ctaeos: "
 if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
@@ -93,5 +91,5 @@ else
   systemctl start cta-frontend-grpc
 
   echo "Status is now:"
-  systemctl status cta-frontend
+  systemctl status cta-frontend-grpc
 fi
