@@ -15,8 +15,9 @@
 
 ObjectStore BackendPath /path/to/local/objectstore
 
+####################################
 #  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
-
+####################################
 #  TLS service key file
 #gRPC TlsKey /path/to/key
 #
@@ -25,3 +26,21 @@ ObjectStore BackendPath /path/to/local/objectstore
 #
 #  TLS CA chain file
 #gRPC TlsChain /path/to/CA/chain
+
+####################################
+# cta-admin-grpc required variables
+####################################
+# The port the gRPC frotnend is listening to
+#gRPC port 17017
+
+#
+#gRPC SslRoot ?
+
+#
+#gRPC SslKey  ?
+
+#
+#gRPC SslCer  ?
+
+#
+#gRPC Keytab  ?
