@@ -61,17 +61,6 @@ echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
 for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-# Configuring  grpc for cta-admin tapefile disk filename resolution
-echo -n "Configuring grpc to ctaeos: "
-if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
-  cp /etc/config/eoscta/eos.grpc.keytab /etc/cta/eos.grpc.keytab
-  echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend-xrootd.conf
-  echo 'OK'
-else
-  echo 'KO'
-fi
-
-
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
   echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
