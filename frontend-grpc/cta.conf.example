@@ -28,19 +28,19 @@ ObjectStore BackendPath /path/to/local/objectstore
 #gRPC TlsChain /path/to/CA/chain
 
 ####################################
-# cta-admin-grpc required variables
+# Variables used by cta-frontend-async-grpc
 ####################################
 # The port the gRPC frotnend is listening to
 #gRPC port 17017
 
-#
-#gRPC SslRoot ?
+# The ca-cert file path
+#gRPC SslRoot /path/to/ca/cert
 
-#
-#gRPC SslKey  ?
+# Ssl Key file
+#gRPC SslKey /path/to/ssl/key
 
-#
-#gRPC SslCer  ?
+# Ssl certificate file
+#gRPC SslCer /path/to/ssl/cert
 
-#
-#gRPC Keytab  ?
+# keytab file
+#gRPC Keytab /path/to/keytab
