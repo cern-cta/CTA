@@ -71,21 +71,22 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
   log::Logger& log = *m_log;
 
-  // Set static parameters: Instance and backend
+  // Set static parameters: Instance and backend names
   {
     std::map<std::string, std::string> staticParamMap;
     const auto instanceName = config.getOptionValueStr("cta.instance_name");
     const auto backendName =  config.getOptionValueStr("cta.schedulerdb.scheduler_backend_name");
 
-    if (instanceName.has_value()){
-      staticParamMap["instance"]  = instanceName.value();
+    if (!instanceName.has_value()){
+      throw exception::UserError("cta.instance_name is not set in configuration file " + configFilename);
     }
-    if (backendName.has_value()){
-      staticParamMap["sched_backend"] = backendName.value();
+    if (!backendName.has_value()){
+      throw exception::UserError("cta.schedulerdb.scheduler_backend_name is not set in configuration file " + configFilename);
     }
-    if (!staticParamMap.empty()){
-      log.setStaticParams(staticParamMap);
-    }
+
+    staticParamMap["instance"]  = instanceName.value();
+    staticParamMap["sched_backend"] = backendName.value();
+    log.setStaticParams(staticParamMap);
   }
 
   {
