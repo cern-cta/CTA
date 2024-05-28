@@ -152,6 +152,20 @@ int main(const int argc, char *const *const argv) {
     auto backed = config.getConfEntString("ObjectStore", "BackendPath");
     lc.log(log::INFO, "Using scheduler backend: " + backed);
 
+    // Check the scheduler DB cache timeout values
+    try {
+      auto tapeCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "TapeCacheMaxAgeSecs");
+      log::ScopedParamContainer params(lc);
+      params.add("tapeCacheMaxAgeSecs", tapeCacheMaxAgeSecs);
+      lc.log(log::INFO, "Using custom tape cache timout value");
+    } catch(Configuration::NoEntry &ex) {}
+    try {
+      auto retrieveQueueCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "RetrieveQueueCacheMaxAgeSecs");
+      log::ScopedParamContainer params(lc);
+      params.add("retrieveQueueCacheMaxAgeSecs", retrieveQueueCacheMaxAgeSecs);
+      lc.log(log::INFO, "Using custom retrieve queue cache timout value");
+    } catch(Configuration::NoEntry &ex) {}
+
     auto sInit = std::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
     auto scheddb = sInit->getSchedDB(*catalogue, logger);
     scheddb->initConfig(std::nullopt, std::nullopt);
