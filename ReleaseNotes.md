@@ -10,6 +10,7 @@
 
 ### Bug Fixes
 - cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024
+- cta/CTA#477 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#485 - Check disk file metadata on delete requests
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 - cta/CTA#645 - Fix new mount timeout log message
