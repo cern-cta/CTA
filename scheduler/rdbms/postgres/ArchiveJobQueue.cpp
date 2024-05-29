@@ -26,11 +26,10 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
   /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
    * which will be released when the transaction ends
    */
-  //std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
-  //auto stmt = txn.conn().createStmt(sql);
-  //stmt.executeQuery();
-  std::string sql =
-    "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE; "
+  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
+  auto stmt = txn.conn().createStmt(sql);
+  stmt.executeQuery();
+  sql =
     "WITH SET_SELECTION AS ( "
       "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
     "WHERE TAPE_POOL = :TAPE_POOL "
@@ -43,7 +42,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
     "FROM SET_SELECTION "
     "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
     "RETURNING SET_SELECTION.JOB_ID";
-  auto stmt = txn.conn().createStmt(sql);
+  stmt = txn.conn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", tapepool);
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindUint32(":LIMIT", limit);
