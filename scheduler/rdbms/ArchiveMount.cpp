@@ -79,8 +79,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Job info of the updated jobs has been queueried, passing it on for execution");
     std::list <postgres::ArchiveJobQueueRow> jobs;
     // Construct the return value
-    if (nullptr != resultSet)
-      uint64_t totalBytes = 0;
+    uint64_t totalBytes = 0;
     while (resultSet.next()) {
       jobs.emplace_back(resultSet);
       jobs.back().jobId = resultSet.columnUint64("JOB_ID");
