@@ -30,6 +30,7 @@
 - cta/CTA#663 - Setup dev env containers for Alma9
 - cta/CTA#686 - Upgrade eos-5 to eos-5.2.23-1
 - cta/CTA#705 - Upgrade eos-5 to eos-5.2.24-1: fixes EOS-6112 and add archive metadata in eoscta MGM report EOS-6150
+- cta/CTA#711 - Add cta-frontend-grpc to k8s setup
 
 ### Code Quality
 - cta/CTA#575 - Remove rados metrics logging

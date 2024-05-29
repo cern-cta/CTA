@@ -1,0 +1,53 @@
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2024 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
+#
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
+
+ObjectStore BackendPath /path/to/local/objectstore
+
+####################################
+#  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
+####################################
+#  TLS service key file
+#gRPC TlsKey /path/to/key
+#
+#  TLS service certificate file
+#gRPC TlsCert /path/to/cert
+#
+#  TLS CA chain file
+#gRPC TlsChain /path/to/CA/chain
+#
+
+####################################
+#  CTA Scheduler DB cache timeout options
+####################################
+#SchedulerDB TapeCacheMaxAgeSecs 600
+#SchedulerDB RetrieveQueueCacheMaxAgeSecs 10
+
+####################################
+# Variables used by cta-frontend-async-grpc
+####################################
+# The port the gRPC frotnend is listening to
+#gRPC port 17017
+
+# The ca-cert file path
+#gRPC SslRoot /path/to/ca/cert
+
+# Ssl Key file
+#gRPC SslKey /path/to/ssl/key
+
+# Ssl certificate file
+#gRPC SslCert /path/to/ssl/cert
+
+# keytab file
+#gRPC Keytab /path/to/keytab
