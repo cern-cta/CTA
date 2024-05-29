@@ -219,14 +219,13 @@ if [[ $EOS_V == 5 ]]; then
 
 fi
 
-# TODO: Remove these comments once https://gitlab.cern.ch/cta/CTA/-/issues/616 is fixed
-#setup_tapes_for_multicopy_test
-#
-#echo
-#echo "Launching retrieve_queue_cleanup.sh on client pod"
-#echo " Archiving file: xrdcp as user1"
-#echo " Retrieving it as poweruser1"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
-#kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+setup_tapes_for_multicopy_test
+
+echo
+echo "Launching retrieve_queue_cleanup.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 exit 0

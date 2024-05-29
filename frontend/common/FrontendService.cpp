@@ -146,6 +146,12 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
   m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
+  // Set Scheduler DB cache timeouts
+  SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
+  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapeCacheMaxAgeSecs;
+  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_retrieveQueueCacheMaxAgeSecs;
+  m_scheddb->setStatisticsCacheConfig(statisticsCacheConfig);
+
   /** [[OStoreDB specific]]
    * The osThreadStackSize and osThreadPoolSize variables
    * shall be removed once we decommission OStoreDB
@@ -264,6 +270,32 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("value",
                                 config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
     log(log::INFO, "Configuration entry", params);
+  }
+
+  {
+    auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
+    if(tapeCacheMaxAgeSecsConf.has_value()) {
+      m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", configFilename));
+      params.push_back(log::Param("category", "cta.schedulerdb"));
+      params.push_back(log::Param("key", "tape_cache_max_age_secs"));
+      params.push_back(log::Param("value", tapeCacheMaxAgeSecsConf.value()));
+      log(log::INFO, "Configuration entry", params);
+    }
+  }
+
+  {
+    auto retrieveQueueCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
+    if(retrieveQueueCacheMaxAgeSecsConf.has_value()) {
+      m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", configFilename));
+      params.push_back(log::Param("category", "cta.schedulerdb"));
+      params.push_back(log::Param("key", "retrieve_queue_cache_max_age_secs"));
+      params.push_back(log::Param("value", retrieveQueueCacheMaxAgeSecsConf.value()));
+      log(log::INFO, "Configuration entry", params);
+    }
   }
 
   // Get the mount policy name for verification requests

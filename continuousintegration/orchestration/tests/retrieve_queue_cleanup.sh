@@ -115,14 +115,14 @@ trigger_queue_cleanup() {
   for i in ${!tapeList[@]}; do
     wait_for_tape_state ${tapeList[$i]} BROKEN
   done
-  sleep 1
+  sleep 1 # Wait for a bit, to take in account caching latencies
   for i in ${!tapeList[@]}; do
     admin_cta tape ch --vid ${tapeList[$i]} --state ACTIVE
   done
   for i in ${!tapeList[@]}; do
     wait_for_tape_state ${tapeList[$i]} ACTIVE
   done
-  sleep 1
+  sleep 1 # Wait for a bit, to take in account caching latencies
 }
 
 wait_for_request_cancel_report() {
@@ -167,9 +167,11 @@ change_tape_state() {
   then
     admin_cta tape ch --vid $VID --state REPACKING --reason "Testing"
     wait_for_tape_state $VID REPACKING
+    sleep 1 # Wait for a bit, to take in account caching latencies
   fi
   admin_cta tape ch --vid $VID --state $LAST_STATE --reason "Testing"
   wait_for_tape_state $VID $LAST_STATE
+  sleep 1 # Wait for a bit, to take in account caching latencies
 }
 
 
@@ -381,9 +383,6 @@ test_tape_state_change_queue_preserved() {
    
   echo "Checking that the request was not modified on the queue..."
 
-  # Wait for a bit, to take in account protocol latencies
-  sleep 1 
-
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
@@ -506,13 +505,11 @@ test_tape_state_change_queue_moved() {
   if test "0" == "${EXPECTED_QUEUE_START}"; then
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
     change_tape_state $TAPE_1 $TAPE_1_STATE_END
-    sleep 1
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
     change_tape_state $TAPE_0 $TAPE_0_STATE_END
   else
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
     change_tape_state $TAPE_0 $TAPE_0_STATE_END
-    sleep 1
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
     change_tape_state $TAPE_1 $TAPE_1_STATE_END
   fi

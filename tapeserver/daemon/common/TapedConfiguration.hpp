@@ -224,6 +224,17 @@ struct TapedConfiguration {
   };
 
   //----------------------------------------------------------------------------
+  // Caching max age
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<uint32_t> tapeCacheMaxAgeSecs {
+          "taped", "TapeCacheMaxAgeSecs", 600, "Compile time default"
+  };
+
+  cta::SourcedParameter<uint32_t> retrieveQueueCacheMaxAgeSecs {
+          "taped", "RetrieveQueueCacheMaxAgeSecs", 10, "Compile time default"
+  };
+
+  //----------------------------------------------------------------------------
   // Drive Options
   //----------------------------------------------------------------------------
   cta::SourcedParameter<std::string> driveName {

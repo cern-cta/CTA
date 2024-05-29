@@ -199,15 +199,15 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       switch (tapeDataRefreshed.state) {
       case common::dataStructures::Tape::REPACKING_PENDING:
         m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::REPACKING, common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
-        m_db.clearRetrieveQueueStatisticsCache(queueVid);
+        m_db.clearStatisticsCache(queueVid);
         break;
       case common::dataStructures::Tape::BROKEN_PENDING:
         m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::BROKEN, common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
-        m_db.clearRetrieveQueueStatisticsCache(queueVid);
+        m_db.clearStatisticsCache(queueVid);
         break;
       case common::dataStructures::Tape::EXPORTED_PENDING:
         m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::EXPORTED, common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
-        m_db.clearRetrieveQueueStatisticsCache(queueVid);
+        m_db.clearStatisticsCache(queueVid);
         break;
       default:
         log::ScopedParamContainer paramsWarnMsg(logContext);

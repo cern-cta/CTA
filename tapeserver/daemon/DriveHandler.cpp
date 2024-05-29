@@ -947,6 +947,13 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
       "Reporting fatal error.");
     throw;
   }
+
+  // Set Scheduler DB cache timeouts
+  SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
+  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapedConfig.tapeCacheMaxAgeSecs.value();
+  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
+  m_sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
+
   m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
   return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
 }

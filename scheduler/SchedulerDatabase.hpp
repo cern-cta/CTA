@@ -340,22 +340,32 @@ class SchedulerDatabase {
     const std::set<std::string> & vidsToConsider) = 0;
 
   /**
-   * Clear the retrieve queue statistics cache.
-   * @param vid the queue vid
+   * Clear the queue/tape statistics cache.
+   * @param vid the queue/tape vid
    */
-  virtual void clearRetrieveQueueStatisticsCache(const std::string & vid) = 0;
+  virtual void clearStatisticsCache(const std::string & vid) = 0;
 
-    /**
-     * Queues the specified request. As the object store has access to the catalogue,
-     * the best queue (most likely to go, and not disabled can be chosen directly there).
-     *
-     * @param rqst The request.
-     * @param criteria The criteria retrieved from the CTA catalogue to be used to
-     * decide how to quue the request.
-     * @param diskSystemName optional disk system name if the destination matches a declared one.
-     * @param logContext context allowing logging db operation
-     * @return the selected vid (mostly for logging)
-     */
+  struct StatisticsCacheConfig {
+    std::optional<time_t> tapeCacheMaxAgeSecs;
+    std::optional<time_t> retrieveQueueCacheMaxAgeSecs;
+  };
+
+  /**
+   * Configure the statistics cache
+   */
+  virtual void setStatisticsCacheConfig(const StatisticsCacheConfig & conf) = 0;
+
+  /**
+   * Queues the specified request. As the object store has access to the catalogue,
+   * the best queue (most likely to go, and not disabled can be chosen directly there).
+   *
+   * @param rqst The request.
+   * @param criteria The criteria retrieved from the CTA catalogue to be used to
+   * decide how to quue the request.
+   * @param diskSystemName optional disk system name if the destination matches a declared one.
+   * @param logContext context allowing logging db operation
+   * @return the selected vid (mostly for logging)
+   */
   struct RetrieveRequestInfo {
     std::string selectedVid;
     std::string requestId;

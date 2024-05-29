@@ -5,13 +5,17 @@
 # CTA ObjectStore options
 #cta.objectstore.backendpath /tmp/jobStoreXXXXXXX
 
-# Block requests for user or repack
+# CTA Scheduler DB - thread options
+cta.schedulerdb.numberofthreads 500
+cta.schedulerdb.threadstacksize_mb 1
+
+# CTA Scheduler DB - enable requests for user or repack
 cta.schedulerdb.enable_repack_requests on
 cta.schedulerdb.enable_user_requests on
 
-# CTA Scheduler DB options
-cta.schedulerdb.numberofthreads 500
-cta.schedulerdb.threadstacksize_mb 1
+# CTA Scheduler DB - cache timeout options
+# cta.schedulerdb.tape_cache_max_age_secs 600
+# cta.schedulerdb.retrieve_queue_cache_max_age_secs 10
 
 # CTA Catalogue options
 cta.catalogue.numberofconnections 10

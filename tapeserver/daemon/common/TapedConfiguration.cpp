@@ -179,6 +179,10 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.instanceName.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.schedulerBackendName.setFromConfigurationFile(cf, driveTapedConfigPath);
 
+  // Caching options
+  ret.tapeCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.retrieveQueueCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
+
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);
@@ -225,6 +229,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
 
   ret.instanceName.log(log);
   ret.schedulerBackendName.log(log);
+
+  ret.tapeCacheMaxAgeSecs.log(log);
+  ret.retrieveQueueCacheMaxAgeSecs.log(log);
 
   return ret;
 }

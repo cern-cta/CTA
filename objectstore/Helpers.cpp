@@ -34,6 +34,10 @@
 
 namespace cta::objectstore {
 
+/** Time between cache updates */
+time_t Helpers::g_tapeCacheMaxAge = 600;         // Default 10 minutes
+time_t Helpers::g_retrieveQueueCacheMaxAge = 10; // Default 10 seconds
+
 //------------------------------------------------------------------------------
 // Helpers::getLockedAndFetchedQueue <ArchiveQueue> ()
 //------------------------------------------------------------------------------
@@ -377,7 +381,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
     for(auto& v : candidateVids) {
       // throw std::out_of_range() if cache item not found or if it is stale
       auto timeSinceLastUpdate = time(nullptr) - g_tapeStatuses.at(v).updateTime;
-      if(timeSinceLastUpdate > c_tapeCacheMaxAge) {
+      if(timeSinceLastUpdate >= g_tapeCacheMaxAge) {
         throw std::out_of_range("");
       }
     }
@@ -385,7 +389,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
     // Remove stale cache entries
     for(auto it = g_tapeStatuses.cbegin(); it != g_tapeStatuses.cend(); ) {
       auto timeSinceLastUpdate = time(nullptr) - it->second.updateTime;
-      if(timeSinceLastUpdate > c_tapeCacheMaxAge) {
+      if(timeSinceLastUpdate >= g_tapeCacheMaxAge) {
         it = g_tapeStatuses.erase(it);
       } else {
         ++it;
@@ -423,14 +427,16 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
       } else {
         // We have a cache hit, check it's not stale.
         time_t timeSinceLastUpdate = time(nullptr) - g_retrieveQueueStatistics.at(v).updateTime;
-        if (timeSinceLastUpdate > c_retrieveQueueCacheMaxAge){
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+")> c_retrieveQueueCacheMaxAge ("
-                  +std::to_string(c_retrieveQueueCacheMaxAge)+"), cache needs to be updated");
+        if (timeSinceLastUpdate >= g_retrieveQueueCacheMaxAge) {
+          if (g_retrieveQueueCacheMaxAge) {
+            logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v), "timeSinceLastUpdate (" + std::to_string(timeSinceLastUpdate) + ")> g_retrieveQueueCacheMaxAge ("
+                                                                          + std::to_string(g_retrieveQueueCacheMaxAge) + "), cache needs to be updated");
+          }
           throw std::out_of_range("");
         }
 
-        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
-        ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
+        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v), "Cache is not updated, timeSinceLastUpdate (" + std::to_string(timeSinceLastUpdate) +
+                                                                      ") <= g_retrieveQueueCacheMaxAge (" + std::to_string(g_retrieveQueueCacheMaxAge) + ")");
         // We're lucky: cache hit (and not stale)
         if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
             (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
@@ -551,13 +557,13 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
   }
 }
 
-void Helpers::flushRetrieveQueueStatisticsCache(){
+void Helpers::flushStatisticsCache(){
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   g_retrieveQueueStatistics.clear();
   g_tapeStatuses.clear();
 }
 
-void Helpers::flushRetrieveQueueStatisticsCacheForVid(const std::string & vid){
+void Helpers::flushStatisticsCacheForVid(const std::string & vid){
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   g_retrieveQueueStatistics.erase(vid);
   g_tapeStatuses.erase(vid);
@@ -617,6 +623,20 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     ret.back().filesQueued=rq.getJobsSummary().jobs;
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// Helpers::setTapeCacheMaxAgeSecs()
+//------------------------------------------------------------------------------
+void Helpers::setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs) {
+  g_tapeCacheMaxAge = cacheMaxAgeSecs;
+}
+
+//------------------------------------------------------------------------------
+// Helpers::setRetrieveQueueCacheMaxAgeSecs()
+//------------------------------------------------------------------------------
+void Helpers::setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs) {
+  g_retrieveQueueCacheMaxAge = cacheMaxAgeSecs;
 }
 
 //------------------------------------------------------------------------------

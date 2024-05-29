@@ -14,6 +14,7 @@
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 - cta/CTA#645 - Fix new mount timeout log message
 - cta/CTA#656 - Improve naming of taped's drive threads
+- cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#666 - Fix drive status activity field not being properly reset
 - cta/CTA#678 - Fix string representation for Cleanup session type
 - cta/CTA#682 - Generate taped's log file with correct owner and group

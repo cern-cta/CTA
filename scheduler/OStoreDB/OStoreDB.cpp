@@ -1423,10 +1423,22 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::clearRetrieveQueueStatisticsCache()
+// OStoreDB::clearStatisticsCache()
 //------------------------------------------------------------------------------
-void OStoreDB::clearRetrieveQueueStatisticsCache(const std::string& vid) {
-  return Helpers::flushRetrieveQueueStatisticsCacheForVid(vid);
+void OStoreDB::clearStatisticsCache(const std::string& vid) {
+  return Helpers::flushStatisticsCacheForVid(vid);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setStatisticsCacheConfig()
+//------------------------------------------------------------------------------
+void OStoreDB::setStatisticsCacheConfig(const StatisticsCacheConfig & conf) {
+  if (conf.retrieveQueueCacheMaxAgeSecs.has_value()) {
+    Helpers::setRetrieveQueueCacheMaxAgeSecs(conf.retrieveQueueCacheMaxAgeSecs.value());
+  }
+  if (conf.tapeCacheMaxAgeSecs.has_value()) {
+    Helpers::setTapeCacheMaxAgeSecs(conf.tapeCacheMaxAgeSecs.value());
+  }
 }
 
 //------------------------------------------------------------------------------

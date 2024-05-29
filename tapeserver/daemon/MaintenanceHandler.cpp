@@ -277,6 +277,11 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       catalogueLogin, nbConns, nbArchiveFileListingConns);
     catalogue = catalogueFactory->create();
     sched_db = sched_db_init.getSchedDB(*catalogue, m_processManager.logContext().logger());
+    // Set Scheduler DB cache timeouts
+    SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
+    statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapedConfig.tapeCacheMaxAgeSecs.value();
+    statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
+    sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
     scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
     // Before launching the transfer session, we validate that the scheduler is reachable.

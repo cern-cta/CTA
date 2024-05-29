@@ -229,9 +229,9 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> RelationalDB::getRetrieveQ
    throw cta::exception::Exception("Not implemented");
 }
 
-void RelationalDB::clearRetrieveQueueStatisticsCache(const std::string & vid)
+void RelationalDB::clearStatisticsCache(const std::string & vid)
 {
-  schedulerdb::Helpers::flushRetrieveQueueStatisticsCacheForVid(vid);
+  schedulerdb::Helpers::flushStatisticsCacheForVid(vid);
 }
 
 SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
