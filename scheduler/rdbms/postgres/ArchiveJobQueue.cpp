@@ -26,7 +26,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
   /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
    * which will be released when the transaction ends
    */
-  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;"
+  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
   auto stmt = txn.conn().createStmt(sql);
   stmt.executeQuery();
   sql =
