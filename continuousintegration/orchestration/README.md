@@ -195,9 +195,9 @@ OK
 ```
 
 ### Launching a cta-frontend-grpc pod 
-A pod to launch the grpc frontend can be add to the cluster manually.
+A grpc frontend pod can be added to the cluster manually.
 
-When running the `create_instance.sh` command a temporary directory will be created under `/tmp/` containing the pod definition files updated with the configured image.
+The `create_instance.sh` command creates a temporary directory, under `tmp`, that contains the pod files updated with the image to use in the instance.
 
 ```
 [cirunner@ctadevpoliverc01 orchestration]$ ll /tmp/tmp.M600U1fz9K/
@@ -217,7 +217,7 @@ total 52
 -rw-r--r--. 1 cirunner cirunner 2096 May 29 16:44 pod-tpsrv.yaml
 ```
 
-By running `kubectl create -f ${poddir}/pod-ctafrontend-grpc.yaml --namespace=$NAMESCPACE` where `poddir` is this temporary directory. 
+The grpc pod is then created by running `kubectl create -f ${poddir}/pod-ctafrontend-grpc.yaml --namespace=$NAMESCPACE` where `poddir` is this temporary directory. 
 
 ```
 [cirunner@ctadevpoliverc01 orchestration]$ kubectl -n cta get pods
