@@ -67,7 +67,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   auto conn = m_RelationalDB.m_connPool.getConn();
   rdbms::Rset resultSet;
   // retrieve more job information about the updated batch
-  logContext.log(cta::log::DEBUG, "Query for job IDs " + jobIDsString + "ArchiveMount::getNextJobBatch()");
+  logContext.log(cta::log::DEBUG, "Query for job IDs " + jobIDsString + " ArchiveMount::getNextJobBatch()");
   resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::select(conn, jobIDsList);
   logContext.log(cta::log::DEBUG, "Job info of the updated jobs has been queueried, passing it on for execution");
   std::list<postgres::ArchiveJobQueueRow> jobs;
