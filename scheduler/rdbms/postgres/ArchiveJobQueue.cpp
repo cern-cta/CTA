@@ -39,6 +39,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
     "LIMIT :LIMIT ) "
     "UPDATE ARCHIVE_JOB_QUEUE SET "
       "MOUNT_ID = :MOUNT_ID "
+    "FROM SET_SELECTION "
     "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
     "RETURNING SET_SELECTION.JOB_ID";
   stmt = txn.conn().createStmt(sql);
