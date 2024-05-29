@@ -35,7 +35,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
     "WHERE TAPE_POOL = :TAPE_POOL "
     "AND STATUS = :STATUS "
     "AND MOUNT_ID IS NULL "
-    "LIMIT :LIMIT"
+    "LIMIT :LIMIT "
     "ORDER BY PRIORITY DESC, JOB_ID) "
     "UPDATE ARCHIVE_JOB_QUEUE SET "
       "MOUNT_ID = :MOUNT_ID "
