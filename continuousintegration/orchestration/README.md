@@ -195,8 +195,59 @@ OK
 ```
 
 ### Launching a cta-frontend-grpc pod 
-An extra pod can be add to the cluster manually by running `kubectl create -f pod-ctafrontend-grpc.yaml --namespace=$NAMESCPACE` from the `continuousintegration/orchestration` directory.
+A pod to launch the grpc frontend can be add to the cluster manually.
 
+When running the `create_instance.sh` command a temporary directory will be created under `/tmp/` containing the pod definition files updated with the configured image.
+
+```
+[cirunner@ctadevpoliverc01 orchestration]$ ll /tmp/tmp.M600U1fz9K/
+total 52
+-rw-r--r--. 1 cirunner cirunner 1030 May 29 16:44 pod-client.yaml
+-rw-r--r--. 1 cirunner cirunner  917 May 29 16:44 pod-ctacli.yaml
+-rw-r--r--. 1 cirunner cirunner 1346 May 29 16:44 pod-ctaeos.yaml
+-rw-r--r--. 1 cirunner cirunner 1584 May 29 16:44 pod-ctafrontend-grpc.yaml
+-rw-r--r--. 1 cirunner cirunner 1562 May 29 16:44 pod-ctafrontend.yaml
+-rwxr-xr-x. 1 cirunner cirunner 1505 May 29 16:44 pod-dbupdatetest.yaml
+-rw-r--r--. 1 cirunner cirunner 1509 May 29 16:44 pod-externaltapetests.yaml
+-rw-r--r--. 1 cirunner cirunner 1560 May 29 16:44 pod-init.yaml
+-rw-r--r--. 1 cirunner cirunner  905 May 29 16:44 pod-kdc.yaml
+-rw-r--r--. 1 cirunner cirunner 1392 May 29 16:44 pod-oracleunittests.yaml
+-rw-r--r--. 1 cirunner cirunner 2289 May 29 16:44 pod-tpsrv01.yaml
+-rw-r--r--. 1 cirunner cirunner 2289 May 29 16:44 pod-tpsrv02.yaml
+-rw-r--r--. 1 cirunner cirunner 2096 May 29 16:44 pod-tpsrv.yaml
+```
+
+By running `kubectl create -f ${poddir}/pod-ctafrontend-grpc.yaml --namespace=$NAMESCPACE` where `poddir` is this temporary directory. 
+
+```
+[cirunner@ctadevpoliverc01 orchestration]$ kubectl -n cta get pods
+NAME          READY   STATUS      RESTARTS   AGE
+client        1/1     Running     0          2m25s
+ctacli        1/1     Running     0          2m25s
+ctaeos        1/1     Running     0          2m25s
+ctafrontend   1/1     Running     0          2m24s
+init          0/1     Completed   0          2m44s
+kdc           1/1     Running     0          2m24s
+postgres      1/1     Running     0          2m55s
+tpsrv01       2/2     Running     0          2m25s
+tpsrv02       2/2     Running     0          2m25s
+
+[cirunner@ctadevpoliverc01 orchestration]$ kubectl create -f pod-ctafrontend-grpc.yaml --namespace=cta
+pod/ctafrontend-grpc created
+
+[cirunner@ctadevpoliverc01 orchestration]$ kubectl -n cta get pods
+NAME               READY   STATUS      RESTARTS   AGE
+client             1/1     Running     0          4m9s
+ctacli             1/1     Running     0          4m9s
+ctaeos             1/1     Running     0          4m9s
+ctafrontend        1/1     Running     0          4m8s
+ctafrontend-grpc   1/1     Running     0          44s
+init               0/1     Completed   0          4m28s
+kdc                1/1     Running     0          4m8s
+postgres           1/1     Running     0          4m39s
+tpsrv01            2/2     Running     0          4m9s
+tpsrv02            2/2     Running     0          4m9s
+```
 
 # Running a simple test
 
