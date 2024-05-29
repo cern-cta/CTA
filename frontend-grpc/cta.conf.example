@@ -26,6 +26,13 @@ ObjectStore BackendPath /path/to/local/objectstore
 #
 #  TLS CA chain file
 #gRPC TlsChain /path/to/CA/chain
+#
+
+####################################
+#  CTA Scheduler DB cache timeout options
+####################################
+#SchedulerDB TapeCacheMaxAgeSecs 600
+#SchedulerDB RetrieveQueueCacheMaxAgeSecs 10
 
 ####################################
 # Variables used by cta-frontend-async-grpc
@@ -40,7 +47,7 @@ ObjectStore BackendPath /path/to/local/objectstore
 #gRPC SslKey /path/to/ssl/key
 
 # Ssl certificate file
-#gRPC SslCer /path/to/ssl/cert
+#gRPC SslCert /path/to/ssl/cert
 
 # keytab file
 #gRPC Keytab /path/to/keytab
