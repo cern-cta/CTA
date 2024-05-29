@@ -194,6 +194,9 @@ OK
 ...
 ```
 
+### Launching a cta-frontend-grpc pod 
+An extra pod can be add to the cluster manually by running `kubectl create -f pod-ctafrontend-grpc.yaml --namespace=$NAMESCPACE` from the `continuousintegration/orchestration` directory.
+
 
 # Running a simple test
 
