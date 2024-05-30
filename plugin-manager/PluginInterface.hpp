@@ -58,15 +58,15 @@ public:
   Interface& CLASS(const std::string& strClassName) {
     static_assert(std::is_base_of<BASE_TYPE, TYPE>::value, "Plugin type not supported.");
        
-    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& args) -> std::unique_ptr<TYPE> {
+    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& varaintPluginArgs) -> std::unique_ptr<TYPE> {
       try {
-        std::unique_ptr<TYPE> upType = std::visit([](auto&& arg) ->
+        std::unique_ptr<TYPE> upType = std::visit([](auto&& tuplePluginArgs) ->
           std::unique_ptr<TYPE> {
           // unpack parameter pack (IARGS...) 
-          return std::apply([](auto&&... unpackArgs) -> std::unique_ptr<TYPE> {
-                   return make<TYPE>(unpackArgs...);
-                 }, arg);
-        }, args);
+          return std::apply([](auto&&... unpackedPluginArgs) -> std::unique_ptr<TYPE> {
+                   return make<TYPE>(unpackedPluginArgs...);
+                 }, tuplePluginArgs);
+        }, varaintPluginArgs);
 
         return upType;
 
