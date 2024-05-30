@@ -40,15 +40,15 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   static cta::plugin::Manager<cta::catalogue::CatalogueFactory,
     cta::plugin::Args<
       cta::log::Logger&,
-      const u_int64_t,
-      const u_int64_t,
-      const u_int64_t>,
+      const uint64_t,
+      const uint64_t,
+      const uint32_t>,
     cta::plugin::Args<
       cta::log::Logger&,
       const cta::rdbms::Login&,
-      const u_int64_t,
-      const u_int64_t,
-      const u_int64_t>> pm;
+      const uint64_t,
+      const uint64_t,
+      const uint32_t>> pm;
 
   try {
     switch (login.dbType) {
