@@ -56,10 +56,8 @@ public:
 
   template<typename TYPE>
   Interface& CLASS(const std::string& strClassName) {
-    if (!std::is_base_of<BASE_TYPE, TYPE>::value) { 
-      throw std::invalid_argument("Plugin type not supported.");
-    }
-    
+    static_assert(std::is_base_of<BASE_TYPE, TYPE>::value, "Plugin type not supported.");
+       
     m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& args) -> std::unique_ptr<TYPE> {
       try {
         std::unique_ptr<TYPE> upType = std::visit([](auto&& arg) ->
