@@ -20,7 +20,6 @@
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <memory>
-#include <stdexcept>
 
 namespace cta::rdbms::wrapper {
 
@@ -34,19 +33,6 @@ public:
    * Destructor.
    */
   virtual ~ConnFactory() = default;
-
-  /**
-   * Initializer
-   */
-  virtual void init(const std::string& strVal1) {
-    throw std::logic_error("Not implemented");
-  }
-
-  virtual void init(const std::string& strVal1,
-      const std::string& strVal2, const std::string& strVal3) {
-
-    throw std::logic_error("Not implemented");
-  }
 
   /**
    * Returns a newly created database connection.
