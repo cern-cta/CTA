@@ -24,6 +24,8 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <vector>
+#include <any>
 #include <dlfcn.h>
 
 namespace cta::plugin {
@@ -39,36 +41,41 @@ public:
 
   Loader& load(const std::string& strFile) {
     m_strFile = strFile;
-    if (m_pHandler) {
+    if (m_pHandler.has_value()) {
       throw std::logic_error("An attempt to load a library before unloading the previous one.");
     }  
-    // RTLD_NOW ensures that all the symbols are resolved immediately. This means that
-	  // if a symbol cannot be found, the program will crash now instead of later.
-    // RTLD_LAZY -
+    /*
+     * RTLD_NOW - ensures that all the symbols are resolved immediately.
+     * This means that if a symbol cannot be found, the program will crash now
+     * instead of later.
+     * RTLD_LAZY - resolve symbols only as the code that references them is executed.
+     * If a symbol cannot be found, the program will eventually crash later instead of now.
+     * If the symbol is never referenced, then it is never resolved.
+    */
     m_pHandler = dlopen(strFile.c_str(), RTLD_NOW);
     
-    if (!m_pHandler) {
+    if (!m_pHandler.has_value()) {
       throw std::runtime_error(dlerror());
     }
     return *this;
   }
 
   Loader& unload() {
-    if (m_pHandler) {
-      dlclose(m_pHandler);
-      m_pHandler = nullptr;
+    if (m_pHandler.has_value()) {
+      dlclose(std::any_cast<void*>(m_pHandler));
+      m_pHandler.reset();
       m_strFile = "";
     }
     return *this;
   }
 
   Loader& attach(const std::string& strEntryPointName) {
-    if (!m_pHandler) {
-      throw std::runtime_error("Null pointer exception.");
+    if (!m_pHandler.has_value()) {
+      throw std::runtime_error("Null pointer exception: a library is not loaded.");
     }
 
     dlerror(); // to clear any old error conditions
-    m_pFun = dlsym(m_pHandler, strEntryPointName.c_str());
+    m_pFun = dlsym(std::any_cast<void*>(m_pHandler), strEntryPointName.c_str());
     char* pcError = dlerror();
     if (pcError) {
       throw std::runtime_error(pcError);
@@ -82,17 +89,17 @@ public:
 
   template<typename HANDLER, typename RETURN, typename... ARGS>
   RETURN call(ARGS&... args) {
-    if (!m_pFun) {
-      throw std::runtime_error("Null pointer exception: an entry funcrion is not attached.");
+    if (!m_pFun.has_value()) {
+      throw std::runtime_error("Null pointer exception: an entry function is not attached.");
     }
-    HANDLER pFun = reinterpret_cast<HANDLER>(m_pFun);
+    HANDLER pFun = reinterpret_cast<HANDLER>(std::any_cast<void*>(m_pFun));
     return pFun(args...);
   }
 
 private:
 
-  void* m_pHandler = nullptr;
-  void* m_pFun = nullptr;
+  std::any m_pHandler;
+  std::any m_pFun;
   std::string m_strFile;
 
 };
