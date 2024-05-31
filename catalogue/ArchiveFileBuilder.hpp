@@ -116,7 +116,7 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
     // If the tape file represents an ArchiveFile object with no tape files
     if(tapeFile.tapeFiles.empty()) {
       // Archive file is already complete
-      return std::unique_ptr<T>(new T(tapeFile));
+      return std::make_unique<T>(tapeFile);
     }
 
     // If the tape file exists then it must be alone
