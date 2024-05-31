@@ -123,10 +123,32 @@ int main(const int argc, char *const *const argv) {
     log::StdoutLogger logger(shortHostName, "cta-frontend-grpc", shortHeader);
     log::LogContext lc(logger);
 
-    lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
-
     // use castor config to avoid dependency on xroot-ssi
     Configuration config("/etc/cta/cta.conf");
+
+    {
+      std::map<std::string, std::string> staticParamMap;
+      try {
+        staticParamMap["instance"] = config.getConfEntString("general", "InstanceName");
+      } catch (cta::exception::Exception &) {
+        // Instance name was not set, log this as info.
+        lc.log(log::ERR, "Instance name was not specified in the configuration file.");
+        exit(1);
+      }
+      try {
+            staticParamMap["sched_backend"] = config.getConfEntString("general", "SchedulerBackendName") ;
+        } catch (cta::exception::Exception &) {
+            // Scheduler backend name was not set, log this as info.
+            lc.log(log::ERR, "Scheduler backend name was not specified in the configuration file.");
+        exit(1);
+      }
+
+      if(!staticParamMap.empty()) {
+        logger.setStaticParams(staticParamMap);
+      }
+    }
+
+    lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     std::string server_address("0.0.0.0:" + port);
 

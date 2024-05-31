@@ -7,6 +7,7 @@
 - cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
 - cta/CTA#667 - Sonarcloud code smells in catalogue
 - cta/CTA#670 - Add the ability to read EnstoreLarge tapes
+- cta/CTA#698 - Include instanceName and schedulerBackendName in frontend logs
 
 ### Bug Fixes
 - cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024

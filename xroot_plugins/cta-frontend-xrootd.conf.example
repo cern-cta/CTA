@@ -2,6 +2,15 @@
 # CTA options
 #
 
+
+# Unique string to identify CTA's instance the frontend is serving (i.e: production, preproduction).
+# Each of these instances should be associated with a specific CTA catalogue instance.
+cta.instance_name CI_local
+
+# Unique string to identify the backend scheduler resources. As an exmple, it can be structured as:
+# "[ceph|postgres|vfs][User|Repack]".
+cta.schedulerdb.scheduler_backend_name vfsCI
+
 # CTA ObjectStore options
 #cta.objectstore.backendpath /tmp/jobStoreXXXXXXX
 

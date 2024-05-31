@@ -71,6 +71,24 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
   log::Logger& log = *m_log;
 
+  // Set static parameters: Instance and backend names
+  {
+    std::map<std::string, std::string> staticParamMap;
+    const auto instanceName = config.getOptionValueStr("cta.instance_name");
+    const auto backendName =  config.getOptionValueStr("cta.schedulerdb.scheduler_backend_name");
+
+    if (!instanceName.has_value()){
+      throw exception::UserError("cta.instance_name is not set in configuration file " + configFilename);
+    }
+    if (!backendName.has_value()){
+      throw exception::UserError("cta.schedulerdb.scheduler_backend_name is not set in configuration file " + configFilename);
+    }
+
+    staticParamMap["instance"]  = instanceName.value();
+    staticParamMap["sched_backend"] = backendName.value();
+    log.setStaticParams(staticParamMap);
+  }
+
   {
     // Log starting message
     std::list<log::Param> params;
@@ -82,6 +100,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("logFilePath", logFilePath));
     log(log::INFO, std::string("Starting cta-frontend"), params);
   }
+
+
 
   // Initialise the Catalogue
   std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
