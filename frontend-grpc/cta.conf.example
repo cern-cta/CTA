@@ -13,7 +13,22 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+####################################
+# GENERAL OPTIONS (required)
+####################################
+# This options will be included in every log line of the frontend.
+#
+# Unique string to identify CTA's catalogue instance the frontend is serving.
+general InstanceName CI_local
+
+#
+# The unique string to identify the backend scheduler resources. It can be structured as:
+# "[ceph|postgres|vfs][User|Repack]".
+general SchedulerBackendName vfsCI
+
+# Scheduler endpoint
 ObjectStore BackendPath /path/to/local/objectstore
+
 
 ####################################
 #  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
@@ -28,11 +43,13 @@ ObjectStore BackendPath /path/to/local/objectstore
 #gRPC TlsChain /path/to/CA/chain
 #
 
+
 ####################################
-#  CTA Scheduler DB cache timeout options
+# CTA Scheduler DB cache timeout options
 ####################################
 #SchedulerDB TapeCacheMaxAgeSecs 600
 #SchedulerDB RetrieveQueueCacheMaxAgeSecs 10
+
 
 ####################################
 # Variables used by cta-frontend-async-grpc

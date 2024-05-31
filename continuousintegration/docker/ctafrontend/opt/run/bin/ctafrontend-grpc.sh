@@ -33,6 +33,8 @@ echo "ObjectStore BackendPath $OBJECTSTOREURL" >/etc/cta/cta-objectstore-tools.c
 
 
 cat <<EOF > /etc/cta/cta.conf
+general InstanceName CI_local
+general SchedulerBackendName vfsCI
 ObjectStore BackendPath ${OBJECTSTOREURL}
 EOF
 
