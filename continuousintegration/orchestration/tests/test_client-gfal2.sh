@@ -108,11 +108,6 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-    echo "###"
-    echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
-    sleep 65
-    echo "###"
-
     echo
     echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
     echo "  Evicting files with gfal-evict via root protocol"
@@ -166,11 +161,6 @@ echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protoco
 echo "  Retrieving files with gfal-bringonline via https protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo "###"
-echo "Sleeping 65 seconds to allow MGM-FST communication to settle after retrieval."
-sleep 65
-echo "###"
 
 echo
 echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
