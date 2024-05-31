@@ -18,16 +18,12 @@
 #include <string>
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/InMemoryCatalogueFactory.hpp"
-#include "catalogue/PostgresqlCatalogueFactory.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "common/log/Logger.hpp"
-
-#ifdef SUPPORT_OCCI
-  #include "catalogue/OracleCatalogueFactory.hpp"
-#endif
-
+#include "rdbms/Login.hpp"
+#include "plugin-manager/PluginManager.hpp"
 
 namespace cta::catalogue {
 
@@ -40,19 +36,44 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns,
   const uint32_t maxTriesToConnect) {
+
+  static cta::plugin::Manager<cta::catalogue::CatalogueFactory,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const uint64_t,
+      const uint64_t,
+      const uint32_t>,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const cta::rdbms::Login&,
+      const uint64_t,
+      const uint64_t,
+      const uint32_t>> pm;
+
   try {
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      pm.load("libctacatalogueinmemory.so");
+      if (!pm.isRegistered("ctacatalogueinmemory")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
-        maxTriesToConnect);
+      pm.load("libctacatalogueocci.so");
+      if (!pm.isRegistered("ctacatalogueocci")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueocci").make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
 #else
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
-      return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      pm.load("libctacataloguepostrgres.so");
+      if (!pm.isRegistered("ctacataloguepostgres")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_SQLITE:
       throw exception::Exception("Sqlite file based databases are not supported");
     case rdbms::Login::DBTYPE_NONE:

@@ -23,6 +23,7 @@
 #include "catalogue/rdbms/oracle/OracleCatalogue.hpp"
 #include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
 #include "common/exception/Exception.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 namespace cta::catalogue {
 
@@ -62,3 +63,24 @@ std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
 }
 
 } // namespace cta::catalogue
+
+extern "C" {
+
+void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>,
+    cta::plugin::Args<
+      cta::log::Logger&,
+      const cta::rdbms::Login&,
+      const u_int64_t,
+      const u_int64_t,
+      const u_int64_t>>& interface) {
+  
+  interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacatalogueocci")
+    .CLASS<cta::catalogue::OracleCatalogueFactory>("OracleCatalogueFactory");
+}
+
+}// extern "C"

@@ -303,8 +303,15 @@ Shared libraries required to access the CTA catalogue
 %files -n cta-lib-catalogue
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogue.so*
+%{_libdir}/libctacatalogueocci.so*
+%{_libdir}/libctacataloguesqlite.so*
+%{_libdir}/libctacatalogueinmemory.so*
+%{_libdir}/libctacataloguepostrgres.so*
 %{_libdir}/libctadropschemacmd.so*
 %{_libdir}/libctardbms.so*
+%{_libdir}/libctardbmsocci.so*
+%{_libdir}/libctardbmssqlite.so*
+%{_libdir}/libctardbmspostgres.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctaschemachecker.so*
 %{_libdir}/libctastatistics.so*

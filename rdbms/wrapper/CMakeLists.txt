@@ -29,21 +29,22 @@ endif()
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
-  ConnFactory.cpp
   ConnFactoryFactory.cpp
   ConnWrapper.cpp
   ParamNameToIdx.cpp
   RsetWrapper.cpp
+  StmtWrapper.cpp
+)
+
+set (RDBMS_SQLITE_LIB_SRC_FILES
   Sqlite.cpp
   SqliteConn.cpp
   SqliteConnFactory.cpp
   SqliteRset.cpp
   SqliteStmt.cpp
-  StmtWrapper.cpp
 )
 
-set (RDBMS_WRAPPER_LIB_SRC_FILES
-  ${RDBMS_WRAPPER_LIB_SRC_FILES}
+set (RDBMS_POSTGRES_LIB_SRC_FILES
   PostgresConn.cpp
   PostgresConnFactory.cpp
   PostgresRset.cpp
@@ -51,8 +52,7 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
   PostgresColumn.cpp)
 
 if (OCCI_SUPPORT)
-  set (RDBMS_WRAPPER_LIB_SRC_FILES
-    ${RDBMS_WRAPPER_LIB_SRC_FILES}
+  set (RDBMS_OCCI_LIB_SRC_FILES
     OcciColumn.cpp
     OcciConn.cpp
     OcciConnFactory.cpp
@@ -62,6 +62,45 @@ if (OCCI_SUPPORT)
     OcciStmt.cpp)
 endif()
 
+# SQLITE
+## For a plugin that may not be linked by other targets,
+## but may be dynamically loaded at runtime using dlopen-like functionality:
+##   add_library (ctardbmssqlite MODULE
+##
+add_library (ctardbmssqlite SHARED
+  ${RDBMS_SQLITE_LIB_SRC_FILES})
+set_property(TARGET ctardbmssqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctardbmssqlite
+  ${SQLITE_LIBRARIES})
+
+install(TARGETS ctardbmssqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+# POSTGRES
+add_library (ctardbmspostgres SHARED
+  ${RDBMS_POSTGRES_LIB_SRC_FILES})
+set_property(TARGET ctardbmspostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctardbmspostgres
+  ${POSTGRES_LIBRARIES})
+
+install(TARGETS ctardbmspostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+# OCCI
+if (OCCI_SUPPORT) 
+  add_library (ctardbmsocci SHARED
+    ${RDBMS_OCCI_LIB_SRC_FILES})
+  set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
+  set_property(TARGET ctardbmsocci PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+  target_link_libraries (ctardbmsocci
+    ${ORACLE-INSTANTCLIENT_LIBRARIES})
+
+  install(TARGETS ctardbmsocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+endif()
+
 add_library (ctardbmswrapper SHARED
   ${RDBMS_WRAPPER_LIB_SRC_FILES})
 set_property(TARGET ctardbmswrapper PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -69,11 +108,10 @@ set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
-  ${SQLITE_LIBRARIES}
-  ${POSTGRES_LIBRARIES})
+)
 
 if (OCCI_SUPPORT)
-  target_link_libraries (ctardbmswrapper ${ORACLE-INSTANTCLIENT_LIBRARIES})
+  set_property (TARGET ctardbmswrapper APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif()
 
 install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

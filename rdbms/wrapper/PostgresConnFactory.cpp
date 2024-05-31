@@ -18,6 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 #include <sstream>
 
@@ -42,3 +43,15 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
 }
 
 } // namespace cta::rdbms::wrapper
+
+extern "C" {
+
+void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+    cta::plugin::Args<const std::string&>,
+    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+
+  interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
+    .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");
+}
+
+}// extern "C"
