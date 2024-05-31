@@ -67,10 +67,11 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # This options will be included in every log line of the tape daemon to enhance log identification
 # when swapping drives between different backends.
 #
-# Unique string to identify CTA's catalogue instance the tape daemon is serving.
+# Unique string to identify CTA's instance the tape daemon is serving (i.e: production, preproduction).
+# Each of these instances should be associated with a specific CTA catalogue instance.
 # general InstanceName production
 #
-# The unique string to identify the backend scheduler resources. It can be structured as:
+# The unique string to identify the backend scheduler resources. As an example, it can be structured as:
 # "[ceph|postgres|vfs][User|Repack]".
 # general SchedulerBackendName cephUser
 

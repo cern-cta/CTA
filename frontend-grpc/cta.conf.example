@@ -18,11 +18,11 @@
 ####################################
 # This options will be included in every log line of the frontend.
 #
-# Unique string to identify CTA's catalogue instance the frontend is serving.
+# Unique string to identify CTA's instance the frontend is serving (i.e: production, preproduction).
+# Each of these instances should be associated with a specific CTA catalogue instance.
 general InstanceName CI_local
 
-#
-# The unique string to identify the backend scheduler resources. It can be structured as:
+# Unique string to identify the backend scheduler resources. As an exmple, it can be structured as:
 # "[ceph|postgres|vfs][User|Repack]".
 general SchedulerBackendName vfsCI
 

@@ -136,10 +136,10 @@ int main(const int argc, char *const *const argv) {
         exit(1);
       }
       try {
-        staticParamMap["sched_bakcend"] = config.getConfEntString("general", "SchedulerBackendName") ;
-      } catch (cta::exception::Exception &) {
-        // Scheduler backend name was not set, log this as info.
-        lc.log(log::ERR, "Scheduler backend name was not specified in the configuration file.");
+            staticParamMap["sched_backend"] = config.getConfEntString("general", "SchedulerBackendName") ;
+        } catch (cta::exception::Exception &) {
+            // Scheduler backend name was not set, log this as info.
+            lc.log(log::ERR, "Scheduler backend name was not specified in the configuration file.");
         exit(1);
       }
 
