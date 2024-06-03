@@ -332,7 +332,7 @@ Group: Application/CTA
   %define requirementsLibCatalogue postgresql-libs oracle-instantclient19.3-basic
 %endif
 Requires: cta-lib-common
-Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
+Requires: cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release}
 #Requires: cta-lib-catalogue-occi = %{version}-%{release}
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: %{requirementsLibCatalogue}
