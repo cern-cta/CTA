@@ -1,7 +1,6 @@
 # v4.10.11.0-1 / v5.10.11.0-1
 
 ## Features
-- cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
 - cta/CTA#350 - Change fxid to fid in command tools
 - cta/CTA#641 - Archive workflow of Postgres Scheduler DB can write a file to tape
 - cta/CTA#646 - JSON logging with correct field types
@@ -14,7 +13,6 @@
 - cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024
 - cta/CTA#485 - Check disk file metadata on delete requests
 - cta/CTA#566 - Set UserError log level to INFO
-- cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 - cta/CTA#645 - Fix new mount timeout log message
 - cta/CTA#656 - Improve naming of taped's drive threads
@@ -27,8 +25,10 @@
 - cta/CTA#704 - Fix special character encoding in json logging
 
 ### Continuous Integration
+- cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
 - cta/CTA#597 - Validate staging activity field metadata is correctly set 
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
+- cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
 - cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main
 - cta/CTA#661 - Update SonarCloud GitHub workflow to Alma 9
