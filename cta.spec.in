@@ -636,135 +636,139 @@ echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_ver
 
 
 %changelog
-* Wed Apr 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4.10.10.1-1
+* Mon Jun 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.11.0-1
+- Various fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
+* Wed Apr 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.10.1-1
 - JSON logging with correct field types
 - Fixed ctafrontend crash during initialisation due to missing config values
 - See ReleaseNotes.md for details
 
-* Wed Apr 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4.10.9.1-1
+* Wed Apr 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.9.1-1
 - Fixed ctafrontend crash during initialisation due to missing config values
 - See ReleaseNotes.md for details
 
-* Wed Mar 13 2024 Joao Afonso <joao.afonso@cern.ch> - 4.10.10.0-1
+* Wed Mar 13 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.10.0-1
 - Various fixes and improvements to CTA
 - Deprecating TPCONFIG configuration in favour of cta-taped.conf
 
-* Wed Feb 14 2024 Joao Afonso <joao.afonso@cern.ch> - 4.10.9.0-1
+* Wed Feb 14 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.9.0-1
 - Various fixes and improvements to CTA
 - Updates EOS-5 version in CI to 5.2.8
 - See ReleaseNotes.md for details
 
-* Tue Nov 14 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.8-1
+* Tue Nov 14 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.8-1
 - Various fixes and improvements to CTA
 - Updates EOS version in CI to 4.8.105/5.1.28
 - See ReleaseNotes.md for details
 
-* Wed Oct 18 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.7-1
+* Wed Oct 18 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.7-1
 - Various fixes and improvements to CTA
 - Updates EOS version in CI to 4.8.105/5.1.29
 - See ReleaseNotes.md for details
 
-* Fri Oct 13 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.6-1
+* Fri Oct 13 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.10.6-1
 - Remove critical constrain after update heartbeat
 
-* Mon Sep 25 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.5-1
+* Mon Sep 25 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.10.5-1
 - Workaround for scheduler crashing
 
-* Mon Sep 18 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.4-1
+* Mon Sep 18 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.10.4-1
 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
 
-* Wed Sep 06 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.3-1
+* Wed Sep 06 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.10.3-1
 - Fix device statistics from LTO drives
 
-* Tue Sep 05 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.2-1
+* Tue Sep 05 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.10.2-1
 - Fix scheduler crashing because of empty tape pool name
 - See ReleaseNotes.md for details
 
-* Tue Aug 08 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.1-1
+* Tue Aug 08 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.1-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
 
-* Mon Aug 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.0-2
+* Mon Aug 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.0-2
 - Removes any usage of the CTA catalogue version 13.0
 - The migration should be done directly from version 12.0 to 14.0
 
-* Mon Jul 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4.10.0-1
+* Mon Jul 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.0-1
 - Catalogue schema version 14.0
 
-* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4.9.0-1
+* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.9.0-1
 - Catalogue schema version 13.0 re-tagging
 - Same behaviour as 4.8.10-2
 
-* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.10-2
+* Mon Jul 03 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.10-2
 - Fix schema verification failure for postgres migration to catalogue v13
 
-* Mon Jun 12 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.10-1
+* Mon Jun 12 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.10-1
 - Do not fail CTA taped when using older catalogue schema versions
 
-* Wed Jun 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.9-1
+* Wed Jun 07 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.9-1
 - Catalogue schema version 13.0
 
-* Wed May 31 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.8.8-2
+* Wed May 31 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.8.8-2
 - Fix tagging release CI script for xrootd5
 - See ReleaseNotes.md for details
 
-* Wed May 31 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.8-1
+* Wed May 31 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.8-1
 - Enabled HTTP and EOSTOKEN support on CTA CI
 - Change in tape server encryption logic
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
 
-* Wed Mar 29 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.7-1
+* Wed Mar 29 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.7-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
 
-* Wed Mar 08 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.6-1
+* Wed Mar 08 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.6-1
 - Fixes queue cleanup bug in CTA
 - See ReleaseNotes.md for details
 
-* Thu Feb 16 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.5-1
+* Thu Feb 16 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.5-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
 
-* Tue Jan 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.4-1
+* Tue Jan 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.4-1
 - Major reduction of the number of DB queries issued to the CTA catalogue
 - See ReleaseNotes.md for more details
 
-* Wed Jan 18 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.3-1
+* Wed Jan 18 2023 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.3-1
 - Added DB query counters for profiling purposes
 - See ReleaseNotes.md for more details
 
-* Wed Dec 14 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.2-1
+* Wed Dec 14 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.2-1
 - Improvements on catalogue DB query performance
 - See ReleaseNotes.md for more details
 
-* Mon Dec 12 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.1-1
+* Mon Dec 12 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.1-1
 - Fixes bug with protobuf definition
 - See ReleaseNotes.md for more details
 
-* Mon Nov 28 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.0-1
+* Mon Nov 28 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.8.0-1
 - This CTA release contains significant changes related to repacking, including the addition of new final and temporary states
 - Minor fixes and improvements to CTA
 - See ReleaseNotes.md for details
 
-* Wed Nov 16 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.14-1
+* Wed Nov 16 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.7.14-1
 - Fixes to CTA and cta-admin tool, see ReleaseNotes.md for details
 
-* Tue Nov 15 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.13-3
+* Tue Nov 15 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.7.13-3
 - Repackaging CTA for easy installation of public RPMs
 
-* Tue Nov 08 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.7.13-2
+* Tue Nov 08 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.7.13-2
 - Fix gitlab release tagging pipeline
 
-* Mon Nov 07 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.7.13-1
+* Mon Nov 07 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4/5.7.13-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
 - Change Owner Identifier in the header of Tapes
 - Tool to update the storage class
 
-* Thu Oct 27 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.12-2
+* Thu Oct 27 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.7.12-2
 - Repackaging CTA for easy installation of public RPMs
 
-* Tue Oct 04 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.12-1
+* Tue Oct 04 2022 Joao Afonso <joao.afonso@cern.ch> - 4/5.7.12-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
 - Performance improvement: optimized DB queries for getting tape drive states
 - Upgrade eos5 to 5.1.1-1
