@@ -69,6 +69,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   ; \
     rm -f /etc/rc.d/rc.local
 
+# Sqlite3 not installed by default in Alma9 image
+RUN yum install -y sqlite
+
 RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
   wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
   yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \

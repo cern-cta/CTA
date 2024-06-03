@@ -26,6 +26,7 @@
 - cta/CTA#704 - Fix special character encoding in json logging
 
 ### Continuous Integration
+- cta/CTA#597 - Validate staging activity field metadata is correctly set 
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
 - cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
