@@ -286,6 +286,22 @@ The shared libraries base
 %{_libdir}/libctacommon.so*
 %{_libdir}/libctatapedaemoncommon.so*
 
+
+
+%package -n cta-lib-rdbms-postgres
+Summary: CERN Tape Archive libraries
+Group: Application/CTA
+# Explicity require protobuf to avoid clash with eos-protobuf
+Requires: postgresql-libs
+%description -n cta-lib-rdbms-postgres
+CERN Tape Archive:
+The shared libraries base
+%files -n cta-lib-rdbms-postgres
+%defattr(0755,root,root,-)
+%{_libdir}/libctardbmspostgres.so*
+
+
+
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
@@ -295,6 +311,7 @@ Group: Application/CTA
   %define requirementsLibCatalogue postgresql-libs oracle-instantclient19.3-basic
 %endif
 Requires: cta-lib-common
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 Requires: %{requirementsLibCatalogue}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
@@ -311,7 +328,7 @@ Shared libraries required to access the CTA catalogue
 %{_libdir}/libctardbms.so*
 %{_libdir}/libctardbmsocci.so*
 %{_libdir}/libctardbmssqlite.so*
-%{_libdir}/libctardbmspostgres.so*
+#%{_libdir}/libctardbmspostgres.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctaschemachecker.so*
 %{_libdir}/libctastatistics.so*
