@@ -288,18 +288,39 @@ The shared libraries base
 
 
 
-%package -n cta-lib-rdbms-postgres
+%package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-# Explicity require protobuf to avoid clash with eos-protobuf
-Requires: postgresql-libs
-%description -n cta-lib-rdbms-postgres
+Requires: oracle-instantclient19.3-basic
+%description -n cta-lib-catalogue-occi
 CERN Tape Archive:
-The shared libraries base
-%files -n cta-lib-rdbms-postgres
+Shared libraries required to access the Oracle-based CTA catalogue
+%files -n cta-lib-catalogue-occi
 %defattr(0755,root,root,-)
+%{_libdir}/libctacatalogueocci.so*
+%{_libdir}/libctardbmsocci.so*
+
+%package -n cta-lib-catalogue-postgres
+Summary: CERN Tape Archive libraries
+Group: Application/CTA
+Requires: postgresql-libs
+%description -n cta-lib-catalogue-postgres
+CERN Tape Archive:
+Shared libraries required to access the PostgreSQL-based CTA catalogue
+%files -n cta-lib-catalogue-postgres
+%defattr(0755,root,root,-)
+%{_libdir}/libctacataloguepostrgres.so*
 %{_libdir}/libctardbmspostgres.so*
 
+%package -n cta-lib-catalogue-inmemory
+Summary: CERN Tape Archive libraries
+Group: Application/CTA
+%description -n cta-lib-catalogue-inmemory
+CERN Tape Archive:
+Shared libraries required to access the in-memory-based CTA catalogue
+%files -n cta-lib-catalogue-inmemory
+%defattr(0755,root,root,-)
+%{_libdir}/libctacatalogueinmemory.so*
 
 
 %package -n cta-lib-catalogue
@@ -311,7 +332,9 @@ Group: Application/CTA
   %define requirementsLibCatalogue postgresql-libs oracle-instantclient19.3-basic
 %endif
 Requires: cta-lib-common
-Requires: cta-lib-rdbms-postgres = %{version}-%{release}
+Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
+#Requires: cta-lib-catalogue-occi = %{version}-%{release}
+Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: %{requirementsLibCatalogue}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
@@ -320,13 +343,13 @@ Shared libraries required to access the CTA catalogue
 %files -n cta-lib-catalogue
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogue.so*
-%{_libdir}/libctacatalogueocci.so*
+#%{_libdir}/libctacatalogueocci.so*
 %{_libdir}/libctacataloguesqlite.so*
 %{_libdir}/libctacatalogueinmemory.so*
-%{_libdir}/libctacataloguepostrgres.so*
+#%{_libdir}/libctacataloguepostrgres.so*
 %{_libdir}/libctadropschemacmd.so*
 %{_libdir}/libctardbms.so*
-%{_libdir}/libctardbmsocci.so*
+#%{_libdir}/libctardbmsocci.so*
 %{_libdir}/libctardbmssqlite.so*
 #%{_libdir}/libctardbmspostgres.so*
 %{_libdir}/libctardbmswrapper.so*
