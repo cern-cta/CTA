@@ -1,22 +1,23 @@
-# v4.NEXT / v5.NEXT
+# v4.10.11.0-1 / v5.10.11.0-1
 
 ## Features
-- cta/CTA#646 - JSON logging with correct field types
+- cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
 - cta/CTA#350 - Change fxid to fid in command tools
 - cta/CTA#641 - Archive workflow of Postgres Scheduler DB can write a file to tape
-- cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
+- cta/CTA#646 - JSON logging with correct field types
+- cta/CTA#664 - Add tape lable format to tape ls (JSON only)
 - cta/CTA#667 - Sonarcloud code smells in catalogue
 - cta/CTA#670 - Add the ability to read EnstoreLarge tapes
 - cta/CTA#698 - Include instanceName and schedulerBackendName in frontend logs
-- cta/CTA#664 - Add tape lable format to tape ls (JSON only)
 
 ### Bug Fixes
 - cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024
 - cta/CTA#485 - Check disk file metadata on delete requests
+- cta/CTA#566 - Set UserError log level to INFO
+- cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#634 - Fix crash of ctafrontend in initialisation for missing config values
 - cta/CTA#645 - Fix new mount timeout log message
 - cta/CTA#656 - Improve naming of taped's drive threads
-- cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#666 - Fix drive status activity field not being properly reset
 - cta/CTA#678 - Fix string representation for Cleanup session type
 - cta/CTA#682 - Generate taped's log file with correct owner and group
@@ -29,18 +30,20 @@
 - cta/CTA#597 - Validate staging activity field metadata is correctly set 
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
-- cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main 
+- cta/CTA#659 - Allow running only branch's systemtests in CI using ctageneric image from main
+- cta/CTA#661 - Update SonarCloud GitHub workflow to Alma 9
 - cta/CTA#663 - Setup dev env containers for Alma9
-- cta/CTA#686 - Upgrade eos-5 to eos-5.2.23-1
+- cta/CTA#689 - Add redeploy script
 - cta/CTA#705 - Upgrade eos-5 to eos-5.2.24-1: fixes EOS-6112 and add archive metadata in eoscta MGM report EOS-6150
 - cta/CTA#711 - Add cta-frontend-grpc to k8s setup
 - cta/CTA#712 - Remove CI mitigations
 
 ### Code Quality
+- cta/CTA#334 - Refactor the libctacatalogue DB interface
+- cta/CTA#459 - Remove function name from UserError exception messages
 - cta/CTA#575 - Remove rados metrics logging
 - cta/CTA#675 - Renaming PostgresSchedDB to RelationalDB and introducing rdbms directory model to the Scheduler DB code
 - cta/CTA#687 - Remove SyslogLogger
-- cta/CTA#459 - Remove function name from UserError exception messages
 
 # v4.10.10.1-1 / v5.10.10.1-1
 
