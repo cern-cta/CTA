@@ -254,7 +254,7 @@ echo "Files replicas evicted from disk successfully"
 ################################################################################
 
 echo
-echo "Test c allowed per file (${NB_RETRIEVES_MAX})"
+echo "Test maximum number of retrieve requests allowed per file (${NB_RETRIEVES_MAX})"
 
 TEST_FILE_NAME=${EOS_BASEDIR}/$(uuidgen)
 
