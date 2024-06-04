@@ -30,7 +30,8 @@
 namespace cta::plugin {
 
 enum class DATA {
-  FILE_NAME = 0,
+  NONE = 0,
+  FILE_NAME = 1,
   API_VERSION,
   PLUGIN_NAME,
   PLUGIN_VERSION
@@ -43,6 +44,10 @@ class Interface {
 
 public:
 
+  Interface() {
+    m_umapData.emplace(plugin::DATA::NONE, "");
+  }
+
   template<plugin::DATA D>
   Interface& SET(const std::string& strValue) {
     m_umapData.emplace(D, strValue);
@@ -51,6 +56,9 @@ public:
 
   template<plugin::DATA D>
   const std::string& GET() const {
+    if (m_umapData.find(D) == m_umapData.end()) {
+      return m_umapData.at(plugin::DATA::NONE);
+    }
     return m_umapData.at(D);
   }
 
