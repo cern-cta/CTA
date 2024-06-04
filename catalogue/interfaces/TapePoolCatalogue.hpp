@@ -82,6 +82,9 @@ public:
    */
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
   virtual void verifyTapePoolSupply(const std::string &supply) = 0;
+
+  virtual std::string getTapePoolSupplySources(const std::string &tape_pool_name) const = 0; // which tapepools act as supply for this tapepool?
+  virtual std::string getTapePoolSupplyDestinations(const std::string &tape_pool_name) const = 0; // which tapepools does this tapepool supply?
 };
 
 }} // namespace cta::catalogue

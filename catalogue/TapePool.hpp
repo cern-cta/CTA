@@ -126,8 +126,11 @@ struct TapePool {
 
   /**
    * Optional value used by the tape pool supply mechanism.
+   * TODO: deprecate this field, since it's replaced by the TAPE_POOL_SUPPLY catalogue table
    */
-  std::optional<std::string> supply;
+  std::optional<std::string> supply_source;
+
+  std::optional<std::string> supply_destination;
 
   /**
    * The creation log.

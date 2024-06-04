@@ -97,9 +97,9 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
-    ASSERT_EQ(supply, pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
+    ASSERT_EQ(supply.value(), pool.supply_source.value());
+    ASSERT_EQ(supply, pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -122,9 +122,9 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(m_vo.name, pool->vo.name);
     ASSERT_EQ(nbPartialTapes, pool->nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool->encryption);
-    ASSERT_TRUE((bool)pool->supply);
-    ASSERT_EQ(supply.value(), pool->supply.value());
-    ASSERT_EQ(supply, pool->supply);
+    ASSERT_TRUE((bool)pool->supply_source);
+    ASSERT_EQ(supply.value(), pool->supply_source.value());
+    ASSERT_EQ(supply, pool->supply_source);
     ASSERT_EQ(0, pool->nbTapes);
     ASSERT_EQ(0, pool->capacityBytes);
     ASSERT_EQ(0, pool->dataBytes);
@@ -165,7 +165,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
   ASSERT_EQ(m_vo.name, pool.vo.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
-  ASSERT_FALSE((bool)pool.supply);
+  ASSERT_FALSE((bool)pool.supply_source);
   ASSERT_EQ(0, pool.nbTapes);
   ASSERT_EQ(0, pool.capacityBytes);
   ASSERT_EQ(0, pool.dataBytes);
@@ -1056,8 +1056,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
-    ASSERT_EQ(supply, pool.supply);
+    ASSERT_EQ(supply.value(), pool.supply_source.value());
+    ASSERT_EQ(supply, pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1087,7 +1087,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(modifiedSupply, pool.supply.value());
+    ASSERT_EQ(modifiedSupply, pool.supply_source.value());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1128,8 +1128,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_TRUE((bool)supply);
-    ASSERT_EQ(supply.value(), pool.supply.value());
-    ASSERT_EQ(supply, pool.supply);
+    ASSERT_EQ(supply.value(), pool.supply_source.value());
+    ASSERT_EQ(supply, pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1157,7 +1157,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_FALSE((bool)pool.supply);
+    ASSERT_FALSE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1213,7 +1213,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1236,7 +1236,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1298,7 +1298,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1321,7 +1321,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1386,7 +1386,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1409,7 +1409,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_TRUE((bool)pool.supply_source);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);

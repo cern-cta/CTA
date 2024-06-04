@@ -155,6 +155,64 @@ void RdbmsTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
   }
 }
 
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(const std::string &tapePoolName) const {
+  auto conn = m_connPool->getConn();
+  std::string sql =
+  "SELECT TP.TAPE_POOL_ID    AS SUPPLY_DEST_TAPE_POOL_ID,"
+  "     TP.TAPE_POOL_NAME     AS SUPPLY_DEST_TAPE_POOL_NAME,"
+  "     TP_SRC.TAPE_POOL_ID   AS SUPPLY_SOURCE_TAPE_POOL_ID,"
+  "     TP_SRC.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME"
+  "FROM  TAPE_POOL TP"
+  "   INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID"
+  "    AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME"
+  "    INNER JOIN TAPE_POOL ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  auto rset = stmt.executeQuery();
+
+  std::string sources = "";
+  while (rset.next()) {
+    if (sources == "")
+      sources = rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
+    else
+    {
+      sources += ",";
+      sources += rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
+    }
+  }
+  return sources;
+}
+
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(const std::string &tapePoolName) const {
+  auto conn = m_connPool->getConn();
+  std::string sql =
+  "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
+  "    TP.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME,"
+  "    TP_DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID,"
+  "    TP_DEST.TAPE_POOL_NAME AS SUPPLY_DESTINATION_TAPE_POOL_NAME"
+  "FROM TAPE_POOL TP"
+  "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID"
+  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME"
+  "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  auto rset = stmt.executeQuery();
+
+  std::string destinations = "";
+  while (rset.next()) {
+    if (destinations == "")
+      destinations = rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
+    else
+    {
+      destinations += ",";
+      destinations += rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
+    }
+  }
+  return destinations;
+}
+
 void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
   auto conn = m_connPool->getConn();
 
@@ -209,6 +267,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   }
 
   std::list<TapePool> pools;
+  // the following query needs to be rewritten
   std::string sql =
     "SELECT "
       "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -300,12 +359,12 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     TapePool pool;
-
+    // for each result in this rset, I would need to do a new query to get the tape pool supply
     pool.name = rset.columnString("TAPE_POOL_NAME");
     pool.vo.name = rset.columnString("VO");
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
-    pool.supply = rset.columnOptionalString("SUPPLY");
+    pool.supply_source = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
@@ -324,6 +383,12 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 
     pools.push_back(pool);
   }
+
+  // tests get stuck on the following lines, so there is something wrong here
+  // for (TapePool pool : pools) {
+  //   pool.supply_source = getTapePoolSupplySources(pool.name);
+  //   pool.supply_destination = getTapePoolSupplyDestinations(pool.name);
+  // }
 
   return pools;
 }
@@ -398,7 +463,7 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.vo.name = rset.columnString("VO");
   pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
   pool.encryption = rset.columnBool("IS_ENCRYPTED");
-  pool.supply = rset.columnOptionalString("SUPPLY");
+  pool.supply_source = rset.columnOptionalString("SUPPLY");
   pool.nbTapes = rset.columnUint64("NB_TAPES");
   pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
   pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");

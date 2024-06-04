@@ -72,6 +72,9 @@ public:
 
   void verifyTapePoolSupply(const std::string &supply) override;
 
+  std::string getTapePoolSupplySources(const std::string &tapePoolName) const override;
+  std::string getTapePoolSupplyDestinations(const std::string &tapePoolName) const override;
+
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
 
