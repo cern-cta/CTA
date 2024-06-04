@@ -83,6 +83,8 @@ add_library (ctardbmspostgres SHARED
 set_property(TARGET ctardbmspostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_LIBVERSION}")
+
 target_link_libraries (ctardbmspostgres
   ${POSTGRES_LIBRARIES})
 
@@ -105,6 +107,8 @@ add_library (ctardbmswrapper SHARED
   ${RDBMS_WRAPPER_LIB_SRC_FILES})
 set_property(TARGET ctardbmswrapper PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_compile_definitions(ctardbmswrapper PRIVATE VERSION_API="${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
