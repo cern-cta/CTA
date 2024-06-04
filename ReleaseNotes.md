@@ -1,11 +1,14 @@
 # v4.NEXT / v5.NEXT
 
-## Features
+### Features
 - cta/CTA#565 - Improve logging of 'Tape session finished' message
+
+### Bug Fixes
+- cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
-## Features
+### Features
 - cta/CTA#350 - Change fxid to fid in command tools
 - cta/CTA#641 - Archive workflow of Postgres Scheduler DB can write a file to tape
 - cta/CTA#646 - JSON logging with correct field types
@@ -52,7 +55,7 @@
 
 # v4.10.10.1-1 / v5.10.10.1-1
 
-## Features
+### Features
 - cta/CTA#646 - JSON logging with correct field types
 
 ### Bug Fixes
