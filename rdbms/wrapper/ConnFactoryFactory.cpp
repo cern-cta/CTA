@@ -42,7 +42,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
           osErr << "Plugin API version mismatch: "
                 << "API_VERIOSN = " << VERSION_API
                 << ", PLUIGN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
-                << ", PLUGIN_API_VERSION" << plugin.template GET<plugin::DATA::API_VERSION>();
+                << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
           throw exception::Exception(osErr.str());
         }
       });
