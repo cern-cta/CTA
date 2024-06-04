@@ -147,6 +147,7 @@ poddir=$(mktemp -d)
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 SCHEMA_VERSION="$MAJOR.$MINOR"
+echo "IMPORTANT!! Schema version is $SCHEMA_VERSION"
 
 # It sets as schema version the previous to the current one to create a database with that schema version
 if [ "$updatedatabasetest" == "1" ] ; then

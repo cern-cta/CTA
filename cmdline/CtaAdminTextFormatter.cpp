@@ -971,7 +971,8 @@ void TextFormatter::printTapePoolLsHeader() {
     "m.user",
     "m.host",
     "m.time",
-    "comment"
+    "comment",
+    "supply_destination"
   );
 }
 
@@ -1001,7 +1002,8 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
     tpls_item.modified().username(),
     tpls_item.modified().host(),
     timeToStr(tpls_item.modified().time()),
-    tpls_item.comment()
+    tpls_item.comment(),
+    tpls_item.supply_destination()
   );
 }
 

@@ -130,8 +130,6 @@ struct TapePool {
    */
   std::optional<std::string> supply_source;
 
-  std::optional<std::string> supply_destination;
-
   /**
    * The creation log.
    */
@@ -146,6 +144,9 @@ struct TapePool {
    * The comment.
    */
   std::string comment;
+
+  /* Comma-separated list of values that this tapepool acts as supplier to */
+  std::optional<std::string> supply_destination;
 
 }; // struct TapePool
 
