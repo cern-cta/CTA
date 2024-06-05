@@ -87,8 +87,7 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->set_capacity_bytes(tp.capacityBytes);
     tp_item->set_data_bytes(tp.dataBytes);
     tp_item->set_encrypt(tp.encryption);
-    tp_item->set_supply_source(tp.supply_source ? tp.supply_source.value() : "");
-    // tp_item->set_supply_destination(tp.supply_destination ? tp.supply_destination.value() : "");
+    tp_item->set_supply(tp.supply ? tp.supply.value() : "");
     tp_item->mutable_created()->set_username(tp.creationLog.username);
     tp_item->mutable_created()->set_host(tp.creationLog.host);
     tp_item->mutable_created()->set_time(tp.creationLog.time);
@@ -96,6 +95,8 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->mutable_modified()->set_host(tp.lastModificationLog.host);
     tp_item->mutable_modified()->set_time(tp.lastModificationLog.time);
     tp_item->set_comment(tp.comment);
+    tp_item->set_supply_source(tp.supply_source ? tp.supply_source.value() : "");
+    tp_item->set_supply_destination(tp.supply_destination ? tp.supply_destination.value() : "");
 
     is_buffer_full = streambuf->Push(record);
   }

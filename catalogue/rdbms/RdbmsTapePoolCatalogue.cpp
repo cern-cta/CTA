@@ -364,7 +364,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pool.vo.name = rset.columnString("VO");
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
-    pool.supply_source = rset.columnOptionalString("SUPPLY");
+    pool.supply = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
@@ -380,7 +380,9 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
+    // these are dummy values obviously, but need to debug the queries first
+    pool.supply_source = pool.supply;
+    pool.supply_destination = "";
     pools.push_back(pool);
   }
 
@@ -463,7 +465,7 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.vo.name = rset.columnString("VO");
   pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
   pool.encryption = rset.columnBool("IS_ENCRYPTED");
-  pool.supply_source = rset.columnOptionalString("SUPPLY");
+  pool.supply = rset.columnOptionalString("SUPPLY");
   pool.nbTapes = rset.columnUint64("NB_TAPES");
   pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
   pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
@@ -479,6 +481,9 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+  // again dummy values
+  pool.supply_source = pool.supply;
+  pool.supply_destination = "";
 
   return pool;
 }
