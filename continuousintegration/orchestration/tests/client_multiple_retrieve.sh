@@ -261,7 +261,8 @@ TEST_FILE_NAME=${EOS_BASEDIR}/$(uuidgen)
 echo
 echo "Archiving test file ${TEST_FILE_NAME}..."
 
-# TODO: Use this for the tests above
+echo "Write file ${TEST_FILE_NAME} for archival..."
+xrdcp /etc/group root://${EOS_INSTANCE}/${TEST_FILE_NAME}
 wait_for_archive ${EOS_INSTANCE} "${TEST_FILE_NAME}"
 
 put_all_drives_down
