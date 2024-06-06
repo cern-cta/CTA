@@ -964,7 +964,7 @@ void TextFormatter::printTapePoolLsHeader() {
     "avail",
     "use%",
     "encrypt",
-    "supply_source",
+    "supply",
     "c.user",
     "c.host",
     "c.time",
@@ -972,6 +972,7 @@ void TextFormatter::printTapePoolLsHeader() {
     "m.host",
     "m.time",
     "comment",
+    "supply_source",
     "supply_destination"
   );
 }
@@ -995,7 +996,7 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
     dataSizeToStr(avail),
     doubleToStr(use_percent, '%'),
     tpls_item.encrypt(),
-    tpls_item.supply_source(),
+    tpls_item.supply(),
     tpls_item.created().username(),
     tpls_item.created().host(),
     timeToStr(tpls_item.created().time()),
@@ -1003,6 +1004,7 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
     tpls_item.modified().host(),
     timeToStr(tpls_item.modified().time()),
     tpls_item.comment(),
+    tpls_item.supply_source(),
     tpls_item.supply_destination()
   );
 }
