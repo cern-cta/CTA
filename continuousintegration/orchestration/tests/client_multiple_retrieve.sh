@@ -273,10 +273,10 @@ for i in $(seq ${NB_RETRIEVES_MAX})
 do
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}")
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}")
-  PATH_EXISTS=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
-  REQUESTED=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
-  HAS_REQID=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").has_reqid")
-  ERROR_TEXT=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
+  PATH_EXISTS=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").path_exists")
+  REQUESTED=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").requested")
+  HAS_REQID=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").has_reqid")
+  ERROR_TEXT=$(echo "${QUERY_RSP}" | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").error_text")
 
   if [[
     "true" != "${PATH_EXISTS}" ||
@@ -284,6 +284,7 @@ do
     "true" != "${HAS_REQID}" ||
     "\"\"" != "${ERROR_TEXT}" ]]
   then
+    echo ${QUERY_RSP}
     echo "ERROR: The ${i}th retrieve request should have been received without failure"
     exit 1
   fi
@@ -295,17 +296,18 @@ REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs
 
 echo "Checking that the $(expr ${NB_RETRIEVES_MAX} + 1)th retrieve request failed"
 QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}")
-PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
-REQUESTED=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
-HAS_REQID=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").has_reqid")
-ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
+PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").path_exists")
+REQUESTED=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").requested")
+HAS_REQID=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").has_reqid")
+ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").error_text")
 
 if [[
   "true" != "${PATH_EXISTS}" ||
   "true" != "${REQUESTED}" ||
   "false" != "${HAS_REQID}" ||
-  "\"\"" == "${ERROR_TEXT}" ]]
+  "\"\"" != "${ERROR_TEXT}" ]]
 then
+  echo ${QUERY_RSP}
   echo "ERROR: New request was not rejected properly after ${NB_RETRIEVES_MAX} retrieve requests have been accumulated"
   exit 1
 fi
