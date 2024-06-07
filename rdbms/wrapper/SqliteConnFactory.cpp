@@ -49,6 +49,7 @@ void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
     cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
 
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmssqlite")
+    .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::SqliteConnFactory>("SqliteConnFactory");
 }
 

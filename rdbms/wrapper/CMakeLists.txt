@@ -72,6 +72,8 @@ add_library (ctardbmssqlite SHARED
 set_property(TARGET ctardbmssqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_LIBVERSION}")
+
 target_link_libraries (ctardbmssqlite
   ${SQLITE_LIBRARIES})
 
@@ -96,6 +98,8 @@ if (OCCI_SUPPORT)
     ${RDBMS_OCCI_LIB_SRC_FILES})
   set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctardbmsocci PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_LIBVERSION}")
 
   target_link_libraries (ctardbmsocci
     ${ORACLE-INSTANTCLIENT_LIBRARIES})

@@ -54,6 +54,7 @@ void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
     cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
 
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmsocci")
+    .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::OcciConnFactory>("OcciConnFactory");
 }
 
