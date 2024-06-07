@@ -172,6 +172,7 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, 
 
   std::string sources = "";
   while (rset.next()) {
+    std::cout << "there is at least one supply source for tape pool " << tapePoolName << " its name is " << rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME") << std::endl;
     if (sources == "")
       sources = rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
     else
@@ -200,6 +201,7 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &c
 
   std::string destinations = "";
   while (rset.next()) {
+    std::cout << "there is at least one supply destination for tapepool " << tapePoolName <<  " its name is " << rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME") << std::endl;
     if (destinations == "")
       destinations = rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
     else
