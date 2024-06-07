@@ -125,16 +125,5 @@ void TapePoolCatalogueRetryWrapper::verifyTapePoolSupply(const std::string &supp
   }, m_maxTriesToConnect);
 }
 
-std::string TapePoolCatalogueRetryWrapper::getTapePoolSupplySources(const std::string &tapePoolName) const {
-  return retryOnLostConnection(m_log, [this,&tapePoolName] {
-    return m_catalogue->TapePool()->getTapePoolSupplySources(tapePoolName);
-  }, m_maxTriesToConnect);
-}
-
-std::string TapePoolCatalogueRetryWrapper::getTapePoolSupplyDestinations(const std::string &tapePoolName) const {
-  return retryOnLostConnection(m_log, [this,&tapePoolName] {
-    return m_catalogue->TapePool()->getTapePoolSupplyDestinations(tapePoolName);
-  }, m_maxTriesToConnect);
-}
 
 } // namespace cta::catalogue

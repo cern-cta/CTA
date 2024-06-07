@@ -155,17 +155,16 @@ void RdbmsTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
   }
 }
 
-std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(const std::string &tapePoolName) const {
-  auto conn = m_connPool->getConn();
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const {
   std::string sql =
-  "SELECT TP.TAPE_POOL_ID    AS SUPPLY_DEST_TAPE_POOL_ID,"
-  "     TP.TAPE_POOL_NAME     AS SUPPLY_DEST_TAPE_POOL_NAME,"
-  "     TP_SRC.TAPE_POOL_ID   AS SUPPLY_SOURCE_TAPE_POOL_ID,"
-  "     TP_SRC.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME"
-  "FROM  TAPE_POOL TP"
-  "   INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID"
-  "    AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME"
-  "    INNER JOIN TAPE_POOL ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID";
+  "SELECT TP.TAPE_POOL_ID AS SUPPLY_DEST_TAPE_POOL_ID,"
+  "     TP.TAPE_POOL_NAME AS SUPPLY_DEST_TAPE_POOL_NAME,"
+  "     TP_SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
+  "     TP_SRC.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME "
+  "FROM TAPE_POOL TP "
+  "INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID "
+  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
+  "INNER JOIN TAPE_POOL TP_SRC ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -184,16 +183,15 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(const std::string &
   return sources;
 }
 
-std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(const std::string &tapePoolName) const {
-  auto conn = m_connPool->getConn();
+std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
   std::string sql =
   "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
   "    TP.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME,"
   "    TP_DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID,"
-  "    TP_DEST.TAPE_POOL_NAME AS SUPPLY_DESTINATION_TAPE_POOL_NAME"
-  "FROM TAPE_POOL TP"
-  "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID"
-  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME"
+  "    TP_DEST.TAPE_POOL_NAME AS SUPPLY_DESTINATION_TAPE_POOL_NAME "
+  "FROM TAPE_POOL TP "
+  "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID "
+  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
   "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID";
 
   auto stmt = conn.createStmt(sql);
@@ -387,10 +385,10 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   }
 
   // tests get stuck on the following lines, so there is something wrong here
-  // for (TapePool pool : pools) {
-  //   pool.supply_source = getTapePoolSupplySources(pool.name);
-  //   pool.supply_destination = getTapePoolSupplyDestinations(pool.name);
-  // }
+  for (TapePool pool : pools) {
+    pool.supply_source = getTapePoolSupplySources(conn, pool.name);
+    pool.supply_destination = getTapePoolSupplyDestinations(conn, pool.name);
+  }
 
   return pools;
 }

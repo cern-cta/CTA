@@ -72,9 +72,6 @@ public:
 
   void verifyTapePoolSupply(const std::string &supply) override;
 
-  std::string getTapePoolSupplySources(const std::string &tapePoolName) const override;
-  std::string getTapePoolSupplyDestinations(const std::string &tapePoolName) const override;
-
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
 
@@ -121,6 +118,10 @@ private:
 
   friend class RdbmsTapeCatalogue;
   std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+
+  // we need to reuse the connection
+  std::string getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const;
+  std::string getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const;
 };
 
 }} // namespace cta::catalogue

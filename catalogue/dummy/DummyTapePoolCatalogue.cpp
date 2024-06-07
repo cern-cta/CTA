@@ -81,12 +81,5 @@ void DummyTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-std::string DummyTapePoolCatalogue::getTapePoolSupplySources(const std::string &tapePoolName) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
-
-std::string DummyTapePoolCatalogue::getTapePoolSupplyDestinations(const std::string &tapePoolName) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
 
 } // namespace cta::catalogue

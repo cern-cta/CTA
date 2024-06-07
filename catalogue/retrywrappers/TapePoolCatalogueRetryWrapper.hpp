@@ -65,8 +65,6 @@ public:
   bool tapePoolExists(const std::string &tapePoolName) const override;
   void verifyTapePoolSupply(const std::string &supply) override;
 
-  std::string getTapePoolSupplySources(const std::string &tapePoolName) const override;
-  std::string getTapePoolSupplyDestinations(const std::string &tapePoolName) const override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
