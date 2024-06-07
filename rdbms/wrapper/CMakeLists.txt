@@ -72,7 +72,7 @@ add_library (ctardbmssqlite SHARED
 set_property(TARGET ctardbmssqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_LIBVERSION}")
+target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctardbmssqlite
   ${SQLITE_LIBRARIES})
@@ -85,7 +85,7 @@ add_library (ctardbmspostgres SHARED
 set_property(TARGET ctardbmspostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_LIBVERSION}")
+target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctardbmspostgres
   ${POSTGRES_LIBRARIES})
@@ -99,7 +99,7 @@ if (OCCI_SUPPORT)
   set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctardbmsocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_LIBVERSION}")
+  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
   target_link_libraries (ctardbmsocci
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
@@ -112,7 +112,7 @@ add_library (ctardbmswrapper SHARED
 set_property(TARGET ctardbmswrapper PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmswrapper PRIVATE VERSION_API="${CTA_LIBVERSION}")
+target_compile_definitions(ctardbmswrapper PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon

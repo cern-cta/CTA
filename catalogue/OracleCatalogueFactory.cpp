@@ -80,6 +80,7 @@ void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
       const u_int64_t>>& interface) {
   
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacatalogueocci")
+    .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::catalogue::OracleCatalogueFactory>("OracleCatalogueFactory");
 }
 
