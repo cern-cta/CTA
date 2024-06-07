@@ -122,6 +122,9 @@ private:
   // we need to reuse the connection
   std::string getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const;
   std::string getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const;
+
+  void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::string supply);
+
 };
 
 }} // namespace cta::catalogue
