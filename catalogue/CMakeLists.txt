@@ -72,6 +72,8 @@ if (OCCI_SUPPORT)
   set_property(TARGET ctacatalogueocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctacatalogueocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+  target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+
   target_link_libraries (ctacatalogueocci
     ctardbmsocci
   )
@@ -90,6 +92,8 @@ add_library (ctacatalogueinmemory SHARED
 set_property(TARGET ctacatalogueinmemory PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogueinmemory PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+
 install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # SQLITE - Sqlite file based databases are not supported 
@@ -101,6 +105,8 @@ add_library (ctacataloguesqlite SHARED
   ${CATALOGUE_SQLITE_LIB_SRC_FILES})
 set_property(TARGET ctacataloguesqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctacataloguesqlite
   ctardbmssqlite
@@ -119,6 +125,8 @@ add_library (ctacataloguepostrgres SHARED
 set_property(TARGET ctacataloguepostrgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguepostrgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+target_compile_definitions(ctacataloguepostrgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+
 target_link_libraries (ctacataloguepostrgres
   ctardbmspostgres
 )
@@ -132,6 +140,8 @@ add_library (ctacatalogue SHARED
 
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_compile_definitions(ctacatalogue PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
