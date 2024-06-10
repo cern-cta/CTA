@@ -69,19 +69,19 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
   }
 }
 
-void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext &lc) {
+void TapeDrivesCatalogueState::removeDrive(const std::string& drive, [[maybe_unused]] log::LogContext &lc) {
   try {
     m_catalogue.DriveState()->deleteTapeDrive(drive);
     log::ScopedParamContainer params(lc);
     params.add("driveName", drive);
     lc.log(log::INFO, "In TapeDrivesCatalogueState::removeDrive(): removed tape drive from database.");
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception &) {
     lc.log(log::WARNING, "In TapeDrivesCatalogueState::removeDrive(): Problem to remove tape drive from database.");
   }
 }
 
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
-  const common::dataStructures::DesiredDriveState & desiredState, log::LogContext &lc) {
+  const common::dataStructures::DesiredDriveState & desiredState, [[maybe_unused]] log::LogContext &lc) {
   if (!desiredState.comment) {
     m_catalogue.DriveState()->setDesiredTapeDriveState(drive, desiredState);
   } else {
@@ -90,7 +90,7 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
 }
 
 void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
-  const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
+  const ReportDriveStatsInputs& inputs, [[maybe_unused]] log::LogContext & lc) {
   common::dataStructures::TapeDriveStatistics statistics;
   statistics.lastModificationLog = common::dataStructures::EntryLog(
     "NO_USER", driveInfo.host, inputs.reportTime);
@@ -121,7 +121,7 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 }
 
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-  const ReportDriveStatusInputs& inputs, log::LogContext &lc) {
+  const ReportDriveStatusInputs& inputs, [[maybe_unused]] log::LogContext &lc) {
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;
