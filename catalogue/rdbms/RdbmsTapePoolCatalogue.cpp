@@ -40,6 +40,7 @@ RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr
   RdbmsCatalogue *rdbmsCatalogue)
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
+// TODO: Update this to include the modifications to the TAPE_POOL_SUPPLY table
 void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
   const std::optional<std::string> &supply, const std::string &comment) {
@@ -127,6 +128,8 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
   stmt.executeNonQuery();
+  // maybe I should skip this in tests that supply a placeholder value?
+  populateSupplyTable(conn, name, supply.value_or(""));
 }
 
 /**
@@ -622,10 +625,11 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
 
 void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::string supply) {
   // extract the matches, which have been verified at this point
+  std::cout << "supply string is " << supply << std::endl;
   const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
   std::vector<std::string> verified_matches;
   bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
-  if (!valid)
+  if (!valid && !supply.empty())
   {
     throw UserSpecifiedInvalidSupplyField("Cannot set tape pool supply because user specified an invalid supply string");
   }
