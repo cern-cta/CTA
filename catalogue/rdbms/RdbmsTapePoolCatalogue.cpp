@@ -184,6 +184,9 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, 
   return sources;
 }
 
+// Problem: the SELECT query apparently returns nothing, even though there is something in the db
+// actually confirmed that this works properly, returns the destinations string filled in. The problem must be
+// in getTapePools
 std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
   std::string sql =
   "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
@@ -380,16 +383,14 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-    // these are dummy values obviously, but need to debug the queries first
-    pool.supply_source = pool.supply;
-    pool.supply_destination = "";
+    /* we have to set the fields supply_source and supply_destination after we're done processing this resultset */
     pools.push_back(pool);
   }
 
-  // tests get stuck on the following lines, so there is something wrong here
-  for (TapePool pool : pools) {
+  for (auto &pool : pools) {
     pool.supply_source = getTapePoolSupplySources(conn, pool.name);
     pool.supply_destination = getTapePoolSupplyDestinations(conn, pool.name);
+    std::cout << "tape pool " << pool.name << " sources: " << pool.supply_source.value() << " destinations: " << pool.supply_destination.value() << std::endl;
   }
 
   return pools;
@@ -481,9 +482,9 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  // again dummy values
-  pool.supply_source = pool.supply;
-  pool.supply_destination = "";
+  // we should be done with this rset now, but will verify with a test
+  pool.supply_source = getTapePoolSupplySources(conn, tapePoolName);
+  pool.supply_destination = getTapePoolSupplyDestinations(conn, tapePoolName);
 
   return pool;
 }
