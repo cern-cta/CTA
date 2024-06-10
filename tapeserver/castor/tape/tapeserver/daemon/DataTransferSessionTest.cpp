@@ -380,7 +380,7 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    const std::optional<std::string> tapePoolSupply("");
 
     ASSERT_NO_THROW(catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes,
       tapePoolEncryption, tapePoolSupply, tapePoolComment));
