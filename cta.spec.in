@@ -291,12 +291,7 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-#Requires: oracle-instantclient19.3-basic
-#%if %{alma9}
-#Requires: oracle-instantclient-devel
-#%else
 %if !%{alma9}
-#Requires: oracle-instantclient19.3-devel
 Requires: oracle-instantclient19.3-basic
 %endif
 %description -n cta-lib-catalogue-occi
@@ -333,11 +328,6 @@ Shared libraries required to access the in-memory-based CTA catalogue
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-#%if %{alma9}
-#  %define requirementsLibCatalogue postgresql-libs
-#%else
-#  %define requirementsLibCatalogue postgresql-libs oracle-instantclient19.3-basic
-#%endif
 Requires: cta-lib-common
 %if %{alma9}
 Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
@@ -346,7 +336,6 @@ Requires: cta-lib-catalogue-postgres = %{version}-%{release}
 Requires: cta-lib-catalogue-occi = %{version}-%{release}
 %endif
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
-#Requires: %{requirementsLibCatalogue}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
 CERN Tape Archive:
@@ -354,15 +343,11 @@ Shared libraries required to access the CTA catalogue
 %files -n cta-lib-catalogue
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogue.so*
-#%{_libdir}/libctacatalogueocci.so*
 %{_libdir}/libctacataloguesqlite.so*
 %{_libdir}/libctacatalogueinmemory.so*
-#%{_libdir}/libctacataloguepostrgres.so*
 %{_libdir}/libctadropschemacmd.so*
 %{_libdir}/libctardbms.so*
-#%{_libdir}/libctardbmsocci.so*
 %{_libdir}/libctardbmssqlite.so*
-#%{_libdir}/libctardbmspostgres.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctaschemachecker.so*
 %{_libdir}/libctastatistics.so*
@@ -403,10 +388,8 @@ The shared libraries
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
-#########
 Requires: cta-lib-catalogue-postgres = %{version}-%{release}
 Requires: cta-lib-catalogue-occi = %{version}-%{release}
-#########
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
