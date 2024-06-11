@@ -211,13 +211,35 @@ protected:
       m_initialProcess.addLogParams(m_driveUnitName, paramList);
     }
   }
+
+  /**
+   * Flush the one-off parameters to the initial process. m_mutex should be taken before calling.
+   */
+  void reportParams() {
+    // Shortcut definitions
+    typedef cta::log::Param Param;
+
+    // Flush the one-of parameters
+    std::list<Param> params;
+    while (m_toAddParamsQueue.size())
+      params.push_back(m_toAddParamsQueue.pop());
+    if (params.size()) {
+      m_initialProcess.addLogParams(m_driveUnitName, params);
+    }
+
+    std::list<std::string> paramsToDelete;
+    // Flush the one-of parameters to delete
+    while (m_toDeleteParamsQueue.size())
+      paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
+    if (params.size()) {
+      m_initialProcess.deleteLogParams(m_driveUnitName, paramsToDelete);
+    }
+  }
   
   /**
    * Thread's loop
    */
   void run(){
-    // Shortcut definitions
-    typedef cta::log::Param Param;
     // reset timers as we don't know how long it took before the thread started
     m_reportTimer.reset();
     m_blockMovementReportTimer.reset();
@@ -237,29 +259,8 @@ protected:
         }
       }
       
-      // Send any one-off parameter
-      {
-        std::list<Param> params;
-        // This is thread safe because we are the only consumer:
-        // a non-zero size guarantees we will find something.
-        while (m_toAddParamsQueue.size())
-          params.push_back(m_toAddParamsQueue.pop());
-        if (params.size()) {
-          m_initialProcess.addLogParams(m_driveUnitName, params);
-        }
-      }
-
-      // Send any one-off parameter to delete
-      {
-        std::list<std::string> params;
-        // This is thread safe because we are the only consumer:
-        // a non-zero size guarantees we will find something.
-        while (m_toDeleteParamsQueue.size())
-          params.push_back(m_toDeleteParamsQueue.pop());
-        if (params.size()) {
-          m_initialProcess.deleteLogParams(m_driveUnitName, params);
-        }
-      }
+      // Send one-off parameter updates
+      reportParams();
 
       //heartbeat to notify activity to the mother
       // and transmit statistics
@@ -294,21 +295,8 @@ protected:
         params.add("exceptionMessage", ex.getMessageValue());
         m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
       }
-      // Flush the one-of parameters one last time.
-      std::list<Param> params;
-      while (m_toAddParamsQueue.size())
-        params.push_back(m_toAddParamsQueue.pop());
-      if (params.size()) {
-        m_initialProcess.addLogParams(m_driveUnitName, params);
-      }
-
-      std::list<std::string> paramsToDelete;
-      // Flush the one-of parameters one last time.
-      while (m_toDeleteParamsQueue.size())
-        paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
-      if (params.size()) {
-        m_initialProcess.deleteLogParams(m_driveUnitName, paramsToDelete);
-      }
+      // Flush the one-off parameter one last time.
+      reportParams();
     }
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
