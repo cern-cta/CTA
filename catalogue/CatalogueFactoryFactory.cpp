@@ -50,13 +50,13 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       const uint64_t,
       const uint32_t>> pm;
 
-  pm.onRegisterPluign([](const auto& plugin) {
+  pm.onRegisterPlugin([](const auto& plugin) {
       // API VERSION CHECKING
       if (plugin.template GET<plugin::DATA::API_VERSION>() != VERSION_API) {
         std::ostringstream osErr;
         osErr << "Plugin API version mismatch: "
-              << "API_VERIOSN = " << VERSION_API
-              << ", PLUIGN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
+              << "API_VERSION = " << VERSION_API
+              << ", PLUGIN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
               << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
         throw exception::Exception(osErr.str());
       }

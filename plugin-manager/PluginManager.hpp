@@ -111,7 +111,7 @@ public:
     return m_umapPlugins.find(strPluginName) != m_umapPlugins.end();
   }
 
-  void onRegisterPluign(std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )>&& callBackOnRegisterPlugin) {
+  void onRegisterPlugin(std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )>&& callBackOnRegisterPlugin) {
     m_callBackOnRegisterPlugin = callBackOnRegisterPlugin;
   }
 
