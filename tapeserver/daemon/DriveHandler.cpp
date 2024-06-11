@@ -700,11 +700,8 @@ int DriveHandler::runChild() {
                                        cta::common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, m_lc);
 
       // Get the drive state to see if there is a reason or not, we don't want to change the reason
-      // why a drive is down at the startup of the tapeserver. If it's setted up a previous Reason From Log
-      // it will be change for this one.
+      // why a drive is down at the startup of the tapeserver.
       if (!currentDesiredDriveState.reason) {
-        driveState.setReasonFromLogMsg(logLevel, msg);
-      } else if (currentDesiredDriveState.reason.value().substr(0, 11) == "[cta-taped]") {
         driveState.setReasonFromLogMsg(logLevel, msg);
       } else {
         driveState.reason = currentDesiredDriveState.reason.value();
