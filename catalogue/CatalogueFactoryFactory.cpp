@@ -50,6 +50,18 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       const uint64_t,
       const uint32_t>> pm;
 
+  pm.onRegisterPlugin([](const auto& plugin) {
+      // API VERSION CHECKING
+      if (plugin.template GET<plugin::DATA::API_VERSION>() != VERSION_API) {
+        std::ostringstream osErr;
+        osErr << "Plugin API version mismatch: "
+              << "API_VERSION = " << VERSION_API
+              << ", PLUGIN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
+              << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
+        throw exception::Exception(osErr.str());
+      }
+    });
+
   try {
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:

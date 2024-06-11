@@ -24,6 +24,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <functional>
 #include <dlfcn.h>
 
 namespace cta::plugin {
@@ -110,10 +111,17 @@ public:
     return m_umapPlugins.find(strPluginName) != m_umapPlugins.end();
   }
 
+  void onRegisterPlugin(std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )>&& callBackOnRegisterPlugin) {
+    m_callBackOnRegisterPlugin = callBackOnRegisterPlugin;
+  }
+
   void registerPlugin(std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface) {
     const std::string strPluginName = upInterface->template GET<plugin::DATA::PLUGIN_NAME>(); 
     if (isRegistered(strPluginName)) {
       throw std::logic_error("A plugin with the name: " + strPluginName + " is already registered.");
+    }
+    if (m_callBackOnRegisterPlugin) {
+      m_callBackOnRegisterPlugin(*upInterface);
     }
     m_umapPlugins.emplace(strPluginName, std::move(upInterface));  
   }
@@ -180,6 +188,7 @@ private:
   std::string m_strActiveLoader;
   std::unordered_map<std::string, plugin::Loader> m_umapLoaders;
   std::unordered_map<std::string, std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>> m_umapPlugins;
+  std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )> m_callBackOnRegisterPlugin;
 
   Loader& loader() {
     try {

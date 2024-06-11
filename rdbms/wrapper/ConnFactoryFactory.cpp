@@ -15,12 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
-
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "plugin-manager/PluginManager.hpp"
+
+#include <string>
+#include <sstream>
+
 
 namespace cta::rdbms::wrapper {
 
@@ -32,6 +34,18 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     static cta::plugin::Manager<rdbms::wrapper::ConnFactory,
       cta::plugin::Args<const std::string&>,
       cta::plugin::Args<const std::string&, const std::string&, const std::string&>> pm;
+
+    pm.onRegisterPlugin([](const auto& plugin) {
+        // API VERSION CHECKING
+        if (plugin.template GET<plugin::DATA::API_VERSION>() != VERSION_API) {
+          std::ostringstream osErr;
+          osErr << "Plugin API version mismatch: "
+                << "API_VERSION = " << VERSION_API
+                << ", PLUGIN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
+                << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
+          throw exception::Exception(osErr.str());
+        }
+      });
 
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
