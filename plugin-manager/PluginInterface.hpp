@@ -84,6 +84,12 @@ public:
   template<typename... ARGS>
   constexpr
   std::unique_ptr<BASE_TYPE> make(const std::string& strClassName, ARGS&&... args) const {
+    if (m_umapFactories.find(strClassName) == m_umapFactories.end()) {
+      throw std::logic_error("The "
+                              + GET<plugin::DATA::PLUGIN_NAME>()
+                              + " plugin does not porvide a class called: "
+                              + strClassName);
+    }
     return m_umapFactories.at(strClassName)(std::forward_as_tuple(args...));
   }
 
