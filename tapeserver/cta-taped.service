@@ -3,7 +3,6 @@ Description=CERN Tape Archive (CTA) tape server daemon
 After=syslog.target network-online.target
 
 [Service]
-EnvironmentFile=-/etc/sysconfig/cta-taped
 ExecStart=/bin/true
 RemainAfterExit=yes
 
