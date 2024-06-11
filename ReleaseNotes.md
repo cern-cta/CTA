@@ -5,6 +5,7 @@
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
+- cta/CTA#722 - cta-taped must not overwrite reason field on start up
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
