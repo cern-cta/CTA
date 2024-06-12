@@ -70,8 +70,6 @@ public:
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
 
-  void verifyTapePoolSupply(const std::string &supply) override;
-
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
 
@@ -119,11 +117,11 @@ private:
   friend class RdbmsTapeCatalogue;
   std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
 
-  // we need to reuse the connection
   std::string getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const;
   std::string getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const;
 
-  void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::string supply);
+  std::vector<std::string> verifyTapePoolSupply(rdbms::Conn &conn, const std::string &supply);
+  void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::vector<std::string> verified_matches);
 
 };
 

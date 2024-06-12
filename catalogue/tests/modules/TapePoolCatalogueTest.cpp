@@ -1530,7 +1530,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
 }
 
 // test changes for supply table
-TEST_P(cta_catalogue_TapePoolTest, konstantinaSupplyTest) {
+TEST_P(cta_catalogue_TapePoolTest, createTapePool_existingTapePoolSupply) {
   const std::string firstTapePoolName = "tape_pool";
   const std::string secondTapePoolName = "tape_pool_2";
 
@@ -1550,10 +1550,13 @@ TEST_P(cta_catalogue_TapePoolTest, konstantinaSupplyTest) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
+
   m_catalogue->TapePool()->createTapePool(m_admin, firstTapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-    firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+  firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+
   m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-    secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+  secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+
   const auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
   const auto pools = m_catalogue->TapePool()->getTapePools();
 

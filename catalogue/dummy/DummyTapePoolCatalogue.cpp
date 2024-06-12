@@ -77,9 +77,4 @@ bool DummyTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) con
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-void DummyTapePoolCatalogue::verifyTapePoolSupply(const std::string &supply) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
-
-
 } // namespace cta::catalogue

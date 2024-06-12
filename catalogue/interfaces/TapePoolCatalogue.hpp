@@ -20,7 +20,6 @@
 #include <list>
 #include <optional>
 #include <string>
-#include <regex>
 
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "common/exception/UserError.hpp"
@@ -81,8 +80,6 @@ public:
    * @return True if the tape pool exists.
    */
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
-  virtual void verifyTapePoolSupply(const std::string &supply) = 0;
-
 };
 
 }} // namespace cta::catalogue
