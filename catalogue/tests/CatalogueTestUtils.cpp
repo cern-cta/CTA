@@ -73,7 +73,7 @@ std::unique_ptr<cta::catalogue::Catalogue> CatalogueTestUtils::createCatalogue(
   }
 }
 
-void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc) {
+void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc) { // this is problematic
   const auto adminUsers = catalogue->AdminUser()->getAdminUsers();
   for(auto &adminUser: adminUsers) {
     catalogue->AdminUser()->deleteAdminUser(adminUser.name);
@@ -126,6 +126,8 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
   for(const auto &storageClass: storageClasses) {
     catalogue->StorageClass()->deleteStorageClass(storageClass.name);
   }
+  // before deleting the tapepools, wipe the supply table
+  catalogue->TapePool()->deleteAllTapePoolSupplyEntries();
   const auto tapePools = catalogue->TapePool()->getTapePools();
   for(const auto &tapePool: tapePools) {
     catalogue->TapePool()->deleteTapePool(tapePool.name);

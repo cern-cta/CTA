@@ -103,4 +103,10 @@ bool TapePoolCatalogueRetryWrapper::tapePoolExists(const std::string &tapePoolNa
   }, m_maxTriesToConnect);
 }
 
+void TapePoolCatalogueRetryWrapper::deleteAllTapePoolSupplyEntries() {
+  return retryOnLostConnection(m_log, [this] {
+    return m_catalogue->TapePool()->deleteAllTapePoolSupplyEntries();
+  }, m_maxTriesToConnect);
+}
+
 } // namespace cta::catalogue

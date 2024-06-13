@@ -64,6 +64,8 @@ public:
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
 
+  void deleteAllTapePoolSupplyEntries() override;
+
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
   log::Logger &m_log;

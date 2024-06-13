@@ -70,6 +70,8 @@ public:
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
 
+  void deleteAllTapePoolSupplyEntries() override;
+
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
 
@@ -122,6 +124,7 @@ private:
 
   std::vector<std::string> verifyTapePoolSupply(rdbms::Conn &conn, const std::string &supply);
   void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::vector<std::string> verified_matches);
+  void deleteAllTapePoolSupplyEntries(rdbms::Conn &conn);
 
 };
 

@@ -80,6 +80,7 @@ public:
    * @return True if the tape pool exists.
    */
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
+  virtual void deleteAllTapePoolSupplyEntries() = 0;
 };
 
 }} // namespace cta::catalogue

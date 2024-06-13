@@ -1530,7 +1530,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
 }
 
 // test changes for supply table
-TEST_P(cta_catalogue_TapePoolTest, createTapePool_existingTapePoolSupply) {
+TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   const std::string firstTapePoolName = "tape_pool";
   const std::string secondTapePoolName = "tape_pool_2";
 
@@ -1550,17 +1550,16 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_existingTapePoolSupply) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-
   m_catalogue->TapePool()->createTapePool(m_admin, firstTapePoolName, m_vo.name, nbFirstPoolPartialTapes,
   firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
 
   m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
   secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
 
-  const auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
-  const auto pools = m_catalogue->TapePool()->getTapePools();
-
+  auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+  auto pools = m_catalogue->TapePool()->getTapePools();
   ASSERT_EQ(2, pools.size());
+
   {
     const auto poolMaplet = pools_map.find(firstTapePoolName);
     ASSERT_NE(pools_map.end(), poolMaplet); // assert it exists
@@ -1583,6 +1582,27 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_existingTapePoolSupply) {
     ASSERT_EQ(firstTapePoolName, pool.supply_source);
     ASSERT_EQ(firstTapePoolName, pool.supply);
     ASSERT_EQ("", pool.supply_destination); // I need to make this false, but for now it's empty string so it gets evaluated to true
+  }
+  // create a third tapepool to test multiple entries
+  std::string thirdTapePoolName("tape_pool_3");
+  std::optional<std::string> thirdTapePoolSupply("  tape_pool,   tape_pool_2"); // comma-separated with multiple whitespace
+  const uint64_t nbThirdPoolPartialTapes = 3;
+  const bool thirdPoolIsEncrypted = false;
+  const std::string thirdPoolComment = "Create third tape pool";
+  m_catalogue->TapePool()->createTapePool(m_admin, thirdTapePoolName, m_anotherVo.name, nbThirdPoolPartialTapes,
+  thirdPoolIsEncrypted, thirdTapePoolSupply, thirdPoolComment);
+  
+  {
+    const auto pools3_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+    const auto pools3 = m_catalogue->TapePool()->getTapePools();
+
+    ASSERT_EQ(3, pools3.size());
+    const auto poolMaplet = pools3_map.find(thirdTapePoolName);
+    ASSERT_NE(pools3_map.end(), poolMaplet); // assert it exists
+
+    const auto &pool = poolMaplet->second;
+    ASSERT_EQ(thirdTapePoolName, pool.name);
+    ASSERT_EQ("tape_pool,tape_pool_2", pool.supply_source.value());
   }
 }
 

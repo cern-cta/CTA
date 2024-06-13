@@ -170,7 +170,8 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, 
   "FROM TAPE_POOL TP "
   "INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID "
   "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-  "INNER JOIN TAPE_POOL TP_SRC ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID";
+  "INNER JOIN TAPE_POOL TP_SRC ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID "
+  "ORDER BY SUPPLY_SOURCE_TAPE_POOL_NAME";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -198,7 +199,8 @@ std::string RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &c
   "FROM TAPE_POOL TP "
   "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID "
   "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-  "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID";
+  "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID "
+  "ORDER BY SUPPLY_DESTINATION_TAPE_POOL_NAME";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -229,7 +231,7 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
   const uint64_t nbTapesInPool = getNbTapesInPool(conn, name);
 
   if(0 == nbTapesInPool) {
-    const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME"; // this fails in the CI unittests
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", name);
     stmt.executeNonQuery();
@@ -482,7 +484,10 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  /* we should be done with this rset now, so no SQL error, but need to verify with a test if possible */
+  /* we need to somehow signal that this query is done, or we get an SQL error. Best to open a new connection */
+  rset.next(); // should be done with this query now
+  // conn.closeUnderlyingStmtsAndConn();
+  // auto newconn = m_connPool->getConn();
   pool.supply_source = getTapePoolSupplySources(conn, tapePoolName);
   pool.supply_destination = getTapePoolSupplyDestinations(conn, tapePoolName);
 
@@ -774,6 +779,17 @@ std::optional<uint64_t> RdbmsTapePoolCatalogue::getTapePoolId(rdbms::Conn &conn,
 bool RdbmsTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) const {
   auto conn = m_connPool->getConn();
   return RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName);
+}
+
+void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries() {
+  auto conn = m_connPool->getConn();
+  deleteAllTapePoolSupplyEntries(conn);
+}
+
+void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn &conn) {
+  std::string sql = "DELETE FROM TAPE_POOL_SUPPLY";
+  auto stmt = conn.createStmt(sql);
+  stmt.executeNonQuery();
 }
 
 } // namespace cta::catalogue

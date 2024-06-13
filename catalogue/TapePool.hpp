@@ -145,7 +145,9 @@ struct TapePool {
    */
   std::string comment;
 
-  /* Comma-separated list of values that this tapepool acts as supplier to */
+  /* Comma-separated list of values that this tapepool acts as supplier to
+   * These fields do not exist in the tape pool table, but they are added here for convenience:
+   * less intrusive changes to the TapePoolLs command implementation */
   std::optional<std::string> supply_source;
   std::optional<std::string> supply_destination;
 
