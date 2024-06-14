@@ -15,15 +15,50 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-IMAGE_TAG=${1:-dev} #default tag is dev
-KUBE_NAMESPACE=${2:-stress}
+set -e
+
+# Help message
+usage() {
+  echo "Usage: $0 [-n <namespace>] [-t <tag>] [-d <root directory>]"
+  echo ""
+  echo "Flags:"
+  echo "  -n, --namespace <namespace>: Specify the Kubernetes namespace (optional)"
+  echo "  -t, --tag <tag>: Specify a tag (optional)"
+  echo "  -d, --root-dir <root directory>: Specify the root directory where the CTA directory is located (optional)"
+  exit 1
+}
+
+# Default values
+KUBE_NAMESPACE="stress"
+IMAGE_TAG="dev"
+ROOT_DIR="~"
+
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -n | --namespace)
+      KUBE_NAMESPACE="$2"
+      shift
+      ;;
+    -t | --tag)
+      IMAGE_TAG="$2"
+      shift
+      ;;
+    -d | --root-dir)
+      ROOT_DIR="$2"
+      shift
+      ;;
+    *) 
+      usage
+      ;;
+  esac
+  shift
+done
 
 if [ "$#" -ge 3 ]; then
-    echo "Usage: The script $0 takes two optional arguments: image tag (1) and namespace name (2)"
+    usage
     exit 1
 fi
-
-echo "Launching redeploy script; image tag is $IMAGE_TAG, namespace name is $KUBE_NAMESPACE"
 
 # Script should be run as cirunner
 if [[ $(whoami) != 'cirunner' ]]
@@ -33,21 +68,31 @@ then
 fi
 
 # Delete previous instance, if it exists
-echo "Deleting the old namespace, if it exists"
-cd ~/CTA/continuousintegration/orchestration/ && ./delete_instance.sh -n $KUBE_NAMESPACE
+if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
+  echo "Deleting the old namespace"
+  cd $ROOT_DIR/CTA/continuousintegration/orchestration/
+  ./delete_instance.sh -n $KUBE_NAMESPACE
+fi
 
 # Clear the old image and namespace
-echo "Deleting old image and removing it from minikube"
-podman rmi ctageneric:$IMAGE_TAG
-minikube image rm localhost/ctageneric:$IMAGE_TAG
-cd ~/CTA/continuousintegration/ci_runner
+if podman inspect ctageneric:$IMAGE_TAG &> /dev/null; then
+  echo "Deleting old image and removing it from minikube"
+  podman rmi ctageneric:$IMAGE_TAG
+  minikube image rm localhost/ctageneric:$IMAGE_TAG
+fi
+
+echo "Cleaning up ctageneric.tar..."
+cd $ROOT_DIR/CTA/continuousintegration/ci_runner
 rm -rf ctageneric.tar
+
+###################################################################################################
+
 
 ## Create and load the new images
 # Prepare new image
 echo "Preparing new image"
-cd ~/CTA/continuousintegration/ci_runner # should already be here
-./prepareImage.sh ~/CTA_rpm/RPM/RPMS/x86_64 $IMAGE_TAG
+cd $ROOT_DIR/CTA/continuousintegration/ci_runner # should already be here
+./prepareImage.sh -s $ROOT_DIR/CTA_rpm/RPM/RPMS/x86_64 -t $IMAGE_TAG -d $ROOT_DIR
 # Save the image in a tar file
 echo "Saving new image"
 podman save -o ctageneric.tar localhost/ctageneric:$IMAGE_TAG
@@ -57,7 +102,5 @@ minikube image load ctageneric.tar localhost/ctageneric:$IMAGE_TAG
 
 # Redeploy containers
 echo "Redeploying container"
-cd ~/CTA/continuousintegration/orchestration
+cd $ROOT_DIR/CTA/continuousintegration/orchestration
 ./create_instance.sh -n $KUBE_NAMESPACE -i $IMAGE_TAG -D -O -d internal_postgres.yaml
-
-
