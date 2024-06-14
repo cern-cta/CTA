@@ -8,7 +8,17 @@ spec:
   restartPolicy: Never
   containers:
   - name: cta-compile-pod
-    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    # TODO: make a custom image that already has this
+    # command: ["/bin/sh", "-c"]
+    # args: |
+    #   cd /shared/CTA
+    #   cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+    #   cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    #   yum -y install epel-release almalinux-release-devel git
+    #   yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+    #   git submodule update --init --recursive
+    #   ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     stdin: true
     env:
     - name: MY_NAME
@@ -21,8 +31,6 @@ spec:
           fieldPath: metadata.namespace
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
-    - name: SCHEMA_VERSION
-      value: "SCHEMA_VERSION_VALUE"
     volumeMounts:
     - mountPath: /shared
       name: shared
@@ -30,7 +38,8 @@ spec:
   volumes:
   - name: shared
     hostPath:
-      path: /opt/cta
+      # TODO don't hardcode this path
+      path: /home/cirunner/CTA
 
   imagePullSecrets:
   - name: ctaregsecret
