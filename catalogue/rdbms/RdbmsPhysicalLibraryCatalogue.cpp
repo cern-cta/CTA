@@ -188,13 +188,16 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
       "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
       "LAST_UPDATE_TIME AS LAST_UPDATE_TIME, "
 
-      "USER_COMMENT AS USER_COMMENT "
+      "USER_COMMENT AS USER_COMMENT,"
+      "IS_DISABLED AS IS_DISABLED,"
+      "DISABLED_REASON AS DISABLED_REASON "
     "FROM "
       "PHYSICAL_LIBRARY "
     "ORDER BY "
       "PHYSICAL_LIBRARY_NAME";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
+
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     common::dataStructures::PhysicalLibrary pl;
@@ -221,14 +224,21 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
     pl.lastModificationLog.host     = rset.columnString("LAST_UPDATE_HOST_NAME");
     pl.lastModificationLog.time     = rset.columnUint64("LAST_UPDATE_TIME");
 
+    pl.isDisabled = rset.columnBool("IS_DISABLED");
+    pl.disabledReason = rset.columnOptionalString("DISABLED_REASON");
+
     libs.push_back(pl);
   }
   return libs;
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, common::dataStructures::UpdatePhysicalLibrary& pl) {
 
   const time_t now = time(nullptr);
+
+  // If unsetting "disabled", wipe the field disabled_reason too
+  if(pl.isDisabled && (!(pl.isDisabled.value())))
+    pl.disabledReason = std::optional<std::string>("");
 
   std::string updateStmtStr = buildUpdateStmtStr(pl);
   auto conn = m_connPool->getConn();
@@ -285,6 +295,8 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
   if(pl.nbAvailableCartridgeSlots) setClause += "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,";
   if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,";
   if(pl.comment)                   setClause += "USER_COMMENT = :USER_COMMENT,";
+  if(pl.isDisabled)                setClause += "IS_DISABLED = :IS_DISABLED,";
+  if(pl.disabledReason)            setClause += "DISABLED_REASON = :DISABLED_REASON,";
 
   if(setClause.empty()) {
     throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
@@ -316,6 +328,11 @@ void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, con
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
   stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+  if(pl.isDisabled)               stmt.bindBool(":IS_DISABLED", pl.isDisabled.value());
+  if(pl.disabledReason) {
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.disabledReason, &m_log);
+    stmt.bindString(":DISABLED_REASON", trimmedReason);
+  }
 }
 
 } // namespace cta::catalogue

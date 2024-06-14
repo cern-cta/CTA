@@ -50,7 +50,7 @@ public:
 
   std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
-  void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) override;
+  void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
 protected:
   RdbmsPhysicalLibraryCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool,

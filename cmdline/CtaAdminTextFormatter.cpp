@@ -1244,7 +1244,8 @@ void TextFormatter::printPhysicalLibraryLsHeader() {
     "m.user",
     "m.host",
     "m.time",
-    "comment"
+    "comment",
+    "disabled"
   );
 }
 
@@ -1266,7 +1267,8 @@ void TextFormatter::print(const PhysicalLibraryLsItem & plls_item){
     plls_item.last_modification_log().username(),
     plls_item.last_modification_log().host(),
     timeToStr(plls_item.last_modification_log().time()),
-    plls_item.comment()
+    plls_item.comment(),
+    plls_item.is_disabled()
   );
 }
 

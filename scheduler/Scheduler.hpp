@@ -71,6 +71,7 @@ class RetrieveJob;
 
 namespace common::dataStructures {
 struct LogicalLibrary;
+struct PhysicalLibrary;
 }
 
 /**
@@ -305,7 +306,12 @@ private:
    */
   void checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest);
 
+  /* common part for getNextMountDryRun() and getNextMount() to check for disabled logical/physical library */
+  bool checkLogicalAndPhysicalLibraryValidForMount(const std::string& libraryName, double& checkLogicalAndPhysicalLibrariesTime, log::LogContext& lc);
+
   std::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+
+  std::optional<common::dataStructures::PhysicalLibrary> getPhysicalLibrary(const std::string &libraryName, double &getPhysicalLibraryTime);
 
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc);
 
