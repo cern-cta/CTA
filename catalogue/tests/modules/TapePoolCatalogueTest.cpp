@@ -1598,11 +1598,17 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
 
     ASSERT_EQ(3, pools3.size());
     const auto poolMaplet = pools3_map.find(thirdTapePoolName);
-    ASSERT_NE(pools3_map.end(), poolMaplet); // assert it exists
+    ASSERT_NE(pools3_map.end(), poolMaplet);
 
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(thirdTapePoolName, pool.name);
     ASSERT_EQ("tape_pool,tape_pool_2", pool.supply_source.value());
+
+    // test that we are not allowed to remove a tapePool when it is the supply (supply_source) of another tapepool
+    ASSERT_ANY_THROW(m_catalogue->TapePool()->deleteTapePool("tape_pool"));
+    ASSERT_ANY_THROW(m_catalogue->TapePool()->deleteTapePool("tape_pool_2"));
+    // but we're allowed to remove the third tapepool just fine
+    m_catalogue->TapePool()->deleteTapePool("tape_pool_3");
   }
 }
 
