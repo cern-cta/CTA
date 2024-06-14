@@ -364,13 +364,12 @@ log_message "Notify drive has been deleted."
 echo "${dr_names_down[0]}" > /root/deleted.txt
 
 
-# Physical Library (ll)
+# Physical Library (pl)
 test_start "physical library" "pl"
 test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add" "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA'\\
    --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
   'select(.name=="cta_adm_systest" and .manufacturer=="manA" and .model=="modA" and .type=="typeA" and .guiUrl=="urlA" and .webcamUrl=="urlA" and .location=="locA" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentA") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
-echo ${command}
 test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--name 'cta_adm_systest' --location 'locB'\\
    --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
   'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
@@ -380,6 +379,9 @@ test_command_fails "Adding a duplicate physical library 'CTA_ADM_SYSTEST' should
                    "add"\
                    "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA' --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
                    || exit 1
+test_and_check_cmd "Disabling physical library 'cta_adm_systest'" "${command}" "ch" "--name 'cta_adm_systest' --disabled true --dr 'disabled_reason_provided'"\
+                    'select(.name=="cta_adm_systest" and .isDisabled==true and .disabledReason=="disabled_reason_provided") | .name'\
+                    "1" "disabling physical library 'cta_adm_systest'" || exit 1
 test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--name 'cta_adm_systest'"
 test_assert || exit 1
 

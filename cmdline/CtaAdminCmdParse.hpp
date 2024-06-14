@@ -809,7 +809,7 @@ physicallibrary (pl)
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
    {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(),
     opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(),
-    opt_nb_physical_drive_slots.optional(), opt_comment.optional()}                                                          },
+    opt_nb_physical_drive_slots.optional(), opt_comment.optional(), opt_disabled.optional(), opt_disabledreason.optional()}  },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
 

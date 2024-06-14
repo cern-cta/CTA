@@ -128,6 +128,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
     dr_item->set_physical_library(dr.physicalLibraryName ? dr.physicalLibraryName.value() : "");
+    dr_item->set_physical_library_disabled(dr.physicalLibraryDisabled);
     if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
       dr_item->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
       dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);

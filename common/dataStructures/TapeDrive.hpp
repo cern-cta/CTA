@@ -115,6 +115,7 @@ struct TapeDrive {
   std::optional<std::string> userComment;
   std::optional<EntryLog> creationLog;
   std::optional<EntryLog> lastModificationLog;
+  bool physicalLibraryDisabled;
 };  // struct TapeDrive
 
 std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
