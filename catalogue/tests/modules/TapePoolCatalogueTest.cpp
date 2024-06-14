@@ -1087,8 +1087,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_TRUE((bool)pool.supply); // this is set because transaction for updating the supply field of the tapepool table succeeded
     ASSERT_EQ(modifiedSupply, pool.supply.value()); // succeeds because each statement is its own transaction
-    ASSERT_NE(modifiedSupply, pool.supply_source.value()); // fails because we do not allow specifying a tapepool as its own supply (no self-supply)
-    // ASSERT_FALSE((bool)pool.supply_source); // for some reason this is true, but why?
+    ASSERT_FALSE((bool)pool.supply_source); // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1562,26 +1561,26 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
 
   {
     const auto poolMaplet = pools_map.find(firstTapePoolName);
-    ASSERT_NE(pools_map.end(), poolMaplet); // assert it exists
+    ASSERT_NE(pools_map.end(), poolMaplet);
 
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(firstTapePoolName, pool.name);
     ASSERT_FALSE((bool)pool.supply);
-    ASSERT_EQ("", pool.supply_source); // we've set no supplier for this tapepool - but it is an empty string instead of optional null..
+    ASSERT_FALSE((bool)pool.supply_source);
     ASSERT_EQ(secondTapePoolName, pool.supply_destination);
   }
 
   {
     const auto poolMaplet = pools_map.find(secondTapePoolName);
-    ASSERT_NE(pools_map.end(), poolMaplet); // assert it exists
+    ASSERT_NE(pools_map.end(), poolMaplet);
 
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_TRUE((bool)pool.supply);
     ASSERT_TRUE((bool)pool.supply_source);
+    ASSERT_FALSE((bool)pool.supply_destination);
     ASSERT_EQ(firstTapePoolName, pool.supply_source);
     ASSERT_EQ(firstTapePoolName, pool.supply);
-    ASSERT_EQ("", pool.supply_destination); // I need to make this false, but for now it's empty string so it gets evaluated to true
   }
   // create a third tapepool to test multiple entries
   std::string thirdTapePoolName("tape_pool_3");
