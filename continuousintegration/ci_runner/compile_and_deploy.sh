@@ -2,11 +2,12 @@
 
 # Help message
 usage() {
-    echo "Usage: $0 [-r] [-s <source_directory>] [-d]"
+    echo "Usage: $0 [-r] [-src <source_directory>] [-dest <destination_directory>] [-d]"
     echo ""
     echo "Flags:"
     echo "  -r, --reset         Shut down the compilation pod and start a new one to ensure a fresh build."
-    echo "  -s, --source-dir    Specify the location of the CTA project directory."
+    echo "  -src, --source-dir    Specify the location of the CTA project directory."
+    echo "  -dst, --destination-dir    Specify the location of the CTA project directory."
     echo "  -d, --redeploy      Redeploy the existing Minikube configuration with the newly compiled RPMs."
     exit 1
 }
@@ -14,15 +15,17 @@ usage() {
 # Default values
 RESET=false
 SOURCE_DIR=""
+DEST_DIR=""
 REDEPLOY=false
 NAMESPACE="dev"
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -r|--reset) RESET=true ;;
-        -s|--source-dir) SOURCE_DIR="$2"; shift ;;
-        -d|--redeploy) REDEPLOY=true ;;
+        -r  |--reset) RESET=true ;;
+        -src|--source-dir) SOURCE_DIR="$2"; shift ;;
+        -dst|--destination-dir) DESTINATION="$2"; shift ;;
+        -d  |--redeploy) REDEPLOY=true ;;
         *) usage ;;
     esac
     shift
@@ -46,8 +49,9 @@ reset_pod() {
 # Function to compile the CTA project
 compile_cta() {
     echo "Compiling the CTA project from source directory: $SOURCE_DIR"
-    kubectl cp "$SOURCE_DIR" cta-compile-pod:/src/cta -n $NAMESPACE
+    kubectl cp "$SOURCE_DIR" cta-compile-pod:/src/CTA -n $NAMESPACE
     kubectl exec -it cta-compile-pod -n $NAMESPACE -- /bin/bash -c "cd /src/cta && make"
+    kubectl cp cta-compile-pod:/src/cta/CTA_rpms "$DEST_DIR" -n "$NAMESPACE"
 }
 
 # Function to redeploy the Minikube configuration
