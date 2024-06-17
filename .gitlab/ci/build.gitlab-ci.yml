@@ -20,11 +20,7 @@
     - yum install -y devtoolset-11 cmake3 make rpm-build git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
-    - mkdir build_srpm
-    - cd build_srpm
-    - echo ${CMAKE_OPTIONS}
-    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_srpm
+    - ./continuousintegration/ci_helpers/build_srpm.sh -p
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
@@ -37,12 +33,7 @@
     - yum install -y git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
-    - mkdir build_rpm
-    - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_rpm
+    - ./continuousintegration/ci_helpers/build_rpm.sh -p
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
@@ -135,18 +126,9 @@ cta_srpm_alma9:
     - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
     - echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
-    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
-    - yum -y install epel-release almalinux-release-devel git
-    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
     - git submodule update --init --recursive
-    - ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-    - mkdir build_srpm
-    - cd build_srpm
-    - echo ${CMAKE_OPTIONS}
-    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_srpm
+    - ./continuousintegration/ci_helpers/build_srpm.sh -i -p
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -162,20 +144,9 @@ cta_rpm_alma9:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
-    - yum -y install epel-release almalinux-release-devel git
-    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
-    - yum -y install yum-plugin-versionlock
     - git submodule update --init --recursive
-    - ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
-    - mkdir build_rpm
-    - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_rpm
+    - ./continuousintegration/ci_helpers/build_rpm.sh -i -p
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
