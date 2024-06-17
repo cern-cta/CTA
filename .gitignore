@@ -5,3 +5,6 @@ catalogue/AllCatalogueSchema.hpp
 # cta-release
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
+
+build_srpm/
+build_rpm/
