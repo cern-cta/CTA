@@ -79,16 +79,20 @@ cd build_rpm
 
 # Cmake
 if [ "$VERBOSE" = true ]; then
+    echo "Executing cmake..."
     echo ${CMAKE_OPTIONS}
 fi
 
 if [ "$SKIP_CMAKE" = false ]; then
     if [ "$PIPELINE" = true ]; then
-        cmake3 -DVCS_VERSION=${CTA_BUILD_ID} -j $JOBS ${CMAKE_OPTIONS} ..
+        cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     else
-        cmake3 -j $JOBS ..
+        cmake3 ..
     fi
 fi
 
 # Make
+if [ "$VERBOSE" = true ]; then
+    echo "Executing make..."
+fi
 make cta_rpm -j $JOBS
