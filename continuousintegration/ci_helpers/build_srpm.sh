@@ -17,71 +17,117 @@
 
 set -e
 
-# navigate to root directory
-cd "$(dirname "$0")"
-cd ../../
-
 usage() {
-  echo "Builds the srpms."
-  echo ""
-  echo "Usage: $0 [-i] [-p] [-j <num-jobs>] [--skip-cmake]"
-  echo ""
-  echo "Flags:"
-  echo "  -i, --install       Perform the setup and installation part of the required yum packages."
-  echo "  -p, --pipeline      Sets some options to make this script suited for execution in a pipeline."
-  echo "  -j, --jobs          How many jobs to use for cmake/make."
-  echo "      --skip-cmake    Skips the cmake step. Can be used if this script is executed multiple times in succession."
+    echo ""
+    echo "Builds the srpms."
+    echo "Usage: $0 [-i|--install <distribution>] [-j|--jobs <num-jobs>] [--skip-cmake] [--vcs-version <vcs-version>]"
+    echo ""
+    echo "Flags:"
+    echo "  -i, --install             Perform the setup and installation part of the required yum packages. Should specify which distribution to use. Should be one of [cc7, alma9]."
+    echo "  -j, --jobs                How many jobs to use for cmake/make."
+    echo "      --skip-cmake          Skips the cmake step. Can be used if this script is executed multiple times in succession."
+    echo "      --vcs-version         Sets the VCS_VERSION variable in cmake."
 
-  exit 1
+    exit 1
 }
 
-# Default values
-JOBS=1
-INSTALL=false
-PIPELINE=false
-SKIP_CMAKE=false
+build_srpm() {
 
-# Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    -i  |--install) INSTALL=true ;;
-    -p  |--pipeline) PIPELINE=true ;;
-    -j  |--jobs) JOBS="$2" shift ;;
-    --skip-cmake) SKIP_CMAKE=true ;;
-    *)
-    usage ;;
-  esac
-  shift
-done
+    # navigate to root directory
+    cd "$(dirname "$0")"
+    cd ../../
 
-# Setup
-if [ "$INSTALL" = true ]; then
-    cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-    cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-    yum -y install epel-release almalinux-release-devel git
-    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
-    ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-fi
+    # Default values
+    local JOBS=1
+    local INSTALL=false
+    local DISTRO=""
+    local SKIP_CMAKE=false
+    local VCS_VERSION="dev"
 
-# Cmake
-if [ "$SKIP_CMAKE" = false ]; then
-    if [ "$PIPELINE" = true ]; then
-        CMAKE_OPTIONS+=" -DVCS_VERSION=${CTA_BUILD_ID}"
+    # Parse command line arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            -i|--install)
+                INSTALL=true
+                if [[ $# -gt 1 ]]; then
+                    DISTRO=$2
+                    shift
+                else
+                    echo "Error: --install requires an argument"
+                    exit 1
+                fi
+                ;;
+            -j|--jobs)
+                if [[ $# -gt 1 ]]; then
+                    JOBS=$2
+                    shift
+                else
+                    echo "Error: --jobs requires an argument"
+                    exit 1
+                fi
+                ;;
+            --skip-cmake) 
+                SKIP_CMAKE=true 
+                ;;
+            --vcs-version) 
+                if [[ $# -gt 1 ]]; then
+                    VCS_VERSION=$2
+                    shift
+                else
+                    echo "Error: --vcs-version requires an argument"
+                    exit 1
+                fi
+                ;;
+            *)
+                echo "Invalid argument: $1"
+                usage 
+                ;;
+        esac
+        shift
+    done
+
+    # Setup
+    if [ "$INSTALL" = true ]; then
+        echo "Installing prerequisites..."
+        case $DISTRO in 
+            "alma9")
+                cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+                cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+                yum -y install epel-release almalinux-release-devel git
+                yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+                ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
+                ;;
+            "cc7")
+                yum install -y devtoolset-11 cmake3 make rpm-build git
+                source /opt/rh/devtoolset-11/enable
+                ;;
+            *)
+                echo "Unsupported distribution. Must be one of: [cc7, alma9]"
+                exit -1
+            ;;
+        esac
     fi
 
-    mkdir -p build_srpm
-    cd build_srpm
-    echo "Executing cmake..."
-    cmake3 -DPackageOnly:Bool=true ${CMAKE_OPTIONS} ..
-else
-    echo "Skipping cmake..."
-    # build_srpm should exist
-    if [ ! -d build_srpm ]; then
-        echo "build_srpm/ directory does not exist. Ensure to run this script without skipping cmake first."
-    fi
-    cd build_srpm
-fi
+    # Cmake
+    if [ "$SKIP_CMAKE" = false ]; then
+        CMAKE_OPTIONS=" -DVCS_VERSION=${VCS_VERSION}"
 
-# Make
-echo "Executing make..."
-make cta_srpm  -j $JOBS
+        mkdir -p build_srpm
+        cd build_srpm
+        echo "Executing cmake..."
+        cmake3 -DPackageOnly:Bool=true ${CMAKE_OPTIONS} ..
+    else
+        echo "Skipping cmake..."
+        # build_srpm should exist
+        if [ ! -d build_srpm ]; then
+            echo "build_srpm/ directory does not exist. Ensure to run this script without skipping cmake first."
+        fi
+        cd build_srpm
+    fi
+
+    # Make
+    echo "Executing make..."
+    make cta_srpm  -j $JOBS
+}
+
+build_srpm "$@"
