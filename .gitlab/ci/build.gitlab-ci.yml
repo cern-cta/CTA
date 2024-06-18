@@ -20,7 +20,7 @@
     - yum install -y devtoolset-11 cmake3 make rpm-build git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh -p
+    - ./continuousintegration/ci_helpers/build_srpm.sh -i -p
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
@@ -33,7 +33,7 @@
     - yum install -y git
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_rpm.sh -p
+    - ./continuousintegration/ci_helpers/build_rpm.sh -i -p
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
