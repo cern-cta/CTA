@@ -10,6 +10,7 @@
 
 ### Continuous Integration
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
+- cta/CTA#725 - Extracted the build steps for srpms and rpms into seperate scripts
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
