@@ -46,7 +46,7 @@ kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- bash -c "yum -y install 
 
 # Get the device to be used.
 echo "Obtaining drive device and name"
-device_name=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- ls /etc/cta/cta-taped-* | grep 'cta-taped-.*\.conf' | awk 'NR==1')
+device_name=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- ls /etc/cta/ | grep 'cta-taped-.*\.conf' | awk 'NR==1')
 device_name="${device_name:10:-5}"
 device=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
 echo "Using device: ${device}; name ${device_name}"
