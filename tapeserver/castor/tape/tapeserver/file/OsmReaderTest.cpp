@@ -99,7 +99,7 @@ protected:
       };
       ASSERT_EQ("STK", removeWhiteSpaces(&devInfo.vendor));
       ASSERT_EQ("MHVTL", removeWhiteSpaces(&devInfo.product));
-      ASSERT_EQ("0105", devInfo.productRevisionLevel);
+      ASSERT_EQ("0107", devInfo.productRevisionLevel);
       ASSERT_EQ(m_devName, removeWhiteSpaces(&devInfo.serialNumber));
     } catch (cta::exception::Exception & ex) {
       FAIL() << "The drive couldn't be created. " << ex.getMessageValue();
