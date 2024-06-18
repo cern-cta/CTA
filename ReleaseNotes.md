@@ -11,6 +11,7 @@
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
+- cta/CTA#725 - Extracted the build steps for srpms and rpms into seperate scripts
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
