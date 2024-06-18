@@ -15,12 +15,12 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-#
 
+
+# Download OSM sample tape
 yum -y install git git-lfs
 git lfs install --skip-repo
 git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git /osm-mhvtl
-
 
 device="$1"
 # Load tape in a tapedrive
@@ -41,4 +41,11 @@ dd if=/osm-tape.img of=$device bs=32768 count=2
 dd if=/osm-mhvtl/L08033/file1 of=$device bs=262144 count=202
 dd if=/osm-mhvtl/L08033/file2 of=$device bs=262144 count=202
 
+# Rewind and move tape back to library
 mt -f ${device} rewind
+mt -f ${device} eject
+
+mtx -f /dev/smc unload 1 0
+
+# Remove downloaded content
+rm /osm-mhvtl
