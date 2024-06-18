@@ -234,6 +234,15 @@ void RelationalDB::clearStatisticsCache(const std::string & vid)
   schedulerdb::Helpers::flushStatisticsCacheForVid(vid);
 }
 
+void RelationalDB::setStatisticsCacheConfig(const StatisticsCacheConfig & conf) {
+  if (conf.retrieveQueueCacheMaxAgeSecs.has_value()) {
+    schedulerdb::Helpers::setRetrieveQueueCacheMaxAgeSecs(conf.retrieveQueueCacheMaxAgeSecs.value());
+  }
+  if (conf.tapeCacheMaxAgeSecs.has_value()) {
+    schedulerdb::Helpers::setTapeCacheMaxAgeSecs(conf.tapeCacheMaxAgeSecs.value());
+  }
+}
+
 SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext)
