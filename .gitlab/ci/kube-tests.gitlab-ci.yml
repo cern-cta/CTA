@@ -125,7 +125,6 @@ external-tape-formats:
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
-    JOB_NAME: "external-tape"
 
 nightly1:
   stage: test
