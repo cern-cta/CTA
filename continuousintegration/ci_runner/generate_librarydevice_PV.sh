@@ -67,9 +67,8 @@ metadata:
   labels:
     config: library
     type: mhvtl
-  annotations:
-    volume.beta.kubernetes.io/storage-class: "librarydevice"
 spec:
+  storageClassName: "librarydevice"
   capacity:
     storage: 1Mi
   accessModes:
@@ -90,9 +89,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: claimlibrary
-  annotations:
-    volume.beta.kubernetes.io/storage-class: "librarydevice"
 spec:
+  storageClassName: "librarydevice"
   accessModes:
     - ReadWriteOnce
   resources:
