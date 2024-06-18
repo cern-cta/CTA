@@ -21,7 +21,7 @@
 
 namespace cta::schedulerdb::postgres {
 
-rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, uint64_t limit){
+rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string& vid, uint64_t limit){
   txn.start();
   /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
    * which will be released when the transaction ends
@@ -39,6 +39,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
     "LIMIT :LIMIT ) "
     "UPDATE ARCHIVE_JOB_QUEUE SET "
       "MOUNT_ID = :MOUNT_ID "
+      "VID = :VID "
     "FROM SET_SELECTION "
     "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
     "RETURNING SET_SELECTION.JOB_ID";
@@ -47,6 +48,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountID(Transaction &txn, ArchiveJobStatus
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountId);
+  stmt.bindUint64(":VID", vid);
   return stmt.executeQuery();
 }
 
