@@ -153,7 +153,7 @@ void ArchiveMount::setJobBatchTransferred(
   std::list <std::string> jobIDsList;
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
-    jobIDsList->emplace_back(std::to_string((*jobsBatchItor)->jobID);
+    jobIDsList->emplace_back(std::to_string((*jobsBatchItor)->jobID));
     log::ScopedParamContainer(lc)
             .add("jobID", (*jobsBatchItor)->jobID)
             .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
