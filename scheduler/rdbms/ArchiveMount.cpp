@@ -166,9 +166,6 @@ void ArchiveMount::setJobBatchTransferred(
    * AJS_ToReportToUserForFailure
    * AJS_ToReportToUserForTransfer
    */
-  updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo.tapePool,
-                                                                  mountInfo.mountId, mountInfo.vid, filesRequested);
-
 }
 
 
