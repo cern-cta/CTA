@@ -225,6 +225,7 @@ class SchedulerDatabase {
   class ArchiveJob {
     friend class ArchiveMount;
    public:
+    uint64_t jobID = 0; // for schedulerdb model
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;

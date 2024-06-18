@@ -48,7 +48,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.bindUint64(":VID", vid);
+  stmt.bindString(":VID", vid);
   return stmt.executeQuery();
 }
 
