@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 # navigate to root directory
 cd "$(dirname "$0")"
@@ -23,11 +24,10 @@ cd ../../
 usage() {
   echo "Builds the srpms."
   echo ""
-  echo "Usage: $0 [-i]"
+  echo "Usage: $0 [-i] [-p] [-j <num-jobs>] [--skip-cmake]"
   echo ""
   echo "Flags:"
   echo "  -i, --install       Perform the setup and installation part of the required yum packages."
-  echo "  -v, --verbose       Output additional information."
   echo "  -p, --pipeline      Sets some options to make this script suited for execution in a pipeline."
   echo "  -j, --jobs          How many jobs to use for cmake/make."
   echo "      --skip-cmake    Skips the cmake step. Can be used if this script is executed multiple times in succession."
@@ -38,7 +38,6 @@ usage() {
 # Default values
 JOBS=1
 INSTALL=false
-VERBOSE=false
 PIPELINE=false
 SKIP_CMAKE=false
 
@@ -46,7 +45,6 @@ SKIP_CMAKE=false
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -i  |--install) INSTALL=true ;;
-    -v  |--verbose) VERBOSE=true ;;
     -p  |--pipeline) PIPELINE=true ;;
     -j  |--jobs) JOBS="$2" shift ;;
     --skip-cmake) SKIP_CMAKE=true ;;
@@ -65,26 +63,25 @@ if [ "$INSTALL" = true ]; then
     ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
 fi
 
-mkdir -p build_srpm
-cd build_srpm
-
-
 # Cmake
-if [ "$VERBOSE" = true ]; then
-    echo "Executing cmake..."
-    echo ${CMAKE_OPTIONS}
-fi
-
 if [ "$SKIP_CMAKE" = false ]; then
     if [ "$PIPELINE" = true ]; then
-        cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    else
-        cmake3 -DPackageOnly:Bool=true ..
+        CMAKE_OPTIONS+=" -DVCS_VERSION=${CTA_BUILD_ID}"
     fi
+
+    mkdir -p build_srpm
+    cd build_srpm
+    echo "Executing cmake..."
+    cmake3 -DPackageOnly:Bool=true ${CMAKE_OPTIONS} ..
+else
+    echo "Skipping cmake..."
+    # build_srpm should exist
+    if [ ! -d build_srpm ]; then
+        echo "build_srpm/ directory does not exist. Ensure to run this script without skipping cmake first."
+    fi
+    cd build_srpm
 fi
 
 # Make
-if [ "$VERBOSE" = true ]; then
-    echo "Executing make..."
-fi
+echo "Executing make..."
 make cta_srpm  -j $JOBS
