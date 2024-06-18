@@ -17,6 +17,7 @@
   extends:
     - .cta_build
   script:
+    - yum install -y git
     - git submodule update --init --recursive
     - ./continuousintegration/ci_helpers/build_srpm.sh -i cc7 --vcs-version ${CTA_BUILD_ID}
   variables:
@@ -26,6 +27,7 @@
   extends:
     - .cta_build
   script:
+    - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - ./continuousintegration/ci_helpers/build_rpm.sh -i cc7 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
@@ -122,6 +124,7 @@ cta_srpm_alma9:
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
     - echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
   script:
+    - yum install -y git
     - git submodule update --init --recursive
     - ./continuousintegration/ci_helpers/build_srpm.sh -i alma9 --vcs-version ${CTA_BUILD_ID}
   rules:
@@ -140,6 +143,7 @@ cta_rpm_alma9:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
   script:
+    - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - ./continuousintegration/ci_helpers/build_rpm.sh -i alma9 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}

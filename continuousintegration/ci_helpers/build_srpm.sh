@@ -93,12 +93,12 @@ build_srpm() {
             "alma9")
                 cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
                 cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-                yum -y install epel-release almalinux-release-devel git
-                yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+                yum install -y epel-release almalinux-release-devel
+                yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils
                 ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
                 ;;
             "cc7")
-                yum install -y devtoolset-11 cmake3 make rpm-build git
+                yum install -y devtoolset-11 cmake3 make rpm-build
                 source /opt/rh/devtoolset-11/enable
                 ;;
             *)
