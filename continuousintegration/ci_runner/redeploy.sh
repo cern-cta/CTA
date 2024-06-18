@@ -19,6 +19,9 @@ set -e
 
 # Help message
 usage() {
+  echo "Will (re)deploy the local minikube instance with the latest rpms."
+  echo "These rpms are assumed to be located in CTA/build_rpm, as done by the build_rpm.sh script in ci_helpers."
+  echo ""
   echo "Usage: $0 [-n <namespace>] [-t <tag>] [-d <root directory>]"
   echo ""
   echo "Flags:"
@@ -29,7 +32,7 @@ usage() {
 }
 
 # Default values
-KUBE_NAMESPACE="stress"
+KUBE_NAMESPACE="dev"
 IMAGE_TAG="dev"
 ROOT_DIR="~"
 
@@ -61,8 +64,7 @@ if [ "$#" -ge 3 ]; then
 fi
 
 # Script should be run as cirunner
-if [[ $(whoami) != 'cirunner' ]]
-then
+if [[ $(whoami) != 'cirunner' ]]; then
     echo "Current user is $(whoami), aborting. Script must run as cirunner"
     exit 1
 fi
@@ -81,24 +83,18 @@ if podman inspect ctageneric:$IMAGE_TAG &> /dev/null; then
   minikube image rm localhost/ctageneric:$IMAGE_TAG
 fi
 
-echo "Cleaning up ctageneric.tar..."
-cd $ROOT_DIR/CTA/continuousintegration/ci_runner
-rm -rf ctageneric.tar
-
 ###################################################################################################
 
 
 ## Create and load the new images
 # Prepare new image
 echo "Preparing new image"
-cd $ROOT_DIR/CTA/continuousintegration/ci_runner # should already be here
-./prepareImage.sh -s $ROOT_DIR/CTA_rpm/RPM/RPMS/x86_64 -t $IMAGE_TAG -d $ROOT_DIR
-# Save the image in a tar file
-echo "Saving new image"
-podman save -o ctageneric.tar localhost/ctageneric:$IMAGE_TAG
-# Load the new image
+cd $ROOT_DIR/CTA
+# specific to alma9
+echo "Building image based on $ROOT_DIR/CTA/build_rpm"
+podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${IMAGE_TAG} --network host
 echo "Loading new image into minikube"
-minikube image load ctageneric.tar localhost/ctageneric:$IMAGE_TAG
+minikube image load  localhost/ctageneric:$IMAGE_TAG
 
 # Redeploy containers
 echo "Redeploying container"
