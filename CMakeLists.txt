@@ -188,7 +188,10 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
    "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
   message (STATUS
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
-  set(CPACK_SOURCE_IGNORE_FILES "/.git/")
+  set(CPACK_SOURCE_IGNORE_FILES 
+    "/.git/"
+    "/build_srpm/"
+    "/build_rpm/")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
