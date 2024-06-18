@@ -38,7 +38,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
     "ORDER BY PRIORITY DESC, JOB_ID "
     "LIMIT :LIMIT ) "
     "UPDATE ARCHIVE_JOB_QUEUE SET "
-      "MOUNT_ID = :MOUNT_ID "
+      "MOUNT_ID = :MOUNT_ID,"
       "VID = :VID "
     "FROM SET_SELECTION "
     "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
