@@ -56,6 +56,6 @@ kubectl -n ${NAMESPACE} cp read_osm_tape.sh ${tape_server}:/root/read_osm_tape.s
 kubectl -n ${NAMESPACE} exec ${tape_server} -c rmcd -- bash -c "/bin/bash /root/read_osm_tape.sh ${device}"
 
 # Run the test
-kubectl -n ${NAMESPACE} ${tape_server} -c taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
+kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
 
 exit 0
