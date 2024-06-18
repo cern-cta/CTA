@@ -22,17 +22,12 @@ exit 1
 }
 
 NAMESPACE=""
-tempdir=$(mktemp -d)
-poddir=""
-READ_OSM_SCRIPT="${tempdir}/read_osm_tape.sh"
+tape_server='tpsrv01'
 
-while getopts "n:P:" o; do
+while getopts "n:" o; do
   case "${o}" in
     n)
       NAMESPACE=${OPTARG}
-      ;;
-    P)
-      poddir=${OPTARG}
       ;;
     *)
       usage
@@ -45,74 +40,22 @@ if [ -z "${NAMESPACE}" ]; then
   usage
 fi
 
-# Does kubernetes version supports `get pod --show-all=true`?
-# use it for older versions and this is not needed for new versions of kubernetes
-KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
-test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
-
-echo "
-device=\"DEVICE\"
-echo \"Device is \$device\"
-
-# Load tape in a tapedrive
-mtx -f /dev/smc status
-mtx -f /dev/smc load 1 0
-mtx -f /dev/smc status
-
-# Get the device status where the tape is loaded and rewind it.
-mt -f \$device status
-mt -f \$device rewind
-
-# The header files have 4 more bytes in the git file
-truncate -s -4 /osm-mhvtl/L08033/L1
-touch /osm-tape.img
-dd if=/osm-mhvtl/L08033/L1 of=/osm-tape.img bs=32768
-dd if=/osm-mhvtl/L08033/L2 of=/osm-tape.img bs=32768 seek=1
-dd if=/osm-tape.img of=\$device bs=32768 count=2
-dd if=/osm-mhvtl/L08033/file1 of=\$device bs=262144 count=202
-dd if=/osm-mhvtl/L08033/file2 of=\$device bs=262144 count=202
-
-mt -f \$device rewind
-" &> ${READ_OSM_SCRIPT}
-
-# Download OSM Tape from git
-echo "${tempdir}/osm-mhvtl"
-if [ ! -d "${tempdir}/osm-mhvtl" ] ; then
-  yum install -y git git-lfs
-  git lfs install || git lfs update --force
-  git lfs clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git ${tempdir}/osm-mhvtl
-fi
+# Install systest rpm that contains the osm reader test.
+echo "Installing cta systest rpms in ${tap_server} - taped container... "
+kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- bash -c "yum -y install cta-systemtests"
 
 # Get the device to be used.
-
-device_name=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- ls | grep -r 'cta-taped-.*\.conf' | awk 'NR==1')
+echo "Obtaining drive device and name"
+device_name=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- ls /etc/cta/cta-taped-* | grep 'cta-taped-.*\.conf' | awk 'NR==1')
 device_name="${device_name:10:-5}"
-device=$(kubectl -n ${NAMESPACE} exec tpsrv01 -c taped -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
-sed -i "s#DEVICE#${device}#g" ${READ_OSM_SCRIPT}
-sed -i "s#DEVICE_NAME_VALUE#${device_name}#g" ${poddir}/pod-externaltapetests.yaml
-sed -i "s#DEVICE_PATH#${device}#g" ${poddir}/pod-externaltapetests.yaml
+device=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
+echo "Using device: ${device}; name ${device_name}"
 
-# Copy the above script to the pod rmcd to be run
-kubectl -n ${NAMESPACE} cp ${tempdir}/osm-mhvtl tpsrv01:/osm-mhvtl -c rmcd
-kubectl -n ${NAMESPACE} cp ${READ_OSM_SCRIPT} tpsrv01:/root/read_osm_tape.sh -c rmcd
-kubectl -n ${NAMESPACE} exec tpsrv01 -c rmcd -- /bin/bash /root/read_osm_tape.sh
+# Copy and run the above a script to the rmcd pod to load osm tape
+kubectl -n ${NAMESPACE} cp read_osm_tape.sh ${tape_server}:/root/read_osm_tape.sh -c rmcd
+kubectl -n ${NAMESPACE} exec ${tape_server} -c rmcd -- /bin/bash /root/read_osm_tape.sh
 
-# Creation of the pod to run the tests
-kubectl create -f "${poddir}/pod-externaltapetests.yaml" --namespace=${NAMESPACE}
-
-echo -n "Waiting for externaltapetests"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl -n ${NAMESPACE} get pod externaltapetests ${KUBECTL_DEPRECATED_SHOWALL} | egrep -q 'Completed|Error' && break
-  sleep 1
-done
-echo "\n"
-
-# Copy the logs outside
-kubectl -n ${NAMESPACE} logs externaltapetests &> "../../pod_logs/${NAMESPACE}/externaltapetests.log"
-
-# Cleanning
-rm -rf ${tempdir}/osm-mhvtl
-rm ${READ_OSM_SCRIPT}
+# Run the test
+kubectl -n ${NAMESPACE} ${tape_server} -c taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
 
 exit 0

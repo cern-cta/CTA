@@ -123,8 +123,8 @@ external-tape-formats:
   rules:
     - !reference [.manual_rules, rules]
   variables:
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -T"
+    TEST_SCRIPT: "tests/external_tapes_test.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
     JOB_NAME: "external-tape"
 
 nightly1:
