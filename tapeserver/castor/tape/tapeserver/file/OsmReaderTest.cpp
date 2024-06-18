@@ -107,7 +107,7 @@ protected:
 
     try {
       /**
-        * Checks if the drive ready to use the tape installed loaded into it.
+        * Checks if the drive ready to use the tape loaded into it.
         */
       m_drive->waitUntilReady(5);
     } catch(cta::exception::Exception &ex) {
