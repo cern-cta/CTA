@@ -29,6 +29,8 @@
 
 namespace cta::schedulerdb::postgres {
 
+class RowBuffer
+
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
   std::optional<std::uint64_t> mountId = std::nullopt;
@@ -402,17 +404,18 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-   * Assign a mount ID to the specified rows
+   * Assign a mount ID and VID to a selection of rows
    *
    * @param txn        Transaction to use for this query
    * @param status     Archive Job Status to select on
    * @param tapepool   Tapepool to select on
    * @param mountId    Mount ID to assign
+   * @param vid        VID to assign
    * @param limit      Maximum number of rows to return
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset updateMountID(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, uint64_t limit);
+  static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string &vid, uint64_t limit);
 };
 
 } // namespace cta::schedulerdb::postgres

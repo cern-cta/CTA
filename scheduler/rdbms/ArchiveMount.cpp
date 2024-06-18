@@ -49,9 +49,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
   try {
     logContext.log(cta::log::DEBUG,
-                   "In postgres::ArchiveJobQueueRow::updateMountID: attempting to update Mount ID for a batch of jobs.");
-    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountID(txn, queriedJobStatus, mountInfo.tapePool,
-                                                                  mountInfo.mountId, filesRequested);
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
+    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo.tapePool,
+                                                                  mountInfo.mountId, mountInfo.vid, filesRequested);
     // we need to extract the JOB_IDs which were updated before we release the lock
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
@@ -63,7 +63,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
                    jobIDsString);
   } catch (exception::Exception &ex) {
     logContext.log(cta::log::DEBUG,
-                   "In postgres::ArchiveJobQueueRow::updateMountID: failed to update Mount ID. Aborting the transaction." +
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
                    ex.getMessageValue());
     txn.abort();
   }
@@ -149,7 +149,25 @@ void ArchiveMount::setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc)
 {
   lc.log(log::WARNING,
-         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests passes as dummy implementation !");
+         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests passes as half-dummy implementation !");
+  std::list <std::string> jobIDsList;
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    jobIDsList-->emplace_back(std::to_string((*jobsBatchItor)->m_jobId);
+    log::ScopedParamContainer(lc)
+            .add("job_ID", (*jobsBatchItor)->m_jobId)
+            .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
+            .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("tapePool", (*jobsBatchItor)->tapePool)
+            .add("instanceName", (*jobsBatchItor)->instanceName)
+            .log(log::INFO,
+                 "In OStoreDB::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
+  }
+  /* Update Status in ARCHIVE_JOB_QUEUE and table to either of the following 2 states:
+   * AJS_ToReportToUserForFailure
+   * AJS_ToReportToUserForTransfer
+   */
 }
+
 
 } // namespace cta::schedulerdb
