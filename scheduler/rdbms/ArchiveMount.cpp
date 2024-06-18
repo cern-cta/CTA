@@ -153,13 +153,12 @@ void ArchiveMount::setJobBatchTransferred(
   std::list <std::string> jobIDsList;
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
-    jobIDsList-->emplace_back(std::to_string((*jobsBatchItor)->m_jobId);
+    jobIDsList->emplace_back(std::to_string((*jobsBatchItor)->jobID);
     log::ScopedParamContainer(lc)
-            .add("job_ID", (*jobsBatchItor)->m_jobId)
+            .add("jobID", (*jobsBatchItor)->jobID)
             .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
             .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
-            .add("tapePool", (*jobsBatchItor)->tapePool)
-            .add("instanceName", (*jobsBatchItor)->instanceName)
+            .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
             .log(log::INFO,
                  "In OStoreDB::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
   }

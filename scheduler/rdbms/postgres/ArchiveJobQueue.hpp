@@ -29,8 +29,6 @@
 
 namespace cta::schedulerdb::postgres {
 
-class RowBuffer
-
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
   std::optional<std::uint64_t> mountId = std::nullopt;
@@ -86,7 +84,7 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    mountId = rset.columnOptionalUint64("MOUNT_ID");
+    mountId                   = rset.columnOptionalUint64("MOUNT_ID");
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
