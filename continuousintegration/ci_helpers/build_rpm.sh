@@ -141,6 +141,7 @@ build_rpm() {
 
     # Cmake
     if [ "$SKIP_CMAKE" = false ]; then
+        # Needs to be exported as cmake gets it from the environment
         export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$XROOTD_SSI_VERSION
 
         CMAKE_OPTIONS=" -DVCS_VERSION=${VCS_VERSION}"
