@@ -120,8 +120,8 @@ build_rpm() {
             "alma9")
                 cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
                 cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-                yum -y install epel-release almalinux-release-devel git
-                yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+                yum -y install epel-release almalinux-release-devel
+                yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
                 yum -y install yum-plugin-versionlock
                 ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
                 yum-builddep --nogpgcheck -y $SRPMS_DIR/*
@@ -129,7 +129,6 @@ build_rpm() {
             "cc7")
                 yum install -y devtoolset-11 cmake3 make rpm-build
                 yum -y install yum-plugin-priorities yum-plugin-versionlock
-                yum install -y git
                 source /opt/rh/devtoolset-11/enable
                 yum-builddep --nogpgcheck -y $SRPMS_DIR/*
                 ;;
