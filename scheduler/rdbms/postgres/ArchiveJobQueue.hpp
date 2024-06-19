@@ -301,7 +301,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset selectJobsByStatusAndMountID(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
+  static rdbms::Rset selectJobsByStatusAndMountID(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
@@ -340,9 +340,12 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
+    std::string sqlstatuspart;
+    for (const auto &jstatus : statusList) sqlstatuspart += jstatus + ",";
+    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindString(":STATUS", to_string(sqlstatuspart));
     stmt.bindUint64(":MOUNT_ID", mount_id);
     stmt.bindUint32(":LIMIT", limit);
 
@@ -359,7 +362,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
+  static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
     const char *const sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
@@ -394,9 +397,11 @@ struct ArchiveJobQueueRow {
             "WHERE STATUS = :STATUS "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-
+    std::string sqlstatuspart;
+    for (const auto &jstatus : statusList) sqlstatuspart += jstatus + ",";
+    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindString(":STATUS", to_string(sqlstatuspart));
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
