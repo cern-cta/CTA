@@ -238,13 +238,13 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-   * Select unowned jobs from the queue
+   * Select any jobs from the queue by job ID
    *
    * @param conn       Connection to the DB backend
    * @param jobIDs     List of jobID strings to select
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, const std::list<std::string>& jobIDs) {
+  static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list<std::string>& jobIDs) {
     if(jobIDs.empty()) {
       rdbms::Rset ret;
       return ret;
@@ -300,7 +300,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
+  static rdbms::Rset selectJobsByStatusAndMountID(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
     const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
@@ -349,7 +349,8 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-   * Select not owned jobs from the queue ordered by tapepool
+   * Select any jobs with specified status from the queue
+   * and return them in the order of priority and by tapepool
    *
    * @param conn       Connection to the backend database
    * @param status     Archive Job Status to select on
@@ -357,7 +358,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
+  static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
     const char *const sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
@@ -389,8 +390,7 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE MOUNT_ID IS NULL "
-            "AND STATUS = :STATUS "
+            "WHERE STATUS = :STATUS "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
 
