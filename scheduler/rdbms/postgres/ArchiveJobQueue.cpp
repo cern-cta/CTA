@@ -59,15 +59,15 @@ void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<
   }
   std::string sqlpart;
   for (const auto &piece : jobIDs) sqlpart += piece;
-  std::string sql =
   txn.start();
   std::string sql =
           "UPDATE ARCHIVE_JOB_QUEUE SET "
           "STATUS = :STATUS "
           "JOB_ID IN (" + sqlpart + ") ";
-  stmt = txn.conn().createStmt(sql);
+  auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
-  return stmt.executeQuery();
+  stmt.executeQuery();
+  return;
 };
 
 
