@@ -37,7 +37,7 @@ build_srpm() {
   cd "$(dirname "$0")"
   cd ../../
 
-  # Default values
+  # Default values for arguments
   local num_jobs=1
   local install=false
   local distro=""
@@ -110,7 +110,7 @@ build_srpm() {
 
   # Cmake
   if [ "${skip_cmake}" = false ]; then
-    cmake_options=" -DVCS_VERSION=${vcs_version}"
+    local cmake_options=" -DVCS_VERSION=${vcs_version}"
 
     mkdir -p build_srpm
     cd build_srpm
