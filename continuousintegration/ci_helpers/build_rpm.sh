@@ -146,7 +146,7 @@ build_rpm() {
 
     cmake_options=" -DVCS_VERSION=${vcs_version}"
     if [ "${skip_unit_tests}" = true ]; then
-      cmake_options+=" -Dskip_unit_tests:STRING=1"
+      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
     fi
     mkdir -p build_rpm
     cd build_rpm
