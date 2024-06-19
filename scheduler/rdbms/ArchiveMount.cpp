@@ -167,9 +167,9 @@ void ArchiveMount::setJobBatchTransferred(
    * AJS_ToReportToUserForFailure
    * AJS_ToReportToUserForTransfer
    */
+  cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
   try {
     // ALL JOBS CURRENTLY FORCE REPORTED AS SUCCESS ONLY !
-    cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
     postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
     txn.commit();
   } catch (exception::Exception &ex) {
