@@ -63,7 +63,7 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   std::string sql =
           "UPDATE ARCHIVE_JOB_QUEUE SET "
           "STATUS = :STATUS "
-          "JOB_ID IN (" + sqlpart + ") ";
+          "WHERE JOB_ID IN (" + sqlpart + ") ";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.executeQuery();
