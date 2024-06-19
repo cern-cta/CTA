@@ -335,7 +335,7 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS IN (:STATUS) "
+      "AND STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[]) "
       "AND MOUNT_ID = :MOUNT_ID "
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
@@ -397,7 +397,7 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS IN (:STATUS) "
+            "WHERE STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[]) "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
     std::string sqlstatuspart;
