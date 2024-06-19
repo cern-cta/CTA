@@ -148,7 +148,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
 {
   rdbms::Rset resultSet;
   auto sqlconn = m_connPool.getConn();
-  //auto sqlconn_forfailure = m_connPool.getConn();
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<ArchiveJobStatus> statusList
