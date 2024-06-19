@@ -160,7 +160,8 @@ void ArchiveMount::setJobBatchTransferred(
             .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
             .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
             .log(log::INFO,
-                 "In OStoreDB::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
+                 "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
+    jobsBatchItor++;
   }
   /* Update Status in ARCHIVE_JOB_QUEUE and table to either of the following 2 states:
    * AJS_ToReportToUserForFailure
