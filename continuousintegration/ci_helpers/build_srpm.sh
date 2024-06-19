@@ -20,13 +20,13 @@ set -e
 usage() {
   echo ""
   echo "Builds the srpms."
-  echo "Usage: $0 [-i|--install <distribution>] [-j|--jobs <num-jobs>] [--skip-cmake] [--vcs-version <vcs-version>]"
+  echo "Usage: $0 [-i|--install <distro>] [-j|--jobs <num-jobs>] [--skip-cmake] [--vcs-version <vcs-version>]"
   echo ""
   echo "Flags:"
-  echo "  -i, --install             Perform the setup and installation part of the required yum packages. Should specify which distribution to use. Should be one of [cc7, alma9]."
-  echo "  -j, --jobs                How many jobs to use for cmake/make."
-  echo "      --skip-cmake          Skips the cmake step. Can be used if this script is executed multiple times in succession."
-  echo "      --vcs-version         Sets the VCS_VERSION variable in cmake. Defaults to \"dev\" if not provided."
+  echo "  -i, --install <distro>:               Perform the setup and installation part of the required yum packages. Should specify which distribution to use. Should be one of [cc7, alma9]."
+  echo "  -j, --jobs <num-jobs>:                How many jobs to use for cmake/make."
+  echo "      --skip-cmake:                     Skips the cmake step. Can be used if this script is executed multiple times in succession."
+  echo "      --vcs-version <vcs-version>:      Sets the VCS_VERSION variable in cmake. Defaults to \"dev\" if not provided."
 
   exit 1
 }
