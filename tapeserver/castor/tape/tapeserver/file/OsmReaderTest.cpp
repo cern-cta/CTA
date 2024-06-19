@@ -99,15 +99,15 @@ protected:
       };
       ASSERT_EQ("STK", removeWhiteSpaces(&devInfo.vendor));
       ASSERT_EQ("MHVTL", removeWhiteSpaces(&devInfo.product));
-      ASSERT_EQ("0105", devInfo.productRevisionLevel);
-      ASSERT_EQ(m_devName, removeWhiteSpaces(&devInfo.serialNumber));
+      ASSERT_EQ("0107", devInfo.productRevisionLevel);
+      ASSERT_EQ("S001L01D01", removeWhiteSpaces(&devInfo.serialNumber));
     } catch (cta::exception::Exception & ex) {
       FAIL() << "The drive couldn't be created. " << ex.getMessageValue();
     }
 
     try {
       /**
-        * Checks if the drive ready to use the tape installed loaded into it.
+        * Checks if the drive ready to use the tape loaded into it.
         */
       m_drive->waitUntilReady(5);
     } catch(cta::exception::Exception &ex) {

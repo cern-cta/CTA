@@ -9,7 +9,10 @@
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 
 ### Continuous Integration
+- cta/CTA#699 - Fix external tape format CI tests
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
+
+### Code Quality
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
