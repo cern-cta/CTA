@@ -160,14 +160,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   //logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
-  while(resultSet_ForTransfer.next() || resultSet_ForFailure.next()) {
-    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
+  if(!resultSet_ForTransfer.isEmpty()){
     try {
-      if(!resultSet_ForTransfer.isEmpty()){
+      while(resultSet_ForTransfer.next()) {
+        logContext.log(log::DEBUG,
+                       "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
         jobs.emplace_back(resultSet_ForTransfer);
-      }
-      if(!resultSet_ForFailure.isEmpty()){
-        jobs.emplace_back(resultSet_ForFailure);
       }
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
