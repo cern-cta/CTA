@@ -48,7 +48,7 @@ build_rpm() {
     local SKIP_UNIT_TESTS=false
     local SRPMS_DIR="build_srpm/RPM/SRPMS"
     local VCS_VERSION="dev"
-    local XROOTD_SSI_VERSION="dev"
+    local XROOTD_SSI_VERSION="${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION:-dev}"
 
     # Parse command line arguments
     while [[ "$#" -gt 0 ]]; do
