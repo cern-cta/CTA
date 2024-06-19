@@ -35,7 +35,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  UserError(const std::string &context = "", const bool embedBacktrace = true);
+  UserError(const std::string &context = "", const bool embedBacktrace = false);
 
 }; // class UserError
 
