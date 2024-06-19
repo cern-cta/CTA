@@ -146,26 +146,24 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> RelationalDB::getArchiv
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-  rdbms::Rset resultSet_ForTransfer;
-  rdbms::Rset resultSet_ForFailure;
-  auto sqlconn_fortransfer = m_connPool.getConn();
+  rdbms::Rset resultSet;
+  auto sqlconn = m_connPool.getConn();
   //auto sqlconn_forfailure = m_connPool.getConn();
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
-  resultSet_ForTransfer = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(
-          sqlconn_fortransfer, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
+  std::list<ArchiveJobStatus> statusList
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
+  resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
-  //resultSet_ForFailure = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(
-  //        sqlconn_forfailure, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
-  //logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
-  if(!resultSet_ForTransfer.isEmpty()){
+  if(!resultSet.isEmpty()){
     try {
-      while(resultSet_ForTransfer.next()) {
+      while(resultSet.next()) {
         logContext.log(log::DEBUG,
                        "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
-        jobs.emplace_back(resultSet_ForTransfer);
+        jobs.emplace_back(resultSet);
       }
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
