@@ -19,7 +19,7 @@
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh -i cc7 --vcs-version ${CTA_BUILD_ID}
+    - ./continuousintegration/ci_helpers/build_srpm.sh --install cc7 --vcs-version ${CTA_BUILD_ID}
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
@@ -30,7 +30,7 @@
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh -i cc7 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+    - ./continuousintegration/ci_helpers/build_rpm.sh --install cc7 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
@@ -126,7 +126,7 @@ cta_srpm_alma9:
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh -i alma9 --vcs-version ${CTA_BUILD_ID}
+    - ./continuousintegration/ci_helpers/build_srpm.sh --install alma9 --vcs-version ${CTA_BUILD_ID}
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -146,7 +146,7 @@ cta_rpm_alma9:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh -i alma9 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+    - ./continuousintegration/ci_helpers/build_rpm.sh --install alma9 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
