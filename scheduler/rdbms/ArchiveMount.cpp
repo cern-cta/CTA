@@ -149,7 +149,7 @@ void ArchiveMount::setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc)
 {
   lc.log(log::WARNING,
-         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests passes as half-dummy implementation !");
+         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation !");
   std::list<std::string> jobIDsList;
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
@@ -162,6 +162,17 @@ void ArchiveMount::setJobBatchTransferred(
             .log(log::INFO,
                  "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
     jobsBatchItor++;
+  }
+  try {
+    // ALL JOBS CURRENTLY FORCE REPORTED AS SUCCESS ONLY !
+    cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+    postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    logContext.log(cta::log::DEBUG,
+                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status. Aborting the transaction." +
+                   ex.getMessageValue());
+    txn.abort();
   }
   /* Update Status in ARCHIVE_JOB_QUEUE and table to either of the following 2 states:
    * AJS_ToReportToUserForFailure

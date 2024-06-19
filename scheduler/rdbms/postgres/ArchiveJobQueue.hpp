@@ -241,7 +241,7 @@ struct ArchiveJobQueueRow {
    * Select unowned jobs from the queue
    *
    * @param conn       Connection to the DB backend
-   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
+   * @param jobIDs     List of jobID strings to select
    * @return  result set
    */
   static rdbms::Rset select(rdbms::Conn &conn, const std::list<std::string>& jobIDs) {
@@ -414,6 +414,20 @@ struct ArchiveJobQueueRow {
    * @return  result set containing job IDs of the rows which were updated
    */
   static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string &vid, uint64_t limit);
+
+  /**
+   * Update job status
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param jobIDs     List of jobID strings to select
+   *
+   * @return  result set
+   */
+   void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
+
+
 };
+
 
 } // namespace cta::schedulerdb::postgres
