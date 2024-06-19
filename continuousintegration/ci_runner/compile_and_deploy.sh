@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -23,107 +23,128 @@ usage() {
   echo ""
   echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM"
   echo ""
-  echo "Usage: $0 [-r] [-d]"
+  echo "Usage: $0 [-r|--reset] [-d|--redeploy] [--skip-cmake]"
   echo ""
   echo "Flags:"
   echo "  -r, --reset         Shut down the compilation pod and start a new one to ensure a fresh build."
-  echo "  -c, --cmake         Enforces the execution of the cmake step. If not provided, cmake is only executed once when the pod is created."
   echo "  -d, --redeploy      Redeploy the CTA pods."
+  echo "      --skip-cmake    Skips the cmake step of the build_rpm stage during the compilation process."
   exit 1
 }
 
-# Default values
-RESET=false
-REDEPLOY=false
-RESTARTED=false
-NAMESPACE="build"
-EXEC_CMAKE=false
-SRC_DIR="/home/cirunner/shared"
+compile_deploy() {
 
-POD_NAME="cta-compile-pod"
+  # Input args
+  local reset=false
+  local redeploy=false
+  local skip_cmake=false
 
-# Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    -r  |--reset) RESET=true ;;
-    -d  |--redeploy) REDEPLOY=true ;;
-    -c  |--cmake) EXEC_CMAKE=true ;;
-    *)
-    usage ;;
-  esac
-  shift
-done
+  # Defaults
+  local restarted=false
+  local namespace="build"
+  local src_dir="/home/cirunner/shared"
+  local readonly compile_pod_name="cta-compile-pod"
 
-# Check if SRC_DIR specified
-echo "Checking whether CTA directory exists in \"$SRC_DIR\" exists..."
-if [ ! -d "$SRC_DIR/CTA" ]; then
-  echo "Error: CTA directory not present in \"$SRC_DIR\"."
-  exit -1
-fi
-echo "Directory found"
+  # Parse command line arguments
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+      -r | --reset)
+        reset=true
+        shift
+        ;;
+      -d | --redeploy)
+        redeploy=true
+        shift
+        ;;
+      -s | --skip-cmake)
+        skip_cmake=true
+        shift
+        ;;
+      *) 
+        usage
+        ;;
+    esac
+    shift
+  done
 
-# Check if namespace exists
-if kubectl get namespace "$NAMESPACE" &> /dev/null; then
-    echo "Namespace $NAMESPACE exists."
-else
-    # Create namespace
-    kubectl create namespace "$NAMESPACE"
-fi
+  # Check if src_dir specified
+  echo "Checking whether CTA directory exists in \"${src_dir}\" exists..."
+  if [ ! -d "${src_dir}/CTA" ]; then
+    echo "Error: CTA directory not present in \"${src_dir}\"."
+    exit 1;
+  fi
+  echo "Directory found"
 
-if $RESET; then
-  echo "Shutting down the existing compilation pod..."
-  kubectl delete pod $POD_NAME -n $NAMESPACE
-fi
+  # Check if namespace exists
+  if kubectl get namespace "${namespace}" &> /dev/null; then
+      echo "Namespace ${namespace} exists."
+  else
+      # Create namespace
+      echo "Creating namespace: ${namespace}"
+      kubectl create namespace "${namespace}"
+  fi
 
-# Create the pod if it does not exist
-if kubectl get pod $POD_NAME -n $NAMESPACE > /dev/null 2>&1; then
-  echo "Pod $POD_NAME already exists"
-else
-  echo "Starting a new compilation pod..."
-  RESTARTED=true
-  kubectl create -f $SRC_DIR/CTA/continuousintegration/orchestration/cta-compile-pod.yml -n $NAMESPACE
-  kubectl wait --for=condition=ready pod/$POD_NAME -n $NAMESPACE
-  echo "Installing packages into container"
-  kubectl exec -it $POD_NAME -n $NAMESPACE -- /bin/sh -c ' \
-    cd /shared/CTA && \
-    cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/ && \
-    cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/ && \
-    yum -y install epel-release almalinux-release-devel git && \
-    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils && \
-    ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh'
-  echo "Basic pod created"
-  echo "Building SRPMs..."
-  kubectl exec -it $POD_NAME -n $NAMESPACE -- /bin/sh -c ' \
-    cd /tmp && \
-    mkdir CTA_srpm && \
-    cd CTA_srpm && \
-    cmake3 -DPackageOnly:Bool=true /shared/CTA && \
-    make cta_srpm -j 4 && \
-    yum-builddep --nogpgcheck -y /tmp/CTA_srpm/RPM/SRPMS/*'
-fi
+  if $reset; then
+    echo "Shutting down the existing compilation pod..."
+    kubectl delete pod ${compile_pod_name} -n ${namespace}
+  fi
 
-echo "Compiling the CTA project from source directory"
+  # Create the pod if it does not exist
+  if kubectl get pod ${compile_pod_name} -n ${namespace} > /dev/null 2>&1; then
+    echo "Pod ${compile_pod_name} already exists"
+  else
+    echo "Starting a new compilation pod..."
+    restarted=true
+    kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/cta-compile-pod.yml -n ${namespace}
+    kubectl wait --for=condition=ready pod/${compile_pod_name} -n ${namespace}
+    echo "Installing packages into container"
+    # TODO: replace with build_srpm script
+    kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ' \
+      cd /shared/CTA && \
+      cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/ && \
+      cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/ && \
+      yum -y install epel-release almalinux-release-devel git && \
+      yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils && \
+      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh'
+    echo "Basic pod created"
+    echo "Building SRPMs..."
+    kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ' \
+      cd /tmp && \
+      mkdir CTA_srpm && \
+      cd CTA_srpm && \
+      cmake3 -DPackageOnly:Bool=true /shared/CTA && \
+      make cta_srpm -j 4 && \
+      yum-builddep --nogpgcheck -y /tmp/CTA_srpm/RPM/SRPMS/*'
+  fi
 
-# TODO: add explicit cmake run flag
-if [ "$RESTARTED" = true ] || [ "$EXEC_CMAKE" = true ]; then
+  echo "Compiling the CTA project from source directory"
+
+  if [ "$restarted" = true ]; then
+    skip_cmake=false
+  fi
+
+
+  # TODO: replace with build_rpm script
   echo "Running cmake..."
-  kubectl exec -it $POD_NAME -n $NAMESPACE -- /bin/sh -c '
+  kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c '
     cd /shared/ && \
     mkdir -p CTA_rpm && \
     cd CTA_rpm && \
     cmake3 ../CTA'
-fi
 
-echo "Running make..."
+  echo "Running make..."
 
-kubectl exec -it $POD_NAME -n $NAMESPACE -- /bin/sh -c '
-  cd /shared/CTA_rpm && \
-  make cta_rpm  -j 4'
+  kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c '
+    cd /shared/CTA_rpm && \
+    make cta_rpm  -j 4'
 
-echo "Compilation successfull"
+  echo "Compilation successfull"
 
-if [ "$REDEPLOY" = "true" ]; then
-  echo "Redeploying CTA pods..."
-  ./redeploy.sh --root-dir $SRC_DIR -n dev
-  echo "Pods redeployed"
-fi
+  if [ "${redeploy}" = "true" ]; then
+    echo "Redeploying CTA pods..."
+    ./redeploy.sh -n dev
+    echo "Pods redeployed"
+  fi
+}
+
+compile_deploy "$@"
