@@ -421,10 +421,8 @@ struct ArchiveJobQueueRow {
    * @param txn        Transaction to use for this query
    * @param status     Archive Job Status to select on
    * @param jobIDs     List of jobID strings to select
-   *
-   * @return  result set
    */
-   void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
+   static void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
 
 
 };
