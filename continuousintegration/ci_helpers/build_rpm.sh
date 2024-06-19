@@ -40,7 +40,7 @@ build_rpm() {
   cd "$(dirname "$0")"
   cd ../../
 
-  # Default values
+  # Default values for arguments
   local num_jobs=1
   local install=false
   local distro=""
@@ -140,11 +140,11 @@ build_rpm() {
   fi
 
   # Cmake
-  if [ "$skip_cmake" = false ]; then
+  if [ "${skip_cmake}" = false ]; then
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
-    cmake_options=" -DVCS_VERSION=${vcs_version}"
+    local cmake_options=" -DVCS_VERSION=${vcs_version}"
     if [ "${skip_unit_tests}" = true ]; then
       cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
     fi
