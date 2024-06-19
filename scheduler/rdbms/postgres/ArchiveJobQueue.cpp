@@ -58,7 +58,8 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
     return;
   }
   std::string sqlpart;
-  for (const auto &piece : jobIDs) sqlpart += piece;
+  for (const auto &piece : jobIDs) sqlpart += piece + ",";
+  if (!sqlpart.empty()) { sqlpart.pop_back(); }
   txn.start();
   std::string sql =
           "UPDATE ARCHIVE_JOB_QUEUE SET "

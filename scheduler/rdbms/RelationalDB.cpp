@@ -149,15 +149,15 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   rdbms::Rset resultSet_ForTransfer;
   rdbms::Rset resultSet_ForFailure;
   auto sqlconn_fortransfer = m_connPool.getConn();
-  auto sqlconn_forfailure = m_connPool.getConn();
+  //auto sqlconn_forfailure = m_connPool.getConn();
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   resultSet_ForTransfer = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(
           sqlconn_fortransfer, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
-  resultSet_ForFailure = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(
-          sqlconn_forfailure, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
+  //resultSet_ForFailure = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(
+  //        sqlconn_forfailure, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
+  //logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   while(resultSet_ForTransfer.next() || resultSet_ForFailure.next()) {

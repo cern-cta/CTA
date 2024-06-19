@@ -250,7 +250,8 @@ struct ArchiveJobQueueRow {
       return ret;
     }
     std::string sqlpart;
-    for (const auto &piece : jobIDs) sqlpart += piece;
+    for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    if (!sqlpart.empty()) { sqlpart.pop_back(); }
     std::string sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
