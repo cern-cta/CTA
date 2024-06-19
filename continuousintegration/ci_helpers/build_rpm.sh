@@ -20,16 +20,16 @@ set -e
 usage() {
   echo "Builds the rpms."
   echo ""
-  echo "Usage: $0 [-i|--install <distribution>] [-j|--jobs <num-jobs>] [--skip-cmake] [--skip-unit-tests] [--srpms-dir <srpms-directory>] [--vcs-version <vcs-version>] [--xrootd-ssi-version <xrootd-ssi-version>]"
+  echo "Usage: $0 [-i|--install <distro>] [-j|--jobs <num-jobs>] [--skip-cmake] [--skip-unit-tests] [--srpms-dir <srpms-directory>] [--vcs-version <vcs-version>] [--xrootd-ssi-version <xrootd-ssi-version>]"
   echo ""
   echo "Flags:"
-  echo "  -i, --install             Perform the setup and installation part of the required yum packages. Should specify which distribution to use. Should be one of [cc7, alma9]."
-  echo "  -j, --jobs                How many jobs to use for cmake/make."
-  echo "      --skip-cmake          Skips the cmake step. Can be used if this script is executed multiple times in succession."
-  echo "      --skip-unit-tests     Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --srpms-dir           The directory where the source rpms are located. Defaults to build_srpm/RPM/SRPMS (i.e. the output directory of the build_srpm.sh script). Note that this directory is relative to the root of the repository."
-  echo "      --vcs-version         Sets the VCS_VERSION variable in cmake. Defaults to \"dev\" if not provided."
-  echo "      --xrootd-ssi-version  Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake. If not provided, this will keep the existing XROOTD_SSI_PROTOBUF_INTERFACE_VERSION env variable if set, and otherwise will set it to \"dev\"."
+  echo "  -i, --install <distro>:                           Perform the setup and installation part of the required yum packages. Should specify which distribution to use. Should be one of [cc7, alma9]."
+  echo "  -j, --jobs <num_jobs>:                            How many jobs to use for cmake/make."
+  echo "      --skip-cmake                                  Skips the cmake step. Can be used if this script is executed multiple times in succession."
+  echo "      --skip-unit-tests                             Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --srpms-dir <srpms-directory>:                The directory where the source rpms are located. Defaults to build_srpm/RPM/SRPMS (i.e. the output directory of the build_srpm.sh script). Note that this directory is relative to the root of the repository."
+  echo "      --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake. Defaults to \"dev\" if not provided."
+  echo "      --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake. If not provided, this will keep the existing XROOTD_SSI_PROTOBUF_INTERFACE_VERSION env variable if set, and otherwise will set it to \"dev\"."
 
   exit 1
 }
