@@ -50,15 +50,12 @@ compile_deploy() {
     case $1 in
       -r | --reset)
         reset=true
-        shift
         ;;
       -d | --redeploy)
         redeploy=true
-        shift
         ;;
       -s | --skip-cmake)
         skip_cmake=true
-        shift
         ;;
       *) 
         usage
@@ -97,46 +94,24 @@ compile_deploy() {
     restarted=true
     kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/cta-compile-pod.yml -n ${namespace}
     kubectl wait --for=condition=ready pod/${compile_pod_name} -n ${namespace}
-    echo "Installing packages into container"
-    # TODO: replace with build_srpm script
-    kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ' \
-      cd /shared/CTA && \
-      cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/ && \
-      cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/ && \
-      yum -y install epel-release almalinux-release-devel git && \
-      yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils && \
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh'
-    echo "Basic pod created"
     echo "Building SRPMs..."
-    kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ' \
-      cd /tmp && \
-      mkdir CTA_srpm && \
-      cd CTA_srpm && \
-      cmake3 -DPackageOnly:Bool=true /shared/CTA && \
-      make cta_srpm -j 4 && \
-      yum-builddep --nogpgcheck -y /tmp/CTA_srpm/RPM/SRPMS/*'
+    kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh --install alma9 --jobs 4
   fi
 
   echo "Compiling the CTA project from source directory"
 
-  if [ "$restarted" = true ]; then
-    skip_cmake=false
+  local build_rpm_flags=" --jobs 8"
+
+  if [ "${restarted}" = true ]; then
+    build_rpm_flags+=" --install alma9"
+  elif [ "${skip_cmake}" = true]; then
+    # It should only be possible to skip cmake if the pod was not restarted
+    build_rpm_flags+=" --skip-cmake"
   fi
 
 
-  # TODO: replace with build_rpm script
-  echo "Running cmake..."
-  kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c '
-    cd /shared/ && \
-    mkdir -p CTA_rpm && \
-    cd CTA_rpm && \
-    cmake3 ../CTA'
-
-  echo "Running make..."
-
-  kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c '
-    cd /shared/CTA_rpm && \
-    make cta_rpm  -j 4'
+  echo "Building RPMs..."
+  kubectl exec -it ${compile_pod_name} -n ${namespace} -- /bin/sh -c ./shared/CTAcontinuousintegration/ci_helpers/build_rpm.sh ${build_rpm_flags}
 
   echo "Compilation successfull"
 

@@ -17,8 +17,8 @@
 
 usage() {
   echo "Usage: $0 [-s|--rpm-src <rpm source>] -t|--tag <image_tag>"
-  echo "  -s, --rpm-src     Path to the RPMs to be installed. For example \"-s ~/CTA-build/RPM/RPMS/x86_64\""
-  echo "  -t, --tag         Docker image tag. For example \"-t dev\""
+  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. For example \"-s ~/CTA-build/RPM/RPMS/x86_64\""
+  echo "  -t, --tag <image_tag>:        Docker image tag. For example \"-t dev\""
   exit 1
 }
 

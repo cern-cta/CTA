@@ -92,7 +92,7 @@ redeploy() {
   cd ../../
 
   # Delete previous instance, if it exists
-  if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
+  if ! kubectl get namespace "${kube_namespace}" &> /dev/null; then
     echo "Deleting the old namespace"
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace}
   fi
