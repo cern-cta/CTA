@@ -45,10 +45,7 @@ cta_tagged_rpm_alma9:
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
-<<<<<<< HEAD
                                                       --jobs $(nproc --ignore=1)
-=======
->>>>>>> faaf9e6f4c (Added missing scheduler type flag)
                                                       --install
   artifacts:
     expire_in: 30 days
