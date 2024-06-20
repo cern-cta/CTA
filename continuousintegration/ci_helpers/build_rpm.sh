@@ -305,22 +305,22 @@ build_rpm() {
   fi
 
   if [ -z "${scheduler_type}" ]; then
-    echo "Please specify --scheduler-type";
+    echo "Failure: Missing mandatory argument --scheduler-type";
     exit 1;
   fi
 
   if [ -z "${srpm_dir}" ]; then
-    echo "Please specify --srpm-dir";
+    echo "Failure: Missing mandatory argument --srpm-dir";
     exit 1;
   fi
 
   if [ -z "${vcs_version}" ]; then
-    echo "Please specify --vcs-version";
+    echo "Failure: Missing mandatory argument --vcs-version";
     exit 1;
   fi
 
   if [ -z "${xrootd_version}" ]; then
-    echo "Please specify --xrootd-version";
+    echo "Failure: Missing mandatory argument --xrootd-version";
     exit 1;
   fi
 
@@ -330,7 +330,7 @@ build_rpm() {
   fi
 
   if [ -z "${xrootd_ssi_version}" ]; then
-    echo "Please specify --xrootd-ssi-version";
+    echo "Failure: Missing mandatory argument --xrootd-ssi-version";
     exit 1;
   fi
 
