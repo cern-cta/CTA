@@ -133,22 +133,22 @@ build_srpm() {
   done
 
   if [ -z "${build_dir}" ]; then
-    echo "Please specify --build-dir";
+    echo "Failure: Missing mandatory argument --build-dir";
     usage
   fi
 
   if [ -z "${scheduler_type}" ]; then
-    echo "Please specify --scheduler-type";
+    echo "Failure: Missing mandatory argument --scheduler-type";
     usage
   fi  
   
   if [ -z "${vcs_version}" ]; then
-    echo "Please specify --vcs-version";
+    echo "Failure: Missing mandatory argument --vcs-version";
     usage
   fi
 
   if [ -z "${xrootd_version}" ]; then
-    echo "Please specify --xrootd-version";
+    echo "Failure: Missing mandatory argument --xrootd-version";
     usage
   fi
 
