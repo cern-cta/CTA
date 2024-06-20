@@ -37,7 +37,7 @@
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
-                                                      --srpm-dir build_srpm/RPM/RPMS
+                                                      --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${CTA_VERSION}
                                                       --vcs-version ${CTA_BUILD_ID}
                                                       --xrootd-version ${XROOTD_VERSION}
@@ -158,7 +158,7 @@ cta_rpm_alma9:
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
-                                                  --srpm-dir build_srpm/RPM/RPMS
+                                                  --srpm-dir build_srpm/RPM/SRPMS
                                                   --cta-version ${CTA_VERSION}
                                                   --vcs-version ${CTA_BUILD_ID}
                                                   --xrootd-version ${XROOTD_VERSION}
