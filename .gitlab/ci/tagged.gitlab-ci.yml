@@ -16,6 +16,7 @@ cta_tagged_rpm:
                                                       --vcs-version ${TAG_RELEASE}
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
                                                       --install
   artifacts:
     expire_in: 30 days
@@ -40,6 +41,7 @@ cta_tagged_rpm_alma9:
                                                       --vcs-version ${TAG_RELEASE}
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
                                                       --install
   artifacts:
     expire_in: 30 days
