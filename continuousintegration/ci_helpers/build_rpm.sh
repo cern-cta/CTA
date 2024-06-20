@@ -30,11 +30,11 @@ usage() {
   echo "  --xrootd-version <xrootd-version>:            Sets the xrootd version. This will also be used as the CTA version. Should be one of [4, 5]."
   echo ""
   echo "options:"
-  echo "  -i, --install:                          Installs the required packages. Supported operating systems: [cc7, alma9]."
-  echo "  -j, --jobs <num_jobs>:                  How many jobs to use for cmake/make."
-  echo "      --skip-cmake                        Skips the cmake step. Can be used if this script is executed multiple times in succession."
-  echo "      --skip-unit-tests                   Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --oracle-support <ON/OFF>:          When set to OFF, will disable Oracle support. Oracle support is enabled by default."
+  echo "  -i, --install:                                Installs the required packages. Supported operating systems: [cc7, alma9]."
+  echo "  -j, --jobs <num_jobs>:                        How many jobs to use for cmake/make."
+  echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
+  echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
 
   exit 1
 }
@@ -215,7 +215,7 @@ build_rpm() {
     fi
 
     # Go through supported Operating Systems
-    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 0 ]; then
+    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
@@ -224,7 +224,7 @@ build_rpm() {
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
       yum-builddep --nogpgcheck -y ${srpm_dir}/*
-    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 0 ]; then
+    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then 
