@@ -42,6 +42,7 @@
                                                       --vcs-version ${CTA_BUILD_ID}
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --install
   variables:
@@ -162,6 +163,7 @@ cta_rpm_alma9:
                                                   --vcs-version ${CTA_BUILD_ID}
                                                   --xrootd-version ${XROOTD_VERSION}
                                                   --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                  --scheduler-type ${SCHED_TYPE}
                                                   --oracle-support ${ORACLE_SUPPORT}
                                                   --install
   rules:
