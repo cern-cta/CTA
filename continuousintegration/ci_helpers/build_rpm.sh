@@ -350,7 +350,7 @@ build_rpm() {
     fi
 
     # Go through supported Operating Systems
-    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 0 ]; then
+    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
@@ -359,7 +359,7 @@ build_rpm() {
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
       yum-builddep --nogpgcheck -y ${srpm_dir}/*
-    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 0 ]; then
+    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then 
