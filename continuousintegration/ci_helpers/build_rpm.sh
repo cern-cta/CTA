@@ -177,6 +177,36 @@ build_rpm() {
           usage
         fi
         ;;
+      -i|--install)
+        install=true
+        ;;
+      -j|--jobs)
+        if [[ $# -gt 1 ]]; then
+          num_jobs="$2"
+          shift
+        else
+          echo "Error: -j|--jobs requires an argument"
+          usage
+        fi
+        ;;
+      --skip-cmake) 
+        skip_cmake=true 
+        ;;
+      --skip-unit-tests) 
+        skip_unit_tests=true 
+        ;;
+      --oracle-support) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" = "OFF" ]; then
+            disable_oracle_support=true
+          fi
+          shift
+        else
+          echo "Error: -j|--jobs requires an argument"
+          usage
+        fi
+        disable_oracle_support=true 
+        ;;
       *)
         echo "Invalid argument: $1"
         usage 
@@ -273,6 +303,83 @@ build_rpm() {
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
     fi
   fi
+
+  if [ -z "${scheduler_type}" ]; then
+    echo "Please specify --scheduler-type";
+    exit 1;
+  fi
+
+  if [ -z "${srpm_dir}" ]; then
+    echo "Please specify --srpm-dir";
+    exit 1;
+  fi
+
+  if [ -z "${vcs_version}" ]; then
+    echo "Please specify --vcs-version";
+    exit 1;
+  fi
+
+  if [ -z "${xrootd_version}" ]; then
+    echo "Please specify --xrootd-version";
+    exit 1;
+  fi
+
+  if ! xrootd_supported "${xrootd_version}"; then 
+    echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
+    exit 1
+  fi
+
+  if [ -z "${xrootd_ssi_version}" ]; then
+    echo "Please specify --xrootd-ssi-version";
+    exit 1;
+  fi
+
+  # navigate to root directory
+  cd "$(dirname "$0")"
+  cd ../../
+  local repo_root=$(pwd)
+  local cmake_options=""
+
+  # Setup  
+  if [ "${install}" = true ]; then
+    echo "Installing prerequisites..."
+    if [ -d "${build_dir}" ]; then
+      echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
+      rm -r "${build_dir}"
+      echo "Old build directory removed"
+    fi
+
+    # Go through supported Operating Systems
+    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 0 ]; then
+      # Alma9
+      cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+      cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+      yum -y install epel-release almalinux-release-devel
+      yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+      yum -y install yum-plugin-versionlock
+      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
+      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 0 ]; then
+      # CentOS 7
+      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+      if [[ ${xrootd_version} -eq 4 ]]; then 
+        echo "Using XRootD version 4";
+        ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
+        yum-config-manager --enable cta-ci-xroot;
+        yum-config-manager --disable cta-ci-xrootd5;
+      else 
+        echo "Using XRootD version 5";
+      fi
+      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+      yum install -y devtoolset-11 cmake3 make rpm-build
+      yum -y install yum-plugin-priorities yum-plugin-versionlock
+      source /opt/rh/devtoolset-11/enable
+      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+    else
+      echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
+    fi
+  fi
+
 
   # Cmake
   export CTA_VERSION=${cta_version}
