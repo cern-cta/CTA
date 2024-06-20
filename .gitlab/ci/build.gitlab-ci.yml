@@ -19,7 +19,7 @@
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm \
+    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
                                                        --cta-version ${CTA_VERSION} \
                                                        --vcs-version ${CTA_BUILD_ID} \
                                                        --xrootd-version ${XROOTD_VERSION} \
