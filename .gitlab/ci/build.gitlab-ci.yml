@@ -19,7 +19,13 @@
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh --install cc7 --vcs-version ${CTA_BUILD_ID}
+    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm \
+                                                       --cta-version ${CTA_VERSION} \
+                                                       --vcs-version ${CTA_BUILD_ID} \
+                                                       --xrootd-version ${XROOTD_VERSION} \
+                                                       --scheduler-type ${SCHED_TYPE} \
+                                                       --oracle-support ${ORACLE_SUPPORT} \
+                                                       --install 
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
@@ -30,7 +36,14 @@
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh --install cc7 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm \
+                                                      --srpm-dir build_srpm/RPM/RPMS \
+                                                      --cta-version ${CTA_VERSION} \
+                                                      --vcs-version ${CTA_BUILD_ID} \
+                                                      --xrootd-version ${XROOTD_VERSION} \
+                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --oracle-support ${ORACLE_SUPPORT} \
+                                                      --install
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
@@ -117,16 +130,16 @@ cta_srpm_alma9:
   extends:
     - .cta_srpm
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  before_script:
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
-    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
-    - echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh --install alma9 --vcs-version ${CTA_BUILD_ID}
+    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm \
+                                                       --cta-version ${CTA_VERSION} \
+                                                       --vcs-version ${CTA_BUILD_ID} \
+                                                       --xrootd-version ${XROOTD_VERSION} \
+                                                       --scheduler-type ${SCHED_TYPE} \
+                                                       --oracle-support ${ORACLE_SUPPORT} \
+                                                       --install 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -139,14 +152,18 @@ cta_rpm_alma9:
   extends:
     - .cta_rpm
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  before_script:
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
   script:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh --install alma9 --vcs-version ${CTA_BUILD_ID} --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm \
+                                                  --srpm-dir build_srpm/RPM/RPMS \
+                                                  --cta-version ${CTA_VERSION} \
+                                                  --vcs-version ${CTA_BUILD_ID} \
+                                                  --xrootd-version ${XROOTD_VERSION} \
+                                                  --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} \
+                                                  --oracle-support ${ORACLE_SUPPORT} \
+                                                  --install
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
