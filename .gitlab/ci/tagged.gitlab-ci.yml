@@ -10,11 +10,11 @@ cta_tagged_rpm:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm \
-                                                      --srpm-dir build_srpm/RPM/RPMS \
-                                                      --cta-version ${TAG_VERSION} \
-                                                      --vcs-version ${TAG_RELEASE} \
-                                                      --xrootd-version ${XROOTD_VERSION} \
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
+                                                      --srpm-dir build_srpm/RPM/RPMS
+                                                      --cta-version ${TAG_VERSION}
+                                                      --vcs-version ${TAG_RELEASE}
+                                                      --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --install
   artifacts:
@@ -34,11 +34,11 @@ cta_tagged_rpm_alma9:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm \
-                                                      --srpm-dir build_srpm/RPM/RPMS \
-                                                      --cta-version ${TAG_VERSION} \
-                                                      --vcs-version ${TAG_RELEASE} \
-                                                      --xrootd-version ${XROOTD_VERSION} \
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
+                                                      --srpm-dir build_srpm/RPM/RPMS
+                                                      --cta-version ${TAG_VERSION}
+                                                      --vcs-version ${TAG_RELEASE}
+                                                      --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --install
   artifacts:
