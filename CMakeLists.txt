@@ -188,6 +188,8 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
    "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
   message (STATUS
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+  # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
+  # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES 
     "/.git/"
     "/build_srpm/"
