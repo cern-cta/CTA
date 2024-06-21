@@ -28,8 +28,9 @@ usage() {
   echo "Usage: $0 [options]"
   echo ""
   echo "options:"
+  echo "  -h, --help:                               Shows help output."
   echo "  -r, --reset:                              Shut down the compilation pod and start a new one to ensure a fresh build."
-  echo "      --skip-build:                        Skips the build step."
+  echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the compilation process."
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
@@ -66,6 +67,9 @@ compile_deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case $1 in
+      -h | --help)
+        usage
+        ;;
       -r | --reset)
         reset=true
         ;;
