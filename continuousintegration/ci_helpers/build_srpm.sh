@@ -29,7 +29,7 @@ usage() {
   echo ""
   echo "options:"
   echo "  -i, --install:                        Installs the required packages. Supported operating systems: [cc7, alma9]."
-  echo "  -j, --jobs <num-jobs>:                How many jobs to use for cmake/make."
+  echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
   echo "      --skip-unit-tests:                Skips the unit tests."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   exit 1
@@ -51,7 +51,7 @@ build_srpm() {
   local install=false
   local num_jobs=1
   local skip_unit_tests=false
-  local disable_oracle_support=false
+  local oracle_support=true
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -119,7 +119,7 @@ build_srpm() {
       --oracle-support) 
         if [[ $# -gt 1 ]]; then
           if [ "$2" = "OFF" ]; then
-            disable_oracle_support=true
+            oracle_support=false
           fi
           shift
         fi
@@ -207,7 +207,7 @@ build_srpm() {
   cmake_options+=" -DPackageOnly:Bool=true"
   cmake_options+=" -DVCS_VERSION=${vcs_version}"
 
-  if [[ ${disable_oracle_support} = true ]]; then
+  if [[ ${oracle_support} = false ]]; then
     echo "Disabling Oracle Support";
     cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
   fi
