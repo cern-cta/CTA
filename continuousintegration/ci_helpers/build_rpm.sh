@@ -306,22 +306,22 @@ build_rpm() {
 
   if [ -z "${scheduler_type}" ]; then
     echo "Failure: Missing mandatory argument --scheduler-type";
-    exit 1;
+    usage
   fi
 
   if [ -z "${srpm_dir}" ]; then
     echo "Failure: Missing mandatory argument --srpm-dir";
-    exit 1;
+    usage
   fi
 
   if [ -z "${vcs_version}" ]; then
     echo "Failure: Missing mandatory argument --vcs-version";
-    exit 1;
+    usage
   fi
 
   if [ -z "${xrootd_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-version";
-    exit 1;
+    usage
   fi
 
   if ! xrootd_supported "${xrootd_version}"; then 
@@ -331,7 +331,7 @@ build_rpm() {
 
   if [ -z "${xrootd_ssi_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-ssi-version";
-    exit 1;
+    usage
   fi
 
   # navigate to root directory
@@ -346,21 +346,23 @@ build_rpm() {
     if [ -d "${build_dir}" ]; then
       echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
       rm -r "${build_dir}"
-      echo "Old build directory removed"
+      echo "Old build directory: ${build_dir} removed"
     fi
 
     # Go through supported Operating Systems
     if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
+      echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
       yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
+      echo "Found CentOS 7 install..."
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then 
         echo "Using XRootD version 4";
@@ -374,7 +376,7 @@ build_rpm() {
       yum install -y devtoolset-11 cmake3 make rpm-build
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable
-      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     else
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
     fi
