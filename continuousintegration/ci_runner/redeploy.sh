@@ -19,12 +19,12 @@ set -e
 
 # Help message
 usage() {
+  echo "Usage: $0 [options]"
+  echo ""
   echo "Will (re)deploy the local minikube instance with the latest rpms."
   echo "These rpms are assumed to be located in CTA/build_rpm, as done by the build_rpm.sh script in ci_helpers."
   echo ""
-  echo "Usage: $0 [-n|--namespace <namespace>] [-t|--tag <tag>] [-s|--rpm-src <rpm source>]"
-  echo ""
-  echo "Flags:"
+  echo "options:"
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:   Path to the RPMs that should be deployed. Defaults to CTA/build_rpm/RPM/RPMS/x86_64 if not provided."
@@ -76,7 +76,6 @@ redeploy() {
 
   if [ "$#" -ge 3 ]; then
     usage
-    exit 1
   fi
 
   # Script should be run as cirunner
@@ -92,28 +91,30 @@ redeploy() {
   cd ../../
 
   # Delete previous instance, if it exists
-  if ! kubectl get namespace "${kube_namespace}" &> /dev/null; then
-    echo "Deleting the old namespace"
+  if kubectl get namespace ${kube_namespace} &> /dev/null; then
+    echo "Found existing namespace \"${kube_namespace}\". Deleting..."
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace}
   fi
 
   # Clear the old image and namespace
   if podman inspect ctageneric:${image_tag} &> /dev/null; then
     echo "Deleting old image and removing it from minikube"
-    podman rmi ctageneric:${image_tag}
+    # podman rmi ctageneric:${image_tag}
     minikube image rm localhost/ctageneric:${image_tag}
   fi
 
   ## Create and load the new image
   echo "Building image based on ${rpm_src}"
-  ./continuousintegration/ci_runner/prepareImage.sh --tag ${image_tag} --rpm-src ${rpm_src}
+  ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}"
+  podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:dev
   echo "Loading new image into minikube"
-  minikube image load  localhost/ctageneric:${image_tag}
+  minikube image load ctageneric_${image_tag}.tar
+  rm ctageneric_${image_tag}.tar
 
   # Redeploy containers
-  echo "Redeploying container"
+  echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n $kube_namespace -i ${image_tag} -D -O -d internal_postgres.yaml
+  ./create_instance.sh -n ${kube_namespace} -i ${image_tag} -D -O -d internal_postgres.yaml
 }
 
 redeploy "$@"

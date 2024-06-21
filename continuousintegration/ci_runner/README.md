@@ -50,7 +50,7 @@ The system tests run with a single image. The image should be generated once for
 
 ```
 cd ~/CTA/continuousintegration/ci_runner
-./prepareImage.sh ~/CTA-build/RPM/RPMS/x86_64 dev
+./prepare_image.sh ~/CTA-build/RPM/RPMS/x86_64 dev
 ```
 
 The first argument is the path to the RPMs, the second is the tag to use for the image.
@@ -79,4 +79,3 @@ sudo ./create_instance.sh -n stress -i dev -D -O -d internal_postgres.yaml -e eo
 ```
 
 and the tests will run like in the continuous integration environment.
-
