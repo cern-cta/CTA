@@ -18,16 +18,16 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options]--build-dir <build-dir> --cta-version <cta-version> --srpm-dir <srpm-directory> --vcs-version <vcs-version> --xrootd-ssi-version <xrootd-ssi-version>"
+  echo "Usage: $0 [options]--build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
   echo ""
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to the repository root. Ex: build_rpm"
-  echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
-  echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to the repository root. Ex: build_srpm/RPM/SRPMS"
+  echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
+  echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
-  echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo "  --xrootd-version <xrootd-version>:            Sets the xrootd version. This will also be used as the CTA version. Should be one of [4, 5]."
+  echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo ""
   echo "options:"
   echo "  -i, --install:                                Installs the required packages. Supported operating systems: [cc7, alma9]."
@@ -166,27 +166,27 @@ build_rpm() {
 
  if [ -z "${build_dir}" ]; then
     echo "Failure: Missing mandatory argument --build-dir";
-    exit 1;
+    usage
   fi
 
   if [ -z "${scheduler_type}" ]; then
     echo "Failure: Missing mandatory argument --scheduler-type";
-    exit 1;
+    usage
   fi
 
   if [ -z "${srpm_dir}" ]; then
     echo "Failure: Missing mandatory argument --srpm-dir";
-    exit 1;
+    usage
   fi
 
   if [ -z "${vcs_version}" ]; then
     echo "Failure: Missing mandatory argument --vcs-version";
-    exit 1;
+    usage
   fi
 
   if [ -z "${xrootd_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-version";
-    exit 1;
+    usage
   fi
 
   if ! xrootd_supported "${xrootd_version}"; then 
@@ -196,7 +196,7 @@ build_rpm() {
 
   if [ -z "${xrootd_ssi_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-ssi-version";
-    exit 1;
+    usage
   fi
 
   # navigate to root directory
@@ -211,21 +211,23 @@ build_rpm() {
     if [ -d "${build_dir}" ]; then
       echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
       rm -r "${build_dir}"
-      echo "Old build directory removed"
+      echo "Old build directory: ${build_dir} removed"
     fi
 
     # Go through supported Operating Systems
     if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
+      echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
       yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
+      echo "Found CentOS 7 install..."
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then 
         echo "Using XRootD version 4";
@@ -239,7 +241,7 @@ build_rpm() {
       yum install -y devtoolset-11 cmake3 make rpm-build
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable
-      yum-builddep --nogpgcheck -y ${srpm_dir}/*
+      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     else
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
     fi
@@ -267,7 +269,7 @@ build_rpm() {
 
     if [[ ${scheduler_type} != "objectstore" ]]; then
       echo "Using specified scheduler database type $SCHED_TYPE";
-      local sched_opt="-DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
+      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
       cmake_options+=" ${sched_opt}";
     fi
 
