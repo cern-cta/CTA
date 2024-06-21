@@ -54,7 +54,7 @@ RUN yum install -y \
     chmod 0644 /etc/logrotate.d/*
 
 # Add previously built rpms
-COPY build_rpm/RPM ${CTAREPODIR}
+COPY build_rpm/RPM/RPMS/x86_64 ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
