@@ -205,7 +205,6 @@ build_rpm() {
           echo "Error: -j|--jobs requires an argument"
           usage
         fi
-        disable_oracle_support=true 
         ;;
       *)
         echo "Invalid argument: $1"
