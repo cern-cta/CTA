@@ -22,12 +22,6 @@ usage() {
   exit 1
 }
 
-arePathsEqual() {
-  local path1 = $(readlink -f "$1")
-  local path2 = $(readlink -f "$2")
-  return ${path1} = ${path2}
-}
-
 prepareImage() {
 
   # navigate to root directory
@@ -70,7 +64,6 @@ prepareImage() {
   if [ -z "${image_tag}" ]; then
     echo "Please specify the docker image tag";
     usage
-    exit 1;
   fi
 
   if [ -z "${rpm_src}" ]; then
@@ -79,20 +72,20 @@ prepareImage() {
       echo "Default rpm source not found. Please build the rpms or provide an alternative valid path."
       exit 1;
     fi
-  elif ! arePathsEqual ${rpm_src} ${rpm_default_src}; then
+  elif [ ! $(readlink -f "${rpm_src}") = $(readlink -f "${rpm_default_src}") ]; then
     trap "rm -rf ${rpm_default_src}" EXIT
     mkdir -p ${rpm_default_src}
     cp -r ${rpm_src} ${rpm_default_src}
   fi
-
-  if [ "$(cat /etc/redhat-release | grep -c 'AlmaLinux release 9')" -eq 0 ]; then
-    echo "Not running on AlmaLinux 9"
-    echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
-    sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
-  else
+  
+  if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
     echo "Running on AlmaLinux 9"
     echo "podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host"
     podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host
+  elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
+    echo "Running on CC7"
+    echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
+    sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
   fi
 }
 
