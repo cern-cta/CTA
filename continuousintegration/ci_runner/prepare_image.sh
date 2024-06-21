@@ -16,9 +16,14 @@
 #               submit itself to any jurisdiction.
 
 usage() {
-  echo "Usage: $0 [-s|--rpm-src <rpm source>] -t|--tag <image_tag>"
-  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. For example \"-s ~/CTA-build/RPM/RPMS/x86_64\""
+  echo "Usage: $0 [options] -t|--tag <image_tag>"
+  echo ""
+  echo "Builds an image based on the CTA rpms"
   echo "  -t, --tag <image_tag>:        Docker image tag. For example \"-t dev\""
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                               Shows help output."
+  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. Can be absolute or relative to the repository root. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   exit 1
 }
 
@@ -28,7 +33,6 @@ prepareImage() {
   cd "$(dirname "$0")"
   cd ../../
 
-
   # Default values
   local rpm_src=""
   local image_tag=""
@@ -36,6 +40,9 @@ prepareImage() {
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
+      -h | --help)
+        usage
+        ;;
       -s | --rpm-src)
         if [[ $# -gt 1 ]]; then
           rpm_src="$2"
@@ -61,12 +68,12 @@ prepareImage() {
     shift
   done
 
-  if [ -z "${image_tag}" ]; then
+  if [ -z ${image_tag} ]; then
     echo "Please specify the docker image tag";
     usage
   fi
 
-  if [ -z "${rpm_src}" ]; then
+  if [ -z ${rpm_src} ]; then
     echo "No explicit rpm source specified, using default: CTA/${rpm_default_src}"
     if [ ! -d "${rpm_default_src}" ]; then
       echo "Default rpm source not found. Please build the rpms or provide an alternative valid path."
@@ -76,6 +83,8 @@ prepareImage() {
     trap "rm -rf ${rpm_default_src}" EXIT
     mkdir -p ${rpm_default_src}
     cp -r ${rpm_src} ${rpm_default_src}
+  else
+    echo "Provided rpm source is same as default."
   fi
   
   if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then

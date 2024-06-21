@@ -25,6 +25,7 @@ usage() {
   echo "These rpms are assumed to be located in CTA/build_rpm, as done by the build_rpm.sh script in ci_helpers."
   echo ""
   echo "options:"
+  echo "  -h, --help:                               Shows help output."
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:   Path to the RPMs that should be deployed. Defaults to CTA/build_rpm/RPM/RPMS/x86_64 if not provided."
@@ -40,6 +41,9 @@ redeploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case $1 in
+      -h | --help)
+        usage
+        ;;
       -n | --namespace)
         if [[ $# -gt 1 ]]; then
           kube_namespace="$2"
