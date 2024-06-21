@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: build-pod
+  labels:
+    k8s-app: build-pod
+spec:
+  restartPolicy: Never
+  containers:
+  - name: build-pod
+    image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    stdin: true
+    command: ["sleep", "infinity"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+
+  imagePullSecrets:
+  - name: ctaregsecret
