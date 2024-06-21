@@ -17,6 +17,7 @@ cta_tagged_rpm:
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
+                                                      --jobs 8
                                                       --install
   artifacts:
     expire_in: 30 days
@@ -42,6 +43,7 @@ cta_tagged_rpm_alma9:
                                                       --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
+                                                      --jobs 8
                                                       --install
   artifacts:
     expire_in: 30 days
