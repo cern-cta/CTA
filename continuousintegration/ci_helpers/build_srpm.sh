@@ -32,6 +32,7 @@ usage() {
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
   echo "      --skip-unit-tests:                Skips the unit tests."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
+  echo "      --cmake-build-type <build-type>:  Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   exit 1
 }
 
@@ -52,6 +53,7 @@ build_srpm() {
   local num_jobs=1
   local skip_unit_tests=false
   local oracle_support=true
+  local cmake_build_type=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -122,6 +124,19 @@ build_srpm() {
             oracle_support=false
           fi
           shift
+        fi
+        ;;
+      --cmake-build-type) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+              echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+              exit 1
+          fi
+          cmake_build_type="$2"
+          shift
+        else
+          echo "Error: -j|--jobs requires an argument"
+          usage
         fi
         ;;
       *)
@@ -206,6 +221,10 @@ build_srpm() {
 
   cmake_options+=" -DPackageOnly:Bool=true"
   cmake_options+=" -DVCS_VERSION=${vcs_version}"
+
+  if [[ ! ${cmake_build_type} = "" ]]; then
+    cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
+  fi
 
   if [[ ${oracle_support} = false ]]; then
     echo "Disabling Oracle Support";

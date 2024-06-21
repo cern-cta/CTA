@@ -35,6 +35,7 @@ usage() {
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
+  echo "      --cmake-build-type <build-type>:          Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
 
   exit 1
 }
@@ -59,6 +60,7 @@ build_rpm() {
   local skip_cmake=false
   local skip_unit_tests=false
   local oracle_support=true
+  local cmake_build_type=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -149,6 +151,19 @@ build_rpm() {
           if [ "$2" = "OFF" ]; then
             oracle_support=false
           fi
+          shift
+        else
+          echo "Error: -j|--jobs requires an argument"
+          usage
+        fi
+        ;;
+      --cmake-build-type) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+              echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+              exit 1
+          fi
+          cmake_build_type="$2"
           shift
         else
           echo "Error: -j|--jobs requires an argument"
@@ -255,6 +270,10 @@ build_rpm() {
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
     cmake_options+=" -DVCS_VERSION=${vcs_version}"
+
+    if [[ ! ${cmake_build_type} = "" ]]; then
+      cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
+    fi
 
     if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
