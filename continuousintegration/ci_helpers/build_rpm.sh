@@ -31,7 +31,7 @@ usage() {
   echo ""
   echo "options:"
   echo "  -i, --install:                                Installs the required packages. Supported operating systems: [cc7, alma9]."
-  echo "  -j, --jobs <num_jobs>:                        How many jobs to use for cmake/make."
+  echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
@@ -58,7 +58,7 @@ build_rpm() {
   local num_jobs=1
   local skip_cmake=false
   local skip_unit_tests=false
-  local disable_oracle_support=false
+  local oracle_support=true
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -147,14 +147,13 @@ build_rpm() {
       --oracle-support) 
         if [[ $# -gt 1 ]]; then
           if [ "$2" = "OFF" ]; then
-            disable_oracle_support=true
+            oracle_support=false
           fi
           shift
         else
           echo "Error: -j|--jobs requires an argument"
           usage
         fi
-        disable_oracle_support=true 
         ;;
       *)
         echo "Invalid argument: $1"
@@ -257,7 +256,7 @@ build_rpm() {
 
     cmake_options+=" -DVCS_VERSION=${vcs_version}"
 
-    if [[ ${disable_oracle_support} = true ]]; then
+    if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
       cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
     fi
