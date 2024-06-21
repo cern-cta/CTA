@@ -25,6 +25,7 @@
                                                        --xrootd-version ${XROOTD_VERSION}
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
+                                                       --jobs 8
                                                        --install 
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
@@ -44,9 +45,35 @@
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
+                                                      --jobs 8
                                                       --install
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
+
+cta_srpm_alma9:
+  stage: build
+  retry: 1
+  extends:
+    - .cta_srpm
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $ALMA9 == "ON"
+
+cta_rpm_alma9:
+  stage: build
+  needs: [ cta_srpm_alma9 ]
+  retry: 1
+  extends:
+    - .cta_rpm
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "ON"
 
 cta_srpm_xrootd4:
   stage: build
@@ -123,52 +150,3 @@ cta_rpm_no_oracle:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
-
-
-cta_srpm_alma9:
-  stage: build
-  retry: 1
-  extends:
-    - .cta_srpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  script:
-    - yum install -y git
-    - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
-                                                       --cta-version ${CTA_VERSION}
-                                                       --vcs-version ${CTA_BUILD_ID}
-                                                       --xrootd-version ${XROOTD_VERSION}
-                                                       --scheduler-type ${SCHED_TYPE}
-                                                       --oracle-support ${ORACLE_SUPPORT}
-                                                       --install 
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $ALMA9 == "ON"
-
-cta_rpm_alma9:
-  stage: build
-  needs: [ cta_srpm_alma9 ]
-  retry: 1
-  extends:
-    - .cta_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  script:
-    - yum install -y git
-    - git submodule update --init --recursive
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
-                                                  --srpm-dir build_srpm/RPM/SRPMS
-                                                  --cta-version ${CTA_VERSION}
-                                                  --vcs-version ${CTA_BUILD_ID}
-                                                  --xrootd-version ${XROOTD_VERSION}
-                                                  --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
-                                                  --scheduler-type ${SCHED_TYPE}
-                                                  --oracle-support ${ORACLE_SUPPORT}
-                                                  --install
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $ALMA9 == "ON"

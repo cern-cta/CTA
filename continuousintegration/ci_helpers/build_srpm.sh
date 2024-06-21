@@ -18,12 +18,12 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options] --build-dir <build-dir> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --scheduler-type <scheduler-type>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> "
   echo ""
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to the repository root."
-  echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
+  echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-version <xrootd-version>:    Sets the xrootd version. This will also be used as the CTA version. Should be one of [4, 5]."
   echo ""
@@ -175,6 +175,7 @@ build_srpm() {
     # Go through supported Operating Systems
     if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
+      echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
@@ -182,6 +183,7 @@ build_srpm() {
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
+      echo "Found CentOS 7 install..."
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then 
         echo "Using XRootD version 4";
@@ -217,7 +219,7 @@ build_srpm() {
 
   if [[ ${scheduler_type} != "objectstore" ]]; then
     echo "Using specified scheduler database type $SCHED_TYPE";
-    local sched_opt="-DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
+    local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
     cmake_options+=" ${sched_opt}";
   fi
 
