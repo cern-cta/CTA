@@ -19,7 +19,7 @@ set -e
 
 # Help message
 usage() {
-  echo "Performs the compilation of CTA through a dedicated Kubernetes pod."
+  echo "Performs the build of CTA through a dedicated Kubernetes pod."
   echo "The pod persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
   echo ""
@@ -29,10 +29,10 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                               Shows help output."
-  echo "  -r, --reset:                              Shut down the compilation pod and start a new one to ensure a fresh build."
+  echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
-  echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the compilation process."
+  echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
@@ -127,8 +127,8 @@ compile_deploy() {
   if [ ${skip_build} = false ]; then
     # Delete old pod
     if [ ${reset} = true ]; then
-      echo "Shutting down the existing compilation pod..."
-      kubectl delete pod ${build_pod_name} -n ${build_namespace}
+      echo "Attempting shutdown of existing build pod..."
+      kubectl delete pod ${build_pod_name} -n ${build_namespace} --ignore-not-found
     fi
 
     # Create the pod if it does not exist
@@ -136,7 +136,7 @@ compile_deploy() {
       echo "Pod ${build_pod_name} already exists"
     else
       restarted=true
-      echo "Starting a new compilation pod: ${build_pod_name}..."
+      echo "Starting a new build pod: ${build_pod_name}..."
       # TODO: OS flag
       kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
@@ -187,7 +187,6 @@ compile_deploy() {
   if [ ${skip_deploy} = false ]; then
     echo "Redeploying CTA pods..."
     ./redeploy.sh -n ${deploy_namespace}
-    echo "Pods redeployed"
   fi
 }
 

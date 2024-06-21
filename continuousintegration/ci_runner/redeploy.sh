@@ -103,14 +103,14 @@ redeploy() {
   # Clear the old image and namespace
   if podman inspect ctageneric:${image_tag} &> /dev/null; then
     echo "Deleting old image and removing it from minikube"
-    # podman rmi ctageneric:${image_tag}
+    podman rmi ctageneric:${image_tag}
     minikube image rm localhost/ctageneric:${image_tag}
   fi
 
   ## Create and load the new image
   echo "Building image based on ${rpm_src}"
   ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}"
-  podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:dev
+  podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
   echo "Loading new image into minikube"
   minikube image load ctageneric_${image_tag}.tar
   rm ctageneric_${image_tag}.tar
@@ -119,6 +119,8 @@ redeploy() {
   echo "Redeploying containers"
   cd continuousintegration/orchestration
   ./create_instance.sh -n ${kube_namespace} -i ${image_tag} -D -O -d internal_postgres.yaml
+
+  echo "Pods redeployed."
 }
 
 redeploy "$@"
