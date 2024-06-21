@@ -1,3 +1,51 @@
+
+.prepare-xrootd4: &prepare-xrootd4
+  - if [[ ${XROOTD_VERSION} -eq 4 ]];
+    then echo "Using XRootD version 4";
+      ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
+      yum-config-manager --enable cta-ci-xroot;
+      yum-config-manager --disable cta-ci-xrootd5;
+    else echo "Using XRootD version 5";
+    fi
+
+.prepare-scheduler-type: &prepare-scheduler-type
+  - if [[ ${SCHED_TYPE} != "objectstore" ]]; then
+      echo "Using specified scheduler database type $SCHED_TYPE";
+      sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true ";
+      sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3);
+      CTA_VERSION="${CTA_VERSION}${sched_version}";
+      CMAKE_OPTIONS+="${sched_opt}";
+    fi
+  - if [[ ${UNIT_TEST} != "ON" ]]; then
+      echo "Disabling unit test compilation.";
+      CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ";
+    fi
+
+.prepare-no-oracle: &prepare-no-oracle
+  - if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+      echo "Disabling Oracle Support";
+      CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+    fi
+
+default:
+  interruptible: true
+  before_script:
+    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
+    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
+    - xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+    - if [[ ${xrootd_version} == 4 ]]; then
+        echo "Setting to compile with XRootD version 4";
+        XROOTD_VERSION=4;
+        CTA_VERSION=4;
+      fi
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - *prepare-xrootd4
+    - *prepare-scheduler-type
+    - *prepare-no-oracle
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+
 cta_valgrind:
   stage: test
   rules:
