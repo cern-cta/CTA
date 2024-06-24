@@ -350,7 +350,7 @@ struct ArchiveJobQueueRow {
     ss += "::archive_job_status[]";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", ss.str());
+    stmt.bindString(":STATUS", ss);
     stmt.bindUint64(":MOUNT_ID", mount_id);
     stmt.bindUint32(":LIMIT", limit);
 
