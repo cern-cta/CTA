@@ -341,13 +341,13 @@ struct ArchiveJobQueueRow {
       "LIMIT :LIMIT";
 
     std::stringstream ss;
-    ss << = "{";
+    ss << "{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
       ss<< to_string(jstatus);
       ss << "\"";
       if (&jstatus != &statusList.back()) {
-        sqlstatuspart += std::string(",");
+        ss << ",";
       }
     }
     ss << "}";
@@ -407,13 +407,13 @@ struct ArchiveJobQueueRow {
             "LIMIT :LIMIT";
 
     std::stringstream ss;
-    ss << = "{";
+    ss << "{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
       ss<< to_string(jstatus);
       ss << "\"";
       if (&jstatus != &statusList.back()) {
-        sqlstatuspart += std::string(",");
+        ss << ",";
       }
     }
     ss << "}";
