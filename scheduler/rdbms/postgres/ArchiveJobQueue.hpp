@@ -341,7 +341,7 @@ struct ArchiveJobQueueRow {
       "LIMIT :LIMIT";
 
     std::stringstream ss;
-    ss << "{";
+    ss << "'{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
       ss<< to_string(jstatus);
@@ -350,7 +350,7 @@ struct ArchiveJobQueueRow {
         ss << ",";
       }
     }
-    ss << "}";
+    ss << "}'";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", ss.str());
@@ -407,7 +407,7 @@ struct ArchiveJobQueueRow {
             "LIMIT :LIMIT";
 
     std::stringstream ss;
-    ss << "{";
+    ss << "'{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
       ss<< to_string(jstatus);
@@ -416,7 +416,7 @@ struct ArchiveJobQueueRow {
         ss << ",";
       }
     }
-    ss << "}";
+    ss << "}'";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", ss.str());
     stmt.bindUint32(":LIMIT", limit);
