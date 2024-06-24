@@ -302,7 +302,7 @@ struct ArchiveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset selectJobsByStatusAndMountID(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
-    const char *const sql =
+    std::string sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
       "MOUNT_ID AS MOUNT_ID,"
@@ -366,7 +366,7 @@ struct ArchiveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
-     sql =
+     std::string sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
             "MOUNT_ID AS MOUNT_ID,"
