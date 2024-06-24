@@ -146,23 +146,25 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> RelationalDB::getArchiv
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-  rdbms::Rset resultSet;
   auto sqlconn = m_connPool.getConn();
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
-  resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
+  rdbms::Rset resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   if(!resultSet.isEmpty()){
+    logContext.log(log::DEBUG,
+                   "In RelationalDB::getNextArchiveJobsToReportBatch(): Finding out the result is NOT empty !");
+
     try {
       while(resultSet.next()) {
         logContext.log(log::DEBUG,
                        "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
-        jobs.emplace_back(resultSet);
+        //jobs.emplace_back(resultSet);
       }
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
