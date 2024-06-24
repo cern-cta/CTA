@@ -1238,14 +1238,14 @@ void TextFormatter::printPhysicalLibraryLsHeader() {
     "physical cartridge slots",
     "available cartridge slots",
     "physical drive slots",
+    "disabled",
     "c.user",
     "c.host",
     "c.time",
     "m.user",
     "m.host",
     "m.time",
-    "comment",
-    "disabled"
+    "comment"
   );
 }
 
