@@ -335,7 +335,7 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = ANY(ARRAY[:STATUS]) "
+      "AND STATUS = ANY(:STATUS) "
       "AND MOUNT_ID = :MOUNT_ID "
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
@@ -400,7 +400,7 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = :STATUS "
+            "WHERE STATUS = ANY(:STATUS) "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
 
