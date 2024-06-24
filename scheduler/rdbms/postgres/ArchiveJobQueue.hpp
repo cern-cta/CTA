@@ -342,7 +342,7 @@ struct ArchiveJobQueueRow {
 
     std::string sqlstatuspart = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'");
+      sqlstatuspart += std::string("\"") + to_string(jstatus) + std::string("\"");
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
@@ -402,22 +402,14 @@ struct ArchiveJobQueueRow {
             "WHERE STATUS = :STATUS "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-    //std::string sqlstatuspart = "{";
-    //for (const auto &jstatus : statusList) {
-    //  sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'");
-    //  if (&jstatus != &statusList.back()) {
-    //    sqlstatuspart += std::string(",");
-    //  }
-    //}
-    //sqlstatuspart += "}";
-    std::string sqlstatuspart = "";
+    std::string sqlstatuspart = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += to_string(jstatus);
+      sqlstatuspart += std::string("\"") + to_string(jstatus) + std::string("\"");
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
     }
-    //sqlstatuspart += "}";
+    sqlstatuspart += "}";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
