@@ -349,6 +349,7 @@ struct ArchiveJobQueueRow {
       }
     }
     ss += "}::archive_job_status[]";
+    std::cout << ss ;
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", ss);
@@ -413,6 +414,7 @@ struct ArchiveJobQueueRow {
       }
     }
     ss += "}::archive_job_status[]";
+    std::cout << ss ;
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", ss);
     stmt.bindUint32(":LIMIT", limit);
