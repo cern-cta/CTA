@@ -354,10 +354,9 @@ struct ArchiveJobQueueRow {
     size_t index = 0;
     std::string plcholder = "";
     for (const auto& jstatus : statusList) {
-      plcholder = ":" + std::to_string(index + 1)
+      plcholder = ":" + std::to_string(index + 1);
       stmt.bindString(plcholder, to_string(jstatus));
     }
-    stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
@@ -422,10 +421,9 @@ struct ArchiveJobQueueRow {
     size_t index = 0;
     std::string plcholder = "";
     for (const auto& jstatus : statusList) {
-      plcholder = ":" + std::to_string(index + 1)
+      plcholder = ":" + std::to_string(index + 1);
       stmt.bindString(plcholder, to_string(jstatus));
     }
-    stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
