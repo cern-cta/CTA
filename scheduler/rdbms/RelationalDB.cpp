@@ -153,6 +153,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   rdbms::Rset resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
+  sqlconn.commit();
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
