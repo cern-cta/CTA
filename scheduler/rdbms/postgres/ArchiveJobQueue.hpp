@@ -343,12 +343,10 @@ struct ArchiveJobQueueRow {
     std::stringstream ss;
     ss << "'{";
     for (const auto &jstatus : statusList) {
-      ss << "\"";
-      ss<< to_string(jstatus);
-      ss << "\"";
-      if (&jstatus != &statusList.back()) {
-        ss << ",";
-      }
+     ss<< to_string(jstatus);
+     if (&jstatus != &statusList.back()) {
+       ss << ",";
+     }
     }
     ss << "}'";
     auto stmt = conn.createStmt(sql);
@@ -409,9 +407,7 @@ struct ArchiveJobQueueRow {
     std::stringstream ss;
     ss << "'{";
     for (const auto &jstatus : statusList) {
-      ss << "\"";
       ss<< to_string(jstatus);
-      ss << "\"";
       if (&jstatus != &statusList.back()) {
         ss << ",";
       }
