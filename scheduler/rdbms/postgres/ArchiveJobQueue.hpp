@@ -344,6 +344,7 @@ struct ArchiveJobQueueRow {
     for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
                                                          + to_string(jstatus)
                                                          + std::string("'")
+                                                         + std::string("::ARCHIVE_JOB_STATUS")
                                                          + std::string(",");
     if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
@@ -404,6 +405,7 @@ struct ArchiveJobQueueRow {
     for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
                                            + to_string(jstatus)
                                            + std::string("'")
+                                           + std::string("::ARCHIVE_JOB_STATUS")
                                            + std::string(",");
     if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
