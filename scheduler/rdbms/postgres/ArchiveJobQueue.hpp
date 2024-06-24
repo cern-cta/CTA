@@ -340,17 +340,20 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    std::string sqlstatuspart = "'{";
+    std::stringstream ss
+    ss << = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("\"") + to_string(jstatus) + std::string("\"");
+      ss << "\"";
+      ss<< to_string(jstatus);
+      ss << "\"";
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
     }
-    sqlstatuspart += "}'";
+    ss << "}";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", sqlstatuspart);
+    stmt.bindString(":STATUS", ss.str());
     stmt.bindUint64(":MOUNT_ID", mount_id);
     stmt.bindUint32(":LIMIT", limit);
 
@@ -402,16 +405,20 @@ struct ArchiveJobQueueRow {
             "WHERE STATUS = :STATUS "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-    std::string sqlstatuspart = "'{";
+
+    std::stringstream ss
+    ss << = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("\"") + to_string(jstatus) + std::string("\"");
+      ss << "\"";
+      ss<< to_string(jstatus);
+      ss << "\"";
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
     }
-    sqlstatuspart += "}'";
+    ss << "}";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":STATUS", sqlstatuspart);
+    stmt.bindString(":STATUS", ss.str());
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
