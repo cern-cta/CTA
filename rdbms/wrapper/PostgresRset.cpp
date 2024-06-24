@@ -273,7 +273,6 @@ bool PostgresRset::next() {
     // A non query would give PGRES_COMMAND_OK but we don't accept this here
     // as a Rset is intended for an executeQuery only.
 
-    std::cout << std::string(PGRES_SINGLE_TUPLE) << " : debugging : " << std::string(PGRES_TUPLES_OK);
     if (PGRES_TUPLES_OK == m_resItr->rcode() && 0 == PQntuples(m_resItr->get())) {
       const std::string stringValue = PQcmdTuples(m_resItr->get());
       if (!stringValue.empty()) {
