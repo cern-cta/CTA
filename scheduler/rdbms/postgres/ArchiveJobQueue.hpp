@@ -335,7 +335,7 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = ANY(ARRAY["
+      "AND STATUS = ANY(ARRAY[";
 
     // Adding place holders for status values
     std::string statusPlaceholders;
@@ -358,7 +358,7 @@ struct ArchiveJobQueueRow {
     }
     stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
-    
+
     return stmt.executeQuery();
   }
 
