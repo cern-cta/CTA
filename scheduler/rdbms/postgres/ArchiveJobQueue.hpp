@@ -340,7 +340,7 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    std::stringstream ss
+    std::stringstream ss;
     ss << = "{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
@@ -406,7 +406,7 @@ struct ArchiveJobQueueRow {
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
 
-    std::stringstream ss
+    std::stringstream ss;
     ss << = "{";
     for (const auto &jstatus : statusList) {
       ss << "\"";
