@@ -157,9 +157,10 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
+  std::string mylog = resultSet.getSql();
+  mylog += std::string(resultSet.isEmpty());
   if(!resultSet.isEmpty()){
-    logContext.log(log::DEBUG,
-                   "In RelationalDB::getNextArchiveJobsToReportBatch(): Finding out the result is NOT empty !");
+    logContext.log(log::DEBUG, mylog);
 
     try {
       while(resultSet.next()) {
