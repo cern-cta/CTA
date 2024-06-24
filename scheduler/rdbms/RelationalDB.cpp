@@ -151,7 +151,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
-  //statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   auto resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
