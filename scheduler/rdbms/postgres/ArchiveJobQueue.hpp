@@ -302,7 +302,7 @@ struct ArchiveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset selectJobsByStatusAndMountID(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
-    std::string sql =
+    const char *const sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
       "MOUNT_ID AS MOUNT_ID,"
@@ -335,28 +335,21 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = ANY(ARRAY[";
+      "AND STATUS = ANY(ARRAY[:STATUS]) "
+      "AND MOUNT_ID = :MOUNT_ID "
+    "ORDER BY PRIORITY DESC, JOB_ID "
+      "LIMIT :LIMIT";
 
-    // Adding place holders for status values
-    std::string statusPlaceholders;
-    for (size_t i = 0; i < statusList.size(); ++i) {
-      statusPlaceholders += ":" + std::to_string(i + 1) + ",";
-    }
-    if (!statusPlaceholders.empty()) {
-      statusPlaceholders.pop_back();  // Remove the last comma
-    }
-    // Continue the SQL statement
-    sql += statusPlaceholders + "]::ARCHIVE_JOB_STATUS[]) "
-           "AND MOUNT_ID = :MOUNT_ID "
-           "ORDER BY PRIORITY DESC, JOB_ID "
-           "LIMIT :LIMIT";
+    std::string sqlstatuspart;
+    for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
+                                                         + to_string(jstatus)
+                                                         + std::string("'")
+                                                         + std::string(",");
+    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
-    size_t index = 0;
-    std::string plcholder = "";
-    for (const auto& jstatus : statusList) {
-      plcholder = ":" + std::to_string(index + 1);
-      stmt.bindString(plcholder, to_string(jstatus));
-    }
+    stmt.bindString(":TAPE_POOL", tapepool);
+    stmt.bindString(":STATUS", sqlstatuspart);
+    stmt.bindUint64(":MOUNT_ID", mount_id);
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
@@ -373,7 +366,7 @@ struct ArchiveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
-    std::string sql =
+     sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
             "MOUNT_ID AS MOUNT_ID,"
@@ -404,26 +397,17 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[";
-    // Adding place holders for status values
-    std::string statusPlaceholders;
-    for (size_t i = 0; i < statusList.size(); ++i) {
-      statusPlaceholders += ":" + std::to_string(i + 1) + ",";
-    }
-    if (!statusPlaceholders.empty()) {
-      statusPlaceholders.pop_back();  // Remove the last comma
-    }
-    // Continue the SQL statement
-    sql += statusPlaceholders + "]::ARCHIVE_JOB_STATUS[]) "
-           "ORDER BY PRIORITY DESC, TAPE_POOL "
-           "LIMIT :LIMIT";
+            "WHERE STATUS = ANY(ARRAY[:STATUS]) "
+            "ORDER BY PRIORITY DESC, TAPE_POOL "
+            "LIMIT :LIMIT";
+    std::string sqlstatuspart;
+    for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
+                                           + to_string(jstatus)
+                                           + std::string("'")
+                                           + std::string(",");
+    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
-    size_t index = 0;
-    std::string plcholder = "";
-    for (const auto& jstatus : statusList) {
-      plcholder = ":" + std::to_string(index + 1);
-      stmt.bindString(plcholder, to_string(jstatus));
-    }
+    stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
