@@ -342,7 +342,7 @@ struct ArchiveJobQueueRow {
 
     std::string sqlstatuspart = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'")
+      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'");
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
@@ -404,7 +404,7 @@ struct ArchiveJobQueueRow {
             "LIMIT :LIMIT";
     std::string sqlstatuspart = "{";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'")
+      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'");
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
