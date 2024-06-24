@@ -335,10 +335,10 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = ANY(ARRAY[$1]::ARCHIVE_JOB_STATUS[]) "
-      "AND MOUNT_ID = $2 "
+      "AND STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[]) "
+      "AND MOUNT_ID = :MOUNT_ID "
     "ORDER BY PRIORITY DESC, JOB_ID "
-      "LIMIT $3";
+      "LIMIT :LIMIT";
 
     std::string sqlstatuspart;
     for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
@@ -348,9 +348,9 @@ struct ArchiveJobQueueRow {
     if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(1, sqlstatuspart);
-    stmt.bindUint64(2, mount_id);
-    stmt.bindUint32(3, limit);
+    stmt.bindString(":STATUS", sqlstatuspart);
+    stmt.bindUint64(":MOUNT_ID", mount_id);
+    stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
   }
@@ -397,9 +397,9 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[$1]::ARCHIVE_JOB_STATUS[]) "
+            "WHERE STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[]) "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
-            "LIMIT $2";
+            "LIMIT :LIMIT";
     std::string sqlstatuspart;
     for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
                                            + to_string(jstatus)
@@ -407,8 +407,8 @@ struct ArchiveJobQueueRow {
                                            + std::string(",");
     if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(1, sqlstatuspart);
-    stmt.bindUint32(2, limit);
+    stmt.bindString(":STATUS", sqlstatuspart);
+    stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
   }
