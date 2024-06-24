@@ -340,13 +340,14 @@ struct ArchiveJobQueueRow {
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
 
-    std::string sqlstatuspart;
-    for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
-                                                         + to_string(jstatus)
-                                                         + std::string("'")
-                                                         + std::string("::ARCHIVE_JOB_STATUS")
-                                                         + std::string(",");
-    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
+    std::string sqlstatuspart = "{";
+    for (const auto &jstatus : statusList) {
+      sqlstatuspart += "'" + to_string(jstatus) + "'"
+      if (&jstatus != &statusList.back()) {
+        sqlstatuspart += ",";
+      }
+    }
+    sqlstatuspart += "}";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", sqlstatuspart);
@@ -398,16 +399,17 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[:STATUS]) "
+            "WHERE STATUS = ANY(:STATUS) "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-    std::string sqlstatuspart;
-    for (const auto &jstatus : statusList) sqlstatuspart += std::string("'")
-                                           + to_string(jstatus)
-                                           + std::string("'")
-                                           + std::string("::ARCHIVE_JOB_STATUS")
-                                           + std::string(",");
-    if (!sqlstatuspart.empty()) { sqlstatuspart.pop_back(); }
+    std::string sqlstatuspart = "{";
+    for (const auto &jstatus : statusList) {
+      sqlstatuspart += "'" + to_string(jstatus) + "'"
+      if (&jstatus != &statusList.back()) {
+        sqlstatuspart += ",";
+      }
+    }
+    sqlstatuspart += "}";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", sqlstatuspart);
     stmt.bindUint32(":LIMIT", limit);
