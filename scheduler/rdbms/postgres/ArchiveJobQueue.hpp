@@ -412,7 +412,7 @@ struct ArchiveJobQueueRow {
     //sqlstatuspart += "}";
     std::string sqlstatuspart = "";
     for (const auto &jstatus : statusList) {
-      sqlstatuspart += std::string("'") + to_string(jstatus) + std::string("'");
+      sqlstatuspart += to_string(jstatus);
       if (&jstatus != &statusList.back()) {
         sqlstatuspart += std::string(",");
       }
