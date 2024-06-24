@@ -157,7 +157,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   std::string mylog = resultSet.getSql();
-  mylog += std::string(resultSet.isEmpty());
   if(!resultSet.isEmpty()){
     logContext.log(log::DEBUG, mylog);
 
