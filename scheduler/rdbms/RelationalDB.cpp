@@ -157,22 +157,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   std::string mylog = resultSet.getSql();
-  if(!resultSet.isEmpty()){
-    logContext.log(log::DEBUG, mylog);
-
-    try {
-      while(resultSet.next()) {
-        logContext.log(log::DEBUG,
-                       "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
-        jobs.emplace_back(resultSet);
-      }
-    } catch (cta::exception::Exception & e) {
-      std::string bt = e.backtrace();
-      logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+  logContext.log(log::DEBUG, mylog);
+  try {
+    while(resultSet.next()) {
+      logContext.log(log::DEBUG,
+                     "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
+      jobs.emplace_back(resultSet);
     }
-    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
+  } catch (cta::exception::Exception & e) {
+    std::string bt = e.backtrace();
+    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
   }
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
+  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
