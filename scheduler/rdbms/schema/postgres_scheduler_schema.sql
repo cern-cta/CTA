@@ -102,8 +102,6 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   RETRIES_WITHIN_MOUNT SMALLINT,
                                   MAX_RETRIES_WITHIN_MOUNT SMALLINT,
                                   LAST_MOUNT_WITH_FAILURE BIGINT,
-                                  TOTAL_REPORT_RETRIES SMALLINT,
-                                  MAX_REPORT_RETRIES SMALLINT,
                                   TAPE_POOL VARCHAR(100) CONSTRAINT AJQ_TPN_NN NOT NULL,
                                   REPACK_FILEBUF_URL VARCHAR(2000),
                                   REPACK_FSEQ NUMERIC(20, 0),
