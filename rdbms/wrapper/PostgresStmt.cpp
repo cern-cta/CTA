@@ -498,8 +498,17 @@ void PostgresStmt::closeBoth() {
 void PostgresStmt::CountAndReformatSqlBinds(const std::string &common_sql, std::string &pg_sql, int &nParams) const {
   nParams = 0;
   pg_sql = common_sql;
+  // first we replace all '::' in the SQL by '______' to jump over such occurences
+  // and look for '::' in the SQL to jump over such occurences
+  std::string dblcolon = "::";
+  std::string sixunderscores = "______";
   // if found :name, replace it with '$<n>'
   while (true) {
+    // we replace all '::' in the SQL first by '______'
+    const size_t pos = pg_sql.find(dblcolon);
+    if (pos != std::string::npos){
+      pg_sql.replace(pos, 2, sixunderscores);
+    }
     // find start of :name
     const auto itr = std::find(pg_sql.begin(),pg_sql.end(),':');
     if (itr == pg_sql.end()) {
@@ -510,6 +519,12 @@ void PostgresStmt::CountAndReformatSqlBinds(const std::string &common_sql, std::
     ++nParams;
     const std::string r = "$" + std::to_string(nParams);
     pg_sql.replace(itr,itr2,r);
+  }
+  // finally we revert back all '______'  in the SQL to '::'
+  size_t pos = pg_sql.find(sixunderscores);
+  while (pos != std::string::npos) {
+    pg_sql.replace(pos, 6, dblcolon);
+    pos = pg_sql.find(sixunderscores, pos + 2);
   }
 }
 
