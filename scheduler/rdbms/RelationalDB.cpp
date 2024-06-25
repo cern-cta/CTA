@@ -213,7 +213,34 @@ void RelationalDB::tickRetrieveQueueCleanupHeartbeat(const std::string & vid)
 void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "RelationalDB::setArchiveJobBatchReported() half-dummy implementation for successful jobs !");
+  // We can have a mixture of failed and successful jobs, so we will sort them before batch queue/discarding them.
+  // First, sort the jobs. Done jobs get deleted (no need to sort further) and failed jobs go to their per-VID queues/containers.
+  // Status gets updated on the fly on the latter case.
+  std::list<std::string> jobIDsList;
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+    log::ScopedParamContainer(lc)
+            .add("jobID", (*jobsBatchItor)->jobID)
+            .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
+            .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+            .log(log::INFO,
+                 "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job to be reported.");
+    jobsBatchItor++;
+  }
+  schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  try {
+    // ALL JOBS CURRENTLY REPORTED AS SUCCESS !
+    postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_Complete, jobIDsList);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::DEBUG,
+           "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Complete. Aborting the transaction." +
+           ex.getMessageValue());
+    txn.abort();
+  }
 }
 
 std::list<SchedulerDatabase::RetrieveQueueStatistics> RelationalDB::getRetrieveQueueStatistics(
