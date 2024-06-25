@@ -398,19 +398,30 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[])  "
+            "WHERE STATUS = ANY(ARRAY[";
+    // we can move this to new bindArray method for stmt
+    std::vector<std::string> statusVec;
+    std::vector<std::string> placeholderVec;
+    size_t j = 1;
+    for (const auto &jstatus : statusList) {
+      statusVec.push_back(to_string(jstatus));
+      std::string plch = std::string(":STATUS") + std::to_string(j);
+      placeholderVec.push_back(plch);
+      sql += plch;
+      if (&jstatus != &statusList.back()) {
+        sql += std::string(",");
+      }
+      j++;
+    }
+    sql +=  "]::ARCHIVE_JOB_STATUS[])  "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-
-    std::string ss;
-    for (const auto &jstatus : statusList) {
-      ss += std::string("'") + to_string(jstatus) + std::string("'");
-      if (&jstatus != &statusList.back()) {
-        ss += ",";
-      }
-    }
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":STATUS", ss);
+    // we can move the array binding to new bindArray method for STMT
+    size_t sz = statusVec.size();
+    for (size_t i = 0; i < sz; ++i) {
+      stmt.bindString(placeholderVec[i], statusVec[i]);
+    }
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
