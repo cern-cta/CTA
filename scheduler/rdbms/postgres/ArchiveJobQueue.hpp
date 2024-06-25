@@ -335,7 +335,7 @@ struct ArchiveJobQueueRow {
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
       "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = ANY(ARRAY[:STATUS]) "
+      "AND STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[]) "
       "AND MOUNT_ID = :MOUNT_ID "
     "ORDER BY PRIORITY DESC, JOB_ID "
       "LIMIT :LIMIT";
@@ -347,7 +347,6 @@ struct ArchiveJobQueueRow {
        ss += ",";
      }
     }
-    ss += "::archive_job_status[]";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL", tapepool);
     stmt.bindString(":STATUS", ss);
@@ -399,7 +398,7 @@ struct ArchiveJobQueueRow {
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[:STATUS])  "
+            "WHERE STATUS = ANY(ARRAY[:STATUS]::ARCHIVE_JOB_STATUS[])  "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
 
@@ -410,7 +409,6 @@ struct ArchiveJobQueueRow {
         ss += ",";
       }
     }
-    ss += "}'";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATUS", ss);
     stmt.bindUint32(":LIMIT", limit);
