@@ -43,10 +43,14 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
           waitingForAParam = false;
           paramName << ":";
         }
+        // We need to jump over '::' in PL/SQL code (at least)
+        if (*(ptr+1) == ':'){
+          ptr++;
+          continue;
+        }
       }
 
     } else { // Currently processing a parameter name
-
       if(isValidParamNameChar(*ptr)) {
         paramName << *ptr;
       } else {
