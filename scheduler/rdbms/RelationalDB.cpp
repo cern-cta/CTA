@@ -230,10 +230,10 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                  "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job to be reported.");
     jobsBatchItor++;
   }
-  schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  schedulerdb::Transaction txn(m_connPool);
   try {
     // ALL JOBS CURRENTLY REPORTED AS SUCCESS !
-    postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_Complete, jobIDsList);
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList);
     txn.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
