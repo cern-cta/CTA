@@ -108,7 +108,7 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   REPACK_FILEBUF_URL VARCHAR(2000),
                                   REPACK_FSEQ NUMERIC(20, 0),
                                   TOTAL_REPORT_RETRIES SMALLINT,
-                                  MAX_REPORT_RETRIES SMALLINT,
+                                  MAX_REPORT_RETRIES SMALLINT
 
 );
 CREATE TABLE RETRIEVE_JOB_QUEUE(

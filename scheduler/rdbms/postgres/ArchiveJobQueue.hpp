@@ -291,11 +291,11 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-   * Select any jobs with specified status from the queue
+   * Select any jobs with specified status(es) from the queue
    * and return them in the order of priority and by tapepool
    *
    * @param conn       Connection to the backend database
-   * @param status     Archive Job Status to select on
+   * @param statusList List of Archive Job Status to select on
    * @param limit      Maximum number of rows to return
    *
    * @return  result set
