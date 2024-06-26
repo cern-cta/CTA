@@ -45,6 +45,7 @@ void ArchiveRequest::insert() {
     ajr.requesterGroup = m_requesterIdentity.group;
     ajr.srcUrl = m_srcURL;
     ajr.retriesWithinMount = aj.retriesWithinMount;
+    ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
     ajr.totalRetries = aj.totalRetries;
     ajr.lastMountWithFailure = aj.lastMountWithFailure;
     ajr.maxTotalRetries = aj.maxTotalRetries;

@@ -96,7 +96,6 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   FAILURE_REPORT_LOG TEXT,
 /* ARCHIVE specific columns */
                                   FAILURE_LOG TEXT,
-                                  IS_REPORTDECIDED CHAR(1),
                                   TOTAL_RETRIES SMALLINT,
                                   MAX_TOTAL_RETRIES SMALLINT,
                                   RETRIES_WITHIN_MOUNT SMALLINT,
