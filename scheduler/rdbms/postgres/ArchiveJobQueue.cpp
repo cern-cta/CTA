@@ -57,15 +57,17 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   if(jobIDs.empty()) {
     return;
   }
+  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
+  auto stmt = txn.conn().createStmt(sql);
+  stmt.executeQuery();
   std::string sqlpart;
   for (const auto &piece : jobIDs) sqlpart += piece + ",";
   if (!sqlpart.empty()) { sqlpart.pop_back(); }
-  txn.start();
-  std::string sql =
+  sql =
           "UPDATE ARCHIVE_JOB_QUEUE SET "
           "STATUS = :STATUS "
           "WHERE JOB_ID IN (" + sqlpart + ") ";
-  auto stmt = txn.conn().createStmt(sql);
+  stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.executeQuery();
   return;

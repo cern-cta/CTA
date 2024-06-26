@@ -48,7 +48,6 @@ struct ArchiveJobQueueRow {
   uint32_t totalRetries = 0;
   uint64_t lastMountWithFailure = 0;
   uint32_t maxTotalRetries = 0;
-
   uint32_t maxRetriesWithinMount = 0;
   uint32_t maxReportRetries = 0;
   uint32_t totalReportRetries = 0;
@@ -110,6 +109,7 @@ struct ArchiveJobQueueRow {
     srcUrl                    = rset.columnString("SRC_URL");
     archiveFile.storageClass  = rset.columnString("STORAGE_CLASS");
     retriesWithinMount        = rset.columnUint16("RETRIES_WITHIN_MOUNT");
+    maxRetriesWithinMount     = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
     totalRetries              = rset.columnUint16("TOTAL_RETRIES");
     lastMountWithFailure      = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
     maxTotalRetries           = rset.columnUint16("MAX_TOTAL_RETRIES");
@@ -144,6 +144,7 @@ struct ArchiveJobQueueRow {
         "SRC_URL,"
         "STORAGE_CLASS,"
         "RETRIES_WITHIN_MOUNT,"
+        "MAX_RETRIES_WITHIN_MOUNT,"
         "TOTAL_RETRIES,"
         "LAST_MOUNT_WITH_FAILURE,"
         "MAX_TOTAL_RETRIES) VALUES ("
@@ -170,6 +171,7 @@ struct ArchiveJobQueueRow {
         ":SRC_URL,"
         ":STORAGE_CLASS,"
         ":RETRIES_WITHIN_MOUNT,"
+        ":MAX_RETRIES_WITHIN_MOUNT,"
         ":TOTAL_RETRIES,"
         ":LAST_MOUNT_WITH_FAILURE,"
         ":MAX_TOTAL_RETRIES)";
@@ -198,6 +200,7 @@ struct ArchiveJobQueueRow {
     stmt.bindString(":SRC_URL", srcUrl);
     stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
     stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+    stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
     stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
     stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
