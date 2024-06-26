@@ -257,13 +257,15 @@ echo
 echo "Test maximum number of retrieve requests allowed per file (${NB_RETRIEVES_MAX})"
 
 TEST_FILE_NAME=${EOS_BASEDIR}/$(uuidgen)
+TEST_FILE_NAME_OTHER=${EOS_BASEDIR}/$(uuidgen)
 
 echo
 echo "Archiving test file ${TEST_FILE_NAME}..."
 
 echo "Write file ${TEST_FILE_NAME} for archival..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEST_FILE_NAME}
-wait_for_archive ${EOS_INSTANCE} "${TEST_FILE_NAME}"
+xrdcp /etc/group root://${EOS_INSTANCE}/${TEST_FILE_NAME_OTHER}
+wait_for_archive ${EOS_INSTANCE} "${TEST_FILE_NAME}" "${TEST_FILE_NAME_OTHER}"
 
 put_all_drives_down
 
@@ -292,10 +294,19 @@ done
 
 echo
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200) one more time, should fail to create request ID"
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}")
-
 echo "Checking that the $(expr ${NB_RETRIEVES_MAX} + 1)th retrieve request failed"
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}")
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}")
+if [ $? -eq 0 ]; then
+  echo "ERROR: New file (single-file request) was not rejected properly after ${NB_RETRIEVES_MAX} retrieve requests have been accumulated"
+  exit 1
+else
+  echo "File request failed as expected"
+fi
+
+echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200) one more time (for two files), should succeed to create request ID but fail to request this file in particular"
+echo "Checking that the $(expr ${NB_RETRIEVES_MAX} + 1)th retrieve request failed"
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s "${TEST_FILE_NAME}" "${TEST_FILE_NAME_OTHER}")
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare "${REQUEST_ID}" "${TEST_FILE_NAME}" "${TEST_FILE_NAME_OTHER}")
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").path_exists")
 REQUESTED=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").requested")
 HAS_REQID=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEST_FILE_NAME}\").has_reqid")
@@ -308,7 +319,7 @@ if [[
   "\"\"" != "${ERROR_TEXT}" ]]
 then
   echo ${QUERY_RSP}
-  echo "ERROR: New request was not rejected properly after ${NB_RETRIEVES_MAX} retrieve requests have been accumulated"
+  echo "ERROR: New file (multi-file request) was not rejected properly after ${NB_RETRIEVES_MAX} retrieve requests have been accumulated"
   exit 1
 fi
 echo "Test completed successfully"
