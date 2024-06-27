@@ -186,7 +186,7 @@ compile_deploy() {
 
   if [ ${skip_deploy} = false ]; then
     echo "Redeploying CTA pods..."
-    ./redeploy.sh -n ${deploy_namespace}
+    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh -n ${deploy_namespace}
   fi
 }
 
