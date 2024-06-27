@@ -30,6 +30,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                               Shows help output."
   echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
+  echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
@@ -49,6 +50,7 @@ compile_deploy() {
   local skip_unit_tests=false
   local cmake_build_type=""
   local force_install=false
+  local operating_system="alma9"
 
   # Defaults
   local num_jobs=8
@@ -101,6 +103,19 @@ compile_deploy() {
           usage
         fi
         ;;
+      -o | --operating-system) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+              echo "-o | --operating-system must be one of [cc7, alma9]."
+              exit 1
+          fi
+          operating_system="$2"
+          shift
+        else
+          echo "Error: -o | --operating-system requires an argument"
+          usage
+        fi
+        ;;
       *) 
         usage
         ;;
@@ -137,8 +152,17 @@ compile_deploy() {
     else
       restarted=true
       echo "Starting a new build pod: ${build_pod_name}..."
-      # TODO: OS flag
-      kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
+      case $operating_system in
+        cc7)
+          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-cc7.yml -n ${build_namespace}
+          ;;
+        alma9)
+          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
+          ;;
+        *)
+          echo "Invalid operating system provided: ${operating_system}"
+          exit 1
+      esac
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
       echo "Building SRPMs..."
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
