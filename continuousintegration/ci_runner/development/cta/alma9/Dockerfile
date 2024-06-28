@@ -26,7 +26,7 @@ RUN mkdir -p shared;
 RUN set -ex; \
     dnf -y update; \
     dnf -y install epel-release almalinux-release-devel; \
-    dnf -y install git vim rsync wget cmake3 dnf-utils ccache openssh-server; \
+    dnf -y install git vim rsync wget cmake3 dnf-utils ccache openssh-server ninja-build; \
     dnf -y group install "Development Tools";
 
 RUN set -ex; \
@@ -42,8 +42,8 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir build_srpm; \
     cd build_srpm; \
-    cmake3 -DPackageOnly:Bool=true ../cta; \
-    make cta_srpm;
+    cmake3 -G Ninja -DPackageOnly:Bool=true ../cta; \
+    ninja-build cta_srpm;
 
 RUN set -ex; \
     yum-builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;

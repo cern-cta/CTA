@@ -11,7 +11,7 @@ COPY ./repos/ /etc/yum.repos.d/
 RUN set -ex; \
     yum update -y; \
     yum -y install epel-release almalinux-release-devel; \
-    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils; \
+    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build; \
     yum clean all;
 
 WORKDIR /Project
@@ -32,12 +32,12 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir /Project/build_srpm; \
     cd /Project/build_srpm; \
-    cmake3 -DPackageOnly:Bool=true ../CTA; \
-    make cta_srpm; \
+    cmake3 -G Ninja -DPackageOnly:Bool=true ../CTA; \
+    ninja-build cta_srpm; \
     yum-builddep -y /Project/build_srpm/RPM/SRPMS/*;
 
 RUN set -ex; \
     mkdir /Project/build; \
     cd /Project/build; \
-    cmake3 ../CTA; \
-    make cta_rpm -j7;
+    cmake3 -G Ninja ../CTA; \
+    ninja-build cta_rpm -j7;
