@@ -122,7 +122,7 @@ ninja-build
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-ninja install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man ninja install
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
