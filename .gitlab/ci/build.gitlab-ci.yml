@@ -17,14 +17,14 @@
   extends:
     - .cta_build
   script:
-    - yum install -y devtoolset-11 cmake3 make rpm-build git
+    - yum install -y devtoolset-11 cmake3 make rpm-build git ninja-build
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - mkdir build_srpm
     - cd build_srpm
     - echo ${CMAKE_OPTIONS}
-    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_srpm
+    - cmake3 -G Ninja -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - ninja-build cta_srpm
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
@@ -32,7 +32,7 @@
   extends:
     - .cta_build
   script:
-    - yum install -y devtoolset-11 cmake3 make rpm-build
+    - yum install -y devtoolset-11 cmake3 make rpm-build ninja-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
     - source /opt/rh/devtoolset-11/enable
@@ -41,8 +41,8 @@
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_rpm
+    - cmake3 -G Ninja -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - ninja-build cta_rpm
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
@@ -139,14 +139,14 @@ cta_srpm_alma9:
     - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
     - yum -y install epel-release almalinux-release-devel git
-    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build
     - git submodule update --init --recursive
     - ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     - mkdir build_srpm
     - cd build_srpm
     - echo ${CMAKE_OPTIONS}
-    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_srpm
+    - cmake3 -G Ninja -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - ninja-build cta_srpm
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -166,7 +166,7 @@ cta_rpm_alma9:
     - cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
   script:
     - yum -y install epel-release almalinux-release-devel git
-    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+    - yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build
     - yum -y install yum-plugin-versionlock
     - git submodule update --init --recursive
     - ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
@@ -174,8 +174,8 @@ cta_rpm_alma9:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_rpm
+    - cmake3 -G Ninja -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - ninja-build cta_rpm
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
