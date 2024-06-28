@@ -44,16 +44,6 @@ public:
    */
   uint32_t getIdx(const std::string& paramName) const;
 
-  /**
-   * Returns true if the specified character is a valid parameter name
-   * character.
-   *
-   * @param c The character.
-   * @return True if the specified character is a valid parameter name
-   * character.
-   */
-  static bool isValidParamNameChar(const char c);
-
 private:
   /**
    * Map from SQL parameter name to parameter index.
