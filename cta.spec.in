@@ -74,6 +74,7 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
   %define requirementsOS protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1 oracle-instantclient19.3-devel grpc-static
   %define requiredProtobuf protobuf3
 %endif
+BuildRequires: ninja-build
 BuildRequires: %{requirementsOS}
 BuildRequires: grpc, grpc-devel, grpc-plugins
 BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
@@ -109,16 +110,19 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # The cmake step does the selection between client/server compilation or just client
-CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
+CTA_VERSION=%{ctaVersion} cmake3 -G Ninja .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
 # Workaround for the inability of cmake to handle properly the dependencies to generated code.
-%{__make} -s %{_smp_mflags} -k || true
-%{__make} -s %{_smp_mflags}
+#%{__make} -s %{_smp_mflags} -k || true
+#%{__make} -s %{_smp_mflags}
+# Build using Ninja
+ninja -k 0  # Continue running after errors (similar to the workaround above)
+ninja-build
 
 %install
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-%{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+ninja install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -134,7 +138,7 @@ cd build
 
 %if "%{skip_unit_tests}" == "0"
 cd build
-%{__make} shortunittests
+ninja shortunittests
 %endif
 
 # The main packages will be cta-taped, cta-frontend, cta-cli
