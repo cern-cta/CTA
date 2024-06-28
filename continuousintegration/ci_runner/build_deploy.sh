@@ -31,6 +31,8 @@ usage() {
   echo "  -h, --help:                               Shows help output."
   echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
   echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
+  echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --clean-cmake:                        Cleans the cmake cache before building."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
@@ -51,6 +53,8 @@ compile_deploy() {
   local cmake_build_type=""
   local force_install=false
   local operating_system="alma9"
+  local build_generator="Ninja"
+  local clean_cmake=false
 
   # Defaults
   local num_jobs=8
@@ -68,7 +72,7 @@ compile_deploy() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help)
         usage
         ;;
@@ -103,6 +107,9 @@ compile_deploy() {
           usage
         fi
         ;;
+      --clean-cmake) 
+        clean_cmake=true 
+        ;;
       -o | --operating-system) 
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "cc7" ] && [ "$2" != "alma9" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
@@ -113,6 +120,15 @@ compile_deploy() {
           shift
         else
           echo "Error: -o | --operating-system requires an argument"
+          usage
+        fi
+        ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
           usage
         fi
         ;;
@@ -167,6 +183,7 @@ compile_deploy() {
       echo "Building SRPMs..."
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
                                                                                                           --build-dir build_srpm \
+                                                                                                          --build-generator "${build_generator}" \
                                                                                                           --cta-version ${cta_version} \
                                                                                                           --vcs-version ${vcs_version} \
                                                                                                           --xrootd-version ${xrootd_version} \
@@ -193,9 +210,14 @@ compile_deploy() {
       build_rpm_flags+=" --cmake-build-type ${cmake_build_type}"
     fi
 
+    if [[ ! ${clean_cmake} = "" ]]; then
+      build_rpm_flags+=" --clean-cmake"
+    fi
+
     echo "Building RPMs..."
     kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
                                                                                                       --build-dir build_rpm \
+                                                                                                      --build-generator "${build_generator}" \
                                                                                                       --srpm-dir build_srpm/RPM/SRPMS \
                                                                                                       --cta-version ${cta_version} \
                                                                                                       --vcs-version ${vcs_version} \

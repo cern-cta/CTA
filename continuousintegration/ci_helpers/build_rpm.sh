@@ -18,10 +18,11 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options]--build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --build-generator <generator> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
   echo ""
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to the repository root. Ex: build_rpm"
+  echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to the repository root. Ex: build_srpm/RPM/SRPMS"
   echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
@@ -32,6 +33,7 @@ usage() {
   echo "options:"
   echo "  -i, --install:                                Installs the required packages. Supported operating systems: [cc7, alma9]."
   echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
+  echo "      --clean-cmake:                            Cleans the cmake cache before building."
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
@@ -54,17 +56,19 @@ build_rpm() {
   local vcs_version=""
   local xrootd_version=""
   local xrootd_ssi_version=""
+  local build_generator=""
 
   local install=false
   local num_jobs=1
+  local clean_cmake=false
   local skip_cmake=false
+  local cmake_build_type=""
   local skip_unit_tests=false
   local oracle_support=true
-  local cmake_build_type=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1"  in
       --build-dir)
         if [[ $# -gt 1 ]]; then
           build_dir="$2"
@@ -146,6 +150,9 @@ build_rpm() {
       --skip-unit-tests) 
         skip_unit_tests=true 
         ;;
+      --clean-cmake) 
+        clean_cmake=true 
+        ;;
       --oracle-support) 
         if [[ $# -gt 1 ]]; then
           if [ "$2" = "OFF" ]; then
@@ -167,6 +174,18 @@ build_rpm() {
           shift
         else
           echo "Error: -j|--jobs requires an argument"
+          usage
+        fi
+        ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+              echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          fi
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
           usage
         fi
         ;;
@@ -213,6 +232,11 @@ build_rpm() {
     usage
   fi
 
+  if [ -z "${build_generator}" ]; then
+    echo "Failure: Missing mandatory argument --build-generator";
+    usage
+  fi
+
   # navigate to root directory
   cd "$(dirname "$0")"
   cd ../../
@@ -234,7 +258,7 @@ build_rpm() {
       echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum -y install epel-release almalinux-release-devel
+      yum -y install epel-release almalinux-release-devel ninja-build
       yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
@@ -249,10 +273,10 @@ build_rpm() {
         yum-config-manager --enable cta-ci-xroot;
         yum-config-manager --disable cta-ci-xrootd5;
       else 
-        echo "Using XRootD version 5";
+        echo "Using XRootD version ${xrootd_version}";
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y devtoolset-11 cmake3 make rpm-build
+      yum install -y devtoolset-11 cmake3 make rpm-build ninja-build
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
@@ -267,35 +291,50 @@ build_rpm() {
 
   if [ "${skip_cmake}" = false ]; then
     # Needs to be exported as cmake gets it from the environment
+    echo "Using XROOTD_SSI_PROTOBUF_INTERFACE_VERSION: ${xrootd_ssi_version}"
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
+    # VCS version
+    echo "Using VCS_VERSION: ${vcs_version}"
     cmake_options+=" -DVCS_VERSION=${vcs_version}"
 
+
+    # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
+      echo "Using build type: ${cmake_build_type}"
       cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
+    # Oracle support
     if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
       cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
     fi
 
+    # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       echo "Skipping unit tests";
       cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
     fi
 
+    # Scheduler type
     if [[ ${scheduler_type} != "objectstore" ]]; then
       echo "Using specified scheduler database type $SCHED_TYPE";
       local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
       cmake_options+=" ${sched_opt}";
     fi
 
+    if [[ ${clean_cmake} = true ]]; then
+      rm -r "${build_dir}"
+    fi
+
+    echo "Creating build directory: ${build_dir}"
     mkdir -p "${build_dir}"
     cd "${build_dir}"
-    echo "Executing cmake..."
-    echo "${cmake_options}"
-    cmake3 ${cmake_options} "${repo_root}"
+    echo ""
+    # Generator type
+    echo "Using build generator: ${build_generator}"
+    cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}" -DCMAKE_VERBOSE_MAKEFILE=ON
   else
     echo "Skipping cmake..."
     if [ ! -d "${build_dir}" ]; then
@@ -304,9 +343,10 @@ build_rpm() {
     cd "${build_dir}"
   fi
 
-  # Make
-  echo "Executing make..."
-  make cta_rpm -j "${num_jobs}"
+  # Build step
+  echo "Executing build step using: ${build_generator}"
+  export NINJA_STATUS='%p [%f/%t] '
+  cmake --build . --target cta_rpm -- -j "${num_jobs}"
 }
 
 build_rpm "$@"

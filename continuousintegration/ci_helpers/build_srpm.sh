@@ -18,10 +18,11 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> "
+  echo "Usage: $0 [options] --build-dir <build-dir> --build-generator <generator> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> "
   echo ""
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to the repository root."
+  echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
@@ -48,16 +49,17 @@ build_srpm() {
   local scheduler_type=""
   local vcs_version=""
   local xrootd_version=""
+  local build_generator=""
 
   local install=false
-  local num_jobs=1
+  local num_jobs=4
   local skip_unit_tests=false
   local oracle_support=true
   local cmake_build_type=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       --build-dir) 
         if [[ $# -gt 1 ]]; then
           build_dir="$2"
@@ -139,6 +141,18 @@ build_srpm() {
           usage
         fi
         ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+              echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          fi
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
+          usage
+        fi
+        ;;
       *)
         echo "Invalid argument: $1"
         usage 
@@ -164,6 +178,11 @@ build_srpm() {
 
   if [ -z "${xrootd_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-version";
+    usage
+  fi
+
+  if [ -z "${build_generator}" ]; then
+    echo "Failure: Missing mandatory argument --build-generator";
     usage
   fi
 
@@ -193,7 +212,7 @@ build_srpm() {
       echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y epel-release almalinux-release-devel
+      yum install -y epel-release almalinux-release-devel ninja-build
       yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
@@ -209,7 +228,7 @@ build_srpm() {
         echo "Using XRootD version 5";
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y devtoolset-11 cmake3 make rpm-build
+      yum install -y devtoolset-11 cmake3 make rpm-build ninja-build
       source /opt/rh/devtoolset-11/enable
     else
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
@@ -220,9 +239,13 @@ build_srpm() {
   export CTA_VERSION=${cta_version}
 
   cmake_options+=" -DPackageOnly:Bool=true"
+
+  # VCS version
+  echo "Using VCS_VERSION: ${vcs_version}"
   cmake_options+=" -DVCS_VERSION=${vcs_version}"
 
   if [[ ! ${cmake_build_type} = "" ]]; then
+    echo "Using build type: ${cmake_build_type}"
     cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
   fi
 
@@ -242,14 +265,17 @@ build_srpm() {
     cmake_options+=" ${sched_opt}";
   fi
 
+  echo "Creating build directory: ${build_dir}"
   mkdir -p "${build_dir}"
   cd "${build_dir}"
-  echo "Executing cmake..."
-  cmake3 ${cmake_options} "${repo_root}"
 
-  # Make
-  echo "Executing make..."
-  make cta_srpm  -j "${num_jobs}"
+  # Generator type
+  echo "Using build generator: ${build_generator}"
+  cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}"
+
+  # Build step
+  echo "Executing build step using: ${build_generator}"
+  cmake --build . --target cta_srpm -- -j "${num_jobs}"
 }
 
 build_srpm "$@"
