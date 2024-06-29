@@ -496,7 +496,7 @@ void PostgresStmt::closeBoth() {
 //------------------------------------------------------------------------------
 // CountAndReformatSqlBinds
 //------------------------------------------------------------------------------
-void PostgresStmt::CountAndReformatSqlBinds(const std::string &common_sql, std::string &pg_sql, int &nParams) {
+void PostgresStmt::CountAndReformatSqlBinds(const std::string &common_sql, std::string &pg_sql, int &nParams) const {
   nParams = 0;
   // Match any :name
   std::regex pattern(R"(:(\w+))");
