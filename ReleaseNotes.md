@@ -37,6 +37,7 @@
 - cta/CTA#798 - Improved naming and structure of various ci jobs
 - cta/CTA#800 - Refactored the `deploy-eos.sh` script
 - cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
+- cta/CTA#708 - Added a basic test for the archive metadata to the CI
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
