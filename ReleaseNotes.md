@@ -11,6 +11,7 @@
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
+- cta/CTA#708 - Added a basic test for the archive metadata to the CI
 
 ### Code Quality
 
