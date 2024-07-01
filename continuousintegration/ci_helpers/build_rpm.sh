@@ -36,6 +36,7 @@ usage() {
   echo "      --clean-cmake:                            Cleans the cmake cache before building."
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --cmake-build-type <build-type>:          Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
 
@@ -57,14 +58,15 @@ build_rpm() {
   local xrootd_version=""
   local xrootd_ssi_version=""
   local build_generator=""
+  local cmake_build_type=""
 
   local install=false
   local num_jobs=1
   local clean_cmake=false
   local skip_cmake=false
-  local cmake_build_type=""
   local skip_unit_tests=false
   local oracle_support=true
+  local skip_debug_packages=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -149,6 +151,9 @@ build_rpm() {
         ;;
       --skip-unit-tests) 
         skip_unit_tests=true 
+        ;;
+      --skip-debug-packages) 
+        skip_debug_packages=true 
         ;;
       --clean-cmake) 
         clean_cmake=true 
@@ -248,7 +253,7 @@ build_rpm() {
     echo "Installing prerequisites..."
     if [ -d "${build_dir}" ]; then
       echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
-      rm -r "${build_dir}"
+      rm -rf "${build_dir}"
       echo "Old build directory: ${build_dir} removed"
     fi
 
@@ -258,7 +263,7 @@ build_rpm() {
       echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum -y install epel-release almalinux-release-devel ninja-build
+      yum -y install epel-release almalinux-release-devel ninja-build ccache
       yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
@@ -276,7 +281,7 @@ build_rpm() {
         echo "Using XRootD version ${xrootd_version}";
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y devtoolset-11 cmake3 make rpm-build ninja-build
+      yum install -y devtoolset-11 cmake3 make rpm-build ninja-build ccache
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
@@ -305,16 +310,31 @@ build_rpm() {
       cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
+    # Debug packages
+    if [[ ${skip_debug_packages} = true ]]; then
+      echo "Skipping debug packages"
+      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=1"
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=0"
+    fi
+
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
       cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
     fi
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       echo "Skipping unit tests";
       cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
     fi
 
     # Scheduler type
@@ -325,7 +345,8 @@ build_rpm() {
     fi
 
     if [[ ${clean_cmake} = true ]]; then
-      rm -r "${build_dir}"
+      echo "Removing old cmake directory"
+      rm -rf "${build_dir}"
     fi
 
     echo "Creating build directory: ${build_dir}"
@@ -334,7 +355,9 @@ build_rpm() {
     echo ""
     # Generator type
     echo "Using build generator: ${build_generator}"
+    echo "cmake3 ${cmake_options} -G ${build_generator} ${repo_root} -DCMAKE_VERBOSE_MAKEFILE=ON"
     cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}" -DCMAKE_VERBOSE_MAKEFILE=ON
+
   else
     echo "Skipping cmake..."
     if [ ! -d "${build_dir}" ]; then
@@ -345,7 +368,6 @@ build_rpm() {
 
   # Build step
   echo "Executing build step using: ${build_generator}"
-  export NINJA_STATUS='%p [%f/%t] '
   cmake --build . --target cta_rpm -- -j "${num_jobs}"
 }
 

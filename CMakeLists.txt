@@ -94,6 +94,14 @@ else (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
 endif (NOT DEFINED SKIP_UNIT_TESTS)
 
+if (NOT DEFINED SKIP_DEBUG_PACKAGES)
+  message (STATUS "Setting SKIP_DEBUG_PACKAGES to the value of 0")
+  message (STATUS "Override with -dSKIP_DEBUG_PACKAGES:STRING=1")
+  set(SKIP_DEBUG_PACKAGES 0)
+else (NOT DEFINED SKIP_DEBUG_PACKAGES)
+  message (STATUS "Already set: SKIP_DEBUG_PACKAGES=${SKIP_DEBUG_PACKAGES}")
+endif (NOT DEFINED SKIP_DEBUG_PACKAGES)
+
 #Load version information in all cases.
 include(cmake/CTAVersions.cmake)
 
