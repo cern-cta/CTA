@@ -33,9 +33,9 @@ cppcheck_report:
     - when: always
   stage: analysis
   needs: [ cppcheck ]
-  image: centos:7
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   before_script:
-    - yum -y install python3-pip
+    - yum -y install python-pip
     - python3 -m pip install -U cppcheck_codequality
   script:
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
