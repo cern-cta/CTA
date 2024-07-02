@@ -22,7 +22,6 @@
 namespace cta::schedulerdb::postgres {
 
 rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string& vid, uint64_t limit){
-  txn.start();
   /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
    * which will be released when the transaction ends
    */
@@ -53,7 +52,6 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
 }
 
 void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
-  txn.start();
   if(jobIDs.empty()) {
     return;
   }
