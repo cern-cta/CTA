@@ -67,7 +67,8 @@ build_rpm() {
     case $1 in
       --build-dir)
         if [[ $# -gt 1 ]]; then
-          build_dir="$2"
+          # Convert build_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
+          build_dir=$(realpath "$2")
           shift
         else
           echo "Error: --build-dir requires an argument"
@@ -94,7 +95,8 @@ build_rpm() {
         ;;
       --srpm-dir)
         if [[ $# -gt 1 ]]; then
-            srpm_dir="$2"
+            # Convert srpm_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
+            srpm_dir=$(realpath "$2")
             shift
         else
             echo "Error: --srpm-dir requires an argument"
@@ -178,7 +180,7 @@ build_rpm() {
     shift
   done
 
- if [ -z "${build_dir}" ]; then
+  if [ -z "${build_dir}" ]; then
     echo "Failure: Missing mandatory argument --build-dir";
     usage
   fi
@@ -260,7 +262,6 @@ build_rpm() {
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
     fi
   fi
-
 
   # Cmake
   export CTA_VERSION=${cta_version}

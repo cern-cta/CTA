@@ -60,7 +60,8 @@ build_srpm() {
     case $1 in
       --build-dir) 
         if [[ $# -gt 1 ]]; then
-          build_dir="$2"
+          # Convert build_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
+          build_dir=$(realpath "$2")
           shift
         else
           echo "Error: --build-dir requires an argument"
