@@ -20,6 +20,7 @@
     - yum install -y git
     - git submodule update --init --recursive
     - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
+                                                       --create-build-dir
                                                        --cta-version ${CTA_VERSION}
                                                        --vcs-version ${CTA_BUILD_ID}
                                                        --xrootd-version ${XROOTD_VERSION}
@@ -38,6 +39,7 @@
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
+                                                      --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${CTA_VERSION}
                                                       --vcs-version ${CTA_BUILD_ID}
