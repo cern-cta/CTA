@@ -25,10 +25,10 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
   /* using exclusive lock on the ARCHIVE_JOB_QUEUE table for this transaction
    * which will be released when the transaction ends
    */
-  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.executeQuery();
-  sql =
+  std::string lock_sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
+  auto stmt = txn.conn().createStmt(lock_sql);
+  stmt.executeNonQuery();
+  std::string sql =
     "WITH SET_SELECTION AS ( "
       "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
     "WHERE TAPE_POOL = :TAPE_POOL "
@@ -55,13 +55,13 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   if(jobIDs.empty()) {
     return;
   }
-  std::string sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.executeQuery();
+  std::string lock_sql = "LOCK TABLE ARCHIVE_JOB_QUEUE IN ACCESS EXCLUSIVE MODE;";
+  auto stmt = txn.conn().createStmt(lock_sql);
+  stmt.executeNonQuery();
   std::string sqlpart;
   for (const auto &piece : jobIDs) sqlpart += piece + ",";
   if (!sqlpart.empty()) { sqlpart.pop_back(); }
-  sql =
+  std::string sql =
           "UPDATE ARCHIVE_JOB_QUEUE SET "
           "STATUS = :STATUS "
           "WHERE JOB_ID IN (" + sqlpart + ") ";
