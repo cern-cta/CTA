@@ -97,6 +97,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       ret.emplace_back(std::move(aj));
       if (totalBytes >= bytesRequested) break;
     }
+    // returning connection to the pool
+    conn.commit;
   }
   logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
   return ret;

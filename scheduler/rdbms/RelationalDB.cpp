@@ -162,6 +162,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
       jobs.emplace_back(resultSet);
     }
+    // this is not query commit, but conn commit returning
+    // the connection to the pool !
+    sqlconn.commit();
   } catch (cta::exception::Exception & e) {
     std::string bt = e.backtrace();
     logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
