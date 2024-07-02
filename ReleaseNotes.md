@@ -13,6 +13,7 @@
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
 
 ### Code Quality
+- cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
