@@ -174,6 +174,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
     auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
+    aj->jobID = j.jobId;
     logContext.log(log::DEBUG, std::string("In RelationalDB::getNextArchiveJobsToReportBatch(): Job IDs, ArchiveFileIDs: ") + std::to_string(j.jobId) + " " + std::to_string(aj->jobID) + " " + std::to_string(j.archiveFile.archiveFileID));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
