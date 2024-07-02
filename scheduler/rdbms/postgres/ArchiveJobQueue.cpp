@@ -53,7 +53,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
 }
 
 void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
-
+  txn.start();
   if(jobIDs.empty()) {
     return;
   }
