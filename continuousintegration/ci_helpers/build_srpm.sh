@@ -21,7 +21,7 @@ usage() {
   echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> "
   echo ""
   echo "Builds the srpms."
-  echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to the repository root."
+  echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
   echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
@@ -30,6 +30,7 @@ usage() {
   echo "options:"
   echo "  -i, --install:                        Installs the required packages. Supported operating systems: [cc7, alma9]."
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
+  echo "      --create-build-dir                        Creates the build directory if it does not exist."
   echo "      --skip-unit-tests:                Skips the unit tests."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --cmake-build-type <build-type>:  Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
@@ -49,6 +50,7 @@ build_srpm() {
   local vcs_version=""
   local xrootd_version=""
 
+  local create_build_dir=false
   local install=false
   local num_jobs=1
   local skip_unit_tests=false
@@ -67,6 +69,9 @@ build_srpm() {
           echo "Error: --build-dir requires an argument"
           usage
         fi
+        ;;
+      --create-build-dir)
+        create_build_dir=true
         ;;
       --cta-version) 
         if [[ $# -gt 1 ]]; then
@@ -179,14 +184,20 @@ build_srpm() {
   local repo_root=$(pwd)
   local cmake_options=""
 
+  if [[ ${create_build_dir} = true ]]; then
+    mkdir -p "${build_dir}"
+  elif [ ! -d "${build_dir}" ]; then
+    echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
+    exit 1
+  fi
+
+  if [ -n "${build_dir}" ]; then
+    echo "WARNING: build directory ${build_dir} is not empty"
+  fi
+
   # Setup
   if [ "${install}" = true ]; then
     echo "Installing prerequisites..."
-    if [ -d "${build_dir}" ]; then
-      echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
-      rm -r "${build_dir}"
-      echo "Old build directory: ${build_dir} removed"
-    fi
 
     # Go through supported Operating Systems
     if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
@@ -243,7 +254,6 @@ build_srpm() {
     cmake_options+=" ${sched_opt}";
   fi
 
-  mkdir -p "${build_dir}"
   cd "${build_dir}"
   echo "Executing cmake..."
   cmake3 ${cmake_options} "${repo_root}"
