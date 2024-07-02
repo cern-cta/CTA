@@ -85,6 +85,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       jobs.back().jobId = resultSet.columnUint64("JOB_ID");
       totalBytes += jobs.back().archiveFile.fileSize;
       auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, mountInfo.mountId, jobs.back().jobId, mountInfo.tapePool);
+      aj->jobID = jobs.back().jobId;
       aj->tapeFile.copyNb = jobs.back().copyNb;
       aj->archiveFile = jobs.back().archiveFile;
       aj->archiveReportURL = jobs.back().archiveReportUrl;
