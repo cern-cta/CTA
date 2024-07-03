@@ -23,7 +23,7 @@ usage() {
 }
 
 if [ -z "$1" ]; then
-    usage
+  usage
 fi
 
 echo "Looking for archive metadata activity..."
@@ -36,9 +36,9 @@ ARCHIVE_METADATA_LOGLINE=$(grep "archivemetadata=" "${REPORT_FILE_NAME}")
 echo "  Archive metadata eosreport log line:"
 echo "  ${ARCHIVE_METADATA_LOGLINE}"
 
-if grep -q "${ARCHIVE_METADATA}" <<< "${ARCHIVE_METADATA_LOGLINE}" ; then
-    echo "  Archive metadata successfully ended up in eos report logs."
+if grep -q "${ARCHIVE_METADATA}" <<<"${ARCHIVE_METADATA_LOGLINE}"; then
+  echo "  Archive metadata successfully ended up in eos report logs."
 else
-    echo "  ERROR: Archive metadata log line not found."
-    exit 1
+  echo "  ERROR: Archive metadata log line not found."
+  exit 1
 fi
