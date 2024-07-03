@@ -167,9 +167,15 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     }
     delete[] pucTmpData;
   } else {
-    bytes_read = m_session.m_drive.readBlock(data, size);
+    //bytes_read = m_session.m_drive.readBlock(data, size);
     // Special case - 64K data format with CRC32
-    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
+    if (!m_b64KFormat) {
+      bytes_read = m_session.m_drive.readBlock(data, size);
+    } else {
+      bytes_read = m_session.m_drive.readBlock(data, 65536);
+    }
+
+//    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
       if (bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0 && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT
             && !m_b64KFormat) {
         // Checking if the data block is with CRC32
@@ -177,7 +183,9 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
               SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
           bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
           m_b64KFormat = true;
-          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+//          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+        } else {
+          throw TapeFormatError("OSM 64KFormat Error");
         }
       }
     }
@@ -196,9 +204,9 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 
   // end of file reached! keep reading until the header of the next file
   if (!bytes_read) {
-    if (m_b64KFormat) {
-      m_session.m_drive.disableLogicalBlockProtection();
-    }
+//    if (m_b64KFormat) {
+//      m_session.m_drive.disableLogicalBlockProtection();
+//    }
     m_session.setCurrentFseq(m_session.getCurrentFseq() + 1); // moving on to the header of the next file
     m_session.setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
