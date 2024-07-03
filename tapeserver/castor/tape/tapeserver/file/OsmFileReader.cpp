@@ -188,7 +188,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
           throw TapeFormatError("OSM 64KFormat Error");
         }
       }
-    }
+//    }
     m_ui64CPIODataSize += bytes_read;
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
