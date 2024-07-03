@@ -32,6 +32,8 @@ COPY ${BASEDIR}/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
+## Add external script for freespace
+COPY ${BASEDIR}/cta-get-free-disk-space.sh /usr/local/bin/cta-get-free-disk-space.sh
 
 RUN yum install -y \
       yum-plugin-versionlock \
