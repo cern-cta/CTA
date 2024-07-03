@@ -176,7 +176,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     }
 
 //    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
-      if (bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0 && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT
+      if (bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0 && bytes_read == PAYLOAD_BOLCK_SIZE_64K_FORMAT
             && !m_b64KFormat) {
         // Checking if the data block is with CRC32
         if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
