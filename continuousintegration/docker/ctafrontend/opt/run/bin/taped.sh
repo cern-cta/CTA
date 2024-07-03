@@ -58,6 +58,8 @@ echo "taped RetrieveQueueCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
 
 echo "general InstanceName CI" >> "${TAPED_CONF_FILE}"
 echo "general SchedulerBackendName VFS" >> "${TAPED_CONF_FILE}"
+echo "taped externalFreeDiskSpaceScript cta-get-free-disk-space.sh" >> "${TAPED_CONF_FILE}"
+
 
 
 ####

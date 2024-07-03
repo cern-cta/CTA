@@ -337,7 +337,7 @@ echo "Labeling tapes:"
       # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
     # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
     # tests. That's why we need to force cta-tape-label, but only for CI testing.
-    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --force
+    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --force --debug
     if [ $? -ne 0 ]; then
       echo "ERROR: failed to label the tape ${VID}"
       exit 1
