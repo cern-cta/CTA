@@ -24,7 +24,7 @@ usage() {
 }
 
 if [ -z "$1" ]; then
-    usage
+  usage
 fi
 
 . /root/client_helper.sh
@@ -59,4 +59,4 @@ eos ${EOSINSTANCE} rm ${FILE_LOCATION} 2>/dev/null
 TMP_FILE=$(mktemp)
 
 echo "Making curl request"
-curl -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" ${ENDPOINT} --upload-file "${TMP_FILE}"
+curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" ${ENDPOINT} --upload-file "${TMP_FILE}"
