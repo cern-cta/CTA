@@ -172,7 +172,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     if (!m_b64KFormat) {
       bytes_read = m_session.m_drive.readBlock(data, size);
     } else {
-      bytes_read = m_session.m_drive.readBlock(data, 65536);
+      bytes_read = m_session.m_drive.readBlock(data, 65540);
     }
 
 //    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
