@@ -21,7 +21,7 @@ usage() {
   echo "Usage: $0 [options]--build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
   echo ""
   echo "Builds the rpms."
-  echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to the repository root. Ex: build_rpm"
+  echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
   echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
