@@ -26,7 +26,7 @@
                                                        --xrootd-version ${XROOTD_VERSION}
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
-                                                       --jobs 8
+                                                       --jobs $(nproc --ignore=1)
                                                        --install 
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
@@ -47,7 +47,7 @@
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
-                                                      --jobs 8
+                                                      --jobs $(nproc --ignore=1)
                                                       --install
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
