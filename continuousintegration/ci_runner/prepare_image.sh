@@ -39,10 +39,8 @@ prepareImage() {
   local rpm_default_src="build_rpm/RPM/RPMS/x86_64"
 
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
-      -h | --help)
-        usage
-        ;;
+    case "$1" in
+      -h | --help) usage ;;
       -s | --rpm-src)
         if [[ $# -gt 1 ]]; then
           rpm_src="$2"
@@ -61,15 +59,13 @@ prepareImage() {
           exit 1
         fi
         ;;
-      *) 
-        usage
-        ;;
+      *) usage ;;
     esac
     shift
   done
 
   if [ -z ${image_tag} ]; then
-    echo "Please specify the docker image tag";
+    echo "Please specify the docker image tag"
     usage
   fi
 
@@ -77,7 +73,7 @@ prepareImage() {
     echo "No explicit rpm source specified, using default: CTA/${rpm_default_src}"
     if [ ! -d "${rpm_default_src}" ]; then
       echo "Default rpm source not found. Please build the rpms or provide an alternative valid path."
-      exit 1;
+      exit 1
     fi
   elif [ ! $(readlink -f "${rpm_src}") = $(readlink -f "${rpm_default_src}") ]; then
     trap "rm -rf ${rpm_default_src}" EXIT
@@ -86,7 +82,7 @@ prepareImage() {
   else
     echo "Provided rpm source is same as default."
   fi
-  
+
   if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
     echo "Running on AlmaLinux 9"
     echo "podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host"
@@ -95,6 +91,9 @@ prepareImage() {
     echo "Running on CC7"
     echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
     sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
+  else
+    echo "Running on unsupported operating system. Only cc7 and alma9 are supported."
+    exit 1
   fi
 }
 

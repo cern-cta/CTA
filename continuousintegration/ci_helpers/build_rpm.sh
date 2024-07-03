@@ -18,7 +18,7 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options]--build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
   echo ""
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
@@ -66,7 +66,7 @@ build_rpm() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       --build-dir)
         if [[ $# -gt 1 ]]; then
           # Convert build_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
@@ -77,10 +77,8 @@ build_rpm() {
           usage
         fi
         ;;
-      --create-build-dir)
-        create_build_dir=true
-        ;;
-      --cta-version) 
+      --create-build-dir) create_build_dir=true ;;
+      --cta-version)
         if [[ $# -gt 1 ]]; then
           cta_version="$2"
           shift
@@ -89,7 +87,7 @@ build_rpm() {
           usage
         fi
         ;;
-      --scheduler-type) 
+      --scheduler-type)
         if [[ $# -gt 1 ]]; then
           scheduler_type="$2"
           shift
@@ -100,15 +98,15 @@ build_rpm() {
         ;;
       --srpm-dir)
         if [[ $# -gt 1 ]]; then
-            # Convert srpm_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
-            srpm_dir=$(realpath "$2")
-            shift
+          # Convert srpm_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
+          srpm_dir=$(realpath "$2")
+          shift
         else
-            echo "Error: --srpm-dir requires an argument"
-            usage
+          echo "Error: --srpm-dir requires an argument"
+          usage
         fi
         ;;
-      --vcs-version) 
+      --vcs-version)
         if [[ $# -gt 1 ]]; then
           vcs_version="$2"
           shift
@@ -117,7 +115,7 @@ build_rpm() {
           usage
         fi
         ;;
-      --xrootd-version) 
+      --xrootd-version)
         if [[ $# -gt 1 ]]; then
           xrootd_version="$2"
           shift
@@ -126,7 +124,7 @@ build_rpm() {
           usage
         fi
         ;;
-      --xrootd-ssi-version) 
+      --xrootd-ssi-version)
         if [[ $# -gt 1 ]]; then
           xrootd_ssi_version="$2"
           shift
@@ -135,10 +133,8 @@ build_rpm() {
           usage
         fi
         ;;
-      -i|--install)
-        install=true
-        ;;
-      -j|--jobs)
+      -i | --install) install=true ;;
+      -j | --jobs)
         if [[ $# -gt 1 ]]; then
           num_jobs="$2"
           shift
@@ -147,13 +143,9 @@ build_rpm() {
           usage
         fi
         ;;
-      --skip-cmake) 
-        skip_cmake=true 
-        ;;
-      --skip-unit-tests) 
-        skip_unit_tests=true 
-        ;;
-      --oracle-support) 
+      --skip-cmake) skip_cmake=true ;;
+      --skip-unit-tests) skip_unit_tests=true ;;
+      --oracle-support)
         if [[ $# -gt 1 ]]; then
           if [ "$2" = "OFF" ]; then
             oracle_support=false
@@ -164,11 +156,11 @@ build_rpm() {
           usage
         fi
         ;;
-      --cmake-build-type) 
+      --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-              echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-              exit 1
+            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+            exit 1
           fi
           cmake_build_type="$2"
           shift
@@ -177,75 +169,46 @@ build_rpm() {
           usage
         fi
         ;;
-      -i|--install)
-        install=true
-        ;;
-      -j|--jobs)
-        if [[ $# -gt 1 ]]; then
-          num_jobs="$2"
-          shift
-        else
-          echo "Error: -j|--jobs requires an argument"
-          usage
-        fi
-        ;;
-      --skip-cmake) 
-        skip_cmake=true 
-        ;;
-      --skip-unit-tests) 
-        skip_unit_tests=true 
-        ;;
-      --oracle-support) 
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" = "OFF" ]; then
-            disable_oracle_support=true
-          fi
-          shift
-        else
-          echo "Error: -j|--jobs requires an argument"
-          usage
-        fi
-        ;;
       *)
         echo "Invalid argument: $1"
-        usage 
+        usage
         ;;
     esac
     shift
   done
 
   if [ -z "${build_dir}" ]; then
-    echo "Failure: Missing mandatory argument --build-dir";
+    echo "Failure: Missing mandatory argument --build-dir"
     usage
   fi
 
   if [ -z "${scheduler_type}" ]; then
-    echo "Failure: Missing mandatory argument --scheduler-type";
+    echo "Failure: Missing mandatory argument --scheduler-type"
     usage
   fi
 
   if [ -z "${srpm_dir}" ]; then
-    echo "Failure: Missing mandatory argument --srpm-dir";
+    echo "Failure: Missing mandatory argument --srpm-dir"
     usage
   fi
 
   if [ -z "${vcs_version}" ]; then
-    echo "Failure: Missing mandatory argument --vcs-version";
+    echo "Failure: Missing mandatory argument --vcs-version"
     usage
   fi
 
   if [ -z "${xrootd_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-version";
+    echo "Failure: Missing mandatory argument --xrootd-version"
     usage
   fi
 
-  if ! xrootd_supported "${xrootd_version}"; then 
+  if ! xrootd_supported "${xrootd_version}"; then
     echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
     exit 1
   fi
 
   if [ -z "${xrootd_ssi_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-ssi-version";
+    echo "Failure: Missing mandatory argument --xrootd-ssi-version"
     usage
   fi
 
@@ -266,7 +229,7 @@ build_rpm() {
     echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
-  # Setup  
+  # Setup
   if [ "${install}" = true ]; then
     echo "Installing prerequisites..."
 
@@ -285,13 +248,13 @@ build_rpm() {
       # CentOS 7
       echo "Found CentOS 7 install..."
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      if [[ ${xrootd_version} -eq 4 ]]; then 
-        echo "Using XRootD version 4";
-        ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
-        yum-config-manager --enable cta-ci-xroot;
-        yum-config-manager --disable cta-ci-xrootd5;
-      else 
-        echo "Using XRootD version 5";
+      if [[ ${xrootd_version} -eq 4 ]]; then
+        echo "Using XRootD version 4"
+        ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4
+        yum-config-manager --enable cta-ci-xroot
+        yum-config-manager --disable cta-ci-xrootd5
+      else
+        echo "Using XRootD version 5"
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y devtoolset-11 cmake3 make rpm-build
@@ -302,85 +265,6 @@ build_rpm() {
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
     fi
   fi
-
-  if [ -z "${scheduler_type}" ]; then
-    echo "Failure: Missing mandatory argument --scheduler-type";
-    usage
-  fi
-
-  if [ -z "${srpm_dir}" ]; then
-    echo "Failure: Missing mandatory argument --srpm-dir";
-    usage
-  fi
-
-  if [ -z "${vcs_version}" ]; then
-    echo "Failure: Missing mandatory argument --vcs-version";
-    usage
-  fi
-
-  if [ -z "${xrootd_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-version";
-    usage
-  fi
-
-  if ! xrootd_supported "${xrootd_version}"; then 
-    echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
-    exit 1
-  fi
-
-  if [ -z "${xrootd_ssi_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-ssi-version";
-    usage
-  fi
-
-  # navigate to root directory
-  cd "$(dirname "$0")"
-  cd ../../
-  local repo_root=$(pwd)
-  local cmake_options=""
-
-  # Setup  
-  if [ "${install}" = true ]; then
-    echo "Installing prerequisites..."
-    if [ -d "${build_dir}" ]; then
-      echo "Build directory already exists while asking for install. Attempting removal of existing build directory..."
-      rm -r "${build_dir}"
-      echo "Old build directory: ${build_dir} removed"
-    fi
-
-    # Go through supported Operating Systems
-    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
-      # Alma9
-      echo "Found Alma 9 install..."
-      cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
-      cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum -y install epel-release almalinux-release-devel
-      yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
-      yum -y install yum-plugin-versionlock
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
-    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
-      # CentOS 7
-      echo "Found CentOS 7 install..."
-      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      if [[ ${xrootd_version} -eq 4 ]]; then 
-        echo "Using XRootD version 4";
-        ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
-        yum-config-manager --enable cta-ci-xroot;
-        yum-config-manager --disable cta-ci-xrootd5;
-      else 
-        echo "Using XRootD version 5";
-      fi
-      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y devtoolset-11 cmake3 make rpm-build
-      yum -y install yum-plugin-priorities yum-plugin-versionlock
-      source /opt/rh/devtoolset-11/enable
-      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
-    else
-      echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
-    fi
-  fi
-
 
   # Cmake
   export CTA_VERSION=${cta_version}
@@ -396,19 +280,19 @@ build_rpm() {
     fi
 
     if [[ ${oracle_support} = false ]]; then
-      echo "Disabling Oracle Support";
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+      echo "Disabling Oracle Support"
+      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON"
     fi
 
     if [[ ${skip_unit_tests} = true ]]; then
-      echo "Skipping unit tests";
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
+      echo "Skipping unit tests"
+      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
     fi
 
     if [[ ${scheduler_type} != "objectstore" ]]; then
-      echo "Using specified scheduler database type $SCHED_TYPE";
-      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
-      cmake_options+=" ${sched_opt}";
+      echo "Using specified scheduler database type $SCHED_TYPE"
+      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true "
+      cmake_options+=" ${sched_opt}"
     fi
 
     cd "${build_dir}"

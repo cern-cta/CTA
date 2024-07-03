@@ -40,10 +40,8 @@ redeploy() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
-      -h | --help)
-        usage
-        ;;
+    case "$1" in
+      -h | --help) usage ;;
       -n | --namespace)
         if [[ $# -gt 1 ]]; then
           kube_namespace="$2"
@@ -71,9 +69,7 @@ redeploy() {
           exit 1
         fi
         ;;
-      *) 
-        usage
-        ;;
+      *) usage ;;
     esac
     shift
   done
@@ -95,13 +91,13 @@ redeploy() {
   cd ../../
 
   # Delete previous instance, if it exists
-  if kubectl get namespace ${kube_namespace} &> /dev/null; then
+  if kubectl get namespace ${kube_namespace} &>/dev/null; then
     echo "Found existing namespace \"${kube_namespace}\". Deleting..."
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace}
   fi
 
   # Clear the old image and namespace
-  if podman inspect ctageneric:${image_tag} &> /dev/null; then
+  if podman inspect ctageneric:${image_tag} &>/dev/null; then
     echo "Deleting old image and removing it from minikube"
     podman rmi ctageneric:${image_tag}
     minikube image rm localhost/ctageneric:${image_tag}
@@ -110,6 +106,7 @@ redeploy() {
   ## Create and load the new image
   echo "Building image based on ${rpm_src}"
   ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}"
+  # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
   podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
   echo "Loading new image into minikube"
   minikube image load ctageneric_${image_tag}.tar

@@ -59,42 +59,29 @@ compile_deploy() {
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
   local build_pod_name="build-pod"
-  local xrootd_version="5" # TODO
+  local xrootd_version="5"
   local cta_version=${xrootd_version}
+  # These versions don't affect anything functionality wise
   local vcs_version="dev"
-  local xrootd_ssi_version="5" # TODO
+  local xrootd_ssi_version="dev"
   local scheduler_type="objectstore"
   local oracle_support="ON"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-      -h | --help)
-        usage
-        ;;
-      -r | --reset)
-        reset=true
-        ;;
-      --skip-build)
-        skip_build=true
-        ;;
-      --skip-deploy)
-        skip_deploy=true
-        ;;
-      --skip-cmake)
-        skip_cmake=true
-        ;;
-      --skip-unit-tests)
-        skip_unit_tests=true
-        ;;
-      --force-install)
-        force_install=true
-        ;;
-      --cmake-build-type) 
+      -h | --help) usage ;;
+      -r | --reset) reset=true ;;
+      --skip-build) skip_build=true ;;
+      --skip-deploy) skip_deploy=true ;;
+      --skip-cmake) skip_cmake=true ;;
+      --skip-unit-tests) skip_unit_tests=true ;;
+      --force-install) force_install=true ;;
+      --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-              echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-              exit 1
+            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+            exit 1
           fi
           cmake_build_type="$2"
           shift
@@ -103,11 +90,11 @@ compile_deploy() {
           usage
         fi
         ;;
-      -o | --operating-system) 
+      -o | --operating-system)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "cc7" ] && [ "$2" != "alma9" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-              echo "-o | --operating-system must be one of [cc7, alma9]."
-              exit 1
+            echo "-o | --operating-system must be one of [cc7, alma9]."
+            exit 1
           fi
           operating_system="$2"
           shift
@@ -116,7 +103,7 @@ compile_deploy() {
           usage
         fi
         ;;
-      *) 
+      *)
         usage
         ;;
     esac
@@ -124,19 +111,19 @@ compile_deploy() {
   done
 
   # Check if src_dir specified
-  echo "Checking whether CTA directory exists in \"${src_dir}\" exists..."
+  echo "Checking whether CTA directory exists in \"${src_dir}\"..."
   if [ ! -d "${src_dir}/CTA" ]; then
     echo "Error: CTA directory not present in \"${src_dir}\"."
-    exit 1;
+    exit 1
   fi
-  echo "Directory found"
+  echo "CTA directory found"
 
   # Check if namespace exists
-  if kubectl get namespace "${build_namespace}" &> /dev/null; then
-      echo "Found existing namespace ${build_namespace}."
+  if kubectl get namespace "${build_namespace}" &>/dev/null; then
+    echo "Found existing namespace ${build_namespace}."
   else
-      echo "Creating namespace: ${build_namespace}"
-      kubectl create namespace "${build_namespace}"
+    echo "Creating namespace: ${build_namespace}"
+    kubectl create namespace "${build_namespace}"
   fi
 
   if [ ${skip_build} = false ]; then
@@ -147,7 +134,7 @@ compile_deploy() {
     fi
 
     # Create the pod if it does not exist
-    if kubectl get pod ${build_pod_name} -n ${build_namespace} > /dev/null 2>&1; then
+    if kubectl get pod ${build_pod_name} -n ${build_namespace} >/dev/null 2>&1; then
       echo "Pod ${build_pod_name} already exists"
     else
       restarted=true
@@ -162,18 +149,20 @@ compile_deploy() {
         *)
           echo "Invalid operating system provided: ${operating_system}"
           exit 1
+          ;;
       esac
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
       echo "Building SRPMs..."
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
-                                                                                                          --build-dir build_srpm \
-                                                                                                          --cta-version ${cta_version} \
-                                                                                                          --vcs-version ${vcs_version} \
-                                                                                                          --xrootd-version ${xrootd_version} \
-                                                                                                          --scheduler-type ${scheduler_type} \
-                                                                                                          --oracle-support ${oracle_support} \
-                                                                                                          --install \
-                                                                                                          --jobs ${num_jobs}
+        --build-dir /shared/CTA/build_srpm \
+        --create-build-dir \
+        --cta-version ${cta_version} \
+        --vcs-version ${vcs_version} \
+        --xrootd-version ${xrootd_version} \
+        --scheduler-type ${scheduler_type} \
+        --oracle-support ${oracle_support} \
+        --install \
+        --jobs ${num_jobs}
     fi
 
     echo "Compiling the CTA project from source directory"
@@ -181,6 +170,7 @@ compile_deploy() {
     local build_rpm_flags="--jobs ${num_jobs}"
 
     if [ ${restarted} = true ] || [ ${force_install} = true ]; then
+      # Only install if it is the first time running this or if the install is forced
       build_rpm_flags+=" --install"
     elif [ ${skip_cmake} = true ]; then
       # It should only be possible to skip cmake if the pod was not restarted
@@ -195,15 +185,16 @@ compile_deploy() {
 
     echo "Building RPMs..."
     kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
-                                                                                                      --build-dir build_rpm \
-                                                                                                      --srpm-dir build_srpm/RPM/SRPMS \
-                                                                                                      --cta-version ${cta_version} \
-                                                                                                      --vcs-version ${vcs_version} \
-                                                                                                      --xrootd-version ${xrootd_version} \
-                                                                                                      --xrootd-ssi-version ${xrootd_ssi_version} \
-                                                                                                      --scheduler-type ${scheduler_type} \
-                                                                                                      --oracle-support ${oracle_support} \
-                                                                                                      ${build_rpm_flags}
+      --build-dir /shared/CTA/build_rpm \
+      --create-build-dir \
+      --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
+      --cta-version ${cta_version} \
+      --vcs-version ${vcs_version} \
+      --xrootd-version ${xrootd_version} \
+      --xrootd-ssi-version ${xrootd_ssi_version} \
+      --scheduler-type ${scheduler_type} \
+      --oracle-support ${oracle_support} \
+      ${build_rpm_flags}
 
     echo "Build successfull"
   fi
