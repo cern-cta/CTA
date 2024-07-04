@@ -39,11 +39,6 @@ mkdir -p /var/log/tmp
 chmod 1777 /var/log/tmp
 echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
 
-# Creating the Rados performance locking file
-touch /var/log/cta-rados-locking.log
-#Creating the symbolic link to /var/log/cta-rados-locking.log
-ln -s /var/log/cta-rados-locking.log /var/tmp/cta-rados-locking.log
-
 echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
