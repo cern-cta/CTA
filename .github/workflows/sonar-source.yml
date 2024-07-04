@@ -27,7 +27,7 @@ jobs:
         run: |
           dnf -y update
           dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock yum-plugin-versionlock
-          dnf -y --enablerepo=crb install wget git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build
+          dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build
 
       - name: Download CTA
         uses: actions/checkout@v4

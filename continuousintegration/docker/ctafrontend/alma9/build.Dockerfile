@@ -11,7 +11,7 @@ COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
 RUN set -ex; \
     yum update -y; \
     yum -y install epel-release almalinux-release-devel; \
-    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils; \
+    yum -y install git gcc gcc-c++ cmake3 make rpm-build yum-utils; \
     yum clean all;
 
 WORKDIR /Project

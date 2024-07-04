@@ -37,7 +37,7 @@ RUN yum install -y \
       yum-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
-      wget jq bc \
+      jq bc \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
@@ -71,12 +71,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 
 # Sqlite3 not installed by default in Alma9 image
 RUN yum install -y sqlite
-
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-  wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-  yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-  rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)

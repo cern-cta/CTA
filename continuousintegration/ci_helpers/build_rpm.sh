@@ -240,7 +240,7 @@ build_rpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
-      yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+      yum -y install gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
