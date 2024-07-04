@@ -84,7 +84,7 @@ rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStat
     }
     j++;
   }
-  auto stmt = conn.createStmt(sql);
+  auto stmt = txn.conn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
   size_t sz = statusVec.size();
   for (size_t i = 0; i < sz; ++i) {
@@ -97,8 +97,7 @@ rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStat
   "IS_OWNED = 1,"
   "FROM SET_SELECTION "
   "WHERE ARCHIVE_JOB_REPORTS.JOB_ID = SET_SELECTION.JOB_ID "
-  "RETURNING SET_SELECTION.JOB_ID"
-
+  "RETURNING SET_SELECTION.JOB_ID";
   stmt.bindUint32(":LIMIT", limit);
   return stmt.executeQuery();
 }
