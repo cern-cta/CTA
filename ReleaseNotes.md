@@ -13,6 +13,7 @@
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
 - cta/CTA#725 - Extracted the build steps for srpms and rpms into seperate scripts
 - cta/CTA#750 - Removed outdated cc7 ci_runner/eos development directory
+- cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
