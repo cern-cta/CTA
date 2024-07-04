@@ -1,0 +1,14 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krb5-config
+data:
+  krb5.conf: | 
+    [libdefaults]
+    default_realm = TEST.CTA
+
+    [realms]
+      TEST.CTA = {
+      kdc=kdc
+      }
