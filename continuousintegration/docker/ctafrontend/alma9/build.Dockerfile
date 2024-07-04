@@ -26,9 +26,6 @@ COPY ./cc7toalma9.sh /Project/CTA/continuousintegration/docker/ctafrontend/alma9
 COPY ./code.patch /Project/CTA/continuousintegration/docker/ctafrontend/alma9/code.patch
 
 RUN set -ex; \
-    cd CTA;
-
-RUN set -ex; \
     mkdir /Project/build_srpm; \
     cd /Project/build_srpm; \
     cmake3 -DPackageOnly:Bool=true ../CTA; \
