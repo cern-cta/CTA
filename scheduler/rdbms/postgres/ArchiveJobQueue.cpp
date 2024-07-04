@@ -65,23 +65,7 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   return;
 };
 
-
-  std::string sql =
-          "WITH SET_SELECTION AS ( "
-          "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
-          "WHERE STATUS = ANY(ARRAY['AJS_ToReportToUserForTransfer', "
-                                   "'AJS_ToReportToUserForFailure']";
-          "]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS NULL)  "
-          "ORDER BY PRIORITY DESC, JOB_ID  "
-          "LIMIT :LIMIT FOR UPDATE) "
-          "UPDATE ARCHIVE_JOB_QUEUE SET "
-          "IS_REPORTING = 1 "
-          "FROM SET_SELECTION "
-          "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
-          "RETURNING SET_SELECTION.JOB_ID";
-
-
-  rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
   std::string sql =
           "WITH SET_SELECTION AS ( "
           "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
