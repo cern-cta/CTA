@@ -65,7 +65,7 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   return;
 };
 
-rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
   std::string sql =
           "WITH SET_SELECTION AS ( "
           "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
