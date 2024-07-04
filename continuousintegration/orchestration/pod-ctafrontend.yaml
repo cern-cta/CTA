@@ -38,7 +38,7 @@ spec:
       name: logstorage
     - mountPath: /etc/config/eoscta
       name: eosctaconfig
-    - mountPath: /etc/
+    - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
     securityContext:
