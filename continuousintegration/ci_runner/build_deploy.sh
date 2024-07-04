@@ -92,7 +92,7 @@ compile_deploy() {
         ;;
       -o | --operating-system)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ]; then
             echo "-o | --operating-system must be one of [cc7, alma9]."
             exit 1
           fi
@@ -201,7 +201,10 @@ compile_deploy() {
 
   if [ ${skip_deploy} = false ]; then
     echo "Redeploying CTA pods..."
-    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh -n ${deploy_namespace} --operating-system "${operating_system}"
+    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
+      -n ${deploy_namespace} \
+      --operating-system "${operating_system}" \
+      --rpm-src build_rpm/RPM/RPMS/x86_64
   fi
 }
 

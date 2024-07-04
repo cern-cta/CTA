@@ -193,7 +193,8 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   set(CPACK_SOURCE_IGNORE_FILES 
     "/.git/"
     "/build_srpm/"
-    "/build_rpm/")
+    "/build_rpm/"
+    "/image_rpms/")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
