@@ -50,7 +50,9 @@ clang_format:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    # - when: always
   stage: analysis
   image:
     name: gitlab-registry.cern.ch/linuxsupport/alma9-base
