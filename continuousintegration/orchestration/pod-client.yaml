@@ -32,6 +32,9 @@ spec:
       name: logstorage
     - mountPath: /etc/config/eos
       name: eosconfig
+    - mountPath: /etc/
+      name: krb5-config-volume
+      subPath: krb5.conf
     securityContext:
       privileged: true
 
@@ -45,6 +48,9 @@ spec:
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
+  - name: krb5-config-volume
+    configMap: 
+      name: krb5-config
 
   imagePullSecrets:
   - name: ctaregsecret

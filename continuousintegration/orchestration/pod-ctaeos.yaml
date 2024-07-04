@@ -38,6 +38,9 @@ spec:
       name: eosconfig
     - mountPath: /etc/config/eoscta
       name: eosctaconfig
+    - mountPath: /etc/
+      name: krb5-config-volume
+      subPath: krb5.conf
     securityContext:
       privileged: true
 
@@ -57,6 +60,9 @@ spec:
   - name: eosctaconfig
     configMap:
       name: eoscta-config
+  - name: krb5-config-volume
+    configMap: 
+      name: krb5-config
 
   imagePullSecrets:
   - name: ctaregsecret
