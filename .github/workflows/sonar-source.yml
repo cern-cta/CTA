@@ -64,9 +64,6 @@ jobs:
           fi
           git config --global --add safe.directory $(pwd)
           git submodule update --init --recursive
-          # This is a temporary hack because Oracle has not made the correct RPMs available in a repo. Once the RPMs are
-          # available, they should be installed using the package manager in the usual way. See issue cta/CTA#608.
-          ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
           mkdir build_srpm
           cd build_srpm
           echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"

@@ -201,7 +201,6 @@ build_srpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
       yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       echo "Found CentOS 7 install..."

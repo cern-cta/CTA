@@ -242,7 +242,6 @@ build_rpm() {
       yum -y install epel-release almalinux-release-devel
       yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
       yum -y install yum-plugin-versionlock
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
