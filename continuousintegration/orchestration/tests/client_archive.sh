@@ -46,11 +46,16 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   xrdcp_error="ERROR with xrootd transfer for file ${subdir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
   command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || ${xrdcp_error}"
-   
+  start=$(date +%s)
+  echo "Starting at ${start}"
   seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
-
+  end=$(date +%s)
+  duration=$((end - start))
+  echo "All file copies to disk for subdir ${subdir} took ${duration} seconds."
   echo Done.
 done
+start=$(date +%s)
+echo "Timestamp after all files copied ${start}"
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some xrdcp errors
   echo "Several xrdcp errors occured during archival!"
@@ -73,6 +78,7 @@ echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$(((3+${NB_DIRS})*(40+${NB_FILES}/5)))
 while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
+  start_check=$(date +%s)
   echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -86,9 +92,11 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
     sleep 1 # do not hammer eos too hard
+    let SECONDS_PASSED=SECONDS_PASSED+1
   done
-
-  echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
+  end_check=$(date +%s)
+  duration=$((end_check - start_check))
+  echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived checked within ${duration} seconds, current timestamp ${end_check}"
 
   NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
   if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
