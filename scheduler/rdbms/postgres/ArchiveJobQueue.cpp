@@ -59,13 +59,13 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
           "UPDATE ARCHIVE_JOB_QUEUE SET "
           "STATUS = :STATUS "
           "WHERE JOB_ID IN (" + sqlpart + ") ";
-  stmt = txn.conn().createStmt(sql);
+  auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.executeNonQuery();
   return;
 };
 
-rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit); {
+rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
   std::string sql =
           "WITH SET_SELECTION AS ( "
           "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "

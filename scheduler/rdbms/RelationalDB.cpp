@@ -153,18 +153,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   rdbms::Rset jobIDresultSet;
+  std::list<std::string> jobIDsList;
   try {
-    jobIDresultSet = flagReportingJobsByStatus(txn, statusList, filesRequested);
+    jobIDresultSet = schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, filesRequested);
+    while (jobIDresultSet.next()) {
+      jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
+    }
     txn.commit();
   } catch (exception::Exception &ex) {
     logContext.log(cta::log::DEBUG,
          "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
          ex.getMessageValue());
     txn.abort();
-  }
-  std::list<std::string> jobIDsList;
-  while (jobIDresultSet.next()) {
-    jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
   }
   auto sqlconn = m_connPool.getConn();
   auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
