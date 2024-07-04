@@ -96,7 +96,7 @@ rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStat
   "UPDATE ARCHIVE_JOB_QUEUE SET "
   "IS_OWNED = 1,"
   "FROM SET_SELECTION "
-  "WHERE ARCHIVE_JOB_REPORTS.JOB_ID = SET_SELECTION.JOB_ID "
+  "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
   "RETURNING SET_SELECTION.JOB_ID";
   stmt.bindUint32(":LIMIT", limit);
   return stmt.executeQuery();
