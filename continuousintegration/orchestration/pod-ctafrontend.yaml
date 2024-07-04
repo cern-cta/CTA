@@ -38,6 +38,9 @@ spec:
       name: logstorage
     - mountPath: /etc/config/eoscta
       name: eosctaconfig
+    - mountPath: /etc/
+      name: krb5-config-volume
+      subPath: krb5.conf
     securityContext:
       # RW access needed to volumes
       privileged: true
@@ -64,6 +67,9 @@ spec:
   - name: eosctaconfig
     configMap:
       name: eoscta-config
+  - name: krb5-config-volume
+    configMap: 
+      name: krb5-config
 
   imagePullSecrets:
   - name: ctaregsecret
