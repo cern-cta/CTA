@@ -50,8 +50,6 @@ clang_format:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
     - when: always
   stage: analysis
   image:
@@ -59,7 +57,7 @@ clang_format:
     entrypoint: [""]
   script:
     - yum install -y git-clang-format
-    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-origin/main}
+    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-main}
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.output
   artifacts:
