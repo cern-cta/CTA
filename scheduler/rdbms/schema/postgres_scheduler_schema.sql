@@ -68,7 +68,7 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
   RETRIES_WITHIN_MOUNT SMALLINT,
   MAX_RETRIES_WITHIN_MOUNT SMALLINT,
   LAST_MOUNT_WITH_FAILURE BIGINT,
-  IS_REPORTDECIDED CHAR(1)
+  IS_REPORTING CHAR(1)
 /*  REPACK_FILEBUF_URL VARCHAR(2000),*/
 /*  REPACK_FSEQ NUMERIC(20, 0)*/
 );
@@ -76,12 +76,13 @@ CREATE INDEX IDX_MOUNT_ID ON ARCHIVE_JOB_QUEUE(MOUNT_ID);
 ALTER TABLE ARCHIVE_JOB_QUEUE ADD COLUMN LAST_UPDATE_TIME timestamp DEFAULT CURRENT_TIMESTAMP;
 CREATE TABLE ARCHIVE_JOB_REPORTS(
 /* Common part with RETRIEVE table - request related info */
-                                  JOB_ID BIGSERIAL PRIMARY KEY,
+                                  JOB_ID BIGINT PRIMARY KEY REFERENCES ARCHIVE_JOB_QUEUE(JOB_ID),
                                   STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
+                                  IS_OWNED BOOLEAN,
                                   CREATION_TIME BIGINT,
                                   MOUNT_ID BIGINT,
                                   START_TIME BIGINT,
-                                  PRIORITY SMALLINT CONSTRAINT AJQ_MPAP_NN NOT NULL,
+/* PRIORITY SMALLINT CONSTRAINT AJQ_MPAP_NN NOT NULL, */
                                   STORAGE_CLASS VARCHAR(100),
                                   COPY_NB NUMERIC(3, 0),
                                   SIZE_IN_BYTES BIGINT,
@@ -101,7 +102,6 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   RETRIES_WITHIN_MOUNT SMALLINT,
                                   MAX_RETRIES_WITHIN_MOUNT SMALLINT,
                                   LAST_MOUNT_WITH_FAILURE BIGINT,
-                                  TAPE_POOL VARCHAR(100) CONSTRAINT AJQ_TPN_NN NOT NULL,
                                   REPACK_FILEBUF_URL VARCHAR(2000),
                                   REPACK_FSEQ NUMERIC(20, 0),
                                   TOTAL_REPORT_RETRIES SMALLINT,

@@ -146,14 +146,29 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> RelationalDB::getArchiv
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-  auto sqlconn = m_connPool.getConn();
+  schedulerdb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
-  auto resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByStatus(sqlconn, statusList, filesRequested);
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
+  rdbms::Rset jobIDresultSet;
+  try {
+    jobIDresultSet = flagReportingJobsByStatus(txn, statusList, filesRequested);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    logContext.log(cta::log::DEBUG,
+         "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
+         ex.getMessageValue());
+    txn.abort();
+  }
+  std::list<std::string> jobIDsList;
+  while (jobIDresultSet.next()) {
+    jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
+  }
+  auto sqlconn = m_connPool.getConn();
+  auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
+  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToDiskRunnerForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   try {

@@ -177,7 +177,7 @@ void ArchiveMount::setJobBatchTransferred(
     txn.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
-                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status. Aborting the transaction." +
+                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status for reporting. Aborting the transaction." +
                    ex.getMessageValue());
     txn.abort();
   }
