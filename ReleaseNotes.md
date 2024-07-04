@@ -15,6 +15,7 @@
 - cta/CTA#750 - Removed outdated cc7 ci_runner/eos development directory
 - cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
 - cta/CTA#724 - Added a script to perform containerized compilation on a VM
+- cta/CTA#747 - Added the Oracle Instant Client to the Alma9 yum repos and removed the installOracle21.sh script
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
