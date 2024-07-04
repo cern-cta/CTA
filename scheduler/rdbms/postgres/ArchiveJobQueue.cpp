@@ -84,21 +84,21 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
     }
     j++;
   }
+  sql +=  "]::ARCHIVE_JOB_STATUS[] AND IS_OWNED IS NULL)  "
+          "ORDER BY PRIORITY DESC, JOB_ID  "
+          "LIMIT :LIMIT FOR UPDATE) "
+          "UPDATE ARCHIVE_JOB_QUEUE SET "
+          "IS_OWNED = 1,"
+          "FROM SET_SELECTION "
+          "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
+          "RETURNING SET_SELECTION.JOB_ID";
   auto stmt = txn.conn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
   size_t sz = statusVec.size();
   for (size_t i = 0; i < sz; ++i) {
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
-  sql +=  "]::ARCHIVE_JOB_STATUS[] AND IS_OWNED IS NULL)  "
-  "ORDER BY PRIORITY DESC, JOB_ID  "
-  "LIMIT :LIMIT FOR UPDATE) "
-  "UPDATE ARCHIVE_JOB_QUEUE SET "
-  "IS_OWNED = 1,"
-  "FROM SET_SELECTION "
-  "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
-  "RETURNING SET_SELECTION.JOB_ID";
-  stmt.bindUint32(":LIMIT", limit);
+  stmt.bindUint64(":LIMIT", limit);
   return stmt.executeQuery();
 }
 
