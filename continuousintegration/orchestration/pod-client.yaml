@@ -32,7 +32,7 @@ spec:
       name: logstorage
     - mountPath: /etc/config/eos
       name: eosconfig
-    - mountPath: /etc/
+    - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
     securityContext:
