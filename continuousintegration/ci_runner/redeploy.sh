@@ -27,6 +27,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                               Shows help output."
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
+  echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:   Path to the RPMs that should be deployed. Defaults to CTA/build_rpm/RPM/RPMS/x86_64 if not provided."
   exit 1
@@ -36,6 +37,7 @@ redeploy() {
   # Default values
   local kube_namespace="dev"
   local image_tag="dev"
+  local operating_system="alma9"
   local rpm_src="build_rpm/RPM/RPMS/x86_64"
 
   # Parse command line arguments
@@ -49,6 +51,19 @@ redeploy() {
         else
           echo "Error: -n|--namespace requires an argument"
           exit 1
+        fi
+        ;;
+      -o | --operating-system)
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+            echo "-o | --operating-system must be one of [cc7, alma9]."
+            exit 1
+          fi
+          operating_system="$2"
+          shift
+        else
+          echo "Error: -o | --operating-system requires an argument"
+          usage
         fi
         ;;
       -s | --rpm-src)
@@ -105,7 +120,7 @@ redeploy() {
 
   ## Create and load the new image
   echo "Building image based on ${rpm_src}"
-  ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}"
+  ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}" --operating-system "${operating_system}"
   # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
   podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
   echo "Loading new image into minikube"

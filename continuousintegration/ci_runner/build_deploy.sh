@@ -139,7 +139,7 @@ compile_deploy() {
     else
       restarted=true
       echo "Starting a new build pod: ${build_pod_name}..."
-      case $operating_system in
+      case "${operating_system}" in
         cc7)
           kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-cc7.yml -n ${build_namespace}
           ;;
@@ -201,7 +201,7 @@ compile_deploy() {
 
   if [ ${skip_deploy} = false ]; then
     echo "Redeploying CTA pods..."
-    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh -n ${deploy_namespace}
+    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh -n ${deploy_namespace} --operating-system "${operating_system}"
   fi
 }
 
