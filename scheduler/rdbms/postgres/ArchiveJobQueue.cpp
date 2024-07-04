@@ -84,7 +84,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
     }
     j++;
   }
-  sql +=  "]::ARCHIVE_JOB_STATUS[] AND IS_REPORTING IS NULL)  "
+  sql +=  "]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS NULL)  "
           "ORDER BY PRIORITY DESC, JOB_ID  "
           "LIMIT :LIMIT FOR UPDATE) "
           "UPDATE ARCHIVE_JOB_QUEUE SET "
