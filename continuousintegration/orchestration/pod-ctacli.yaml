@@ -30,7 +30,7 @@ spec:
       name: shared
     - mountPath: /mnt/logs
       name: logstorage
-    - mountPath: /etc/
+    - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
     securityContext:
