@@ -366,17 +366,17 @@ struct ArchiveJobQueueRow {
     return stmt.executeQuery();
   }
 
-    /**
-   * Select any jobs with specified status(es) from the report,
-   * flag them as being reported and return the job IDs
-   *
-   * @param conn       Connection to the backend database
-   * @param statusList List of Archive Job Status to select on
-   * @param limit      Maximum number of rows to return
-   *
-   * @return  result set of job IDs
-   */
-    rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit);
+ /**
+  * Select any jobs with specified status(es) from the report,
+  * flag them as being reported and return the job IDs
+  *
+  * @param conn       Connection to the backend database
+  * @param statusList List of Archive Job Status to select on
+  * @param limit      Maximum number of rows to return
+  *
+  * @return  result set of job IDs
+  */
+  static rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit);
 
   /**
    * Assign a mount ID and VID to a selection of rows
