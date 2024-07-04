@@ -88,7 +88,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
           "ORDER BY PRIORITY DESC, JOB_ID  "
           "LIMIT :LIMIT FOR UPDATE) "
           "UPDATE ARCHIVE_JOB_QUEUE SET "
-          "IS_OWNED = 1,"
+          "IS_OWNED = 1 "
           "FROM SET_SELECTION "
           "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
           "RETURNING SET_SELECTION.JOB_ID";
