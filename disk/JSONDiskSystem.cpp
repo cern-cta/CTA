@@ -20,17 +20,15 @@
 namespace cta::disk {
 
 JSONDiskSystem::JSONDiskSystem() : JSONCObject() {
-  diskInstanceSpace.refreshInterval = 
-  0;
+  diskInstanceSpace.refreshInterval = 0;
   targetedFreeSpace = 0;
   sleepTime = 0;
 }
 
 JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem):JSONCObject(){
-  if(this  != &diskSystem)
-  {
+  if(this != &diskSystem){
     name = diskSystem.name;
-        fileRegexp = diskSystem.fileRegexp;
+    fileRegexp = diskSystem.fileRegexp;
     diskInstanceSpace.freeSpaceQueryURL = diskSystem.diskInstanceSpace.freeSpaceQueryURL;
     diskInstanceSpace.refreshInterval = diskSystem.diskInstanceSpace.refreshInterval;
     targetedFreeSpace = diskSystem.targetedFreeSpace;
