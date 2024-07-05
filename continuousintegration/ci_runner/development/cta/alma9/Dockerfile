@@ -36,9 +36,6 @@ RUN set -ex; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \
-    cd cta;
-
-RUN set -ex; \
     mkdir build_srpm; \
     cd build_srpm; \
     cmake3 -DPackageOnly:Bool=true ../cta; \
