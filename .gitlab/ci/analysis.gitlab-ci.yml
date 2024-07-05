@@ -60,6 +60,7 @@ clang_format:
   script:
     - yum install -y git-clang-format
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
+    - git fetch origin $TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.output
   artifacts:
