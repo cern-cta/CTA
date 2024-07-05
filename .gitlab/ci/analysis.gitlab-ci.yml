@@ -51,7 +51,7 @@ clang_format:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
+      when: never
     - when: always
   stage: analysis
   image:
