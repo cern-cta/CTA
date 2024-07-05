@@ -10,11 +10,7 @@
 %endif
 
 # Avoid problem with official Oracle RPMS not listing necessary capabilities
-%if %{alma9}
-  %global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
-%else
-  %global __requires_exclude ^libocci.so|^libclntsh.so
-%endif
+%global __requires_exclude ^libocci.so|^libclntsh.so
 
 # Generic macros
 #---------------
@@ -671,6 +667,10 @@ echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_ver
 
 
 %changelog
+* Fri Jul 05 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 4/5.10.11.2-1
+- Fix for the correct oracle instant client rpms for alma9
+- See ReleaseNotes.md for details
+
 * Mon Jun 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.11.0-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
