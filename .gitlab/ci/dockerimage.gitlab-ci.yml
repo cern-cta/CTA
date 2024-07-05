@@ -17,6 +17,9 @@ ctageneric_docker:
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
     - if [ "$ALMA9" == "ON" ]; then export DOCKERFILE=$DOCKERFILE_ALMA9; else export DOCKERFILE=$DOCKERFILE_CC7; fi
+    # The dockerfile wants the rpms in the image_rpms directory. The build step generated the rpms in build_rpm/RPM/RPMS/x86_64
+    - mkdir -p image_rpms
+    - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
   variables:
     DOCKERFILE_CC7: continuousintegration/docker/ctafrontend/cc7/Dockerfile
