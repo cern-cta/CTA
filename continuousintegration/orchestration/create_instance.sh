@@ -94,7 +94,7 @@ while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ" o; do
         n)
             instance=${OPTARG}
             ;;
-	      p)
+        p)
             pipelineid=${OPTARG}
             ;;
         i)
@@ -245,7 +245,7 @@ kubectl create -f ${config_database} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
 kubectl create -f ${config_eoscta} --namespace=${instance}
 
-echo -n "Requesting an unused ${model} library"
+echo "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
 for ((i=0; i<120; i++)); do
   echo -n "."

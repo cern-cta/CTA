@@ -8,3 +8,4 @@ cta-release/versionlock.cta
 
 build_srpm/
 build_rpm/
+image_rpms/
