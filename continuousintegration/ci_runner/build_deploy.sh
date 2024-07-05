@@ -58,7 +58,7 @@ compile_deploy() {
   local build_namespace="build"
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
-  local build_pod_name="build-pod"
+  local build_pod_name="cta-build"
   local xrootd_version="5"
   local cta_version=${xrootd_version}
   # These versions don't affect anything functionality wise

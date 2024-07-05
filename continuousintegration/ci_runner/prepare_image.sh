@@ -99,13 +99,12 @@ prepareImage() {
   mkdir -p ${rpm_default_src}
   cp -r ${rpm_src} ${rpm_default_src}
 
+  echo "Building image for ${operating_system}..."
   case "${operating_system}" in
     cc7)
-      echo "Running on CC7"
       (set -x; podman build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag} --network host)
       ;;
     alma9)
-      echo "Running on AlmaLinux 9"
       (set -x; podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host)
       ;;
     *)

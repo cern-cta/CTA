@@ -288,7 +288,7 @@ Group: Application/CTA
 %if !%{alma9}
 Requires: oracle-instantclient19.3-basic
 %else
-Requires: oracle-instantclient23.1-basic
+Requires: oracle-instantclient-basic
 %endif
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:

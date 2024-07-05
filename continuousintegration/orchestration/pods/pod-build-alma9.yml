@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: build-pod
+  name: cta-build
   labels:
-    k8s-app: build-pod
+    k8s-app: cta-build
 spec:
   restartPolicy: Never
   containers:
-  - name: build-pod
+  - name: cta-build
     image: gitlab-registry.cern.ch/linuxsupport/alma9-base
     stdin: true
     command: ["sleep", "infinity"]
