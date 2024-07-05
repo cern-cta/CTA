@@ -153,23 +153,25 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 
     bytes_read = m_session.m_drive.readBlock(pucTmpData, size);
 
-    if (!m_b64KFormat
-          && bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
+    if (
+        //!m_b64KFormat
+        //  && 
+          bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
           && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT) {
       // Checking if the data block is with CRC32
       if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
             SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
-//          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-        m_b64KFormat = true;
+          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+//        m_b64KFormat = true;
 //          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
       }
 //        else {
 //          throw TapeFormatError("OSM 64KFormat Error");
 //        }
     }
-    if (m_b64KFormat) {
-      bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-    }
+//    if (m_b64KFormat) {
+//      bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+//    }
 
     uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
     uiResiduesSize = bytes_read - uiHeaderSize;
@@ -195,27 +197,29 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 //      bytes_read = m_session.m_drive.readBlock(data, 65540);
 //    }
 
-/*
+
 //    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
-      if (!m_b64KFormat
-            && bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
+      if (
+          //!m_b64KFormat
+            //&&
+            bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
             && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT) {
         // Checking if the data block is with CRC32
         if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
               SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
-//          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-          m_b64KFormat = true;
+          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+          //m_b64KFormat = true;
 //          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
         }
 //        else {
 //          throw TapeFormatError("OSM 64KFormat Error");
 //        }
       }
-      if (m_b64KFormat) {
-        bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-      }
+//      if (m_b64KFormat) {
+//        bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+//      }
 //    }
-*/
+
 
     m_ui64CPIODataSize += bytes_read;
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
