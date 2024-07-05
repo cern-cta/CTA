@@ -146,6 +146,7 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> RelationalDB::getArchiv
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   schedulerdb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
@@ -165,6 +166,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
          "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
          ex.getMessageValue());
     txn.abort();
+  }
+  if (jobIDsList.empty()){
+    logContext.log(cta::log::DEBUG,
+                   "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
+    return ret;
   }
   auto sqlconn = m_connPool.getConn();
   auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
@@ -186,7 +192,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   }
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
   // Construct the return value
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
     auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
     aj->jobID = j.jobId;

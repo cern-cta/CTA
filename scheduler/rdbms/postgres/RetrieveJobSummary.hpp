@@ -70,7 +70,6 @@ struct RetrieveJobSummaryRow {
       "STATUS,"
       "JOBS_COUNT,"
       "JOBS_TOTAL_SIZE,"
-      "PRIORITY "
     "FROM RETRIEVE_JOB_SUMMARY WHERE "
       "VID = :VID AND "
       "STATUS = :STATUS";
