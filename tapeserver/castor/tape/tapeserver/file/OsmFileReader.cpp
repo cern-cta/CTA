@@ -195,6 +195,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 //      bytes_read = m_session.m_drive.readBlock(data, 65540);
 //    }
 
+/*
 //    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
       if (!m_b64KFormat
             && bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
@@ -214,6 +215,8 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
         bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
       }
 //    }
+*/
+
     m_ui64CPIODataSize += bytes_read;
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
