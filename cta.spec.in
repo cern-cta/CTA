@@ -63,7 +63,7 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
 %if %{alma9}
   %define radosVersion 2:17.2.7
-  %define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient23.1-devel
+  %define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel
   %define requiredProtobuf protobuf
 %else
   %define radosVersion 2:15.2.15
