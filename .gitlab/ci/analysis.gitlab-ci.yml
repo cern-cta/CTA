@@ -64,6 +64,7 @@ clang_format:
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.output
   artifacts:
+    when: always
     paths:
     - clang-format.output
 
