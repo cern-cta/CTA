@@ -50,7 +50,7 @@ typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
 const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
-                               "-i/--eos.instance <instance> [-e/--eos.endpoint <url>] "
+                               "-i/--diskinstance <instance> [-e/--diskendpoint <url>] "
                                "-u/--request.user <user> -g/--request.group <group>");
 
 // remove leading spaces and quotes
@@ -113,8 +113,8 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
                       const int argc, char *const *const argv)
 {
   cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, cta::cliTool::StandaloneCliTool::CTA_SEND_EVENT);
-  const std::string &eos_instance = cmdLineArgs.m_diskInstance.value();
-  const std::string &eos_endpoint = cmdLineArgs.m_eosEndpoint.has_value() ? cmdLineArgs.m_eosEndpoint.value() : "localhost:1095";
+  const std::string &disk_instance = cmdLineArgs.m_diskInstance.value();
+  const std::string &disk_endpoint = cmdLineArgs.m_diskEndpoint.has_value() ? cmdLineArgs.m_diskEndpoint.value() : "localhost:1095";
   const std::string &requester_user = cmdLineArgs.m_requestUser.value();
   const std::string &requester_group = cmdLineArgs.m_requestGroup.value();
 
@@ -132,15 +132,15 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
   AttrMap xattrs;
   parseFileInfo(std::cin, attr, xattrs);
 
-  std::string accessUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"];
-  std::string reportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
+  std::string accessUrl = "root://" + disk_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"];
+  std::string reportUrl = "eosQuery://" + disk_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
     "&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
     xattrs["sys.archive.file_id"];
-  std::string destUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"] +
+  std::string destUrl = "root://" + disk_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"] +
     "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
 
   // WF
-  notification.mutable_wf()->mutable_instance()->set_name(eos_instance);
+  notification.mutable_wf()->mutable_instance()->set_name(disk_instance);
   notification.mutable_wf()->mutable_instance()->set_url(accessUrl);
   notification.mutable_wf()->set_requester_instance("cta-send-event");
 
@@ -151,7 +151,7 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
   // Transport
   if(wf_command == "CLOSEW") {
     notification.mutable_transport()->set_report_url(reportUrl);
-    notification.mutable_transport()->set_error_report_url("eosQuery://" + eos_endpoint +
+    notification.mutable_transport()->set_error_report_url("eosQuery://" + disk_endpoint +
       "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] + "&mgm.logid=cta" +
       "&mgm.event=sync::archive_failed" +
       "&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0" +
@@ -159,7 +159,7 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
       "&mgm.errmsg=");
   } else if(wf_command == "PREPARE") {
     notification.mutable_transport()->set_dst_url(destUrl);
-    notification.mutable_transport()->set_error_report_url("eosQuery://" + eos_endpoint +
+    notification.mutable_transport()->set_error_report_url("eosQuery://" + disk_endpoint +
       "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] + "&mgm.logid=cta" +
       "&mgm.event=sync::retrieve_failed" +
       "&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0" +

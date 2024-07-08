@@ -43,8 +43,8 @@ static struct option restoreFilesLongOption[] = {
 };
 
 static struct option sendEventLongOption[] = {
-  {"eos.instance", required_argument, nullptr, 'i'},
-  {"eos.endpoint", required_argument, nullptr, 'e'},
+  {"diskinstance", required_argument, nullptr, 'i'},
+  {"diskendpoint", required_argument, nullptr, 'e'},
   {"request.user", required_argument, nullptr, 'u'},
   {"request.group", required_argument, nullptr, 'g'},
   {nullptr, 0, nullptr, 0}
@@ -120,7 +120,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
       }
     case 'e':
       {
-        m_eosEndpoint = std::string(optarg);
+        m_diskEndpoint = std::string(optarg);
         break;
       }
     case 'f':
@@ -261,7 +261,7 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
   case StandaloneCliTool::CTA_SEND_EVENT:
     os << "    Usage:" << std::endl <<
     "    eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE " << std::endl <<
-    "                        -i/--eos.instance <instance> [-e/--eos.endpoint <url>]" << std::endl <<
+    "                        -i/--diskinstance <instance> [-e/--eos.endpoint <url>]" << std::endl <<
     "                        -u/--request.user <user> -g/--request.group <group>" << std::endl << std::endl;
     break;
   case StandaloneCliTool::CTA_VERIFY_FILE :

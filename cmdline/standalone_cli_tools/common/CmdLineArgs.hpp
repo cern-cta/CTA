@@ -89,7 +89,7 @@ struct CmdLineArgs {
   /**
    * Eos endpoint
    */
-  std::optional<std::string> m_eosEndpoint;
+  std::optional<std::string> m_diskEndpoint;
 
   /**
    * Request user
