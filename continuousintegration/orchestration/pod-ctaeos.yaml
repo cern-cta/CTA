@@ -41,6 +41,9 @@ spec:
     - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
+    - mountPath: /etc/eos-server.krb5.keytab
+      name: keytab
+      subPath: eos-server.krb5.keytab
     securityContext:
       privileged: true
 
@@ -63,6 +66,10 @@ spec:
   - name: krb5-config-volume
     configMap: 
       name: krb5-config
+  - name: keytab 
+    secret: 
+      secretName: eos-server-keytab
+
 
   imagePullSecrets:
   - name: ctaregsecret

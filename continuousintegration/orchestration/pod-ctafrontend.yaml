@@ -41,6 +41,9 @@ spec:
     - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
+    - mountPath: /etc/cta/cta-frontend.krb5.keytab
+      name: keytab
+      subPath: cta-frontend.krb5.keytab
     securityContext:
       # RW access needed to volumes
       privileged: true
@@ -70,6 +73,8 @@ spec:
   - name: krb5-config-volume
     configMap: 
       name: krb5-config
-
+  - name: keytab 
+    secret: 
+      secretName: cta-frontend-keytab
   imagePullSecrets:
   - name: ctaregsecret

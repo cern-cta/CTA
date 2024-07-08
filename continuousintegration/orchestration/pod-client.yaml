@@ -35,6 +35,9 @@ spec:
     - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
+    - mountPath: /root/user1.keytab
+      name: keytab
+      subPath: user1.keytab
     securityContext:
       privileged: true
 
@@ -51,6 +54,9 @@ spec:
   - name: krb5-config-volume
     configMap: 
       name: krb5-config
+  - name: keytab 
+    secret: 
+      secretName: user1-keytab
 
   imagePullSecrets:
   - name: ctaregsecret
