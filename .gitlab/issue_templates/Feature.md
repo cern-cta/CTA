@@ -12,4 +12,4 @@
 
 <!-- How are we going to solve the problem? -->
 
-/label ~feature
+/label ~type::feature

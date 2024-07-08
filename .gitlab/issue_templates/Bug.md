@@ -24,4 +24,4 @@
 
 <!-- If you have a theory about the possible cause of the bug, include it here. -->
 
-/label ~bug
+/label ~type::bug

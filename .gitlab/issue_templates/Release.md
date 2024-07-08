@@ -22,4 +22,4 @@ This release will be tagged as version `v4.Y.Z-R`/`v5.Y.Z-R`.
 
 <!-- Add stress test screenshots for the commit_id referenced above. If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 
-/label ~Release
+/label ~type::release
