@@ -30,6 +30,8 @@ config_eos="./eos5-config-quarkdb-https.yaml"
 config_eoscta="./eoscta-config.yaml"
 # shared config map with kdc config for pods
 config_kdc_krb5="./kdc-krb5.yaml" 
+# config containing keypass names
+keypass_names="./keypass-names-configmap.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -247,6 +249,8 @@ kubectl create -f ${config_database} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
 kubectl create -f ${config_eoscta} --namespace=${instance}
 kubectl create -f ${config_kdc_krb5} --namespace=${instance}
+kubectl create -f ${keypass_names} --namespace=${instance}
+
 
 echo "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
@@ -369,11 +373,7 @@ done
 echo OK
 
 echo -n "Configuring KDC clients (frontend, cli...) "
-kubectl --namespace=${instance} exec kdc -- cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
-kubectl --namespace=${instance} exec kdc -- cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /root/user1.keytab"
 # need to mkdir /etc/cta folder as cta rpm may not already be installed (or put it somewhere else and move it later???)
-kubectl --namespace=${instance} exec kdc -- cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "mkdir -p /etc/cta; cat > /etc/cta/cta-frontend.krb5.keytab"
-kubectl --namespace=${instance} exec kdc -- cat /root/eos-server.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/eos-server.krb5.keytab"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
