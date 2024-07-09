@@ -165,3 +165,27 @@ regressioneos:
     - kubernetes
     - mhvtl
     - xlarge
+
+cta-release:
+  stage: test
+  extends:
+    - .kubernetes_test
+  script:
+    - cat << EOF > /etc/yum.repos.d/cta-public-5.repo
+      [cta-public-5-alma9]
+      name=CERN Tape Archive
+      baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
+      enabled=1
+      gpgcheck=0
+      EOF
+    - yum install cta-release
+    - cta-versionlock config eos5
+    - cta-versionlock apply
+    - yum install cta-frontend
+    - yum install cta-taped
+    - yum install cta-rmcd
+    - yum install cta-smc
+    - yum install eos-server
+    - yum install eos-client
+    # Check that everything was installed properly
+    - cta-versionlock checkpkg
