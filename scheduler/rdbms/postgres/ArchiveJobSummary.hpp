@@ -32,6 +32,7 @@ struct ArchiveJobSummaryRow {
   time_t oldestJobStartTime = std::numeric_limits<time_t>::max();
   uint16_t archivePriority = 0;
   uint32_t archiveMinRequestAge = 0;
+  uint32_t lastUpdateTime = 0;
 
   ArchiveJobSummaryRow() = default;
 
@@ -55,6 +56,7 @@ struct ArchiveJobSummaryRow {
     oldestJobStartTime   = rset.columnUint64("OLDEST_JOB_START_TIME");
     archivePriority      = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
+    lastUpdateTime     = rset.columnUint32("LAST_UPDATE_TIME");
     return *this;
   }
 
@@ -68,6 +70,7 @@ struct ArchiveJobSummaryRow {
     params.add("oldestJobStartTime", oldestJobStartTime);
     params.add("archivePriority", archivePriority);
     params.add("archiveMinRequestAge", archiveMinRequestAge);
+    params.add("lastUpdateTime", lastUpdateTime);
   }
 
   /**
@@ -85,12 +88,26 @@ struct ArchiveJobSummaryRow {
       "JOBS_TOTAL_SIZE,"
       "OLDEST_JOB_START_TIME,"
       "ARCHIVE_PRIORITY,"
-      "ARCHIVE_MIN_REQUEST_AGE "
+      "ARCHIVE_MIN_REQUEST_AGE, "
+      "LAST_UPDATE_TIME"
     "FROM ARCHIVE_JOB_SUMMARY WHERE "
     "MOUNT_ID IS NULL";
 
     auto stmt = txn.conn().createStmt(sql);
     return stmt.executeQuery();
+  }
+
+  /**
+   * Refresh Materialized View
+   * @param txn transaction
+   * @param table_name
+   *
+   * @return void/exception
+   */
+  static void refreshMaterializedView(Transaction &txn, std::string_view table_name) {
+    std::string sql = "REFRESH MATERIALIZED VIEW " + table_name;
+    auto stmt = txn.conn().createStmt(sql);
+    return stmt.executeNonQuery();
   }
 };
 

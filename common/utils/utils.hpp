@@ -23,6 +23,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <chrono>
 
 #include "Regex.hpp"
 
@@ -534,4 +535,8 @@ namespace cta::utils {
    * @return `true` if the string is a valid ID, `false` otherwise.
    */
   bool isValidID(const std::string& id);
+
+  // Function to get the current epoch time in seconds
+  std::time_t getCurrentEpochTime();
+
 } // namespace cta::utils

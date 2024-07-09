@@ -20,6 +20,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
@@ -629,8 +630,16 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 
   // Iterate over all archive queues
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNotOwned(txn);
+  bool isFirstRow = true;
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
+    if(isFirstRow){
+      // Check last update time of the summary table and request an update if > 30 sec
+      if ((getCurrentEpochTime() - ajsr.lastUpdateTime) > 30){
+        cta::schedulerdb::postgres::ArchiveJobSummaryRow::refreshMaterializedView(txn,"ARCHIVE_JOB_SUMMARY");
+      }
+      isFirstRow = false;
+    }
     // Set the queue type
     common::dataStructures::MountType mountType;
     switch(ajsr.status) {
@@ -663,6 +672,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
+  txn.commit();
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {

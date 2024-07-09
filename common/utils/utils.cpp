@@ -1055,4 +1055,8 @@ bool isValidID(const std::string& id) {
   return true;
 }
 
+std::time_t getCurrentEpochTime(){
+  return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+}
+
 } // namespace cta::utils
