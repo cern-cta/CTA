@@ -29,7 +29,7 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                               Shows help output."
-  echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
+  echo "  -r, --reset:                              Shut down the build container and start a new one to ensure a fresh build."
   echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
@@ -129,7 +129,7 @@ compile_deploy() {
   if [ ${skip_build} = false ]; then
     # Delete old pod
     if [ ${reset} = true ]; then
-      echo "Attempting shutdown of existing build pod..."
+      echo "Attempting shutdown of existing build container..."
       kubectl delete pod ${build_pod_name} -n ${build_namespace} --ignore-not-found
     fi
 
@@ -138,7 +138,7 @@ compile_deploy() {
       echo "Pod ${build_pod_name} already exists"
     else
       restarted=true
-      echo "Starting a new build pod: ${build_pod_name}..."
+      echo "Starting a new build container: ${build_pod_name}..."
       case "${operating_system}" in
         cc7)
           kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-cc7.yml -n ${build_namespace}

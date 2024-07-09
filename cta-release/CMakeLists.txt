@@ -32,11 +32,8 @@ function(safedl SOURCEURL DESTFILE)
   endif()
 endfunction()
 
-# We need the el version to select the proper key for Oracle repo
-include(../cmake/UseRPMToolsEnvironment.cmake)
-
-if( "${RPMTools_RPMBUILD_DIST}" MATCHES "\\.el([0-9])\\.")
-  set(OSV "${CMAKE_MATCH_1}")
+if(ALMA9)
+  set(OSV "9")
 else()
 # Default to el7
   set(OSV "7")
@@ -80,14 +77,25 @@ foreach(PNAME ${RESULTS})
     string(APPEND CTAVERSIONLOCK "0:${PNAME}-${CTA_VERSION}-${CTA_RELEASE}${RPMTools_RPMBUILD_DIST}.*\n")
 endforeach()
 
-file(READ ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+
+if(ALMA9)
+  file(READ ../continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+
+  # Repos files
+  file (GLOB REPO_FILES
+    "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/alma9/repos/*.repo"
+  )
+else()
+  file(READ ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+
+  # Repos files
+  file (GLOB REPO_FILES
+    "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo"
+  )
+endif()
+
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")
 file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAVERSIONLOCK}")
-
-# Repos files
-file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo"
-)
 
 # Signing keys
 file (GLOB KEY_FILES
