@@ -28,7 +28,7 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 COPY ${BASEDIR}/../etc/ /etc/
 # COPY ${BASEDIR}/yum/ /etc/yum/
-COPY ${BASEDIR}/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
+COPY ${BASEDIR}/etc/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt

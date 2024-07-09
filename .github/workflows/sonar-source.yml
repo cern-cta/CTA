@@ -44,7 +44,7 @@ jobs:
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
           cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
           rm -f /etc/yum.repos.d/database.repo
-          cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+          cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
