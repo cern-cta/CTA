@@ -5,10 +5,11 @@ metadata:
   labels:
     k8s-app: kdc
 spec:
+  serviceAccountName: secret-creator
   restartPolicy: Never
   containers:
   - name: kdc
-    serviceAccountName: secret-creator
+
     image: gitlab-registry.cern.ch/cta/ctageneric:7713827gitf24c5f5c
     stdin: true
     env:
