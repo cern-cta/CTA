@@ -42,7 +42,7 @@ jobs:
           export CMAKE_OPTIONS
           export CTA_VERSION
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
-          cp -f continuousintegration/docker/ctafrontend/alma9/repos/*.repo /etc/yum.repos.d/
+          cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
           rm -f /etc/yum.repos.d/database.repo
           cp -f continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then

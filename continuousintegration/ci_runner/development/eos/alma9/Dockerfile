@@ -19,7 +19,7 @@ ARG EOS_VERSION=master
 RUN set -ex; \
     echo "EOS version is ${EOS_VERSION}";
 
-COPY ./repos/ /etc/yum.repos.d/
+COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
 
 RUN mkdir -p shared;
 

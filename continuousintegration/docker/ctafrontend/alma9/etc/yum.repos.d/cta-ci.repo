@@ -1,0 +1,6 @@
+[cta-ci-ceph-octopus]
+name=CTA CI repo ceph-octopus cache
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/ceph/el9/x86_64
+priority=3
+gpgcheck=0
+enabled=1
