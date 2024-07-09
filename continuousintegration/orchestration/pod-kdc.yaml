@@ -9,7 +9,7 @@ spec:
   containers:
   - name: kdc
     serviceAccountName: secret-creator
-    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    image: gitlab-registry.cern.ch/cta/ctageneric:7713827gitf24c5f5c
     stdin: true
     env:
     - name: MY_NAME
