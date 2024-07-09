@@ -32,6 +32,8 @@ config_eoscta="./eoscta-config.yaml"
 config_kdc_krb5="./kdc-krb5.yaml" 
 # config containing keypass names
 keypass_names="./keypass-names-configmap.yaml"
+# Service account for kdc to use k8s API
+servive_acc_kdc="./service-account-kdc.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -251,6 +253,9 @@ kubectl create -f ${config_eoscta} --namespace=${instance}
 kubectl create -f ${config_kdc_krb5} --namespace=${instance}
 kubectl create -f ${keypass_names} --namespace=${instance}
 
+echo "creating service account for kdc"
+
+kubectl create -f ${servive_acc_kdc} --namespace=${instance}
 
 echo "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}

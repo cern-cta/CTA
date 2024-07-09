@@ -42,12 +42,12 @@ for NAME in ${KEYTABS}; do
 done
 
 
-NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+KUBERNETES_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+KUBERNETES_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+KUBERNETES_CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+KUBERNETES_API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
-file_name="./keytab.txt"
+keypasses_file="/tmp/keypass-names.txt"
 
 while IFS=' ' read -r secret filename 
 do
@@ -68,12 +68,12 @@ cat <<EOF > secret.json
 
 EOF
 
-curl -s --cacert ${CA_CERT} -H "Authorization: Bearer ${TOKEN}" \
+curl -s --cacert ${KUBERNETES_CA_CERT} -H "Authorization: Bearer ${KUBERNETES_TOKEN}" \
      -H "Content-Type: application/json" \
      -X POST --data @secret.json \
-     ${API_SERVER}/api/v1/namespaces/${NAMESPACE}/secrets
+     ${KUBERNETES_API_SERVER}/api/v1/namespaces/${KUBERNETES_NAMESPACE}/secrets
 
-done < $file_name
+done < $keypasses_file
 
 echo Done.
 
