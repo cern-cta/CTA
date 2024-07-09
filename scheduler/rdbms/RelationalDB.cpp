@@ -635,7 +635,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     if(isFirstRow){
       // Check last update time of the summary table and request an update if > 30 sec
-      if ((getCurrentEpochTime() - ajsr.lastUpdateTime) > 30){
+      if ((utils::getCurrentEpochTime() - ajsr.lastUpdateTime) > 30){
         cta::schedulerdb::postgres::ArchiveJobSummaryRow::refreshMaterializedView(txn,"ARCHIVE_JOB_SUMMARY");
       }
       isFirstRow = false;

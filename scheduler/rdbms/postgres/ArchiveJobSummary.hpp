@@ -19,6 +19,7 @@
 
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "rdbms/NullDbValue.hpp"
+#include <sstream>
 
 namespace cta::schedulerdb::postgres {
 
@@ -105,7 +106,9 @@ struct ArchiveJobSummaryRow {
    * @return void/exception
    */
   static void refreshMaterializedView(Transaction &txn, std::string_view table_name) {
-    std::string sql = "REFRESH MATERIALIZED VIEW " + table_name;
+    std::ostringstream oss;
+    oss << "REFRESH MATERIALIZED VIEW " << table_name;
+    std::string sql = oss.str();
     auto stmt = txn.conn().createStmt(sql);
     return stmt.executeNonQuery();
   }
