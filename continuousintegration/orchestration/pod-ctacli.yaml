@@ -51,7 +51,7 @@ spec:
       name: krb5-config
   - name: keytab
     secret: 
-      secretName: ctadmin1-keytab
+      secretName: ctaadmin1-keytab
 
   imagePullSecrets:
   - name: ctaregsecret
