@@ -152,30 +152,15 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     uint8_t* pucTmpData = new uint8_t[size];
 
     bytes_read = m_session.m_drive.readBlock(pucTmpData, size);
-
-    if (
-        //!m_b64KFormat
-        //  && 
-          bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
-          && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT) {
-      // Checking if the data block is with CRC32
-      if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
-            SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
-          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-//        m_b64KFormat = true;
-//          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
-      }
-//        else {
-//          throw TapeFormatError("OSM 64KFormat Error");
-//        }
+    // Special case - checking if data format is with CRC32 
+    if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(pucTmpData))) {
+      m_bDataWithCRC32 = true;
+      bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
     }
-//    if (m_b64KFormat) {
-//      bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-//    }
 
-    uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
+    uiHeaderSize = m_cpioHeader.decode(pucTmpData, CPIO::MAXHEADERSIZE);
     uiResiduesSize = bytes_read - uiHeaderSize;
-
 
     // Copy the rest of data to the buffer
     if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
@@ -190,36 +175,11 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     delete[] pucTmpData;
   } else {
     bytes_read = m_session.m_drive.readBlock(data, size);
-    // Special case - 64K data format with CRC32
-//    if (!m_b64KFormat) {
-//      bytes_read = m_session.m_drive.readBlock(data, size);
-//    } else {
-//      bytes_read = m_session.m_drive.readBlock(data, 65540);
-//    }
-
-
-//    if (m_session.m_drive.getLbpToUse() == tapeserver::drive::lbpToUse::disabled) {
-      if (
-          //!m_b64KFormat
-            //&&
-            bytes_read - SCSI::logicBlockProtectionMethod::CRC32CLength > 0
-            && bytes_read <= PAYLOAD_BOLCK_SIZE_64K_FORMAT) {
-        // Checking if the data block is with CRC32
-        if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
-              SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
-          bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-          //m_b64KFormat = true;
-//          m_session.m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
-        }
-//        else {
-//          throw TapeFormatError("OSM 64KFormat Error");
-//        }
-      }
-//      if (m_b64KFormat) {
-//        bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
-//      }
-//    }
-
+    // Special case - data format with CRC32
+    if (m_bDataWithCRC32 && cta::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed, bytes_read, static_cast<const uint8_t*>(data))) {
+      bytes_read -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+    }
 
     m_ui64CPIODataSize += bytes_read;
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
@@ -236,9 +196,6 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
 
   // end of file reached! keep reading until the header of the next file
   if (!bytes_read) {
-//    if (m_b64KFormat) {
-//      m_session.m_drive.disableLogicalBlockProtection();
-//    }
     m_session.setCurrentFseq(m_session.getCurrentFseq() + 1); // moving on to the header of the next file
     m_session.setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
