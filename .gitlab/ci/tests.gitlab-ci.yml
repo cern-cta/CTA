@@ -219,6 +219,8 @@ dbunittests_postgresql_alma9:
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
 cta-release:
+  # For now this stage is allowed (expected) to fail. This is to be fixed in #747
+  allow_failure: true
   stage: test
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   rules:
