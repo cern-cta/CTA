@@ -182,12 +182,12 @@ cta-release:
     - yum install cta-release
     - cta-versionlock config eos5
     - cta-versionlock apply
-    - yum install cta-frontend
-    - yum install cta-taped
-    - yum install cta-rmcd
-    - yum install cta-smc
-    - yum install eos-server
-    - yum install eos-client
+    - yum install -y cta-frontend
+    - yum install -y cta-taped
+    - yum install -y cta-rmcd
+    - yum install -y cta-smc
+    - yum install -y eos-server
+    - yum install -y eos-client
     # Check that everything was installed properly
     - cta-versionlock checkpkg
   rules:
