@@ -34,9 +34,11 @@ endfunction()
 
 if(ALMA9)
   set(OSV "9")
+  set(OS "alma9")
 else()
 # Default to el7
   set(OSV "7")
+  set(OS "cc7")
 endif()
 
 # Download package signing keys
@@ -78,21 +80,12 @@ foreach(PNAME ${RESULTS})
 endforeach()
 
 
-if(ALMA9)
-  file(READ ../continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+file(READ ../continuousintegration/docker/ctafrontend/${OS}/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
 
-  # Repos files
-  file (GLOB REPO_FILES
-    "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/alma9/repos/*.repo"
-  )
-else()
-  file(READ ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
-
-  # Repos files
-  file (GLOB REPO_FILES
-    "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo"
-  )
-endif()
+# Repos files
+file (GLOB REPO_FILES
+  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/${OS}/etc/yum.repos.d-public/*.repo"
+)
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")
 file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAVERSIONLOCK}")

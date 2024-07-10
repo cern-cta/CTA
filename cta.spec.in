@@ -638,7 +638,9 @@ collects EOS disk copies that have been safely stored to tape.
 Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
 Requires: yum-plugin-versionlock
+%if !%{alma9}
 Requires: yum-plugin-priorities
+%endif
 Requires: python
 Requires: jq
 %description -n cta-release
