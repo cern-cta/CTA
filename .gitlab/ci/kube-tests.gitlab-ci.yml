@@ -168,17 +168,15 @@ regressioneos:
 
 cta-release:
   stage: test
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'
   extends:
     - .kubernetes_test
   script:
     - cat << EOF > ~/cta-public-5.repo
-[cta-public-5-alma9]
-name=CERN Tape Archive
-baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
-enabled=1
-gpgcheck=0
+      [cta-public-5-alma9]
+      name=CERN Tape Archive
+      baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
+      enabled=1
+      gpgcheck=0
 EOF
     - yum-config-manager --add-repo file://$HOME/cta-public-5.repo
     - yum install cta-release
@@ -192,3 +190,5 @@ EOF
     - yum install eos-client
     # Check that everything was installed properly
     - cta-versionlock checkpkg
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'
