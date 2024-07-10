@@ -7,6 +7,7 @@
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
+- cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
