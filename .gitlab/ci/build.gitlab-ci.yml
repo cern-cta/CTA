@@ -19,6 +19,10 @@
   script:
     - yum install -y git
     - git submodule update --init --recursive
+    - EXTRA_BUILD_FLAGS=""
+    - if [ "${UNIT_TEST}" == "OFF" ]; then
+        EXTRA_BUILD_FLAGS+=" --skip-unit-tests"
+      fi
     - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
                                                        --create-build-dir
                                                        --cta-version ${CTA_VERSION}
@@ -27,6 +31,7 @@
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --jobs $(nproc --ignore=1)
+                                                       ${EXTRA_BUILD_FLAGS}
                                                        --install 
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
@@ -38,6 +43,10 @@
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    - EXTRA_BUILD_FLAGS=""
+    - if [ "${UNIT_TEST}" == "OFF" ]; then
+        EXTRA_BUILD_FLAGS+=" --skip-unit-tests"
+      fi
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
@@ -48,6 +57,7 @@
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --jobs $(nproc --ignore=1)
+                                                       ${EXTRA_BUILD_FLAGS}
                                                       --install
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
