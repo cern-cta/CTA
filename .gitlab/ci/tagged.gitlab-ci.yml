@@ -10,6 +10,7 @@ cta_tagged_rpm:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    # Note that unit tests cannot be disabled here
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
@@ -37,6 +38,7 @@ cta_tagged_rpm_alma9:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    # Note that unit tests cannot be disabled here
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
