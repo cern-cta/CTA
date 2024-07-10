@@ -217,3 +217,26 @@ dbunittests_postgresql_alma9:
     - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+
+cta-release:
+  stage: test
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  script:
+    - yum -y install createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum install cta-release
+    - cta-versionlock config eos5
+    - cta-versionlock apply
+    - yum install -y cta-frontend
+    - yum install -y cta-taped
+    - yum install -y cta-rmcd
+    - yum install -y cta-smc
+    - yum install -y eos-server
+    - yum install -y eos-client
+    # Check that everything was installed properly
+    - cta-versionlock checkpkg
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'  
+  variables:
+    CTAREPODIR: /tmp/repo
