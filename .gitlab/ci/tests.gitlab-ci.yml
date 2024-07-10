@@ -217,3 +217,35 @@ dbunittests_postgresql_alma9:
     - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+
+cta-release:
+  # For now this stage is allowed (expected) to fail. This is to be fixed in #747
+  allow_failure: true
+  stage: test
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "ON"
+  script:
+    - yum install -y createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum install --nogpgcheck -y cta-release
+    - cta-versionlock config eos5
+    - cta-versionlock apply
+    - yum install --nogpgcheck -y cta-frontend
+    - yum install --nogpgcheck -y cta-taped
+    - yum install --nogpgcheck -y cta-rmcd
+    - yum install --nogpgcheck -y cta-smc
+    - yum install --nogpgcheck -y eos-server
+    - yum install --nogpgcheck -y eos-client
+    # Check that everything was installed properly
+    - cta-versionlock checkpkg --json > checkpkg-output.json
+  variables:
+    CTAREPODIR: /tmp/repo
+  artifacts:
+    paths:
+    - checkpkg-output.json
