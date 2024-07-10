@@ -171,12 +171,13 @@ cta-release:
   extends:
     - .kubernetes_test
   script:
-    - echo "[cta-public-5-alma9]
-name=CERN Tape Archive
-baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
-enabled=1
-gpgcheck=0
-" > ~/cta-public-5.repo
+    - |
+      echo "[cta-public-5-alma9]
+      name=CERN Tape Archive
+      baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
+      enabled=1
+      gpgcheck=0
+      " > ~/cta-public-5.repo
     - yum-config-manager --add-repo file://$HOME/cta-public-5.repo
     - yum install cta-release
     - cta-versionlock config eos5
