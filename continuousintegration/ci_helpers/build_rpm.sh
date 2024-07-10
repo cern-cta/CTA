@@ -301,14 +301,6 @@ build_rpm() {
         exit 1
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      if [[ ${xrootd_version} -eq 4 ]]; then
-        echo "Using XRootD version 4"
-        ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4
-        yum-config-manager --enable cta-ci-xroot
-        yum-config-manager --disable cta-ci-xrootd5
-      else
-        echo "Using XRootD version 5"
-      fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       # We don't support ninja for cc7
       yum install -y devtoolset-11 cmake3 make rpm-build
