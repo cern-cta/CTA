@@ -324,8 +324,12 @@ Shared libraries required to access the in-memory-based CTA catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: cta-lib-common
+%if %{alma9}
+Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
+%else
 Requires: cta-lib-catalogue-postgres = %{version}-%{release}
 Requires: cta-lib-catalogue-occi = %{version}-%{release}
+%endif
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue

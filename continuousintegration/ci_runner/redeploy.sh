@@ -112,7 +112,7 @@ redeploy() {
   if kubectl get namespace ${kube_namespace} &>/dev/null; then
     echo "Found existing namespace \"${kube_namespace}\". Deleting..."
     # We don't do delete_instance here as we don't care about a proper cleanup/reporting of the logs
-    kubectl delete namespace dev
+    kubectl delete namespace ${kube_namespace}
   fi
 
   # Clear the old image and namespace
