@@ -7,6 +7,7 @@
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
+- cta/CTA#758 - Updated cta-release to work with alma9
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
@@ -16,7 +17,6 @@
 - cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
 - cta/CTA#724 - Added a script to perform containerized compilation on a VM
 - cta/CTA#747 - Added the Oracle Instant Client to the Alma9 yum repos and removed the installOracle21.sh script
-- cta/CTA#758 - Updated cta-release to work with alma9
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
