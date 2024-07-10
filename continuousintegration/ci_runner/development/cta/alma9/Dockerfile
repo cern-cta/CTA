@@ -19,7 +19,7 @@ ARG CTA_VERSION=main
 RUN set -ex; \
     echo "CTA version is ${CTA_VERSION}";
 
-COPY ./repos/ /etc/yum.repos.d/
+COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
 
 RUN mkdir -p shared;
 

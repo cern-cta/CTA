@@ -5,8 +5,8 @@ LABEL maintainer_mail="jorge.camarero@cern.ch"
 
 ENV USER="develop"
 
-COPY ./repos/ /etc/yum.repos.d/
-COPY ./repos/ /etc/yum.repos.d/
+COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
+COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
 
 RUN set -ex; \
     yum update -y; \
