@@ -222,18 +222,18 @@ cta-release:
   stage: test
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   script:
-    - yum -y install createrepo epel-release almalinux-release-devel
+    - yum install -y createrepo epel-release almalinux-release-devel
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-    - yum install cta-release
+    - yum install --nogpgcheck -y cta-release
     - cta-versionlock config eos5
     - cta-versionlock apply
-    - yum install -y cta-frontend
-    - yum install -y cta-taped
-    - yum install -y cta-rmcd
-    - yum install -y cta-smc
-    - yum install -y eos-server
-    - yum install -y eos-client
+    - yum install --nogpgcheck -y cta-frontend
+    - yum install --nogpgcheck -y cta-taped
+    - yum install --nogpgcheck -y cta-rmcd
+    - yum install --nogpgcheck -y cta-smc
+    - yum install --nogpgcheck -y eos-server
+    - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
     - cta-versionlock checkpkg
   rules:
