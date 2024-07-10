@@ -221,6 +221,12 @@ dbunittests_postgresql_alma9:
 cta-release:
   stage: test
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $ALMA9 == "ON"
   script:
     - yum install -y createrepo epel-release almalinux-release-devel
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
@@ -236,7 +242,5 @@ cta-release:
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
     - cta-versionlock checkpkg
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'  
   variables:
     CTAREPODIR: /tmp/repo
