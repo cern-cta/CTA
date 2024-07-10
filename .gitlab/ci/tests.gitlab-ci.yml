@@ -243,6 +243,9 @@ cta-release:
     - yum install --nogpgcheck -y eos-server
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
-    - cta-versionlock checkpkg
+    - cta-versionlock checkpkg --json > checkpkg-output.json
   variables:
     CTAREPODIR: /tmp/repo
+  artifacts:
+    paths:
+    - checkpkg-output.json
