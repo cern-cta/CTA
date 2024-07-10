@@ -177,7 +177,7 @@ cta-release:
       baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
       enabled=1
       gpgcheck=0
-EOF
+    EOF
     - yum-config-manager --add-repo file://$HOME/cta-public-5.repo
     - yum install cta-release
     - cta-versionlock config eos5
@@ -191,4 +191,4 @@ EOF
     # Check that everything was installed properly
     - cta-versionlock checkpkg
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'
+    - if: '$CI_COMMIT_REF_NAME == "767-add-ci-job-that-tests-whether-yum-install-cta-release-works-correctly"'  
