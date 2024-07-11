@@ -22,7 +22,7 @@
     - EXTRA_BUILD_FLAGS=""
     - if [ "${UNIT_TEST}" == "OFF" ]; then EXTRA_BUILD_FLAGS+=" --skip-unit-tests"; fi
     - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
-                                                       --build-generator ${BUILD_GENERATOR}
+                                                       --build-generator "${BUILD_GENERATOR}"
                                                        --create-build-dir
                                                        --cta-version ${CTA_VERSION}
                                                        --vcs-version ${CTA_BUILD_ID}
@@ -45,7 +45,7 @@
     - EXTRA_BUILD_FLAGS=""
     - if [ "${UNIT_TEST}" == "OFF" ]; then EXTRA_BUILD_FLAGS+=" --skip-unit-tests"; fi
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
-                                                      --build-generator ${BUILD_GENERATOR}
+                                                      --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${CTA_VERSION}

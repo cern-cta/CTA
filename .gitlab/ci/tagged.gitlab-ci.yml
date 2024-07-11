@@ -12,7 +12,7 @@ cta_tagged_rpm:
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     # Note that unit tests cannot be disabled here
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
-                                                      --build-generator ${BUILD_GENERATOR}
+                                                      --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${TAG_VERSION}
@@ -41,7 +41,7 @@ cta_tagged_rpm_alma9:
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     # Note that unit tests cannot be disabled here
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
-                                                      --build-generator ${BUILD_GENERATOR}
+                                                      --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${TAG_VERSION}
