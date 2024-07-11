@@ -73,10 +73,6 @@ Group: Application/cta
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
-
-# The CTA client is the only component of CTA that can be compiled on both SLC6
-# and C77, therefore only the packages it depends on are required for SLC6
-
 %define xrootdVersion 1:5.6.1-1
 
 %if %{alma9}
@@ -135,14 +131,6 @@ DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --buil
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
 %{__rm} -rf $RPM_BUILD_DIR/%{name}-%{version}
-
-
-%check
-# The CTA client is the only component of CTA that can be compiled on both SLC6
-# and C77, therefore thereis no unittest for it
-%if "%{?dist}" == ".slc6" || "%{?dist}" == ".el6"
-%define skip_unit_tests 1
-%endif
 
 %if "%{skip_unit_tests}" == "0"
 cd build
@@ -672,6 +660,11 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0755,root,root) %{_bindir}/cta-checkpkg
 
 %changelog
+
+* Wed Jul 11 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
+- Removed references to xrootd4
+- Removed references to SLC6
+
 * Wed Jul 10 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
 - Removed cta-versionlock script
 - Added cta-checkpkg script

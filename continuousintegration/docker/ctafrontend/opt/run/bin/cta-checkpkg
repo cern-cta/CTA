@@ -48,12 +48,6 @@ def split_filename(filename: str) -> Tuple[str, str, str, str, str]:
     regex = r"^((?P<epoch>[0-9]+):)?(?P<name>.+)-(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
     match = re.match(regex, filename)
     if match:
-        print("filename: " + filename)
-        print("name: " + match.group("name"))
-        print("epoch: " + (match.group("epoch") or "0"))
-        print("version: " + match.group("version"))
-        print("release: " + match.group("release"))
-        print("")
         return (
             match.group("name"),
             match.group("version"),
