@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 
+import pprint
 import argparse
 import json
 import os
 import re
 import rpm
-import sys
 from typing import List, Dict, Tuple, Any
 
 
-def printer(versions: Dict[str, Dict[str, List[str]]], msg: Dict[str, Any], jsonoutput: bool) -> None:
+def printer(versions: Dict[str, Dict[str, List[str]]], msg: Dict[str, Any], json_output: bool) -> None:
     """
     Formats and prints the message based on the provided versions and jsonoutput flag.
 
@@ -18,7 +18,7 @@ def printer(versions: Dict[str, Dict[str, List[str]]], msg: Dict[str, Any], json
         msg (dict): Message to print.
         jsonoutput (bool): Flag to determine if the output should be in JSON format.
     """
-    if jsonoutput:
+    if json_output:
         print(json.dumps(msg))
     else:
         print(f"\n{msg.pop('title')}")
@@ -32,7 +32,7 @@ def printer(versions: Dict[str, Dict[str, List[str]]], msg: Dict[str, Any], json
         print("\n")
 
 
-def splitFilename(filename: str) -> Tuple[str, str, str, str, str]:
+def split_filename(filename: str) -> Tuple[str, str, str, str, str]:
     """
     Splits RPM filename into name, version, release, epoch, and architecture.
 
@@ -45,21 +45,27 @@ def splitFilename(filename: str) -> Tuple[str, str, str, str, str]:
     Raises:
         ValueError: If the filename does not match the expected RPM format.
     """
-    regex = r"^(?P<name>.+)-(?P<version>[^-]+)-(?P<release>[^-.]+)(?:\.([^-.]+))?\.(?P<arch>[^-.]+)$"
+    regex = r"^((?P<epoch>[0-9]+):)?(?P<name>.+)-(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
     match = re.match(regex, filename)
     if match:
+        print("filename: " + filename)
+        print("name: " + match.group("name"))
+        print("epoch: " + (match.group("epoch") or "0"))
+        print("version: " + match.group("version"))
+        print("release: " + match.group("release"))
+        print("")
         return (
             match.group("name"),
             match.group("version"),
             match.group("release"),
-            match.group(4) or "0",
+            match.group("epoch") or "0",
             match.group("arch"),
         )
     else:
         raise ValueError(f"Filename {filename} does not match expected RPM format")
 
 
-def readVer(filelist: Dict[str, str]) -> Dict[str, Dict[str, List[str]]]:
+def read_version_lock_file(versionlock_files: Dict[str, str]) -> Dict[str, Dict[str, List[str]]]:
     """
     Reads versionlock files and returns a dictionary of versions.
 
@@ -69,50 +75,23 @@ def readVer(filelist: Dict[str, str]) -> Dict[str, Dict[str, List[str]]]:
     Returns:
         dict: Dictionary containing versions.
     """
-    versions = {fname: {} for fname in filelist}
-    for fname, vfile in filelist.items():
+    versions = {fname: {} for fname in versionlock_files}
+    for fname, vfile in versionlock_files.items():
         if not os.path.isfile(vfile):
             raise FileNotFoundError(f"file {vfile} not found")
 
         with open(vfile) as f:
-            plist = f.read().splitlines()
-            for p in plist:
-                if p == "" or p.startswith("#"):
+            packages = f.read().splitlines()
+            for package in packages:
+                if package == "" or package.startswith("#"):
                     continue
-                n, v, r, e, a = splitFilename(p)
-                versions[fname][n] = [e, v, r, a]
+                name, version, release, epoch, arch = split_filename(package)
+                versions[fname][name] = [epoch, version, release, arch]
     return versions
 
-
-def checkVfile(versions: Dict[str, Dict[str, List[str]]], pkglist: Dict[str, List[str]]) -> Dict[str, Any]:
+def check_consistency(required_versions: Dict[str, List[str]]) -> Dict[str, Any]:
     """
-    Compares versions in both versionlock lists and returns a dictionary of results.
-
-    Args:
-        versions (dict): Dictionary containing version information.
-        pkglist (dict): Dictionary of package list.
-
-    Returns:
-        dict: Dictionary containing comparison results.
-    """
-    result = {}
-    for p, version in pkglist.items():
-        if p not in versions["yum"]:
-            result.setdefault("missing", []).append(p)
-        else:
-            if versions["yum"][p][:-1] == version[:-1]:
-                result.setdefault("ok", []).append(p)
-            else:
-                result.setdefault("wrong_version", {})[p] = {
-                    "current": f"{versions['yum'][p][0]}:{versions['yum'][p][1]}-{versions['yum'][p][2]}",
-                    "required": f"{version[0]}:{version[1]}-{version[2]}",
-                }
-    return result
-
-
-def checkConsistency(pkglist: Dict[str, List[str]]) -> Dict[str, Any]:
-    """
-    Checks the installed packages version and returns a dictionary of results.
+    Checks the installed packages version with the versions in the versionlock.
 
     Args:
         pkglist (dict): Dictionary of package list.
@@ -121,29 +100,29 @@ def checkConsistency(pkglist: Dict[str, List[str]]) -> Dict[str, Any]:
         dict: Dictionary containing check results.
     """
     result = {"ok": {}, "wrong_version": {}}
-    ts = rpm.TransactionSet()
-    for pname, verlist in pkglist.items():
-        mi = ts.dbMatch("name", pname)
+    installed_packages = rpm.TransactionSet()
+    for package_name, required_version in required_versions.items():
+        mi = installed_packages.dbMatch("name", package_name)
         for item in mi:
-            ie = "0" if item["epoch"] is None else str(item["epoch"])
-            e, v, r, _ = verlist
-            if (e, v, r) == (ie, item["version"], item["release"]):
-                result["ok"][pname] = f"{e}:{v}-{r}"
+            installed_epoch = "0" if item["epoch"] is None else str(item["epoch"])
+            epoch, version, release, _ = required_version
+            if (epoch, version, release) == (installed_epoch, item["version"], item["release"]):
+                result["ok"][package_name] = f"{epoch}:{version}-{release}"
             else:
-                result["wrong_version"][pname] = {
-                    "required": f"{e}:{v}-{r}",
-                    "installed": f"{ie}:{item['version']}-{item['release']}",
+                result["wrong_version"][package_name] = {
+                    "required": f"{epoch}:{version}-{release}",
+                    "installed": f"{installed_epoch}:{item['version']}-{item['release']}",
                 }
     return result
 
 
-def checkPkg() -> None:
+def checkpg() -> None:
     """
     Main function to check if CTA packages exist in versionlock.list and if the installed versions are consistent.
     """
-    vfiles = {"cta": "/etc/yum/pluginconf.d/versionlock.cta", "yum": "/etc/yum/pluginconf.d/versionlock.list"}
+    versionlock_files = {"cta": "/etc/yum/pluginconf.d/versionlock.cta", "yum": "/etc/yum/pluginconf.d/versionlock.list"}
     retcode = 0
-    jsonoutput = False
+    json_output = False
 
     parser = argparse.ArgumentParser(
         description="Tool that checks the consistency between installed packages and CTA versionlock requirements"
@@ -153,7 +132,7 @@ def checkPkg() -> None:
     args = parser.parse_args()
 
     if args.json:
-        jsonoutput = True
+        json_output = True
 
     versionlock_file = "/etc/yum/pluginconf.d/versionlock.cta"
     if args.file:
@@ -162,16 +141,16 @@ def checkPkg() -> None:
 
     message = {"title": "CTA packages and dependencies versions currently installed"}
 
-    versions = readVer(vfiles)
+    required_versions = read_version_lock_file(versionlock_files)
 
-    packages = checkConsistency(versions["cta"])
+    packages = check_consistency(required_versions["cta"])
     for status, content in packages.items():
         message[status] = {"count": len(content), "content": content}
     if "wrong_version" in packages:
         retcode = 2
 
-    printer(versions, message, jsonoutput)
+    printer(required_versions, message, json_output)
     exit(retcode)
 
 
-checkPkg()
+checkpg()

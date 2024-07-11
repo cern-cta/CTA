@@ -23,11 +23,6 @@ IF (UNIX)
     MESSAGE(STATUS "Looking for RPMTools... - rpmbuild NOT FOUND")
   ENDIF (RPMTools_RPMBUILD_EXECUTABLE)
 
-  # Detetect rpmbuild environment (dist variable)
-  execute_process(COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} --showrc
-    OUTPUT_VARIABLE RPMTools_RPMBUILD_SHOWRC)
-  string(REGEX MATCH "-14: dist[^\n]*" RPMTools_RPMBUILD_DIST "${RPMTools_RPMBUILD_SHOWRC}")
-  # message(STATUS "Found line for rpmbuild dist: ${RPMTools_RPMBUILD_DIST}")
-  string(REGEX REPLACE ".*\t" "" RPMTools_RPMBUILD_DIST "${RPMTools_RPMBUILD_DIST}")
-  message(STATUS "Detected rpmbuild dist: ${RPMTools_RPMBUILD_DIST}")
+  SET(RPMTools_RPMBUILD_DIST "el9")
+  message(STATUS "Set rpmbuild dist: ${RPMTools_RPMBUILD_DIST}")
 ENDIF (UNIX)

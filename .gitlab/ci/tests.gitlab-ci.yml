@@ -234,6 +234,7 @@ cta-release:
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
     - cta-checkpkg --json > checkpkg-output.json
+    - jq -e '.wrong_version.count == 0' checkpkg-output.json > /dev/null || exit 1
   variables:
     CTAREPODIR: /tmp/repo
   artifacts:

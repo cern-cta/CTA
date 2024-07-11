@@ -85,25 +85,6 @@ cta_rpm_alma9:
       when: never
     - if: $ALMA9 == "ON"
 
-cta_srpm_xrootd4:
-  stage: build
-  extends:
-    - .cta_srpm
-  rules:
-    - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
-cta_rpm_xrootd4:
-  stage: build
-  needs: [ cta_srpm_xrootd4 ]
-  extends:
-    - .cta_rpm
-  rules:
-    - !reference [.cta_build, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
 cta_srpm_xrootd5_pgsched:
   stage: build
   extends:
