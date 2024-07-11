@@ -34,6 +34,7 @@ struct ArchiveJobSummaryRow {
   uint16_t archivePriority = 0;
   uint32_t archiveMinRequestAge = 0;
   uint32_t lastUpdateTime = 0;
+  uint32_t lastJobUpdateTime = 0;
 
   ArchiveJobSummaryRow() = default;
 
@@ -58,6 +59,7 @@ struct ArchiveJobSummaryRow {
     archivePriority      = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
     lastUpdateTime     = rset.columnUint32("LAST_UPDATE_TIME");
+    lastJobUpdateTime  = rset.columnUint32("LAST_JOB_UPDATE_TIME");
     return *this;
   }
 
@@ -72,6 +74,7 @@ struct ArchiveJobSummaryRow {
     params.add("archivePriority", archivePriority);
     params.add("archiveMinRequestAge", archiveMinRequestAge);
     params.add("lastUpdateTime", lastUpdateTime);
+    params.add("lastJobUpdateTime", lastJobUpdateTime);
   }
 
   /**
