@@ -672,6 +672,11 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
+  // if there were no rows in the summary
+  // refresh the materialised view (in this case, count(*) is not expensive)
+  if(isFirstRow){
+    cta::schedulerdb::postgres::ArchiveJobSummaryRow::refreshMaterializedView(txn,"ARCHIVE_JOB_SUMMARY");
+  }
   txn.commit();
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
