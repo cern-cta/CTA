@@ -80,7 +80,7 @@ string(REPLACE "\n" ";" RESULTS ${RESULT})
 include(../cmake/UseRPMToolsEnvironment.cmake)
 
 foreach(PNAME ${RESULTS})
-    string(APPEND CTAVERSIONLOCK "0:${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
+    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
 endforeach()
 
 file(READ ../continuousintegration/docker/ctafrontend/${OS}/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
