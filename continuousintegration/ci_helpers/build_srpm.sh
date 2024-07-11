@@ -22,6 +22,7 @@ usage() {
   echo ""
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
+  echo "  --build-generator <generator>:        Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
@@ -45,6 +46,7 @@ build_srpm() {
 
   # Default values for arguments
   local build_dir=""
+  local build_generator=""
   local cta_version=""
   local scheduler_type=""
   local vcs_version=""
@@ -67,6 +69,18 @@ build_srpm() {
           shift
         else
           echo "Error: --build-dir requires an argument"
+          usage
+        fi
+        ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+              echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          fi
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
           usage
         fi
         ;;
@@ -167,6 +181,11 @@ build_srpm() {
     usage
   fi
 
+  if [ -z "${build_generator}" ]; then
+    echo "Failure: Missing mandatory argument --build-generator";
+    usage
+  fi
+
   if ! xrootd_supported "${xrootd_version}"; then
     echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
     exit 1
@@ -200,7 +219,8 @@ build_srpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
-      yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+      # TODO: make ninja and ccache optional?
+      yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build ccache
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
@@ -250,11 +270,11 @@ build_srpm() {
 
   cd "${build_dir}"
   echo "Executing cmake..."
-  cmake3 ${cmake_options} "${repo_root}"
+  (set -x; cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}")
 
-  # Make
-  echo "Executing make..."
-  make cta_srpm -j "${num_jobs}"
+  # Build step
+  echo "Executing build step using: ${build_generator}"
+  cmake --build . --target cta_srpm -- -j "${num_jobs}"
 }
 
 build_srpm "$@"

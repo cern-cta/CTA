@@ -94,6 +94,22 @@ else (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
 endif (NOT DEFINED SKIP_UNIT_TESTS)
 
+if (NOT DEFINED SKIP_DEBUG_PACKAGES)
+  message (STATUS "Setting SKIP_DEBUG_PACKAGES to the value of 0")
+  message (STATUS "Override with -DSKIP_DEBUG_PACKAGES:STRING=1")
+  set(SKIP_DEBUG_PACKAGES 0)
+else (NOT DEFINED SKIP_DEBUG_PACKAGES)
+  message (STATUS "Already set: SKIP_DEBUG_PACKAGES=${SKIP_DEBUG_PACKAGES}")
+endif (NOT DEFINED SKIP_DEBUG_PACKAGES)
+
+if (NOT DEFINED ENABLE_CCACHE)
+  message (STATUS "Setting ENABLE_CCACHE to the value of 0")
+  message (STATUS "Override with -DENABLE_CCACHE:STRING=1")
+  set(ENABLE_CCACHE 0)
+else (NOT DEFINED ENABLE_CCACHE)
+  message (STATUS "Already set: ENABLE_CCACHE=${ENABLE_CCACHE}")
+endif (NOT DEFINED ENABLE_CCACHE)
+
 #Load version information in all cases.
 include(cmake/CTAVersions.cmake)
 

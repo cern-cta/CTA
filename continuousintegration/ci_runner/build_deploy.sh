@@ -31,11 +31,17 @@ usage() {
   echo "  -h, --help:                               Shows help output."
   echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
   echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
+  echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --clean-build-dir:                    Empties the build directory, ensuring a fresh build from scratch."
+  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --disable-oracle-support:             Disables support for oracle."
+  echo "      --disable-ccache:                     Disables ccache for the building of the rpms."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
+  echo "      --skip-debug-packages                 Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
   exit 1
 }
@@ -43,14 +49,20 @@ usage() {
 compile_deploy() {
 
   # Input args
+  local clean_build_dir=false
+  local force_install=false
   local reset=false
   local skip_build=false
   local skip_deploy=false
   local skip_cmake=false
   local skip_unit_tests=false
+  local skip_debug_packages=false
+  local build_generator="Ninja"
   local cmake_build_type=""
-  local force_install=false
   local operating_system="alma9"
+  local scheduler_type="objectstore"
+  local oracle_support="ON"
+  local enable_ccache=true
 
   # Defaults
   local num_jobs=8
@@ -64,19 +76,30 @@ compile_deploy() {
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
   local xrootd_ssi_version="dev"
-  local scheduler_type="objectstore"
-  local oracle_support="ON"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case $1 in
       -h | --help) usage ;;
       -r | --reset) reset=true ;;
+      --clean-build-dir) clean_build_dir=true ;;
+      --disable-oracle-support) oracle_support="OFF" ;;
+      --disable-ccache) enable_ccache=false ;;
       --skip-build) skip_build=true ;;
       --skip-deploy) skip_deploy=true ;;
       --skip-cmake) skip_cmake=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;
+      --skip-debug-packages) skip_debug_packages=true ;;
       --force-install) force_install=true ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
+          usage
+        fi
+        ;;
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
@@ -100,6 +123,15 @@ compile_deploy() {
           shift
         else
           echo "Error: -o | --operating-system requires an argument"
+          usage
+        fi
+        ;;
+      --scheduler-type)
+        if [[ $# -gt 1 ]]; then
+          scheduler_type="$2"
+          shift
+        else
+          echo "Error: --scheduler-type requires an argument"
           usage
         fi
         ;;
@@ -155,6 +187,7 @@ compile_deploy() {
       echo "Building SRPMs..."
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
+        --build-generator "${build_generator}" \
         --create-build-dir \
         --cta-version ${cta_version} \
         --vcs-version ${vcs_version} \
@@ -183,9 +216,22 @@ compile_deploy() {
       build_rpm_flags+=" --cmake-build-type ${cmake_build_type}"
     fi
 
+    if [[ ${clean_build_dir} = true ]]; then
+      build_rpm_flags+=" --clean-build-dir"
+    fi
+
+    if [[ ${skip_debug_packages} = true ]]; then
+      build_rpm_flags+=" --skip-debug-packages"
+    fi
+
+    if [[ ${enable_ccache} = true ]]; then
+      build_rpm_flags+=" --enable-ccache"
+    fi
+
     echo "Building RPMs..."
     kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
+      --build-generator "${build_generator}" \
       --create-build-dir \
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \

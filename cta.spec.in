@@ -25,6 +25,7 @@
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
 %define schedOpt @RPM_SCHEDOPT@
 %define oracleOpt @RPM_ORACLE@
+%define buildGenerator @CMAKE_GENERATOR@
 
 # Neutral packaging (for srpm)
 #-----------------------------
@@ -37,6 +38,22 @@
 # Skipping unit tests (for developers)
 #-------------------------------------
 %define skip_unit_tests @SKIP_UNIT_TESTS@
+
+# Skipping debug packages (for developers)
+#-------------------------------------
+%define skipDebugPackages @SKIP_DEBUG_PACKAGES@
+%if %{skipDebugPackages}
+%define debug_package %{nil}
+%endif
+
+# Setting ccache (for developers)
+#-------------------------------------
+%define enableCCache @ENABLE_CCACHE@
+%if %{enableCCache}
+%define ccacheFlags -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+%else
+%define ccacheFlags ""
+%endif
 
 # Utility for reloading systemctl when needed
 #--------------------------------------------
@@ -108,17 +125,15 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-# The cmake step does the selection between client/server compilation or just client
-CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
-# Workaround for the inability of cmake to handle properly the dependencies to generated code.
-%{__make} -s %{_smp_mflags} -k || true
-%{__make} -s %{_smp_mflags}
+# ccacheFlags will be empty if ccache is not enabled
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. ${ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
+cmake --build . %{_smp_mflags}
 
 %install
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-%{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -134,7 +149,7 @@ cd build
 
 %if "%{skip_unit_tests}" == "0"
 cd build
-%{__make} shortunittests
+cmake --build . --target shortunittests
 %endif
 
 # The main packages will be cta-taped, cta-frontend, cta-cli
