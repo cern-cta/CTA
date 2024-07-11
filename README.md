@@ -6,7 +6,7 @@
 <br />
 <div align="center">
   <a href="https://gitlab.cern.ch/cta/CTA/">
-    <img src="cta-logo.png" alt="Logo">
+    <img src="assets/cta-logo.png" alt="Logo">
   </a>
 <h3 align="center" style="padding-top: 0">CTA</h3>
   <p align="center">
@@ -23,12 +23,34 @@
   </p>
 </div>
 
+___
+
 ## About the project
 
-The CERN Tape Archive (CTA) is the archival storage system for the custodial copy of all physics data at CERN.
+The CERN Tape Archive (CTA) is the storage system for the custodial copy of all physics data at CERN. It keeps track of files stored on magnetic tape and handles user requests. CTA is the archival solution of choice for the 3rd activity period of the Large Hadron Collider, and beyond.
 
-CTA is implemented as the tape back-end to EOS. EOS + CTA is the CERN archival solution for LHC Run–3 and beyond.
+We are:
+
+- The leading Free and Open Source tape data management software
+- Home to more than 750PB of data at CERN
+- Scalable, for small and large installations
+- Self-hostable, on-premise
+- Private and secure
+
+## Community
+
+![CTA Community](assets/community-map.svg)
+
+We have active developer and operator communities across the globe. Combined, CTA facilitates the storage of more than **1 Exabyte** worldwide. We have an active community forum that you can visit for discussions and help: <https://cta-community.web.cern.ch/>
 
 ## License
 
-This project is licensed under the GNU General Public License version 3 - see the [COPYING](COPYING) file for details
+This project is licensed under the GNU General Public License - see the [COPYING](COPYING) file for details
+
+___
+
+<div align="center">
+  <a href="https://home.cern/">
+    <img src="assets/cern-logo.png" alt="CERN Logo" width="128" height="128">
+  </a>
+</div>
