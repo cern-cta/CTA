@@ -1,10 +1,7 @@
-<a name="readme-top"></a>
-
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](COPYING)
 [![Latest Release](https://gitlab.cern.ch/cta/CTA/-/badges/release.svg)](https://gitlab.cern.ch/cta/CTA/-/releases)
 [![Pipeline Status](https://gitlab.cern.ch/cta/CTA/badges/main/pipeline.svg)](https://gitlab.cern.ch/cta/CTA/-/commits/main/)
 [![Monitoring](https://cta.web.cern.ch/resources/gitlab_meter-CTA_badge.svg)](https://meter-cta.web.cern.ch/d/mpoGeGDSk/continuous-integration)
-
 
 <br />
 <div align="center">
