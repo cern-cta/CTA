@@ -44,7 +44,8 @@ def split_filename(filename: str) -> Tuple[str, str, str, str, str]:
     Raises:
         ValueError: If the filename does not match the expected RPM format.
     """
-    regex = r"^((?P<epoch>[0-9]+):)?(?P<name>.+)-(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
+    # Note that dnf versionlock has the epoch after the name, instead of before: https://dnf-plugins-core.readthedocs.io/en/latest/versionlock.html
+    regex = r"^(?P<name>.+)-((?P<epoch>[0-9]+):)?(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
     match = re.match(regex, filename)
     if match:
         return (

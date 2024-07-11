@@ -661,7 +661,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 %changelog
 
-* Wed Jul 11 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
+* Thu Jul 11 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
 - Removed references to xrootd4
 - Removed references to SLC6
 

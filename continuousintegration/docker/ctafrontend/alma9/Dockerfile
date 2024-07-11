@@ -34,7 +34,7 @@ COPY ${BASEDIR}/etc/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionl
 COPY ${BASEDIR}/../opt /opt
 
 RUN yum install -y \
-      yum-plugin-versionlock \
+      python3-dnf-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
       wget jq bc \
