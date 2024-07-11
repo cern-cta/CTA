@@ -1,5 +1,7 @@
 
 {{$namespace := .Release.Namespace }}
+{{$imageVersion := .Values.global.image}}
+
 {{- range $key, $value := .Values.cta}}
 
 apiVersion: v1
@@ -13,7 +15,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: {{ $key | quote}}
-    image: {{ $value.image | quote }}
+    image: {{ $imageVersion | quote }}
     stdin: true
     env:
     - name: MY_NAME
