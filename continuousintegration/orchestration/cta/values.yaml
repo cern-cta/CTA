@@ -1,0 +1,145 @@
+# Here are stored global settings for all the project pods
+global: 
+  imagePullSecret: "TODO"
+
+# Here are stored values for the project related pods
+cta:
+  ctacli: 
+    label: ctacli
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    command: ['/opt/run/bin/ctacli.sh'] 
+    args: ["none"]
+    env: 
+    - name: TERM
+      value: "xterm"
+    volumes: 
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: keytab 
+      secret: 
+        secretName: ctaadmin1-keytab
+    volumeMounts: 
+    - mountPath: /shared
+      name: shared
+    - mountPath: /mnt/logs
+      name: logstorage
+    - mountPath: /root/ctaadmin1.keytab
+      name: keytab
+      subPath: ctaadmin1.keytab
+    isPriviliged: true
+
+  cta-frontend:
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    setupScript:
+      command: ['/opt/run/bin/ctafrontend.sh']
+      args: ["none"]
+    env:
+    - name: TERM
+      value: "xterm"
+    ports:
+    - containerPort: 10955
+      name: ctafrontend
+      protocol: TCP
+
+    volumes: 
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: myobjectstore
+      configMap:
+        name: objectstore-config
+    - name: mydatabase
+      configMap:
+        name: database-config
+    - name: mylibrary
+      configMap:
+        name: library-config
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: eosctaconfig
+      configMap:
+        name: eoscta-config
+    - name: keytab 
+      secret: 
+        secretName: cta-frontend-keytab
+
+    volumeMounts: 
+    - mountPath: /shared
+      name: shared
+    - mountPath: /etc/config/objectstore
+      name: myobjectstore
+    - mountPath: /etc/config/database
+      name: mydatabase
+    - mountPath: /etc/config/library
+      name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
+    - mountPath: /etc/config/eoscta
+      name: eosctaconfig
+    - mountPath: /etc/cta/cta-frontend.krb5.keytab
+      name: keytab
+      subPath: cta-frontend.krb5.keytab
+    # TODO: Add container ports 
+  
+  client:
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    command: ['/opt/run/bin/client.sh']
+    args: ["none"]
+    env:
+    - name: TERM
+      value: "xterm"
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /mnt/logs
+      name: logstorage
+    - mountPath: /etc/config/eos
+      name: eosconfig
+    - mountPath: /root/user1.keytab
+      name: keytab
+      subPath: user1.keytab
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: eosconfig
+      configMap:
+        name: eos-config
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: keytab 
+      secret: 
+        secretName: user1-keytab
+
+# Here are stored values for the pvc's
+pvcs:
+  claimstg:
+    selectors:
+      type: stg
+    storage: 3Gi
+    accessModes:
+      - ReadWriteMany  
+  claimlogs:
+    selectors:
+      type: logs
+    storage: 2Gi
+    accessModes:
+      - ReadWriteMany  
+  claimlibrary: 
+    annotations:
+      volume.beta.kubernetes.io/storage-class: "librarydevice"
+    selectors:
+      config: library
+      type: mhvtl
+    storage: 1Mi
+    accessModes:
+      - ReadWriteOnce  
+
+# eos: 
+# TODO: Add eos as dependency and set of values here 
