@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "common/CRC.hpp"
 
 namespace castor::tape::tapeFile {
 
@@ -133,7 +134,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
-  size_t bytes_read = 0;
+  size_t uiBytesRead = 0;
   /*
    * Cpio filter for OSM file
    * - caclulate the file size and position of the trailer
@@ -150,45 +151,58 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     size_t uiResiduesSize = 0;
     uint8_t* pucTmpData = new uint8_t[size];
 
-    bytes_read = m_session.m_drive.readBlock(pucTmpData, size);
-    uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
-    uiResiduesSize = bytes_read - uiHeaderSize;
+    uiBytesRead = m_session.m_drive.readBlock(pucTmpData, size);
+    // Special case - checking whether the data format contains CRC32 
+    if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed, uiBytesRead, static_cast<const uint8_t*>(pucTmpData))) {
+      m_bDataWithCRC32 = true;
+      uiBytesRead -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+    }
+
+    uiHeaderSize = m_cpioHeader.decode(pucTmpData, CPIO::MAXHEADERSIZE);
+    uiResiduesSize = uiBytesRead - uiHeaderSize;
 
     // Copy the rest of data to the buffer
     if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
-      bytes_read = m_cpioHeader.m_ui64FileSize;
-      m_ui64CPIODataSize = bytes_read;
-      memcpy(data, pucTmpData + uiHeaderSize, bytes_read);
+      uiBytesRead = m_cpioHeader.m_ui64FileSize;
+      m_ui64CPIODataSize = uiBytesRead;
+      memcpy(data, pucTmpData + uiHeaderSize, uiBytesRead);
     } else {
       memcpy(data, pucTmpData + uiHeaderSize, uiResiduesSize);
-      bytes_read = uiResiduesSize;
-      m_ui64CPIODataSize = bytes_read >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : bytes_read;
+      uiBytesRead = uiResiduesSize;
+      m_ui64CPIODataSize = uiBytesRead >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : uiBytesRead;
     }
     delete[] pucTmpData;
   } else {
-    bytes_read = m_session.m_drive.readBlock(data, size);
-    m_ui64CPIODataSize += bytes_read;
-    if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
+    uiBytesRead = m_session.m_drive.readBlock(data, size);
+    // Special case - the data format contains CRC32
+    if (m_bDataWithCRC32 && cta::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed, uiBytesRead, static_cast<const uint8_t*>(data))) {
+      uiBytesRead -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+    }
+
+    m_ui64CPIODataSize += uiBytesRead;
+    if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && uiBytesRead > 0) {
       // File is ready
-      if(bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
-	bytes_read = 0;
+      if(uiBytesRead < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
+        uiBytesRead = 0;
       } else {
-	// size_t uiOldSize = bytes_read;
-	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize); 
-	// m_ui64CPIODataSize += bytes_read - uiOldSize;
+        // size_t uiOldSize = uiBytesRead;
+        uiBytesRead = uiBytesRead - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+        // m_ui64CPIODataSize += uiBytesRead - uiOldSize;
       }
     }
   }
 
   // end of file reached! keep reading until the header of the next file
-  if (!bytes_read) {
+  if (!uiBytesRead) {
     m_session.setCurrentFseq(m_session.getCurrentFseq() + 1); // moving on to the header of the next file
     m_session.setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();
   }
 
-  return bytes_read;
+  return uiBytesRead;
 }
 
 } // namespace castor::tape::tapeFile

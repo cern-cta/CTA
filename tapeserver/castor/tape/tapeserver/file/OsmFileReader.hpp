@@ -44,6 +44,10 @@ public:
 private:
   const size_t PAYLOAD_BOLCK_SIZE = 262144;
   /*
+   * Set to true if 64k_FORMAT detected
+   */
+  bool m_bDataWithCRC32 = false;
+  /*
    * CPIO file
    */
   CPIO m_cpioHeader;
