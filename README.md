@@ -25,11 +25,11 @@
 
 ___
 
-## About the project
+## About CTA
 
 The CERN Tape Archive (CTA) is the storage system for the custodial copy of all physics data at CERN. It keeps track of files stored on magnetic tape and handles user requests. CTA is the archival solution of choice for the 3rd activity period of the Large Hadron Collider, and beyond.
 
-We are:
+CTA is:
 
 - The leading Free and Open Source tape data management software
 - Home to more than 750PB of data at CERN
@@ -37,11 +37,43 @@ We are:
 - Self-hostable, on-premise
 - Private and secure
 
-## Community
+## Getting Started
 
-![CTA Community](assets/community-map.svg)
+The simplest way to get start with CTA is by using the publically available RPMs.
 
-We have active developer and operator communities across the globe. Combined, CTA facilitates the storage of more than **1 Exabyte** worldwide. We have an active community forum that you can visit for discussions and help: <https://cta-community.web.cern.ch/>
+**Install CTA**
+
+1. Setup the cta-public repo for CTA:
+
+    ```bash
+    echo -e "[cta-public-5-alma9]\n \
+              name=CTA artifacts\n \
+              baseurl=https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64/\n \
+              gpgcheck=0\n \
+              ena bled=1\n \
+              priority=2" \
+      > /etc/yum.repos.d/cta-public-5.repo
+    ```
+
+2. Install the `cta-release` package:
+
+    ```bash
+    yum install cta-release
+    ```
+
+3. Install CTA and EOS - choose the appropriate packages, as needed:
+
+    ```bash
+    yum install cta-frontend
+    yum install cta-taped
+    yum install cta-rmcd
+    yum install cta-smc
+
+    yum install eos-server
+    yum install eos-client
+    ```
+
+For more detailed instructions, please visit [the documentation](https://eoscta.docs.cern.ch/latest/overview/getting_started/).
 
 ## License
 
