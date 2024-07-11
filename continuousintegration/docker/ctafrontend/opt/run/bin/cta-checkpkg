@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import pprint
 import argparse
 import json
 import os
@@ -121,17 +120,21 @@ def checkpg() -> None:
     parser = argparse.ArgumentParser(
         description="Tool that checks the consistency between installed packages and CTA versionlock requirements"
     )
-    parser.add_argument("--file", help="Check against the provided versionlock file instead of the default")
+    parser.add_argument("--cta-versionlock", help="Check against the provided versionlock file instead of the default versionlock.cta")
+    parser.add_argument("--yum-versionlock", help="Check against the provided versionlock file instead of the default versionlock.list")
     parser.add_argument("--json", action="store_true", help="Format output in json")
     args = parser.parse_args()
 
     if args.json:
         json_output = True
 
-    versionlock_file = "/etc/yum/pluginconf.d/versionlock.cta"
-    if args.file:
-        versionlock_file = args.file
-        print("Using yum versionlock file: %s" % versionlock_file)
+    if args.cta_versionlock:
+        versionlock_files['cta'] = args.cta_versionlock
+        print("Using cta versionlock file: %s" % args.cta_versionlock)
+
+    if args.yum_versionlock:
+        versionlock_files['yum'] = args.yum_versionlock
+        print("Using yum versionlock file: %s" % args.yum_versionlock)
 
     message = {"title": "CTA packages and dependencies versions currently installed"}
 
@@ -140,7 +143,7 @@ def checkpg() -> None:
     packages = check_consistency(required_versions["cta"])
     for status, content in packages.items():
         message[status] = {"count": len(content), "content": content}
-    if "wrong_version" in packages:
+    if packages['wrong_version']:
         retcode = 2
 
     printer(required_versions, message, json_output)
