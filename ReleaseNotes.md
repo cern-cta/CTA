@@ -10,6 +10,9 @@
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
 
+### Maintenance
+- cta/CTA#779 - Removed outdated doxygen files
+
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
