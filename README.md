@@ -13,7 +13,7 @@
   </a>
 <h3 align="center" style="padding-top: 0">CTA</h3>
   <p align="center">
-    The Cern Tape Archive open source software system.
+    The Cern Tape Archive open source tape data management software.
     <br />
     <a href="https://eoscta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
