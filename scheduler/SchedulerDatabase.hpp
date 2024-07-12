@@ -225,6 +225,7 @@ class SchedulerDatabase {
   class ArchiveJob {
     friend class ArchiveMount;
    public:
+    uint64_t jobID = 0; // for schedulerdb model
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
@@ -234,7 +235,8 @@ class SchedulerDatabase {
       CompletionReport,
       FailureReport,
       Report  ///< A generic grouped type
-    } reportType;
+    };
+    ReportType reportType = ReportType::CompletionReport;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void failTransfer(const std::string & failureReason, log::LogContext & lc) = 0;

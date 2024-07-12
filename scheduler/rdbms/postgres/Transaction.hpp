@@ -86,7 +86,7 @@ public:
 private:
 
   rdbms::Conn m_conn;
-  bool m_begin = true;
+  bool m_begin = false;
 };
 
 } // namespace cta::schedulerdb

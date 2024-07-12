@@ -29,6 +29,7 @@
 #include <exception>
 #include <sstream>
 #include <utility>
+#include <regex>
 
 namespace cta::rdbms::wrapper {
 
@@ -497,20 +498,29 @@ void PostgresStmt::closeBoth() {
 //------------------------------------------------------------------------------
 void PostgresStmt::CountAndReformatSqlBinds(const std::string &common_sql, std::string &pg_sql, int &nParams) const {
   nParams = 0;
-  pg_sql = common_sql;
-  // if found :name, replace it with '$<n>'
-  while (true) {
-    // find start of :name
-    const auto itr = std::find(pg_sql.begin(),pg_sql.end(),':');
-    if (itr == pg_sql.end()) {
-      break;
+  // Match any :name
+  std::regex pattern(R"(:(\w+))");
+  std::smatch match;
+  std::string::const_iterator searchStart(common_sql.cbegin());
+  std::string result;
+  std::ostringstream oss;
+  while (std::regex_search(searchStart, common_sql.cend(), match, pattern)) {
+    // skip all matches which have a second colon in front e.g. ::name (reserved for type casting in postgres)
+    auto matchPos = std::distance(common_sql.cbegin(), searchStart) + match.position();
+    if (matchPos > 0 && ':' == *(common_sql.cbegin() + matchPos - 1)){
+      oss << match.prefix();
+      oss << match.str();
+      searchStart = match.suffix().first;
+      continue;
     }
-    // find end of :name
-    const auto itr2 = std::find_if_not(itr+1,pg_sql.end(),ParamNameToIdx::isValidParamNameChar);
-    ++nParams;
-    const std::string r = "$" + std::to_string(nParams);
-    pg_sql.replace(itr,itr2,r);
+    ++nParams; // Increment the parameter counter
+    oss << match.prefix();
+    oss << "$" << nParams;
+    searchStart = match.suffix().first;
   }
+  // Append the remaining part of the string after the last match
+  oss << std::string(searchStart, common_sql.cend());
+  pg_sql = oss.str();
 }
 
 //------------------------------------------------------------------------------

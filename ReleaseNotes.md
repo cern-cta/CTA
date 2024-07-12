@@ -36,6 +36,8 @@
 - cta/CTA#667 - Sonarcloud code smells in catalogue
 - cta/CTA#670 - Add the ability to read EnstoreLarge tapes
 - cta/CTA#698 - Include instanceName and schedulerBackendName in frontend logs
+- cta/CTA#684 - Implementing reporting for successful Archive jobs for Postgres scheduler DB
+- cta/CTA#731 - Enabling type casting for Postgres queries
 
 ### Bug Fixes
 - cta/CTA#466 - Changed `cta.archivefile.max_size_gb` to correctly use powers of 1000 instead of 1024
@@ -51,6 +53,7 @@
 - cta/CTA#688 - Fix tapeserver umask to allow directory creation in POSIX filesystems
 - cta/CTA#693 - Fix tapeserver tool regressions
 - cta/CTA#704 - Fix special character encoding in json logging
+- cta/CTA#733 - Fix missing target lib for frontend-grpc to compile with Postgres Scheduler DB
 
 ### Continuous Integration
 - cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
@@ -65,6 +68,7 @@
 - cta/CTA#705 - Upgrade eos-5 to eos-5.2.24-1: fixes EOS-6112 and add archive metadata in eoscta MGM report EOS-6150
 - cta/CTA#711 - Add cta-frontend-grpc to k8s setup
 - cta/CTA#712 - Remove CI mitigations
+- cta/CTA#732 - Fixing DropSchemaCmd for postgres scheduler DB
 
 ### Code Quality
 - cta/CTA#334 - Refactor the libctacatalogue DB interface

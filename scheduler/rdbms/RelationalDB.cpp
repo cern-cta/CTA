@@ -20,6 +20,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
@@ -146,40 +147,56 @@ std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> RelationalDB::getArchiv
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext)
 {
-  rdbms::Rset resultSet_ForTransfer;
-  rdbms::Rset resultSet_ForFailure;
-  auto sqlconn_fortransfer = m_connPool.getConn();
-  auto sqlconn_forfailure = m_connPool.getConn();
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  schedulerdb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
-  resultSet_ForTransfer = cta::schedulerdb::postgres::ArchiveJobQueueRow::select(
-          sqlconn_fortransfer, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer, filesRequested);
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForTransfer.");
-  resultSet_ForFailure = cta::schedulerdb::postgres::ArchiveJobQueueRow::select(
-          sqlconn_forfailure, schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure, filesRequested);
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToUserForFailure.");
+  std::list<schedulerdb::ArchiveJobStatus> statusList;
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
+  rdbms::Rset jobIDresultSet;
+  std::list<std::string> jobIDsList;
+  try {
+    jobIDresultSet = schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, filesRequested);
+    while (jobIDresultSet.next()) {
+      jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
+    }
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    logContext.log(cta::log::DEBUG,
+         "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
+         ex.getMessageValue());
+    txn.abort();
+  }
+  if (jobIDsList.empty()){
+    logContext.log(cta::log::DEBUG,
+                   "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
+    return ret;
+  }
+  auto sqlconn = m_connPool.getConn();
+  auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
+  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToDiskRunnerForTransfer.");
   std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
-  while(resultSet_ForTransfer.next() || resultSet_ForFailure.next()) {
-    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
-    try {
-      if(!resultSet_ForTransfer.isEmpty()){
-        jobs.emplace_back(resultSet_ForTransfer);
-      }
-      if(!resultSet_ForFailure.isEmpty()){
-        jobs.emplace_back(resultSet_ForFailure);
-      }
-    } catch (cta::exception::Exception & e) {
-      std::string bt = e.backtrace();
-      logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+  try {
+    while(resultSet.next()) {
+      logContext.log(log::DEBUG,
+                     "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
+      jobs.emplace_back(resultSet);
     }
-    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
+    // this is not query commit, but conn commit returning
+    // the connection to the pool !
+    sqlconn.commit();
+  } catch (cta::exception::Exception & e) {
+    std::string bt = e.backtrace();
+    logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
   }
-  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Archive Jobs filled.");
+  logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
   // Construct the return value
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   for (const auto &j : jobs) {
     auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
+    aj->jobID = j.jobId;
+    logContext.log(log::DEBUG, std::string("In RelationalDB::getNextArchiveJobsToReportBatch(): Job IDs, ArchiveFileIDs: ") + std::to_string(j.jobId) + " " + std::to_string(aj->jobID) + " " + std::to_string(j.archiveFile.archiveFileID));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportUrl;
@@ -220,7 +237,33 @@ void RelationalDB::tickRetrieveQueueCleanupHeartbeat(const std::string & vid)
 void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "RelationalDB::setArchiveJobBatchReported() half-dummy implementation for successful jobs !");
+  // We can have a mixture of failed and successful jobs, so we will sort them before batch queue/discarding them.
+  // First, sort the jobs. Done jobs get deleted (no need to sort further) and failed jobs go to their per-VID queues/containers.
+  // Status gets updated on the fly on the latter case.
+  std::list<std::string> jobIDsList;
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+    log::ScopedParamContainer(lc)
+            .add("jobID", (*jobsBatchItor)->jobID)
+            .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+            .log(log::INFO,
+                 "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job to be reported.");
+    jobsBatchItor++;
+  }
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    // ALL JOBS CURRENTLY REPORTED AS SUCCESS !
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::DEBUG,
+           "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Complete. Aborting the transaction." +
+           ex.getMessageValue());
+    txn.abort();
+  }
 }
 
 std::list<SchedulerDatabase::RetrieveQueueStatistics> RelationalDB::getRetrieveQueueStatistics(
@@ -232,6 +275,15 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> RelationalDB::getRetrieveQ
 void RelationalDB::clearStatisticsCache(const std::string & vid)
 {
   schedulerdb::Helpers::flushStatisticsCacheForVid(vid);
+}
+
+void RelationalDB::setStatisticsCacheConfig(const StatisticsCacheConfig & conf) {
+  if (conf.retrieveQueueCacheMaxAgeSecs.has_value()) {
+    schedulerdb::Helpers::setRetrieveQueueCacheMaxAgeSecs(conf.retrieveQueueCacheMaxAgeSecs.value());
+  }
+  if (conf.tapeCacheMaxAgeSecs.has_value()) {
+    schedulerdb::Helpers::setTapeCacheMaxAgeSecs(conf.tapeCacheMaxAgeSecs.value());
+  }
 }
 
 SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
@@ -612,6 +664,9 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
+  // release the lock on the view,
+  // so that other tape servers can query the job summary
+  txn.commit();
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {

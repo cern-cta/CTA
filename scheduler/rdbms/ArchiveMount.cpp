@@ -34,71 +34,74 @@ const SchedulerDatabase::ArchiveMount::MountInfo &ArchiveMount::getMountInfo()
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext)
-{
+      uint64_t bytesRequested, log::LogContext& logContext) {
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
-  rdbms::Rset resultSet;
-  // fetch a non transactional connection from the PGSCHED connection pool
-  auto conn = m_RelationalDB.m_connPool.getConn();
-  // retrieve batch up to file limit
-  if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
-    logContext.log(cta::log::DEBUG, "Query JobsToTransferForUser ArchiveMount::getNextJobBatch()");
-    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::select(
-            conn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
-    logContext.log(cta::log::DEBUG, "After first selection of AJS_ToTransferForUser ArchiveMount::getNextJobBatch()");
-  } else {
-    logContext.log(cta::log::DEBUG, "Query JobsToTransferForRepack ArchiveMount::getNextJobBatch()");
-    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::select(
-            conn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
-  }
-  logContext.log(cta::log::DEBUG, "Filling jobs in ArchiveMount::getNextJobBatch()");
-  std::list<postgres::ArchiveJobQueueRow> jobs;
+  rdbms::Rset updatedJobIDset;
+  using queueType = common::dataStructures::JobQueueType;
+  ArchiveJobStatus queriedJobStatus = (m_queueType == queueType::JobsToTransferForUser) ?
+                                      ArchiveJobStatus::AJS_ToTransferForUser :
+                                      ArchiveJobStatus::AJS_ToTransferForRepack;
+  // mark the next job batch as owned by a specific mountId
+  // and return the list of JOB_IDs which we have modified
+  std::list <std::string> jobIDsList;
   std::string jobIDsString;
-  std::list<std::string> jobIDsList;
-  // filter retrieved batch up to size limit
-  uint64_t totalBytes = 0;
-  while(resultSet.next()) {
-    uint64_t assigned_jobid =  resultSet.columnUint64("JOB_ID");
-    jobs.emplace_back(resultSet);
-    jobs.back().jobId = assigned_jobid;
-    jobIDsList.emplace_back(std::to_string(assigned_jobid));
-    jobIDsString += std::to_string(assigned_jobid) + ",";
-    logContext.log(cta::log::DEBUG, "jobIDsString: " + jobIDsString);
-    totalBytes += jobs.back().archiveFile.fileSize;
-    if(totalBytes >= bytesRequested) break;
-  }
-  logContext.log(cta::log::DEBUG, "Ended filling jobs in ArchiveMount::getNextJobBatch() executing ArchiveJobQueueRow::updateMountID");
-
-  // Construct the return value
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-
-  if (!jobIDsString.empty()) {
-    jobIDsString.pop_back(); // Remove the trailing comma
-    // mark the jobs in the batch as owned
-    try {
-      cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
-      txn.lockGlobal(0);
-      postgres::ArchiveJobQueueRow::updateMountID(txn, jobIDsList, mountInfo.mountId);
-      txn.commit();
-      logContext.log(cta::log::DEBUG, "Finished to update Mount ID to: " + std::to_string(mountInfo.mountId)+ " for JOB IDs: " + jobIDsString);
-      for (const auto &j : jobs) {
-        auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, mountInfo.mountId, j.jobId, mountInfo.tapePool);
-        aj->tapeFile.copyNb = j.copyNb;
-        aj->archiveFile = j.archiveFile;
-        aj->archiveReportURL = j.archiveReportUrl;
-        aj->errorReportURL = j.archiveErrorReportUrl;
-        aj->srcURL = j.srcUrl;
-        aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-        aj->tapeFile.vid = mountInfo.vid;
-        aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
-        // reportType ?
-        ret.emplace_back(std::move(aj));
-      }
-    } catch (exception::Exception& ex) {
-      logContext.log(cta::log::DEBUG, "In postgres::ArchiveJobQueueRow::updateMountID: failed to update Mount ID." + ex.getMessageValue());
+  // start a new transaction
+  cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  try {
+    logContext.log(cta::log::DEBUG,
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
+    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo.tapePool,
+                                                                  mountInfo.mountId, mountInfo.vid, filesRequested);
+    // we need to extract the JOB_IDs which were updated before we release the lock
+    while (updatedJobIDset.next()) {
+      jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
     }
-    logContext.log(cta::log::DEBUG, "Finished updating Mount ID for the selected jobs  ArchiveJobQueueRow::updateMountID" + jobIDsString);
+    txn.commit();
+    for (const auto &piece: jobIDsList) jobIDsString += piece;
+    logContext.log(cta::log::DEBUG,
+                   "Successfully finished to update Mount ID: " + std::to_string(mountInfo.mountId) + " for JOB IDs: " +
+                   jobIDsString);
+  } catch (exception::Exception &ex) {
+    logContext.log(cta::log::DEBUG,
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
+                   ex.getMessageValue());
+    txn.abort();
   }
+  std::list <std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  // Fetch job info only in case there were jobs found and updated
+  if (!jobIDsList.empty()) {
+    // fetch a non transactional connection from the PGSCHED connection pool
+    auto conn = m_RelationalDB.m_connPool.getConn();
+    rdbms::Rset resultSet;
+    // retrieve more job information about the updated batch
+    logContext.log(cta::log::DEBUG, "Query for job IDs " + jobIDsString + " ArchiveMount::getNextJobBatch()");
+    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(conn, jobIDsList);
+    logContext.log(cta::log::DEBUG, "Job info of the updated jobs has been queueried, passing it on for execution");
+    std::list <postgres::ArchiveJobQueueRow> jobs;
+    // Construct the return value
+    uint64_t totalBytes = 0;
+    while (resultSet.next()) {
+      jobs.emplace_back(resultSet);
+      jobs.back().jobId = resultSet.columnUint64("JOB_ID");
+      totalBytes += jobs.back().archiveFile.fileSize;
+      auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, mountInfo.mountId, jobs.back().jobId, mountInfo.tapePool);
+      aj->jobID = jobs.back().jobId;
+      aj->tapeFile.copyNb = jobs.back().copyNb;
+      aj->archiveFile = jobs.back().archiveFile;
+      aj->archiveReportURL = jobs.back().archiveReportUrl;
+      aj->errorReportURL = jobs.back().archiveErrorReportUrl;
+      aj->srcURL = jobs.back().srcUrl;
+      aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      aj->tapeFile.vid = mountInfo.vid;
+      aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+      // reportType ?
+      ret.emplace_back(std::move(aj));
+      if (totalBytes >= bytesRequested) break;
+    }
+    // returning connection to the pool
+    conn.commit();
+  }
+  logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
   return ret;
 }
 
@@ -149,7 +152,34 @@ void ArchiveMount::setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc)
 {
   lc.log(log::WARNING,
-         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests passes as dummy implementation !");
+         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation !");
+  std::list<std::string> jobIDsList;
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+    log::ScopedParamContainer(lc)
+            .add("jobID", (*jobsBatchItor)->jobID)
+            .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
+            .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+            .log(log::INFO,
+                 "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
+    jobsBatchItor++;
+  }
+  /* Update Status in ARCHIVE_JOB_QUEUE and table to either of the following 2 states:
+   * AJS_ToReportToUserForFailure
+   * AJS_ToReportToUserForTransfer
+   */
+  cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  try {
+    // To be checked if all jobs for which setJobBatchTransferred is called can be reported as SUCCESS !
+    postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::DEBUG,
+                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status for reporting. Aborting the transaction." +
+                   ex.getMessageValue());
+    txn.abort();
+  }
 }
-
 } // namespace cta::schedulerdb

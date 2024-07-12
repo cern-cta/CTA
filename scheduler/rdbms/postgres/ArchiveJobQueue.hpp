@@ -48,7 +48,6 @@ struct ArchiveJobQueueRow {
   uint32_t totalRetries = 0;
   uint64_t lastMountWithFailure = 0;
   uint32_t maxTotalRetries = 0;
-
   uint32_t maxRetriesWithinMount = 0;
   uint32_t maxReportRetries = 0;
   uint32_t totalReportRetries = 0;
@@ -84,7 +83,7 @@ struct ArchiveJobQueueRow {
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset &rset) {
     jobId                     = rset.columnUint64("JOB_ID");
-    mountId = rset.columnOptionalUint64("MOUNT_ID");
+    mountId                   = rset.columnOptionalUint64("MOUNT_ID");
     status                    = from_string<ArchiveJobStatus>(
                                 rset.columnString("STATUS") );
     tapePool                  = rset.columnString("TAPE_POOL");
@@ -110,6 +109,7 @@ struct ArchiveJobQueueRow {
     srcUrl                    = rset.columnString("SRC_URL");
     archiveFile.storageClass  = rset.columnString("STORAGE_CLASS");
     retriesWithinMount        = rset.columnUint16("RETRIES_WITHIN_MOUNT");
+    maxRetriesWithinMount     = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
     totalRetries              = rset.columnUint16("TOTAL_RETRIES");
     lastMountWithFailure      = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
     maxTotalRetries           = rset.columnUint16("MAX_TOTAL_RETRIES");
@@ -144,6 +144,7 @@ struct ArchiveJobQueueRow {
         "SRC_URL,"
         "STORAGE_CLASS,"
         "RETRIES_WITHIN_MOUNT,"
+        "MAX_RETRIES_WITHIN_MOUNT,"
         "TOTAL_RETRIES,"
         "LAST_MOUNT_WITH_FAILURE,"
         "MAX_TOTAL_RETRIES) VALUES ("
@@ -170,6 +171,7 @@ struct ArchiveJobQueueRow {
         ":SRC_URL,"
         ":STORAGE_CLASS,"
         ":RETRIES_WITHIN_MOUNT,"
+        ":MAX_RETRIES_WITHIN_MOUNT,"
         ":TOTAL_RETRIES,"
         ":LAST_MOUNT_WITH_FAILURE,"
         ":MAX_TOTAL_RETRIES)";
@@ -198,6 +200,7 @@ struct ArchiveJobQueueRow {
     stmt.bindString(":SRC_URL", srcUrl);
     stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
     stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+    stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
     stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
     stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
@@ -238,18 +241,21 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-   * Select unowned jobs from the queue
+   * Select any jobs from the queue by job ID
    *
    * @param conn       Connection to the DB backend
-   * @param status     Archive Job Status to select on
-   * @param tapepool   Tapepool to select on
-   * @param limit      Maximum number of rows to return
-   *
+   * @param jobIDs     List of jobID strings to select
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit) {
-
-    const char *const sql =
+  static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list<std::string>& jobIDs) {
+    if(jobIDs.empty()) {
+      rdbms::Rset ret;
+      return ret;
+    }
+    std::string sqlpart;
+    for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    if (!sqlpart.empty()) { sqlpart.pop_back(); }
+    std::string sql =
     "SELECT "
       "JOB_ID AS JOB_ID,"
       "MOUNT_ID AS MOUNT_ID,"
@@ -276,95 +282,30 @@ struct ArchiveJobQueueRow {
       "SRC_URL AS SRC_URL,"
       "STORAGE_CLASS AS STORAGE_CLASS,"
       "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
+      "MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,"
       "TOTAL_RETRIES AS TOTAL_RETRIES,"
-      "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
+      "LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,"
       "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
     "FROM ARCHIVE_JOB_QUEUE "
     "WHERE "
-      "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = :STATUS "
-      "AND MOUNT_ID IS NULL "
-    "ORDER BY PRIORITY DESC, JOB_ID "
-      "LIMIT :LIMIT";
-
+       "JOB_ID IN (" + sqlpart + ") "
+    "ORDER BY PRIORITY DESC, JOB_ID";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":LIMIT", limit);
-
     return stmt.executeQuery();
   }
 
   /**
-   * Select owned jobs from the queue
+   * Select any jobs with specified status(es) from the queue
+   * and return them in the order of priority and by tapepool
    *
    * @param conn       Connection to the backend database
-   * @param status     Archive Job Status to select on
-   * @param tapepool   Tapepool to select on
-   * @param mount_id   Mount id which owns this job
+   * @param statusList List of Archive Job Status to select on
    * @param limit      Maximum number of rows to return
    *
    * @return  result set
    */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, const std::string& tapepool, uint64_t limit, uint64_t mount_id) {
-    const char *const sql =
-    "SELECT "
-      "JOB_ID AS JOB_ID,"
-      "MOUNT_ID AS MOUNT_ID,"
-      "STATUS AS STATUS,"
-      "TAPE_POOL AS TAPE_POOL,"
-      "MOUNT_POLICY AS MOUNT_POLICY,"
-      "PRIORITY AS PRIORITY,"
-      "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
-      "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "COPY_NB AS COPY_NB,"
-      "START_TIME AS START_TIME,"
-      "CHECKSUMBLOB AS CHECKSUMBLOB,"
-      "CREATION_TIME AS CREATION_TIME,"
-      "DISK_INSTANCE AS DISK_INSTANCE,"
-      "DISK_FILE_ID AS DISK_FILE_ID,"
-      "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
-      "DISK_FILE_GID AS DISK_FILE_GID,"
-      "DISK_FILE_PATH AS DISK_FILE_PATH,"
-      "ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,"
-      "ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,"
-      "REQUESTER_NAME AS REQUESTER_NAME,"
-      "REQUESTER_GROUP AS REQUESTER_GROUP,"
-      "SRC_URL AS SRC_URL,"
-      "STORAGE_CLASS AS STORAGE_CLASS,"
-      "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
-      "TOTAL_RETRIES AS TOTAL_RETRIES,"
-      "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
-      "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
-    "FROM ARCHIVE_JOB_QUEUE "
-    "WHERE "
-      "TAPE_POOL = :TAPE_POOL "
-      "AND STATUS = :STATUS "
-      "AND MOUNT_ID = :MOUNT_ID "
-    "ORDER BY PRIORITY DESC, JOB_ID "
-      "LIMIT :LIMIT";
-
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":TAPE_POOL", tapepool);
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":MOUNT_ID", mount_id);
-    stmt.bindUint32(":LIMIT", limit);
-
-    return stmt.executeQuery();
-  }
-
-  /**
-   * Select not owned jobs from the queue ordered by tapepool
-   *
-   * @param conn       Connection to the backend database
-   * @param status     Archive Job Status to select on
-   * @param limit      Maximum number of rows to return
-   *
-   * @return  result set
-   */
-  static rdbms::Rset select(rdbms::Conn &conn, ArchiveJobStatus status, uint64_t limit) {
-    const char *const sql =
+  static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+     std::string sql =
             "SELECT "
             "JOB_ID AS JOB_ID,"
             "MOUNT_ID AS MOUNT_ID,"
@@ -391,30 +332,76 @@ struct ArchiveJobQueueRow {
             "SRC_URL AS SRC_URL,"
             "STORAGE_CLASS AS STORAGE_CLASS,"
             "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
+            "MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,"
             "TOTAL_RETRIES AS TOTAL_RETRIES,"
             "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
             "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
             "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE MOUNT_ID IS NULL "
-            "AND STATUS = :STATUS "
+            "WHERE STATUS = ANY(ARRAY[";
+    // we can move this to new bindArray method for stmt
+    std::vector<std::string> statusVec;
+    std::vector<std::string> placeholderVec;
+    size_t j = 1;
+    for (const auto &jstatus : statusList) {
+      statusVec.push_back(to_string(jstatus));
+      std::string plch = std::string(":STATUS") + std::to_string(j);
+      placeholderVec.push_back(plch);
+      sql += plch;
+      if (&jstatus != &statusList.back()) {
+        sql += std::string(",");
+      }
+      j++;
+    }
+    sql +=  "]::ARCHIVE_JOB_STATUS[])  "
             "ORDER BY PRIORITY DESC, TAPE_POOL "
             "LIMIT :LIMIT";
-
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":STATUS", to_string(status));
+    // we can move the array binding to new bindArray method for STMT
+    size_t sz = statusVec.size();
+    for (size_t i = 0; i < sz; ++i) {
+      stmt.bindString(placeholderVec[i], statusVec[i]);
+    }
     stmt.bindUint32(":LIMIT", limit);
 
     return stmt.executeQuery();
   }
 
+ /**
+  * Select any jobs with specified status(es) from the report,
+  * flag them as being reported and return the job IDs
+  *
+  * @param conn       Connection to the backend database
+  * @param statusList List of Archive Job Status to select on
+  * @param limit      Maximum number of rows to return
+  *
+  * @return  result set of job IDs
+  */
+  static rdbms::Rset flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit);
+
   /**
-   * Assign a mount ID to the specified rows
+   * Assign a mount ID and VID to a selection of rows
    *
    * @param txn        Transaction to use for this query
-   * @param jobIDs     String consisting of comma separated job IDs to update with the given Mount ID
+   * @param status     Archive Job Status to select on
+   * @param tapepool   Tapepool to select on
    * @param mountId    Mount ID to assign
+   * @param vid        VID to assign
+   * @param limit      Maximum number of rows to return
+   *
+   * @return  result set containing job IDs of the rows which were updated
    */
-  static void updateMountID(Transaction &txn, const std::list<std::string>& jobIDs, uint64_t mountId);
-};
+  static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string &vid, uint64_t limit);
+
+  /**
+   * Update job status
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param jobIDs     List of jobID strings to select
+   */
+  static void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
+
+  };
+
 
 } // namespace cta::schedulerdb::postgres

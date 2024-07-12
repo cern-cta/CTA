@@ -18,6 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/ParamNameToIdx.hpp"
 
+#include <regex>
 #include <sstream>
 
 namespace cta::rdbms::wrapper {
@@ -26,57 +27,30 @@ namespace cta::rdbms::wrapper {
 // constructor
 //------------------------------------------------------------------------------
 ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
-  bool waitingForAParam = true;
   std::ostringstream paramName;
-  uint32_t paramIdx = 1;
-
-  for(const char *ptr = sql.c_str(); ; ptr++) {
-    if(waitingForAParam) {
-
-      if('\0' == *ptr) {
-        break;
-      }
-
-      if(':' == *ptr) {
-        // We need to overlook ':=' in PL/SQL code (at least)
-        if (isValidParamNameChar(*(ptr+1))) {
-          waitingForAParam = false;
-          paramName << ":";
-        }
-      }
-
-    } else { // Currently processing a parameter name
-
-      if(isValidParamNameChar(*ptr)) {
-        paramName << *ptr;
-      } else {
-        if(paramName.str().empty()) {
-          throw exception::Exception("Parse error: Empty SQL parameter name");
-        }
-        if(m_nameToIdx.find(paramName.str()) != m_nameToIdx.end()) {
-          throw exception::Exception("Parse error: SQL parameter " + paramName.str() + " is a duplicate");
-        }
-        m_nameToIdx[paramName.str()] = paramIdx;
-        paramName.str(std::string()); // Clear the stream
-        paramIdx++;
-        waitingForAParam = true;
-      }
-
-      if('\0' == *ptr) {
-        break;
-      }
+  uint32_t paramIdx = 0;
+  // Match any :name that is not preceded by another colon
+  std::regex pattern(R"(:(\w+))");
+  std::smatch match;
+  std::string::const_iterator searchStart(sql.cbegin());
+  while (std::regex_search(searchStart, sql.cend(), match, pattern)) {
+    auto matchPos = std::distance(sql.cbegin(), searchStart) + match.position();
+    if (matchPos > 0 && ':' == *(sql.cbegin() + matchPos -1)){
+      searchStart = match.suffix().first;
+      continue;
     }
+    paramName << match.str();
+    if(paramName.str().empty()) {
+      throw exception::Exception("Parse error: Empty SQL parameter name");
+    }
+    if(m_nameToIdx.find(paramName.str()) != m_nameToIdx.end()) {
+      throw exception::Exception("Parse error: SQL parameter " + paramName.str() + " is a duplicate");
+    }
+    ++paramIdx; // Increment the parameter counter
+    m_nameToIdx[paramName.str()] = paramIdx;
+    paramName.str(std::string()); // Clear the stream
+    searchStart = match.suffix().first;
   }
-}
-
-//------------------------------------------------------------------------------
-// isValidParamNameChar
-//------------------------------------------------------------------------------
-bool ParamNameToIdx::isValidParamNameChar(const char c) {
-  return ('0' <= c && c <= '9') ||
-         ('A' <= c && c <= 'Z') ||
-         ('a' <= c && c <= 'z') ||
-         c == '_';
 }
 
 //------------------------------------------------------------------------------

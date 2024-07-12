@@ -21,8 +21,8 @@
 namespace cta::schedulerdb {
 
 ArchiveJob::ArchiveJob() = default;
-ArchiveJob::ArchiveJob(bool jobOwned, uint64_t jobID, uint64_t mountID, std::string_view tapePool) :
-           m_jobOwned(jobOwned), m_mountId(mountID), m_jobId(jobID), m_tapePool(tapePool) { };
+ArchiveJob::ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool) :
+           m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool) { jobID = jid; };
 
 void ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
 {
