@@ -122,6 +122,23 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+## I will add the test here, because it needs to be executed on the client pod, I think
+EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf
+EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
+kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${EOSDF_BUFFER_URL}
+kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${EOSDF_BUFFER_URL}
+## The idea is that we run it once without script, and once without executable permission on the script
+## Both times we should get a success, because when the script is the problem, we allow staging to continue
+echo "Launching eosdf_systemtest.sh with a nonexistent script"
+# rename the script on taped so that it cannot be found
+kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+# now give it back its original name but remove the executable permission, should still succeed
+echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
+kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+
 echo
 echo " Launching client_timestamp.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
@@ -221,12 +238,17 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/stagerrm_tests.sh || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo
-echo "Launching evict_tests.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/evict_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+Get EOS version
+EOS_V=$(kubectl -n ${NAMESPACE} exec client -- eos -v 2>&1 | grep EOS | awk '{print $2}' | awk -F. '{print $1}')
+if [[ $EOS_V == 5 ]]; then
+  echo
+  echo "Launching evict_tests.sh on client pod"
+  echo " Archiving file: xrdcp as user1"
+  echo " Retrieving it as poweruser1"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/evict_tests.sh || exit 1
+  kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+fi
 
 setup_tapes_for_multicopy_test
 
@@ -236,5 +258,6 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 
 exit 0

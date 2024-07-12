@@ -19,7 +19,7 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cta-eosdf
 
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum-config-manager --enable ceph
