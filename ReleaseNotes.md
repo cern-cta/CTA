@@ -4,11 +4,13 @@
 - cta/CTA#565 - Improve logging of 'Tape session finished' message
 - cta/CTA#334 - Refactor the libctacatalogue DB interface such that in can be build only with the chosen DB client library, either Oracle or Postgres
 - cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
+- cta/CTA#355 - Added option to build CTA with ninja
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
+- cta/CTA#781 - Fixed security issues with build pods
 
 ### Maintenance
 - cta/CTA#779 - Removed outdated doxygen files

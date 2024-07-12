@@ -19,8 +19,8 @@ set -e
 
 # Help message
 usage() {
-  echo "Performs the build of CTA through a dedicated Kubernetes pod."
-  echo "The pod persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
+  echo "Performs the build of CTA through a dedicated build container."
+  echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
   echo ""
   echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM"
@@ -29,13 +29,20 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                               Shows help output."
-  echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
+  echo "  -r, --reset:                              Shut down the build container and start a new one to ensure a fresh build."
   echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
+  echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --clean-build-dir:                    Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --clean-build-dirs:                   Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --disable-oracle-support:             Disables support for oracle."
+  echo "      --disable-ccache:                     Disables ccache for the building of the rpms."
   echo "      --skip-build:                         Skips the build step."
   echo "      --skip-deploy:                        Skips the redeploy step."
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
+  echo "      --skip-debug-packages                 Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
   exit 1
 }
@@ -43,14 +50,21 @@ usage() {
 compile_deploy() {
 
   # Input args
+  local clean_build_dir=false
+  local clean_build_dirs=false
+  local force_install=false
   local reset=false
   local skip_build=false
   local skip_deploy=false
   local skip_cmake=false
   local skip_unit_tests=false
+  local skip_debug_packages=false
+  local build_generator="Ninja"
   local cmake_build_type=""
-  local force_install=false
   local operating_system="alma9"
+  local scheduler_type="objectstore"
+  local oracle_support="ON"
+  local enable_ccache=true
 
   # Defaults
   local num_jobs=8
@@ -58,25 +72,37 @@ compile_deploy() {
   local build_namespace="build"
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
-  local build_pod_name="build-pod"
+  local build_pod_name="cta-build"
   local xrootd_version="5"
   local cta_version=${xrootd_version}
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
   local xrootd_ssi_version="dev"
-  local scheduler_type="objectstore"
-  local oracle_support="ON"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case $1 in
       -h | --help) usage ;;
       -r | --reset) reset=true ;;
+      --clean-build-dir) clean_build_dir=true ;;
+      --clean-build-dirs) clean_build_dirs=true ;;
+      --disable-oracle-support) oracle_support="OFF" ;;
+      --disable-ccache) enable_ccache=false ;;
       --skip-build) skip_build=true ;;
       --skip-deploy) skip_deploy=true ;;
       --skip-cmake) skip_cmake=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;
+      --skip-debug-packages) skip_debug_packages=true ;;
       --force-install) force_install=true ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
+          usage
+        fi
+        ;;
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
@@ -100,6 +126,15 @@ compile_deploy() {
           shift
         else
           echo "Error: -o | --operating-system requires an argument"
+          usage
+        fi
+        ;;
+      --scheduler-type)
+        if [[ $# -gt 1 ]]; then
+          scheduler_type="$2"
+          shift
+        else
+          echo "Error: --scheduler-type requires an argument"
           usage
         fi
         ;;
@@ -153,8 +188,14 @@ compile_deploy() {
       esac
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
       echo "Building SRPMs..."
+      local build_srpm_flags=""
+      if [[ ${clean_build_dirs} = true ]]; then
+        build_srpm_flags+=" --clean-build-dir"
+      fi
+
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
+        --build-generator "${build_generator}" \
         --create-build-dir \
         --cta-version ${cta_version} \
         --vcs-version ${vcs_version} \
@@ -162,7 +203,8 @@ compile_deploy() {
         --scheduler-type ${scheduler_type} \
         --oracle-support ${oracle_support} \
         --install \
-        --jobs ${num_jobs}
+        --jobs ${num_jobs} \
+        ${build_srpm_flags}
     fi
 
     echo "Compiling the CTA project from source directory"
@@ -183,9 +225,22 @@ compile_deploy() {
       build_rpm_flags+=" --cmake-build-type ${cmake_build_type}"
     fi
 
+    if [[ ${clean_build_dir} = true || ${clean_build_dirs} = true ]]; then
+      build_rpm_flags+=" --clean-build-dir"
+    fi
+
+    if [[ ${skip_debug_packages} = true ]]; then
+      build_rpm_flags+=" --skip-debug-packages"
+    fi
+
+    if [[ ${enable_ccache} = true ]]; then
+      build_rpm_flags+=" --enable-ccache"
+    fi
+
     echo "Building RPMs..."
     kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
+      --build-generator "${build_generator}" \
       --create-build-dir \
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \

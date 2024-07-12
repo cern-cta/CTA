@@ -22,6 +22,7 @@ usage() {
   echo ""
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
+  echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
   echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
@@ -32,8 +33,11 @@ usage() {
   echo "options:"
   echo "  -i, --install:                                Installs the required packages. Supported operating systems: [cc7, alma9]."
   echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
+  echo "      --clean-build-dir:                        Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                        Creates the build directory if it does not exist."
+  echo "      --enable-ccache:                          Enables ccache."
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
+  echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --cmake-build-type <build-type>:          Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
@@ -49,6 +53,7 @@ build_rpm() {
 
   # Default values for arguments
   local build_dir=""
+  local build_generator=""
   local cta_version=""
   local scheduler_type=""
   local srpm_dir=""
@@ -56,13 +61,16 @@ build_rpm() {
   local xrootd_version=""
   local xrootd_ssi_version=""
 
+  local enable_ccache=false
   local install=false
   local num_jobs=1
+  local cmake_build_type=""
+  local clean_build_dir=false
   local create_build_dir=false
   local skip_cmake=false
   local skip_unit_tests=false
+  local skip_debug_packages=false
   local oracle_support=true
-  local cmake_build_type=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -77,7 +85,21 @@ build_rpm() {
           usage
         fi
         ;;
+      --build-generator) 
+        if [[ $# -gt 1 ]]; then
+          if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+              echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          fi
+          build_generator="$2"
+          shift
+        else
+          echo "Error: --build-generator requires an argument"
+          usage
+        fi
+        ;;
+      --clean-build-dir) clean_build_dir=true ;;
       --create-build-dir) create_build_dir=true ;;
+      --enable-ccache) enable_ccache=true ;;
       --cta-version)
         if [[ $# -gt 1 ]]; then
           cta_version="$2"
@@ -144,6 +166,7 @@ build_rpm() {
         fi
         ;;
       --skip-cmake) skip_cmake=true ;;
+      --skip-debug-packages) skip_debug_packages=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;
       --oracle-support)
         if [[ $# -gt 1 ]]; then
@@ -202,6 +225,11 @@ build_rpm() {
     usage
   fi
 
+  if [ -z "${build_generator}" ]; then
+    echo "Failure: Missing mandatory argument --build-generator";
+    usage
+  fi
+
   if ! xrootd_supported "${xrootd_version}"; then
     echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
     exit 1
@@ -217,6 +245,11 @@ build_rpm() {
   cd ../../
   local repo_root=$(pwd)
   local cmake_options=""
+
+  if [[ ${clean_build_dir} = true ]]; then
+    echo "Removing old build directory: ${build_dir}"
+    rm -rf "${build_dir}"
+  fi
 
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
@@ -240,13 +273,33 @@ build_rpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
-      yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils
+      yum -y install wget gcc gcc-c++ cmake3 rpm-build yum-utils
+      case "${build_generator}" in
+        "Unix Makefiles")
+          yum install -y make
+          ;;
+        "Ninja")
+          yum install -y ninja-build
+          ;;
+        *)
+          echo "Failure: Unsupported build generator for alma9: ${build_generator}"
+          exit 1
+          ;;
+      esac
+      if [[ ${enable_ccache} = true ]]; then
+        yum -y install ccache
+      fi
       yum -y install yum-plugin-versionlock
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       echo "Found CentOS 7 install..."
+      if [[ ! ${build_generator} = "Unix Makefiles" ]]; then
+        # We only support Unix Makefiles for cc7
+        echo "Failure: Unsupported build generator for cc7: ${build_generator}"
+        exit 1
+      fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then
         echo "Using XRootD version 4"
@@ -257,6 +310,7 @@ build_rpm() {
         echo "Using XRootD version 5"
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+      # We don't support ninja for cc7
       yum install -y devtoolset-11 cmake3 make rpm-build
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable
@@ -275,30 +329,58 @@ build_rpm() {
 
     cmake_options+=" -DVCS_VERSION=${vcs_version}"
 
+    # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
+      echo "Using build type: ${cmake_build_type}"
       cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
+    # Debug packages
+    if [[ ${skip_debug_packages} = true ]]; then
+      echo "Skipping debug packages"
+      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=1"
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=0"
+    fi
+
+    # Oracle support
     if [[ ${oracle_support} = false ]]; then
-      echo "Disabling Oracle Support"
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON"
+      echo "Disabling Oracle Support";
+      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
     fi
 
+    # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
-      echo "Skipping unit tests"
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
+      echo "Skipping unit tests";
+      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
     fi
 
+    # CCache
+    if [[ ${enable_ccache} = true ]]; then
+      echo "Enabling ccache";
+      cmake_options+=" -DENABLE_CCACHE:STRING=1";
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -DENABLE_CCACHE:STRING=0"
+    fi
+
+    # Scheduler type
     if [[ ${scheduler_type} != "objectstore" ]]; then
-      echo "Using specified scheduler database type $SCHED_TYPE"
-      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true "
-      cmake_options+=" ${sched_opt}"
+      echo "Using specified scheduler database type $SCHED_TYPE";
+      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
+      cmake_options+=" ${sched_opt}";
     fi
 
     cd "${build_dir}"
     echo "Executing cmake..."
-    echo "${cmake_options}"
-    cmake3 ${cmake_options} "${repo_root}"
+    (set -x; cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}")
   else
     echo "Skipping cmake..."
     if [ ! -d "${build_dir}" ]; then
@@ -307,9 +389,9 @@ build_rpm() {
     cd "${build_dir}"
   fi
 
-  # Make
-  echo "Executing make..."
-  make cta_rpm -j "${num_jobs}"
+  # Build step
+  echo "Executing build step using: ${build_generator}"
+  cmake --build . --target cta_rpm -- -j "${num_jobs}"
 }
 
 build_rpm "$@"

@@ -1,16 +1,21 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: build-pod
+  name: cta-build
   labels:
-    k8s-app: build-pod
+    k8s-app: cta-build
 spec:
+  automountServiceAccountToken: false
   restartPolicy: Never
   containers:
-  - name: build-pod
+  - name: cta-build
     image: gitlab-registry.cern.ch/linuxsupport/alma9-base
     stdin: true
     command: ["sleep", "infinity"]
+    resources:
+      limits:
+        memory: 8Gi
+        ephemeral-storage: "4Gi"
     volumeMounts:
     - mountPath: /shared
       name: shared
