@@ -801,7 +801,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       }
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
-    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
+    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), cta::INSUFFICIENT_SPACE);
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
@@ -889,15 +889,15 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       ASSERT_EQ("ds-Error", rj->diskSystemName.value());
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
-    //reserving disk space will fail because the disk instance is not reachable, causing backpressure
-    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
+    // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
+    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), cta::SCRIPT_ERROR); // this here fails, it is actually TRUE
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
   ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
-  ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
-  ASSERT_EQ("ds-Error", mi->potentialMounts.begin()->diskSystemSleptFor);
+  ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount); // not a sleeping mount because we do not apply backpressure when we can't get the free disk space
+  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor); // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
 }
 
 #undef TEST_MOCK_DB
