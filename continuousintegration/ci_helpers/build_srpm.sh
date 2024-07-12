@@ -31,7 +31,8 @@ usage() {
   echo "options:"
   echo "  -i, --install:                        Installs the required packages. Supported operating systems: [cc7, alma9]."
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
-  echo "      --create-build-dir                        Creates the build directory if it does not exist."
+  echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
+  echo "      --create-build-dir                Creates the build directory if it does not exist."
   echo "      --skip-unit-tests:                Skips the unit tests."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --cmake-build-type <build-type>:  Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
@@ -53,6 +54,7 @@ build_srpm() {
   local xrootd_version=""
 
   local create_build_dir=false
+  local clean_build_dir=false
   local install=false
   local num_jobs=1
   local skip_unit_tests=false
@@ -84,6 +86,7 @@ build_srpm() {
           usage
         fi
         ;;
+      --clean-build-dir) clean_build_dir=true ;;
       --create-build-dir) create_build_dir=true ;;
       --cta-version)
         if [[ $# -gt 1 ]]; then
@@ -197,6 +200,11 @@ build_srpm() {
   local repo_root=$(pwd)
   local cmake_options=""
 
+  if [[ ${clean_build_dir} = true ]]; then
+    echo "Removing old build directory: ${build_dir}"
+    rm -rf "${build_dir}"
+  fi
+
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
   elif [ ! -d "${build_dir}" ]; then
@@ -219,11 +227,28 @@ build_srpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
-      yum install -y wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build
+      yum install -y wget gcc gcc-c++ cmake3 rpm-build yum-utils
+      case "${build_generator}" in
+        "Unix Makefiles")
+          yum install -y make
+          ;;
+        "Ninja")
+          yum install -y ninja-build
+          ;;
+        *)
+          echo "Failure: Unsupported build generator for alma9: ${build_generator}"
+          exit 1
+          ;;
+      esac
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       echo "Found CentOS 7 install..."
+      if [[ ! ${build_generator} = "Unix Makefiles" ]]; then
+        # We only support Unix Makefiles for cc7
+        echo "Failure: Unsupported build generator for cc7: ${build_generator}"
+        exit 1
+      fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then
         echo "Using XRootD version 4"
@@ -238,6 +263,7 @@ build_srpm() {
       source /opt/rh/devtoolset-11/enable
     else
       echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
+      exit 1
     fi
   fi
 

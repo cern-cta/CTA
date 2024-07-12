@@ -273,7 +273,19 @@ build_rpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
-      yum -y install wget gcc gcc-c++ cmake3 make rpm-build yum-utils ninja-build
+      yum -y install wget gcc gcc-c++ cmake3 rpm-build yum-utils
+      case "${build_generator}" in
+        "Unix Makefiles")
+          yum install -y make
+          ;;
+        "Ninja")
+          yum install -y ninja-build
+          ;;
+        *)
+          echo "Failure: Unsupported build generator for alma9: ${build_generator}"
+          exit 1
+          ;;
+      esac
       if [[ ${enable_ccache} = true ]]; then
         yum -y install ccache
       fi
@@ -283,6 +295,11 @@ build_rpm() {
     elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
       # CentOS 7
       echo "Found CentOS 7 install..."
+      if [[ ! ${build_generator} = "Unix Makefiles" ]]; then
+        # We only support Unix Makefiles for cc7
+        echo "Failure: Unsupported build generator for cc7: ${build_generator}"
+        exit 1
+      fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       if [[ ${xrootd_version} -eq 4 ]]; then
         echo "Using XRootD version 4"
@@ -293,6 +310,7 @@ build_rpm() {
         echo "Using XRootD version 5"
       fi
       cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+      # We don't support ninja for cc7
       yum install -y devtoolset-11 cmake3 make rpm-build
       yum -y install yum-plugin-priorities yum-plugin-versionlock
       source /opt/rh/devtoolset-11/enable

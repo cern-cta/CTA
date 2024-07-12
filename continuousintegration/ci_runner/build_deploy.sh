@@ -19,8 +19,8 @@ set -e
 
 # Help message
 usage() {
-  echo "Performs the build of CTA through a dedicated Kubernetes pod."
-  echo "The pod persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
+  echo "Performs the build of CTA through a dedicated build container."
+  echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
   echo ""
   echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM"
@@ -29,10 +29,11 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                               Shows help output."
-  echo "  -r, --reset:                              Shut down the build pod and start a new one to ensure a fresh build."
+  echo "  -r, --reset:                              Shut down the build container and start a new one to ensure a fresh build."
   echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
   echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "      --clean-build-dir:                    Empties the build directory, ensuring a fresh build from scratch."
+  echo "      --clean-build-dir:                    Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --clean-build-dirs:                   Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "      --disable-oracle-support:             Disables support for oracle."
   echo "      --disable-ccache:                     Disables ccache for the building of the rpms."
@@ -50,6 +51,7 @@ compile_deploy() {
 
   # Input args
   local clean_build_dir=false
+  local clean_build_dirs=false
   local force_install=false
   local reset=false
   local skip_build=false
@@ -70,7 +72,7 @@ compile_deploy() {
   local build_namespace="build"
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
-  local build_pod_name="build-pod"
+  local build_pod_name="cta-build"
   local xrootd_version="5"
   local cta_version=${xrootd_version}
   # These versions don't affect anything functionality wise
@@ -83,6 +85,7 @@ compile_deploy() {
       -h | --help) usage ;;
       -r | --reset) reset=true ;;
       --clean-build-dir) clean_build_dir=true ;;
+      --clean-build-dirs) clean_build_dirs=true ;;
       --disable-oracle-support) oracle_support="OFF" ;;
       --disable-ccache) enable_ccache=false ;;
       --skip-build) skip_build=true ;;
@@ -185,6 +188,11 @@ compile_deploy() {
       esac
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
       echo "Building SRPMs..."
+      local build_srpm_flags=""
+      if [[ ${clean_build_dirs} = true ]]; then
+        build_srpm_flags+=" --clean-build-dir"
+      fi
+
       kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
         --build-generator "${build_generator}" \
@@ -195,7 +203,8 @@ compile_deploy() {
         --scheduler-type ${scheduler_type} \
         --oracle-support ${oracle_support} \
         --install \
-        --jobs ${num_jobs}
+        --jobs ${num_jobs} \
+        ${build_srpm_flags}
     fi
 
     echo "Compiling the CTA project from source directory"
@@ -216,7 +225,7 @@ compile_deploy() {
       build_rpm_flags+=" --cmake-build-type ${cmake_build_type}"
     fi
 
-    if [[ ${clean_build_dir} = true ]]; then
+    if [[ ${clean_build_dir} = true || ${clean_build_dirs} = true ]]; then
       build_rpm_flags+=" --clean-build-dir"
     fi
 
