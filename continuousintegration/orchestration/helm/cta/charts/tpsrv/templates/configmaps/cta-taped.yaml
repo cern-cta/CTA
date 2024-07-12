@@ -30,5 +30,6 @@ data:
     # General
     general InstanceName {{ $.Values.conf.general.instanceName }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
+    taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 ---
 {{- end }}

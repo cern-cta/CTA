@@ -17,6 +17,7 @@ conf:
     secProtocol: "sss"
     secSssktPath: "/etc/cta"
     ctaTapedSss: "cta-taped.sss.keytab"
+    externalFreeDiskSpaceScript: "/usr/local/bin/cta-get-free-disk-space.sh"
   general:
     instanceName: "CI"
 
