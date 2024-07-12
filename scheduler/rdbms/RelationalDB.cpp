@@ -630,16 +630,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 
   // Iterate over all archive queues
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNotOwned(txn);
-  bool isFirstRow = true;
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
-    if(isFirstRow){
-      // Check last update time of the summary table and request an update if > 30 sec
-      if ((utils::getCurrentEpochTime() - ajsr.lastUpdateTime) > 30){
-        cta::schedulerdb::postgres::ArchiveJobSummaryRow::refreshMaterializedView(txn,"ARCHIVE_JOB_SUMMARY");
-      }
-      isFirstRow = false;
-    }
     // Set the queue type
     common::dataStructures::MountType mountType;
     switch(ajsr.status) {
@@ -672,11 +664,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
-  // if there were no rows in the summary
-  // refresh the materialised view (in this case, count(*) is not expensive)
-  if(isFirstRow){
-    cta::schedulerdb::postgres::ArchiveJobSummaryRow::refreshMaterializedView(txn,"ARCHIVE_JOB_SUMMARY");
-  }
+  // release the lock on the view,
+  // so that other tape servers can query the job summary
   txn.commit();
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo

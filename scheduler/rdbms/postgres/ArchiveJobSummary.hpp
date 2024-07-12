@@ -83,6 +83,11 @@ struct ArchiveJobSummaryRow {
    * @return result set containing all rows in the table
    */
   static rdbms::Rset selectNotOwned(Transaction &txn) {
+    // locking the view until commit (DB lock released)
+    // this is to prevent tape servers counting the rows all at the same time
+    const char *const lock_sql = "LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE";
+    auto stmt = txn.conn().createStmt(lock_sql);
+    stmt.executeNonQuery();
     const char *const sql = "SELECT "
       "MOUNT_ID,"
       "STATUS,"
@@ -98,24 +103,10 @@ struct ArchiveJobSummaryRow {
     "FROM ARCHIVE_JOB_SUMMARY WHERE "
     "MOUNT_ID IS NULL";
 
-    auto stmt = txn.conn().createStmt(sql);
+    stmt = txn.conn().createStmt(sql);
     return stmt.executeQuery();
   }
 
-  /**
-   * Refresh Materialized View
-   * @param txn transaction
-   * @param table_name
-   *
-   * @return void/exception
-   */
-  static void refreshMaterializedView(Transaction &txn, std::string_view table_name) {
-    std::ostringstream oss;
-    oss << "REFRESH MATERIALIZED VIEW " << table_name;
-    std::string sql = oss.str();
-    auto stmt = txn.conn().createStmt(sql);
-    return stmt.executeNonQuery();
-  }
 };
 
 } // namespace cta::schedulerdb::postgres
