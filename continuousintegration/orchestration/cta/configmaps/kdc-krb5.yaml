@@ -1,0 +1,7 @@
+[libdefaults]
+default_realm = TEST.CTA
+
+[realms]
+  TEST.CTA = {
+  kdc=kdc
+  }
