@@ -2,7 +2,7 @@
 {{$namespace := .Release.Namespace }}
 {{$imageVersion := .Values.global.image}}
 
-{{- range $key, $value := .Values.cta}}
+{{- range $key, $value := .Values.cta.pods}}
 
 apiVersion: v1
 kind: Pod
@@ -32,6 +32,7 @@ spec:
     securityContext:
       privileged: {{$value.isPriviliged}}
     {{- if ($value.ports)}}
+    ports:
         {{- $value.ports | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
@@ -42,5 +43,5 @@ spec:
 
   imagePullSecrets:
   - name: ctaregsecret
-
+---
 {{- end}}
