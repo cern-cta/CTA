@@ -661,6 +661,17 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %attr(0755,root,root) %{_bindir}/cta-checkpkg
 
+%package -n cta-eos-freediskspace
+Summary: External script to get free disk space
+Group: Application/CTA
+Requires: eos-client
+%description -n cta-eos-freediskspace
+cta-get-free-disk-space is a script that runs on taped and returns
+the free disk space in the defalut namespace
+%files -n cta-eos-freediskspace
+%defattr(-,root,root)
+%attr(0755,root,root) /usr/local/bin/cta-get-free-disk-space.sh
+
 %changelog
 
 * Mon Jul 15 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.0-2

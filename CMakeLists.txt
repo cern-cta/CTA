@@ -189,6 +189,8 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(cta-release)
 
+  add_subdirectory(scripts)
+
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
     ${CMAKE_BINARY_DIR}/version.h)
