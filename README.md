@@ -69,7 +69,7 @@ The simplest way to get start with CTA is by using the publically available RPMs
     On the CTA frontend:
     ```bash
     yum install cta-frontend cta-cli cta-common cta-catalogueutils cta-debuginfo cta-objectstore-tools
-    yum install cta-lib cta-lib-catalogue cta-lib-common cta-lib-commoncta
+    yum install cta-lib cta-lib-common cta-lib-catalogue
     
     yum install eos-client eos-xrootd eos-grpc
     yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
@@ -77,8 +77,8 @@ The simplest way to get start with CTA is by using the publically available RPMs
     On the CTA tape servers:
     ```bash
     yum install cta-taped cta-rmcd cta-smc cta-cli cta-common cta-debuginfo
-    yum install cta-lib cta-lib-catalogue cta-lib-common
-    yum install cta-readtp cta-tape-label-5.10.10.1-1.el9.el9.x86_64
+    yum install cta-lib cta-lib-common cta-lib-catalogue
+    yum install cta-readtp cta-tape-label
 
     yum install eos-client eos-xrootd eos-grpc
     yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
