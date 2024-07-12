@@ -9,6 +9,9 @@
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 
+### Maintenance
+- cta/CTA#780 - Renamed `ReleaseNotes.md` to `CHANGELOG.md`
+
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
 - cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
