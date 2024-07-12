@@ -13,7 +13,7 @@
   </a>
 <h3 align="center" style="padding-top: 0">CTA</h3>
   <p align="center">
-    The Cern Tape Archive open source tape data management software.
+    The CERN Tape Archive open source tape data management software.
     <br />
     <a href="https://eoscta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
@@ -35,7 +35,7 @@ The CERN Tape Archive (CTA) is the storage system for the custodial copy of all 
 CTA is:
 
 - The leading Free and Open Source tape data management software
-- Home to more than 750PB of data at CERN
+- Home to more than 800PB of data at CERN
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 - Private and secure
@@ -64,16 +64,23 @@ The simplest way to get start with CTA is by using the publically available RPMs
     yum install cta-release
     ```
 
-3. Install CTA and EOS - choose the appropriate packages, as needed:
-
+3. Install CTA and EOS packages - choose the appropriate packages, as needed.
+    On the CTA frontend:
     ```bash
-    yum install cta-frontend
-    yum install cta-taped
-    yum install cta-rmcd
-    yum install cta-smc
+    yum install cta-frontend cta-cli cta-common cta-catalogueutils cta-debuginfo cta-objectstore-tools
+    yum install cta-lib cta-lib-catalogue cta-lib-common cta-lib-commoncta
+    
+    yum install eos-client eos-xrootd eos-grpc
+    yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
+    ```
+    On the CTA tape servers:
+    ```bash
+    yum install cta-taped cta-rmcd cta-smc cta-cli cta-common cta-debuginfo
+    yum install cta-lib cta-lib-catalogue cta-lib-common
+    yum install cta-readtp cta-tape-label-5.10.10.1-1.el9.el9.x86_64
 
-    yum install eos-server
-    yum install eos-client
+    yum install eos-client eos-xrootd eos-grpc
+    yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
     ```
 
 For more detailed instructions, please visit [the documentation](https://eoscta.docs.cern.ch/latest/overview/getting_started/).
