@@ -10,6 +10,7 @@
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
+- cta/CTA#781 - Fixed security issues with build pods
 
 ### Maintenance
 - cta/CTA#779 - Removed outdated doxygen files
