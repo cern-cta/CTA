@@ -661,13 +661,9 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 %changelog
 
-* Thu Jul 11 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
-- Removed references to xrootd4
-- Removed references to SLC6
-
-* Wed Jul 10 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
-- Removed cta-versionlock script
-- Added cta-checkpkg script
+* Fri Jul 12 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.1-2
+- Fixing cta-release compatability with Alma9
+- See ReleaseNotes.md for details
 
 * Mon Jun 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.11.0-1
 - Various fixes and improvements to CTA
