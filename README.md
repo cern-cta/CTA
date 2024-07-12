@@ -65,6 +65,7 @@ The simplest way to get start with CTA is by using the publically available RPMs
     ```
 
 3. Install CTA and EOS packages - choose the appropriate packages, as needed.
+    
     On the CTA frontend:
     ```bash
     yum install cta-frontend cta-cli cta-common cta-catalogueutils cta-debuginfo cta-objectstore-tools
