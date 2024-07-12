@@ -86,8 +86,8 @@ public:
 
   void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext) override{};
 
-  bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext &logContext) override {
-    return true;
+  cta::DiskSpaceReservationResult reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext &logContext) override {
+    return SUCCESS;
   }
 
   void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime,

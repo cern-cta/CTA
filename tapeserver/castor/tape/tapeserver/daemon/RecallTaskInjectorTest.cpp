@@ -137,8 +137,8 @@ namespace unitTests
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
+    cta::DiskSpaceReservationResult reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
+    cta::DiskSpaceReservationResult testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
   };
 
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
@@ -185,7 +185,7 @@ namespace unitTests
     rti.requestInjection(true);
     rti.finish();
     ASSERT_NO_THROW(rti.waitThreads());
-    ASSERT_EQ(nbJobs+1, trm.getJobs);
+    ASSERT_EQ(nbJobs+1, trm.getJobs); // this fails, nbJobs + 1 is 16, trm.getJobs is 6
 
     //pushed nbFile*2 files + 1 end of work
     ASSERT_EQ(nbJobs+1, diskWrite.m_tasks.size());

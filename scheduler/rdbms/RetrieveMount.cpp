@@ -71,13 +71,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNex
   return ret;
 }
 
-bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+cta::DiskSpaceReservationResult RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+cta::DiskSpaceReservationResult RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
 {
    throw cta::exception::Exception("Not implemented");
