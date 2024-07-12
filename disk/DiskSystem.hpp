@@ -51,7 +51,6 @@ namespace disk {
  *  interval), and the expected external bandwidth from sources external to CTA.
  */
 CTA_GENERATE_EXCEPTION_CLASS(FreeDiskSpaceException);
-CTA_GENERATE_EXCEPTION_CLASS(FreeDiskSpaceScriptException);
 
 struct DiskSystem {
   std::string name;
@@ -112,9 +111,8 @@ public:
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
-  uint64_t fetchFreeDiskSpace(const std::string & instanceAddress, const std::string & spaceName,log::LogContext & lc);
   uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
-  uint64_t fetchFreeDiskSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
+  uint64_t fetchFreeDiskSpaceWithScript(const std::string & scriptPath, std::string& diskInstanceName, std::string& spaceName, const std::string & jsonInput, log::LogContext &lc);
 };
 
 }} // namespace cta::disk

@@ -21,7 +21,7 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common cta-eos-freediskspace
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
@@ -52,6 +52,7 @@ echo "taped DriveName ${DRIVENAMES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
 echo "taped DriveLogicalLibrary ${DRIVENAMES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
 echo "taped DriveDevice /dev/${DRIVEDEVICES[${driveslot}]}" >> "${TAPED_CONF_FILE}"
 echo "taped DriveControlPath smc${driveslot}" >> "${TAPED_CONF_FILE}"
+echo "taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh" >> "${TAPED_CONF_FILE}"
 # Decrease schedulerDB cache timeout for tests
 echo "taped TapeCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
 echo "taped RetrieveQueueCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
