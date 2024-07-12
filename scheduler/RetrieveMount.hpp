@@ -227,14 +227,14 @@ public:
     * @param request the disk space reservation request
     * @param logContext
     */
-  virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
+  virtual cta::DiskSpaceReservationResult reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
 
   /**
     * Performs the disk space reservation logic for the request and mount, but does not reserve space in the catalogue
     * @param request the disk space reservation request
     * @param logContext
     */
-  virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
+  virtual cta::DiskSpaceReservationResult testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
 
 
   /**

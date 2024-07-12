@@ -46,10 +46,10 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
    std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
      uint64_t bytesRequested, log::LogContext& logContext) override;
 
-   bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+   cta::DiskSpaceReservationResult reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) override;
 
-   bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+   cta::DiskSpaceReservationResult testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) override;
 
    void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
