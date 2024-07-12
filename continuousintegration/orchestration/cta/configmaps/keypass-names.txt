@@ -1,0 +1,4 @@
+ctaadmin1 ctaadmin1.keytab
+user1 user1.keytab
+cta-frontend cta-frontend.krb5.keytab
+eos-server eos-server.krb5.keytab

@@ -19,5 +19,5 @@ Be sure that you run it as an account with enough privilliges (In case of workin
 Its simple. You need only to invoke following command
 
 ```
-helm install <name-of-the-deployment> -f <your_values.yaml> <chart_directory>
+helm install <name-of-the-releases> -n <your_namespace> -f <your_values.yaml> <chart_directory>
 ```
