@@ -332,6 +332,38 @@ pvcs:
     accessModes:
       - ReadWriteOnce
 
+# Here is stored postgress db config. It might be moved as external dependency in next iterations
+postgres:
+  name: postgres
+  service:
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+  pod:
+    image: docker.io/postgres:14.10
+    env:
+    - name: POSTGRES_USER
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.username
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.password
+    - name: PGDATA
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.path
+    - name: POSTGRES_DB
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.database
+
 # here will be stored the kdc config
 kdc:
   # it is used for the selectors, names
