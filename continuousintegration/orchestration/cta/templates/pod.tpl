@@ -10,11 +10,17 @@ metadata:
   name: {{$key | quote}}
   namespace: {{ $namespace | quote}}
   labels:
+  {{- if ($value.labels)}}
+    {{$value.labels | toYaml  | nindent 4}}
+  {{- else}}
     k8s-app: {{$key | quote}}
+  {{- end}}
 spec:
   restartPolicy: Never
   containers:
-  - name: {{ $key | quote}}
+  {{- range $value.containers}}
+    {{$containerName := .name | default $key | quote }}
+  - name: {{ $containerName }}
     image: {{ $imageVersion | quote }}
     stdin: true
     env:
@@ -24,20 +30,20 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
-    {{- if ($value.env) }}
-        {{- $value.env | toYaml | nindent 4}}
+    {{- if (.env) }}
+        {{- .env | toYaml | nindent 4}}
     {{- end}}
-    command: {{$value.command}}
-    args: {{$value.args}}
+    command: {{.command}}
+    args: {{.args}}
     securityContext:
-      privileged: {{$value.isPriviliged}}
-    {{- if ($value.ports)}}
+      privileged: {{.isPriviliged}}
+    {{- if (.ports)}}
     ports:
-        {{- $value.ports | toYaml | nindent 4}}
+        {{- .ports | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
-    {{- $value.volumeMounts | toYaml | nindent 4}}
-  
+    {{- .volumeMounts | toYaml | nindent 4}}
+  {{- end}}
   volumes:
     {{- $value.volumes | toYaml | nindent 2}}
 
