@@ -1,70 +1,121 @@
 # Here are stored global settings for all the project pods
-global: 
+global:
   imagePullSecret: "TODO"
   image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
 
 # Here are stored values for the project related pods
 cta:
-    # TODO: Discuss about adding service type 
-  services: 
+    # TODO: Discuss about adding service type
+  services:
     ctacli:
-      labels: 
+      labels:
         k8s-app: ctacli
       selectors:
         k8s-app: ctacli
       ports:
       - name: ctacli
         port: 1
-        protocol: TCP 
+        protocol: TCP
     ctafrontend:
       selectors:
         k8s-app: ctafrontend
-      labels: 
+      labels:
         k8s-app: ctafrontend
       ports:
       - name: ctafrontend
         port: 10955
         protocol: TCP
 
-  pods: 
-    ctacli: 
-      command: ['/opt/run/bin/ctacli.sh'] 
-      args: ["none"]
-      env: 
-      - name: TERM
-        value: "xterm"
-      volumes: 
+  pods:
+    init:
+      containers:
+      - command: ['/opt/run/bin/init.sh']
+        args: ["none"]
+        isPriviliged: true
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/objectstore
+          name: myobjectstore
+        - mountPath: /etc/config/database
+          name: mydatabase
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /mnt/logs
+          name: logstorage
+      volumes:
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: myobjectstore
+        configMap:
+          name: objectstore-config
+      - name: mydatabase
+        configMap:
+          name: database-config
+      - name: mylibrary
+        configMap:
+          name: library-config
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: claimlogs
+
+    ctacli:
+      containers:
+      - command: ['/opt/run/bin/ctacli.sh']
+        args: ["none"]
+        isPriviliged: true
+        env:
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /mnt/logs
+          name: logstorage
+        - mountPath: /root/ctaadmin1.keytab
+          name: keytab
+          subPath: ctaadmin1.keytab
+      volumes:
       - name: shared
         hostPath:
           path: /opt/cta
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-      - name: keytab 
-        secret: 
+      - name: keytab
+        secret:
           secretName: ctaadmin1-keytab
-      volumeMounts: 
-      - mountPath: /shared
-        name: shared
-      - mountPath: /mnt/logs
-        name: logstorage
-      - mountPath: /root/ctaadmin1.keytab
-        name: keytab
-        subPath: ctaadmin1.keytab
-      isPriviliged: true
 
     ctafrontend:
-      command: ['/opt/run/bin/ctafrontend.sh']
-      args: ["none"]
-      env:
-      - name: TERM
-        value: "xterm"
-      ports:
-      - containerPort: 10955
-        name: ctafrontend
-        protocol: TCP
-
-      volumes: 
+      containers:
+      - command: ['/opt/run/bin/ctafrontend.sh']
+        args: ["none"]
+        isPriviliged: true
+        env:
+        - name: TERM
+          value: "xterm"
+        ports:
+        - containerPort: 10955
+          name: ctafrontend
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/objectstore
+          name: myobjectstore
+        - mountPath: /etc/config/database
+          name: mydatabase
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /mnt/logs
+          name: logstorage
+        - mountPath: /etc/config/eoscta
+          name: eosctaconfig
+        - mountPath: /etc/cta/cta-frontend.krb5.keytab
+          name: keytab
+          subPath: cta-frontend.krb5.keytab
+      volumes:
       - name: shared
         hostPath:
           path: /opt/cta
@@ -83,44 +134,28 @@ cta:
       - name: eosctaconfig
         configMap:
           name: eoscta-config
-      - name: keytab 
-        secret: 
+      - name: keytab
+        secret:
           secretName: cta-frontend-keytab
 
-      volumeMounts: 
-      - mountPath: /shared
-        name: shared
-      - mountPath: /etc/config/objectstore
-        name: myobjectstore
-      - mountPath: /etc/config/database
-        name: mydatabase
-      - mountPath: /etc/config/library
-        name: mylibrary
-      - mountPath: /mnt/logs
-        name: logstorage
-      - mountPath: /etc/config/eoscta
-        name: eosctaconfig
-      - mountPath: /etc/cta/cta-frontend.krb5.keytab
-        name: keytab
-        subPath: cta-frontend.krb5.keytab
-    
     client:
-      image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
-      command: ['/opt/run/bin/client.sh']
-      args: ["none"]
-      env:
-      - name: TERM
-        value: "xterm"
-      volumeMounts:
-      - mountPath: /shared
-        name: shared
-      - mountPath: /mnt/logs
-        name: logstorage
-      - mountPath: /etc/config/eos
-        name: eosconfig
-      - mountPath: /root/user1.keytab
-        name: keytab
-        subPath: user1.keytab
+      containers:
+      - command: ['/opt/run/bin/client.sh']
+        args: ["none"]
+        isPriviliged: true
+        env:
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /mnt/logs
+          name: logstorage
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /root/user1.keytab
+          name: keytab
+          subPath: user1.keytab
       volumes:
       - name: shared
         hostPath:
@@ -131,19 +166,147 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-      - name: keytab 
-        secret: 
+      - name: keytab
+        secret:
           secretName: user1-keytab
-  configs: 
-    - name: krb5-config
-      file: kdc-krb5.yaml
-      labels: 
-        config: keypass-names
 
-    - name: keypass-names
-      file: keypass-names.txt
-      labels: 
-        config: keypass-names
+    tpsrv01:
+      labels:
+        k8s-app: ctataped
+      containers:
+      - name: rmcd
+        isPriviliged: true
+        command: ['/opt/run/bin/rmcd.sh']
+        args: ["none"]
+        env:
+        - name: MY_CONTAINER
+          value: "rmcd"
+        - name: driveslot
+          value: "0"
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /mnt/logs
+          name: logstorage
+
+      - name: taped
+        isPriviliged: true
+        command: ['/opt/run/bin/taped.sh']
+        args: ["none"]
+        env:
+        - name: MY_CONTAINER
+          value: "taped"
+        - name: eoshost
+          value: "mgm"
+        - name: TERM
+          value: "xterm"
+        - name: driveslot
+          value: "0"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/objectstore
+          name: myobjectstore
+        - mountPath: /etc/config/database
+          name: mydatabase
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /mnt/logs
+          name: logstorage
+
+      volumes:
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: myobjectstore
+        configMap:
+          name: objectstore-config
+      - name: mydatabase
+        configMap:
+          name: database-config
+      - name: mylibrary
+        configMap:
+          name: library-config
+      - name: eosconfig
+        configMap:
+          name: eos-config
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: claimlogs
+    tpsrv02:
+      labels:
+        k8s-app: ctataped
+      containers:
+      - name: rmcd
+        isPriviliged: true
+        command: ['/opt/run/bin/rmcd.sh']
+        args: ["none"]
+        env:
+        - name: MY_CONTAINER
+          value: "rmcd"
+        - name: driveslot
+          value: "0"
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /mnt/logs
+          name: logstorage
+
+      - name: taped
+        isPriviliged: true
+        command: ['/opt/run/bin/taped.sh']
+        args: ["none"]
+        env:
+        - name: MY_CONTAINER
+          value: "taped"
+        - name: eoshost
+          value: "mgm"
+        - name: TERM
+          value: "xterm"
+        - name: driveslot
+          value: "0"
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /etc/config/objectstore
+          name: myobjectstore
+        - mountPath: /etc/config/database
+          name: mydatabase
+        - mountPath: /etc/config/library
+          name: mylibrary
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /mnt/logs
+          name: logstorage
+      volumes:
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: myobjectstore
+        configMap:
+          name: objectstore-config
+      - name: mydatabase
+        configMap:
+          name: database-config
+      - name: mylibrary
+        configMap:
+          name: library-config
+      - name: eosconfig
+        configMap:
+          name: eos-config
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: claimlogs
 
 # Here are stored values for the pvc's
 pvcs:
@@ -152,14 +315,14 @@ pvcs:
       type: stg
     storage: 3Gi
     accessModes:
-      - ReadWriteMany  
+      - ReadWriteMany
   claimlogs:
     selectors:
       type: logs
     storage: 2Gi
     accessModes:
-      - ReadWriteMany  
-  claimlibrary: 
+      - ReadWriteMany
+  claimlibrary:
     annotations:
       volume.beta.kubernetes.io/storage-class: "librarydevice"
     selectors:
@@ -167,21 +330,21 @@ pvcs:
       type: mhvtl
     storage: 1Mi
     accessModes:
-      - ReadWriteOnce  
+      - ReadWriteOnce
 
-# here will be stored the kdc config 
-kdc: 
-  # it is used for the selectors, names 
-  name: kdc 
+# here will be stored the kdc config
+kdc:
+  # it is used for the selectors, names
+  name: kdc
   # service account for kdc to be able to call k8s api
-  serviceAccount: 
+  serviceAccount:
     name: secret-creator
     rules:
     - apiGroups: [""]
       resources: ["secrets"]
       verbs: ["get", "list", "watch", "create"]
 
-  service: 
+  service:
     ports:
     - name: kdc-tcp
       port: 88
@@ -190,12 +353,12 @@ kdc:
       port: 88
       protocol: UDP
 
-  pod: 
+  pod:
     isPriviliged: true
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
-    env: 
+    env:
     - name: TERM
       value: "xterm"
     volumes:
@@ -206,14 +369,14 @@ kdc:
       persistentVolumeClaim:
         claimName: claimlogs
     - name: script
-      configMap: 
+      configMap:
         name: sandbox-script
         defaultMode: 0500
     - name: keypass-names
-      configMap: 
+      configMap:
         name: keypass-names-config
     - name: krb5-config-volume
-      configMap: 
+      configMap:
         name: krb5-config
 
     volumeMounts:
@@ -230,7 +393,7 @@ kdc:
     - name: keypass-names
       mountPath: /tmp/keypass-names.txt
       subPath: keypass-names.txt
-    
 
-# eos: 
-# TODO: Add eos as dependency and set of values here 
+
+# eos:
+# TODO: Add eos as dependency and set of values here
