@@ -5,12 +5,14 @@
 - cta/CTA#334 - Refactor the libctacatalogue DB interface such that in can be build only with the chosen DB client library, either Oracle or Postgres
 - cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
 - cta/CTA#355 - Added option to build CTA with ninja
+- cta/CTA#771 - Remove `cta-versionlock` script and extract `cta-checkpkg` script. Added strict version checking for XRootD
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
 - cta/CTA#781 - Fixed security issues with build pods
+- cta/CTA#772 - Make sonarcloud use yum.repos.d-public repos instead of the interal repos
 
 ### Maintenance
 - cta/CTA#779 - Removed outdated doxygen files
@@ -22,6 +24,7 @@
 - cta/CTA#750 - Removed outdated cc7 ci_runner/eos development directory
 - cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
 - cta/CTA#724 - Added a script to perform containerized compilation on a VM
+- cta/CTA#777 - Removed XRootD4 support
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files

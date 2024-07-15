@@ -2,14 +2,6 @@
   - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
   - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
   - xrootd_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-  - if [[ ${xrootd_version} -eq 4 ]];
-    then echo "Using XRootD version 4";
-      ./continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
-      yum-config-manager --enable cta-ci-xroot;
-      yum-config-manager --disable cta-ci-xrootd5;
-    else 
-      echo "Using XRootD version 5";
-    fi
   - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
 
 .before-script-alma9: &before-script-alma9
@@ -234,8 +226,6 @@ cta-release:
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum install --nogpgcheck -y cta-release
-    - cta-versionlock config eos5
-    - cta-versionlock apply
     - yum install --nogpgcheck -y cta-frontend
     - yum install --nogpgcheck -y cta-taped
     - yum install --nogpgcheck -y cta-rmcd
@@ -243,9 +233,10 @@ cta-release:
     - yum install --nogpgcheck -y eos-server
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
-    - cta-versionlock checkpkg --json > checkpkg-output.json
+    - cta-checkpkg --json > checkpkg-output.json
   variables:
     CTAREPODIR: /tmp/repo
   artifacts:
+    when: always
     paths:
     - checkpkg-output.json

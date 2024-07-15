@@ -34,7 +34,7 @@ COPY ${BASEDIR}/etc/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionl
 COPY ${BASEDIR}/../opt /opt
 
 RUN yum install -y \
-      yum-plugin-versionlock \
+      python3-dnf-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
       wget jq bc \
@@ -80,13 +80,6 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# Check if we need to enable cta-ci-xrootd4 repository
-RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-4; then \
-  /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config xrootd4; \
-  yum-config-manager --enable cta-ci-xroot; \
-  yum-config-manager --disable cta-ci-xrootd5; \
-fi
 
 # Add pod specific configuration
 COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
