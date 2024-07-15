@@ -1,15 +1,22 @@
 {{ $filesHandler := .Files}}
-{{ $content := $filesHandler.Get "configmaps/kdc-krb5.yaml" }}
-{{- range .Values.cta.configs}}
-
+{{ $namespace := .Release.Namespace}}
+{{- range .Values.configs}}
+# TODO add correct directory to read
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .name }} 
+  name: {{ .name }}
+  namespace: {{ $namespace }}
   labels:
     config: keypass-names
 data:
-  example.txt: |-
-  # TODO: Find why File.get gives error when reading here
+  {{- if (.file)}}
+    {{ .file }} : |-
+      {{- range ( $filesHandler.Lines .file ) }}
+      {{ . | indent 1}}
+      {{- end}}
+  {{- else}}
+    {{- .data | toYaml | nindent 4}}
+  {{- end}}
 ---
 {{- end}}
