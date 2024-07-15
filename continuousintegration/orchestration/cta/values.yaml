@@ -332,6 +332,47 @@ pvcs:
     accessModes:
       - ReadWriteOnce
 
+configs:
+  - name: objectstore-config
+    labels:
+      config: objectstore
+      type: ceph
+    data:
+      objectstore.type: ceph
+      objectstore.ceph.mon: cephmond.cern.ch
+      objectstore.ceph.monport: "6790"
+      objectstore.ceph.pool: tapetest
+      objectstore.ceph.namespace: cta-julien
+      objectstore.ceph.id: cta-julien
+      objectstore.ceph.key: KEY
+  - name: library-config
+    labels:
+      config: library
+      type: mhvtl
+    data:
+      library.type: mhvtl
+      library.name: VLSTK10
+      library.device: sg30
+      library.drivenames: (VDSTK11 VDSTK12 VDSTK13)
+      library.drivedevices: (nst0 nst1 nst2)
+      library.tapes: (V01001 V01002 V01003 V01004 V01005 V01006 V01007)
+  - name: database-config
+    labels:
+      config: database
+      type: postgres
+    data:
+      database.type: postgres
+      database.postgres.username: cta
+      database.postgres.password: cta
+      database.postgres.database: cta
+      database.postgres.path: /var/lib/postgresql/data/pgdata
+      # postgres service points to the postgresql container in namespace
+      database.postgres.server: postgres
+  - name: krb5-config
+    file: kdc-krb5.conf
+    labels:
+      config: keypass-config
+
 # Here is stored postgress db config. It might be moved as external dependency in next iterations
 postgres:
   name: postgres
