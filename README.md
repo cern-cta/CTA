@@ -1,7 +1,6 @@
 [![Latest Release](https://gitlab.cern.ch/cta/CTA/-/badges/release.svg)](https://gitlab.cern.ch/cta/CTA/-/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](COPYING)
 [![Code Quality](https://sonarcloud.io/api/project_badges/measure?project=cern-cta_CTA&metric=alert_status)](https://sonarcloud.io/project/overview?id=cern-cta_CTA)
-[![Monitoring](https://cta.web.cern.ch/resources/gitlab_meter-CTA_badge.svg)](https://meter-cta.web.cern.ch/d/mpoGeGDSk/continuous-integration)
 [![Last Commit](https://img.shields.io/gitlab/last-commit/cta%2FCTA?gitlab_url=https%3A%2F%2Fgitlab.cern.ch)](https://gitlab.cern.ch/cta/CTA/-/commits/main?ref_type=heads)
 
 <br />
@@ -28,21 +27,20 @@ ___
 
 ## About CTA
 
-The CERN Tape Archive (CTA) is the storage system for the custodial copy of all physics data at CERN. It keeps track of files stored on magnetic tape and handles user requests. CTA is the archival solution of choice for the 3rd activity period of the Large Hadron Collider, and beyond.
+The CERN Tape Archive (CTA) is the storage system for the custodial copy of all physics data at CERN. CTA was designed to cope with the huge storage and performance demands of [LHC Run-3](https://home.cern/press/2022/run-3) and beyond.
 
 CTA is:
 
 - The leading Free and Open Source tape data management software
-- Home to more than 800PB of data at CERN
+- Home to all the experimental physics data at CERN
 - Scalable, for small and large installations
 - Self-hostable, on-premise
-- Private and secure
 
 ## Getting Started
 
-The simplest way to get start with CTA is by using the publically available RPMs.
+The simplest way to get start with CTA is by using the publicly-available RPMs.
 
-**Install CTA**
+###  Install CTA
 
 1. Setup the cta-public repo for CTA:
 
@@ -63,8 +61,9 @@ The simplest way to get start with CTA is by using the publically available RPMs
     ```
 
 3. Install CTA and EOS packages - choose the appropriate packages, as needed.
-    
+
     On the CTA frontend:
+
     ```bash
     yum install cta-frontend cta-cli cta-common cta-catalogueutils cta-debuginfo cta-objectstore-tools
     yum install cta-lib cta-lib-common cta-lib-catalogue
@@ -72,7 +71,9 @@ The simplest way to get start with CTA is by using the publically available RPMs
     yum install eos-client eos-xrootd eos-grpc
     yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
     ```
+
     On the CTA tape servers:
+
     ```bash
     yum install cta-taped cta-rmcd cta-smc cta-cli cta-common cta-debuginfo
     yum install cta-lib cta-lib-common cta-lib-catalogue
@@ -86,7 +87,11 @@ For more detailed instructions, please visit [the documentation](https://eoscta.
 
 ## License
 
-This project is licensed under the GNU General Public License - see the [COPYING](COPYING) file for details
+> This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+See the [COPYING](COPYING) file for additional details.
 
 ___
 
