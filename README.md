@@ -1,10 +1,8 @@
 [![Latest Release](https://gitlab.cern.ch/cta/CTA/-/badges/release.svg)](https://gitlab.cern.ch/cta/CTA/-/releases)
-[![Pipeline Status](https://gitlab.cern.ch/cta/CTA/badges/main/pipeline.svg)](https://gitlab.cern.ch/cta/CTA/-/commits/main/)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](COPYING)
 [![Code Quality](https://sonarcloud.io/api/project_badges/measure?project=cern-cta_CTA&metric=alert_status)](https://sonarcloud.io/project/overview?id=cern-cta_CTA)
 [![Monitoring](https://cta.web.cern.ch/resources/gitlab_meter-CTA_badge.svg)](https://meter-cta.web.cern.ch/d/mpoGeGDSk/continuous-integration)
 [![Last Commit](https://img.shields.io/gitlab/last-commit/cta%2FCTA?gitlab_url=https%3A%2F%2Fgitlab.cern.ch)](https://gitlab.cern.ch/cta/CTA/-/commits/main?ref_type=heads)
-[![Open Issues](https://img.shields.io/gitlab/issues/open/cta%2FCTA?gitlab_url=https%3A%2F%2Fgitlab.cern.ch)](https://gitlab.cern.ch/cta/CTA/-/issues)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](COPYING)
 
 <br />
 <div align="center">
