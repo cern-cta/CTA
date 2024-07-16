@@ -40,7 +40,7 @@ CTA is:
 
 The simplest way to get start with CTA is by using the publicly-available RPMs.
 
-###  Install CTA
+### Install CTA
 
 1. Setup the cta-public repo for CTA:
 
@@ -60,36 +60,29 @@ The simplest way to get start with CTA is by using the publicly-available RPMs.
     yum install cta-release
     ```
 
-3. Install CTA and EOS packages - choose the appropriate packages, as needed.
+3. For a very minimal install, you need the following packages.
 
     On the CTA frontend:
 
     ```bash
-    yum install cta-frontend cta-cli cta-common cta-catalogueutils cta-debuginfo cta-objectstore-tools
-    yum install cta-lib cta-lib-common cta-lib-catalogue
-    
-    yum install eos-client eos-xrootd eos-grpc
-    yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
+    yum install cta-frontend cta-catalogueutils
     ```
 
     On the CTA tape servers:
 
     ```bash
-    yum install cta-taped cta-rmcd cta-smc cta-cli cta-common cta-debuginfo
-    yum install cta-lib cta-lib-common cta-lib-catalogue
-    yum install cta-readtp cta-tape-label
-
-    yum install eos-client eos-xrootd eos-grpc
-    yum install eos-folly-2019.11.11.00 eos-folly-deps-2019.11.11.00
+    yum install cta-taped cta-tape-label
     ```
 
-For more detailed instructions, please visit [the documentation](https://eoscta.docs.cern.ch/latest/overview/getting_started/).
+For more detailed instructions and configuration, please visit [the documentation](https://eoscta.docs.cern.ch/latest/overview/getting_started/).
 
 ## License
 
 > This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.
+>
+> This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+>
+> In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 See the [COPYING](COPYING) file for additional details.
 
