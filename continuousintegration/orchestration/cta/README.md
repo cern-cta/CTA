@@ -16,8 +16,13 @@ Be sure that you run it as an account with enough privilliges (In case of workin
 
 ## Installing CTA
 
-Its simple. You need only to invoke following command
+It's simple. You need only to invoke following commands
 
 ```
+helm dependency update # It downloads required dependencies
 helm install <name-of-the-releases> -n <your_namespace> -f <your_values.yaml> <chart_directory>
 ```
+
+
+## Documentation
+
