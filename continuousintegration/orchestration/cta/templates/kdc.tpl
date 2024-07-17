@@ -1,5 +1,5 @@
-#It is as seperate file as its not really a part of the app 
-#So if the need to put as subchart arises it will be simpler to move 
+#It is as seperate file as its not really a part of the app
+#So if the need to put as subchart arises it will be simpler to move
 {{$namespace := .Release.Namespace }}
 {{$accountName := .Values.kdc.serviceAccount.name }}
 {{$name := .Values.kdc.name}}
@@ -18,7 +18,7 @@ spec:
   {{- .ports | toYaml | nindent 4}}
 {{- end}}
 
-
+---
 
 {{- with .Values.kdc.pod}}
 apiVersion: v1
@@ -51,7 +51,7 @@ spec:
       privileged: {{.isPriviliged}}
     volumeMounts:
     {{- .volumeMounts | toYaml | nindent 4}}
-  
+
   volumes:
     {{- .volumes | toYaml | nindent 2}}
 
@@ -78,12 +78,12 @@ metadata:
   name: {{.name}}
   namespace: {{$namespace}}
 
---- 
+---
 
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ printf "%s-%s" .name "roleBinding" }}  
+  name: {{ printf "%s-%s" .name "roleBinding" }}
   namespace: {{$namespace}}
 subjects:
 - kind: ServiceAccount
