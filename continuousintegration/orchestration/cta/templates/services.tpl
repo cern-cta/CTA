@@ -13,4 +13,5 @@ spec:
   clusterIP: None
   ports:
     {{$service.ports | toYaml | nindent 4}}
+---
 {{- end}}
