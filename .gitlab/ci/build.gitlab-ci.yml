@@ -141,3 +141,17 @@ cta_rpm_no_oracle:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+
+export_docs:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - echo "Exporting man pages (Markdown)"
+    - mkdir docs
+    - /usr/bin/find . -name '*cta.md' -exec cp {} docs/ \;
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - docs/

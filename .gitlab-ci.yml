@@ -20,7 +20,6 @@ variables:
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
 
-
 default:
   interruptible: true
   before_script:

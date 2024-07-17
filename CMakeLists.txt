@@ -110,8 +110,11 @@ else (NOT DEFINED ENABLE_CCACHE)
   message (STATUS "Already set: ENABLE_CCACHE=${ENABLE_CCACHE}")
 endif (NOT DEFINED ENABLE_CCACHE)
 
-#Load version information in all cases.
+# Load additional CMake modules:
+# Version information
 include(cmake/CTAVersions.cmake)
+# Pandocology (to create man pages from Markdown)
+include(cmake/Pandocology.cmake)
 
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")

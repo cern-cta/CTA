@@ -16,6 +16,7 @@
 
 ### Maintenance
 - cta/CTA#779 - Removed outdated doxygen files
+- cta/CTA#734 - Generate cta-admin man page from Markdown
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests

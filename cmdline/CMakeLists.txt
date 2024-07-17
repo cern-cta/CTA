@@ -17,6 +17,14 @@ cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory (standalone_cli_tools)
 
+add_document(
+  TARGET cta-admin_manual_page
+  OUTPUT_FILE cta-admin.1cta
+  SOURCES cta-admin.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
@@ -48,6 +56,6 @@ target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsiLib X
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-admin DESTINATION usr/bin)
-install(FILES cta-admin.1cta DESTINATION usr/share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta DESTINATION /usr/share/man/man1)
 install(FILES cta-send-closew.sh DESTINATION usr/bin)
 install(FILES cta-cli.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
