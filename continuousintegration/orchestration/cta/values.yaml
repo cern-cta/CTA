@@ -468,5 +468,37 @@ kdc:
       subPath: keypass-names.txt
 
 
-# eos:
-# TODO: Add eos as dependency and set of values here
+eos:
+  global:
+    repository: gitlab-registry.cern.ch/dss/eos/eos-all
+    tag: 5.0.31
+
+
+    #
+    # SSS keytab for the eos cluster
+    #   All the components (qdb, mq, fst, mgm) will use the keytab specified here.
+    #   Options:
+    #   - secret: Use an existing secret (containing the eos keytab) by providing its name
+    #             Takes priority over 'file' option (see below).
+    #   - file: Path to a file storing the keytab. The secret 'eos-sss-keytab' will be generated from it.
+    #             Defaults to 'files/eos.keytab'
+    sssKeytab:
+      secret: eos-server-keytab
+      # file: files/eos.keytab
+
+
+    #
+    # Define the security context for all containers.
+    #   Docs at https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    #
+    #  Default: Containers are not provileged and privilege escalation is not allowed.
+    securityContext:
+      privileged:
+      allowPrivilegeEscalation:
+
+    #
+    # Allow HTTP access.
+    #
+    # Default: false
+    http:
+      enabled: false
