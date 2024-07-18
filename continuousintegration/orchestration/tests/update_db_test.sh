@@ -103,7 +103,7 @@ MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
 # Get yum repositories from current commit (will go to standard /shared/yum.repos.d directory in cta-catalogue-updater container)
-YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
+YUM_REPOS="$(realpath "$(dirname "$0")/../../docker/ctafrontend/alma9/etc/yum.repos.d")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 # Add our intermediate script (do we really need it?)
 SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh" | head -n 1)")"
