@@ -27,9 +27,17 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-change-storage-class-in-catalogue ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParse.cpp JsonFileData.cpp)
-target_link_libraries(cta-change-storage-class-in-catalogue XrdSsiLib XrdUtils ctacommon stdc++fs ctaCmdlineToolsCommon)
-set_property (TARGET cta-change-storage-class-in-catalogue APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+add_document(
+  TARGET cta-change-storage-class_man_page
+  OUTPUT_FILE cta-change-storage-class.1cta
+  SOURCES cta-change-storage-class.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
 
-install(TARGETS cta-change-storage-class-in-catalogue DESTINATION usr/bin)
-install(FILES cta-change-storage-class-in-catalogue.1cta DESTINATION usr/share/man/man1)
+add_executable(cta-change-storage-class ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParse.cpp JsonFileData.cpp)
+target_link_libraries(cta-change-storage-class XrdSsiLib XrdUtils ctacommon stdc++fs ctaCmdlineToolsCommon)
+set_property(TARGET cta-change-storage-class APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+install(TARGETS cta-change-storage-class DESTINATION usr/bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-change-storage-class.1cta DESTINATION /usr/share/man/man1)
