@@ -1,7 +1,7 @@
 ---
 date: 2024-07-18
 section: 1cta
-title: CTA-TAPE-LABEL
+title: CTA-READTP
 ---
 <!---
 @project      The CERN Tape Archive (CTA)
@@ -22,37 +22,34 @@ title: CTA-TAPE-LABEL
 
 # NAME
 
-cta-tape-label --- Pre-label a CTA tape
+cta-readtp --- Low-level utility to read files from a tape
 
 # SYNOPSIS
 
-**cta-tape-label** \[\--oldlabel *old_vid*] \[\--loadtimeout *timeout*] \[\--drive *drive_name*] \[\--force] \[\--help] \[\--debug] \--vid *vid*
+**cta-readtp** *vid* *sequence* \[\--destination\_files *file_url*] \[\--drive *drive_name*] \[\--help]
 
 # DESCRIPTION
 
-**cta-tape-label** writes the CTA label file **VOL1** at the beginning
-of a tape, to prepare the tape to store data files. The label contains
-the Volume ID specified by *vid*.
+**cta-readtp** is a command-line tool for reading files from tape and
+validating their checksums.
 
-If the tape to be labelled already contains files, running **cta-tape-label**
-is a destructive operation, which writes the label file to the beginning
-of tape and renders all data beyond the label file inaccessible.
+The tape to be read is specified by the *vid* argument. The tape files
+to be read are specified as a *sequence* of tape file sequence numbers.
+The syntax used to specify the sequence is as follows:
 
-For non-blank tapes, **cta-tape-label** checks that the *vid* supplied
-matches the existing label of the tape in the drive. This behaviour can
-be changed with the \--oldlabel and \--force options (see **OPTIONS**, below).
+    f1-f2         Files f1 to f2 inclusive.
+    f1-           Files f1 to the last file on the tape.
+    f1-f2,f4,f6-  A series of non-consecutive ranges of files.
 
 # OPTIONS
 
--o, \--oldlabel *old_vid*
+-f, \--destination\_files *file_url*
 
-:   The Volume ID (VID) of the current label on the tape, if it is not
-    the same as *vid* and the tape is not blank.
-
--t, \--loadtimeout *timeout*
-
-:   The timeout to load the tape in the drive slot, in seconds. Defaults
-    to 7200 (two hours), to allow time for media initialisation.
+:   Path to a file containing a list of destination URLs that the files
+    will be written to (one URL per line). If not specified, all data
+    read will be written to */dev/null*. If there are less destination
+    files than read files, the remaining files read will be written to
+    */dev/null*.
 
 -u, \--drive *drive_name*
 
@@ -60,32 +57,17 @@ be changed with the \--oldlabel and \--force options (see **OPTIONS**, below).
     configuration file matching *cta-taped-unitName.conf* under the
     directory */etc/cta/*.
 
--f, \--force
-
-:   **Warning: this option destroys any data on the tape without first
-    performing the label check.**
-
-    Force labelling for non-blank tapes. This is intended for testing or
-    use in rare situations by expert operators. This option should not be
-    used when calling **cta-tape-label** from a script.
-
 -h, \--help
 
 :   Display command options and exit.
 
--d, \--debug
-
-:   Verbose log messages.
-
 # EXIT STATUS
 
-**cta-tape-label** returns 0 on success.
+**cta-readtp** returns 0 on success.
 
-# EXAMPLES
+# EXAMPLE
 
-cta-tape-label \--vid I54321 \--oldvid T12345 \--debug
-
-cta-tape-label \--vid L54321 \--force
+cta-readtp V01007 10002,10004-10006,10008-
 
 # SEE ALSO
 

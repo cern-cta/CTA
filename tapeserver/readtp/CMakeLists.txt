@@ -16,6 +16,16 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
+find_package( ZLIB REQUIRED )
+
+add_document(
+  TARGET cta-readtp_man_page
+  OUTPUT_FILE cta-readtp.1cta
+  SOURCES cta-readtp.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+
 add_executable(cta-readtp
   ReadtpCmd.cpp
   ReadtpCmdMain.cpp
@@ -25,7 +35,7 @@ add_executable(cta-readtp
   TapeFseqRangeListSequence.cpp
   TapeFseqSequenceParser.cpp)
 
-target_link_libraries (cta-readtp
+target_link_libraries(cta-readtp
   ctacommon
   TapeDrive
   ctamediachanger
@@ -33,5 +43,5 @@ target_link_libraries (cta-readtp
   SCSI
 )
 
-install (TARGETS cta-readtp DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-readtp DESTINATION /usr/bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)
