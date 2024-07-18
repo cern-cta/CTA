@@ -17,7 +17,7 @@
  
 #pragma once
 
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 #include <map>
 #include <optional>
@@ -28,7 +28,7 @@ namespace cta::frontend::grpc::request {
 class RequestMessage {
 public:
   
-  explicit RequestMessage(const cta::frontend::rpc::AdminRequest& request);
+  explicit RequestMessage(const cta::xrd::Request& request);
   ~RequestMessage() = default;
   
   /*!

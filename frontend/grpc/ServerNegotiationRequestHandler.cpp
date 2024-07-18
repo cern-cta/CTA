@@ -24,7 +24,7 @@
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(cta::log::Logger& log,
                                                                 AsyncServer& asyncServer,
-                                                                cta::frontend::rpc::Negotiation::AsyncService& ctaNegotiationSvc,
+                                                                cta::xrd::Negotiation::AsyncService& ctaNegotiationSvc,
                                                                 const std::string& strKeytab,
                                                                 const std::string& strService
                                                               ) :

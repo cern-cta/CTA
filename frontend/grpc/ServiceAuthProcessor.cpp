@@ -52,7 +52,7 @@
    * that do not require authorization.
    */
   strAuthMetadataValue = std::string(iterAuthMetadata->second.data(), iterAuthMetadata->second.length());
-  if (strAuthMetadataValue == "/cta.frontend.rpc.Negotiation/Negotiate") {
+  if (strAuthMetadataValue == "/cta.xrd.Negotiation/Negotiate") {
     return ::grpc::Status::OK;
   }
   /*

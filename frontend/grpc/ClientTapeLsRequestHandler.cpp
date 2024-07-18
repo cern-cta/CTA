@@ -20,10 +20,10 @@
 
 
 cta::frontend::grpc::client::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
-                                                                cta::frontend::rpc::CtaRpcStream::Stub& stub,
+                                                                cta::xrd::CtaRpcStream::Stub& stub,
                                                                 ::grpc::CompletionQueue& completionQueue,
                                                                 cta::admin::TextFormatter& textFormatter,
-                                                                cta::frontend::rpc::AdminRequest& request
+                                                                cta::xrd::Request& request
                                                               ) :
                                                                 m_log(log),
                                                                 m_stub(stub),

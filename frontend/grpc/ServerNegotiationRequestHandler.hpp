@@ -19,7 +19,8 @@
 
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 
 #include <grpcpp/grpcpp.h>
 #include <gssapi/gssapi_generic.h>
@@ -34,7 +35,7 @@ class NegotiationRequestHandler : public request::IHandler {
 public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log, AsyncServer& asyncServer,
-                   cta::frontend::rpc::Negotiation::AsyncService& ctaRpcStreamSvc,
+                   cta::xrd::Negotiation::AsyncService& ctaRpcStreamSvc,
                    const std::string& strKeytab,
                    const std::string& strService
                   );
@@ -58,7 +59,7 @@ private:
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
   AsyncServer& m_asyncServer;
-  cta::frontend::rpc::Negotiation::AsyncService& m_ctaNegotiationSvc;
+  cta::xrd::Negotiation::AsyncService& m_ctaNegotiationSvc;
   std::string m_strKeytab;
   std::string m_strService;
   StreamState m_streamState;
@@ -73,11 +74,11 @@ private:
   
   
   // Request from the client
-  cta::frontend::rpc::KerberosAuthenticationRequest m_request;
+  cta::xrd::KerberosAuthenticationRequest m_request;
   // Response send back to the client
-  cta::frontend::rpc::KerberosAuthenticationResponse m_response;
+  cta::xrd::KerberosAuthenticationResponse m_response;
   // The means to get back to the client.
-  ::grpc::ServerAsyncReaderWriter<cta::frontend::rpc::KerberosAuthenticationResponse, cta::frontend::rpc::KerberosAuthenticationRequest> m_rwNegotiation;
+  ::grpc::ServerAsyncReaderWriter<cta::xrd::KerberosAuthenticationResponse, cta::xrd::KerberosAuthenticationRequest> m_rwNegotiation;
   // KRB5 credentials
   void logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType);
   void registerKeytab(const std::string& strKeytab); // can throw

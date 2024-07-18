@@ -29,7 +29,7 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
 
 cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
                                                                 AsyncServer& asyncServer,
-                                                                cta::frontend::rpc::CtaRpcStream::AsyncService& ctaRpcStreamSvc
+                                                                cta::xrd::CtaRpcStream::AsyncService& ctaRpcStreamSvc
                                                               ) :
                                                                 m_log(log),
                                                                 m_tag(this),

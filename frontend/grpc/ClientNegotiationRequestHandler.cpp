@@ -20,7 +20,7 @@
 #include "common/exception/Exception.hpp"
 
 cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(cta::log::Logger& log,
-                                                                cta::frontend::rpc::Negotiation::Stub& stub,
+                                                                cta::xrd::Negotiation::Stub& stub,
                                                                 ::grpc::CompletionQueue& completionQueue,
                                                                 const std::string& strSpn
                                                               ) :
