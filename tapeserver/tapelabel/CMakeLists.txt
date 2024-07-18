@@ -15,7 +15,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_document(
-  TARGET cta-tape-label_manual_page
+  TARGET cta-tape-label_man_page
   OUTPUT_FILE cta-tape-label.1cta
   SOURCES cta-tape-label.1cta.md
   NO_EXPORT_PRODUCT

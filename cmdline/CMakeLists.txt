@@ -18,7 +18,7 @@ cmake_minimum_required (VERSION 3.17)
 add_subdirectory (standalone_cli_tools)
 
 add_document(
-  TARGET cta-admin_manual_page
+  TARGET cta-admin_man_page
   OUTPUT_FILE cta-admin.1cta
   SOURCES cta-admin.1cta.md
   NO_EXPORT_PRODUCT
