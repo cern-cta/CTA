@@ -17,7 +17,8 @@
  
 #pragma once
 
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"

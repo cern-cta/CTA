@@ -18,23 +18,18 @@
 #include "ClientTapeLsRequestHandler.hpp"
 #include "common/log/LogContext.hpp"
 
-
 cta::frontend::grpc::client::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
-                                                                cta::frontend::rpc::CtaRpcStream::Stub& stub,
-                                                                ::grpc::CompletionQueue& completionQueue,
-                                                                cta::admin::TextFormatter& textFormatter,
-                                                                cta::frontend::rpc::AdminRequest& request
-                                                              ) :
-                                                                m_log(log),
-                                                                m_stub(stub),
-                                                                m_completionQueue(completionQueue),
-                                                                m_textFormatter(textFormatter),
-                                                                m_request(request),
-                                                                m_tag(this),
-                                                                m_streamState(StreamState::NEW)
-                                                                {
-
-}
+                                                                        cta::xrd::CtaRpcStream::Stub& stub,
+                                                                        ::grpc::CompletionQueue& completionQueue,
+                                                                        cta::admin::TextFormatter& textFormatter,
+                                                                        cta::xrd::Request& request)
+    : m_log(log),
+      m_stub(stub),
+      m_completionQueue(completionQueue),
+      m_textFormatter(textFormatter),
+      m_request(request),
+      m_tag(this),
+      m_streamState(StreamState::NEW) {}
 
 bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
   bool bNext = false;

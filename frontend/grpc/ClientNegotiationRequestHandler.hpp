@@ -20,7 +20,8 @@
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
 #include "cmdline/CtaAdminTextFormatter.hpp"
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 
 #include <grpcpp/grpcpp.h>
 #include <gssapi/gssapi_generic.h>
@@ -32,7 +33,10 @@ class NegotiationRequestHandler : public request::IHandler {
 
 public:
   NegotiationRequestHandler() = delete;
-  NegotiationRequestHandler(cta::log::Logger& log, cta::frontend::rpc::Negotiation::Stub& stub, ::grpc::CompletionQueue& completionQueue, const std::string& strSpn);
+  NegotiationRequestHandler(cta::log::Logger& log,
+                            cta::xrd::Negotiation::Stub& stub,
+                            ::grpc::CompletionQueue& completionQueue,
+                            const std::string& strSpn);
   ~NegotiationRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
@@ -49,7 +53,7 @@ private:
   };
   
   cta::log::Logger& m_log;
-  cta::frontend::rpc::Negotiation::Stub& m_stub;
+  cta::xrd::Negotiation::Stub& m_stub;
   ::grpc::CompletionQueue&  m_completionQueue;
   const std::string& m_strSpn;
   cta::frontend::grpc::request::Tag m_tag;
@@ -63,11 +67,13 @@ private:
   ::grpc::ClientContext m_ctx;
   ::grpc::Status        m_grpcStatus;
   // Request from the client
-  cta::frontend::rpc::KerberosAuthenticationRequest m_request;
+  cta::xrd::KerberosAuthenticationRequest m_request;
   // Response send back to the client
-  cta::frontend::rpc::KerberosAuthenticationResponse m_response;
+  cta::xrd::KerberosAuthenticationResponse m_response;
   // ClientAsyncReaderWriter
-  std::unique_ptr<::grpc::ClientAsyncReaderWriter<cta::frontend::rpc::KerberosAuthenticationRequest, cta::frontend::rpc::KerberosAuthenticationResponse>> m_uprwNegotiation;
+  std::unique_ptr<
+    ::grpc::ClientAsyncReaderWriter<cta::xrd::KerberosAuthenticationRequest, cta::xrd::KerberosAuthenticationResponse>>
+    m_uprwNegotiation;
   // Token from the negotiation service
   std::string m_strToken = {""};
 

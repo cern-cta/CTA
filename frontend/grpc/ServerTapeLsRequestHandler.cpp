@@ -27,19 +27,16 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
    return (cmd << 16) + subcmd;
 }
 
-cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
-                                                                AsyncServer& asyncServer,
-                                                                cta::frontend::rpc::CtaRpcStream::AsyncService& ctaRpcStreamSvc
-                                                              ) :
-                                                                m_log(log),
-                                                                m_tag(this),
-                                                                m_asyncServer(asyncServer),
-                                                                m_ctaRpcStreamSvc(ctaRpcStreamSvc),
-                                                                m_streamState(StreamState::NEW),
-                                                                m_writer(&m_ctx)
-                                                                {
-  
-}
+cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(
+  cta::log::Logger& log,
+  AsyncServer& asyncServer,
+  cta::xrd::CtaRpcStream::AsyncService& ctaRpcStreamSvc)
+    : m_log(log),
+      m_tag(this),
+      m_asyncServer(asyncServer),
+      m_ctaRpcStreamSvc(ctaRpcStreamSvc),
+      m_streamState(StreamState::NEW),
+      m_writer(&m_ctx) {}
 
 bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
   bool bNext = false;

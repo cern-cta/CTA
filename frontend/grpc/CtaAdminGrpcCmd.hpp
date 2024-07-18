@@ -18,7 +18,8 @@
 #pragma once
 
 #include "cmdline/CtaAdminCmdParse.hpp"
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 #include "common/log/Logger.hpp"
 
 #include <string>
@@ -40,7 +41,7 @@ public:
 
 private:
   std::string m_strExecname;
-  cta::frontend::rpc::AdminRequest m_request;  //!< Protocol Buffer for the command and parameters
+  cta::xrd::Request m_request;                 //!< Protocol Buffer for the command and parameters
   static std::atomic<bool> m_abIsJson;         //!< Display results in JSON format
 
   

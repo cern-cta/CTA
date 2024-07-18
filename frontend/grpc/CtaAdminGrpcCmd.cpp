@@ -51,10 +51,7 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
 
 cta::frontend::grpc::client::CtaAdminGrpcCmd::CtaAdminGrpcCmd(int argc, char** argv) : m_strExecname(argv[0]) {
   auto &admincmd = *(m_request.mutable_admincmd());
-  
-  m_request.set_client_version(CTA_VERSION);
-  m_request.set_client_protobuf_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  
+
   // Strip path from execname
 
   size_t p = m_strExecname.find_last_of('/');
@@ -136,7 +133,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
   std::shared_ptr<::grpc::ChannelCredentials> spChannelCreds = ::grpc::SslCredentials({strSslRoot, strSslKey, strSslCert});
   // Create a channel to the KRB-GSI negotiation service 
   std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, spChannelCreds)};
-  cta::frontend::grpc::client::AsyncClient<cta::frontend::rpc::Negotiation> clientNeg(log, spChannelNegotiation);
+  cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
   try {
     strToken = clientNeg.exe<cta::frontend::grpc::client::NegotiationRequestHandler>(GSS_SPN)->token();
     /*
@@ -194,7 +191,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
           new KerberosAuthenticator(strEncodedToken)));
         std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials = ::grpc::CompositeChannelCredentials(spChannelCreds, spCallCredentials);
         std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, spCompositeCredentials)};
-        cta::frontend::grpc::client::AsyncClient<cta::frontend::rpc::CtaRpcStream> client(log, spChannel);
+        cta::frontend::grpc::client::AsyncClient<cta::xrd::CtaRpcStream> client(log, spChannel);
         // Execute the TapeLs command
         client.exe<cta::frontend::grpc::client::TapeLsRequestHandler>(textFormatter, m_request);
       } catch(const cta::exception::Exception& e) {
