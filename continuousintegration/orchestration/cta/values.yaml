@@ -79,7 +79,7 @@ cta:
         - mountPath: /etc/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
-
+          readOnly: true
       volumes:
       - name: shared
         hostPath:
@@ -125,6 +125,8 @@ cta:
         - mountPath: /etc/cta/eos.sss.keytab
           name: sss-keytab
           subPath: eos.sss.keytab
+          readOnly: true
+
       volumes:
       - name: shared
         hostPath:
@@ -168,6 +170,7 @@ cta:
         - mountPath: /etc/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
+          readOnly: true
         - mountPath: /root/user1.keytab
           name: keytab
           subPath: user1.keytab
