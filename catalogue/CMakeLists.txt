@@ -15,6 +15,53 @@
 
 cmake_minimum_required (VERSION 3.17)
 
+#
+# Man pages
+#
+
+add_document(
+  TARGET cta-catalogue-admin-user-create_man_page
+  OUTPUT_FILE cta-catalogue-admin-user-create.1cta
+  SOURCES cta-catalogue-admin-user-create.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+add_document(
+  TARGET cta-catalogue-schema-create_man_page
+  OUTPUT_FILE cta-catalogue-schema-create.1cta
+  SOURCES cta-catalogue-schema-create.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+add_document(
+  TARGET cta-catalogue-schema-drop_man_page
+  OUTPUT_FILE cta-catalogue-schema-drop.1cta
+  SOURCES cta-catalogue-schema-drop.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+add_document(
+  TARGET cta-catalogue-schema-set-production_man_page
+  OUTPUT_FILE cta-catalogue-schema-set-production.1cta
+  SOURCES cta-catalogue-schema-set-production.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+add_document(
+  TARGET cta-catalogue-schema-verify_man_page
+  OUTPUT_FILE cta-catalogue-schema-verify.1cta
+  SOURCES cta-catalogue-schema-verify.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+add_document(
+  TARGET cta-database-poll_man_page
+  OUTPUT_FILE cta-database-poll.1cta
+  SOURCES cta-database-poll.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+
 add_subdirectory(cta-catalogue-schema)
 
 find_package(postgres REQUIRED)
@@ -308,7 +355,7 @@ install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 target_link_libraries (cta-catalogue-schema-create ctacatalogue)
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
 
 set (DROP_SCHEMA_CMD
   DropSchemaCmd.cpp
@@ -325,7 +372,7 @@ add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
 target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-set-production
   SetProductionCmd.cpp
@@ -336,7 +383,7 @@ add_executable(cta-catalogue-schema-set-production
 target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
 
 install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-database-poll
   PollDatabaseCmd.cpp
@@ -346,7 +393,7 @@ add_executable(cta-database-poll
 target_link_libraries (cta-database-poll ctacatalogue)
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmd.cpp
@@ -356,7 +403,7 @@ add_executable(cta-catalogue-admin-user-create
 target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
 
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-verify
   VerifySchemaCmd.cpp
@@ -366,7 +413,7 @@ add_executable(cta-catalogue-schema-verify
 target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
 
 
 set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
@@ -387,3 +434,4 @@ set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVER
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
