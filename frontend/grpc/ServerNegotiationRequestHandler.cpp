@@ -22,25 +22,21 @@
 
 #include <cryptopp/base64.h>
 
-cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(cta::log::Logger& log,
-                                                                AsyncServer& asyncServer,
-                                                                cta::frontend::rpc::Negotiation::AsyncService& ctaNegotiationSvc,
-                                                                const std::string& strKeytab,
-                                                                const std::string& strService
-                                                              ) :
-                                                                m_log(log),
-                                                                m_tag(this),
-                                                                m_asyncServer(asyncServer),
-                                                                m_ctaNegotiationSvc(ctaNegotiationSvc),
-                                                                m_strKeytab(strKeytab),
-                                                                m_strService(strService),
-                                                                m_streamState(StreamState::NEW),
-                                                                m_gssCtx(GSS_C_NO_CONTEXT),
-                                                                m_rwNegotiation(&m_ctx)
-                                                                {
-                                                                  
-  
-}
+cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
+  cta::log::Logger& log,
+  AsyncServer& asyncServer,
+  cta::xrd::Negotiation::AsyncService& ctaNegotiationSvc,
+  const std::string& strKeytab,
+  const std::string& strService)
+    : m_log(log),
+      m_tag(this),
+      m_asyncServer(asyncServer),
+      m_ctaNegotiationSvc(ctaNegotiationSvc),
+      m_strKeytab(strKeytab),
+      m_strService(strService),
+      m_streamState(StreamState::NEW),
+      m_gssCtx(GSS_C_NO_CONTEXT),
+      m_rwNegotiation(&m_ctx) {}
 
 cta::frontend::grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler() {
   OM_uint32 gssMajStat, gssMinStat;

@@ -8,11 +8,12 @@
 
 #include <scheduler/Scheduler.hpp>
 #include "common/log/Logger.hpp"
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
-using cta::frontend::rpc::CtaRpc;
+using cta::xrd::CtaRpc;
 
 using grpc::ResourceQuota;
 using grpc::Server;
@@ -31,12 +32,10 @@ public:
     CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
 
     // Archive/Retrieve interface
-    Status Create(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::CreateResponse* response);
-    Status Archive(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::ArchiveResponse* response);
-    Status Retrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::RetrieveResponse* response);
-    Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::google::protobuf::Empty* response);
-    Status Delete(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::google::protobuf::Empty* response);
-
-    // Admin interface
-    Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
+    Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+    Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+    Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+    Status
+    CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+    Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 };

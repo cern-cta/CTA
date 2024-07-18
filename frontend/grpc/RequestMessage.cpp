@@ -18,8 +18,8 @@
 #include "RequestMessage.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
 
-cta::frontend::grpc::request::RequestMessage::RequestMessage(const cta::frontend::rpc::AdminRequest &request) {
-    importOptions(request.admincmd());
+cta::frontend::grpc::request::RequestMessage::RequestMessage(const cta::xrd::Request& request) {
+  importOptions(request.admincmd());
 }
 
 void cta::frontend::grpc::request::RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd) {

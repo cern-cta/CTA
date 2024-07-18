@@ -40,14 +40,13 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../frontend/common/Config.cpp
                              ../frontend/common/FrontendService.cpp
                              ../frontend/common/WorkflowEvent.cpp
-                             ../frontend/common/AdminCmd.cpp
-                             ../frontend/common/GrpcClient.cpp ../frontend/common/GrpcEndpoint.cpp)
+                             ../frontend/common/AdminCmd.cpp)
 if(CTA_USE_PGSCHED)
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctacatalogue
-                        EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ProtoCtaFrontend ctascheduler ctacommon ctacatalogue
+                        ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 else()
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue
-                        EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ProtoCtaFrontend ctascheduler ctacommon ctaobjectstore ctacatalogue
+                        ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 endif()
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 

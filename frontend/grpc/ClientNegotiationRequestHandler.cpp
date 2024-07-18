@@ -19,21 +19,19 @@
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
 
-cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(cta::log::Logger& log,
-                                                                cta::frontend::rpc::Negotiation::Stub& stub,
-                                                                ::grpc::CompletionQueue& completionQueue,
-                                                                const std::string& strSpn
-                                                              ) :
-                                                                m_log(log),
-                                                                m_stub(stub),
-                                                                m_completionQueue(completionQueue),
-                                                                m_strSpn(strSpn),
-                                                                m_tag(this),
-                                                                m_streamState(StreamState::NEW)
-                                                                {
-  // Get KRB5 principal name for the given service                                                                
+cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(
+  cta::log::Logger& log,
+  cta::xrd::Negotiation::Stub& stub,
+  ::grpc::CompletionQueue& completionQueue,
+  const std::string& strSpn)
+    : m_log(log),
+      m_stub(stub),
+      m_completionQueue(completionQueue),
+      m_strSpn(strSpn),
+      m_tag(this),
+      m_streamState(StreamState::NEW) {
+  // Get KRB5 principal name for the given service
   m_gssNameSpn = gssSpn(m_strSpn);
-
 }
 
 void cta::frontend::grpc::client::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {

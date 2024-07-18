@@ -20,38 +20,38 @@ find_package(GRPC REQUIRED)
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # Select protobuf files
-set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
-file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
-set(PROTOBUF_EOS_CTA_GRPC_DIR ${PROJECT_SOURCE_DIR}/eos_cta/grpc-proto/protobuf)
-file(GLOB ProtoFilesEosCtaGrpc "${PROTOBUF_EOS_CTA_GRPC_DIR}/*.proto")
+set(PROTOBUF_CTA_FRONTEND_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
+set(PROTOBUF_EOS_MGM_DIR ${PROJECT_SOURCE_DIR}/eos_cta/grpc-proto/protobuf)
+file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CTA_FRONTEND_DIR}/*.proto")
+file(GLOB ProtoFilesEOSMGM "${PROTOBUF_EOS_MGM_DIR}/*.proto")
 
 # Compile protobufs
-set(PROTOBUF3_INCLUDE_PATH ${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_EOS_CTA_GRPC_DIR})
-PROTOBUF3_GENERATE_CPP(ProtoSourcesEosCta ProtoHeadersEosCta ${ProtoFilesEosCta})
-PROTOBUF3_GENERATE_CPP(ProtoSourcesEosCtaGrpc ProtoHeadersEosCtaGrpc ${ProtoFilesEosCtaGrpc})
+set(PROTOBUF3_INCLUDE_PATH ${PROTOBUF_CTA_FRONTEND_DIR}:${PROTOBUF_EOS_MGM_DIR})
+PROTOBUF3_GENERATE_CPP(ProtoSourcesCtaFrontend ProtoHeadersCtaFrontend ${ProtoFilesCtaFrontend})
+PROTOBUF3_GENERATE_CPP(ProtoSourcesEOSMGM ProtoHeadersEOSMGM ${ProtoFilesEOSMGM})
 
 # Compile gRPC code
 set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/eos_cta/")
-grpc_generate_cpp(ProtoGrpcSourcesEosCtaGrpc ProtoGrpcHeadersEosCtaGrpc ${GRPC_PROTOBUF_PATH} ${ProtoFilesEosCtaGrpc})
+grpc_generate_cpp(GrpcSourcesEOSMGM GrpcHeadersEOSMGM ${GRPC_PROTOBUF_PATH} ${ProtoFilesEOSMGM})
+set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_CTA_FRONTEND_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
+grpc_generate_cpp(GrpcSourcesCtaFrontend GrpcHeadersCtaFrontend ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaFrontend})
 
 set_source_files_properties(
-  ${ProtoSourcesEosCta} ${ProtoHeadersEosCta}
-  ${ProtoSourcesEosCtaGrpc} ${ProtoHeadersEosCtaGrpc}
-  ${ProtoGrpcSourcesEosCtaGrpc} ${ProtoGrpcHeadersEosCtaGrpc}
+  ${ProtoSourcesCtaFrontend} ${ProtoHeadersCtaFrontend}
+  ${ProtoSourcesEOSMGM} ${ProtoHeadersEOSMGM}
+  ${GrpcSourcesEOSMGM} ${GrpcHeadersEOSMGM}
+  ${GrpcSourcesCtaFrontend} ${GrpcHeadersCtaFrontend}
   PROPERTIES GENERATED TRUE)
 
-foreach(PROTO_SRC ${ProtoSourcesEosCta} ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
-  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
-endforeach(PROTO_SRC)
-
-add_library(XrdSsiPbEosCta ${ProtoSourcesEosCta})
-set_target_properties(XrdSsiPbEosCta PROPERTIES
+add_library(ProtoCtaFrontend ${ProtoSourcesCtaFrontend} ${GrpcSourcesCtaFrontend})
+set_target_properties(ProtoCtaFrontend PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(XrdSsiPbEosCta ${PROTOBUF3_LIBRARIES})
+target_link_libraries(ProtoCtaFrontend gpr absl_synchronization ${PROTOBUF3_LIBRARIES})
 
-add_library(EosCtaGrpc ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
-set_target_properties(EosCtaGrpc PROPERTIES
+# Library containing EOS protobuf and gRPC definitions
+add_library(ProtoEOSMGM ${ProtoSourcesEOSMGM} ${GrpcSourcesEOSMGM})
+set_target_properties(ProtoEOSMGM PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(EosCtaGrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})
+target_link_libraries(ProtoEOSMGM gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})

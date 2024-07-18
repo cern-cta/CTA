@@ -238,9 +238,11 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   // Register services & run
   try {
     // SERVICE: Negotiation
-    server.registerService<cta::frontend::rpc::Negotiation::AsyncService>();
+    server.registerService<cta::xrd::Negotiation::AsyncService>();
     try {
-      server.registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler,  cta::frontend::rpc::Negotiation::AsyncService>(strKeytab, strService);
+      server
+        .registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler, cta::xrd::Negotiation::AsyncService>(
+          strKeytab, strService);
     } catch(const cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("handler", "NegotiationRequestHandler");
@@ -248,8 +250,8 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
       throw;
     }
     // SERVICE: CtaRpcStream
-    server.registerService<cta::frontend::rpc::CtaRpcStream::AsyncService>();
-    server.registerHandler<cta::frontend::grpc::server::TapeLsRequestHandler,  cta::frontend::rpc::CtaRpcStream::AsyncService>();
+    server.registerService<cta::xrd::CtaRpcStream::AsyncService>();
+    server.registerHandler<cta::frontend::grpc::server::TapeLsRequestHandler, cta::xrd::CtaRpcStream::AsyncService>();
     // Setup SSL
     sslOpt.pem_root_certs = strSslRoot;
     sslOpt.pem_key_cert_pairs.push_back({strSslKey, strSslCert});

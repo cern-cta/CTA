@@ -37,7 +37,7 @@ set(CMD_LINE_TOOLS_COMMON_LIB_SRC_FILES
 add_library (ctaCmdlineToolsCommon STATIC
   ${CMD_LINE_TOOLS_COMMON_LIB_SRC_FILES})
 
-target_link_libraries(ctaCmdlineToolsCommon ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils EosCtaGrpc EosGrpcClient)
+target_link_libraries(ctaCmdlineToolsCommon ctacommon ProtoCtaFrontend XrdSsiLib XrdUtils ProtoEOSMGM EosGrpcClient)
 
 set_property(TARGET ctaCmdlineToolsCommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaCmdlineToolsCommon PROPERTY   VERSION "${CTA_LIBVERSION}")
@@ -55,7 +55,7 @@ set_property(TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPA
 # recalls a file from tape without writing a disk copy
 #
 add_executable(cta-verify-file CtaVerifyFile.cpp common/CmdLineArgs.cpp common/CatalogueFetch.cpp)
-target_link_libraries(cta-verify-file ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+target_link_libraries(cta-verify-file ctacommon ProtoCtaFrontend XrdSsiLib XrdUtils)
 set_property (TARGET cta-verify-file APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-send-event DESTINATION usr/bin)

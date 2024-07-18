@@ -20,7 +20,8 @@
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
 #include "cmdline/CtaAdminTextFormatter.hpp"
-#include "cta_grpc_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 
 #include <grpcpp/grpcpp.h>
 
@@ -30,9 +31,11 @@ class TapeLsRequestHandler : public request::IHandler {
 
 public:
   TapeLsRequestHandler() = delete;
-  TapeLsRequestHandler(cta::log::Logger& log, cta::frontend::rpc::CtaRpcStream::Stub& stub, ::grpc::CompletionQueue& completionQueue,
+  TapeLsRequestHandler(cta::log::Logger& log,
+                       cta::xrd::CtaRpcStream::Stub& stub,
+                       ::grpc::CompletionQueue& completionQueue,
                        cta::admin::TextFormatter& textFormatter,
-                       cta::frontend::rpc::AdminRequest& request);
+                       cta::xrd::Request& request);
   ~TapeLsRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
@@ -48,11 +51,11 @@ private:
   };
   
   cta::log::Logger& m_log;
-  cta::frontend::rpc::CtaRpcStream::Stub& m_stub;
+  cta::xrd::CtaRpcStream::Stub& m_stub;
   ::grpc::CompletionQueue&  m_completionQueue;
   cta::admin::TextFormatter& m_textFormatter;
   // Request from the client
-  cta::frontend::rpc::AdminRequest& m_request;
+  cta::xrd::Request& m_request;
   cta::frontend::grpc::request::Tag m_tag;
   
   StreamState m_streamState;
@@ -63,9 +66,8 @@ private:
   ::grpc::ClientContext m_ctx;
   ::grpc::Status        m_grpcStatus;
   // Response send back to the client
-  cta::frontend::rpc::StreamResponse m_response;
-  std::unique_ptr<::grpc::ClientAsyncReader<cta::frontend::rpc::StreamResponse>> m_upReader;
-    
+  cta::xrd::StreamResponse m_response;
+  std::unique_ptr<::grpc::ClientAsyncReader<cta::xrd::StreamResponse>> m_upReader;
 };
 
 } // namespace cta::frontend::grpc::client
