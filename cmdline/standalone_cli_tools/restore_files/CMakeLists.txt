@@ -27,6 +27,14 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+add_document(
+  TARGET cta-restore-deleted-files_man_page
+  OUTPUT_FILE cta-restore-deleted-files.1cta
+  SOURCES cta-restore-deleted-files.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+
 add_executable(cta-restore-deleted-files RestoreFilesCmdMain.cpp RestoreFilesCmd.cpp ../../CtaAdminCmdParse.cpp)
 target_link_libraries(cta-restore-deleted-files
   ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY}
@@ -34,4 +42,4 @@ target_link_libraries(cta-restore-deleted-files
 set_property (TARGET cta-restore-deleted-files APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-restore-deleted-files DESTINATION usr/bin)
-install(FILES cta-restore-deleted-files.1cta DESTINATION usr/share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-restore-deleted-files.1cta DESTINATION /usr/share/man/man1)
