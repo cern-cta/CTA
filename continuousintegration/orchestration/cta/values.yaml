@@ -1,7 +1,7 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "TODO"
-  image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+  image: gitlab-registry.cern.ch/cta/ctageneric:7713827gitf24c5f5c
 
 # Here are stored values for the project related pods
 cta:
@@ -76,6 +76,10 @@ cta:
         - mountPath: /root/ctaadmin1.keytab
           name: keytab
           subPath: ctaadmin1.keytab
+        - mountPath: /etc/eos.keytab
+          name: sss-keytab
+          subPath: eos.keytab
+
       volumes:
       - name: shared
         hostPath:
@@ -86,6 +90,9 @@ cta:
       - name: keytab
         secret:
           secretName: ctaadmin1-keytab
+      - name: sss-keytab
+        secret:
+          secretName: eos-sss-keytab
 
     ctafrontend:
       containers:
@@ -110,11 +117,14 @@ cta:
           name: mylibrary
         - mountPath: /mnt/logs
           name: logstorage
-        - mountPath: /etc/config/eoscta
-          name: eosctaconfig
+        # - mountPath: /etc/config/eoscta
+        #   name: eosctaconfig
         - mountPath: /etc/cta/cta-frontend.krb5.keytab
           name: keytab
           subPath: cta-frontend.krb5.keytab
+        - mountPath: /etc/cta/eos.sss.keytab
+          name: sss-keytab
+          subPath: eos.sss.keytab
       volumes:
       - name: shared
         hostPath:
@@ -131,13 +141,15 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-      - name: eosctaconfig
-        configMap:
-          name: eoscta-config
+      # - name: eosctaconfig
+      #   configMap:
+      #     name: eoscta-config
       - name: keytab
         secret:
           secretName: cta-frontend-keytab
-
+      - name: sss-keytab
+        secret:
+          secretName: eos-sss-keytab
     client:
       containers:
       - command: ['/opt/run/bin/client.sh']
@@ -151,8 +163,11 @@ cta:
           name: shared
         - mountPath: /mnt/logs
           name: logstorage
-        - mountPath: /etc/config/eos
-          name: eosconfig
+        # - mountPath: /etc/config/eos
+        #   name: eosconfig
+        - mountPath: /etc/eos.keytab
+          name: sss-keytab
+          subPath: eos.keytab
         - mountPath: /root/user1.keytab
           name: keytab
           subPath: user1.keytab
@@ -160,15 +175,18 @@ cta:
       - name: shared
         hostPath:
           path: /opt/cta
-      - name: eosconfig
-        configMap:
-          name: eos-config
+      # - name: eosconfig
+      #   configMap:
+      #     name: eos-config
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
       - name: keytab
         secret:
           secretName: user1-keytab
+      - name: sss-keytab
+        secret:
+          secretName: eos-sss-keytab
 
     tpsrv01:
       labels:
@@ -332,6 +350,7 @@ pvcs:
     accessModes:
       - ReadWriteOnce
 
+# Here are stored ALL configMaps needed for the project to be build
 configs:
   - name: objectstore-config
     labels:
@@ -369,11 +388,16 @@ configs:
       # postgres service points to the postgresql container in namespace
       database.postgres.server: postgres
   - name: krb5-config
-    file: kdc-krb5.conf
+    file: krb5.conf
     labels:
       config: keypass-config
+  - name: keypass-names-config
+    file: keypass-names.txt
+    labels:
+      config: keypass-names
 
-# Here is stored postgress db config. It might be moved as external dependency in next iterations
+
+# Here is stored postgress db config. It might be moved as external dependency,
 postgres:
   name: postgres
   service:
@@ -404,12 +428,10 @@ postgres:
         configMapKeyRef:
           name: database-config
           key: database.postgres.database
-
 # here will be stored the kdc config
 kdc:
   # it is used for the selectors, names
   name: kdc
-  # service account for kdc to be able to call k8s api
   serviceAccount:
     name: secret-creator
     rules:
@@ -428,30 +450,12 @@ kdc:
 
   pod:
     isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    image: gitlab-registry.cern.ch/cta/ctageneric:7741596git50472b32
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
     env:
     - name: TERM
       value: "xterm"
-    volumes:
-    - name: shared
-      hostPath:
-        path: /opt/cta
-    - name: logstorage
-      persistentVolumeClaim:
-        claimName: claimlogs
-    - name: script
-      configMap:
-        name: sandbox-script
-        defaultMode: 0500
-    - name: keypass-names
-      configMap:
-        name: keypass-names-config
-    - name: krb5-config-volume
-      configMap:
-        name: krb5-config
-
     volumeMounts:
     - mountPath: /shared
       name: shared
@@ -460,12 +464,23 @@ kdc:
     - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
-    - mountPath: /etc/scripts/script.sh
-      name: script
-      subPath: script.sh
     - name: keypass-names
       mountPath: /tmp/keypass-names.txt
       subPath: keypass-names.txt
+
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: keypass-names
+      configMap:
+        name: keypass-names-config
+    - name: krb5-config-volume
+      configMap:
+        name: krb5-config
 
 
 eos:
@@ -483,8 +498,7 @@ eos:
     #   - file: Path to a file storing the keytab. The secret 'eos-sss-keytab' will be generated from it.
     #             Defaults to 'files/eos.keytab'
     sssKeytab:
-      secret: eos-server-keytab
-      # file: files/eos.keytab
+      secret: eos-sss-keytab
 
 
     #
