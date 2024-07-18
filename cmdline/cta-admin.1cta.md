@@ -1,4 +1,9 @@
-% CTA-ADMIN(1cta) | The CERN Tape Archive (CTA)
+---
+date: 2024-07-18
+section: 1cta
+title: CTA-ADMIN
+header: The CERN Tape Archive (CTA)
+---
 <!---
 @project      The CERN Tape Archive (CTA)
 @copyright    Copyright © 2020-2024 CERN
