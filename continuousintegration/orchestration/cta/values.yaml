@@ -1,7 +1,8 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "TODO"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7713827gitf24c5f5c
+  image: gitlab-registry.cern.ch/cta/ctageneric:7649588gitef974059
+
 
 # Here are stored values for the project related pods
 cta:
@@ -31,6 +32,21 @@ cta:
       containers:
       - command: ['/opt/run/bin/init.sh']
         args: ["none"]
+        env:
+# First two are another whacky hacky way by just creating configmap in cmd on line 244
+        - name: KEEP_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: init
+              key: keepdatabase
+        - name: KEEP_OBJECTSTORE
+          valueFrom:
+            configMapKeyRef:
+              name: init
+              key: keepobjectstore
+# Its used by some hacky find and grep on 309 and 151 line of create_instance.sh
+        - name: SCHEMA_VERSION
+          value: "15.0"
         isPriviliged: true
         volumeMounts:
         - mountPath: /shared
@@ -80,6 +96,9 @@ cta:
           name: sss-keytab
           subPath: eos.keytab
           readOnly: true
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
+          subPath: krb5.conf
       volumes:
       - name: shared
         hostPath:
@@ -93,6 +112,9 @@ cta:
       - name: sss-keytab
         secret:
           secretName: eos-sss-keytab
+      - name: krb5-config-volume
+        configMap:
+          name: krb5-config
 
     ctafrontend:
       containers:
@@ -126,7 +148,9 @@ cta:
           name: sss-keytab
           subPath: eos.sss.keytab
           readOnly: true
-
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
+          subPath: krb5.conf
       volumes:
       - name: shared
         hostPath:
@@ -152,6 +176,9 @@ cta:
       - name: sss-keytab
         secret:
           secretName: eos-sss-keytab
+      - name: krb5-config-volume
+        configMap:
+          name: krb5-config
     client:
       containers:
       - command: ['/opt/run/bin/client.sh']
@@ -174,6 +201,9 @@ cta:
         - mountPath: /root/user1.keytab
           name: keytab
           subPath: user1.keytab
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
+          subPath: krb5.conf
       volumes:
       - name: shared
         hostPath:
@@ -190,6 +220,9 @@ cta:
       - name: sss-keytab
         secret:
           secretName: eos-sss-keytab
+      - name: krb5-config-volume
+        configMap:
+          name: krb5-config
 
     tpsrv01:
       labels:
@@ -329,6 +362,9 @@ cta:
         persistentVolumeClaim:
           claimName: claimlogs
 
+
+
+
 # Here are stored values for the pvc's
 pvcs:
   claimstg:
@@ -358,38 +394,37 @@ configs:
   - name: objectstore-config
     labels:
       config: objectstore
-      type: ceph
+    type: file
     data:
-      objectstore.type: ceph
-      objectstore.ceph.mon: cephmond.cern.ch
-      objectstore.ceph.monport: "6790"
-      objectstore.ceph.pool: tapetest
-      objectstore.ceph.namespace: cta-julien
-      objectstore.ceph.id: cta-julien
-      objectstore.ceph.key: KEY
+      objectstore.file.path: /shared/%NAMESPACE/objectstore
+      objectstore.type: file
   - name: library-config
     labels:
       config: library
       type: mhvtl
     data:
-      library.type: mhvtl
+      library.device: sg3
+      library.drivedevices: (nst1 nst0 nst2)
+      library.drivenames: (VDSTK01 VDSTK02 VDSTK03)
       library.name: VLSTK10
-      library.device: sg30
-      library.drivenames: (VDSTK11 VDSTK12 VDSTK13)
-      library.drivedevices: (nst0 nst1 nst2)
-      library.tapes: (V01001 V01002 V01003 V01004 V01005 V01006 V01007)
+      library.tapes: (V00101 V00102 V00103 V00104 V00105 V00106 V00107 V00108)
+      library.type: mhvtl
   - name: database-config
     labels:
       config: database
       type: postgres
     data:
-      database.type: postgres
-      database.postgres.username: cta
-      database.postgres.password: cta
       database.postgres.database: cta
+      database.postgres.password: cta
       database.postgres.path: /var/lib/postgresql/data/pgdata
-      # postgres service points to the postgresql container in namespace
       database.postgres.server: postgres
+      database.postgres.username: cta
+      database.type: postgres
+# Add it temporarely; TODO when got the full working helmchart against CI remove it and add it as values
+  - name: init
+    data:
+      keepdatabase: "0"
+      keepobjectstore: "0"
   - name: krb5-config
     file: krb5.conf
     labels:
@@ -431,6 +466,7 @@ postgres:
         configMapKeyRef:
           name: database-config
           key: database.postgres.database
+
 # here will be stored the kdc config
 kdc:
   # it is used for the selectors, names
