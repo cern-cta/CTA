@@ -35,7 +35,7 @@ check_schema_version() {
   if [ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]; then
     echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
   else
-    echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
+    echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${DESIRED_SCHEMA_VERSION}"
     exit 1
   fi
 }
