@@ -8,7 +8,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: dbupdatetest
-    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater@sha256:072fbb587e7b8a5ab4f0b8e889bcf30e5d1a9bb057cdb876c4e67c2213acc064
+    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater@sha256:27349086220e5eee20ba33251fcbc828ea4135944d94f2232e6b64383fb899d8
     stdin: true
     env:
     - name: MY_NAME

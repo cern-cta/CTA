@@ -26,6 +26,7 @@
 - cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
 - cta/CTA#724 - Added a script to perform containerized compilation on a VM
 - cta/CTA#777 - Removed XRootD4 support
+- cta/CTA#788 - Updated image used by liquibase-update
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
