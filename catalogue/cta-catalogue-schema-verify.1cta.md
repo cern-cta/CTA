@@ -40,7 +40,7 @@ containing the connection details of the CTA Catalogue database.
 
 The tool checks the following items:
 
--   The schema matches the expected version
+-   Verify that the schema version matches the expected version
 -   Compare table names, column names and types
 -   Compare constraint names (except `NOT NULL` constraints in PostgreSQL)
 -   Compare index names
@@ -57,8 +57,7 @@ The tool checks the following items:
 
 # EXIT STATUS
 
-**cta-catalogue-schema-verify** returns 0 on success and non-zero if any
-errors are detected.
+**cta-catalogue-schema-verify** returns 0 on success and non-zero if any errors are detected.
 
 # EXAMPLE
 

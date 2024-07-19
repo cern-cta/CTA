@@ -81,31 +81,31 @@ used to query the state of the library.
 :   Queries the library and produces a report about the state of the
     library. *query_type* may be one of the following:
 
-    **D**
+    D
 
     :   Produce a list of drives with their status and the VID of the
         mounted tape (if any). The status of all drives is reported,
         unless a specific drive is selected with the -D option.
 
-    **L**
+    L
 
     :   Prints the result of the SCSI **INQUIRY** command
         (Vendor/Product/Revision). It also gives the starting address
         and the number of slots, drives, ports and transports (robotic
         arms) in the library.
 
-    **P**
+    P
 
     :   Prints the status of import/export slots.
 
-    **S**
+    S
 
     :   Prints the status of slots. By default all slots are reported,
         but the starting address may be specified with the -S option,
         and the number of elements to be reported may be specified with
         the -N option.
 
-    **V**
+    V
 
     :   Prints the status of volumes (tapes). A single VID or a pattern
         may also be specified with the -V option.
@@ -141,15 +141,15 @@ used to query the state of the library.
 
 To mount the tape with VID JK2005 on drive 1:
 
-> **cta-smc -m -D 1 -V JK2005**
+> cta-smc -m -D 1 -V JK2005
 
 To dismount the tape present on drive 1 after checking the VID:
 
-> **cta-smc -d -D 1 -V JK2005**
+> cta-smc -d -D 1 -V JK2005
 
 To query the main charateristics of the library:
 
-> **cta-smc -q L**
+> cta-smc -q L
 >
 >     Vendor/Product/Revision = <IBM     03584L32        1802>
 >     Transport Count = 1, Start = 1000
@@ -159,7 +159,7 @@ To query the main charateristics of the library:
 
 To query the status of all the drives:
 
-> **cta-smc -q D**
+> cta-smc -q D
 >
 >     Drive Ordinal   Element Addr.   Status          Vid
 >              0          1030        free
@@ -167,7 +167,7 @@ To query the status of all the drives:
 
 To get the list of a few slots in the library:
 
-> **cta-smc -q S -S 20 -N 10**
+> cta-smc -q S -S 20 -N 10
 >
 >     Element Addr.   Vid
 >           20        JK2021
@@ -183,7 +183,7 @@ To get the list of a few slots in the library:
 
 To get the status of tapes for which the VID starts with JK200
 
-> **cta-smc -q V -V \'JK200\*\'**
+> cta-smc -q V -V \'JK200\*\'
 >
 >     Vid     Element Addr.   Element Type
 >     JK2001         0        slot

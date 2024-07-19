@@ -72,37 +72,36 @@ daemon (**cta-rmcd**) to be installed and running on the same server as itself.
 
 # CONFIGURATION
 
-The **cta-taped** daemon reads its configuration parameters from the CTA
-configuration file (by default, */etc/cta/cta-taped.conf*). Each option
-is listed here with its *default* value.
+The **cta-taped** daemon reads its configuration parameters from the CTA configuration file (by
+default, */etc/cta/cta-taped.conf*). Each option is listed with its *default* value.
 
 ## Tape Server Configuration Options
 
-**taped DaemonUserName *cta***
+taped DaemonUserName *cta*
 
 :   The user of the **cta-taped** daemon process.
 
-**taped DaemonGroupName *tape***
+taped DaemonGroupName *tape*
 
 :   The group of the **cta-taped** daemon process.
 
-**taped LogMask *INFO***
+taped LogMask *INFO*
 
 :   Logs with a level lower than this value will be masked. Possible
     values are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO,
     DEBUG. USERERR log level is equivalent to NOTICE, because by
     convention, CTA uses log level NOTICE for user errors.
 
-**taped LogFormat *default***
+taped LogFormat *default*
 
 :   The default format for log lines is plain-text key-value pairs. If
     this option is set to *json*, log lines will be output in JSON format.
 
-**taped CatalogueConfigFile */etc/cta/cta-catalogue.conf***
+taped CatalogueConfigFile */etc/cta/cta-catalogue.conf*
 
 :   Path to the CTA Catalogue configuration file. See **FILES**, below.
 
-**ObjectStore BackendPath** (no default)
+ObjectStore BackendPath (no default)
 
 :   URL of the objectstore (CTA Scheduler Database). Usually this will
     be the URL of a Ceph RADOS objectstore. For testing or small
@@ -111,19 +110,19 @@ is listed here with its *default* value.
 
 ## Drive Configuration Options
 
-**taped DriveName** (no default)
+taped DriveName (no default)
 
 :   The name of the drive. Will be included for every line in the logs.
 
-**taped DriveLogicalLibrary** (no default)
+taped DriveLogicalLibrary (no default)
 
 :   CTA\'s logical library the tape drive will be linked to.
 
-**taped DriveDevice** (no default)
+taped DriveDevice (no default)
 
 :   Path to the character special device used to access the drive.
 
-**taped DriveControlPath** (no default)
+taped DriveControlPath (no default)
 
 :   The SCSI media changer address of the drive. This is \"smc\" + the
     drive ordinal number of the device, which can be obtained with
@@ -134,28 +133,28 @@ is listed here with its *default* value.
 This options will be included in every log line of the tape daemon to
 enhance log identification when swapping drives between different backends.
 
-**general InstanceName** (no default)
+general InstanceName (no default)
 
 :   Unique string to identify CTA\'s catalogue instance the tape daemon is serving.
 
-**general SchedulerBackendName** (no default)
+general SchedulerBackendName (no default)
 
 :   The unique string to identify the backend scheduler resources. It
     can be structured as: \[ceph\|postgres\|vfs]\[User\|Repack].
 
 ## Memory management options
 
-**taped BufferCount *5000***
+taped BufferCount *5000*
 
 :   Number of memory buffers per drive in the data transfer cache.
 
-**taped BufferSizeBytes *5000000***
+taped BufferSizeBytes *5000000*
 
 :   Size of a memory buffer in the data transfer cache, in bytes.
 
 ## Batched metadata access and tape write flush options
 
-**taped ArchiveFetchBytesFiles *80000000000*,*4000***
+taped ArchiveFetchBytesFiles *80000000000*,*4000*
 
 :   Maximum batch size for processing archive requests, specified as a
     tuple (number of bytes, number of files). When **cta-taped** fetches
@@ -163,7 +162,7 @@ enhance log identification when swapping drives between different backends.
     bytes and number of files specified by this parameter. Defaults to
     80 GB and 4000 files.
 
-**taped ArchiveFlushBytesFiles *32000000000*,*200***
+taped ArchiveFlushBytesFiles *32000000000*,*200*
 
 :   Flush to tape criteria, specified as a tuple (number of bytes,
     number of files). During archiving operations, this parameter
@@ -171,7 +170,7 @@ enhance log identification when swapping drives between different backends.
     written to tape before a flush to tape (synchronised tape mark).
     Defaults to 32 GB and 200 files.
 
-**taped RetrieveFetchBytesFiles *80000000000*,*4000***
+taped RetrieveFetchBytesFiles *80000000000*,*4000*
 
 :   Maximum batch size for processing retrieve requests, specified as a
     tuple (number of bytes, number of files). When cta-taped fetches a
@@ -181,7 +180,7 @@ enhance log identification when swapping drives between different backends.
 
 ## Scheduling options
 
-**taped MountCriteria *500000000000*,*10000***
+taped MountCriteria *500000000000*,*10000*
 
 :   Criteria to mount a tape, specified as a tuple (number of bytes,
     number of files). An archival or retrieval queue must contain at
@@ -192,33 +191,33 @@ enhance log identification when swapping drives between different backends.
 
 ## Disk file access options
 
-**taped NbDiskThreads *10***
+taped NbDiskThreads *10*
 
 :   The number of disk I/O threads. This determines the maximum number
     of parallel file transfers.
 
 ## Tape encryption support
 
-**taped UseEncryption *yes***
+taped UseEncryption *yes*
 
 :   Enable tape hardware encryption. Encryption will be enabled only for
     tapes where a valid encryption key has been configured for the tape
     or tape pool.
 
-**taped externalEncryptionKeyScript** (no default)
+taped externalEncryptionKeyScript (no default)
 
 :   Path to the external script used to obtain encryption keys.
 
 ## Disk space management options
 
-**taped externalFreeDiskSpaceScript** (no default)
+taped externalFreeDiskSpaceScript (no default)
 
 :   Path to the external script used to determine free disk space in the
     retrieve buffer.
 
 ## Recommended Access Order (RAO) options
 
-**taped UseRAO *yes***
+taped UseRAO *yes*
 
 :   Enable Recommended Access Order (RAO) if available. This setting is
     used to enable both hardware and software RAO for all drives that
@@ -226,7 +225,7 @@ enhance log identification when swapping drives between different backends.
     9 or later needs no further configuration. The additional RAO
     options below are for software RAO on LTO-8 drives.
 
-**taped RAOLTOAlgorithm *sltf***
+taped RAOLTOAlgorithm *sltf*
 
 :   On LTO-8 tape drives, specify which software RAO algorithm to use.
     Valid options are **linear**, **random**, **sltf**. **linear** means
@@ -244,59 +243,59 @@ enhance log identification when swapping drives between different backends.
 > been specified in the CTA Catalogue for the LTO-8 media type:
 > *nbwraps*, *minlpos*, *maxlpos*. See **cta-admin mediatype**.
 
-**taped RAOLTOAlgorithmOptions *cost_heuristic_name:cta***
+taped RAOLTOAlgorithmOptions *cost_heuristic_name:cta*
 
 :   Options for the software RAO algorithm specified by
     **RAOLTOAlgorithm**, above.
 
 ## Maintenance process configuration options
 
-**taped UseRepackManagement *yes***
+taped UseRepackManagement *yes*
 
 :   Enable RepackRequestManager for repack-related operations.
 
-**taped UseMaintenanceProcess *yes***
+taped UseMaintenanceProcess *yes*
 
 :   Enable MaintenanceProcess for repack-related operations, garbage
     collection and disk reporting.
 
 ## Timeout options
 
-**taped TapeLoadTimeout *300***
+taped TapeLoadTimeout *300*
 
 :   Maximum time to wait for a tape to load, in seconds.
 
-**taped WatchdogCheckMaxSecs *120***
+taped WatchdogCheckMaxSecs *120*
 
 :   Maximum time allowed to determine a drive is ready, in seconds.
 
-**taped WatchdogScheduleMaxSecs *300***
+taped WatchdogScheduleMaxSecs *300*
 
 :   Maximum time allowed to schedule a single mount, in seconds.
 
-**taped WatchdogMountMaxSecs *600***
+taped WatchdogMountMaxSecs *600*
 
 :   Maximum time allowed to mount a tape, in seconds.
 
-**taped WatchdogUnmountMaxSecs *600***
+taped WatchdogUnmountMaxSecs *600*
 
 :   Maximum time allowed to unmount a tape, in seconds.
 
-**taped WatchdogDrainMaxSecs *1800***
+taped WatchdogDrainMaxSecs *1800*
 
 :   Maximum time allowed to drain a file to disk during retrieve, in seconds.
 
-**taped WatchdogShutdownMaxSecs *900***
+taped WatchdogShutdownMaxSecs *900*
 
 :   Maximum time allowed to shutdown of a tape session, in seconds.
 
-**taped WatchdogNoBlockMoveMaxSecs *1800***
+taped WatchdogNoBlockMoveMaxSecs *1800*
 
 :   Maximum time allowed after mounting without any tape blocks being
     read/written, in seconds. If this timeout is exceeded, the session
     will be terminated.
 
-**taped WatchdogIdleSessionTimer *10***
+taped WatchdogIdleSessionTimer *10*
 
 :   Maximum time to wait after scheduling came up idle, in seconds.
 

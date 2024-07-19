@@ -68,43 +68,43 @@ disk filename and then running:
 The **cta-fst-gcd** daemon reads its parameters from its configuration
 file, by default */etc/cta/cta-fst-gcd.conf*.
 
-**log_file =** */var/log/eos/fst/cta-fst-gcd.log*
+log_file = */var/log/eos/fst/cta-fst-gcd.log*
 
 :   Path of the garbage collector log file.
 
-**mgm_host =** *HOSTNAME.2NDLEVEL.TOPLEVEL*
+mgm_host = *HOSTNAME.2NDLEVEL.TOPLEVEL*
 
 :   Fully qualified host name of EOS MGM.
 
-**eos_spaces =** *EOS_SPACE_1* *EOS_SPACE_2*
+eos_spaces = *EOS_SPACE_1* *EOS_SPACE_2*
 
 :   Space-separated list of names of the EOS spaces to be garbage
     collected.
 
-**eos_space_to_min_free_bytes =** *EOS_SPACE_1:10000000000* *EOS_SPACE_2:10000000000*
+eos_space_to_min_free_bytes = *EOS_SPACE_1:10000000000* *EOS_SPACE_2:10000000000*
 
 :   Minimum number of free bytes each filesystem should have.
 
-**gc_age_secs =** *7200*
+gc_age_secs = *7200*
 
 :   Minimum age of a file before it can be considered for garbage
     collection.
 
-**absolute_max_age_secs =** *604800*
+absolute_max_age_secs = *604800*
 
 :   Age at which a file will be considered for garbage collection,
     regardless of the amount of free space.
 
-**query_period_secs =** *310*
+query_period_secs = *310*
 
 :   Delay in seconds between free space queries to the local file
     systems.
 
-**main_loop_period_secs =** *300*
+main_loop_period_secs = *300*
 
 :   Period in seconds of the main loop of the **cta-fst-gcd** daemon.
 
-**xrdsecssskt =** */etc/eos.keytab*
+xrdsecssskt = */etc/eos.keytab*
 
 :   Path to Simple Shared Secrets keytab to authenticate with EOS MGM.
 

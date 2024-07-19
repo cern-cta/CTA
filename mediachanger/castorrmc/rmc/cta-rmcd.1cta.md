@@ -33,20 +33,17 @@ systemctl status **cta-rmcd**
 
 # DESCRIPTION
 
-**cta-rmcd** is the Remote Media Changer daemon, used to control
-SCSI-compatible tape libraries.
+**cta-rmcd** is the Remote Media Changer daemon, used to control SCSI-compatible tape libraries.
 
-The **cta-taped** daemon requires that **cta-rmcd** is installed and
-running on the same tape server as itself. **cta-rmcd** is usually
-started at system startup time by **systemd** or other system service
-management software.
+The **cta-taped** daemon requires that **cta-rmcd** is installed and running on the same tape
+server as itself. **cta-rmcd** is usually started at system startup time by **systemd** or other
+system service management software.
 
 # CONFIGURATION
 
-The port number that **cta-rmcd** will listen on should be defined on
-client hosts and on the tapeserver host. The default port number is
-5014. It is possible to configure a different port number in
-*/etc/services*:
+The port number that **cta-rmcd** will listen on should be defined on client hosts and on the
+tapeserver host. The default port number is 5014. It is possible to configure a different port
+number in */etc/services*:
 
 > rmc 657/tcp \# CTA Remote Media Changer (cta-rmcd)\
 > rmc 657/udp \# CTA Remote Media Changer (cta-rmcd)
@@ -59,18 +56,18 @@ It can also be set in the **RMC_PORT** environment variable.
 
 # ENVIRONMENT
 
-**RMC_PORT**
+RMC_PORT
 
 :   Sets the port number on which **cta-rmcd** will listen.
 
 # FILES
 
-**/etc/cta/cta-rmcd.conf**
+*/etc/cta/cta-rmcd.conf*
 
 :   Configuration file. See **CONFIGURATION** above, and
     */etc/cta/cta-rmcd.conf.example*.
 
-**/var/log/cta/cta-rmcd.log**
+*/var/log/cta/cta-rmcd.log*
 
 :   Log of error messages and statistical information. Log lines with
     code **RMC92** give information about the requestor: (uid,gid) and
