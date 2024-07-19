@@ -11,13 +11,13 @@ metadata:
     config: keypass-names
 data:
   {{- if (.file)}}
-    {{$fullDir := printf "%s/%s" "configmaps" .file}}
-    {{ .file }} : |-
-      {{- range ( $filesHandler.Lines $fullDir ) }}
-      {{ . | indent 1}}
-      {{- end}}
+  {{- $fullDir := printf "%s/%s" "configmaps" .file}}
+  {{ .file }} : |-
+    {{- range ( $filesHandler.Lines $fullDir ) }}
+    {{ .}}
+    {{- end}}
   {{- else}}
-    {{- .data | toYaml | nindent 4}}
+    {{- .data | toYaml | nindent 2}}
   {{- end}}
 
 ---
