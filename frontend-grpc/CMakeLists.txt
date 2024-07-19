@@ -20,6 +20,14 @@ find_package(GRPC REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
+add_document(
+  TARGET cta-frontend-grpc_man_page
+  OUTPUT_FILE cta-frontend-grpc.1cta
+  SOURCES cta-frontend-grpc.1cta.md
+  NO_EXPORT_PRODUCT
+  PANDOC_DIRECTIVES --standalone --to man
+)
+
 set(PROTOBUF_CtaFrontend_DIR ${PROJECT_SOURCE_DIR}/frontend-grpc/grpc-proto/protobuf)
 file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CtaFrontend_DIR}/*.proto")
 
@@ -67,7 +75,7 @@ set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_
 install(TARGETS cta-frontend-grpc DESTINATION usr/bin)
 install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
 install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
-install (FILES cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
 
 ##
 ## cta-frontend-grpc-stream-server
