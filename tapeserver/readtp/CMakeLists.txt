@@ -16,8 +16,6 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-find_package( ZLIB REQUIRED )
-
 add_executable(cta-readtp
   ReadtpCmd.cpp
   ReadtpCmdMain.cpp
