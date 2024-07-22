@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2015-2022 CERN
+# @copyright    Copyright © 2015-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,13 +14,10 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-find_package(Protobuf3 REQUIRED)
-
 if (ALMA9)
   add_definitions( -DALMA9 )
 endif()
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-unitTests
   unit_tests.cpp)
 
@@ -57,8 +54,6 @@ endif()
 
 target_link_libraries(cta-unitTests ${CTA_UNIT_TEST_LIBS})
 
-set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-
 add_executable(cta-rdbmsUnitTests
   GlobalCatalogueFactoryForUnitTests.cpp
   RdbmsUnitTestsCmdLineArgs.cpp
@@ -73,10 +68,7 @@ target_link_libraries(cta-rdbmsUnitTests
   ctadisk
   gtest
   gmock
-  pthread
-  ${PROTOBUF3_LIBRARIES})
-
-set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+  pthread)
 
 add_executable(cta-unitTests-multiProcess
   unit_tests.cpp)
@@ -87,10 +79,7 @@ target_link_libraries(cta-unitTests-multiProcess
   gtest
   gmock
   pthread
-  ${PROTOBUF3_LIBRAIRES}
   sqlite3)
-
-set_property (TARGET cta-unitTests-multiProcess APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)
@@ -106,14 +95,11 @@ target_link_libraries(systemTestHelperTests
 add_executable(cta-systemTests
   system_tests.cpp)
 
-set_property (TARGET cta-systemTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-
 target_link_libraries(cta-systemTests
   systemTestHelperTests
   cta-tapedSystemTests
   gtest
-  pthread
-  ${PROTOBUF3_LIBRARIES})
+  pthread)
 
 add_executable(cta-immutable-file-test
   ImmutableFileTest.cpp
@@ -121,7 +107,6 @@ add_executable(cta-immutable-file-test
   ImmutableFileTestCmdLineArgs.cpp)
 
 set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
-set_property (TARGET cta-immutable-file-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 target_link_libraries(cta-immutable-file-test
   ctacommon)

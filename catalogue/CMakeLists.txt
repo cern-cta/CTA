@@ -17,7 +17,6 @@ cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(cta-catalogue-schema)
 
-find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
@@ -27,11 +26,6 @@ if (OCCI_SUPPORT)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
   add_definitions( -DSUPPORT_OCCI )
 endif ()
-
-#
-# Compiled protocol buffers (for ChecksumBlob)
-#
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
@@ -312,7 +306,6 @@ add_library (ctaschemachecker SHARED
 install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (cta-catalogue-schema-create ctacatalogue)
-set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
@@ -330,7 +323,6 @@ target_link_libraries (ctadropschemacmd ctaschemachecker)
 add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
-set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -342,7 +334,6 @@ add_executable(cta-catalogue-schema-set-production
 )
 
 target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
-set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
@@ -353,7 +344,6 @@ add_executable(cta-database-poll
   PollDatabaseCmdMain.cpp)
 
 target_link_libraries (cta-database-poll ctacatalogue)
-set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
@@ -364,7 +354,6 @@ add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmdMain.cpp)
 
 target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
-set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
@@ -375,7 +364,6 @@ add_executable(cta-catalogue-schema-verify
   VerifySchemaCmdMain.cpp)
 
 target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
-set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)

@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,6 +20,7 @@ find_package(Protobuf3 REQUIRED)
 
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
+# See https://gitlab.cern.ch/cta/CTA/-/issues/791#note_8251696
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)

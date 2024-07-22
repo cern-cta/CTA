@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2003-2022 CERN
+# @copyright    Copyright © 2003-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -21,7 +21,6 @@ include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
-find_package(Protobuf3 REQUIRED)
 find_package( ZLIB REQUIRED )
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
@@ -48,10 +47,8 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
 add_library(ctaTapeServerDaemon
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctacommon ${PROTOBUF3_LIBRARIES} ctascheduler ctalegacymsg ctacatalogue TapeDrive ctarao)
-add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
+target_link_libraries(ctaTapeServerDaemon ctacommon ctascheduler ctacatalogue ctamediachanger TapeDrive ctarao)
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctatapeserverdaemonunittests SHARED
   DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
@@ -61,13 +58,11 @@ add_library(ctatapeserverdaemonunittests SHARED
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
-  #${CMAKE_BINARY_DIR}/catalogue/OracleCatalogueSchema.cpp
+  ../../../messages/TapeserverProxyDummy.cpp
 )
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctatapeserverdaemonunittests
-  ctamessagesutils)
-  #ctaschedulerutils
+target_link_libraries(ctatapeserverdaemonunittests)
 
 install(TARGETS ctatapeserverdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

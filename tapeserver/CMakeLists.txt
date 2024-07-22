@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -25,12 +25,8 @@ add_subdirectory (session)
 add_subdirectory (tapelabel)
 add_subdirectory (readtp)
 
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_executable (cta-taped cta-taped.cpp)
-find_package(Protobuf3 REQUIRED)
-target_link_libraries(cta-taped
-  ctatapedaemon ctacommon ${PROTOBUF3_LIBRARIES})
-set_property (TARGET cta-taped APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-taped ctatapedaemon ctacommon)
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
