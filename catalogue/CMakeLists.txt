@@ -396,4 +396,3 @@ set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVER
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
