@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2003-2022 CERN
+# @copyright    Copyright © 2003-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,8 +20,6 @@ include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 include_directories(/usr/include/tirpc) # rpc headers are now provided by libtirpc-devel 
-
-find_package(Protobuf3 REQUIRED)
 
 set(TAPESERVER_FILE_LIBRARY_SRCS
   CtaFileReader.cpp
@@ -80,7 +78,6 @@ set_property(TARGET ctatapeserverfileunittests PROPERTY   VERSION "${CTA_LIBVERS
 
 install(TARGETS ctatapeserverfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-osmReaderTest
   OsmReaderTest.cpp)
 
@@ -90,6 +87,5 @@ target_link_libraries(cta-osmReaderTest
   File
   gtest
 )
-set_property(TARGET cta-osmReaderTest APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-osmReaderTest DESTINATION usr/bin)
