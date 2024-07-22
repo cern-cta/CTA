@@ -371,8 +371,6 @@ The shared libraries
 %{_libdir}/libctaobjectstore.so*
 %endif
 %{_libdir}/libctamediachanger.so*
-%{_libdir}/libctamessages.so*
-%{_libdir}/libctamessagesutils.so*
 %{_libdir}/libctarao.so*
 %{_libdir}/libctadisk.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
