@@ -15,7 +15,6 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(castorrmc)
-find_package(Protobuf3 REQUIRED)
 
 set (MEDIACHANGER_LIB_SRC_FILES
   CmdLine.cpp

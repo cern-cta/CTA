@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2015-2022 CERN
+# @copyright    Copyright © 2015-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -13,8 +13,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
-
-find_package(Protobuf3 REQUIRED)
 
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
@@ -55,8 +53,6 @@ add_executable(cta-statistics-save
 
 target_link_libraries (cta-statistics-save ctastatistics)
 
-set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-
 install (TARGETS cta-statistics-save DESTINATION /usr/bin)
 
 add_executable(cta-statistics-update
@@ -66,7 +62,5 @@ add_executable(cta-statistics-update
 )
 
 target_link_libraries (cta-statistics-update ctastatistics)
-
-set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install (TARGETS cta-statistics-update DESTINATION /usr/bin)
