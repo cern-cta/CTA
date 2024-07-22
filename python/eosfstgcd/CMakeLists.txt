@@ -14,13 +14,7 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_document(
-  TARGET cta-fst-gcd_man_page
-  OUTPUT_FILE cta-fst-gcd.1cta
-  SOURCES cta-fst-gcd.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
+add_manpage(cta-fst-gcd)
 
 install (PROGRAMS ctafstgcd.py DESTINATION usr/bin RENAME cta-fst-gcd)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-fst-gcd.1cta DESTINATION /usr/share/man/man1)

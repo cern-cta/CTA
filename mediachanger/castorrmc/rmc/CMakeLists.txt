@@ -15,21 +15,6 @@
 cmake_minimum_required (VERSION 3.17)
 include_directories (${PROJECT_SOURCE_DIR}/mediachanger/castorrmc/h)
 
-add_document(
-  TARGET cta-rmcd_man_page
-  OUTPUT_FILE cta-rmcd.1cta
-  SOURCES cta-rmcd.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-smc_man_page
-  OUTPUT_FILE cta-smc.1cta
-  SOURCES cta-smc.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-
 set (RMCD_SRC_FILES
   rmc_serv.c
   rmc_logit.c
@@ -70,5 +55,8 @@ set (SMC_SRC_FILES
   smc.c)
 add_executable(cta-smc ${SMC_SRC_FILES})
 target_link_libraries(cta-smc ctarmccommon)
+
+add_manpage(cta-rmcd cta-smc)
+
 install (TARGETS cta-smc DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)

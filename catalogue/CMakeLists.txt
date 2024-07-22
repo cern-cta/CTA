@@ -15,54 +15,16 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-#
-# Man pages
-#
-
-add_document(
-  TARGET cta-catalogue-admin-user-create_man_page
-  OUTPUT_FILE cta-catalogue-admin-user-create.1cta
-  SOURCES cta-catalogue-admin-user-create.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-catalogue-schema-create_man_page
-  OUTPUT_FILE cta-catalogue-schema-create.1cta
-  SOURCES cta-catalogue-schema-create.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-catalogue-schema-drop_man_page
-  OUTPUT_FILE cta-catalogue-schema-drop.1cta
-  SOURCES cta-catalogue-schema-drop.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-catalogue-schema-set-production_man_page
-  OUTPUT_FILE cta-catalogue-schema-set-production.1cta
-  SOURCES cta-catalogue-schema-set-production.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-catalogue-schema-verify_man_page
-  OUTPUT_FILE cta-catalogue-schema-verify.1cta
-  SOURCES cta-catalogue-schema-verify.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-add_document(
-  TARGET cta-database-poll_man_page
-  OUTPUT_FILE cta-database-poll.1cta
-  SOURCES cta-database-poll.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-
 add_subdirectory(cta-catalogue-schema)
+
+add_manpage(
+  cta-catalogue-admin-user-create
+  cta-catalogue-schema-create
+  cta-catalogue-schema-drop
+  cta-catalogue-schema-set-production
+  cta-catalogue-schema-verify
+  cta-database-poll
+)
 
 find_package(postgres REQUIRED)
 

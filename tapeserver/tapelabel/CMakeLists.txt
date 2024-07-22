@@ -14,14 +14,6 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_document(
-  TARGET cta-tape-label_man_page
-  OUTPUT_FILE cta-tape-label.1cta
-  SOURCES cta-tape-label.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-
 add_executable(cta-tape-label
   TapeLabelCmd.cpp
   TapeLabelCmdLineArgs.cpp
@@ -41,6 +33,8 @@ add_library(ctatapelabelunittests SHARED
 
 set_property(TARGET ctatapelabelunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapelabelunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+add_manpage(cta-tape-label)
 
 install(TARGETS cta-tape-label DESTINATION /usr/bin)
 install(TARGETS ctatapelabelunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -18,14 +18,6 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
 find_package( ZLIB REQUIRED )
 
-add_document(
-  TARGET cta-readtp_man_page
-  OUTPUT_FILE cta-readtp.1cta
-  SOURCES cta-readtp.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-
 add_executable(cta-readtp
   ReadtpCmd.cpp
   ReadtpCmdMain.cpp
@@ -42,6 +34,8 @@ target_link_libraries(cta-readtp
   ctacatalogue
   SCSI
 )
+
+add_manpage(cta-readtp)
 
 install(TARGETS cta-readtp DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)

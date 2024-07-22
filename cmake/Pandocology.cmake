@@ -481,7 +481,14 @@ function(add_tex_document)
     add_document(${ARGV} DIRECT_TEX_TO_PDF)
 endfunction()
 
-# LEGACY SUPPORT
-function(add_pandoc_document)
-    add_document(${ARGV})
+function(add_manpage)
+  foreach(arg IN LISTS ARGN)
+    add_document(
+      TARGET ${arg}_man_page
+      OUTPUT_FILE ${arg}.1cta
+      SOURCES ${arg}.1cta.md
+      NO_EXPORT_PRODUCT
+      PANDOC_DIRECTIVES --standalone --to man
+    )
+  endforeach()
 endfunction()

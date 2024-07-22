@@ -25,17 +25,12 @@ add_subdirectory (session)
 add_subdirectory (tapelabel)
 add_subdirectory (readtp)
 
-add_document(
-  TARGET cta-taped_man_page
-  OUTPUT_FILE cta-taped.1cta
-  SOURCES cta-taped.1cta.md
-  NO_EXPORT_PRODUCT
-  PANDOC_DIRECTIVES --standalone --to man
-)
-
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctatapedaemon ctacommon)
+
+add_manpage(cta-taped)
+
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
