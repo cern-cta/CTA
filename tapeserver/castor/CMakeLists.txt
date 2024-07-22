@@ -14,6 +14,6 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory (legacymsg)
-add_subdirectory (messages)
+#add_subdirectory (legacymsg)
+#add_subdirectory (messages)
 add_subdirectory (tape)
