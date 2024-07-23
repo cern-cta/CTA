@@ -43,7 +43,7 @@ protected:
     m_connstring = "postgresql://ctaunittest:ctaunittest@localhost/ctaunittest";
     m_conn = std::make_unique<cta::rdbms::wrapper::PostgresConn>(m_connstring);
     // Try to drop anything owned by ctaunittest currently in the db
-    m_conn->executeNonQuery("drop owned by ctaunittest");
+    m_conn->executeNonQuery(R"SQL(drop owned by ctaunittest)SQL");
     ASSERT_TRUE(m_conn->getTableNames().empty());
   }
 
@@ -61,21 +61,23 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST1("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST1(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
   }
 
   // Test for the existence of the test table
   {
-    const char *const sql =
-       "SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c "
-         "WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') "
-         "AND c.tablename = 'test1'";
+    const char* const sql = R"SQL(
+      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c 
+        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') 
+        AND c.tablename = 'test1'
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -89,21 +91,23 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
 
   // Create a second test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST2("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST2(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
   }
 
   // Test for the existence of the second test table
   {
-    const char *const sql =
-       "SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c "
-         "WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') "
-         "AND c.tablename = 'test2'";
+    const char* const sql = R"SQL(
+      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c 
+        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') 
+        AND c.tablename = 'test2'
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -128,11 +132,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, select_from_empty_table) {
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0))";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -141,13 +146,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, select_from_empty_table) {
 
   // Select from the empty table
   {
-    const char *const sql =
-      "SELECT "
-        "COL1,"
-        "COL2,"
-        "COL3 "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COL1,
+        COL2,
+        COL3 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_FALSE(rset->next());
@@ -162,11 +168,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_without_bind) {
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -175,28 +182,30 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_without_bind) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1,"
-        "COL2,"
-        "COL3)"
-      "VALUES("
-        "'one',"
-        "'two',"
-        "3);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1,
+        COL2,
+        COL3)
+      VALUES(
+        'one',
+        'two',
+        3)
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
   }
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT "
-        "COL1 AS COL1,"
-        "COL2 AS COL2,"
-        "COL3 AS COL3 "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COL1 AS COL1,
+        COL2 AS COL2,
+        COL3 AS COL3 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -225,11 +234,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -238,15 +248,16 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1,"
-        "COL2,"
-        "COL3)"
-      "VALUES("
-        ":COL1,"
-        ":COL2,"
-        ":COL3);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1,
+        COL2,
+        COL3)
+      VALUES(
+        :COL1,
+        :COL2,
+        :COL3)
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->bindString(":COL1", std::string("one"));
     stmt->bindString(":COL2", std::string("two"));
@@ -256,13 +267,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT "
-        "COL1 AS COL1,"
-        "COL2 AS COL2,"
-        "COL3 AS COL3 "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COL1 AS COL1,
+        COL2 AS COL2,
+        COL3 AS COL3 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -293,11 +305,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   // Create a table
   ASSERT_TRUE(connForCreate.getTableNames().empty());
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = connForCreate.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, connForCreate.getTableNames().size());
@@ -308,16 +321,17 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   // Insert a row but do not commit using the separate connection
   PostgresConn connForInsert(m_connstring);
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1,"
-        "COL2,"
-        "COL3)"
-      "VALUES("
-        "'one',"
-        "'two',"
-        "3);";
-    connForInsert.executeNonQuery("BEGIN");
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1,
+        COL2,
+        COL3)
+      VALUES(
+        'one',
+        'two',
+        3)
+    )SQL";
+    connForInsert.executeNonQuery(R"SQL(BEGIN)SQL");
     auto stmt = connForInsert.createStmt(sql);
     stmt->executeNonQuery();
   }
@@ -327,11 +341,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   ASSERT_EQ(1, connForSelect.getTableNames().size());
   ASSERT_EQ("TEST", connForSelect.getTableNames().front());
   {
-    const char *const sql =
-      "SELECT "
-        "COUNT(*) AS NB_ROWS "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COUNT(*) AS NB_ROWS 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = connForSelect.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -348,11 +363,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
 
   // count the rows again on the select connection: should be 1
   {
-    const char *const sql =
-      "SELECT "
-        "COUNT(*) AS NB_ROWS "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COUNT(*) AS NB_ROWS 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = connForSelect.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -374,18 +390,17 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
   PostgresConn conn(m_connstring);
 
   // Try to drop anything owned by ctaunittest currently in the db
-  {
-    conn.executeNonQuery("drop owned by ctaunittest");
-  }
+  { conn.executeNonQuery(R"SQL(drop owned by ctaunittest)SQL"); }
 
   ASSERT_TRUE(conn.getTableNames().empty());
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 NUMERIC(20,0),"
-        "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 NUMERIC(20,0),
+        CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1))
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
@@ -394,11 +409,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1)"
-      "VALUES("
-        ":COL1);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1)
+      VALUES(
+        :COL1)
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
@@ -406,11 +422,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
 
   // Try to insert an identical row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1)"
-      "VALUES("
-        ":COL1);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1)
+      VALUES(
+        :COL1)
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     ASSERT_THROW(stmt->executeNonQuery(), exception::Exception);
@@ -425,10 +442,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeQuery_insert_violatin
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 NUMERIC(20,0),"
-        "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 NUMERIC(20,0),
+        CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -437,11 +455,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeQuery_insert_violatin
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1)"
-      "VALUES("
-        ":COL1);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1)
+      VALUES(
+        :COL1)
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
@@ -449,11 +468,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeQuery_insert_violatin
 
   // Try to insert an identical row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1)"
-      "VALUES("
-        ":COL1);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1)
+      VALUES(
+        :COL1)
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
@@ -469,9 +489,10 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -481,11 +502,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
   uint64_t val = 0xFFFFFFFFFFFFFFF0ULL;
   // Insert uint64_t with top bit set into a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO TEST("
-        "COL1)"
-      "VALUES("
-        ":COL1);";
+    const char* const sql = R"SQL(
+      INSERT INTO TEST(
+        COL1)
+      VALUES(
+        :COL1)
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->bindUint64(":COL1", val);
 
@@ -494,11 +516,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT "
-        "COL1 AS COL1 "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COL1 AS COL1 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -521,11 +544,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
 
   // Create a test table
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -550,15 +574,16 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
       c3.setFieldValue(i, rval);
     }
 
-    const char *const sql =
-      "COPY TEST("
-        "COL1,"
-        "COL2,"
-        "COL3) "
-      "FROM STDIN --"
-        ":MYCOL1,"
-        ":MYCOL2,"
-        ":MYCOL3";
+    const char* const sql = R"SQL(
+      COPY TEST(
+        COL1,
+        COL2,
+        COL3) 
+      FROM STDIN --
+        :MYCOL1,
+        :MYCOL2,
+        :MYCOL3
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     PostgresStmt &pgStmt = dynamic_cast<PostgresStmt &>(*stmt);
     pgStmt.setColumn(c3);
@@ -570,11 +595,12 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
   }
 
   {
-    const char *const sql =
-      "SELECT "
-        "COUNT(*) AS NB_ROWS "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COUNT(*) AS NB_ROWS 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
@@ -587,13 +613,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
   }
 
   {
-    const char *const sql =
-      "SELECT "
-        "COL1 AS COL1,"
-        "COL2 AS COL2,"
-        "COL3 AS COL3 "
-      "FROM "
-        "TEST;";
+    const char* const sql = R"SQL(
+      SELECT 
+        COL1 AS COL1,
+        COL2 AS COL2,
+        COL3 AS COL3 
+      FROM 
+        TEST
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
 
@@ -635,31 +662,34 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
 
   // Create a test table and insert some rows
   {
-    const char *const sql =
-      "CREATE TABLE TEST("
-        "COL1 VARCHAR(100),"
-        "COL2 VARCHAR(100),"
-        "COL3 NUMERIC(20,0));";
+    const char* const sql = R"SQL(
+      CREATE TABLE TEST(
+        COL1 VARCHAR(100),
+        COL2 VARCHAR(100),
+        COL3 NUMERIC(20,0))
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, m_conn->getTableNames().size());
     ASSERT_EQ("TEST", m_conn->getTableNames().front());
 
-    const char *const sql_populate =
-      "INSERT INTO TEST(COL1,COL2,COL3) VALUES "
-        "('val1',NULL,55),"
-        "('val1',NULL,56),"
-        "('val2',NULL,56),"
-        "('val2','yyy',10),"
-        "('val2','yyy',11)";
+    const char* const sql_populate = R"SQL(
+      INSERT INTO TEST(COL1,COL2,COL3) VALUES 
+        ('val1',NULL,55),
+        ('val1',NULL,56),
+        ('val2',NULL,56),
+        ('val2','yyy',10),
+        ('val2','yyy',11)
+    )SQL";
 
     m_conn->executeNonQuery(sql_populate);
   }
 
   // UPDATE and check affected row count
   {
-    const char *const sql =
-      "UPDATE TEST SET COL1=:NEWVAL WHERE COL1=:OLDVAL";
+    const char* const sql = R"SQL(
+      UPDATE TEST SET COL1=:NEWVAL WHERE COL1=:OLDVAL
+  )SQL";
 
     auto stmt = m_conn->createStmt(sql);
     stmt->bindString(":NEWVAL", std::string("val3"));
@@ -670,7 +700,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
 
   // SELECT and check affected row count
   {
-    const char *const sql = "SELECT COL1 FROM TEST WHERE COL1='val2'";
+    const char* const sql = R"SQL(
+      SELECT COL1 FROM TEST WHERE COL1='val2'
+    )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
     size_t nr=0;

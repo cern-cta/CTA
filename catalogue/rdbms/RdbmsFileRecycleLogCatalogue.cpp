@@ -136,11 +136,12 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& 
 }
 
 void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) const {
-  const char *const deleteFilesFromRecycleLogSql =
-  "DELETE FROM "
-    "FILE_RECYCLE_LOG "
-  "WHERE "
-    "VID=:VID";
+  const char* const deleteFilesFromRecycleLogSql = R"SQL(
+    DELETE FROM 
+      FILE_RECYCLE_LOG 
+    WHERE 
+      VID=:VID
+  )SQL";
 
   cta::utils::Timer t;
   log::TimingList tl;
@@ -164,12 +165,14 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn,
 //------------------------------------------------------------------------------
 void RdbmsFileRecycleLogCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn,
   const common::dataStructures::FileRecycleLog& fileRecycleLog) const {
-  const char *const deleteTapeFilesSql =
-  "DELETE FROM "
-    "FILE_RECYCLE_LOG "
-  "WHERE FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND "
-  "FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND "
-  "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+  const char* const deleteTapeFilesSql = R"SQL(
+    DELETE FROM 
+      FILE_RECYCLE_LOG 
+    WHERE 
+      FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND 
+      FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND 
+      FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+  )SQL";
 
   auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
   deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID", fileRecycleLog.archiveFileId);
@@ -184,57 +187,58 @@ void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
   const InsertFileRecycleLog& fileRecycleLog) const {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog, &m_log);
   uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
-  const char *const sql =
-  "INSERT INTO FILE_RECYCLE_LOG("
-    "FILE_RECYCLE_LOG_ID,"
-    "VID,"
-    "FSEQ,"
-    "BLOCK_ID,"
-    "COPY_NB,"
-    "TAPE_FILE_CREATION_TIME,"
-    "ARCHIVE_FILE_ID,"
-    "DISK_INSTANCE_NAME,"
-    "DISK_FILE_ID,"
-    "DISK_FILE_ID_WHEN_DELETED,"
-    "DISK_FILE_UID,"
-    "DISK_FILE_GID,"
-    "SIZE_IN_BYTES,"
-    "CHECKSUM_BLOB,"
-    "CHECKSUM_ADLER32,"
-    "STORAGE_CLASS_ID,"
-    "ARCHIVE_FILE_CREATION_TIME,"
-    "RECONCILIATION_TIME,"
-    "COLLOCATION_HINT,"
-    "DISK_FILE_PATH,"
-    "REASON_LOG,"
-    "RECYCLE_LOG_TIME"
-  ") SELECT "
-    ":FILE_RECYCLE_LOG_ID,"
-    ":VID,"
-    ":FSEQ,"
-    ":BLOCK_ID,"
-    ":COPY_NB,"
-    ":TAPE_FILE_CREATION_TIME,"
-    ":ARCHIVE_FILE_ID,"
-    "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-    "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-    "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
-    "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-    "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-    "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-    "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-    "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-    "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-    "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-    "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-    "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
-    ":DISK_FILE_PATH,"
-    ":REASON_LOG,"
-    ":RECYCLE_LOG_TIME "
-  "FROM "
-    "ARCHIVE_FILE "
-  "WHERE "
-    "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
+  const char* const sql = R"SQL(
+    INSERT INTO FILE_RECYCLE_LOG(
+      FILE_RECYCLE_LOG_ID,
+      VID,
+      FSEQ,
+      BLOCK_ID,
+      COPY_NB,
+      TAPE_FILE_CREATION_TIME,
+      ARCHIVE_FILE_ID,
+      DISK_INSTANCE_NAME,
+      DISK_FILE_ID,
+      DISK_FILE_ID_WHEN_DELETED,
+      DISK_FILE_UID,
+      DISK_FILE_GID,
+      SIZE_IN_BYTES,
+      CHECKSUM_BLOB,
+      CHECKSUM_ADLER32,
+      STORAGE_CLASS_ID,
+      ARCHIVE_FILE_CREATION_TIME,
+      RECONCILIATION_TIME,
+      COLLOCATION_HINT,
+      DISK_FILE_PATH,
+      REASON_LOG,
+      RECYCLE_LOG_TIME
+    ) SELECT 
+      :FILE_RECYCLE_LOG_ID,
+      :VID,
+      :FSEQ,
+      :BLOCK_ID,
+      :COPY_NB,
+      :TAPE_FILE_CREATION_TIME,
+      :ARCHIVE_FILE_ID,
+      ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
+      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,
+      ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,
+      ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,
+      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,
+      ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
+      ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,
+      ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,
+      ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,
+      :DISK_FILE_PATH,
+      :REASON_LOG,
+      :RECYCLE_LOG_TIME 
+    FROM 
+      ARCHIVE_FILE 
+    WHERE 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":FILE_RECYCLE_LOG_ID",fileRecycleLogId);
   stmt.bindString(":VID",fileRecycleLog.vid);
@@ -280,18 +284,19 @@ std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfF
   rdbms::Conn & conn,const common::dataStructures::TapeFile & tapefile, const uint64_t archiveFileId) const {
   std::list<InsertFileRecycleLog> fileRecycleLogsToInsert;
   //First, get the file to insert on the FILE_RECYCLE_LOG table
-  const char *const sql =
-  "SELECT "
-    "TAPE_FILE.VID AS VID,"
-    "TAPE_FILE.FSEQ AS FSEQ,"
-    "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-    "TAPE_FILE.COPY_NB AS COPY_NB,"
-    "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-    "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-  "FROM "
-    "TAPE_FILE "
-  "WHERE "
-    "TAPE_FILE.COPY_NB=:COPY_NB AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND (TAPE_FILE.VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ)";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_FILE.VID AS VID,
+      TAPE_FILE.FSEQ AS FSEQ,
+      TAPE_FILE.BLOCK_ID AS BLOCK_ID,
+      TAPE_FILE.COPY_NB AS COPY_NB,
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
+      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
+    FROM 
+      TAPE_FILE 
+    WHERE 
+      TAPE_FILE.COPY_NB=:COPY_NB AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND (TAPE_FILE.VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ)
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindUint8(":COPY_NB",tapefile.copyNb);

@@ -29,13 +29,14 @@ SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger &log,
   : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
-  const char *const sql =
-    "SELECT "
-      "LAST_FSEQ AS LAST_FSEQ "
-    "FROM "
-      "TAPE "
-    "WHERE "
-      "VID = :VID;";
+  const char* const sql = R"SQL(
+    SELECT 
+      LAST_FSEQ AS LAST_FSEQ 
+    FROM 
+      TAPE 
+    WHERE 
+      VID = :VID
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);

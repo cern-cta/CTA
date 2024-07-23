@@ -28,8 +28,9 @@ PostgresVirtualOrganizationCatalogue::PostgresVirtualOrganizationCatalogue(log::
   : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
-  const char *const sql =
-    "select NEXTVAL('VIRTUAL_ORGANIZATION_ID_SEQ') AS VIRTUAL_ORGANIZATION_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('VIRTUAL_ORGANIZATION_ID_SEQ') AS VIRTUAL_ORGANIZATION_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

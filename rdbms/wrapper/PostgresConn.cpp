@@ -174,10 +174,10 @@ std::list<std::string> PostgresConn::getSequenceNames() {
       throw exception::Exception("can not execute sql, another query is in progress");
     }
 
-    Postgres::Result res(PQexec(m_pgsqlConn,
-       "SELECT c.relname AS SEQUENCE_NAME FROM pg_class c "
-         "WHERE c.relkind = 'S' ORDER BY SEQUENCE_NAME"
-       ));
+    Postgres::Result res(PQexec(m_pgsqlConn, R"SQL(
+        SELECT c.relname AS SEQUENCE_NAME FROM pg_class c 
+          WHERE c.relkind = 'S' ORDER BY SEQUENCE_NAME
+      )SQL"));
 
     throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing Sequences in the DB");
 
@@ -208,14 +208,15 @@ std::map<std::string, std::string, std::less<>> PostgresConn::getColumns(const s
     std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     auto lowercaseTableName = tableName;
     utils::toLower(lowercaseTableName); // postgres work with lowercase
-    const char *const sql =
-      "SELECT "
-        "COLUMN_NAME, "
-        "DATA_TYPE "
-      "FROM "
-        "INFORMATION_SCHEMA.COLUMNS "
-      "WHERE "
-        "TABLE_NAME = :TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        COLUMN_NAME, 
+        DATA_TYPE 
+      FROM 
+        INFORMATION_SCHEMA.COLUMNS 
+      WHERE 
+        TABLE_NAME = :TABLE_NAME
+    )SQL";
 
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", lowercaseTableName);
@@ -258,15 +259,15 @@ std::list<std::string> PostgresConn::getTableNames() {
       throw exception::Exception("can not execute sql, another query is in progress");
     }
 
-    Postgres::Result res(PQexec(m_pgsqlConn,
-      "SELECT "
-        "tablename "
-      "FROM "
-        "pg_catalog.pg_tables "
-      "WHERE "
-        "pg_catalog.pg_tables.schemaname = current_schema() "
-      "ORDER BY tablename"
-    ));
+    Postgres::Result res(PQexec(m_pgsqlConn, R"SQL(
+      SELECT 
+        tablename 
+      FROM 
+        pg_catalog.pg_tables 
+      WHERE 
+        pg_catalog.pg_tables.schemaname = current_schema() 
+      ORDER BY tablename
+    )SQL"));
 
     throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing table names in the DB");
 
@@ -295,15 +296,16 @@ std::list<std::string> PostgresConn::getTableNames() {
 std::list<std::string> PostgresConn::getIndexNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "INDEXNAME "
-      "FROM "
-        "PG_INDEXES "
-      "WHERE "
-        "SCHEMANAME = 'public' "
-      "ORDER BY "
-        "INDEXNAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        INDEXNAME 
+      FROM 
+        PG_INDEXES 
+      WHERE 
+        SCHEMANAME = 'public' 
+      ORDER BY 
+        INDEXNAME
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -339,17 +341,18 @@ std::list<std::string> PostgresConn::getParallelTableNames(){
 std::list<std::string> PostgresConn::getConstraintNames(const std::string& tableName){
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "CON.CONNAME AS CONSTRAINT_NAME "
-      "FROM "
-        "PG_CATALOG.PG_CONSTRAINT CON "
-      "INNER JOIN PG_CATALOG.PG_CLASS REL "
-        "ON REL.OID=CON.CONRELID "
-      "INNER JOIN PG_CATALOG.PG_NAMESPACE NSP "
-        "ON NSP.OID = CONNAMESPACE "
-      "WHERE "
-        "REL.RELNAME=:TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        CON.CONNAME AS CONSTRAINT_NAME 
+      FROM 
+        PG_CATALOG.PG_CONSTRAINT CON 
+      INNER JOIN PG_CATALOG.PG_CLASS REL 
+        ON REL.OID=CON.CONRELID 
+      INNER JOIN PG_CATALOG.PG_NAMESPACE NSP 
+        ON NSP.OID = CONNAMESPACE 
+      WHERE 
+        REL.RELNAME=:TABLE_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     std::string localTableName = tableName;
     utils::toLower(localTableName);
@@ -390,12 +393,13 @@ std::list<std::string> PostgresConn::getSynonymNames() {
 std::list<std::string> PostgresConn::getTypeNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-            "SELECT "
-            "TYPNAME "
-            "FROM "
-            "PG_TYPE "
-            "WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')";
+    const char* const sql = R"SQL(
+      SELECT 
+        TYPNAME 
+      FROM 
+        PG_TYPE 
+      WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -415,12 +419,13 @@ std::list<std::string> PostgresConn::getTypeNames() {
 std::list<std::string> PostgresConn::getViewNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-            "SELECT "
-            "TABLE_NAME "
-            "FROM "
-            "INFORMATION_SCHEMA.VIEWS "
-            "WHERE table_schema = 'public'";
+    const char* const sql = R"SQL(
+      SELECT 
+        TABLE_NAME 
+      FROM 
+        INFORMATION_SCHEMA.VIEWS 
+      WHERE table_schema = 'public'
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {

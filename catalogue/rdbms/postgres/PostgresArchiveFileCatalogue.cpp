@@ -39,38 +39,39 @@ PostgresArchiveFileCatalogue::PostgresArchiveFileCatalogue(log::Logger &log, std
 
 void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
   const uint64_t archiveFileId, log::LogContext &lc) {
-  const char *selectSql =
-    "SELECT "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-      "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-      "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-      "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-      "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-      "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-      "TAPE_FILE.VID AS VID,"
-      "TAPE_FILE.FSEQ AS FSEQ,"
-      "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-      "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
-      "TAPE_FILE.COPY_NB AS COPY_NB,"
-      "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-    "FROM "
-      "ARCHIVE_FILE "
-    "INNER JOIN STORAGE_CLASS ON "
-      "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "INNER JOIN TAPE_FILE ON "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-    "WHERE "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
-    "FOR UPDATE OF ARCHIVE_FILE";
+  const char* selectSql = R"SQL(
+    SELECT 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+      ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
+      ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,
+      ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,
+      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,
+      ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,
+      TAPE_FILE.VID AS VID,
+      TAPE_FILE.FSEQ AS FSEQ,
+      TAPE_FILE.BLOCK_ID AS BLOCK_ID,
+      TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
+      TAPE_FILE.COPY_NB AS COPY_NB,
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME 
+    FROM 
+      ARCHIVE_FILE 
+    INNER JOIN STORAGE_CLASS ON 
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    INNER JOIN TAPE_FILE ON 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
+    WHERE 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID 
+    FOR UPDATE OF ARCHIVE_FILE
+  )SQL";
   utils::Timer t;
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
-  conn.executeNonQuery("BEGIN");
+  conn.executeNonQuery(R"SQL(BEGIN)SQL");
 
   const auto getConnTime = t.secs(utils::Timer::resetCounter);
   auto selectStmt = conn.createStmt(selectSql);
@@ -167,7 +168,7 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
     stmt.executeNonQuery();
   };
 
-  executeQuery("DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID", archiveFileId);
+  executeQuery(R"SQL(DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)SQL", archiveFileId);
 
   const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -178,7 +179,7 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
 
   const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
-  executeQuery("DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID", archiveFileId);
+  executeQuery(R"SQL(DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)SQL", archiveFileId);
 
   const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -219,8 +220,9 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
 }
 
 uint64_t PostgresArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
-  const char *const sql =
-    "select NEXTVAL('ARCHIVE_FILE_ID_SEQ') AS ARCHIVE_FILE_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('ARCHIVE_FILE_ID_SEQ') AS ARCHIVE_FILE_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {
@@ -235,7 +237,7 @@ void PostgresArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms
   log::TimingList tl;
   //We currently do an INSERT INTO and a DELETE FROM
   //in a single transaction
-  conn.executeNonQuery("BEGIN");
+  conn.executeNonQuery(R"SQL(BEGIN)SQL");
   const auto fileRecycleLog = static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
   fileRecycleLog->copyArchiveFileToFileRecycleLog(conn,request);
   tl.insertAndReset("insertToRecycleBinTime",t);
@@ -268,16 +270,17 @@ std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
     archiveFileIdList.push_back(event.archiveFileId);
   }
 
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-      "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 "
-    "FROM "
-      "ARCHIVE_FILE "
-    "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID";
+  const char* const sql = R"SQL(
+    SELECT 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 
+    FROM 
+      ARCHIVE_FILE 
+    INNER JOIN TEMP_TAPE_FILE_BATCH ON 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   auto rset = stmt.executeQuery();

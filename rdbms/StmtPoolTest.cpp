@@ -40,7 +40,9 @@ TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const sql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
@@ -56,7 +58,9 @@ TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const sql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
@@ -74,7 +78,9 @@ TEST_F(cta_rdbms_StmtPoolTest, moveConstructor) {
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const sql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
@@ -88,16 +94,19 @@ TEST_F(cta_rdbms_StmtPoolTest, moveConstructor) {
 TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
   using namespace cta::rdbms;
 
-  const std::string createTableSql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
-  const std::string selectTableNamesSql =
-       "SELECT "
-        "NAME AS NAME "
-      "FROM "
-        "SQLITE_MASTER "
-      "WHERE "
-        "TYPE = 'table' "
-      "ORDER BY "
-        "NAME;";
+  const char* const createTableSql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
+  const char* const selectTableNamesSql = R"SQL(
+      SELECT
+        NAME AS NAME
+      FROM
+        SQLITE_MASTER
+      WHERE
+        TYPE = 'table'
+      ORDER BY
+        NAME;
+  )SQL";
 
   // First in-memory database
   {
@@ -172,7 +181,9 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_getTableNames) {
   using namespace cta::rdbms;
 
-  const std::string createTableSql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const createTableSql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
 
   // First in-memory database
   {
@@ -217,7 +228,9 @@ TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const sql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {

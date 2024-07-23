@@ -44,7 +44,7 @@ void cta_rdbms_StmtTest::SetUp() {
   ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, m_conn.getAutocommitMode());
 
   try {
-    m_conn.executeNonQuery("DROP TABLE STMT_TEST");
+    m_conn.executeNonQuery(R"SQL(DROP TABLE STMT_TEST)SQL");
   } catch(...) {
     // Do nothing
   }
@@ -61,20 +61,21 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
   using namespace cta::rdbms;
 
   try {
-    std::string sql =
-      "CREATE TABLE STMT_TEST("                                      "\n"
-      "  ID         UINT64TYPE CONSTRAINT STMT_TEST_ID_NN NOT NULL," "\n"
-      "  DOUBLE_COL FLOAT,"                                          "\n"
-      "  UINT8_COL  UINT8TYPE,"                                      "\n"
-      "  UINT16_COL UINT16TYPE,"                                     "\n"
-      "  UINT32_COL UINT32TYPE,"                                     "\n"
-      "  UINT64_COL UINT64TYPE,"                                     "\n"
-      "  STRING_COL VARCHAR(100),"                                   "\n"
-      "  BLOB_COL   BLOBTYPE,"                                      "\n"
-      "  BOOL_COL   CHAR(1) DEFAULT '0',"                            "\n"
-      "  CONSTRAINT STMT_TEST_PK PRIMARY KEY(ID),"                   "\n"
-      "  CONSTRAINT BOOL_COL_BOOL_CK CHECK(BOOL_COL IN ('0', '1'))"  "\n"
-      ")";
+    std::string sql = R"SQL(
+      CREATE TABLE STMT_TEST(                                     
+        ID         UINT64TYPE CONSTRAINT STMT_TEST_ID_NN NOT NULL,
+        DOUBLE_COL FLOAT,                                         
+        UINT8_COL  UINT8TYPE,                                     
+        UINT16_COL UINT16TYPE,                                    
+        UINT32_COL UINT32TYPE,                                    
+        UINT64_COL UINT64TYPE,                                    
+        STRING_COL VARCHAR(100),                                  
+        BLOB_COL   BLOBTYPE,                                     
+        BOOL_COL   CHAR(1) DEFAULT '0',                           
+        CONSTRAINT STMT_TEST_PK PRIMARY KEY(ID),                  
+        CONSTRAINT BOOL_COL_BOOL_CK CHECK(BOOL_COL IN ('0', '1')) 
+      )
+    )SQL";
 
     switch(m_login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
@@ -128,7 +129,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
 void cta_rdbms_StmtTest::TearDown() {
   using namespace cta::rdbms;
   try {
-    m_conn.executeNonQuery("DROP TABLE STMT_TEST");
+    m_conn.executeNonQuery(R"SQL(DROP TABLE STMT_TEST)SQL");
   } catch(...) {
     // Do nothing
   }
@@ -141,13 +142,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  DOUBLE_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :DOUBLE_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        DOUBLE_COL)          
+      VALUES(                
+        1,                   
+        :DOUBLE_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindDouble(":DOUBLE_COL", insertValue);
     stmt.executeNonQuery();
@@ -155,11 +157,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  DOUBLE_COL AS DOUBLE_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                     
+        DOUBLE_COL AS DOUBLE_COL 
+      FROM                       
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -191,13 +194,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBlob) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  BLOB_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :BLOB_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        BLOB_COL)            
+      VALUES(                
+        1,                   
+        :BLOB_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindBlob(":BLOB_COL", insertBlob);
     stmt.executeNonQuery();
@@ -205,11 +209,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBlob) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  BLOB_COL AS BLOB_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                     
+        BLOB_COL AS BLOB_COL     
+      FROM                       
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -232,13 +237,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  DOUBLE_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :DOUBLE_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        DOUBLE_COL)          
+      VALUES(                
+        1,                   
+        :DOUBLE_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindDouble(":DOUBLE_COL", insertValue);
     stmt.executeNonQuery();
@@ -246,11 +252,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  DOUBLE_COL AS DOUBLE_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                     
+        DOUBLE_COL AS DOUBLE_COL 
+      FROM                       
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -272,13 +279,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT8_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT8_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        UINT8_COL)           
+      VALUES(                
+        1,                   
+        :UINT8_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint8(":UINT8_COL", insertValue);
     stmt.executeNonQuery();
@@ -286,11 +294,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                   "\n"
-      "  UINT8_COL AS UINT8_COL" "\n"
-      "FROM"                     "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                   
+        UINT8_COL AS UINT8_COL 
+      FROM                     
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -316,13 +325,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT8_COL)"           "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT8_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        UINT8_COL)           
+      VALUES(                
+        1,                   
+        :UINT8_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint8(":UINT8_COL", insertValue);
     stmt.executeNonQuery();
@@ -330,11 +340,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                   "\n"
-      "  UINT8_COL AS UINT8_COL" "\n"
-      "FROM"                     "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                   
+        UINT8_COL AS UINT8_COL 
+      FROM                     
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -360,13 +371,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT8_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT8_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST( 
+        ID,                  
+        UINT8_COL)           
+      VALUES(                
+        1,                   
+        :UINT8_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint8(":UINT8_COL", insertValue);
     stmt.executeNonQuery();
@@ -374,11 +386,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT8_COL AS UINT8_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT8_COL AS UINT8_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -401,13 +414,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT16_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT16_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT16_COL)         
+      VALUES(               
+        1,                  
+        :UINT16_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint16(":UINT16_COL", insertValue);
     stmt.executeNonQuery();
@@ -415,11 +429,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT16_COL AS UINT16_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT16_COL AS UINT16_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -443,13 +458,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT16_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT16_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT16_COL)         
+      VALUES(               
+        1,                  
+        :UINT16_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint16(":UINT16_COL", insertValue);
     stmt.executeNonQuery();
@@ -457,11 +473,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT16_COL AS UINT16_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT16_COL AS UINT16_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -485,13 +502,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT16_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT16_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT16_COL)         
+      VALUES(               
+        1,                  
+        :UINT16_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint16(":UINT16_COL", insertValue);
     stmt.executeNonQuery();
@@ -499,11 +517,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT16_COL AS UINT16_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT16_COL AS UINT16_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -525,13 +544,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT32_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT32_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT32_COL)         
+      VALUES(               
+        1,                  
+        :UINT32_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint32(":UINT32_COL", insertValue);
     stmt.executeNonQuery();
@@ -539,11 +559,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT32_COL AS UINT32_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT32_COL AS UINT32_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -567,13 +588,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT32_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT32_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT32_COL)         
+      VALUES(               
+        1,                  
+        :UINT32_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint32(":UINT32_COL", insertValue);
     stmt.executeNonQuery();
@@ -581,11 +603,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT32_COL AS UINT32_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT32_COL AS UINT32_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -608,13 +631,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT32_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT32_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT32_COL)         
+      VALUES(               
+        1,                  
+        :UINT32_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint32(":UINT32_COL", insertValue);
     stmt.executeNonQuery();
@@ -622,11 +646,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT32_COL AS UINT32_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT32_COL AS UINT32_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -648,13 +673,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT64_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT64_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT64_COL)         
+      VALUES(               
+        1,                  
+        :UINT64_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":UINT64_COL", insertValue);
     stmt.executeNonQuery();
@@ -662,11 +688,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT64_COL AS UINT64_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT64_COL AS UINT64_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -690,13 +717,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT64_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT64_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT64_COL)         
+      VALUES(               
+        1,                  
+        :UINT64_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":UINT64_COL", insertValue);
     stmt.executeNonQuery();
@@ -704,11 +732,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT64_COL AS UINT64_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT64_COL AS UINT64_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -732,13 +761,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT64_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT64_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        UINT64_COL)         
+      VALUES(               
+        1,                  
+        :UINT64_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":UINT64_COL", insertValue);
     stmt.executeNonQuery();
@@ -746,11 +776,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT64_COL AS UINT64_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        UINT64_COL AS UINT64_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -774,13 +805,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  STRING_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :STRING_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        STRING_COL)         
+      VALUES(               
+        1,                  
+        :STRING_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":STRING_COL", insertValue);
     stmt.executeNonQuery();
@@ -788,11 +820,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  STRING_COL AS STRING_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        STRING_COL AS STRING_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -814,13 +847,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  STRING_COL)"          "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :STRING_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        STRING_COL)         
+      VALUES(               
+        1,                  
+        :STRING_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":STRING_COL", insertValue);
     stmt.executeNonQuery();
@@ -828,11 +862,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  STRING_COL AS STRING_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        STRING_COL AS STRING_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -856,13 +891,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  BOOL_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :BOOL_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        BOOL_COL)         
+      VALUES(               
+        1,                  
+        :BOOL_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindBool(":BOOL_COL", insertValue);
     stmt.executeNonQuery();
@@ -870,11 +906,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  BOOL_COL AS BOOL_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                    
+        BOOL_COL AS BOOL_COL
+      FROM                      
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -896,13 +933,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_true) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  BOOL_COL)"            "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :BOOL_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        BOOL_COL)           
+      VALUES(               
+        1,                  
+        :BOOL_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindBool(":BOOL_COL", insertValue);
     stmt.executeNonQuery();
@@ -910,11 +948,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_true) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                 "\n"
-      "  BOOL_COL AS BOOL_COL" "\n"
-      "FROM"                   "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                
+        BOOL_COL AS BOOL_COL
+      FROM                  
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -938,13 +977,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_false) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  BOOL_COL)"            "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :BOOL_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        BOOL_COL)           
+      VALUES(               
+        1,                  
+        :BOOL_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindBool(":BOOL_COL", insertValue);
     stmt.executeNonQuery();
@@ -952,11 +992,12 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_false) {
 
   // Select the row back from the table
   {
-    const char *const sql =
-      "SELECT"                 "\n"
-      "  BOOL_COL AS BOOL_COL" "\n"
-      "FROM"                   "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT                
+        BOOL_COL AS BOOL_COL
+      FROM                  
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -980,13 +1021,14 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_invalid_bool_value) {
 
   // Insert a row into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-        "BOOL_COL)"            "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-        ":BOOL_COL)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID,                 
+        BOOL_COL)           
+      VALUES(               
+        1,                  
+        :BOOL_COL)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":BOOL_COL", insertValue);
 
@@ -1001,11 +1043,12 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
 
   // Insert an ID into the test table
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID)"                  "\n"
-      "VALUES("                "\n"
-      "  :ID)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID)                 
+      VALUES(               
+        :ID)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":ID", insertValue);
     stmt.executeNonQuery();
@@ -1013,11 +1056,12 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
 
   // Select the ID back from the table
   {
-    const char *const sql =
-      "SELECT"      "\n"
-      "  ID AS ID"  "\n"
-      "FROM"        "\n"
-      "  STMT_TEST";
+    const char* const sql = R"SQL(
+      SELECT     
+        ID AS ID 
+      FROM       
+        STMT_TEST
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
@@ -1035,11 +1079,12 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
 
   // Attempt to insert the same ID again
   {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID) "                 "\n"
-      "VALUES("                "\n"
-      "  :ID)";
+    const char* const sql = R"SQL(
+      INSERT INTO STMT_TEST(
+        ID)                 
+      VALUES(               
+        :ID)
+    )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":ID", insertValue);
     switch(m_login.dbType) {

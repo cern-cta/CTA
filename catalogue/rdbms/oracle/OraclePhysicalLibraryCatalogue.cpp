@@ -28,11 +28,12 @@ OraclePhysicalLibraryCatalogue::OraclePhysicalLibraryCatalogue(log::Logger &log,
   : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OraclePhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "SELECT "
-      "PHYSICAL_LIBRARY_ID_SEQ.NEXTVAL AS PHYSICAL_LIBRARY_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      PHYSICAL_LIBRARY_ID_SEQ.NEXTVAL AS PHYSICAL_LIBRARY_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

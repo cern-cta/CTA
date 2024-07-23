@@ -28,8 +28,9 @@ PostgresPhysicalLibraryCatalogue::PostgresPhysicalLibraryCatalogue(log::Logger &
   : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresPhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "select NEXTVAL('PHYSICAL_LIBRARY_ID_SEQ') AS PHYSICAL_LIBRARY_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('PHYSICAL_LIBRARY_ID_SEQ') AS PHYSICAL_LIBRARY_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

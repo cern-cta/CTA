@@ -106,11 +106,12 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
 }
 
 bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) const {
-  const char *const sql =
-    "SELECT "
-      "CTA_CATALOGUE.STATUS AS STATUS "
-    "FROM "
-      "CTA_CATALOGUE";
+  const char* const sql = R"SQL(
+    SELECT 
+      CTA_CATALOGUE.STATUS AS STATUS 
+    FROM 
+      CTA_CATALOGUE
+  )SQL";
 
   auto stmt = conn->createStmt(sql);
   auto rset = stmt.executeQuery();

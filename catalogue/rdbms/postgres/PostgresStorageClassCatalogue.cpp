@@ -29,8 +29,9 @@ PostgresStorageClassCatalogue::PostgresStorageClassCatalogue(log::Logger &log,
   : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
-  const char *const sql =
-    "select NEXTVAL('STORAGE_CLASS_ID_SEQ') AS STORAGE_CLASS_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('STORAGE_CLASS_ID_SEQ') AS STORAGE_CLASS_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

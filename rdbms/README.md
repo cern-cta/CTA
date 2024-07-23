@@ -25,7 +25,9 @@ rdbms::ConnPool connPool(login, maxNbConns);
 auto conn = connPool.getConn();
 
 {
-  const std::string sql = "CREATE TABLE TEST(ID INTEGER, VALUE VARCHAR(80))";
+  const char* const sql = R"SQL(
+    CREATE TABLE TEST(ID INTEGER, VALUE VARCHAR(80))
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.executeNonQuery();
 }
@@ -33,7 +35,9 @@ auto conn = connPool.getConn();
 {
   const uint64_t id = 1;
   const std::string value = "ONE";
-  const std::string sql = "INSERT INTO TEST(ID, VALUE) VALUES (:ID, :VALUE);";
+  const char* const sql = R"SQL(
+    INSERT INTO TEST(ID, VALUE) VALUES (:ID, :VALUE)
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ID", id);
   stmt.bindString(":VALUE", value);
@@ -43,7 +47,9 @@ auto conn = connPool.getConn();
 {
   const uint64_t id = 2;
   const std::string value = "TWO";
-  const std::string sql = "INSERT INTO TEST(ID, VALUE) VALUES (:ID, :VALUE);";
+  const char* const sql = R"SQL(
+    INSERT INTO TEST(ID, VALUE) VALUES (:ID, :VALUE)
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ID", id);
   stmt.bindString(":VALUE", value);
@@ -51,7 +57,9 @@ auto conn = connPool.getConn();
 }
 
 {
-  const std::string sql = "SELECT TEST.ID AS ID, TEST.VALUE AS VALUE FROM TEST ORDER BY ID";
+  const char* const sql = R"SQL(
+    SELECT TEST.ID AS ID, TEST.VALUE AS VALUE FROM TEST ORDER BY ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 

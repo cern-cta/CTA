@@ -81,7 +81,9 @@ bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login & login, cta
 // setProductionFlag
 //------------------------------------------------------------------------------
 void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) const {
-  const char *  const sql = "UPDATE CTA_CATALOGUE SET IS_PRODUCTION='1'";
+  const char* const sql = R"SQL(
+    UPDATE CTA_CATALOGUE SET IS_PRODUCTION='1'
+  )SQL";
   try {
     conn.executeNonQuery(sql);
   } catch(const exception::Exception & ex) {

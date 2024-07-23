@@ -65,14 +65,16 @@ struct RetrieveJobSummaryRow {
   static rdbms::Rset selectVid(const std::string &vid,
                                common::dataStructures::JobQueueType type,
                                Transaction &txn) {
-    const char *const sql = "SELECT "
-      "VID,"
-      "STATUS,"
-      "JOBS_COUNT,"
-      "JOBS_TOTAL_SIZE,"
-    "FROM RETRIEVE_JOB_SUMMARY WHERE "
-      "VID = :VID AND "
-      "STATUS = :STATUS";
+    const char* const sql = R"SQL(
+      SELECT 
+        VID,
+        STATUS,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+      FROM RETRIEVE_JOB_SUMMARY WHERE 
+        VID = :VID AND 
+        STATUS = :STATUS
+    )SQL";
 
     std::string statusStr;
     switch(type) {

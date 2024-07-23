@@ -66,37 +66,38 @@ void RdbmsStorageClassCatalogue::createStorageClass(
   }
   const uint64_t storageClassId = getNextStorageClassId(conn);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO STORAGE_CLASS("
-      "STORAGE_CLASS_ID,"
-      "STORAGE_CLASS_NAME,"
-      "NB_COPIES,"
-      "VIRTUAL_ORGANIZATION_ID,"
+  const char* const sql = R"SQL(
+    INSERT INTO STORAGE_CLASS(
+      STORAGE_CLASS_ID,
+      STORAGE_CLASS_NAME,
+      NB_COPIES,
+      VIRTUAL_ORGANIZATION_ID,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":STORAGE_CLASS_ID,"
-      ":STORAGE_CLASS_NAME,"
-      ":NB_COPIES,"
-      "(SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :STORAGE_CLASS_ID,
+      :STORAGE_CLASS_NAME,
+      :NB_COPIES,
+      (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindUint64(":STORAGE_CLASS_ID", storageClassId);
@@ -135,11 +136,12 @@ void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string &storageCl
       " storage class is being used by one or more file in the recycle logs");
   }
 
-  const char *const sql =
-    "DELETE FROM "
-      "STORAGE_CLASS "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    DELETE FROM 
+      STORAGE_CLASS 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -153,27 +155,28 @@ void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string &storageCl
 
 std::list<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::getStorageClasses() const {
   std::list<common::dataStructures::StorageClass> storageClasses;
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "NB_COPIES AS NB_COPIES,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      NB_COPIES AS NB_COPIES,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
 
-      "STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,"
+      STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,
 
-      "STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "STORAGE_CLASS "
-    "INNER JOIN "
-      "VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "ORDER BY "
-      "STORAGE_CLASS_NAME";
+      STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      STORAGE_CLASS 
+    INNER JOIN 
+      VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    ORDER BY 
+      STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -198,27 +201,28 @@ std::list<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::getS
 }
 
 common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass(const std::string &name) const {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "NB_COPIES AS NB_COPIES,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
-      "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
-      "STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,"
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      NB_COPIES AS NB_COPIES,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
+      VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,
+      STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,
 
-      "STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "STORAGE_CLASS "
-    "INNER JOIN "
-      "VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+      STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      STORAGE_CLASS 
+    INNER JOIN 
+      VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", name);
@@ -248,14 +252,15 @@ common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass
 void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t nbCopies) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE STORAGE_CLASS SET "
-      "NB_COPIES = :NB_COPIES,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    UPDATE STORAGE_CLASS SET 
+      NB_COPIES = :NB_COPIES,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":NB_COPIES", nbCopies);
@@ -276,14 +281,15 @@ void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStr
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE STORAGE_CLASS SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    UPDATE STORAGE_CLASS SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -302,14 +308,15 @@ void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStr
 void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &vo) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE STORAGE_CLASS SET "
-      "VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    UPDATE STORAGE_CLASS SET 
+      VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   if(vo.empty()){
     throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class : ") + name + " because the vo is an empty string");
@@ -335,14 +342,15 @@ void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructur
 void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &currentName, const std::string &newName) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE STORAGE_CLASS SET "
-      "STORAGE_CLASS_NAME = :NEW_STORAGE_CLASS_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    UPDATE STORAGE_CLASS SET 
+      STORAGE_CLASS_NAME = :NEW_STORAGE_CLASS_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   if(newName != currentName && RdbmsCatalogueUtils::storageClassExists(conn,newName)){
     throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName +". The new name : " + newName+" already exists in the database.");
@@ -363,17 +371,18 @@ void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
 
 bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn &conn,
   const std::string &storageClassName) const {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
-    "FROM "
-      "ARCHIVE_ROUTE "
-    "INNER JOIN "
-      "STORAGE_CLASS "
-    "ON "
-      "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME 
+    FROM 
+      ARCHIVE_ROUTE 
+    INNER JOIN 
+      STORAGE_CLASS 
+    ON 
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   auto rset = stmt.executeQuery();
@@ -382,17 +391,18 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn &
 
 bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &conn,
   const std::string &storageClassName) const {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
-    "FROM "
-      "ARCHIVE_FILE "
-    "INNER JOIN "
-      "STORAGE_CLASS "
-    "ON "
-      "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME 
+    FROM 
+      ARCHIVE_FILE 
+    INNER JOIN 
+      STORAGE_CLASS 
+    ON 
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   auto rset = stmt.executeQuery();
@@ -401,17 +411,18 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &c
 
 bool RdbmsStorageClassCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn &conn,
   const std::string &storageClassName) const {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
-    "FROM "
-      "FILE_RECYCLE_LOG "
-    "INNER JOIN "
-      "STORAGE_CLASS "
-    "ON "
-      "FILE_RECYCLE_LOG.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME 
+    FROM 
+      FILE_RECYCLE_LOG 
+    INNER JOIN 
+      STORAGE_CLASS 
+    ON 
+      FILE_RECYCLE_LOG.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   auto rset = stmt.executeQuery();

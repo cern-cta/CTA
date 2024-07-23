@@ -34,15 +34,16 @@ RdbmsSchemaCatalogue::RdbmsSchemaCatalogue(log::Logger &log, std::shared_ptr<rdb
 
 SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
   std::map<std::string, uint64_t, std::less<>> schemaVersion;
-  const char *const sql =
-    "SELECT "
-      "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
-      "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
-      "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
-      "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
-      "CTA_CATALOGUE.STATUS AS STATUS "
-    "FROM "
-      "CTA_CATALOGUE";
+  const char* const sql = R"SQL(
+    SELECT 
+      CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,
+      CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,
+      CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,
+      CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,
+      CTA_CATALOGUE.STATUS AS STATUS 
+    FROM 
+      CTA_CATALOGUE
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);

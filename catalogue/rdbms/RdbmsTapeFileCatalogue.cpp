@@ -109,23 +109,24 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
     = fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn,tapeFile,archiveFileId);
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO TAPE_FILE("
-      "VID,"
-      "FSEQ,"
-      "BLOCK_ID,"
-      "LOGICAL_SIZE_IN_BYTES,"
-      "COPY_NB,"
-      "CREATION_TIME,"
-      "ARCHIVE_FILE_ID)"
-    "VALUES("
-      ":VID,"
-      ":FSEQ,"
-      ":BLOCK_ID,"
-      ":LOGICAL_SIZE_IN_BYTES,"
-      ":COPY_NB,"
-      ":CREATION_TIME,"
-      ":ARCHIVE_FILE_ID)";
+  const char* const sql = R"SQL(
+    INSERT INTO TAPE_FILE(
+      VID,
+      FSEQ,
+      BLOCK_ID,
+      LOGICAL_SIZE_IN_BYTES,
+      COPY_NB,
+      CREATION_TIME,
+      ARCHIVE_FILE_ID)
+    VALUES(
+      :VID,
+      :FSEQ,
+      :BLOCK_ID,
+      :LOGICAL_SIZE_IN_BYTES,
+      :COPY_NB,
+      :CREATION_TIME,
+      :ARCHIVE_FILE_ID)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":VID", tapeFile.vid);
@@ -138,12 +139,13 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
   stmt.executeNonQuery();
 
   for(auto& fileRecycleLog: insertedFilesRecycleLog){
-    const char *const sql2 =
-    "DELETE FROM "
-      "TAPE_FILE "
-    "WHERE "
-      "VID=:VID AND "
-      "FSEQ=:FSEQ";
+    const char* const sql2 = R"SQL(
+      DELETE FROM 
+        TAPE_FILE 
+      WHERE 
+        VID=:VID AND 
+        FSEQ=:FSEQ
+    )SQL";
     auto stmt2 = conn.createStmt(sql2);
     stmt2.bindString(":VID",fileRecycleLog.vid);
     stmt2.bindUint64(":FSEQ",fileRecycleLog.fSeq);
@@ -155,10 +157,11 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
 void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   const common::dataStructures::DeleteArchiveRequest& request) const {
   //Delete the tape files after.
-  const char *const deleteTapeFilesSql =
-  "DELETE FROM "
-    "TAPE_FILE "
-  "WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+  const char* const deleteTapeFilesSql = R"SQL(
+    DELETE FROM 
+      TAPE_FILE 
+    WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+  )SQL";
 
   auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
   deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
@@ -170,12 +173,13 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   for(auto &tapeFile: file.tapeFiles) {
 
     //Delete the tape file.
-    const char *const deleteTapeFilesSql =
-    "DELETE FROM "
-      "TAPE_FILE "
-    "WHERE "
-      "TAPE_FILE.VID = :VID AND "
-      "TAPE_FILE.FSEQ = :FSEQ";
+    const char* const deleteTapeFilesSql = R"SQL(
+      DELETE FROM 
+        TAPE_FILE 
+      WHERE 
+        TAPE_FILE.VID = :VID AND 
+        TAPE_FILE.FSEQ = :FSEQ
+    )SQL";
 
     auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
     deleteTapeFilesStmt.bindString(":VID", tapeFile.vid);

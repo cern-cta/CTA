@@ -84,11 +84,12 @@ void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
 }
 
 uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "SELECT "
-      "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

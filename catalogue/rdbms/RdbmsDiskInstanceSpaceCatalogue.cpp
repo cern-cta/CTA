@@ -35,14 +35,15 @@ RdbmsDiskInstanceSpaceCatalogue::RdbmsDiskInstanceSpaceCatalogue(log::Logger &lo
 
 void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string &name,
   const std::string &diskInstance) {
-  const char *const delete_sql =
-    "DELETE "
-    "FROM "
-      "DISK_INSTANCE_SPACE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    "AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const delete_sql = R"SQL(
+    DELETE 
+    FROM 
+      DISK_INSTANCE_SPACE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+    AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(delete_sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
@@ -93,41 +94,42 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO DISK_INSTANCE_SPACE("
-      "DISK_INSTANCE_NAME,"
-      "DISK_INSTANCE_SPACE_NAME,"
-      "FREE_SPACE_QUERY_URL,"
-      "REFRESH_INTERVAL,"
-      "LAST_REFRESH_TIME,"
-      "FREE_SPACE,"
+  const char* const sql = R"SQL(
+    INSERT INTO DISK_INSTANCE_SPACE(
+      DISK_INSTANCE_NAME,
+      DISK_INSTANCE_SPACE_NAME,
+      FREE_SPACE_QUERY_URL,
+      REFRESH_INTERVAL,
+      LAST_REFRESH_TIME,
+      FREE_SPACE,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":DISK_INSTANCE_NAME,"
-      ":DISK_INSTANCE_SPACE_NAME,"
-      ":FREE_SPACE_QUERY_URL,"
-      ":REFRESH_INTERVAL,"
-      ":LAST_REFRESH_TIME,"
-      ":FREE_SPACE,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :DISK_INSTANCE_NAME,
+      :DISK_INSTANCE_SPACE_NAME,
+      :FREE_SPACE_QUERY_URL,
+      :REFRESH_INTERVAL,
+      :LAST_REFRESH_TIME,
+      :FREE_SPACE,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
@@ -152,26 +154,27 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
 
 std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
   std::list<common::dataStructures::DiskInstanceSpace> diskInstanceSpaceList;
-  std::string sql =
-    "SELECT "
-      "DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "DISK_INSTANCE_SPACE.DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME,"
-      "DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,"
-      "DISK_INSTANCE_SPACE.REFRESH_INTERVAL AS REFRESH_INTERVAL,"
-      "DISK_INSTANCE_SPACE.LAST_REFRESH_TIME AS LAST_REFRESH_TIME,"
-      "DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE,"
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      DISK_INSTANCE_SPACE.DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME,
+      DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,
+      DISK_INSTANCE_SPACE.REFRESH_INTERVAL AS REFRESH_INTERVAL,
+      DISK_INSTANCE_SPACE.LAST_REFRESH_TIME AS LAST_REFRESH_TIME,
+      DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE,
 
-      "DISK_INSTANCE_SPACE.USER_COMMENT AS USER_COMMENT,"
+      DISK_INSTANCE_SPACE.USER_COMMENT AS USER_COMMENT,
 
-      "DISK_INSTANCE_SPACE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "DISK_INSTANCE_SPACE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "DISK_INSTANCE_SPACE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      DISK_INSTANCE_SPACE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      DISK_INSTANCE_SPACE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      DISK_INSTANCE_SPACE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "DISK_INSTANCE_SPACE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "DISK_INSTANCE_SPACE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "DISK_INSTANCE_SPACE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "DISK_INSTANCE_SPACE";
+      DISK_INSTANCE_SPACE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      DISK_INSTANCE_SPACE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      DISK_INSTANCE_SPACE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      DISK_INSTANCE_SPACE
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -207,16 +210,17 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE DISK_INSTANCE_SPACE SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    "AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const sql = R"SQL(
+    UPDATE DISK_INSTANCE_SPACE SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+    AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -241,16 +245,17 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
       "because the new refreshInterval is zero");
   }
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE DISK_INSTANCE_SPACE SET "
-      "REFRESH_INTERVAL = :REFRESH_INTERVAL,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    "AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const sql = R"SQL(
+    UPDATE DISK_INSTANCE_SPACE SET 
+      REFRESH_INTERVAL = :REFRESH_INTERVAL,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+    AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
@@ -270,14 +275,15 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name,
   const std::string &diskInstance, const uint64_t freeSpace) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE DISK_INSTANCE_SPACE SET "
-      "FREE_SPACE = :FREE_SPACE,"
-      "LAST_REFRESH_TIME = :LAST_REFRESH_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    "AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const sql = R"SQL(
+    UPDATE DISK_INSTANCE_SPACE SET 
+      FREE_SPACE = :FREE_SPACE,
+      LAST_REFRESH_TIME = :LAST_REFRESH_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+    AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":FREE_SPACE", freeSpace);
@@ -301,16 +307,17 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE DISK_INSTANCE_SPACE SET "
-      "FREE_SPACE_QUERY_URL = :FREE_SPACE_QUERY_URL,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    "AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const sql = R"SQL(
+    UPDATE DISK_INSTANCE_SPACE SET 
+      FREE_SPACE_QUERY_URL = :FREE_SPACE_QUERY_URL,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+    AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
@@ -329,15 +336,16 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
 
 bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn, const std::string &name,
   const std::string &diskInstance) const {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME "
-    "FROM "
-      "DISK_INSTANCE_SPACE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-    " AND "
-      "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME 
+    FROM 
+      DISK_INSTANCE_SPACE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
+     AND 
+      DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
   stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);

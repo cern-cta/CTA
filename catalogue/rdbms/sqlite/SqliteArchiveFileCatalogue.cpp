@@ -90,12 +90,16 @@ void SqliteArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
 
   t.reset();
   {
-    const char *const sql = "BEGIN DEFERRED;";
+    const char* const sql = R"SQL(
+      BEGIN DEFERRED
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt.executeNonQuery();
   }
   {
-    const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+    const char* const sql = R"SQL(
+      DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     stmt.executeNonQuery();
@@ -117,7 +121,9 @@ void SqliteArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
   const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
   {
-    const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+    const char* const sql = R"SQL(
+      DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     stmt.executeNonQuery();
@@ -160,10 +166,12 @@ void SqliteArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
 }
 
 uint64_t SqliteArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
-  conn.executeNonQuery("INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)");
+  conn.executeNonQuery(R"SQL(INSERT INTO ARCHIVE_FILE_ID VALUES(NULL))SQL");
   uint64_t archiveFileId = 0;
   {
-    const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+    const char* const sql = R"SQL(
+      SELECT LAST_INSERT_ROWID() AS ID
+    )SQL";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
@@ -174,7 +182,7 @@ uint64_t SqliteArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
       throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
     }
   }
-  conn.executeNonQuery("DELETE FROM ARCHIVE_FILE_ID");
+  conn.executeNonQuery(R"SQL(DELETE FROM ARCHIVE_FILE_ID)SQL");
 
   return archiveFileId;
 }
@@ -188,7 +196,7 @@ void SqliteArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::
   log::TimingList tl;
   //We currently do an INSERT INTO and a DELETE FROM
   //in a single transaction
-  conn.executeNonQuery("BEGIN TRANSACTION");
+  conn.executeNonQuery(R"SQL(BEGIN TRANSACTION)SQL");
   const auto fileRecycleLog = static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
   fileRecycleLog->copyArchiveFileToFileRecycleLog(conn,request);
   tl.insertAndReset("insertToRecycleBinTime",t);

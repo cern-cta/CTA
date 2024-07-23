@@ -60,46 +60,47 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
 
   const uint64_t virtualOrganizationId = getNextVirtualOrganizationId(conn);
   const time_t now = time(nullptr);
-  const char *const sql =
-  "INSERT INTO VIRTUAL_ORGANIZATION("
-      "VIRTUAL_ORGANIZATION_ID,"
-      "VIRTUAL_ORGANIZATION_NAME,"
+  const char* const sql = R"SQL(
+    INSERT INTO VIRTUAL_ORGANIZATION(
+      VIRTUAL_ORGANIZATION_ID,
+      VIRTUAL_ORGANIZATION_NAME,
 
-      "READ_MAX_DRIVES,"
-      "WRITE_MAX_DRIVES,"
-      "MAX_FILE_SIZE,"
+      READ_MAX_DRIVES,
+      WRITE_MAX_DRIVES,
+      MAX_FILE_SIZE,
 
-      "DISK_INSTANCE_NAME,"
-      "IS_REPACK_VO,"
+      DISK_INSTANCE_NAME,
+      IS_REPACK_VO,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":VIRTUAL_ORGANIZATION_ID,"
-      ":VIRTUAL_ORGANIZATION_NAME,"
-      ":READ_MAX_DRIVES,"
-      ":WRITE_MAX_DRIVES,"
-      ":MAX_FILE_SIZE,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :VIRTUAL_ORGANIZATION_ID,
+      :VIRTUAL_ORGANIZATION_NAME,
+      :READ_MAX_DRIVES,
+      :WRITE_MAX_DRIVES,
+      :MAX_FILE_SIZE,
 
-      ":DISK_INSTANCE_NAME,"
-      ":IS_REPACK_VO,"
+      :DISK_INSTANCE_NAME,
+      :IS_REPACK_VO,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
@@ -140,11 +141,12 @@ void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::str
       " is being used by one or more Tapepools");
   }
 
-  const char *const sql =
-    "DELETE FROM "
-      "VIRTUAL_ORGANIZATION "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    DELETE FROM 
+      VIRTUAL_ORGANIZATION 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
@@ -159,30 +161,31 @@ void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::str
 
 std::list<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationCatalogue::getVirtualOrganizations() const {
   std::list<common::dataStructures::VirtualOrganization> virtualOrganizations;
-  const char *const sql =
-    "SELECT "
-      "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
 
-      "READ_MAX_DRIVES AS READ_MAX_DRIVES,"
-      "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
-      "MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+      READ_MAX_DRIVES AS READ_MAX_DRIVES,
+      WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,
+      MAX_FILE_SIZE AS MAX_FILE_SIZE,
 
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "IS_REPACK_VO AS IS_REPACK_VO,"
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      IS_REPACK_VO AS IS_REPACK_VO,
 
-      "USER_COMMENT AS USER_COMMENT,"
+      USER_COMMENT AS USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "VIRTUAL_ORGANIZATION "
-    "ORDER BY "
-      "VIRTUAL_ORGANIZATION_NAME";
+      LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    ORDER BY 
+      VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -218,34 +221,35 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
 
 common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(
   rdbms::Conn & conn, const std::string & tapepoolName) const {
-  const char *const sql =
-    "SELECT "
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
 
-      "VIRTUAL_ORGANIZATION.READ_MAX_DRIVES AS READ_MAX_DRIVES,"
-      "VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
-      "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+      VIRTUAL_ORGANIZATION.READ_MAX_DRIVES AS READ_MAX_DRIVES,
+      VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,
+      VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,
 
-      "VIRTUAL_ORGANIZATION.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "VIRTUAL_ORGANIZATION.IS_REPACK_VO AS IS_REPACK_VO,"
+      VIRTUAL_ORGANIZATION.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      VIRTUAL_ORGANIZATION.IS_REPACK_VO AS IS_REPACK_VO,
 
-      "VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,"
+      VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,
 
-      "VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "VIRTUAL_ORGANIZATION.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "VIRTUAL_ORGANIZATION.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      VIRTUAL_ORGANIZATION.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      VIRTUAL_ORGANIZATION.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "VIRTUAL_ORGANIZATION.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "VIRTUAL_ORGANIZATION.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "VIRTUAL_ORGANIZATION.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "TAPE_POOL "
-    "INNER JOIN "
-      "VIRTUAL_ORGANIZATION "
-    "ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-      "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      VIRTUAL_ORGANIZATION.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      VIRTUAL_ORGANIZATION.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      VIRTUAL_ORGANIZATION.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      TAPE_POOL 
+    INNER JOIN 
+      VIRTUAL_ORGANIZATION 
+    ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME",tapepoolName);
   auto rset = stmt.executeQuery();
@@ -281,30 +285,31 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
 
 std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
   auto conn = m_connPool->getConn();
-  const char *const sql =
-          "SELECT "
-          "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
 
-          "READ_MAX_DRIVES AS READ_MAX_DRIVES,"
-          "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
-          "MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+      READ_MAX_DRIVES AS READ_MAX_DRIVES,
+      WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,
+      MAX_FILE_SIZE AS MAX_FILE_SIZE,
 
-          "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-          "IS_REPACK_VO AS IS_REPACK_VO,"
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      IS_REPACK_VO AS IS_REPACK_VO,
 
-          "USER_COMMENT AS USER_COMMENT,"
+      USER_COMMENT AS USER_COMMENT,
 
-          "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-          "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-          "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-          "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-          "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-          "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-          "FROM "
-          "VIRTUAL_ORGANIZATION "
-          "WHERE "
-          "IS_REPACK_VO = '1'";
+      LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    WHERE 
+      IS_REPACK_VO = '1'
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()){
@@ -337,14 +342,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
   const std::string &newVoName) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "VIRTUAL_ORGANIZATION_NAME = :NEW_VIRTUAL_ORGANIZATION_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :CUR_VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      VIRTUAL_ORGANIZATION_NAME = :NEW_VIRTUAL_ORGANIZATION_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :CUR_VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   if((newVoName != currentVoName) && RdbmsCatalogueUtils::virtualOrganizationExists(conn,newVoName)){
     throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName +". The new name : " + newVoName+" already exists in the database.");
@@ -368,14 +374,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationReadMaxDrives(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "READ_MAX_DRIVES = :READ_MAX_DRIVES,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      READ_MAX_DRIVES = :READ_MAX_DRIVES,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   auto stmt = conn.createStmt(sql);
@@ -397,14 +404,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationReadMaxDrives(
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationWriteMaxDrives(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "WRITE_MAX_DRIVES = :WRITE_MAX_DRIVES,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      WRITE_MAX_DRIVES = :WRITE_MAX_DRIVES,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   auto stmt = conn.createStmt(sql);
@@ -426,14 +434,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationWriteMaxDrives(
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationMaxFileSize(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "MAX_FILE_SIZE = :MAX_FILE_SIZE,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      MAX_FILE_SIZE = :MAX_FILE_SIZE,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   auto stmt = conn.createStmt(sql);
@@ -456,14 +465,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   auto stmt = conn.createStmt(sql);
@@ -483,14 +493,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE VIRTUAL_ORGANIZATION SET "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   auto stmt = conn.createStmt(sql);
@@ -510,14 +521,15 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceNam
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
   const time_t now = time(nullptr);
-  const char *const sql =
-          "UPDATE VIRTUAL_ORGANIZATION SET "
-          "IS_REPACK_VO = :IS_REPACK_VO,"
-          "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-          "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-          "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-          "WHERE "
-          "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    UPDATE VIRTUAL_ORGANIZATION SET 
+      IS_REPACK_VO = :IS_REPACK_VO,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto repackVoNameOpt = RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn);
   if (!isRepackVo && (!repackVoNameOpt.has_value() || repackVoNameOpt.value() != voName)) {
@@ -548,17 +560,18 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
 
 bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByStorageClasses(rdbms::Conn &conn,
   const std::string &voName) const {
-  const char *const sql =
-    "SELECT "
-      "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
-    "FROM "
-      "VIRTUAL_ORGANIZATION "
-    "INNER JOIN "
-      "STORAGE_CLASS "
-    "ON "
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    INNER JOIN 
+      STORAGE_CLASS 
+    ON 
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   auto rset = stmt.executeQuery();
@@ -567,17 +580,18 @@ bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByStorageClasse
 
 bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn,
   const std::string &voName) const {
-  const char *const sql =
-    "SELECT "
-      "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
-    "FROM "
-      "VIRTUAL_ORGANIZATION "
-    "INNER JOIN "
-      "TAPE_POOL "
-    "ON "
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = TAPE_POOL.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    INNER JOIN 
+      TAPE_POOL 
+    ON 
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = TAPE_POOL.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   auto rset = stmt.executeQuery();

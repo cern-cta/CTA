@@ -37,15 +37,16 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &mountPolicy) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE REQUESTER_MOUNT_RULE SET "
-      "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_NAME = :REQUESTER_NAME";
+  const char* const sql = R"SQL(
+    UPDATE REQUESTER_MOUNT_RULE SET 
+      MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_NAME = :REQUESTER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicy);
@@ -67,15 +68,16 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
   const std::string &requesterName, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE REQUESTER_MOUNT_RULE SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_NAME = :REQUESTER_NAME";
+  const char* const sql = R"SQL(
+    UPDATE REQUESTER_MOUNT_RULE SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_NAME = :REQUESTER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -117,35 +119,36 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
   }
 
   const uint64_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO REQUESTER_MOUNT_RULE("
-      "DISK_INSTANCE_NAME,"
-      "REQUESTER_NAME,"
-      "MOUNT_POLICY_NAME,"
+  const char* const sql = R"SQL(
+    INSERT INTO REQUESTER_MOUNT_RULE(
+      DISK_INSTANCE_NAME,
+      REQUESTER_NAME,
+      MOUNT_POLICY_NAME,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":DISK_INSTANCE_NAME,"
-      ":REQUESTER_NAME,"
-      ":MOUNT_POLICY_NAME,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :DISK_INSTANCE_NAME,
+      :REQUESTER_NAME,
+      :MOUNT_POLICY_NAME,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -169,25 +172,26 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
 
 std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCatalogue::getRequesterMountRules() const {
   std::list<common::dataStructures::RequesterMountRule> rules;
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "REQUESTER_NAME AS REQUESTER_NAME,"
-      "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      REQUESTER_NAME AS REQUESTER_NAME,
+      MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
 
-      "USER_COMMENT AS USER_COMMENT,"
+      USER_COMMENT AS USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "REQUESTER_MOUNT_RULE "
-    "ORDER BY "
-      "DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME";
+      LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      REQUESTER_MOUNT_RULE 
+    ORDER BY 
+      DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -213,12 +217,13 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCat
 
 void RdbmsRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName,
   const std::string &requesterName) {
-  const char *const sql =
-    "DELETE FROM "
-      "REQUESTER_MOUNT_RULE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_NAME = :REQUESTER_NAME";
+  const char* const sql = R"SQL(
+    DELETE FROM 
+      REQUESTER_MOUNT_RULE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_NAME = :REQUESTER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);

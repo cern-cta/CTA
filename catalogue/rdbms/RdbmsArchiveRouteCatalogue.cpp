@@ -83,39 +83,40 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     throw ue;
   }
 
-  const char *const sql =
-    "INSERT INTO ARCHIVE_ROUTE("
-      "STORAGE_CLASS_ID,"
-      "COPY_NB,"
-      "TAPE_POOL_ID,"
+  const char* const sql = R"SQL(
+    INSERT INTO ARCHIVE_ROUTE(
+      STORAGE_CLASS_ID,
+      COPY_NB,
+      TAPE_POOL_ID,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "SELECT "
-      "STORAGE_CLASS_ID,"
-      ":COPY_NB,"
-      "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME) AS TAPE_POOL_ID,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    SELECT 
+      STORAGE_CLASS_ID,
+      :COPY_NB,
+      (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME) AS TAPE_POOL_ID,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME "
-    "FROM "
-      "STORAGE_CLASS "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME 
+    FROM 
+      STORAGE_CLASS 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -136,18 +137,18 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
 }
 
 void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) {
-  const char *const sql =
-    "DELETE FROM "
-      "ARCHIVE_ROUTE "
-    "WHERE "
-      "STORAGE_CLASS_ID = ("
-        "SELECT "
-          "STORAGE_CLASS_ID "
-        "FROM "
-          "STORAGE_CLASS "
-        "WHERE "
-          "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
-      "COPY_NB = :COPY_NB";
+  const char* const sql = R"SQL(
+    DELETE FROM 
+      ARCHIVE_ROUTE 
+    WHERE 
+      STORAGE_CLASS_ID = (
+        SELECT 
+          STORAGE_CLASS_ID 
+        FROM 
+          STORAGE_CLASS 
+        WHERE 
+          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -164,29 +165,30 @@ void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageCl
 
 std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes() const {
   std::list<common::dataStructures::ArchiveRoute> routes;
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
 
-      "ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT,"
+      ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT,
 
-      "ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "ARCHIVE_ROUTE "
-    "INNER JOIN STORAGE_CLASS ON "
-      "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "INNER JOIN TAPE_POOL ON "
-      "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "ORDER BY "
-      "STORAGE_CLASS_NAME, COPY_NB";
+      ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      ARCHIVE_ROUTE 
+    INNER JOIN STORAGE_CLASS ON 
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    INNER JOIN TAPE_POOL ON 
+      ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    ORDER BY 
+      STORAGE_CLASS_NAME, COPY_NB
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -219,32 +221,33 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
 std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes(rdbms::Conn &conn,
   const std::string &storageClassName, const std::string &tapePoolName) const {
   std::list<common::dataStructures::ArchiveRoute> routes;
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME, "
-      "ARCHIVE_ROUTE.COPY_NB AS COPY_NB, "
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME, "
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME, 
+      ARCHIVE_ROUTE.COPY_NB AS COPY_NB, 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME, 
 
-      "ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT, "
+      ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT, 
 
-      "ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME, "
-      "ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME, "
-      "ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME, "
+      ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME, 
+      ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME, 
+      ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME, 
 
-      "ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME, "
-      "ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME, "
-      "ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "ARCHIVE_ROUTE "
-    "INNER JOIN STORAGE_CLASS ON "
-      "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "INNER JOIN TAPE_POOL ON "
-      "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "WHERE "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
-      "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-    "ORDER BY "
-      "STORAGE_CLASS_NAME, COPY_NB";
+      ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME, 
+      ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME, 
+      ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      ARCHIVE_ROUTE 
+    INNER JOIN STORAGE_CLASS ON 
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    INNER JOIN TAPE_POOL ON 
+      ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    WHERE 
+      STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND 
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME 
+    ORDER BY 
+      STORAGE_CLASS_NAME, COPY_NB
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -273,21 +276,21 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
   const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) {
   try {
     const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE ARCHIVE_ROUTE SET "
-        "TAPE_POOL_ID = (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME),"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "STORAGE_CLASS_ID = ("
-          "SELECT "
-            "STORAGE_CLASS_ID "
-          "FROM "
-            "STORAGE_CLASS "
-          "WHERE "
-            "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
-        "COPY_NB = :COPY_NB";
+    const char* const sql = R"SQL(
+      UPDATE ARCHIVE_ROUTE SET 
+        TAPE_POOL_ID = (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME),
+        LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+        LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+        LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+      WHERE 
+        STORAGE_CLASS_ID = (
+          SELECT 
+            STORAGE_CLASS_ID 
+          FROM 
+            STORAGE_CLASS 
+          WHERE 
+            STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+    )SQL";
     auto conn = m_connPool->getConn();
 
     if(!RdbmsCatalogueUtils::archiveRouteExists(conn, storageClassName, copyNb)) {
@@ -323,21 +326,21 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE ARCHIVE_ROUTE SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "STORAGE_CLASS_ID = ("
-        "SELECT "
-          "STORAGE_CLASS_ID "
-        "FROM "
-          "STORAGE_CLASS "
-        "WHERE "
-          "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
-      "COPY_NB = :COPY_NB";
+  const char* const sql = R"SQL(
+    UPDATE ARCHIVE_ROUTE SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      STORAGE_CLASS_ID = (
+        SELECT 
+          STORAGE_CLASS_ID 
+        FROM 
+          STORAGE_CLASS 
+        WHERE 
+          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -356,6 +359,4 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   }
 }
 
-
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

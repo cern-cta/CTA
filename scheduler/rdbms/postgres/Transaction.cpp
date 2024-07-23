@@ -32,14 +32,14 @@ Transaction::~Transaction() {
 }
 
 void Transaction::lockGlobal(uint64_t lockId) {
-  const std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(" + std::to_string(lockId) + ")";
+  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(" + std::to_string(lockId) + ")";
   auto stmt = m_conn.createStmt(sql);
   stmt.executeQuery();
 }
 
 void Transaction::start() {
   if (!m_begin) {
-    m_conn.executeNonQuery("BEGIN");
+    m_conn.executeNonQuery(R"SQL(BEGIN)SQL");
     m_begin = true;
   }
 }

@@ -25,20 +25,21 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
-  std::string sql =
-    "WITH SET_SELECTION AS ( "
-      "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
-    "WHERE TAPE_POOL = :TAPE_POOL "
-    "AND STATUS = :STATUS "
-    "AND MOUNT_ID IS NULL "
-    "ORDER BY PRIORITY DESC, JOB_ID "
-    "LIMIT :LIMIT FOR UPDATE) "
-    "UPDATE ARCHIVE_JOB_QUEUE SET "
-      "MOUNT_ID = :MOUNT_ID,"
-      "VID = :VID "
-    "FROM SET_SELECTION "
-    "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
-    "RETURNING SET_SELECTION.JOB_ID";
+  const char* const sql = R"SQL(
+    WITH SET_SELECTION AS ( 
+      SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE 
+      WHERE TAPE_POOL = :TAPE_POOL 
+        AND STATUS = :STATUS 
+        AND MOUNT_ID IS NULL 
+      ORDER BY PRIORITY DESC, JOB_ID 
+      LIMIT :LIMIT FOR UPDATE) 
+    UPDATE ARCHIVE_JOB_QUEUE SET 
+      MOUNT_ID = :MOUNT_ID,
+      VID = :VID 
+    FROM SET_SELECTION 
+    WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID 
+    RETURNING SET_SELECTION.JOB_ID
+  )SQL";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", tapepool);
   stmt.bindString(":STATUS", to_string(status));
@@ -55,10 +56,7 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   std::string sqlpart;
   for (const auto &piece : jobIDs) sqlpart += piece + ",";
   if (!sqlpart.empty()) { sqlpart.pop_back(); }
-  std::string sql =
-          "UPDATE ARCHIVE_JOB_QUEUE SET "
-          "STATUS = :STATUS "
-          "WHERE JOB_ID IN (" + sqlpart + ") ";
+  std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.executeNonQuery();
@@ -66,10 +64,11 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
 };
 
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
-  std::string sql =
-          "WITH SET_SELECTION AS ( "
-          "SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE "
-          "WHERE STATUS = ANY(ARRAY[";
+  std::string sql = R"SQL(
+    WITH SET_SELECTION AS ( 
+      SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE 
+      WHERE STATUS = ANY(ARRAY[
+  )SQL";
   // we can move this to new bindArray method for stmt
   std::vector<std::string> statusVec;
   std::vector<std::string> placeholderVec;
@@ -84,14 +83,16 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
     }
     j++;
   }
-  sql +=  "]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS NULL "
-          "ORDER BY PRIORITY DESC, JOB_ID "
-          "LIMIT :LIMIT FOR UPDATE) "
-          "UPDATE ARCHIVE_JOB_QUEUE SET "
-          "IS_REPORTING = 1 "
-          "FROM SET_SELECTION "
-          "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID "
-          "RETURNING SET_SELECTION.JOB_ID";
+  sql += R"SQL(
+      ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS NULL 
+      ORDER BY PRIORITY DESC, JOB_ID 
+      LIMIT :LIMIT FOR UPDATE) 
+    UPDATE ARCHIVE_JOB_QUEUE SET 
+      IS_REPORTING = 1 
+    FROM SET_SELECTION 
+    WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID 
+    RETURNING SET_SELECTION.JOB_ID
+  )SQL";
   auto stmt = txn.conn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
   size_t sz = statusVec.size();

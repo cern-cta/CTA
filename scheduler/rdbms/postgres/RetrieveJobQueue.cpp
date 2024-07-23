@@ -25,16 +25,20 @@ void RetrieveJobQueueRow::updateMountID(Transaction &txn, const std::list<Retrie
   if(rowList.empty()) return;
 
   try {
-    const char *const sqltt = "CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP";
+    const char* const sqltt = R"SQL(
+      CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP
+    )SQL";
     txn.conn().executeNonQuery(sqltt);
   } catch(exception::Exception &ex) {
-    const char *const sqltrunc = "TRUNCATE TABLE TEMP_JOB_IDS";
+    const char* const sqltrunc = R"SQL(
+      TRUNCATE TABLE TEMP_JOB_IDS
+    )SQL";
     txn.conn().executeNonQuery(sqltrunc);
   }
 
-  const char *const sqlcopy =
-    "COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --"
-      ":JOB_ID";
+  const char* const sqlcopy = R"SQL(
+    COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --:JOB_ID
+  )SQL";
 
   auto stmt = txn.conn().createStmt(sqlcopy);
   auto & postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
@@ -50,11 +54,12 @@ void RetrieveJobQueueRow::updateMountID(Transaction &txn, const std::list<Retrie
   postgresStmt.setColumn(c1);
   postgresStmt.executeCopyInsert(nbrows);
 
-  const char *const sql =
-    "UPDATE RETRIEVE_JOB_QUEUE SET "
-      "MOUNT_ID = :MOUNT_ID "
-    "WHERE "
-      " JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)";
+  const char* const sql = R"SQL(
+    UPDATE RETRIEVE_JOB_QUEUE SET 
+      MOUNT_ID = :MOUNT_ID 
+    WHERE 
+       JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)
+  )SQL";
 
   stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);

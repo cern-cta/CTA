@@ -29,8 +29,9 @@ PostgresTapePoolCatalogue::PostgresTapePoolCatalogue(log::Logger &log,
   : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "select NEXTVAL('TAPE_POOL_ID_SEQ') AS TAPE_POOL_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('TAPE_POOL_ID_SEQ') AS TAPE_POOL_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

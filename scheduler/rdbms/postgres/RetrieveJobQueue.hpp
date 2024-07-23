@@ -120,88 +120,89 @@ struct RetrieveJobQueueRow {
 
   void insert(Transaction &txn) const {
     // does not set mountId or jobId
-    const char *const sql =
-      "INSERT INTO RETRIEVE_JOB_QUEUE("
-        "RETRIEVE_REQID,"
-        "STATUS,"
-        "VID,"
-        "ACTIVITY,"
-        "ACTIVE_COPY_NB,"
-        "PRIORITY,"
-        "RETRIEVE_MIN_REQ_AGE,"
-        "STARTTIME,"
-        "RETRIEVEJOB_PB,"
-        "REQUESTER_NAME,"
-        "REQUESTER_GROUP,"
-        "ARCHIVE_FILE_ID,"
-        "DST_URL,"
-        "DISK_FILE_OWNER_UID,"
-        "DISK_FILE_GID,"
-        "DISK_FILE_PATH,"
-        "SRR_USERNAME,"
-        "SRR_HOST,"
-        "SRR_TIME,"
-        "RETRIEVE_ERROR_REPORT_URL,"
-        "IS_VERIFY,"
-        "MOUNT_POLICY,"
-        "SRR_MOUNT_POLICY,"
-        "SRR_ACTIVITY,"
-        "SIZE_IN_BYTES,"
-        "DISK_FILE_ID,"
-        "DISK_INSTANCE,"
-        "CHECKSUMBLOB,"
-        "CREATION_TIME,"
-        "STORAGE_CLASS,"
-        "FAILURE_REPORT_URL,"
-        "FAILURE_REPORT_LOG,"
-        "IS_REPACK,"
-        "REPACK_REQID,"
-        "RR_REPACKINFO_PB,"
-        "LT_CREATE,"
-        "LT_FIRST_SELECTED,"
-        "LT_COMPLETED,"
-        "DISK_SYSTEM_NAME,"
-        "IS_FAILED) VALUES ("
-        ":RETRIEVE_REQID,"
-        ":STATUS,"
-        ":VID,"
-        ":ACTIVITY,"
-        ":ACTIVE_COPY_NB,"
-        ":PRIORITY,"
-        ":RETRIEVE_MIN_REQ_AGE,"
-        ":STARTTIME,"
-        ":RETRIEVEJOB_PB,"
-        ":REQUESTER_NAME,"
-        ":REQUESTER_GROUP,"
-        ":ARCHIVE_FILE_ID,"
-        ":DST_URL,"
-        ":DISK_FILE_OWNER_UID,"
-        ":DISK_FILE_GID,"
-        ":DISK_FILE_PATH,"
-        ":SRR_USERNAME,"
-        ":SRR_HOST,"
-        ":SRR_TIME,"
-        ":RETRIEVE_ERROR_REPORT_URL,"
-        ":IS_VERIFY,"
-        ":MOUNT_POLICY,"
-        ":SRR_MOUNT_POLICY,"
-        ":SRR_ACTIVITY,"
-        ":SIZE_IN_BYTES,"
-        ":DISK_FILE_ID,"
-        ":DISK_INSTANCE,"
-        ":CHECKSUMBLOB,"
-        ":CREATION_TIME,"
-        ":STORAGE_CLASS,"
-        ":FAILURE_REPORT_URL,"
-        ":FAILURE_REPORT_LOG,"
-        ":IS_REPACK,"
-        ":REPACK_REQID,"
-        ":RR_REPACKINFO_PB,"
-        ":LT_CREATE,"
-        ":LT_FIRST_SELECTED,"
-        ":LT_COMPLETED,"
-        ":DISK_SYSTEM_NAME,"
-        ":IS_FAILED)";
+    const char* const sql = R"SQL(
+      INSERT INTO RETRIEVE_JOB_QUEUE(
+        RETRIEVE_REQID,
+        STATUS,
+        VID,
+        ACTIVITY,
+        ACTIVE_COPY_NB,
+        PRIORITY,
+        RETRIEVE_MIN_REQ_AGE,
+        STARTTIME,
+        RETRIEVEJOB_PB,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        ARCHIVE_FILE_ID,
+        DST_URL,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        SRR_USERNAME,
+        SRR_HOST,
+        SRR_TIME,
+        RETRIEVE_ERROR_REPORT_URL,
+        IS_VERIFY,
+        MOUNT_POLICY,
+        SRR_MOUNT_POLICY,
+        SRR_ACTIVITY,
+        SIZE_IN_BYTES,
+        DISK_FILE_ID,
+        DISK_INSTANCE,
+        CHECKSUMBLOB,
+        CREATION_TIME,
+        STORAGE_CLASS,
+        FAILURE_REPORT_URL,
+        FAILURE_REPORT_LOG,
+        IS_REPACK,
+        REPACK_REQID,
+        RR_REPACKINFO_PB,
+        LT_CREATE,
+        LT_FIRST_SELECTED,
+        LT_COMPLETED,
+        DISK_SYSTEM_NAME,
+        IS_FAILED) VALUES (
+        :RETRIEVE_REQID,
+        :STATUS,
+        :VID,
+        :ACTIVITY,
+        :ACTIVE_COPY_NB,
+        :PRIORITY,
+        :RETRIEVE_MIN_REQ_AGE,
+        :STARTTIME,
+        :RETRIEVEJOB_PB,
+        :REQUESTER_NAME,
+        :REQUESTER_GROUP,
+        :ARCHIVE_FILE_ID,
+        :DST_URL,
+        :DISK_FILE_OWNER_UID,
+        :DISK_FILE_GID,
+        :DISK_FILE_PATH,
+        :SRR_USERNAME,
+        :SRR_HOST,
+        :SRR_TIME,
+        :RETRIEVE_ERROR_REPORT_URL,
+        :IS_VERIFY,
+        :MOUNT_POLICY,
+        :SRR_MOUNT_POLICY,
+        :SRR_ACTIVITY,
+        :SIZE_IN_BYTES,
+        :DISK_FILE_ID,
+        :DISK_INSTANCE,
+        :CHECKSUMBLOB,
+        :CREATION_TIME,
+        :STORAGE_CLASS,
+        :FAILURE_REPORT_URL,
+        :FAILURE_REPORT_LOG,
+        :IS_REPACK,
+        :REPACK_REQID,
+        :RR_REPACKINFO_PB,
+        :LT_CREATE,
+        :LT_FIRST_SELECTED,
+        :LT_COMPLETED,
+        :DISK_SYSTEM_NAME,
+        :IS_FAILED)
+    )SQL";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQID", retrieveReqId);
@@ -297,58 +298,59 @@ struct RetrieveJobQueueRow {
 
 
   static rdbms::Rset select(Transaction &txn, RetrieveJobStatus status, const std::string &vid, uint32_t limit) {
-
-    const char *const sql =
-      "SELECT "
-        "JOB_ID AS JOB_ID,"
-        "RETRIEVE_REQID AS RETRIEVE_REQID,"
-        "MOUNT_ID AS MOUNT_ID,"
-        "STATUS AS STATUS,"
-        "VID AS VID,"
-        "ACTIVE_COPY_NB AS ACTIVE_COPY_NB,"
-        "ACTIVITY AS ACTIVITY,"
-        "PRIORITY AS PRIORITY,"
-        "RETRIEVE_MIN_REQ_AGE AS RETRIEVE_MIN_REQ_AGE,"
-        "STARTTIME AS STARTTIME,"
-        "RETRIEVEJOB_PB AS RETRIEVEJOB_PB,"
-        "REQUESTER_NAME AS REQUESTER_NAME,"
-        "REQUESTER_GROUP AS REQUESTER_GROUP,"
-        "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "DST_URL AS DST_URL,"
-        "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
-        "DISK_FILE_GID AS DISK_FILE_GID,"
-        "DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "SRR_USERNAME AS SRR_USERNAME,"
-        "SRR_HOST AS SRR_HOST,"
-        "SRR_TIME AS SRR_TIME,"
-        "RETRIEVE_ERROR_REPORT_URL AS RETRIEVE_ERROR_REPORT_URL,"
-        "IS_VERIFY AS IS_VERIFY,"
-        "MOUNT_POLICY AS MOUNT_POLICY,"
-        "SRR_MOUNT_POLICY AS SRR_MOUNT_POLICY,"
-        "SRR_ACTIVITY AS SRR_ACTIVITY,"
-        "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "DISK_FILE_ID AS DISK_FILE_ID,"
-        "DISK_INSTANCE AS DISK_INSTANCE,"
-        "CHECKSUMBLOB AS CHECKSUMBLOB,"
-        "CREATION_TIME AS CREATION_TIME,"
-        "STORAGE_CLASS AS STORAGE_CLASS,"
-        "FAILURE_REPORT_URL AS FAILURE_REPORT_URL,"
-        "FAILURE_REPORT_LOG AS FAILURE_REPORT_LOG,"
-        "IS_REPACK AS IS_REPACK,"
-        "REPACK_REQID AS REPACK_REQID,"
-        "RR_REPACKINFO_PB AS RR_REPACKINFO_PB,"
-        "LT_CREATE AS LT_CREATE,"
-        "LT_FIRST_SELECTED AS LT_FIRST_SELECTED,"
-        "LT_COMPLETED AS LT_COMPLETED,"
-        "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-        "IS_FAILED AS IS_FAILED "
-      "FROM RETRIEVE_JOB_QUEUE "
-      "WHERE "
-        "VID = :VID "
-        "AND STATUS = :STATUS "
-        "AND MOUNT_ID IS NULL "
-    "ORDER BY PRIORITY DESC, JOB_ID "
-      "LIMIT :LIMIT";
+    const char* const sql = R"SQL(
+      SELECT 
+        JOB_ID AS JOB_ID,
+        RETRIEVE_REQID AS RETRIEVE_REQID,
+        MOUNT_ID AS MOUNT_ID,
+        STATUS AS STATUS,
+        VID AS VID,
+        ACTIVE_COPY_NB AS ACTIVE_COPY_NB,
+        ACTIVITY AS ACTIVITY,
+        PRIORITY AS PRIORITY,
+        RETRIEVE_MIN_REQ_AGE AS RETRIEVE_MIN_REQ_AGE,
+        STARTTIME AS STARTTIME,
+        RETRIEVEJOB_PB AS RETRIEVEJOB_PB,
+        REQUESTER_NAME AS REQUESTER_NAME,
+        REQUESTER_GROUP AS REQUESTER_GROUP,
+        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+        DST_URL AS DST_URL,
+        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
+        DISK_FILE_GID AS DISK_FILE_GID,
+        DISK_FILE_PATH AS DISK_FILE_PATH,
+        SRR_USERNAME AS SRR_USERNAME,
+        SRR_HOST AS SRR_HOST,
+        SRR_TIME AS SRR_TIME,
+        RETRIEVE_ERROR_REPORT_URL AS RETRIEVE_ERROR_REPORT_URL,
+        IS_VERIFY AS IS_VERIFY,
+        MOUNT_POLICY AS MOUNT_POLICY,
+        SRR_MOUNT_POLICY AS SRR_MOUNT_POLICY,
+        SRR_ACTIVITY AS SRR_ACTIVITY,
+        SIZE_IN_BYTES AS SIZE_IN_BYTES,
+        DISK_FILE_ID AS DISK_FILE_ID,
+        DISK_INSTANCE AS DISK_INSTANCE,
+        CHECKSUMBLOB AS CHECKSUMBLOB,
+        CREATION_TIME AS CREATION_TIME,
+        STORAGE_CLASS AS STORAGE_CLASS,
+        FAILURE_REPORT_URL AS FAILURE_REPORT_URL,
+        FAILURE_REPORT_LOG AS FAILURE_REPORT_LOG,
+        IS_REPACK AS IS_REPACK,
+        REPACK_REQID AS REPACK_REQID,
+        RR_REPACKINFO_PB AS RR_REPACKINFO_PB,
+        LT_CREATE AS LT_CREATE,
+        LT_FIRST_SELECTED AS LT_FIRST_SELECTED,
+        LT_COMPLETED AS LT_COMPLETED,
+        DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
+        IS_FAILED AS IS_FAILED 
+      FROM 
+        RETRIEVE_JOB_QUEUE 
+      WHERE 
+        VID = :VID 
+        AND STATUS = :STATUS 
+        AND MOUNT_ID IS NULL 
+      ORDER BY PRIORITY DESC, JOB_ID 
+        LIMIT :LIMIT
+    )SQL";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -368,56 +370,57 @@ struct RetrieveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset select(Transaction &txn, RetrieveJobStatus status, uint64_t limit) {
-    const char *const sql =
-            "SELECT "
-            "JOB_ID AS JOB_ID,"
-            "RETRIEVE_REQID AS RETRIEVE_REQID,"
-            "MOUNT_ID AS MOUNT_ID,"
-            "STATUS AS STATUS,"
-            "VID AS VID,"
-            "ACTIVE_COPY_NB AS ACTIVE_COPY_NB,"
-            "ACTIVITY AS ACTIVITY,"
-            "PRIORITY AS PRIORITY,"
-            "RETRIEVE_MIN_REQ_AGE AS RETRIEVE_MIN_REQ_AGE,"
-            "STARTTIME AS STARTTIME,"
-            "RETRIEVEJOB_PB AS RETRIEVEJOB_PB,"
-            "REQUESTER_NAME AS REQUESTER_NAME,"
-            "REQUESTER_GROUP AS REQUESTER_GROUP,"
-            "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-            "DST_URL AS DST_URL,"
-            "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
-            "DISK_FILE_GID AS DISK_FILE_GID,"
-            "DISK_FILE_PATH AS DISK_FILE_PATH,"
-            "SRR_USERNAME AS SRR_USERNAME,"
-            "SRR_HOST AS SRR_HOST,"
-            "SRR_TIME AS SRR_TIME,"
-            "RETRIEVE_ERROR_REPORT_URL AS RETRIEVE_ERROR_REPORT_URL,"
-            "IS_VERIFY AS IS_VERIFY,"
-            "MOUNT_POLICY AS MOUNT_POLICY,"
-            "SRR_MOUNT_POLICY AS SRR_MOUNT_POLICY,"
-            "SRR_ACTIVITY AS SRR_ACTIVITY,"
-            "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-            "DISK_FILE_ID AS DISK_FILE_ID,"
-            "DISK_INSTANCE AS DISK_INSTANCE,"
-            "CHECKSUMBLOB AS CHECKSUMBLOB,"
-            "CREATION_TIME AS CREATION_TIME,"
-            "STORAGE_CLASS AS STORAGE_CLASS,"
-            "FAILURE_REPORT_URL AS FAILURE_REPORT_URL,"
-            "FAILURE_REPORT_LOG AS FAILURE_REPORT_LOG,"
-            "IS_REPACK AS IS_REPACK,"
-            "REPACK_REQID AS REPACK_REQID,"
-            "RR_REPACKINFO_PB AS RR_REPACKINFO_PB,"
-            "LT_CREATE AS LT_CREATE,"
-            "LT_FIRST_SELECTED AS LT_FIRST_SELECTED,"
-            "LT_COMPLETED AS LT_COMPLETED,"
-            "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-            "IS_FAILED AS IS_FAILED "
-            "FROM RETRIEVE_JOB_QUEUE "
-            "WHERE "
-            "STATUS = :STATUS "
-            "AND MOUNT_ID IS NULL "
-            "ORDER BY PRIORITY DESC, JOB_ID "
-            "LIMIT :LIMIT";
+    const char* const sql = R"SQL(
+      SELECT 
+        JOB_ID AS JOB_ID,
+        RETRIEVE_REQID AS RETRIEVE_REQID,
+        MOUNT_ID AS MOUNT_ID,
+        STATUS AS STATUS,
+        VID AS VID,
+        ACTIVE_COPY_NB AS ACTIVE_COPY_NB,
+        ACTIVITY AS ACTIVITY,
+        PRIORITY AS PRIORITY,
+        RETRIEVE_MIN_REQ_AGE AS RETRIEVE_MIN_REQ_AGE,
+        STARTTIME AS STARTTIME,
+        RETRIEVEJOB_PB AS RETRIEVEJOB_PB,
+        REQUESTER_NAME AS REQUESTER_NAME,
+        REQUESTER_GROUP AS REQUESTER_GROUP,
+        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+        DST_URL AS DST_URL,
+        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
+        DISK_FILE_GID AS DISK_FILE_GID,
+        DISK_FILE_PATH AS DISK_FILE_PATH,
+        SRR_USERNAME AS SRR_USERNAME,
+        SRR_HOST AS SRR_HOST,
+        SRR_TIME AS SRR_TIME,
+        RETRIEVE_ERROR_REPORT_URL AS RETRIEVE_ERROR_REPORT_URL,
+        IS_VERIFY AS IS_VERIFY,
+        MOUNT_POLICY AS MOUNT_POLICY,
+        SRR_MOUNT_POLICY AS SRR_MOUNT_POLICY,
+        SRR_ACTIVITY AS SRR_ACTIVITY,
+        SIZE_IN_BYTES AS SIZE_IN_BYTES,
+        DISK_FILE_ID AS DISK_FILE_ID,
+        DISK_INSTANCE AS DISK_INSTANCE,
+        CHECKSUMBLOB AS CHECKSUMBLOB,
+        CREATION_TIME AS CREATION_TIME,
+        STORAGE_CLASS AS STORAGE_CLASS,
+        FAILURE_REPORT_URL AS FAILURE_REPORT_URL,
+        FAILURE_REPORT_LOG AS FAILURE_REPORT_LOG,
+        IS_REPACK AS IS_REPACK,
+        REPACK_REQID AS REPACK_REQID,
+        RR_REPACKINFO_PB AS RR_REPACKINFO_PB,
+        LT_CREATE AS LT_CREATE,
+        LT_FIRST_SELECTED AS LT_FIRST_SELECTED,
+        LT_COMPLETED AS LT_COMPLETED,
+        DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
+        IS_FAILED AS IS_FAILED 
+      FROM RETRIEVE_JOB_QUEUE 
+      WHERE 
+        STATUS = :STATUS 
+        AND MOUNT_ID IS NULL 
+      ORDER BY PRIORITY DESC, JOB_ID 
+        LIMIT :LIMIT
+    )SQL";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));

@@ -53,31 +53,32 @@ void RdbmsAdminUserCatalogue::createAdminUser(
       " because an admin user with the same name already exists"));
   }
   const uint64_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO ADMIN_USER("
-      "ADMIN_USER_NAME,"
+  const char* const sql = R"SQL(
+    INSERT INTO ADMIN_USER(
+      ADMIN_USER_NAME,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":ADMIN_USER_NAME,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :ADMIN_USER_NAME,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":ADMIN_USER_NAME", username);
@@ -96,13 +97,14 @@ void RdbmsAdminUserCatalogue::createAdminUser(
 }
 
 bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const {
-  const char *const sql =
-    "SELECT "
-      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
-    "FROM "
-      "ADMIN_USER "
-    "WHERE "
-      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      ADMIN_USER_NAME AS ADMIN_USER_NAME 
+    FROM 
+      ADMIN_USER 
+    WHERE 
+      ADMIN_USER_NAME = :ADMIN_USER_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ADMIN_USER_NAME", adminUsername);
   auto rset = stmt.executeQuery();
@@ -110,7 +112,9 @@ bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::stri
 }
 
 void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
-  const char *const sql = "DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  const char* const sql = R"SQL(
+    DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ADMIN_USER_NAME", username);
@@ -123,23 +127,24 @@ void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
 
 std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUsers() const {
   std::list<common::dataStructures::AdminUser> admins;
-  const char *const sql =
-    "SELECT "
-      "ADMIN_USER_NAME AS ADMIN_USER_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      ADMIN_USER_NAME AS ADMIN_USER_NAME,
 
-      "USER_COMMENT AS USER_COMMENT,"
+      USER_COMMENT AS USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "ADMIN_USER "
-    "ORDER BY "
-      "ADMIN_USER_NAME";
+      LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      ADMIN_USER 
+    ORDER BY 
+      ADMIN_USER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -173,14 +178,15 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE ADMIN_USER SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  const char* const sql = R"SQL(
+    UPDATE ADMIN_USER SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      ADMIN_USER_NAME = :ADMIN_USER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -199,13 +205,14 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
 // isNonCachedAdmin
 //------------------------------------------------------------------------------
 bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  const char *const sql =
-    "SELECT "
-      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
-    "FROM "
-      "ADMIN_USER "
-    "WHERE "
-      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      ADMIN_USER_NAME AS ADMIN_USER_NAME 
+    FROM 
+      ADMIN_USER 
+    WHERE 
+      ADMIN_USER_NAME = :ADMIN_USER_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ADMIN_USER_NAME", admin.username);
@@ -223,5 +230,4 @@ bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIden
   return isCachedAdmin(admin);
 }
 
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

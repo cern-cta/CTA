@@ -70,12 +70,12 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
       } catch(exception::Exception &ex) {
         // Postgres does not drop temporary tables until the end of the session; trying to create another
         // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
-        sql = "TRUNCATE TABLE " + tempTableName;
-        conn.executeNonQuery(sql);
+        std::string sql2 = "TRUNCATE TABLE " + tempTableName;
+        conn.executeNonQuery(sql2);
       }
 
-      sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
-      auto stmt = conn.createStmt(sql);
+      std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
+      auto stmt = conn.createStmt(sql3);
       for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();

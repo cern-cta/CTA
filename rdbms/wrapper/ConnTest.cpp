@@ -37,7 +37,9 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
   using namespace cta;
   using namespace cta::rdbms::wrapper;
 
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const char* const sql = R"SQL(
+    CREATE TABLE POOLED_STMT_TEST(ID INTEGER)
+  )SQL";
 
   // First in-memory database
   {

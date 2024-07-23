@@ -68,45 +68,46 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   }
   const uint64_t tapePoolId = getNextTapePoolId(conn);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO TAPE_POOL("
-      "TAPE_POOL_ID,"
-      "TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION_ID,"
-      "NB_PARTIAL_TAPES,"
-      "IS_ENCRYPTED,"
-      "SUPPLY,"
+  const char* const sql = R"SQL(
+    INSERT INTO TAPE_POOL(
+      TAPE_POOL_ID,
+      TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION_ID,
+      NB_PARTIAL_TAPES,
+      IS_ENCRYPTED,
+      SUPPLY,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "SELECT "
-      ":TAPE_POOL_ID,"
-      ":TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION_ID,"
-      ":NB_PARTIAL_TAPES,"
-      ":IS_ENCRYPTED,"
-      ":SUPPLY,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    SELECT 
+      :TAPE_POOL_ID,
+      :TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION_ID,
+      :NB_PARTIAL_TAPES,
+      :IS_ENCRYPTED,
+      :SUPPLY,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME "
-    "FROM "
-      "VIRTUAL_ORGANIZATION "
-    "WHERE "
-      "VIRTUAL_ORGANIZATION_NAME = :VO";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    WHERE 
+      VIRTUAL_ORGANIZATION_NAME = :VO
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindUint64(":TAPE_POOL_ID", tapePoolId);
@@ -141,7 +142,9 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
   const uint64_t nbTapesInPool = getNbTapesInPool(conn, name);
 
   if(0 == nbTapesInPool) {
-    const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    const char* const sql = R"SQL(
+      DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME
+    )SQL";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", name);
     stmt.executeNonQuery();
@@ -183,77 +186,91 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   }
 
   std::list<TapePool> pools;
-  std::string sql =
-    "SELECT "
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-      "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
-      "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
-      "TAPE_POOL.SUPPLY AS SUPPLY,"
+  std::string sql = R"SQL(
+    SELECT 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
+      TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
+      TAPE_POOL.SUPPLY AS SUPPLY,
 
-      "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
-      "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
-      "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
-      "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
+      COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,
+      COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,
+      COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,
+      COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,
 
-      "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
+      TAPE_POOL.USER_COMMENT AS USER_COMMENT,
 
-      "TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "TAPE_POOL "
-    "INNER JOIN VIRTUAL_ORGANIZATION ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "LEFT OUTER JOIN TAPE ON "
-      "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
-    "LEFT OUTER JOIN MEDIA_TYPE ON "
-      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID";
+      TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      TAPE_POOL 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    LEFT OUTER JOIN TAPE ON 
+      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID 
+    LEFT OUTER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
+  )SQL";
 
   if (searchCriteria.name || searchCriteria.vo || searchCriteria.encrypted) {
-    sql += " WHERE ";
+    sql += R"SQL(
+      WHERE
+    )SQL";
   }
   bool addedAWhereConstraint = false;
   if (searchCriteria.name) {
-    sql += "TAPE_POOL.TAPE_POOL_NAME = :NAME";
+    sql += R"SQL(
+      TAPE_POOL.TAPE_POOL_NAME = :NAME
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.vo) {
-    if (addedAWhereConstraint) sql += " AND ";
-    sql += "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.encrypted) {
-    if (addedAWhereConstraint) sql += " AND ";
-    sql += "TAPE_POOL.IS_ENCRYPTED = :ENCRYPTED";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE_POOL.IS_ENCRYPTED = :ENCRYPTED
+    )SQL";
   }
 
-  sql +=
-      " GROUP BY "
-          "TAPE_POOL.TAPE_POOL_NAME,"
-          "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
-          "TAPE_POOL.NB_PARTIAL_TAPES,"
-          "TAPE_POOL.IS_ENCRYPTED,"
-          "TAPE_POOL.SUPPLY,"
-          "TAPE_POOL.USER_COMMENT,"
-          "TAPE_POOL.CREATION_LOG_USER_NAME,"
-          "TAPE_POOL.CREATION_LOG_HOST_NAME,"
-          "TAPE_POOL.CREATION_LOG_TIME,"
-          "TAPE_POOL.LAST_UPDATE_USER_NAME,"
-          "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
-          "TAPE_POOL.LAST_UPDATE_TIME "
-        "ORDER BY "
-          "TAPE_POOL_NAME";
+  sql += R"SQL(
+    GROUP BY 
+      TAPE_POOL.TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
+      TAPE_POOL.NB_PARTIAL_TAPES,
+      TAPE_POOL.IS_ENCRYPTED,
+      TAPE_POOL.SUPPLY,
+      TAPE_POOL.USER_COMMENT,
+      TAPE_POOL.CREATION_LOG_USER_NAME,
+      TAPE_POOL.CREATION_LOG_HOST_NAME,
+      TAPE_POOL.CREATION_LOG_TIME,
+      TAPE_POOL.LAST_UPDATE_USER_NAME,
+      TAPE_POOL.LAST_UPDATE_HOST_NAME,
+      TAPE_POOL.LAST_UPDATE_TIME 
+    ORDER BY 
+      TAPE_POOL_NAME
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
@@ -303,57 +320,58 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 }
 
 std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &tapePoolName) const {
-  const char *const sql =
-    "SELECT "
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-      "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
-      "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
-      "TAPE_POOL.SUPPLY AS SUPPLY,"
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
+      TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
+      TAPE_POOL.SUPPLY AS SUPPLY,
 
-      "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
-      "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
-      "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
-      "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
-      "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
+      COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,
+      COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,
+      COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,
+      COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,
+      COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,
 
-      "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
+      TAPE_POOL.USER_COMMENT AS USER_COMMENT,
 
-      "TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "TAPE_POOL "
-    "INNER JOIN VIRTUAL_ORGANIZATION ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "LEFT OUTER JOIN TAPE ON "
-      "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
-    "LEFT OUTER JOIN MEDIA_TYPE ON "
-      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-    "GROUP BY "
-      "TAPE_POOL.TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
-      "TAPE_POOL.NB_PARTIAL_TAPES,"
-      "TAPE_POOL.IS_ENCRYPTED,"
-      "TAPE_POOL.SUPPLY,"
-      "TAPE_POOL.USER_COMMENT,"
-      "TAPE_POOL.CREATION_LOG_USER_NAME,"
-      "TAPE_POOL.CREATION_LOG_HOST_NAME,"
-      "TAPE_POOL.CREATION_LOG_TIME,"
-      "TAPE_POOL.LAST_UPDATE_USER_NAME,"
-      "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
-      "TAPE_POOL.LAST_UPDATE_TIME "
-    "HAVING "
-      "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-    "ORDER BY "
-      "TAPE_POOL_NAME";
+      TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      TAPE_POOL 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    LEFT OUTER JOIN TAPE ON 
+      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID 
+    LEFT OUTER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
+    GROUP BY 
+      TAPE_POOL.TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
+      TAPE_POOL.NB_PARTIAL_TAPES,
+      TAPE_POOL.IS_ENCRYPTED,
+      TAPE_POOL.SUPPLY,
+      TAPE_POOL.USER_COMMENT,
+      TAPE_POOL.CREATION_LOG_USER_NAME,
+      TAPE_POOL.CREATION_LOG_HOST_NAME,
+      TAPE_POOL.CREATION_LOG_TIME,
+      TAPE_POOL.LAST_UPDATE_USER_NAME,
+      TAPE_POOL.LAST_UPDATE_HOST_NAME,
+      TAPE_POOL.LAST_UPDATE_TIME 
+    HAVING 
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME 
+    ORDER BY 
+      TAPE_POOL_NAME
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -404,14 +422,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME=:VO),"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME=:VO),
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
 
   if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
@@ -441,14 +460,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStru
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "NB_PARTIAL_TAPES = :NB_PARTIAL_TAPES,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      NB_PARTIAL_TAPES = :NB_PARTIAL_TAPES,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
@@ -476,14 +496,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -501,14 +522,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
 void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool encryptionValue) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "IS_ENCRYPTED = :IS_ENCRYPTED,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      IS_ENCRYPTED = :IS_ENCRYPTED,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
@@ -536,14 +558,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "SUPPLY = :SUPPLY,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      SUPPLY = :SUPPLY,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":SUPPLY", optionalSupply);
@@ -570,14 +593,15 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE_POOL SET "
-      "TAPE_POOL_NAME = :NEW_TAPE_POOL_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "TAPE_POOL_NAME = :CURRENT_TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET 
+      TAPE_POOL_NAME = :NEW_TAPE_POOL_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      TAPE_POOL_NAME = :CURRENT_TAPE_POOL_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_TAPE_POOL_NAME", newName);
@@ -595,15 +619,16 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
 }
 
 bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const {
-  const char *const sql =
-    "SELECT "
-      "TAPE_POOL_NAME AS TAPE_POOL_NAME "
-    "FROM "
-      "TAPE_POOL "
-    "INNER JOIN ARCHIVE_ROUTE ON "
-      "TAPE_POOL.TAPE_POOL_ID = ARCHIVE_ROUTE.TAPE_POOL_ID "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_POOL_NAME AS TAPE_POOL_NAME 
+    FROM 
+      TAPE_POOL 
+    INNER JOIN ARCHIVE_ROUTE ON 
+      TAPE_POOL.TAPE_POOL_ID = ARCHIVE_ROUTE.TAPE_POOL_ID 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
@@ -611,15 +636,16 @@ bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, con
 }
 
 uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const {
-  const char *const sql =
-    "SELECT "
-      "COUNT(*) AS NB_TAPES "
-    "FROM "
-      "TAPE "
-    "INNER JOIN TAPE_POOL ON "
-      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "WHERE "
-      "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      COUNT(*) AS NB_TAPES 
+    FROM 
+      TAPE 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    WHERE 
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", name);
   auto rset = stmt.executeQuery();
@@ -630,13 +656,14 @@ uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::
 }
 
 std::optional<uint64_t> RdbmsTapePoolCatalogue::getTapePoolId(rdbms::Conn &conn, const std::string &name) const {
-  const char *const sql =
-    "SELECT "
-      "TAPE_POOL_ID AS TAPE_POOL_ID "
-    "FROM "
-      "TAPE_POOL "
-    "WHERE "
-      "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_POOL_ID AS TAPE_POOL_ID 
+    FROM 
+      TAPE_POOL 
+    WHERE 
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", name);
   auto rset = stmt.executeQuery();

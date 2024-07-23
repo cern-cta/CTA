@@ -52,7 +52,7 @@ void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   }
 
   // We currently do all file copies restoring in a single transaction
-  conn.executeNonQuery("BEGIN TRANSACTION");
+  conn.executeNonQuery(R"SQL(BEGIN TRANSACTION)SQL");
   const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
   if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
     !archiveFilePtr) {
@@ -80,9 +80,11 @@ void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
 }
 
 uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
-  conn.executeNonQuery("INSERT INTO FILE_RECYCLE_LOG_ID VALUES(NULL)");
+  conn.executeNonQuery(R"SQL(INSERT INTO FILE_RECYCLE_LOG_ID VALUES(NULL))SQL");
   uint64_t fileRecycleLogId = 0;
-  const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+  const char* const sql = R"SQL(
+    SELECT LAST_INSERT_ROWID() AS ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {
@@ -92,7 +94,7 @@ uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
   if(rset.next()) {
     throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
   }
-  conn.executeNonQuery("DELETE FROM FILE_RECYCLE_LOG_ID");
+  conn.executeNonQuery(R"SQL(DELETE FROM FILE_RECYCLE_LOG_ID)SQL");
 
   return fileRecycleLogId;
 }

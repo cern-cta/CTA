@@ -62,12 +62,11 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
 
   if(diskFileIds) {
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
-      "(DISK_FILE_ID VARCHAR2(100))";
+    std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR2(100))";
     conn.executeNonQuery(sql);
 
-    sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
-    auto stmt = conn.createStmt(sql);
+    std::string sql2 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
+    auto stmt = conn.createStmt(sql2);
     for(auto &diskFileId : diskFileIds.value()) {
       stmt.bindString(":DISK_FILE_ID", diskFileId);
       stmt.executeNonQuery();

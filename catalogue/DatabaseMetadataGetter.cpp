@@ -60,12 +60,13 @@ void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, co
 DatabaseMetadataGetter::DatabaseMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
 SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
-  const char *const sql =
-    "SELECT "
-      "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
-      "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR "
-    "FROM "
-      "CTA_CATALOGUE";
+  const char* const sql = R"SQL(
+    SELECT
+      CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,
+      CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR 
+    FROM
+      CTA_CATALOGUE
+  )SQL";
 
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -79,13 +80,14 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
 
     //The cta-catalogue-schema-verify tool has to be backward-compatible with version 1.0
     //of the schema that does not have the NEXT_SCHEMA_VERSION_MAJOR, NEXT_SCHEMA_VERSION_MINOR and the STATUS column
-    const char *const sql2 =
-    "SELECT "
-        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
-        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
-        "CTA_CATALOGUE.STATUS AS STATUS "
-      "FROM "
-        "CTA_CATALOGUE";
+    const char* const sql2 = R"SQL(
+      SELECT
+        CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,
+        CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,
+        CTA_CATALOGUE.STATUS AS STATUS 
+      FROM
+        CTA_CATALOGUE
+    )SQL";
 
     auto stmt2 = m_conn.createStmt(sql2);
     try{
@@ -197,16 +199,18 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
 
 std::set<std::string,std::less<>> OracleDatabaseMetadataGetter::getMissingIndexes() {
   // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
-  const char* const sql = "SELECT "
-      "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
-    "FROM "
-      "USER_CONS_COLUMNS A,"
-      "USER_CONSTRAINTS B "
-    "WHERE "
-      "A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND "
-      "B.CONSTRAINT_TYPE = 'R' AND " // R = Referential Integrity
-      "(A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN"
-        "(SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)";
+  const char* const sql = R"SQL(
+    SELECT 
+      A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME 
+    FROM
+      USER_CONS_COLUMNS A,
+      USER_CONSTRAINTS B
+    WHERE 
+      A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND
+      B.CONSTRAINT_TYPE = 'R' AND /* R = Referential Integrity */ 
+      (A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN
+        (SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)
+  )SQL";
 
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();
@@ -226,35 +230,37 @@ cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
 
 std::set<std::string,std::less<>> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   // Adapted from https://www.cybertec-postgresql.com/en/index-your-foreign-key/
-  const char* const sql = "SELECT "
-        "T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME "
-      "FROM "
-        "PG_CLASS T, "
-        "PG_CATALOG.PG_CONSTRAINT C "
-      // enumerated key column numbers per foreign key
-      "CROSS JOIN LATERAL "
-        "unnest(C.CONKEY) WITH ORDINALITY AS X(ATTNUM, n) "
-      // name for each key column
-      "JOIN "
-        "PG_CATALOG.PG_ATTRIBUTE A ON A.ATTNUM = X.ATTNUM AND A.ATTRELID = C.CONRELID "
-      "WHERE "
-        "T.OID = C.CONRELID AND "
-        "C.CONTYPE = 'f' AND "
-        "NOT EXISTS ("
-          "SELECT 1 "
-          "FROM PG_INDEX "
-          "WHERE "
-            "INDRELID = C.CONRELID AND "
-            "(SELECT ARRAY( "
-              "SELECT CONKEY[i] "
-              "FROM generate_series(array_lower(CONKEY, 1), array_upper(CONKEY, 1)) i "
-              "ORDER BY 1))"
-            " = "
-            "(SELECT ARRAY( "
-              "SELECT INDKEY[i] "
-                "FROM generate_series(array_lower(INDKEY, 1), array_upper(INDKEY, 1)) i "
-              "ORDER BY 1)) "
-        ")";
+  const char* const sql = R"SQL(
+    SELECT 
+        T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME 
+      FROM 
+        PG_CLASS T, 
+        PG_CATALOG.PG_CONSTRAINT C 
+      /* enumerated key column numbers per foreign key */
+      CROSS JOIN LATERAL 
+        unnest(C.CONKEY) WITH ORDINALITY AS X(ATTNUM, n) 
+      /* name for each key column */
+      JOIN 
+        PG_CATALOG.PG_ATTRIBUTE A ON A.ATTNUM = X.ATTNUM AND A.ATTRELID = C.CONRELID 
+      WHERE 
+        T.OID = C.CONRELID AND 
+        C.CONTYPE = 'f' AND 
+        NOT EXISTS (
+          SELECT 1 
+          FROM PG_INDEX 
+          WHERE 
+            INDRELID = C.CONRELID AND 
+            (SELECT ARRAY( 
+              SELECT CONKEY[i] 
+              FROM generate_series(array_lower(CONKEY, 1), array_upper(CONKEY, 1)) i 
+              ORDER BY 1))
+             = 
+            (SELECT ARRAY( 
+              SELECT INDKEY[i] 
+                FROM generate_series(array_lower(INDKEY, 1), array_upper(INDKEY, 1)) i 
+              ORDER BY 1)) 
+        )
+  )SQL";
 
   auto stmt = m_conn.createStmt(sql);
   auto rset = stmt.executeQuery();

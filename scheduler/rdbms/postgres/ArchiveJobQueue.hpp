@@ -119,62 +119,63 @@ struct ArchiveJobQueueRow {
   void insert(Transaction &txn) const {
 
     // does not set mountId or jobId
-    const char *const sql =
-      "INSERT INTO ARCHIVE_JOB_QUEUE("
-        "STATUS,"
-        "TAPE_POOL,"
-        "MOUNT_POLICY,"
-        "PRIORITY,"
-        "MIN_ARCHIVE_REQUEST_AGE,"
-        "ARCHIVE_FILE_ID,"
-        "SIZE_IN_BYTES,"
-        "COPY_NB,"
-        "START_TIME,"
-        "CHECKSUMBLOB,"
-        "CREATION_TIME,"
-        "DISK_INSTANCE,"
-        "DISK_FILE_ID,"
-        "DISK_FILE_OWNER_UID,"
-        "DISK_FILE_GID,"
-        "DISK_FILE_PATH,"
-        "ARCHIVE_REPORT_URL,"
-        "ARCHIVE_ERROR_REPORT_URL,"
-        "REQUESTER_NAME,"
-        "REQUESTER_GROUP,"
-        "SRC_URL,"
-        "STORAGE_CLASS,"
-        "RETRIES_WITHIN_MOUNT,"
-        "MAX_RETRIES_WITHIN_MOUNT,"
-        "TOTAL_RETRIES,"
-        "LAST_MOUNT_WITH_FAILURE,"
-        "MAX_TOTAL_RETRIES) VALUES ("
-        ":STATUS,"
-        ":TAPE_POOL,"
-        ":MOUNT_POLICY,"
-        ":PRIORITY,"
-        ":MIN_ARCHIVE_REQUEST_AGE,"
-        ":ARCHIVE_FILE_ID,"
-        ":SIZE_IN_BYTES,"
-        ":COPY_NB,"
-        ":START_TIME,"
-        ":CHECKSUMBLOB,"
-        ":CREATION_TIME,"
-        ":DISK_INSTANCE,"
-        ":DISK_FILE_ID,"
-        ":DISK_FILE_OWNER_UID,"
-        ":DISK_FILE_GID,"
-        ":DISK_FILE_PATH,"
-        ":ARCHIVE_REPORT_URL,"
-        ":ARCHIVE_ERROR_REPORT_URL,"
-        ":REQUESTER_NAME,"
-        ":REQUESTER_GROUP,"
-        ":SRC_URL,"
-        ":STORAGE_CLASS,"
-        ":RETRIES_WITHIN_MOUNT,"
-        ":MAX_RETRIES_WITHIN_MOUNT,"
-        ":TOTAL_RETRIES,"
-        ":LAST_MOUNT_WITH_FAILURE,"
-        ":MAX_TOTAL_RETRIES)";
+    const char* const sql = R"SQL(
+      INSERT INTO ARCHIVE_JOB_QUEUE(
+        STATUS,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        ARCHIVE_REPORT_URL,
+        ARCHIVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        SRC_URL,
+        STORAGE_CLASS,
+        RETRIES_WITHIN_MOUNT,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        MAX_TOTAL_RETRIES) VALUES (
+        :STATUS,
+        :TAPE_POOL,
+        :MOUNT_POLICY,
+        :PRIORITY,
+        :MIN_ARCHIVE_REQUEST_AGE,
+        :ARCHIVE_FILE_ID,
+        :SIZE_IN_BYTES,
+        :COPY_NB,
+        :START_TIME,
+        :CHECKSUMBLOB,
+        :CREATION_TIME,
+        :DISK_INSTANCE,
+        :DISK_FILE_ID,
+        :DISK_FILE_OWNER_UID,
+        :DISK_FILE_GID,
+        :DISK_FILE_PATH,
+        :ARCHIVE_REPORT_URL,
+        :ARCHIVE_ERROR_REPORT_URL,
+        :REQUESTER_NAME,
+        :REQUESTER_GROUP,
+        :SRC_URL,
+        :STORAGE_CLASS,
+        :RETRIES_WITHIN_MOUNT,
+        :MAX_RETRIES_WITHIN_MOUNT,
+        :TOTAL_RETRIES,
+        :LAST_MOUNT_WITH_FAILURE,
+        :MAX_TOTAL_RETRIES)
+    )SQL";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
@@ -255,41 +256,43 @@ struct ArchiveJobQueueRow {
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
-    std::string sql =
-    "SELECT "
-      "JOB_ID AS JOB_ID,"
-      "MOUNT_ID AS MOUNT_ID,"
-      "STATUS AS STATUS,"
-      "TAPE_POOL AS TAPE_POOL,"
-      "MOUNT_POLICY AS MOUNT_POLICY,"
-      "PRIORITY AS PRIORITY,"
-      "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
-      "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "COPY_NB AS COPY_NB,"
-      "START_TIME AS START_TIME,"
-      "CHECKSUMBLOB AS CHECKSUMBLOB,"
-      "CREATION_TIME AS CREATION_TIME,"
-      "DISK_INSTANCE AS DISK_INSTANCE,"
-      "DISK_FILE_ID AS DISK_FILE_ID,"
-      "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
-      "DISK_FILE_GID AS DISK_FILE_GID,"
-      "DISK_FILE_PATH AS DISK_FILE_PATH,"
-      "ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,"
-      "ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,"
-      "REQUESTER_NAME AS REQUESTER_NAME,"
-      "REQUESTER_GROUP AS REQUESTER_GROUP,"
-      "SRC_URL AS SRC_URL,"
-      "STORAGE_CLASS AS STORAGE_CLASS,"
-      "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
-      "MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,"
-      "TOTAL_RETRIES AS TOTAL_RETRIES,"
-      "LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,"
-      "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
-    "FROM ARCHIVE_JOB_QUEUE "
-    "WHERE "
-       "JOB_ID IN (" + sqlpart + ") "
-    "ORDER BY PRIORITY DESC, JOB_ID";
+    std::string sql = R"SQL(
+      SELECT 
+        JOB_ID AS JOB_ID,
+        MOUNT_ID AS MOUNT_ID,
+        STATUS AS STATUS,
+        TAPE_POOL AS TAPE_POOL,
+        MOUNT_POLICY AS MOUNT_POLICY,
+        PRIORITY AS PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES AS SIZE_IN_BYTES,
+        COPY_NB AS COPY_NB,
+        START_TIME AS START_TIME,
+        CHECKSUMBLOB AS CHECKSUMBLOB,
+        CREATION_TIME AS CREATION_TIME,
+        DISK_INSTANCE AS DISK_INSTANCE,
+        DISK_FILE_ID AS DISK_FILE_ID,
+        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
+        DISK_FILE_GID AS DISK_FILE_GID,
+        DISK_FILE_PATH AS DISK_FILE_PATH,
+        ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,
+        ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,
+        REQUESTER_NAME AS REQUESTER_NAME,
+        REQUESTER_GROUP AS REQUESTER_GROUP,
+        SRC_URL AS SRC_URL,
+        STORAGE_CLASS AS STORAGE_CLASS,
+        RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+        MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES AS TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
+        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES 
+      FROM ARCHIVE_JOB_QUEUE 
+      WHERE 
+        JOB_ID IN (
+    )SQL" + sqlpart + R"SQL(
+      ) ORDER BY PRIORITY DESC, JOB_ID
+    )SQL";
     auto stmt = conn.createStmt(sql);
     return stmt.executeQuery();
   }
@@ -305,39 +308,42 @@ struct ArchiveJobQueueRow {
    * @return  result set
    */
   static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
-     std::string sql =
-            "SELECT "
-            "JOB_ID AS JOB_ID,"
-            "MOUNT_ID AS MOUNT_ID,"
-            "STATUS AS STATUS,"
-            "TAPE_POOL AS TAPE_POOL,"
-            "MOUNT_POLICY AS MOUNT_POLICY,"
-            "PRIORITY AS PRIORITY,"
-            "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
-            "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-            "SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-            "COPY_NB AS COPY_NB,"
-            "START_TIME AS START_TIME,"
-            "CHECKSUMBLOB AS CHECKSUMBLOB,"
-            "CREATION_TIME AS CREATION_TIME,"
-            "DISK_INSTANCE AS DISK_INSTANCE,"
-            "DISK_FILE_ID AS DISK_FILE_ID,"
-            "DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,"
-            "DISK_FILE_GID AS DISK_FILE_GID,"
-            "DISK_FILE_PATH AS DISK_FILE_PATH,"
-            "ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,"
-            "ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,"
-            "REQUESTER_NAME AS REQUESTER_NAME,"
-            "REQUESTER_GROUP AS REQUESTER_GROUP,"
-            "SRC_URL AS SRC_URL,"
-            "STORAGE_CLASS AS STORAGE_CLASS,"
-            "RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,"
-            "MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,"
-            "TOTAL_RETRIES AS TOTAL_RETRIES,"
-            "LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,"
-            "MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES "
-            "FROM ARCHIVE_JOB_QUEUE "
-            "WHERE STATUS = ANY(ARRAY[";
+    std::string sql = R"SQL(
+      SELECT 
+        JOB_ID AS JOB_ID,
+        MOUNT_ID AS MOUNT_ID,
+        STATUS AS STATUS,
+        TAPE_POOL AS TAPE_POOL,
+        MOUNT_POLICY AS MOUNT_POLICY,
+        PRIORITY AS PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES AS SIZE_IN_BYTES,
+        COPY_NB AS COPY_NB,
+        START_TIME AS START_TIME,
+        CHECKSUMBLOB AS CHECKSUMBLOB,
+        CREATION_TIME AS CREATION_TIME,
+        DISK_INSTANCE AS DISK_INSTANCE,
+        DISK_FILE_ID AS DISK_FILE_ID,
+        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
+        DISK_FILE_GID AS DISK_FILE_GID,
+        DISK_FILE_PATH AS DISK_FILE_PATH,
+        ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,
+        ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,
+        REQUESTER_NAME AS REQUESTER_NAME,
+        REQUESTER_GROUP AS REQUESTER_GROUP,
+        SRC_URL AS SRC_URL,
+        STORAGE_CLASS AS STORAGE_CLASS,
+        RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+        MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES AS TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
+        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES 
+      FROM 
+        ARCHIVE_JOB_QUEUE 
+      WHERE
+        STATUS = ANY(ARRAY[
+    )SQL";
     // we can move this to new bindArray method for stmt
     std::vector<std::string> statusVec;
     std::vector<std::string> placeholderVec;
@@ -352,9 +358,11 @@ struct ArchiveJobQueueRow {
       }
       j++;
     }
-    sql +=  "]::ARCHIVE_JOB_STATUS[])  "
-            "ORDER BY PRIORITY DESC, TAPE_POOL "
-            "LIMIT :LIMIT";
+    sql += R"SQL(
+        ]::ARCHIVE_JOB_STATUS[])
+      ORDER BY PRIORITY DESC, TAPE_POOL
+      LIMIT :LIMIT
+    )SQL";
     auto stmt = conn.createStmt(sql);
     // we can move the array binding to new bindArray method for STMT
     size_t sz = statusVec.size();

@@ -28,11 +28,12 @@ OracleLogicalLibraryCatalogue::OracleLogicalLibraryCatalogue(log::Logger &log,
   : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "SELECT "
-      "LOGICAL_LIBRARY_ID_SEQ.NEXTVAL AS LOGICAL_LIBRARY_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      LOGICAL_LIBRARY_ID_SEQ.NEXTVAL AS LOGICAL_LIBRARY_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

@@ -85,23 +85,29 @@ struct ArchiveJobSummaryRow {
   static rdbms::Rset selectNotOwned(Transaction &txn) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
-    const char *const lock_sql = "LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE";
+    const char* const lock_sql = R"SQL(
+    LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
+    )SQL";
     auto stmt = txn.conn().createStmt(lock_sql);
     stmt.executeNonQuery();
-    const char *const sql = "SELECT "
-      "MOUNT_ID,"
-      "STATUS,"
-      "TAPE_POOL,"
-      "MOUNT_POLICY,"
-      "JOBS_COUNT,"
-      "JOBS_TOTAL_SIZE,"
-      "OLDEST_JOB_START_TIME,"
-      "ARCHIVE_PRIORITY,"
-      "ARCHIVE_MIN_REQUEST_AGE, "
-      "LAST_JOB_UPDATE_TIME, "
-      "LAST_UPDATE_TIME "
-    "FROM ARCHIVE_JOB_SUMMARY WHERE "
-    "MOUNT_ID IS NULL";
+    const char* const sql = R"SQL(
+      SELECT 
+        MOUNT_ID,
+        STATUS,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        ARCHIVE_PRIORITY,
+        ARCHIVE_MIN_REQUEST_AGE, 
+        LAST_JOB_UPDATE_TIME, 
+        LAST_UPDATE_TIME 
+      FROM 
+        ARCHIVE_JOB_SUMMARY 
+      WHERE 
+        MOUNT_ID IS NULL
+    )SQL";
 
     stmt = txn.conn().createStmt(sql);
     return stmt.executeQuery();

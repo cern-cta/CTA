@@ -28,11 +28,12 @@ OracleStorageClassCatalogue::OracleStorageClassCatalogue(log::Logger &log,
   : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

@@ -30,13 +30,14 @@
 namespace cta::catalogue {
 
 bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn &conn, const std::string &name) {
-  const char *const sql =
-    "SELECT "
-      "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME "
-    "FROM "
-      "DISK_SYSTEM "
-    "WHERE "
-      "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME 
+    FROM 
+      DISK_SYSTEM 
+    WHERE 
+      DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   auto rset = stmt.executeQuery();
@@ -60,13 +61,14 @@ std::optional<std::string> RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(co
 }
 
 bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn &conn, const std::string &storageClassName) {
-  const char *const sql =
-    "SELECT "
-      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
-    "FROM "
-      "STORAGE_CLASS "
-    "WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME 
+    FROM 
+      STORAGE_CLASS 
+    WHERE 
+      STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   auto rset = stmt.executeQuery();
@@ -74,13 +76,14 @@ bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn &conn, const std::strin
 }
 
 bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName) {
-  const char *const sql =
-    "SELECT "
-      "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
-    "FROM "
-      "VIRTUAL_ORGANIZATION "
-    "WHERE "
-      "UPPER(VIRTUAL_ORGANIZATION_NAME) = UPPER(:VIRTUAL_ORGANIZATION_NAME)";
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    WHERE 
+      UPPER(VIRTUAL_ORGANIZATION_NAME) = UPPER(:VIRTUAL_ORGANIZATION_NAME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   auto rset = stmt.executeQuery();
@@ -88,13 +91,14 @@ bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std
 }
 
 std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn) {
-  const char *const sql =
-          "SELECT "
-          "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
-          "FROM "
-          "VIRTUAL_ORGANIZATION "
-          "WHERE "
-          "IS_REPACK_VO = '1'";
+  const char* const sql = R"SQL(
+    SELECT 
+      VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
+    FROM 
+      VIRTUAL_ORGANIZATION 
+    WHERE 
+      IS_REPACK_VO = '1'
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (rset.next()) {
@@ -105,13 +109,14 @@ std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRep
 }
 
 bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn &conn, const std::string &name) {
-  const char *const sql =
-    "SELECT "
-      "MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME "
-    "FROM "
-      "MEDIA_TYPE "
-    "WHERE "
-      "MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME 
+    FROM 
+      MEDIA_TYPE 
+    WHERE 
+      MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   auto rset = stmt.executeQuery();
@@ -119,13 +124,14 @@ bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn &conn, const std::string &
 }
 
 bool RdbmsCatalogueUtils::diskInstanceExists(rdbms::Conn &conn, const std::string &name) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME "
-    "FROM "
-      "DISK_INSTANCE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME 
+    FROM 
+      DISK_INSTANCE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", name);
   auto rset = stmt.executeQuery();
@@ -133,13 +139,14 @@ bool RdbmsCatalogueUtils::diskInstanceExists(rdbms::Conn &conn, const std::strin
 }
 
 bool RdbmsCatalogueUtils::tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) {
-  const char *const sql =
-    "SELECT "
-      "TAPE_POOL_NAME AS TAPE_POOL_NAME "
-    "FROM "
-      "TAPE_POOL "
-    "WHERE "
-      "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_POOL_NAME AS TAPE_POOL_NAME 
+    FROM 
+      TAPE_POOL 
+    WHERE 
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
@@ -147,13 +154,14 @@ bool RdbmsCatalogueUtils::tapePoolExists(rdbms::Conn &conn, const std::string &t
 }
 
 bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn &conn, const std::string &logicalLibraryName) {
-  const char *const sql =
-    "SELECT "
-      "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME "
-    "FROM "
-      "LOGICAL_LIBRARY "
-    "WHERE "
-      "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME 
+    FROM 
+      LOGICAL_LIBRARY 
+    WHERE 
+      LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
   auto rset = stmt.executeQuery();
@@ -161,13 +169,14 @@ bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn &conn, const std::str
 }
 
 bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn &conn, const std::string &vid) {
-  const char *const sql =
-    "SELECT "
-      "VID AS VID "
-    "FROM "
-      "TAPE "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    SELECT 
+      VID AS VID 
+    FROM 
+      TAPE 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   auto rset = stmt.executeQuery();
@@ -175,13 +184,14 @@ bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn &conn, const std::string &vid) 
 }
 
 bool RdbmsCatalogueUtils::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) {
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-    "FROM "
-      "ARCHIVE_FILE "
-    "WHERE "
-      "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+  const char* const sql = R"SQL(
+    SELECT 
+      ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
+    FROM 
+      ARCHIVE_FILE 
+    WHERE 
+      ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
   auto rset = stmt.executeQuery();
@@ -189,13 +199,14 @@ bool RdbmsCatalogueUtils::archiveFileIdExists(rdbms::Conn &conn, const uint64_t 
 }
 
 bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName) {
-  const char *const sql =
-    "SELECT "
-      "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME "
-    "FROM "
-      "MOUNT_POLICY "
-    "WHERE "
-      "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME 
+    FROM 
+      MOUNT_POLICY 
+    WHERE 
+      MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
   auto rset = stmt.executeQuery();
@@ -204,17 +215,18 @@ bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn &conn, const std::string
 
 bool RdbmsCatalogueUtils::archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName,
   const uint32_t copyNb) {
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-      "ARCHIVE_ROUTE.COPY_NB AS COPY_NB "
-    "FROM "
-      "ARCHIVE_ROUTE "
-    "INNER JOIN STORAGE_CLASS ON "
-      "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "WHERE "
-      "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
-      "ARCHIVE_ROUTE.COPY_NB = :COPY_NB";
+  const char* const sql = R"SQL(
+    SELECT 
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
+      ARCHIVE_ROUTE.COPY_NB AS COPY_NB 
+    FROM 
+      ARCHIVE_ROUTE 
+    INNER JOIN STORAGE_CLASS ON 
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    WHERE 
+      STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND 
+      ARCHIVE_ROUTE.COPY_NB = :COPY_NB
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindUint64(":COPY_NB", copyNb);
@@ -224,17 +236,18 @@ bool RdbmsCatalogueUtils::archiveRouteExists(rdbms::Conn &conn, const std::strin
 
 bool RdbmsCatalogueUtils::requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   const std::string &requesterName, const std::string &activityRegex) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-      "REQUESTER_NAME AS REQUESTER_NAME, "
-      "ACTIVITY_REGEX AS ACTIVITY_REGEX "
-    "FROM "
-      "REQUESTER_ACTIVITY_MOUNT_RULE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_NAME = :REQUESTER_NAME AND "
-      "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
+      REQUESTER_NAME AS REQUESTER_NAME, 
+      ACTIVITY_REGEX AS ACTIVITY_REGEX 
+    FROM 
+      REQUESTER_ACTIVITY_MOUNT_RULE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_NAME = :REQUESTER_NAME AND 
+      ACTIVITY_REGEX = :ACTIVITY_REGEX
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindString(":REQUESTER_NAME", requesterName);
@@ -245,15 +258,16 @@ bool RdbmsCatalogueUtils::requesterActivityMountRuleExists(rdbms::Conn &conn, co
 
 bool RdbmsCatalogueUtils::diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   const std::string &diskFileId) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-      "DISK_FILE_ID AS DISK_FILE_ID "
-    "FROM "
-      "ARCHIVE_FILE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "DISK_FILE_ID = :DISK_FILE_ID";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
+      DISK_FILE_ID AS DISK_FILE_ID 
+    FROM 
+      ARCHIVE_FILE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      DISK_FILE_ID = :DISK_FILE_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindString(":DISK_FILE_ID", diskFileId);
@@ -263,15 +277,16 @@ bool RdbmsCatalogueUtils::diskFileIdExists(rdbms::Conn &conn, const std::string 
 
 bool RdbmsCatalogueUtils::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   uint32_t diskFileOwnerUid) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-      "DISK_FILE_UID AS DISK_FILE_UID "
-    "FROM "
-      "ARCHIVE_FILE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "DISK_FILE_UID = :DISK_FILE_UID";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
+      DISK_FILE_UID AS DISK_FILE_UID 
+    FROM 
+      ARCHIVE_FILE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      DISK_FILE_UID = :DISK_FILE_UID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindUint64(":DISK_FILE_UID", diskFileOwnerUid);
@@ -281,15 +296,16 @@ bool RdbmsCatalogueUtils::diskFileUserExists(rdbms::Conn &conn, const std::strin
 
 bool RdbmsCatalogueUtils::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   uint32_t diskFileGid) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-      "DISK_FILE_GID AS DISK_FILE_GID "
-    "FROM "
-      "ARCHIVE_FILE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "DISK_FILE_GID = :DISK_FILE_GID";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
+      DISK_FILE_GID AS DISK_FILE_GID 
+    FROM 
+      ARCHIVE_FILE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      DISK_FILE_GID = :DISK_FILE_GID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindUint64(":DISK_FILE_GID", diskFileGid);
@@ -299,14 +315,15 @@ bool RdbmsCatalogueUtils::diskFileGroupExists(rdbms::Conn &conn, const std::stri
 
 bool RdbmsCatalogueUtils::requesterMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   const std::string &requesterName) {
-  const char *const sql =
-    "SELECT "
-      "REQUESTER_NAME AS REQUESTER_NAME "
-    "FROM "
-      "REQUESTER_MOUNT_RULE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_NAME = :REQUESTER_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      REQUESTER_NAME AS REQUESTER_NAME 
+    FROM 
+      REQUESTER_MOUNT_RULE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_NAME = :REQUESTER_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindString(":REQUESTER_NAME", requesterName);
@@ -316,15 +333,16 @@ bool RdbmsCatalogueUtils::requesterMountRuleExists(rdbms::Conn &conn, const std:
 
 bool RdbmsCatalogueUtils::requesterGroupMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
   const std::string &requesterGroupName) {
-  const char *const sql =
-    "SELECT "
-      "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-      "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME "
-    "FROM "
-      "REQUESTER_GROUP_MOUNT_RULE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-      "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
+      REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME 
+    FROM 
+      REQUESTER_GROUP_MOUNT_RULE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
   stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
@@ -346,18 +364,20 @@ std::optional<std::string> RdbmsCatalogueUtils::nulloptIfEmptyStr(const std::opt
 }
 
 void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const std::string& vid) {
-  const char * const sql =
-  "UPDATE TAPE SET DIRTY='1' WHERE VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET DIRTY='1' WHERE VID = :VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 }
 
 void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const uint64_t & archiveFileId) {
-  const char * const sql =
-  "UPDATE TAPE SET DIRTY='1' "
-  "WHERE VID IN "
-  "  (SELECT DISTINCT TAPE_FILE.VID AS VID FROM TAPE_FILE WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET DIRTY='1' 
+    WHERE VID IN 
+      (SELECT DISTINCT TAPE_FILE.VID AS VID FROM TAPE_FILE WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
   stmt.executeNonQuery();
@@ -366,16 +386,17 @@ void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const uint64_t & archi
 void RdbmsCatalogueUtils::updateTape(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq,
   const uint64_t compressedBytesWritten, const uint64_t filesWritten, const std::string &tapeDrive) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LAST_FSEQ = :LAST_FSEQ,"
-      "DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,"
-      "MASTER_DATA_IN_BYTES = MASTER_DATA_IN_BYTES + :MASTER_DATA_IN_BYTES,"
-      "NB_MASTER_FILES = NB_MASTER_FILES + :MASTER_FILES,"
-      "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-      "LAST_WRITE_TIME = :LAST_WRITE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LAST_FSEQ = :LAST_FSEQ,
+      DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,
+      MASTER_DATA_IN_BYTES = MASTER_DATA_IN_BYTES + :MASTER_DATA_IN_BYTES,
+      NB_MASTER_FILES = NB_MASTER_FILES + :MASTER_FILES,
+      LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,
+      LAST_WRITE_TIME = :LAST_WRITE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   stmt.bindUint64(":LAST_FSEQ", lastFSeq);

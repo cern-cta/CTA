@@ -163,14 +163,15 @@ void OcciConn::rollback() {
 std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::string &tableName) {
   try {
     std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
-    const char *const sql =
-      "SELECT "
-        "COLUMN_NAME, "
-        "DATA_TYPE "
-      "FROM "
-        "USER_TAB_COLUMNS "
-      "WHERE "
-        "TABLE_NAME = :TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        COLUMN_NAME, 
+        DATA_TYPE 
+      FROM 
+        USER_TAB_COLUMNS 
+      WHERE 
+        TABLE_NAME = :TABLE_NAME
+    )SQL";
 
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", tableName);
@@ -197,13 +198,14 @@ std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::
 std::list<std::string> OcciConn::getTableNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "TABLE_NAME "
-      "FROM "
-        "USER_TABLES "
-      "ORDER BY "
-        "TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        TABLE_NAME 
+      FROM 
+        USER_TABLES 
+      ORDER BY 
+        TABLE_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -225,13 +227,14 @@ std::list<std::string> OcciConn::getTableNames() {
 std::list<std::string> OcciConn::getIndexNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "INDEX_NAME "
-      "FROM "
-        "USER_INDEXES "
-      "ORDER BY "
-        "INDEX_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        INDEX_NAME 
+      FROM 
+        USER_INDEXES 
+      ORDER BY 
+        INDEX_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -253,13 +256,14 @@ std::list<std::string> OcciConn::getIndexNames() {
 std::list<std::string> OcciConn::getSequenceNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "SEQUENCE_NAME "
-      "FROM "
-        "USER_SEQUENCES "
-      "ORDER BY "
-        "SEQUENCE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        SEQUENCE_NAME 
+      FROM 
+        USER_SEQUENCES 
+      ORDER BY 
+        SEQUENCE_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -286,15 +290,16 @@ std::list<std::string> OcciConn::getTriggerNames() {
 std::list<std::string> OcciConn::getParallelTableNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "TABLE_NAME "
-      "FROM "
-        "USER_TABLES "
-      "WHERE "
-        "TRIM(DEGREE) NOT LIKE '1' "
-      "ORDER BY "
-        "TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        TABLE_NAME 
+      FROM 
+        USER_TABLES 
+      WHERE 
+        TRIM(DEGREE) NOT LIKE '1' 
+      ORDER BY 
+        TABLE_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -314,13 +319,14 @@ std::list<std::string> OcciConn::getParallelTableNames() {
 std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName){
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "CONSTRAINT_NAME "
-      "FROM "
-        "USER_CONSTRAINTS "
-      "WHERE "
-        "TABLE_NAME=:TABLE_NAME";
+    const char* const sql = R"SQL(
+      SELECT 
+        CONSTRAINT_NAME 
+      FROM 
+        USER_CONSTRAINTS 
+      WHERE 
+        TABLE_NAME=:TABLE_NAME
+    )SQL";
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME",tableName);
     auto rset = stmt->executeQuery();
@@ -340,11 +346,12 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
 std::list<std::string> OcciConn::getStoredProcedureNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "OBJECT_NAME "
-      "FROM "
-        "USER_PROCEDURES";
+    const char* const sql = R"SQL(
+      SELECT 
+        OBJECT_NAME 
+      FROM 
+        USER_PROCEDURES
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -363,11 +370,12 @@ std::list<std::string> OcciConn::getStoredProcedureNames() {
 std::list<std::string> OcciConn::getSynonymNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "SYNONYM_NAME "
-      "FROM "
-        "USER_SYNONYMS";
+    const char* const sql = R"SQL(
+      SELECT 
+        SYNONYM_NAME 
+      FROM 
+        USER_SYNONYMS
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -386,11 +394,12 @@ std::list<std::string> OcciConn::getSynonymNames() {
 std::list<std::string> OcciConn::getTypeNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "TYPE_NAME "
-      "FROM "
-        "USER_TYPES";
+    const char* const sql = R"SQL(
+      SELECT 
+        TYPE_NAME 
+      FROM 
+        USER_TYPES
+    )SQL";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {

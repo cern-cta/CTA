@@ -77,36 +77,37 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_conn(std::move(conn)),
   m_archiveFileBuilder(log)
 {
-  std::string sql =
-    "SELECT "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-      "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-      "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-      "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-      "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-      "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-      "TAPE_FILE.VID AS VID,"
-      "TAPE_FILE.FSEQ AS FSEQ,"
-      "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-      "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
-      "TAPE_FILE.COPY_NB AS COPY_NB,"
-      "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
-    "FROM "
-      "ARCHIVE_FILE "
-    "INNER JOIN STORAGE_CLASS ON "
-      "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-    "INNER JOIN TAPE_FILE ON "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-    "INNER JOIN TAPE ON "
-      "TAPE_FILE.VID = TAPE.VID "
-    "INNER JOIN TAPE_POOL ON "
-      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
+  std::string sql = R"SQL(
+    SELECT 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+      ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
+      ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,
+      ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,
+      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,
+      ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,
+      TAPE_FILE.VID AS VID,
+      TAPE_FILE.FSEQ AS FSEQ,
+      TAPE_FILE.BLOCK_ID AS BLOCK_ID,
+      TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
+      TAPE_FILE.COPY_NB AS COPY_NB,
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
+    FROM 
+      ARCHIVE_FILE 
+    INNER JOIN STORAGE_CLASS ON 
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
+    INNER JOIN TAPE_FILE ON 
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
+    INNER JOIN TAPE ON 
+      TAPE_FILE.VID = TAPE.VID 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+  )SQL";
 
   const bool thereIsAtLeastOneSearchCriteria =
     searchCriteria.archiveFileId  ||
@@ -116,32 +117,48 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     searchCriteria.fSeq;
 
   if(thereIsAtLeastOneSearchCriteria) {
-  sql += " WHERE ";
+    sql += R"SQL( WHERE )SQL";
   }
 
   bool addedAWhereConstraint = false;
 
   if(searchCriteria.archiveFileId) {
-    sql += " ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+    sql += R"SQL(
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.diskInstance) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.vid) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "TAPE_FILE.VID = :VID";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE_FILE.VID = :VID
+    )SQL";
     addedAWhereConstraint = true;
   }
   if (searchCriteria.fSeq) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "TAPE_FILE.FSEQ = :FSEQ";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE_FILE.FSEQ = :FSEQ
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.diskFileIds) {
-    if(addedAWhereConstraint) sql += " AND ";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
     sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
   }
 
@@ -149,11 +166,17 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE 
   // else order by archive file ID
   if(searchCriteria.vid) {
-    sql += " ORDER BY FSEQ";
+    sql += R"SQL( 
+      ORDER BY FSEQ
+    )SQL";
   } else if (searchCriteria.diskInstance) {
-    sql += " ORDER BY DISK_FILE_ID";
+    sql += R"SQL(
+      ORDER BY DISK_FILE_ID
+    )SQL";
   } else {
-    sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+    sql += R"SQL(
+      ORDER BY ARCHIVE_FILE_ID, COPY_NB
+    )SQL";
   }
 
   m_stmt = m_conn.createStmt(sql);

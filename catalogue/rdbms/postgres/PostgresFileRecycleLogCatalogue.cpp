@@ -53,7 +53,7 @@ auto fileRecycleLog = fileRecycleLogItor.next();
   }
 
   // We currently do all file copies restoring in a single transaction
-  conn.executeNonQuery("BEGIN");
+  conn.executeNonQuery(R"SQL(BEGIN)SQL");
   const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
   if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
     !archiveFilePtr) {
@@ -81,8 +81,9 @@ auto fileRecycleLog = fileRecycleLogItor.next();
 }
 
 uint64_t PostgresFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "select NEXTVAL('FILE_RECYCLE_LOG_ID_SEQ') AS FILE_RECYCLE_LOG_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('FILE_RECYCLE_LOG_ID_SEQ') AS FILE_RECYCLE_LOG_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

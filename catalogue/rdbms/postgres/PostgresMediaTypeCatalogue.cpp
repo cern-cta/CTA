@@ -28,7 +28,9 @@ PostgresMediaTypeCatalogue::PostgresMediaTypeCatalogue(log::Logger &log,
   : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
-  const char *const sql = "select NEXTVAL('MEDIA_TYPE_ID_SEQ') AS MEDIA_TYPE_ID";
+  const char* const sql = R"SQL(
+    SELECT NEXTVAL('MEDIA_TYPE_ID_SEQ') AS MEDIA_TYPE_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {

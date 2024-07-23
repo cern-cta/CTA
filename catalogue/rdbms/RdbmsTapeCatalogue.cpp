@@ -130,62 +130,60 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
       mediaTypeName + " does not exist");
   }
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO TAPE("
-      "VID, "
-      "MEDIA_TYPE_ID, "
-      "VENDOR, "
-      "LOGICAL_LIBRARY_ID, "
-      "TAPE_POOL_ID, "
-      "DATA_IN_BYTES, "
-      "LAST_FSEQ, "
-      "IS_FULL, "
-      "IS_FROM_CASTOR, "
+  const char* const sql = R"SQL(
+    INSERT INTO TAPE(
+      VID, 
+      MEDIA_TYPE_ID, 
+      VENDOR, 
+      LOGICAL_LIBRARY_ID, 
+      TAPE_POOL_ID, 
+      DATA_IN_BYTES, 
+      LAST_FSEQ, 
+      IS_FULL, 
+      IS_FROM_CASTOR, 
 
-      "USER_COMMENT, "
-      "PURCHASE_ORDER, "
+      USER_COMMENT, 
+      PURCHASE_ORDER, 
 
-      "TAPE_STATE, "
-      "STATE_REASON, "
-      "STATE_UPDATE_TIME, "
-      "STATE_MODIFIED_BY, "
+      TAPE_STATE, 
+      STATE_REASON, 
+      STATE_UPDATE_TIME, 
+      STATE_MODIFIED_BY, 
 
-      "CREATION_LOG_USER_NAME, "
-      "CREATION_LOG_HOST_NAME, "
-      "CREATION_LOG_TIME, "
+      CREATION_LOG_USER_NAME, 
+      CREATION_LOG_HOST_NAME, 
+      CREATION_LOG_TIME, 
 
-      "LAST_UPDATE_USER_NAME, "
-      "LAST_UPDATE_HOST_NAME, "
-      "LAST_UPDATE_TIME) "
+      LAST_UPDATE_USER_NAME, 
+      LAST_UPDATE_HOST_NAME, 
+      LAST_UPDATE_TIME) 
+    VALUES(
+      :VID, 
+      :MEDIA_TYPE_ID, 
+      :VENDOR, 
+      :LOGICAL_LIBRARY_ID, 
+      :TAPE_POOL_ID, 
+      :DATA_IN_BYTES, 
+      :LAST_FSEQ, 
+      :IS_FULL, 
+      :IS_FROM_CASTOR, 
 
-    "VALUES("
-      ":VID, "
-      ":MEDIA_TYPE_ID, "
-      ":VENDOR, "
-      ":LOGICAL_LIBRARY_ID, "
-      ":TAPE_POOL_ID, "
-      ":DATA_IN_BYTES, "
-      ":LAST_FSEQ, "
-      ":IS_FULL, "
-      ":IS_FROM_CASTOR, "
+      :USER_COMMENT, 
+      :PURCHASE_ORDER, 
 
-      ":USER_COMMENT, "
-      ":PURCHASE_ORDER, "
+      :TAPE_STATE, 
+      :STATE_REASON, 
+      :STATE_UPDATE_TIME, 
+      :STATE_MODIFIED_BY, 
 
-      ":TAPE_STATE, "
-      ":STATE_REASON, "
-      ":STATE_UPDATE_TIME, "
-      ":STATE_MODIFIED_BY, "
+      :CREATION_LOG_USER_NAME, 
+      :CREATION_LOG_HOST_NAME, 
+      :CREATION_LOG_TIME, 
 
-      ":CREATION_LOG_USER_NAME, "
-      ":CREATION_LOG_HOST_NAME, "
-      ":CREATION_LOG_TIME, "
-
-      ":LAST_UPDATE_USER_NAME, "
-      ":LAST_UPDATE_HOST_NAME, "
-      ":LAST_UPDATE_TIME"
-
-    ")";
+      :LAST_UPDATE_USER_NAME, 
+      :LAST_UPDATE_HOST_NAME, 
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":VID", vid);
@@ -239,14 +237,15 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
 }
 
 void RdbmsTapeCatalogue::deleteTape(const std::string &vid) {
-  const char *const delete_sql =
-    "DELETE "
-    "FROM "
-      "TAPE "
-    "WHERE "
-      "VID = :DELETE_VID AND "
-      "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID) AND "
-      "NOT EXISTS (SELECT VID FROM FILE_RECYCLE_LOG WHERE VID = :SELECT_VID2)";
+  const char* const delete_sql = R"SQL(
+    DELETE 
+    FROM 
+      TAPE 
+    WHERE 
+      VID = :DELETE_VID AND 
+      NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID) AND 
+      NOT EXISTS (SELECT VID FROM FILE_RECYCLE_LOG WHERE VID = :SELECT_VID2)
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(delete_sql);
   stmt.bindString(":DELETE_VID", vid);
@@ -271,56 +270,57 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeS
 }
 
 common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::string& vid) const {
-  const char* const sql =
-  "SELECT "
-    "TAPE.VID AS VID,"
-    "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
-    "TAPE.VENDOR AS VENDOR,"
-    "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-    "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-    "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-    "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-    "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-    "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-    "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-    "TAPE.IS_FULL AS IS_FULL,"
-    "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
-    "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
-    "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
-    "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
-    "TAPE.LABEL_TIME AS LABEL_TIME,"
-    "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-    "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
-    "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-    "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-    "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
-    "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
-    "TAPE.USER_COMMENT AS USER_COMMENT,"
-    "TAPE.TAPE_STATE AS TAPE_STATE,"
-    "TAPE.STATE_REASON AS STATE_REASON,"
-    "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
-    "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
-    "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-    "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-    "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-    "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-    "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-    "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
-    "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
-  "FROM "
-    "TAPE "
-  "INNER JOIN TAPE_POOL ON "
-    "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-  "INNER JOIN LOGICAL_LIBRARY ON "
-    "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-  "LEFT JOIN PHYSICAL_LIBRARY ON "
-    "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
-  "INNER JOIN MEDIA_TYPE ON "
-    "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-  "INNER JOIN VIRTUAL_ORGANIZATION ON "
-    "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-  "WHERE "
-    "VID = :VID";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE.VID AS VID,
+      MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,
+      TAPE.VENDOR AS VENDOR,
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
+      MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
+      TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
+      TAPE.LAST_FSEQ AS LAST_FSEQ,
+      TAPE.IS_FULL AS IS_FULL,
+      TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
+      TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
+      TAPE.LABEL_FORMAT AS LABEL_FORMAT,
+      TAPE.LABEL_DRIVE AS LABEL_DRIVE,
+      TAPE.LABEL_TIME AS LABEL_TIME,
+      TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,
+      TAPE.LAST_READ_TIME AS LAST_READ_TIME,
+      TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,
+      TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,
+      TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,
+      TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,
+      TAPE.USER_COMMENT AS USER_COMMENT,
+      TAPE.TAPE_STATE AS TAPE_STATE,
+      TAPE.STATE_REASON AS STATE_REASON,
+      TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,
+      TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,
+      TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
+      TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME 
+    FROM 
+      TAPE 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    INNER JOIN LOGICAL_LIBRARY ON 
+      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID 
+    LEFT JOIN PHYSICAL_LIBRARY ON 
+      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
+    INNER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      VID = :VID
+  )SQL";
 
   common::dataStructures::VidToTapeMap vidToTapeMap;
 
@@ -532,14 +532,15 @@ void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::Secur
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the media type " + mediaType + " does not exist");
   }
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "MEDIA_TYPE_ID = (SELECT MEDIA_TYPE_ID FROM MEDIA_TYPE WHERE MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE),"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      MEDIA_TYPE_ID = (SELECT MEDIA_TYPE_ID FROM MEDIA_TYPE WHERE MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE),
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MEDIA_TYPE", mediaType);
@@ -566,14 +567,15 @@ void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::Secur
 void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const std::string &vendor) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "VENDOR = :VENDOR,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      VENDOR = :VENDOR,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VENDOR", vendor);
@@ -600,15 +602,16 @@ void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::Security
 void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &logicalLibraryName) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LOGICAL_LIBRARY_ID = "
-        "(SELECT LOGICAL_LIBRARY_ID FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME),"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LOGICAL_LIBRARY_ID = 
+        (SELECT LOGICAL_LIBRARY_ID FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME),
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   if(!RdbmsCatalogueUtils::logicalLibraryExists(conn,logicalLibraryName)){
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the logical library " + logicalLibraryName + " does not exist");
@@ -639,14 +642,15 @@ void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructur
 void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &tapePoolName) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "TAPE_POOL_ID = (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME),"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      TAPE_POOL_ID = (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME),
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   if(!RdbmsCatalogueUtils::tapePoolExists(conn,tapePoolName)){
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the tape pool " + tapePoolName + " does not exist");
@@ -682,14 +686,15 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
@@ -721,14 +726,15 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "PURCHASE_ORDER = :PURCHASE_ORDER,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      PURCHASE_ORDER = :PURCHASE_ORDER,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":PURCHASE_ORDER", optionalPurchaseOrder);
@@ -755,14 +761,15 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
 void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &verificationStatus) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "VERIFICATION_STATUS = :VERIFICATION_STATUS,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      VERIFICATION_STATUS = :VERIFICATION_STATUS,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   if (verificationStatus.empty()) {
@@ -822,17 +829,20 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
     throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
   }
 
-  std::string sql =
-    "UPDATE TAPE SET "
-      "TAPE_STATE = :TAPE_STATE,"
-      "STATE_REASON = :STATE_REASON,"
-      "STATE_UPDATE_TIME = :STATE_UPDATE_TIME,"
-      "STATE_MODIFIED_BY = :STATE_MODIFIED_BY "
-    "WHERE "
-      "VID = :VID";
+  std::string sql = R"SQL(
+    UPDATE TAPE SET 
+      TAPE_STATE = :TAPE_STATE,
+      STATE_REASON = :STATE_REASON,
+      STATE_UPDATE_TIME = :STATE_UPDATE_TIME,
+      STATE_MODIFIED_BY = :STATE_MODIFIED_BY 
+    WHERE 
+      VID = :VID
+  )SQL";
 
   if (prev_state.has_value()) {
-    sql += " AND TAPE_STATE = :PREV_TAPE_STATE";
+    sql += R"SQL(
+      AND TAPE_STATE = :PREV_TAPE_STATE
+    )SQL";
   }
 
   auto conn = m_connPool->getConn();
@@ -862,14 +872,15 @@ bool RdbmsTapeCatalogue::tapeExists(const std::string &vid) const {
 void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool fullValue) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "IS_FULL = :IS_FULL,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      IS_FULL = :IS_FULL,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindBool(":IS_FULL", fullValue);
@@ -896,14 +907,15 @@ void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdent
 void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool dirtyValue) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "DIRTY = :DIRTY,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      DIRTY = :DIRTY,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindBool(":DIRTY", dirtyValue);
@@ -928,11 +940,12 @@ void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIden
 }
 
 void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string &vid) {
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "IS_FULL = '1' "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      IS_FULL = '1' 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
@@ -952,37 +965,38 @@ void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string &vid) {
 
 std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
   std::list<TapeForWriting> tapes;
-  const char *const sql =
-    "SELECT "
-      "TAPE.VID AS VID,"
-      "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
-      "TAPE.VENDOR AS VENDOR,"
-      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-      "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-      "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-      "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-      "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
-      "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME "
-    "FROM "
-      "TAPE "
-    "INNER JOIN TAPE_POOL ON "
-      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "INNER JOIN LOGICAL_LIBRARY ON "
-      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-    "INNER JOIN MEDIA_TYPE ON "
-      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-    "INNER JOIN VIRTUAL_ORGANIZATION ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-//      "TAPE.LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
-//      "TAPE.LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
-      "TAPE.TAPE_STATE = :TAPE_STATE AND "
-      "TAPE.IS_FULL = '0' AND "
-      "TAPE.IS_FROM_CASTOR = '0' AND "
-      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME "
-    "ORDER BY TAPE.DATA_IN_BYTES DESC";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE.VID AS VID,
+      MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,
+      TAPE.VENDOR AS VENDOR,
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
+      TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
+      TAPE.LAST_FSEQ AS LAST_FSEQ,
+      TAPE.LABEL_FORMAT AS LABEL_FORMAT,
+      TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME 
+    FROM 
+      TAPE 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    INNER JOIN LOGICAL_LIBRARY ON 
+      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID 
+    INNER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+/*      TAPE.LABEL_DRIVE IS NOT NULL AND */ /* Set when the tape has been labelled */
+/*      TAPE.LABEL_TIME IS NOT NULL AND */  /* Set when the tape has been labelled */
+      TAPE.TAPE_STATE = :TAPE_STATE AND 
+      TAPE.IS_FULL = '0' AND 
+      TAPE.IS_FROM_CASTOR = '0' AND 
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME 
+    ORDER BY TAPE.DATA_IN_BYTES DESC
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -1009,13 +1023,14 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
 }
 
 common::dataStructures::Label::Format RdbmsTapeCatalogue::getTapeLabelFormat(const std::string& vid) const {
-  const char *const sql =
-    "SELECT "
-      "TAPE.LABEL_FORMAT AS LABEL_FORMAT "
-    "FROM "
-      "TAPE "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE.LABEL_FORMAT AS LABEL_FORMAT 
+    FROM 
+      TAPE 
+    WHERE 
+      VID = :VID
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -1030,11 +1045,12 @@ common::dataStructures::Label::Format RdbmsTapeCatalogue::getTapeLabelFormat(con
 }
 
 void RdbmsTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "IS_FROM_CASTOR = '1' "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      IS_FROM_CASTOR = '1' 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
@@ -1062,14 +1078,15 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
   const std::string &vid, const std::optional<std::string> &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -1096,12 +1113,13 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
 
 void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string &drive) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LABEL_DRIVE = :LABEL_DRIVE,"
-      "LABEL_TIME = :LABEL_TIME "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LABEL_DRIVE = :LABEL_DRIVE,
+      LABEL_TIME = :LABEL_TIME 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LABEL_DRIVE", drive);
@@ -1116,13 +1134,14 @@ void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string 
 
 void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-      "LAST_WRITE_TIME = :LAST_WRITE_TIME, "
-      "WRITE_MOUNT_COUNT = WRITE_MOUNT_COUNT + 1 "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,
+      LAST_WRITE_TIME = :LAST_WRITE_TIME, 
+      WRITE_MOUNT_COUNT = WRITE_MOUNT_COUNT + 1 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LAST_WRITE_DRIVE", drive);
@@ -1144,13 +1163,14 @@ void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std
 
 void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LAST_READ_DRIVE = :LAST_READ_DRIVE,"
-      "LAST_READ_TIME = :LAST_READ_TIME, "
-      "READ_MOUNT_COUNT = READ_MOUNT_COUNT + 1 "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LAST_READ_DRIVE = :LAST_READ_DRIVE,
+      LAST_READ_TIME = :LAST_READ_TIME, 
+      READ_MOUNT_COUNT = READ_MOUNT_COUNT + 1 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LAST_READ_DRIVE", drive);
@@ -1198,69 +1218,70 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   }
 
   std::list<common::dataStructures::Tape> tapes;
-  std::string sql =
-    "SELECT "
-      "TAPE.VID AS VID,"
-      "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
-      "TAPE.VENDOR AS VENDOR,"
-      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-      "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-      "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-      "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-      "TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,"
-      "TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,"
-      "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-      "TAPE.IS_FULL AS IS_FULL,"
-      "TAPE.DIRTY AS DIRTY,"
-      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
-      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
+  std::string sql = R"SQL(
+    SELECT 
+      TAPE.VID AS VID,
+      MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,
+      TAPE.VENDOR AS VENDOR,
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
+      MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
+      TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
+      TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,
+      TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,
+      TAPE.LAST_FSEQ AS LAST_FSEQ,
+      TAPE.IS_FULL AS IS_FULL,
+      TAPE.DIRTY AS DIRTY,
+      TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
 
-      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
 
-      "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+      TAPE.LABEL_FORMAT AS LABEL_FORMAT,
 
-      "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
-      "TAPE.LABEL_TIME AS LABEL_TIME,"
+      TAPE.LABEL_DRIVE AS LABEL_DRIVE,
+      TAPE.LABEL_TIME AS LABEL_TIME,
 
-      "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-      "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
+      TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,
+      TAPE.LAST_READ_TIME AS LAST_READ_TIME,
 
-      "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-      "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+      TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,
+      TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,
 
-      "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
-      "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
+      TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,
+      TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,
 
-      "TAPE.VERIFICATION_STATUS AS VERIFICATION_STATUS,"
+      TAPE.VERIFICATION_STATUS AS VERIFICATION_STATUS,
 
-      "TAPE.USER_COMMENT AS USER_COMMENT,"
+      TAPE.USER_COMMENT AS USER_COMMENT,
 
-      "TAPE.TAPE_STATE AS TAPE_STATE,"
-      "TAPE.STATE_REASON AS STATE_REASON,"
-      "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
-      "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
+      TAPE.TAPE_STATE AS TAPE_STATE,
+      TAPE.STATE_REASON AS STATE_REASON,
+      TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,
+      TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,
 
-      "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "TAPE "
-    "INNER JOIN TAPE_POOL ON "
-      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "INNER JOIN LOGICAL_LIBRARY ON "
-      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-    "LEFT JOIN PHYSICAL_LIBRARY ON "
-      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
-    "INNER JOIN MEDIA_TYPE ON "
-      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-    "INNER JOIN VIRTUAL_ORGANIZATION ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
+      TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      TAPE 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    INNER JOIN LOGICAL_LIBRARY ON 
+      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID 
+    LEFT JOIN PHYSICAL_LIBRARY ON 
+      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
+    INNER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
+  )SQL";
 
   if(searchCriteria.vid ||
       searchCriteria.mediaType ||
@@ -1275,84 +1296,134 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       searchCriteria.fromCastor ||
       searchCriteria.purchaseOrder ||
       searchCriteria.physicalLibraryName) {
-    sql += " WHERE";
+    sql += R"SQL( WHERE )SQL";
   }
 
   bool addedAWhereConstraint = false;
 
   if(searchCriteria.vid) {
-    sql += " TAPE.VID = :VID";
+    sql += R"SQL(
+      TAPE.VID = :VID
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.mediaType) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL( 
+      MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE 
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.vendor) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE.VENDOR = :VENDOR";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE.VENDOR = :VENDOR
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.logicalLibrary) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.tapePool) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.vo) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.capacityInBytes) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " MEDIA_TYPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      MEDIA_TYPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.full) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE.IS_FULL = :IS_FULL";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE.IS_FULL = :IS_FULL
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.diskFileIds) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " VID IN ("
-        "SELECT DISTINCT A.VID "
-        "FROM "
-          "TAPE_FILE A, ARCHIVE_FILE B "
-        "WHERE "
-          "A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND "
-          "B.DISK_FILE_ID IN (:DISK_FID0)"
-        ")";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL( 
+      VID IN (
+        SELECT DISTINCT A.VID 
+        FROM 
+          TAPE_FILE A, ARCHIVE_FILE B 
+        WHERE 
+          A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND 
+          B.DISK_FILE_ID IN (:DISK_FID0)
+      )
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if(searchCriteria.state) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE.TAPE_STATE = :TAPE_STATE";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE.TAPE_STATE = :TAPE_STATE
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.fromCastor) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE.IS_FROM_CASTOR = :FROM_CASTOR
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.purchaseOrder) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " TAPE.PURCHASE_ORDER = :PURCHASE_ORDER";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      TAPE.PURCHASE_ORDER = :PURCHASE_ORDER
+    )SQL";
     addedAWhereConstraint = true;
   }
   if(searchCriteria.physicalLibraryName) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += " PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
+    )SQL";
   }
 
-  sql += " ORDER BY TAPE.VID";
+  sql += R"SQL( ORDER BY TAPE.VID )SQL";
 
   auto stmt = conn.createStmt(sql);
 
@@ -1459,11 +1530,12 @@ void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &v
       ",nextValue=" << lastFSeq;
     throw ex;
   }
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LAST_FSEQ = :LAST_FSEQ "
-    "WHERE "
-      "VID=:VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      LAST_FSEQ = :LAST_FSEQ 
+    WHERE 
+      VID=:VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   stmt.bindUint64(":LAST_FSEQ", lastFSeq);
@@ -1471,8 +1543,9 @@ void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &v
 }
 
 void RdbmsTapeCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
-  const char * const sql =
-  "DELETE FROM TAPE_FILE WHERE VID = :VID";
+  const char* const sql = R"SQL(
+    DELETE FROM TAPE_FILE WHERE VID = :VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
@@ -1480,9 +1553,10 @@ void RdbmsTapeCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& v
 }
 
 uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const {
-  const char *const sql =
-  "SELECT COUNT(*) AS NB_FILES FROM TAPE_FILE "
-  "WHERE VID = :VID ";
+  const char* const sql = R"SQL(
+    SELECT COUNT(*) AS NB_FILES FROM TAPE_FILE 
+    WHERE VID = :VID 
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
 
@@ -1495,25 +1569,26 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
 void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStructures::SecurityIdentity& admin,
   const std::string& vid) const {
   const time_t now = time(nullptr);
-  const char * const sql =
-  "UPDATE TAPE SET "
-      "DATA_IN_BYTES = 0,"
-      "MASTER_DATA_IN_BYTES = 0,"
-      "LAST_FSEQ = 0,"
-      "NB_MASTER_FILES = 0,"
-      "NB_COPY_NB_1 = 0,"
-      "COPY_NB_1_IN_BYTES = 0,"
-      "NB_COPY_NB_GT_1 = 0,"
-      "COPY_NB_GT_1_IN_BYTES = 0,"
-      "IS_FULL = '0',"
-      "IS_FROM_CASTOR = '0',"
-      "VERIFICATION_STATUS = :VERIFICATION_STATUS,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
-      "DIRTY = '0' "
-    "WHERE "
-      "VID = :VID";
+  const char* const sql = R"SQL(
+    UPDATE TAPE SET 
+      DATA_IN_BYTES = 0,
+      MASTER_DATA_IN_BYTES = 0,
+      LAST_FSEQ = 0,
+      NB_MASTER_FILES = 0,
+      NB_COPY_NB_1 = 0,
+      COPY_NB_1_IN_BYTES = 0,
+      NB_COPY_NB_GT_1 = 0,
+      COPY_NB_GT_1_IN_BYTES = 0,
+      IS_FULL = '0',
+      IS_FROM_CASTOR = '0',
+      VERIFICATION_STATUS = :VERIFICATION_STATUS,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME,
+      DIRTY = '0' 
+    WHERE 
+      VID = :VID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VERIFICATION_STATUS", std::nullopt);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -1552,65 +1627,66 @@ std::optional<common::dataStructures::TapeLog> RdbmsTapeCatalogue::getTapeLogFro
 std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
   std::stringstream sql;
 
-  sql <<
-    "SELECT "
-      "TAPE.VID AS VID,"
-      "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
-      "TAPE.VENDOR AS VENDOR,"
-      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-      "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-      "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-      "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-      "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-      "TAPE.IS_FULL AS IS_FULL,"
-      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
-      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
-      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
+  sql << R"SQL(
+    SELECT 
+      TAPE.VID AS VID,
+      MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,
+      TAPE.VENDOR AS VENDOR,
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
+      TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
+      MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
+      TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
+      TAPE.LAST_FSEQ AS LAST_FSEQ,
+      TAPE.IS_FULL AS IS_FULL,
+      TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
+      TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
 
-      "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+      TAPE.LABEL_FORMAT AS LABEL_FORMAT,
 
-      "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
-      "TAPE.LABEL_TIME AS LABEL_TIME,"
+      TAPE.LABEL_DRIVE AS LABEL_DRIVE,
+      TAPE.LABEL_TIME AS LABEL_TIME,
 
-      "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-      "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
+      TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,
+      TAPE.LAST_READ_TIME AS LAST_READ_TIME,
 
-      "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-      "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+      TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,
+      TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,
 
-      "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
-      "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
+      TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,
+      TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,
 
-      "TAPE.USER_COMMENT AS USER_COMMENT,"
+      TAPE.USER_COMMENT AS USER_COMMENT,
 
-      "TAPE.TAPE_STATE AS TAPE_STATE,"
-      "TAPE.STATE_REASON AS STATE_REASON,"
-      "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
-      "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
+      TAPE.TAPE_STATE AS TAPE_STATE,
+      TAPE.STATE_REASON AS STATE_REASON,
+      TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,
+      TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,
 
-      "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "TAPE "
-    "INNER JOIN TAPE_POOL ON "
-      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-    "INNER JOIN LOGICAL_LIBRARY ON "
-      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-    "LEFT JOIN PHYSICAL_LIBRARY ON "
-      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
-    "INNER JOIN MEDIA_TYPE ON "
-      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-    "INNER JOIN VIRTUAL_ORGANIZATION ON "
-      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
-    "WHERE "
-      "VID IN (:V1";
+      TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      TAPE 
+    INNER JOIN TAPE_POOL ON 
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
+    INNER JOIN LOGICAL_LIBRARY ON 
+      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID 
+    LEFT JOIN PHYSICAL_LIBRARY ON 
+      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
+    INNER JOIN MEDIA_TYPE ON 
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
+    INNER JOIN VIRTUAL_ORGANIZATION ON 
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
+    WHERE 
+      VID IN (:V1
+  )SQL";
 
   for(uint32_t i=2; i<=100; i++) {
     sql << ",:V" << i;
@@ -1672,16 +1748,17 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
 std::string RdbmsTapeCatalogue::getSelectVidToLogicalLibraryBy100Sql() const {
   std::stringstream sql;
 
-  sql <<
-    "SELECT "
-      "TAPE.VID AS VID, "
-      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME "
-    "FROM "
-      "TAPE "
-    "INNER JOIN LOGICAL_LIBRARY ON "
-      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-    "WHERE "
-      "VID IN (:V1";
+  sql << R"SQL(
+    SELECT 
+      TAPE.VID AS VID, 
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME 
+    FROM 
+      TAPE 
+    INNER JOIN LOGICAL_LIBRARY ON 
+      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID 
+    WHERE 
+      VID IN (:V1
+  )SQL";
 
   for(uint32_t i=2; i<=100; i++) {
     sql << ",:V" << i;

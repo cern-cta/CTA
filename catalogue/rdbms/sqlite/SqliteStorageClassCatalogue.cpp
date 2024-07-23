@@ -28,9 +28,11 @@ SqliteStorageClassCatalogue::SqliteStorageClassCatalogue(log::Logger &log,
   : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t SqliteStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
-  conn.executeNonQuery("INSERT INTO STORAGE_CLASS_ID VALUES(NULL)");
+  conn.executeNonQuery(R"SQL(INSERT INTO STORAGE_CLASS_ID VALUES(NULL))SQL");
   uint64_t storageClassId = 0;
-  const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+  const char* const sql = R"SQL(
+    SELECT LAST_INSERT_ROWID() AS ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {
@@ -40,7 +42,7 @@ uint64_t SqliteStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
   if(rset.next()) {
     throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
   }
-  conn.executeNonQuery("DELETE FROM STORAGE_CLASS_ID");
+  conn.executeNonQuery(R"SQL(DELETE FROM STORAGE_CLASS_ID)SQL");
 
   return storageClassId;
 }

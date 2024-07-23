@@ -49,31 +49,32 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
   }
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO DISK_INSTANCE("
-      "DISK_INSTANCE_NAME,"
+  const char* const sql = R"SQL(
+    INSERT INTO DISK_INSTANCE(
+      DISK_INSTANCE_NAME,
 
-      "USER_COMMENT,"
+      USER_COMMENT,
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+      CREATION_LOG_USER_NAME,
+      CREATION_LOG_HOST_NAME,
+      CREATION_LOG_TIME,
 
-      "LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME)"
-    "VALUES("
-      ":DISK_INSTANCE_NAME,"
+      LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME)
+    VALUES(
+      :DISK_INSTANCE_NAME,
 
-      ":USER_COMMENT,"
+      :USER_COMMENT,
 
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
+      :CREATION_LOG_USER_NAME,
+      :CREATION_LOG_HOST_NAME,
+      :CREATION_LOG_TIME,
 
-      ":LAST_UPDATE_USER_NAME,"
-      ":LAST_UPDATE_HOST_NAME,"
-      ":LAST_UPDATE_TIME)";
+      :LAST_UPDATE_USER_NAME,
+      :LAST_UPDATE_HOST_NAME,
+      :LAST_UPDATE_TIME)
+  )SQL";
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":DISK_INSTANCE_NAME", name);
@@ -92,12 +93,13 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
 }
 
 void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
-  const char *const delete_sql =
-    "DELETE "
-    "FROM "
-      "DISK_INSTANCE "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+  const char* const delete_sql = R"SQL(
+    DELETE 
+    FROM 
+      DISK_INSTANCE 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(delete_sql);
     stmt.bindString(":DISK_INSTANCE_NAME", name);
@@ -127,14 +129,15 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE DISK_INSTANCE SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+  const char* const sql = R"SQL(
+    UPDATE DISK_INSTANCE SET 
+      USER_COMMENT = :USER_COMMENT,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+  )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -151,21 +154,22 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
 
 std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
   std::list<common::dataStructures::DiskInstance> diskInstanceList;
-  std::string sql =
-    "SELECT "
-      "DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+  const char* const sql = R"SQL(
+    SELECT 
+      DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
 
-      "DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,"
+      DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,
 
-      "DISK_INSTANCE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "DISK_INSTANCE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "DISK_INSTANCE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      DISK_INSTANCE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      DISK_INSTANCE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      DISK_INSTANCE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
 
-      "DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "DISK_INSTANCE";
+      DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
+    FROM 
+      DISK_INSTANCE
+  )SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);

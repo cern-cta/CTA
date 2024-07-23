@@ -28,11 +28,12 @@ OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger &log,
   : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "SELECT "
-      "MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

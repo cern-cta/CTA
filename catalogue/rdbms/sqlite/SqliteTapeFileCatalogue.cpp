@@ -50,7 +50,7 @@ SqliteTapeFileCatalogue::SqliteTapeFileCatalogue(log::Logger &log,
 void SqliteTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn & conn,
   const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, utils::Timer *timer,
   log::TimingList *timingList, log::LogContext & lc) const {
-  conn.executeNonQuery("BEGIN TRANSACTION");
+  conn.executeNonQuery(R"SQL(BEGIN TRANSACTION)SQL");
   const auto fileRecycleLogCatalogue = static_cast<RdbmsFileRecycleLogCatalogue*>(
     RdbmsTapeFileCatalogue::m_rdbmsCatalogue->FileRecycleLog().get());
   fileRecycleLogCatalogue->copyTapeFilesToFileRecycleLog(conn, file, reason);

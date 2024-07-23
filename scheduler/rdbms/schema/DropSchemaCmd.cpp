@@ -141,7 +141,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (tables.size() != 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_SCHEDULER.");
     }
-    conn.executeNonQuery("DROP TABLE IF EXISTS CTA_SCHEDULER");
+    conn.executeNonQuery(R"SQL(DROP TABLE IF EXISTS CTA_SCHEDULER)SQL");
     m_out << "Dropped table CTA_SCHEDULER" << std::endl;
 
     tables = conn.getTableNames();
@@ -206,7 +206,9 @@ void DropSchemaCmd::dropDatabaseTypes(rdbms::Conn &conn) {
 // isProductionSet
 //------------------------------------------------------------------------------
 bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
-  const char * const sql = "SELECT CTA_SCHEDULER.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_SCHEDULER";
+  const char* const sql = R"SQL(
+    SELECT CTA_SCHEDULER.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_SCHEDULER
+  )SQL";
   try {
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();

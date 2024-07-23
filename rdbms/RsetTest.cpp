@@ -51,19 +51,25 @@ TEST_F(cta_rdbms_RsetTest, next) {
   auto conn = connFactory->create();
   StmtPool pool;
   {
-    const std::string sql = "CREATE TABLE RSET_TEST(ID INTEGER)";
+    const char* const sql = R"SQL(
+      CREATE TABLE RSET_TEST(ID INTEGER)
+    )SQL";
     Stmt stmt = pool.getStmt(*conn, sql);
     stmt.executeNonQuery();
   }
   
   {
-    const std::string sql = "INSERT INTO RSET_TEST(ID) VALUES(1)";
+    const char* const sql = R"SQL(
+      INSERT INTO RSET_TEST(ID) VALUES(1)
+    )SQL";
     Stmt stmt = pool.getStmt(*conn, sql);
     stmt.executeNonQuery();
   }
 
   {
-    const std::string sql = "SELECT ID AS ID FROM RSET_TEST ORDER BY ID";
+    const char* const sql = R"SQL(
+      SELECT ID AS ID FROM RSET_TEST ORDER BY ID
+    )SQL";
     Stmt stmt = pool.getStmt(*conn, sql);
     auto rset = stmt.executeQuery();
 

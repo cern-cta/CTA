@@ -29,11 +29,12 @@ OracleTapePoolCatalogue::OracleTapePoolCatalogue(log::Logger &log,
   : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t OracleTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "SELECT "
-      "TAPE_POOL_ID_SEQ.NEXTVAL AS TAPE_POOL_ID "
-    "FROM "
-      "DUAL";
+  const char* const sql = R"SQL(
+    SELECT 
+      TAPE_POOL_ID_SEQ.NEXTVAL AS TAPE_POOL_ID 
+    FROM 
+      DUAL
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {

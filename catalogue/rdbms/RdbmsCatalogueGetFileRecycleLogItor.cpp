@@ -34,36 +34,37 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   m_log(log),
   m_conn(std::move(conn)),
   m_searchCriteria(searchCriteria) {
-  std::string sql =
-    "SELECT "
-      "FILE_RECYCLE_LOG.VID AS VID,"
-      "FILE_RECYCLE_LOG.FSEQ AS FSEQ,"
-      "FILE_RECYCLE_LOG.BLOCK_ID AS BLOCK_ID,"
-      "FILE_RECYCLE_LOG.COPY_NB AS COPY_NB,"
-      "FILE_RECYCLE_LOG.TAPE_FILE_CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-      "FILE_RECYCLE_LOG.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-      "FILE_RECYCLE_LOG.DISK_FILE_ID AS DISK_FILE_ID,"
-      "FILE_RECYCLE_LOG.DISK_FILE_ID_WHEN_DELETED AS DISK_FILE_ID_WHEN_DELETED,"
-      "FILE_RECYCLE_LOG.DISK_FILE_UID AS DISK_FILE_UID,"
-      "FILE_RECYCLE_LOG.DISK_FILE_GID AS DISK_FILE_GID,"
-      "FILE_RECYCLE_LOG.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-      "FILE_RECYCLE_LOG.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-      "FILE_RECYCLE_LOG.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-      "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME as VIRTUAL_ORGANIZATION_NAME,"
-      "FILE_RECYCLE_LOG.ARCHIVE_FILE_CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-      "FILE_RECYCLE_LOG.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-      "FILE_RECYCLE_LOG.COLLOCATION_HINT AS COLLOCATION_HINT,"
-      "FILE_RECYCLE_LOG.DISK_FILE_PATH AS DISK_FILE_PATH,"
-      "FILE_RECYCLE_LOG.REASON_LOG AS REASON_LOG,"
-      "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME "
-    "FROM "
-      "FILE_RECYCLE_LOG "
-    "JOIN "
-      "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID "
-    "JOIN "
-      "VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID";
+  std::string sql = R"SQL(
+    SELECT 
+      FILE_RECYCLE_LOG.VID AS VID,
+      FILE_RECYCLE_LOG.FSEQ AS FSEQ,
+      FILE_RECYCLE_LOG.BLOCK_ID AS BLOCK_ID,
+      FILE_RECYCLE_LOG.COPY_NB AS COPY_NB,
+      FILE_RECYCLE_LOG.TAPE_FILE_CREATION_TIME AS TAPE_FILE_CREATION_TIME,
+      FILE_RECYCLE_LOG.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+      FILE_RECYCLE_LOG.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      FILE_RECYCLE_LOG.DISK_FILE_ID AS DISK_FILE_ID,
+      FILE_RECYCLE_LOG.DISK_FILE_ID_WHEN_DELETED AS DISK_FILE_ID_WHEN_DELETED,
+      FILE_RECYCLE_LOG.DISK_FILE_UID AS DISK_FILE_UID,
+      FILE_RECYCLE_LOG.DISK_FILE_GID AS DISK_FILE_GID,
+      FILE_RECYCLE_LOG.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      FILE_RECYCLE_LOG.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      FILE_RECYCLE_LOG.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME as VIRTUAL_ORGANIZATION_NAME,
+      FILE_RECYCLE_LOG.ARCHIVE_FILE_CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,
+      FILE_RECYCLE_LOG.RECONCILIATION_TIME AS RECONCILIATION_TIME,
+      FILE_RECYCLE_LOG.COLLOCATION_HINT AS COLLOCATION_HINT,
+      FILE_RECYCLE_LOG.DISK_FILE_PATH AS DISK_FILE_PATH,
+      FILE_RECYCLE_LOG.REASON_LOG AS REASON_LOG,
+      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME 
+    FROM 
+      FILE_RECYCLE_LOG 
+    JOIN 
+      STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID 
+    JOIN 
+      VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID
+  )SQL";
 
   const bool thereIsAtLeastOneSearchCriteria =
           searchCriteria.vid ||
@@ -76,62 +77,94 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
           searchCriteria.vo;
 
   if(thereIsAtLeastOneSearchCriteria) {
-    sql += " WHERE ";
+    sql += R"SQL( WHERE )SQL";
   }
   
   bool addedAWhereConstraint = false;
   
   if(searchCriteria.vid) {
-    sql += "FILE_RECYCLE_LOG.VID = :VID";
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.VID = :VID
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.archiveFileId) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
     addedAWhereConstraint = true;
   }
   
   if(searchCriteria.diskFileIds) {
-    if(addedAWhereConstraint) sql += " AND ";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
     sql += "FILE_RECYCLE_LOG.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.diskInstance) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.copynb) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "FILE_RECYCLE_LOG.COPY_NB = :COPY_NB";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.COPY_NB = :COPY_NB
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.recycleLogTimeMin) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME >= :RECYCLE_LOG_TIME_MIN";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME >= :RECYCLE_LOG_TIME_MIN
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.recycleLogTimeMax) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "FILE_RECYCLE_LOG.RECYCLE_LOG_TIME <= :RECYCLE_LOG_TIME_MAX";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME <= :RECYCLE_LOG_TIME_MAX
+    )SQL";
     addedAWhereConstraint = true;
   }
 
   if (searchCriteria.vo) {
-    if(addedAWhereConstraint) sql += " AND ";
-    sql += "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
+    )SQL";
   }
   
   // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
   if(searchCriteria.vid) {
-    sql += " ORDER BY FILE_RECYCLE_LOG.FSEQ";
+    sql += R"SQL(
+      ORDER BY FILE_RECYCLE_LOG.FSEQ
+    )SQL";
   } else {
-    sql += " ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB";
+    sql += R"SQL(
+      ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB
+    )SQL";
   }
   
   m_stmt = m_conn.createStmt(sql);

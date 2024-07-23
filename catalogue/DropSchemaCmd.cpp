@@ -140,7 +140,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
     }
     try {
-      conn.executeNonQuery("DROP TABLE CTA_CATALOGUE");
+      conn.executeNonQuery(R"SQL(DROP TABLE CTA_CATALOGUE)SQL");
       m_out << "Dropped table CTA_CATALOGUE" << std::endl;
     } catch(exception::Exception &ex) {
       // Ignore reason for failure
@@ -182,7 +182,9 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
     return false;
   }
 
-  const char * const sql = "SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE";
+  const char* const sql = R"SQL(
+    SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE
+  )SQL";
   try {
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();

@@ -21,6 +21,7 @@
 - cta/CTA#734 - Generate cta-admin man page from Markdown
 - cta/CTA#784 - Convert all CTA man pages into Markdown
 - cta/CTA#791 - Remove redundant Protobuf3 dependencies
+- cta/CTA#788 - Make SQL multiline strings use raw string literals
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests

@@ -28,8 +28,9 @@ PostgresLogicalLibraryCatalogue::PostgresLogicalLibraryCatalogue(log::Logger &lo
   : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
 uint64_t PostgresLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
-  const char *const sql =
-    "select NEXTVAL('LOGICAL_LIBRARY_ID_SEQ') AS LOGICAL_LIBRARY_ID";
+  const char* const sql = R"SQL(
+    select NEXTVAL('LOGICAL_LIBRARY_ID_SEQ') AS LOGICAL_LIBRARY_ID
+  )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
   if(!rset.next()) {
