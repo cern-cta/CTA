@@ -6,6 +6,7 @@
 - cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
 - cta/CTA#355 - Added option to build CTA with ninja
 - cta/CTA#771 - Remove `cta-versionlock` script and extract `cta-checkpkg` script. Added strict version checking for XRootD
+- cta/CTA#696 - Added a completely new README.md
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
