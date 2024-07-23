@@ -36,55 +36,15 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-## Getting Started
-
-The simplest way to get start with CTA is by using the publicly-available RPMs.
-
-### Install CTA
-
-1. Setup the cta-public repo for CTA:
-
-    ```bash
-    echo -e "[cta-public-5-alma9]\n \
-              name=CTA artifacts\n \
-              baseurl=https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64/\n \
-              gpgcheck=0\n \
-              ena bled=1\n \
-              priority=2" \
-      > /etc/yum.repos.d/cta-public-5.repo
-    ```
-
-2. Install the `cta-release` package:
-
-    ```bash
-    yum install cta-release
-    ```
-
-3. For a very minimal install, you need the following packages.
-
-    On the CTA frontend:
-
-    ```bash
-    yum install cta-frontend cta-catalogueutils
-    ```
-
-    On the CTA tape servers:
-
-    ```bash
-    yum install cta-taped cta-tape-label
-    ```
-
-For more detailed instructions and configuration, please visit [the documentation](https://eoscta.docs.cern.ch/latest/overview/getting_started/).
+CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://eoscta.docs.cern.ch/latest/dev/introduction/).
 
 ## License
 
-> This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
+> This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file [COPYING](COPYING). You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
 >
 > This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 >
 > In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.
-
-See the [COPYING](COPYING) file for additional details.
 
 ___
 
