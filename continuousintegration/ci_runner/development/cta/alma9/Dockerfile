@@ -26,7 +26,7 @@ RUN mkdir -p shared;
 RUN set -ex; \
     dnf -y update; \
     dnf -y install epel-release almalinux-release-devel; \
-    dnf -y install git vim rsync wget cmake3 dnf-utils ccache openssh-server; \
+    dnf -y install git vim rsync cmake3 dnf-utils ccache openssh-server; \
     dnf -y group install "Development Tools";
 
 RUN set -ex; \
@@ -34,10 +34,6 @@ RUN set -ex; \
     cd cta; \
     git checkout ${CTA_VERSION}; \
     git submodule sync --recursive && git submodule update --init --recursive;
-
-RUN set -ex; \
-    cd cta; \
-    ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh;
 
 RUN set -ex; \
     mkdir build_srpm; \

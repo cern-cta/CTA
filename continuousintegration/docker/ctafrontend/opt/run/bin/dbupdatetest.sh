@@ -15,10 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# This libraries are needed to install oracle-instant-client
-# (TO BE FIXED: with the current population of repositories in CI the standard CC7 repos are not available in the container: this should be fixed in the container adding repos for these 2)
-yum install --assumeyes wget libaio
-
 # Create wrapper to use the entrypoint of the container
 echo "
 #/bin/bash

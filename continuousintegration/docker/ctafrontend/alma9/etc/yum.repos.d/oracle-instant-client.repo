@@ -1,0 +1,7 @@
+[cta-oracle-instant-client]
+name=Oracle instant client
+baseurl=https://yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient23/$basearch
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+gpgcheck=0
+enabled=1
+priority=1

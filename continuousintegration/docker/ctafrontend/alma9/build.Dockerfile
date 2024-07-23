@@ -11,7 +11,7 @@ COPY ./etc/yum.repos.d/ /etc/yum.repos.d/
 RUN set -ex; \
     yum update -y; \
     yum -y install epel-release almalinux-release-devel; \
-    yum -y install git wget gcc gcc-c++ cmake3 make rpm-build yum-utils pandoc; \
+    yum -y install git gcc gcc-c++ cmake3 make rpm-build yum-utils pandoc; \
     yum clean all;
 
 WORKDIR /Project
@@ -24,10 +24,6 @@ RUN set -ex; \
 
 COPY ./cc7toalma9.sh /Project/CTA/continuousintegration/docker/ctafrontend/alma9/cc7toalma9.sh
 COPY ./code.patch /Project/CTA/continuousintegration/docker/ctafrontend/alma9/code.patch
-
-RUN set -ex; \
-    cd CTA; \
-    ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh;
 
 RUN set -ex; \
     mkdir /Project/build_srpm; \

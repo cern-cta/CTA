@@ -10,11 +10,7 @@
 %endif
 
 # Avoid problem with official Oracle RPMS not listing necessary capabilities
-%if %{alma9}
-  %global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
-%else
-  %global __requires_exclude ^libocci.so|^libclntsh.so
-%endif
+%global __requires_exclude ^libocci.so|^libclntsh.so
 
 # Generic macros
 #---------------
@@ -291,6 +287,8 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 %if !%{alma9}
 Requires: oracle-instantclient19.3-basic
+%else
+Requires: oracle-instantclient-basic
 %endif
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
