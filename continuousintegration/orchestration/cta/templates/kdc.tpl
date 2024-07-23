@@ -17,8 +17,8 @@ spec:
   ports:
   {{- .ports | toYaml | nindent 4}}
 {{- end}}
-
 ---
+
 
 {{- with .Values.kdc.pod}}
 apiVersion: v1
@@ -47,6 +47,16 @@ spec:
     {{- end}}
     command: {{.command}}
     args: {{.args}}
+    {{- if (.commandsAtRuntime)}}
+    readinessProbe:
+      exec:
+        command: {{.commandsAtRuntime | toJson}}
+      initialDelaySeconds: {{.delay}}
+      periodSeconds: 10
+      failureThreshold: {{.failureTolerance}}
+    {{- end}}
+
+
     securityContext:
       privileged: {{.isPriviliged}}
     volumeMounts:
