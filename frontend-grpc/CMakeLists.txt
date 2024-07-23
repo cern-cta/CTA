@@ -64,10 +64,12 @@ else()
 endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
+add_manpage(cta-frontend-grpc)
+
 install(TARGETS cta-frontend-grpc DESTINATION usr/bin)
 install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
 install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
-install (FILES cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
 
 ##
 ## cta-frontend-grpc-stream-server

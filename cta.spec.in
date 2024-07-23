@@ -260,9 +260,9 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-send-event
 %attr(0755,root,root) %{_bindir}/cta-send-closew.sh
 %attr(0755,root,root) %{_bindir}/cta-verify-file
-%attr(0755,root,root) %{_bindir}/cta-change-storage-class-in-catalogue
+%attr(0755,root,root) %{_bindir}/cta-change-storage-class
 %attr(0755,root,root) %{_bindir}/cta-eos-namespace-inject
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-change-storage-class-in-catalogue.1cta.gz
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-change-storage-class.1cta.gz
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf.example
 
 %posttrans -n cta-cli

@@ -25,7 +25,7 @@ add_executable(cta-readtp
   TapeFseqRangeListSequence.cpp
   TapeFseqSequenceParser.cpp)
 
-target_link_libraries (cta-readtp
+target_link_libraries(cta-readtp
   ctacommon
   TapeDrive
   ctamediachanger
@@ -33,5 +33,7 @@ target_link_libraries (cta-readtp
   SCSI
 )
 
-install (TARGETS cta-readtp DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)
+add_manpage(cta-readtp)
+
+install(TARGETS cta-readtp DESTINATION /usr/bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)

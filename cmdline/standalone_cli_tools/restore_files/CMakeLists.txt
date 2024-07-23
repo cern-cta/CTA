@@ -33,5 +33,7 @@ target_link_libraries(cta-restore-deleted-files
   XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient ctaCmdlineToolsCommon)
 set_property (TARGET cta-restore-deleted-files APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
+add_manpage(cta-restore-deleted-files)
+
 install(TARGETS cta-restore-deleted-files DESTINATION usr/bin)
-install(FILES cta-restore-deleted-files.1cta DESTINATION usr/share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-restore-deleted-files.1cta DESTINATION /usr/share/man/man1)

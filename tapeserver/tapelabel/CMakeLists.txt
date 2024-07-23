@@ -27,9 +27,6 @@ target_link_libraries (cta-tape-label
   SCSI
 )
 
-install (TARGETS cta-tape-label DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-tape-label.1cta DESTINATION /usr/share/man/man1)
-
 add_library(ctatapelabelunittests SHARED
   TapeLabelCmdLineArgs.cpp
   TapeLabelCmdLineArgsTest.cpp)
@@ -37,4 +34,8 @@ add_library(ctatapelabelunittests SHARED
 set_property(TARGET ctatapelabelunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapelabelunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctatapelabelunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+add_manpage(cta-tape-label)
+
+install(TARGETS cta-tape-label DESTINATION /usr/bin)
+install(TARGETS ctatapelabelunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-tape-label.1cta DESTINATION /usr/share/man/man1)

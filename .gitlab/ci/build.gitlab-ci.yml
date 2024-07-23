@@ -149,7 +149,7 @@ export_docs:
   script:
     - echo "Exporting man pages (Markdown)"
     - mkdir docs
-    - /usr/bin/find . -name '*cta.md' -exec cp {} docs/ \;
+    - /usr/bin/find . -path ./docs -prune -o -name '*cta.md' -exec cp {} docs/ \;
   artifacts:
     when: always
     expire_in: 30 days

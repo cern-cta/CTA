@@ -36,7 +36,7 @@ target_link_libraries(cta-rmcd ctarmccommon)
 install (FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 install (TARGETS cta-rmcd DESTINATION /usr/bin)
-install (FILES cta-rmcd.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
 install (FILES cta-rmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-rmcd)
 install (FILES cta-rmcd.service DESTINATION /etc/systemd/system)
@@ -55,5 +55,8 @@ set (SMC_SRC_FILES
   smc.c)
 add_executable(cta-smc ${SMC_SRC_FILES})
 target_link_libraries(cta-smc ctarmccommon)
+
+add_manpage(cta-rmcd cta-smc)
+
 install (TARGETS cta-smc DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)
