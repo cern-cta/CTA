@@ -248,7 +248,7 @@ build_rpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel
-      yum -y install wget gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
+      yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
       case "${build_generator}" in
         "Unix Makefiles")
           yum install -y make
@@ -265,7 +265,6 @@ build_rpm() {
         yum -y install ccache
       fi
       yum -y install yum-plugin-versionlock
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"

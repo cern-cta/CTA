@@ -266,6 +266,14 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
+<<<<<<< HEAD
+=======
+%if !%{alma9}
+Requires: oracle-instantclient19.3-basic
+%else
+Requires: oracle-instantclient-basic
+%endif
+>>>>>>> d76bef8e87 (Removal of oracle 21 and added 23)
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
 Shared libraries required to access the Oracle-based CTA catalogue
