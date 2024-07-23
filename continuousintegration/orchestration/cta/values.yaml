@@ -1,6 +1,6 @@
 # Here are stored global settings for all the project pods
 global:
-  imagePullSecret: "TODO"
+  imagePullSecret: "ctaregsecret"
   image: gitlab-registry.cern.ch/cta/ctageneric:7649588gitef974059
 
 
@@ -26,7 +26,15 @@ cta:
       - name: ctafrontend
         port: 10955
         protocol: TCP
-
+    ctaeos:
+      labels:
+        k8s-app: ctaeos-mgm
+      selectors:
+        k8s-app: ctaeos-mgm
+      ports:
+      - name: ctaeos-mgm
+        port: 1094
+        protocol: TCP
   pods:
     init:
       containers:
@@ -35,18 +43,12 @@ cta:
         env:
 # First two are another whacky hacky way by just creating configmap in cmd on line 244
         - name: KEEP_DATABASE
-          valueFrom:
-            configMapKeyRef:
-              name: init
-              key: keepdatabase
+          value: "0"
         - name: KEEP_OBJECTSTORE
-          valueFrom:
-            configMapKeyRef:
-              name: init
-              key: keepobjectstore
+          value: "0"
 # Its used by some hacky find and grep on 309 and 151 line of create_instance.sh
         - name: SCHEMA_VERSION
-          value: "15.0"
+          value: "14.0"
         isPriviliged: true
         volumeMounts:
         - mountPath: /shared
@@ -118,9 +120,18 @@ cta:
 
     ctafrontend:
       containers:
-      - command: ['/opt/run/bin/ctafrontend.sh']
-        args: ["none"]
+      - image:  gitlab-registry.cern.ch/cta/ctageneric:7649588gitef974059
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab.tmp;
+          chmod 400 /etc/cta/eos.sss.keytab.tmp;
+          mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab;
+          /opt/run/bin/ctafrontend.sh;
         isPriviliged: true
+        commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
+        delay: 10
+        failureTolerance: 10
         env:
         - name: TERM
           value: "xterm"
@@ -139,15 +150,15 @@ cta:
           name: mylibrary
         - mountPath: /mnt/logs
           name: logstorage
-        # - mountPath: /etc/config/eoscta
-        #   name: eosctaconfig
+        - mountPath: /etc/cta/eos.grpc.keytab
+          subPath: eos.grpc.keytab
+          name: eosctaconfig
         - mountPath: /etc/cta/cta-frontend.krb5.keytab
           name: keytab
           subPath: cta-frontend.krb5.keytab
-        - mountPath: /etc/cta/eos.sss.keytab
+        - mountPath: /etc/cta/eos-tmp.sss.keytab
           name: sss-keytab
-          subPath: eos.sss.keytab
-          readOnly: true
+          subPath: eos-tmp.sss.keytab
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
@@ -167,15 +178,15 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-      # - name: eosctaconfig
-      #   configMap:
-      #     name: eoscta-config
+      - name: eosctaconfig
+        configMap:
+          name: eos-grpc-keytab
       - name: keytab
         secret:
           secretName: cta-frontend-keytab
       - name: sss-keytab
         secret:
-          secretName: eos-sss-keytab
+          secretName: frontend-sss-keytab
       - name: krb5-config-volume
         configMap:
           name: krb5-config
@@ -363,8 +374,6 @@ cta:
           claimName: claimlogs
 
 
-
-
 # Here are stored values for the pvc's
 pvcs:
   claimstg:
@@ -420,11 +429,6 @@ configs:
       database.postgres.server: postgres
       database.postgres.username: cta
       database.type: postgres
-# Add it temporarely; TODO when got the full working helmchart against CI remove it and add it as values
-  - name: init
-    data:
-      keepdatabase: "0"
-      keepobjectstore: "0"
   - name: krb5-config
     file: krb5.conf
     labels:
@@ -433,6 +437,44 @@ configs:
     file: keypass-names.txt
     labels:
       config: keypass-names
+  - name: eos-grpc-keytab
+    file: eos-grpc.keytab
+    labels:
+      config: eoscta
+  - name: eos-config
+    labels:
+      config: eos
+    data:
+      eos5: |
+        use_eos5
+
+      xrd.cf.mgm: |
+        mgmofs.nslib /usr/lib64/libEosNsQuarkdb.so
+        mgmofs.qdbcluster localhost:7777
+        mgmofs.qdbpassword_file  /etc/eos.keytab
+        xrd.protocol  XrdHttp:8444 libXrdHttp.so
+        http.exthandler  EosMgmHttp libEosMgmHttp.so eos::mgm::http::redirect-to-https=0
+        http.exthandler  xrdtpc libXrdHttpTPC.so
+        http.trace  all -debug
+        xrd.tls  /etc/grid-security/daemon/hostcert.pem /etc/grid-security/daemon/hostkey.pem
+        xrd.tlsca  certdir /etc/grid-security/certificates/
+        all.sitename  cern_tape_archive_ctaeos_ci
+        taperestapi.sitename cern-cta-ctaeosci
+
+      xrd.cf.fst: |
+        xrd.protocol  XrdHttp:1140 libXrdHttp.so
+        http.exthandler  EosFstHttp /usr/lib64/libEosFstHttp.so none
+        http.exthandler  xrdtpc libXrdHttpTPC.so
+        xrd.tls  /etc/grid-security/daemon/hostcert.pem /etc/grid-security/daemon/hostkey.pem
+        xrd.tlsca  certdir /etc/grid-security/certificates/
+        http.trace  all -debug
+
+      xrootd-quarkdb.cfg: |
+        xrd.port 7777
+        xrd.protocol redis:7777 /usr/lib64/libXrdQuarkDB.so
+        redis.mode standalone
+        redis.database /var/lib/quarkdb/quarkdb1
+        redis.password_file  /etc/eos.keytab.xrootd
 
 
 # Here is stored postgress db config. It might be moved as external dependency,
@@ -492,6 +534,9 @@ kdc:
     image: gitlab-registry.cern.ch/cta/ctageneric:7741596git50472b32
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
+    commandsAtRuntime: [ "cat", "/root/kdcReady"]
+    delay: 10
+    failureTolerance: 10
     env:
     - name: TERM
       value: "xterm"

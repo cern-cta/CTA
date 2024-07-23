@@ -1,7 +1,7 @@
 
 {{$namespace := .Release.Namespace }}
 {{$imageVersion := .Values.global.image}}
-
+{{$imageSecret := .Values.global.imagePullSecret}}
 {{- range $key, $value := .Values.cta.pods}}
 
 apiVersion: v1
@@ -21,7 +21,15 @@ spec:
   {{- range $value.containers}}
     {{$containerName := .name | default $key | quote }}
   - name: {{ $containerName }}
-    image: {{ $imageVersion | quote }}
+    image: {{ default $imageVersion .image  | quote }}
+    {{- if (.commandsAtRuntime)}}
+    readinessProbe:
+      exec:
+        command: {{.commandsAtRuntime | toJson}}
+      initialDelaySeconds: {{.delay}}
+      periodSeconds: 10
+      failureThreshold: {{.failureTolerance}}
+    {{- end}}
     stdin: true
     env:
     - name: MY_NAME
@@ -33,21 +41,26 @@ spec:
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}
-    command: {{.command}}
+    command: {{.command | toJson}}
+    {{- if (.args)}}
     args: {{.args}}
+    {{- end}}
     securityContext:
       privileged: {{.isPriviliged}}
     {{- if (.ports)}}
     ports:
         {{- .ports | toYaml | nindent 4}}
     {{- end}}
+    {{- if (.volumeMounts)}}
     volumeMounts:
     {{- .volumeMounts | toYaml | nindent 4}}
+    {{- end}}
   {{- end}}
+  {{- if ($value.volumes)}}
   volumes:
     {{- $value.volumes | toYaml | nindent 2}}
-
+  {{- end}}
   imagePullSecrets:
-  - name: ctaregsecret
+  - name: {{$imageSecret}}
 ---
 {{- end}}
