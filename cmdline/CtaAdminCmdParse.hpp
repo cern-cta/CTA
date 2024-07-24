@@ -367,9 +367,9 @@ const std::map<std::string, OptionString::Key> strOptions = {
  * Map string list options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
-   { "--fxidfile",              OptionStrList::FILE_ID },
-   { "--vidfile",               OptionStrList::VID },
-   { "--id",                    OptionStrList::FILE_ID }
+  { "--fxidfile", OptionStrList::FILE_ID },
+  { "--vidfile",  OptionStrList::VID },
+  { "--id",       OptionStrList::FILE_ID }
 };
 
 /**
@@ -381,6 +381,7 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  *       the documentation at the same time.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
+
  /**md
 activitymountrule (amr)
 
