@@ -20,7 +20,7 @@ find_package(GRPC REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
-set(PROTOBUF_CtaFrontend_DIR ${PROJECT_SOURCE_DIR}/frontend-grpc/grpc-proto/protobuf)
+set(PROTOBUF_CtaFrontend_DIR ${PROJECT_SOURCE_DIR}/frontend/grpc/grpc-proto/protobuf)
 file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CtaFrontend_DIR}/*.proto")
 
 # depends on CTA_EOS definitions
@@ -30,7 +30,7 @@ file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
 set(PROTOBUF3_INCLUDE_PATH "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_CtaFrontend_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
 PROTOBUF3_GENERATE_CPP(ProtoSourcesCtaFrontend ProtoHeadersCtaFrontend ${ProtoFilesCtaFrontend})
 
-set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/frontend-grpc")
+set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/frontend/grpc")
 set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
 grpc_generate_cpp(ProtoGrpcSourcesCtaFrontend ProtoGrpcHeadersCtaFrontend ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaFrontend})
 
@@ -50,7 +50,7 @@ foreach(PROTO_SRC ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
   endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
 
-include_directories(${CMAKE_BINARY_DIR}/frontend-grpc ${CMAKE_BINARY_DIR}/eos_cta
+include_directories(${CMAKE_BINARY_DIR}/frontend/grpc ${CMAKE_BINARY_DIR}/eos_cta
                     ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
