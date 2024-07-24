@@ -381,8 +381,7 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  *       the documentation at the same time.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
-
- /**md
+  /**md
 activitymountrule (amr)
 
 :   Add, change, remove or list the activity mount rules. This is provided as an alternative to
