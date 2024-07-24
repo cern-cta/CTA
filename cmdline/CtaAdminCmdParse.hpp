@@ -381,7 +381,7 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  *       the documentation at the same time.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
-  /**md
+ /**md
 activitymountrule (amr)
 
 :   Add, change, remove or list the activity mount rules. This is provided as an alternative to
@@ -390,7 +390,7 @@ activitymountrule (amr)
   */
   { AdminCmd::CMD_ACTIVITYMOUNTRULE, { "activitymountrule", "amr", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
@@ -399,7 +399,7 @@ admin (ad)
   */
   { AdminCmd::CMD_ADMIN, { "admin", "ad",  { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 archiveroute (ar)
 
 :   Add, change, remove or list the archive routes, which are the policies linking namespace entries
@@ -407,7 +407,7 @@ archiveroute (ar)
   */
   { AdminCmd::CMD_ARCHIVEROUTE, { "archiveroute", "ar", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 diskinstance (di)
 
 :   Add, change, remove or list the disk instances. A CTA installation has one or more disk instances.
@@ -421,7 +421,8 @@ diskinstance (di)
 			    "   * Specify the name (--name) of the disk instance. This is the unique identifier of the disk\n"
                             "     instance and cannot be changed.\n\n"
 					 }},
-/**md
+
+ /**md
 diskinstancespace (dis)
 
 :   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
@@ -442,7 +443,7 @@ diskinstancespace (dis)
                             "     free space query will be used before performing a new query.\n\n"
 					 }},
 
-/**md
+ /**md
 disksystem (ds)
 
 :   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
@@ -476,7 +477,7 @@ disksystem (ds)
                             "     a retrieve mount when the disk system has insufficient space.\n\n"
 					 }},
 
-/**md
+ /**md
 drive (dr)
 
 :   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
@@ -494,21 +495,21 @@ drive (dr)
                           "  same drive will be used every time.\n"
                                          }},
 
-/**md
+ /**md
 failedrequest (fr)
 
 :   List and remove requests which failed and for which all retry attempts failed.
   */
   { AdminCmd::CMD_FAILEDREQUEST, { "failedrequest", "fr", { "ls", "rm" } }},
 
-  /**md
+ /**md
 groupmountrule (gmr)
 
 :   Add, change, remove or list the group mount rules.
   */
   { AdminCmd::CMD_GROUPMOUNTRULE, { "groupmountrule", "gmr", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 logicallibrary (ll)
 
 :   Add, change, remove or list the logical libraries, which are logical groupings of tapes and
@@ -519,7 +520,7 @@ logicallibrary (ll)
   */
   { AdminCmd::CMD_LOGICALLIBRARY, { "logicallibrary", "ll", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 mediatype (mt)
 
 :   Add, change, remove or list the tape cartridge media types. This command is used to specify the
@@ -529,21 +530,21 @@ mediatype (mt)
   */
   { AdminCmd::CMD_MEDIATYPE, { "mediatype", "mt", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 mountpolicy (mp)
 
 :   Add, change, remove or list the mount policies.
   */
   { AdminCmd::CMD_MOUNTPOLICY, { "mountpolicy", "mp",  { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 physicallibrary (pl)
 
 :   Add, change, remove or list the physical tape libraries.
   */
   { AdminCmd::CMD_PHYSICALLIBRARY, { "physicallibrary", "pl",  { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 recycletf (rtf)
 
 :   List tape files in the recycle log.
@@ -553,7 +554,7 @@ recycletf (rtf)
                               "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"
                              }},
 
-/**md
+ /**md
 repack (re)
 
 :   Add or remove a request to repack one or more tapes. This command can also list repack requests
@@ -584,21 +585,21 @@ repack (re)
            "     located in the buffer will be considered for archival.\n\n"
 					 }},
 
-/**md
+ /**md
 requestermountrule (rmr)
 
 :   Add, change, remove or list the requester mount rules.
   */
   { AdminCmd::CMD_REQUESTERMOUNTRULE, { "requestermountrule", "rmr", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 showqueues (sq)
 
 :   Show the status of all active queues.
   */
   { AdminCmd::CMD_SHOWQUEUES, { "showqueues", "sq", { } }},
 
-  /**md
+ /**md
 storageclass (sc)
 
 :   Add, change, remove or list the storage classes. Storage classes are associated with directories,
@@ -608,7 +609,7 @@ storageclass (sc)
   */
   { AdminCmd::CMD_STORAGECLASS, { "storageclass", "sc", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 tape (ta)
 
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
@@ -616,7 +617,7 @@ tape (ta)
   */
   { AdminCmd::CMD_TAPE, { "tape", "ta", { "add", "ch", "rm", "reclaim", "ls" } }},
 
-  /**md
+ /**md
 tapefile (tf)
 
 :   List files on a specified tape. **cta-admin tapefile ls -l** allows listing the disk metadata as
@@ -629,7 +630,8 @@ tapefile (tf)
                             "  takes a file in the same format as the output of 'eos find --fid <path>'\n"
                             "  Delete a file copy with the \"rm\" subcommand\n\n"
    }},
-/**md
+
+ /**md
 tapepool (tp)
 
 :   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
@@ -638,7 +640,7 @@ tapepool (tp)
   */
   { AdminCmd::CMD_TAPEPOOL, { "tapepool", "tp", { "add", "ch", "rm", "ls" } }},
 
-  /**md
+ /**md
 version (v)
 
 :   Display the version of **cta-admin**, the CTA Frontend, the protocol buffer used for client/server
@@ -646,7 +648,7 @@ version (v)
   */
   { AdminCmd::CMD_VERSION, { "version", "v", { } }},
 
-  /**md
+ /**md
 virtualorganization (vo)
 
 :   Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity
