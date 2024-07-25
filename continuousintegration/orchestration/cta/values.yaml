@@ -400,7 +400,7 @@ configs:
   - name: objectstore-config
     labels:
       config: objectstore
-    type: file
+      type: file
     data:
       objectstore.file.path: /shared/%NAMESPACE/objectstore
       objectstore.type: file
