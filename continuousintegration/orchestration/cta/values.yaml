@@ -26,15 +26,6 @@ cta:
       - name: ctafrontend
         port: 10955
         protocol: TCP
-    ctaeos:
-      labels:
-        k8s-app: ctaeos-mgm
-      selectors:
-        k8s-app: ctaeos-mgm
-      ports:
-      - name: ctaeos-mgm
-        port: 1094
-        protocol: TCP
   pods:
     init:
       containers:
@@ -80,8 +71,12 @@ cta:
 
     ctacli:
       containers:
-      - command: ['/opt/run/bin/ctacli.sh']
-        args: ["none"]
+      - command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /tmp/eos.keytab > /etc/eos.keytab;
+          chmod 600 /etc/eos.keytab;
+          /opt/run/bin/ctacli.sh
         isPriviliged: true
         env:
         - name: TERM
@@ -94,10 +89,9 @@ cta:
         - mountPath: /root/ctaadmin1.keytab
           name: keytab
           subPath: ctaadmin1.keytab
-        - mountPath: /etc/eos.keytab
+        - mountPath: /tmp/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
-          readOnly: true
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
@@ -192,8 +186,12 @@ cta:
           name: krb5-config
     client:
       containers:
-      - command: ['/opt/run/bin/client.sh']
-        args: ["none"]
+      - command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /tmp/eos.keytab > /etc/eos.keytab;
+          chmod 600 /etc/eos.keytab;
+          /opt/run/bin/client.sh;
         isPriviliged: true
         env:
         - name: TERM
@@ -203,12 +201,11 @@ cta:
           name: shared
         - mountPath: /mnt/logs
           name: logstorage
-        # - mountPath: /etc/config/eos
-        #   name: eosconfig
-        - mountPath: /etc/eos.keytab
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /tmp/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
-          readOnly: true
         - mountPath: /root/user1.keytab
           name: keytab
           subPath: user1.keytab
@@ -219,9 +216,9 @@ cta:
       - name: shared
         hostPath:
           path: /opt/cta
-      # - name: eosconfig
-      #   configMap:
-      #     name: eos-config
+      - name: eosconfig
+        configMap:
+          name: eos-config
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
@@ -438,7 +435,7 @@ configs:
     labels:
       config: keypass-names
   - name: eos-grpc-keytab
-    file: eos-grpc.keytab
+    file: eos.grpc.keytab
     labels:
       config: eoscta
   - name: eos-config
