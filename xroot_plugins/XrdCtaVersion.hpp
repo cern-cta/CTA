@@ -27,7 +27,7 @@
 namespace cta::xrd {
 
 /*!
- * Stream object which implements "tapepool ls" command
+ * Stream object which implements "version" command
  */
 class VersionStream: public XrdCtaStream{
  public:
