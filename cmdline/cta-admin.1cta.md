@@ -113,6 +113,10 @@ mountpolicy (mp)
 
 :   Add, change, remove or list the mount policies.
 
+physicallibrary (pl)
+
+:   Add, change, remove or list the physical tape libraries.
+
 recycletf (rtf)
 
 :   List tape files in the recycle log.
