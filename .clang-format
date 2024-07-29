@@ -1,5 +1,34 @@
-# Generated from CLion C/C++ Code Style settings
+---
+# General configuration that applies to all files
 BasedOnStyle: LLVM
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: true
+ColumnLimit: 120
+ContinuationIndentWidth: 2
+IndentWidth: 2
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInConditionalStatement: false
+SpacesInCStyleCastParentheses: false
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: 1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+TabWidth: 2
+UseCRLF: false
+UseTab: Never
+---
+# C++ specific configuration
+Language: Cpp
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Left
@@ -44,15 +73,6 @@ BraceWrapping:
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: false
-BreakConstructorInitializers: AfterColon
-BreakInheritanceList: AfterColon
-BreakStringLiterals: true
-ColumnLimit: 120
-CompactNamespaces: false
-ConstructorInitializerIndentWidth: 0
-ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat: false
@@ -65,13 +85,9 @@ IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock
 IndentGotoLabels: false
 IndentPPDirectives: None
-IndentWidth: 2
-IndentWrappedFunctionNames: true
 InsertBraces: true
 InsertTrailingCommas: None
 KeepEmptyLinesAtTheStartOfBlocks: false
-Language: Cpp
-#LineEnding: LF  # clang-format 16
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 PackConstructorInitializers: CurrentLine
@@ -81,31 +97,22 @@ ReferenceAlignment: Left
 ReflowComments: false
 SeparateDefinitionBlocks: Always
 SortIncludes: Never
-#SortUsingDeclarations: Lexicographic  # clang-format 16
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
-SpaceBeforeAssignmentOperators: true
-SpaceBeforeCaseColon: false
-SpaceBeforeCpp11BracedList: true
-SpaceBeforeCtorInitializerColon: true
-SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: ControlStatements
-SpaceBeforeRangeBasedForLoopColon: true
-SpaceBeforeSquareBrackets: false
-SpaceInEmptyBlock: false
-SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 2
-SpacesInAngles: false
-SpacesInCStyleCastParentheses: false
-SpacesInConditionalStatement: false
-SpacesInContainerLiterals: true
-SpacesInLineCommentPrefix:
-  Minimum: 1
-  Maximum: 1
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-Standard: c++20
-TabWidth: 2
-UseCRLF: false
-UseTab: Never
+---
+# Proto file specific configuration
+Language: Proto
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterNamespace: false
+  AfterEnum: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterFunction: false
+  AfterControlStatement: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+---
