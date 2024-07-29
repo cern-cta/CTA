@@ -13,6 +13,6 @@ spec:
       storage: {{ $value.storage }}
   selector:
     matchLabels:
-      {{- $value.selectors | toYaml | nindent 4}}
+      {{- $value.selectors | toYaml | nindent 6}}
 ---
 {{- end}}
