@@ -8,7 +8,7 @@ metadata:
   name: {{ .name }}
   namespace: {{ $namespace }}
   labels:
-    config: keypass-names
+    {{- .labels | toYaml | nindent 4}}
 data:
   {{- if (.file)}}
   {{- $fullDir := printf "%s/%s" "configmaps" .file}}
