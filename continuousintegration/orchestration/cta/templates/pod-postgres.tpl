@@ -1,6 +1,5 @@
 {{$namespace := .Release.Namespace }}
 {{$name := .Values.postgres.name}}
-
 {{- with .Values.postgres.service}}
 apiVersion: v1
 kind: Service
@@ -16,7 +15,7 @@ spec:
   {{- .ports | toYaml | nindent 4}}
 {{- end}}
 
-
+---
 
 {{- with .Values.postgres.pod}}
 apiVersion: v1
