@@ -1,0 +1,22 @@
+---
+categories:
+  feature: Features
+  bug: Bug Fixes
+  maintenance: Maintenance
+  documentation: Documentation
+  other: Other # While technically supported here, we don't advertise it 
+template: |
+  {% if categories %}
+  {% each categories %}
+  ### {{ title }}
+
+  {% each entries %}
+  - {% if commit.trailers.Issue %} {{ commit.trailers.Issue }} - {% end %}\
+  {{ title }}
+
+  {% end %}
+
+  {% end %}
+  {% else %}
+  No changes.
+  {% end %}
