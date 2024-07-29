@@ -8,12 +8,6 @@ ColumnLimit: 120
 ContinuationIndentWidth: 2
 IndentWidth: 2
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeCaseColon: false
-SpaceBeforeCpp11BracedList: true
-SpaceBeforeCtorInitializerColon: true
-SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: ControlStatements
-SpaceBeforeRangeBasedForLoopColon: true
 SpacesBeforeTrailingComments: 2
 SpacesInAngles: false
 SpacesInConditionalStatement: false
@@ -100,9 +94,17 @@ SortIncludes: Never
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
 ---
 # Proto file specific configuration
 Language: Proto
+AlignConsecutiveAssignments: true
+AlignTrailingComments: true
 BreakBeforeBraces: Attach
 BraceWrapping:
   AfterNamespace: false
@@ -115,4 +117,3 @@ BraceWrapping:
   BeforeElse: true
   BeforeLambdaBody: false
   BeforeWhile: false
----
