@@ -141,11 +141,11 @@ release-cta-external-stable:
 
 release-cta-gitlab-prepare:
   stage: release
-  image: alpine:latest
+  needs: 
+    - job: release-cta-external-stable
   rules:
     - if: $CI_COMMIT_TAG
-  needs: 
-    - job: release_public_rpm
+  image: alpine:latest
   before_script:
     - apk add git curl
   script:
@@ -160,14 +160,14 @@ release-cta-gitlab-prepare:
 
 release-cta-gitlab:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  rules:
-    - if: $CI_COMMIT_TAG
   needs:
     - job: release-cta-gitlab-prepare
       artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
   script:
-    - echo "Creating release on GitLab"
+    - echo "Creating release on GitLab" # TODO: add the rpm docker image here
   release:
     name: 'Release $CI_COMMIT_TAG'
     description: release_notes.md
