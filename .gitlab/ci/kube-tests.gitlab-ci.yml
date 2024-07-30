@@ -1,4 +1,4 @@
-.manual_rules:
+.manual-rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
@@ -10,126 +10,99 @@
       when: on_success
       allow_failure: false
 
-
-.kubernetes_test:
+.kubernetes-test:
+  variables:
+    TEST_SCRIPT:
+    EXTENDED_OPTIONS:
+    JOB_NAME: ${CI_JOB_NAME}
   before_script:
-    - echo "Invalidating default common before_script for kubernetes_test"
+    - echo "Invalidating default common before_script for kubernetes-test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
     - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
-    - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS} ${ONLY_SYSTEST_OPT}
-  variables:
-    TEST_SCRIPT:
-    EXTENDED_OPTIONS:
-    JOB_NAME: ${CI_JOB_NAME}
+    - ./run_systemtest.sh -n ${NAMESPACE} 
+                          -p ${CI_PIPELINE_ID} 
+                          -s ${TEST_SCRIPT} 
+                          ${EXTENDED_OPTIONS} 
+                          ${ONLY_SYSTEST_OPT}
   artifacts:
     when: always
     expire_in: 30 days
     paths:
-    - pod_logs
+      - pod_logs
   tags:
     - kubernetes
     - mhvtl
 
-.eos4:
-  extends:
-    - .kubernetes_test
-  rules:
-    - if: $ALMA9 == "ON"
-      when: never
-    - !reference [.manual_rules, rules]
-  variables:
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
+# Tests
 
-client:
+test-client:
   stage: test
   extends:
-    - .eos4
-  variables:
-    TEST_SCRIPT: "tests/test_client.sh"
-
-client-eos5:
-  stage: test
-  extends:
-    - .kubernetes_test
+    - .kubernetes-test
   except:
     - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-client-gfal2:
+test-client-gfal2:
   stage: test
   extends:
-    - .eos4
-  variables:
-    TEST_SCRIPT: "tests/test_client-gfal2.sh"
-
-
-client-gfal2-eos5:
-  stage: test
-  extends:
-    - .kubernetes_test
+    - .kubernetes-test
   except:
     - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-repack:
+test-repack:
   stage: test
   extends:
-    - .eos4
-  variables:
-    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
-
-repack-eos5:
-  stage: test
-  extends:
-    - .kubernetes_test
+    - .kubernetes-test
   except:
     - tags
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-dbunittests-oracle:
+unit-tests-oracle:
   stage: test
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   except:
     - tags
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
 
-liquibase-update:
+test-liquibase-update:
   stage: test
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   rules:
-    - !reference [.manual_rules, rules]
+    - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
 
-external-tape-formats:
+test-external-tape-formats:
   stage: test
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   rules:
-    - !reference [.manual_rules, rules]
+    - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-nightly1:
+test-nightly1:
   stage: test
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   only:
     - triggers
   variables:
@@ -140,10 +113,10 @@ nightly1:
     - mhvtl
     - xlarge
 
-cta-admin:
+test-cta-admin:
   stage: test
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   except:
     - tags
   variables:
@@ -153,7 +126,7 @@ cta-admin:
 regression-eos:
   stage: test:regressions
   extends:
-    - .kubernetes_test
+    - .kubernetes-test
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success

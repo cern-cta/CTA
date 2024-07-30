@@ -237,4 +237,4 @@ cta-release:
   artifacts:
     when: always
     paths:
-    - checkpkg-output.json
+      - checkpkg-output.json
