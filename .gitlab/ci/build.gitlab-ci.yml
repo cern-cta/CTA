@@ -94,7 +94,7 @@ build-cta-rpm-alma9:
   stage: build
   extends:
     - .build-cta-rpm
-  needs: [cta-srpm-alma9]
+  needs: [build-cta-srpm-alma9]
   retry: 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
