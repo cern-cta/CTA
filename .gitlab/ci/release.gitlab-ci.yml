@@ -5,6 +5,7 @@ preview_changelog:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
+      allow_failure: true
   before_script:
     - |
       if [ -z "${RELEASE_VERSION}" ]; then
@@ -48,6 +49,7 @@ update_changelog:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
+      allow_failure: true
   needs:
     - job: preview_changelog
   before_script:
