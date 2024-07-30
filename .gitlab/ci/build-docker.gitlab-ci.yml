@@ -1,4 +1,4 @@
-build-docker-image-ctageneric:
+build-ctageneric:
   stage: build:docker
   retry: 1
   rules:

@@ -5,8 +5,9 @@ stages:
   - build:tagged
   - test
   - test:regressions
-  - release
   - release:changelog
+  - release:internal
+  - release:external
 
 variables:
   XROOTD_VERSION: 5

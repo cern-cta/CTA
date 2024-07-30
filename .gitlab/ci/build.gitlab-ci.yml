@@ -16,6 +16,8 @@
 .build-cta-srpm:
   extends:
     - .build-cta
+  variables:
+    BUILD_PATH: "build_srpm/RPM/SRPMS/"
   script:
     - yum install -y git
     - git submodule update --init --recursive
@@ -36,6 +38,8 @@
 .build-cta-rpm:
   extends:
     - .build-cta
+  variables:
+    BUILD_PATH: "build_rpm/RPM/RPMS"
   script:
     - yum install -y git
     - git submodule update --init --recursive

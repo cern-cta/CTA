@@ -78,9 +78,9 @@ changelog-update:
                                                                            --description-file changelog_report.md
                                                                            --verbose
 
-release-cta-internal:
-  stage: release
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+release-cta:
+  stage: release:internal
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -92,55 +92,44 @@ release-cta-internal:
         exit 0; 
       fi
     - echo "Publishing to internal CTA repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
-    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
-    - CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS 
-    - EOS_PATH="/eos/user/c/ctareg/www/cta-repo" 
-    - HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" 
-    - continuousintegration/ci_helpers/release/upload_to_eos.sh
-    - |
-      if [ "${ALMA9}" == "OFF" ]; then 
-        echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; 
-        exit 0; 
-      fi
-    - echo "Publishing to public CTA 'testing' repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME}
-    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
-    - CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 
-    - EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" 
-    - HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
-    - continuousintegration/ci_helpers/release/upload_to_eos.sh
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-repo
+                                                                  --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
-release-cta-external-stable:
-  stage: release
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+release-cta-testing:
+  stage: release:external
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+  script:
+    - echo "Publishing to testing CTA repository"
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
+                                                                  --hook /eos/user/c/ctareg/www/public/update_repos.sh
+
+release-cta-stable:
+  stage: release:external
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
     - echo "Publishing to public CTA repository"
-    - |
-      if [ "${ALMA9}" == "OFF" ]; then 
-        EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
-        EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
-        CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" 
-        EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" 
-        HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
-        continuousintegration/ci_helpers/release/upload_to_eos.sh; 
-      fi
-    - |
-      if [ "${ALMA9}" == "ON" ]; then 
-        EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
-        EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
-        CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" 
-        EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta" 
-        HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
-        continuousintegration/ci_helpers/release/upload_to_eos.sh; 
-      fi
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
+                                                                  --hook /eos/user/c/ctareg/www/public/update_repos.sh
 
 release-cta-gitlab-prepare:
-  stage: release
+  stage: release:external
   needs: 
     - job: release-cta-external-stable
   rules:
@@ -159,7 +148,7 @@ release-cta-gitlab-prepare:
     - release_notes.md
 
 release-cta-gitlab:
-  stage: release
+  stage: release:external
   needs:
     - job: release-cta-gitlab-prepare
       artifacts: true

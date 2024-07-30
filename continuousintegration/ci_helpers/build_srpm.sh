@@ -40,7 +40,7 @@ usage() {
 }
 
 xrootd_supported() {
-  [ "$1" -eq 4 ] || [ "$1" -eq 5 ]
+  [ "$1" -eq 5 ]
 }
 
 build_srpm() {
