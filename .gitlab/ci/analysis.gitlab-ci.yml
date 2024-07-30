@@ -11,8 +11,6 @@ cppcheck:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - when: always
-  before_script:
-    - ""
   script:
     - cppcheck --xml
                --force
