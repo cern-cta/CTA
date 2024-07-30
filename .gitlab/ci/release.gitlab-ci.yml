@@ -131,7 +131,7 @@ release-cta-stable:
 release-cta-gitlab-prepare:
   stage: release:external
   needs: 
-    - job: release-cta-external-stable
+    - job: release-cta-stable
   rules:
     - if: $CI_COMMIT_TAG
   image: alpine:latest
