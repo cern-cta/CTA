@@ -62,15 +62,15 @@
 
 # Regular cc7 build
 
-build-cta-srpm:
+build-cta-srpm-cc7:
   stage: build
   extends:
     - .build-cta-srpm
   rules:
     - !reference [.build-cta, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null)) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
-build-cta-rpm:
+build-cta-rpm-cc7:
   stage: build
   extends:
     - .build-cta-rpm
@@ -109,6 +109,7 @@ build-cta-rpm-alma9:
   image: $ALMA9_IMAGE
 
 # Postgres build
+# Note that these are still on cc7 due to the base image.
 
 build-cta-srpm-pgsched:
   stage: build
@@ -116,7 +117,7 @@ build-cta-srpm-pgsched:
     - .build-cta-srpm
   rules:
     - !reference [.build-cta, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null)) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 build-cta-rpm-pgsched:
   stage: build
@@ -137,7 +138,7 @@ build-cta-srpm-no-oracle:
     - .build-cta-srpm
   rules:
     - !reference [.build-cta, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 build-cta-rpm-no-oracle:
   stage: build
@@ -148,7 +149,7 @@ build-cta-rpm-no-oracle:
     - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 # Documentation export
 
