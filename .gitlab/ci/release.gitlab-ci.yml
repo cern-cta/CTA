@@ -1,0 +1,199 @@
+preview_changelog:
+  stage: release:changelog
+  image: python:3-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: manual
+      allow_failure: true
+  before_script:
+    - |
+      if [ -z "${RELEASE_VERSION}" ]; then
+        echo "Release version cannot be empty. Please set the RELEASE_VERSION variable manually in the CI."
+        exit 1
+      fi
+    - pip install requests
+  script:
+    # If no from reference (commit hash or tag) is provided, grab the latest tag before the current commit
+    - |
+      if [ -z "${FROM_REF}" ]; then
+        apk add git
+        FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT}) 
+      fi
+    - python3 continuousintegration/ci_helpers/release/check_commits.py --api-url ${CI_SERVER_URL}
+                                                                        --project-id ${CI_PROJECT_ID}
+                                                                        --api-token ${CI_API_TOKEN}
+                                                                        --from ${FROM_REF}
+                                                                        --to ${TO_COMMIT}
+                                                                        --release-version ${RELEASE_VERSION}
+                                                                        --markdown-output changelog_report.md
+                                                                        --verbose
+                                                                        --preview
+    # Pass on variables so that the update_changelog job does not have to re-initialise them
+    - echo -e "ENV_TO_COMMIT=${TO_COMMIT}\nENV_FROM_REF=${FROM_REF}\nENV_RELEASE_VERSION=${RELEASE_VERSION}" > vars.env
+  artifacts:
+    expire_in: 2 days
+    paths:
+      - changelog_report.md
+    reports:
+      dotenv: vars.env
+  variables:
+    TO_COMMIT: "HEAD"
+    FROM_REF: ""
+    RELEASE_VERSION: ""
+
+update_changelog:
+  stage: release:changelog
+  image: python:3-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: manual
+      allow_failure: true
+  needs:
+    - job: preview_changelog
+  before_script:
+    - pip install requests
+  script:
+    - TO_COMMIT=${ENV_TO_COMMIT}
+    - FROM_REF=${ENV_FROM_REF}
+    - RELEASE_VERSION=${ENV_RELEASE_VERSION}
+    - |
+      if [ -z "${SOURCE_BRANCH}" ]; then
+        echo "No source branch provided. Using default branch: ${CI_DEFAULT_BRANCH}"
+        SOURCE_BRANCH=${CI_DEFAULT_BRANCH}
+      fi
+    - python3 continuousintegration/ci_helpers/release/update_changelog.py --api-url ${CI_SERVER_URL}
+                                                                           --project-id ${CI_PROJECT_ID}
+                                                                           --api-token ${CI_API_TOKEN}
+                                                                           --from ${FROM_REF}
+                                                                           --to ${TO_COMMIT}
+                                                                           --release-version ${RELEASE_VERSION}
+                                                                           --reviewer ${GITLAB_USER_ID}
+                                                                           --source-branch ${SOURCE_BRANCH}
+                                                                           --user-name "${GITLAB_USER_NAME}"
+                                                                           --user-email "${GITLAB_USER_EMAIL}"
+                                                                           --description-file changelog_report.md
+                                                                           --verbose
+  variables:
+    SOURCE_BRANCH: ""
+
+cta_tagged_rpm:
+  stage: build:tagged_rpm
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  rules:
+    - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
+  retry: 1
+  script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
+    - yum install -y git
+    - git submodule update --init --recursive
+    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    # Note that unit tests cannot be disabled here
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
+                                                      --build-generator "${BUILD_GENERATOR}"
+                                                      --create-build-dir
+                                                      --srpm-dir build_srpm/RPM/SRPMS
+                                                      --cta-version ${TAG_VERSION}
+                                                      --vcs-version ${TAG_RELEASE}
+                                                      --xrootd-version ${XROOTD_VERSION}
+                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
+                                                      --jobs $(nproc --ignore=1)
+                                                      --install
+  artifacts:
+    expire_in: 30 days
+    paths:
+    - build_tagged_rpm/RPM/RPMS
+
+cta_tagged_rpm_alma9:
+  stage: build:tagged_rpm
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  rules:
+    - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
+  retry: 1
+  script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
+    - yum install -y git
+    - git submodule update --init --recursive
+    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    # Note that unit tests cannot be disabled here
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
+                                                      --build-generator "${BUILD_GENERATOR}"
+                                                      --create-build-dir
+                                                      --srpm-dir build_srpm/RPM/SRPMS
+                                                      --cta-version ${TAG_VERSION}
+                                                      --vcs-version ${TAG_RELEASE}
+                                                      --xrootd-version ${XROOTD_VERSION}
+                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
+                                                      --jobs $(nproc --ignore=1)
+                                                      --install
+  artifacts:
+    expire_in: 30 days
+    paths:
+    - build_tagged_rpm/RPM/RPMS
+
+publish_tagged_rpm:
+  stage: release
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+  script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - echo "Publishing to internal CTA repository"
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH="/eos/user/c/ctareg/www/cta-repo" HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
+    - if [ "${ALMA9}" == "OFF" ]; then echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; exit 0; fi
+    - echo "Publishing to public CTA 'testing' repository"
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
+
+release_public_rpm:
+  stage: release
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+  script:
+    - echo "Publishing to public CTA repository"
+    - if [ "${ALMA9}" == "OFF" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
+    - if [ "${ALMA9}" == "ON" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
+
+prepare_gitlab_rpm:
+  stage: release
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs: 
+    - job: release_public_rpm
+  before_script:
+    - apk add git curl
+  script:
+    # We generate the release notes for everything between the previous tag and the tag that triggered this pipeline
+    - LATEST_TAG=${CI_COMMIT_TAG}
+    - PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${LATEST_TAG}^)
+    # Generate the release notes
+    - 'curl -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/changelog?version=${CI_COMMIT_TAG}&from=${PREVIOUS_TAG}&to=${LATEST_TAG}" | jq -r .notes > release_notes.md'
+  artifacts:
+    paths:
+    - release_notes.md
+
+release_gitlab_rpm:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - job: prepare_gitlab_rpm
+      artifacts: true
+  script:
+    - echo "Creating release on GitLab"
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: release_notes.md
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_SHA'

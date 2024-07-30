@@ -150,8 +150,8 @@ cta-admin:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-regressioneos:
-  stage: regressions
+regression-eos:
+  stage: test:regressions
   extends:
     - .kubernetes_test
   rules:

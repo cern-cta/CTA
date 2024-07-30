@@ -4,10 +4,9 @@ stages:
   - build:dockerimage
   - build:tagged_rpm
   - test
-  - regressions
-  - shouldfail
-  - publish_rpm
-  - release_rpm
+  - test:regressions
+  - release
+  - release:changelog
 
 variables:
   XROOTD_VERSION: 5
