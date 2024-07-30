@@ -19,6 +19,9 @@ variables:
   ALMA9: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
+  ALMA9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  CC7_IMAGE: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  DOCKER_IMAGE_BUILDER_IMAGE: gitlab-registry.cern.ch/ci-tools/docker-image-builder
 
 default:
   interruptible: true

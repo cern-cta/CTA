@@ -80,7 +80,7 @@ changelog-update:
 
 release-cta:
   stage: release:internal
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  image: $ALMA9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -100,7 +100,7 @@ release-cta:
 
 release-cta-testing:
   stage: release:external
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  image: $ALMA9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -115,7 +115,7 @@ release-cta-testing:
 
 release-cta-stable:
   stage: release:external
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  image: $ALMA9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual

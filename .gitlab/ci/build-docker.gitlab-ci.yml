@@ -10,7 +10,7 @@ build-ctageneric:
       when: never
     - when: always
   image:
-    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    name: $DOCKER_IMAGE_BUILDER_IMAGE
     entrypoint: [""]
   variables:
     DOCKERFILE_CC7: continuousintegration/docker/ctafrontend/cc7/Dockerfile

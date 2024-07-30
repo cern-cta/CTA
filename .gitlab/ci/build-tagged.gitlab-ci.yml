@@ -3,7 +3,7 @@ build-cta-tagged-rpm:
   retry: 1
   rules:
     - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  image: $CC7_IMAGE
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
@@ -32,7 +32,7 @@ build-cta-tagged-rpm-alma9:
   retry: 1
   rules:
     - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  image: $ALMA9_IMAGE
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
