@@ -69,7 +69,17 @@ test-repack:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-unit-tests-oracle:
+test-cta-admin:
+  stage: test
+  extends:
+    - .kubernetes-test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "tests/test_cta-admin.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+unit-test-oracle:
   stage: test
   extends:
     - .kubernetes-test
@@ -78,6 +88,8 @@ unit-tests-oracle:
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
+
+# Manually triggered
 
 test-liquibase-update:
   stage: test
@@ -99,6 +111,8 @@ test-external-tape-formats:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
+# Triggers
+
 test-nightly1:
   stage: test
   extends:
@@ -113,17 +127,9 @@ test-nightly1:
     - mhvtl
     - xlarge
 
-test-cta-admin:
-  stage: test
-  extends:
-    - .kubernetes-test
-  except:
-    - tags
-  variables:
-    TEST_SCRIPT: "tests/test_cta-admin.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+# Regression tests
 
-regression-eos:
+test-regression-eos:
   stage: test:regressions
   extends:
     - .kubernetes-test

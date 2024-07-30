@@ -1,11 +1,15 @@
-preview_changelog:
+changelog-preview:
   stage: release:changelog
-  image: python:3-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
       allow_failure: true
+  image: python:3-alpine
+  variables:
+    TO_COMMIT: "HEAD"
+    FROM_REF: ""
+    RELEASE_VERSION: ""
   before_script:
     - |
       if [ -z "${RELEASE_VERSION}" ]; then
@@ -37,21 +41,19 @@ preview_changelog:
       - changelog_report.md
     reports:
       dotenv: vars.env
-  variables:
-    TO_COMMIT: "HEAD"
-    FROM_REF: ""
-    RELEASE_VERSION: ""
 
-update_changelog:
+changelog-update:
   stage: release:changelog
-  image: python:3-alpine
+  needs:
+    - job: changelog-preview
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
       allow_failure: true
-  needs:
-    - job: preview_changelog
+  image: python:3-alpine
+  variables:
+    SOURCE_BRANCH: ""
   before_script:
     - pip install requests
   script:
@@ -75,15 +77,13 @@ update_changelog:
                                                                            --user-email "${GITLAB_USER_EMAIL}"
                                                                            --description-file changelog_report.md
                                                                            --verbose
-  variables:
-    SOURCE_BRANCH: ""
 
-cta_tagged_rpm:
+build-cta-tagged-rpm:
   stage: build:tagged_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  retry: 1
   rules:
     - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
-  retry: 1
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
@@ -107,12 +107,12 @@ cta_tagged_rpm:
     paths:
     - build_tagged_rpm/RPM/RPMS
 
-cta_tagged_rpm_alma9:
+build-cta-tagged-rpm-alma9:
   stage: build:tagged_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  retry: 1
   rules:
     - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
-  retry: 1
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
@@ -136,7 +136,7 @@ cta_tagged_rpm_alma9:
     paths:
     - build_tagged_rpm/RPM/RPMS
 
-publish_tagged_rpm:
+release-cta-internal:
   stage: release
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   rules:
@@ -144,14 +144,32 @@ publish_tagged_rpm:
       when: manual
       allow_failure: true
   script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - |
+      if [ -z "${CI_COMMIT_TAG}" ]; then 
+        echo "This is not a tagged commit, exiting"; 
+        exit 0; 
+      fi
     - echo "Publishing to internal CTA repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH="/eos/user/c/ctareg/www/cta-repo" HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
-    - if [ "${ALMA9}" == "OFF" ]; then echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; exit 0; fi
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
+    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
+    - CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS 
+    - EOS_PATH="/eos/user/c/ctareg/www/cta-repo" 
+    - HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" 
+    - continuousintegration/ci_helpers/release/upload_to_eos.sh
+    - |
+      if [ "${ALMA9}" == "OFF" ]; then 
+        echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; 
+        exit 0; 
+      fi
     - echo "Publishing to public CTA 'testing' repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME}
+    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
+    - CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 
+    - EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" 
+    - HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
+    - continuousintegration/ci_helpers/release/upload_to_eos.sh
 
-release_public_rpm:
+release-cta-external-stable:
   stage: release
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   rules:
@@ -160,10 +178,26 @@ release_public_rpm:
       allow_failure: true
   script:
     - echo "Publishing to public CTA repository"
-    - if [ "${ALMA9}" == "OFF" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
-    - if [ "${ALMA9}" == "ON" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
+    - |
+      if [ "${ALMA9}" == "OFF" ]; then 
+        EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
+        EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
+        CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" 
+        EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" 
+        HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
+        continuousintegration/ci_helpers/release/upload_to_eos.sh; 
+      fi
+    - |
+      if [ "${ALMA9}" == "ON" ]; then 
+        EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} 
+        EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} 
+        CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" 
+        EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta" 
+        HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" 
+        continuousintegration/ci_helpers/release/upload_to_eos.sh; 
+      fi
 
-prepare_gitlab_rpm:
+release-cta-gitlab-prepare:
   stage: release
   image: alpine:latest
   rules:
@@ -182,13 +216,13 @@ prepare_gitlab_rpm:
     paths:
     - release_notes.md
 
-release_gitlab_rpm:
+release-cta-gitlab:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_TAG
   needs:
-    - job: prepare_gitlab_rpm
+    - job: release-cta-gitlab-prepare
       artifacts: true
   script:
     - echo "Creating release on GitLab"

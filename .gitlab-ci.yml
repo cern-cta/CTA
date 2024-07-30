@@ -1,8 +1,8 @@
 stages:
   - analysis
   - build
-  - build:dockerimage
-  - build:tagged_rpm
+  - build:docker
+  - build:tagged
   - test
   - test:regressions
   - release
