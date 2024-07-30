@@ -33,6 +33,10 @@
 - cta/CTA#777 - Removed XRootD4 support
 - cta/CTA#788 - Updated image used by liquibase-update
 - cta/CTA#797 - Added clang-format support for proto files
+- cta/CTA#799 - Separated jobs for releasing to stable and test repos
+- cta/CTA#798 - Improved naming and structure of various ci jobs
+- cta/CTA#800 - Refactored the `deploy-eos.sh` script
+- cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files

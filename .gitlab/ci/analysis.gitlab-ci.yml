@@ -16,7 +16,8 @@ cppcheck:
                --force
                --enable=warning,performance
                --inline-suppr
-               --suppressions-list=.cppcheck-suppressions.txt . 2> cppcheck_out.xml
+               --suppressions-list=.cppcheck-suppressions.txt 
+               . 2> cppcheck_out.xml
   artifacts:
     expire_in: 2 days
     paths:

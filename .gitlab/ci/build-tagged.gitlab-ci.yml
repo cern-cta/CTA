@@ -5,7 +5,11 @@ build-cta-tagged-rpm:
     - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
   image: $CC7_IMAGE
   script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - |
+      if [ -z "${CI_COMMIT_TAG}" ]; then 
+        echo "This is not a tagged commit, exiting"; 
+        exit 0; 
+      fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - yum install -y git
     - git submodule update --init --recursive
@@ -34,7 +38,11 @@ build-cta-tagged-rpm-alma9:
     - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
   image: $ALMA9_IMAGE
   script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - |
+      if [ -z "${CI_COMMIT_TAG}" ]; then
+        echo "This is not a tagged commit, exiting";
+        exit 0; 
+      fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - yum install -y git
     - git submodule update --init --recursive
