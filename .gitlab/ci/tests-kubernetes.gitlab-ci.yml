@@ -111,8 +111,6 @@ test-external-tape-formats:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-# Triggers
-
 test-nightly1:
   stage: test
   extends:
