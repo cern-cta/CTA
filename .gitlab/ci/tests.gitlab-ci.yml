@@ -199,37 +199,6 @@ unit-test-postgresql-alma9:
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
-# test-cta-release:
-#   stage: test
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#       when: never
-#     - if: $CI_COMMIT_TAG
-#       when: never
-#     - if: $ALMA9 == "ON"
-#   image: $ALMA9_IMAGE
-#   variables:
-#     CTAREPODIR: /tmp/repo
-#   script:
-#     - yum install -y createrepo epel-release almalinux-release-devel
-#     - mkdir -p ${CTAREPODIR}
-#     - cp -r build_rpm/RPM ${CTAREPODIR}
-#     - createrepo ${CTAREPODIR}
-#     - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-#     - yum install --nogpgcheck -y cta-release
-#                                   cta-frontend
-#                                   cta-taped
-#                                   cta-rmcd
-#                                   cta-smc
-#     - yum install --nogpgcheck -y eos-server
-#                                   eos-client
-#     # Check that everything was installed properly
-#     - cta-checkpkg --json > checkpkg-output.json
-#   artifacts:
-#     when: always
-#     paths:
-#       - checkpkg-output.json
-
 test-cta-release:
   stage: test
   rules:
