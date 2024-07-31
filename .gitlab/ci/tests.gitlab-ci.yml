@@ -221,7 +221,7 @@ test-cta-release:
                                   cta-taped
                                   cta-rmcd
                                   cta-smc
-                                  eos-server
+    - yum install --nogpgcheck -y eos-server
                                   eos-client
     # Check that everything was installed properly
     - cta-checkpkg --json > checkpkg-output.json
