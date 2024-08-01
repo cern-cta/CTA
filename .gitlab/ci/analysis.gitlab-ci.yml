@@ -1,4 +1,4 @@
-cppcheck:run:
+cppcheck-run:
   stage: analysis
   image:
     name: $CPPCHECK_IMAGE
@@ -24,9 +24,9 @@ cppcheck:run:
       - cppcheck_out.xml
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
-cppcheck:report:
+cppcheck-report:
   stage: analysis
-  needs: [cppcheck:run]
+  needs: [cppcheck-run]
   rules:
     - if: $CI_COMMIT_TAG
       when: never
