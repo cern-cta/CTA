@@ -105,7 +105,7 @@ catalogue-schema-version-check:
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $CC7_IMAGE
+  image: $ALMA9_IMAGE
   before_script:
     - yum install -y git
     - git submodule update --init --recursive

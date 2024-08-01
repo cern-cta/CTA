@@ -3,11 +3,9 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $ALMA9 == "ON"
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-  image: $CC7_IMAGE
+  image: $ALMA9_IMAGE
   artifacts:
     expire_in: 30 days
     paths:
@@ -60,56 +58,28 @@
                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
 
-# Regular cc7 build
-
-build-cta-srpm-cc7:
-  stage: build
-  extends:
-    - .build-cta-srpm
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
-build-cta-rpm-cc7:
-  stage: build
-  extends:
-    - .build-cta-rpm
-  needs: [build-cta-srpm-cc7]
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
 # Regular alma9 build
 
-build-cta-srpm-alma9:
+build-cta-srpm:
   stage: build
   extends:
     - .build-cta-srpm
-  retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $ALMA9 == "ON"
-  image: $ALMA9_IMAGE
+    - !reference [.build-cta, rules]
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
-build-cta-rpm-alma9:
+build-cta-rpm:
   stage: build
   extends:
     - .build-cta-rpm
-  needs: [build-cta-srpm-alma9]
-  retry: 1
+  needs: [build-cta-srpm]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
+    - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $ALMA9 == "ON"
-  image: $ALMA9_IMAGE
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 # Postgres build
-# Note that these are still on cc7 due to the base image.
 
 build-cta-srpm-pgsched:
   stage: build
