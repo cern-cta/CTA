@@ -38,6 +38,9 @@
 - cta/CTA#800 - Refactored the `deploy-eos.sh` script
 - cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
 
+### Catalogue Schema
+- cta/CTA#801 - Update CTA catalogue schema to version 15.0
+
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 
