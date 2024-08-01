@@ -1,3 +1,5 @@
+# Generic build job
+
 .build-cta:
   retry: 1
   rules:
@@ -10,6 +12,8 @@
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
+
+# Generic build jobs for rpms and srpms
 
 .build-cta-srpm:
   extends:

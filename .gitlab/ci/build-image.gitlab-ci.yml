@@ -1,5 +1,5 @@
-build-ctageneric:
-  stage: build:docker
+docker-build-ctageneric:
+  stage: build:image
   retry: 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

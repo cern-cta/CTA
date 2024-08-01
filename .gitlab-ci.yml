@@ -1,7 +1,7 @@
 stages:
   - analysis
   - build
-  - build:docker
+  - build:image
   - build:tagged
   - test
   - test:regressions
