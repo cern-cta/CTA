@@ -1,3 +1,8 @@
+# v5.11.0.0-1
+
+### Catalogue Schema
+- cta/CTA#801 - Update CTA catalogue schema to version 15.0
+
 # v4.10.11.0-1 / v5.10.11.0-1
 
 ## Features
