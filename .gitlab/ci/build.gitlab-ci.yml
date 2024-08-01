@@ -7,7 +7,7 @@
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-  image: $RHEL9_IMAGE
+  image: $EL9_IMAGE
   artifacts:
     expire_in: 30 days
     paths:

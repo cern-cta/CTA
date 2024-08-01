@@ -3,7 +3,7 @@ build-cta-tagged-rpm:
   retry: 1
   rules:
     - if: $CI_COMMIT_TAG
-  image: $RHEL9_IMAGE
+  image: $EL9_IMAGE
   script:
     - |
       if [ -z "${CI_COMMIT_TAG}" ]; then
