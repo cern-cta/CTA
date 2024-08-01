@@ -1,7 +1,7 @@
 cppcheck:run:
   stage: analysis
   image:
-    name: neszt/cppcheck-docker
+    name: $CPPCHECK_IMAGE
     entrypoint: ["/usr/bin/env"]
   rules:
     - if: $CI_COMMIT_TAG
@@ -35,7 +35,7 @@ cppcheck:report:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: always
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   before_script:
     - yum -y install python-pip
     - python3 -m pip install -U cppcheck_codequality
@@ -57,7 +57,7 @@ clang-format:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: always
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   script:
     - yum install -y git-clang-format
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
@@ -105,7 +105,7 @@ catalogue-schema-version-check:
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   before_script:
     - yum install -y git
     - git submodule update --init --recursive

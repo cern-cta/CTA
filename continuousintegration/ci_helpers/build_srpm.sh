@@ -18,7 +18,7 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> "
+  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version>"
   echo ""
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
@@ -26,7 +26,6 @@ usage() {
   echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
-  echo "  --xrootd-version <xrootd-version>:    Sets the xrootd version. This will also be used as the CTA version. Should be one of [4, 5]."
   echo ""
   echo "options:"
   echo "  -i, --install:                        Installs the required packages. Supported operating systems: [cc7, alma9]."
@@ -39,10 +38,6 @@ usage() {
   exit 1
 }
 
-xrootd_supported() {
-  [ "$1" -eq 5 ]
-}
-
 build_srpm() {
 
   # Default values for arguments
@@ -51,7 +46,6 @@ build_srpm() {
   local cta_version=""
   local scheduler_type=""
   local vcs_version=""
-  local xrootd_version=""
 
   local create_build_dir=false
   local clean_build_dir=false
@@ -115,15 +109,6 @@ build_srpm() {
           usage
         fi
         ;;
-      --xrootd-version)
-        if [[ $# -gt 1 ]]; then
-          xrootd_version="$2"
-          shift
-        else
-          echo "Error: --xrootd-version requires an argument"
-          usage
-        fi
-        ;;
       -i | --install) install=true ;;
       -j | --jobs)
         if [[ $# -gt 1 ]]; then
@@ -179,19 +164,9 @@ build_srpm() {
     usage
   fi
 
-  if [ -z "${xrootd_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-version"
-    usage
-  fi
-
   if [ -z "${build_generator}" ]; then
     echo "Failure: Missing mandatory argument --build-generator";
     usage
-  fi
-
-  if ! xrootd_supported "${xrootd_version}"; then
-    echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
-    exit 1
   fi
 
   # navigate to root directory

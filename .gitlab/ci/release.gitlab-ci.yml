@@ -5,7 +5,7 @@ changelog-preview:
       when: never
     - when: manual
       allow_failure: true
-  image: python:3-alpine
+  image: $PYTHON3_IMAGE
   variables:
     TO_COMMIT: "HEAD"
     FROM_REF: ""
@@ -51,7 +51,7 @@ changelog-update:
       when: never
     - when: manual
       allow_failure: true
-  image: python:3-alpine
+  image: $PYTHON3_IMAGE
   variables:
     SOURCE_BRANCH: ""
   before_script:
@@ -80,7 +80,7 @@ changelog-update:
 
 release-cta:
   stage: release:internal
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -100,7 +100,7 @@ release-cta:
 
 release-cta-testing:
   stage: release:external
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -115,7 +115,7 @@ release-cta-testing:
 
 release-cta-stable:
   stage: release:external
-  image: $ALMA9_IMAGE
+  image: $RHEL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -154,7 +154,7 @@ release-cta-gitlab:
       artifacts: true
   rules:
     - if: $CI_COMMIT_TAG
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: $GITLAB_RELEASE_CLI_IMAGE
   script:
     - echo "Creating release on GitLab"
   release:

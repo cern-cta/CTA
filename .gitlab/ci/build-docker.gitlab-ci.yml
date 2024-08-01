@@ -12,8 +12,6 @@ build-ctageneric:
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
     entrypoint: [""]
-  variables:
-    DOCKERFILE_ALMA9: continuousintegration/docker/ctafrontend/alma9/Dockerfile
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   script:
@@ -22,5 +20,5 @@ build-ctageneric:
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile $DOCKERFILE_ALMA9
+                       --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
