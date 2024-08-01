@@ -53,6 +53,39 @@ for NAME in ${KEYTABS}; do
   /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/$(basename ${NAME}).keytab ${NAME} && echo OK || echo FAILED
 done
 
+
+KUBERNETES_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+KUBERNETES_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+KUBERNETES_CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+KUBERNETES_API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+
+for NAME in ${KEYTABS}; do
+
+content=$(base64 /root/$secret.keytab)
+
+cat <<EOF > secret.json
+{
+  "apiVersion": "v1",
+  "kind": "Secret",
+  "metadata": {
+    "name": "$secret-keytab"
+  },
+  "type": "Opaque",
+  "data": {
+    "$filename": "$content"
+  }
+}
+
+EOF
+
+curl -s --cacert ${KUBERNETES_CA_CERT} -H "Authorization: Bearer ${KUBERNETES_TOKEN}" \
+     -H "Content-Type: application/json" \
+     -X POST --data @secret.json \
+     ${KUBERNETES_API_SERVER}/api/v1/namespaces/${KUBERNETES_NAMESPACE}/secrets
+
+done
+
+
 echo Done.
 
 echo "### KDC ready ###"
