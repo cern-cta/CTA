@@ -73,8 +73,7 @@ compile_deploy() {
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
-  local xrootd_version="5"
-  local cta_version=${xrootd_version}
+  local cta_version="5"
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
   local xrootd_ssi_version="dev"
@@ -199,7 +198,6 @@ compile_deploy() {
         --create-build-dir \
         --cta-version ${cta_version} \
         --vcs-version ${vcs_version} \
-        --xrootd-version ${xrootd_version} \
         --scheduler-type ${scheduler_type} \
         --oracle-support ${oracle_support} \
         --install \
@@ -245,7 +243,6 @@ compile_deploy() {
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \
       --vcs-version ${vcs_version} \
-      --xrootd-version ${xrootd_version} \
       --xrootd-ssi-version ${xrootd_ssi_version} \
       --scheduler-type ${scheduler_type} \
       --oracle-support ${oracle_support} \

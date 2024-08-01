@@ -18,7 +18,7 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-version <xrootd-version> --xrootd-ssi-version <xrootd-ssi-version>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-ssi-version <xrootd-ssi-version>"
   echo ""
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
@@ -27,7 +27,6 @@ usage() {
   echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
-  echo "  --xrootd-version <xrootd-version>:            Sets the xrootd version. This will also be used as the CTA version. Should be one of [4, 5]."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo ""
   echo "options:"
@@ -45,10 +44,6 @@ usage() {
   exit 1
 }
 
-xrootd_supported() {
-  [ "$1" -eq 4 ] || [ "$1" -eq 5 ]
-}
-
 build_rpm() {
 
   # Default values for arguments
@@ -58,7 +53,6 @@ build_rpm() {
   local scheduler_type=""
   local srpm_dir=""
   local vcs_version=""
-  local xrootd_version=""
   local xrootd_ssi_version=""
 
   local enable_ccache=false
@@ -137,15 +131,6 @@ build_rpm() {
           usage
         fi
         ;;
-      --xrootd-version)
-        if [[ $# -gt 1 ]]; then
-          xrootd_version="$2"
-          shift
-        else
-          echo "Error: --xrootd-version requires an argument"
-          usage
-        fi
-        ;;
       --xrootd-ssi-version)
         if [[ $# -gt 1 ]]; then
           xrootd_ssi_version="$2"
@@ -220,19 +205,9 @@ build_rpm() {
     usage
   fi
 
-  if [ -z "${xrootd_version}" ]; then
-    echo "Failure: Missing mandatory argument --xrootd-version"
-    usage
-  fi
-
   if [ -z "${build_generator}" ]; then
     echo "Failure: Missing mandatory argument --build-generator";
     usage
-  fi
-
-  if ! xrootd_supported "${xrootd_version}"; then
-    echo "Unsupported xrootd-version: ${xrootd_version}. Must be one of [4, 5]."
-    exit 1
   fi
 
   if [ -z "${xrootd_ssi_version}" ]; then

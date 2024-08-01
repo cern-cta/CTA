@@ -1,23 +1,27 @@
 stages:
   - analysis
   - build
-  - build:dockerimage
-  - build:tagged_rpm
+  - build:image
+  - build:tagged
   - test
   - test:regressions
-  - release
   - release:changelog
+  - release:internal
+  - release:external
 
 variables:
-  XROOTD_VERSION: 5
+  CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
-  CTA_VERSION: "${XROOTD_VERSION}"
-  CMAKE_OPTIONS: ""
   UNIT_TEST: "ON"
-  ALMA9: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
+  # Images
+  EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  PYTHON3_IMAGE: python:3-alpine
+  DOCKER_IMAGE_BUILDER_IMAGE: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+  CPPCHECK_IMAGE: neszt/cppcheck-docker
+  GITLAB_RELEASE_CLI_IMAGE: registry.gitlab.com/gitlab-org/release-cli:latest
 
 default:
   interruptible: true

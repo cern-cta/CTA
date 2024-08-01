@@ -1,11 +1,15 @@
-preview_changelog:
+changelog-preview:
   stage: release:changelog
-  image: python:3-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
       allow_failure: true
+  image: $PYTHON3_IMAGE
+  variables:
+    TO_COMMIT: "HEAD"
+    FROM_REF: ""
+    RELEASE_VERSION: ""
   before_script:
     - |
       if [ -z "${RELEASE_VERSION}" ]; then
@@ -37,21 +41,19 @@ preview_changelog:
       - changelog_report.md
     reports:
       dotenv: vars.env
-  variables:
-    TO_COMMIT: "HEAD"
-    FROM_REF: ""
-    RELEASE_VERSION: ""
 
-update_changelog:
+changelog-update:
   stage: release:changelog
-  image: python:3-alpine
+  needs:
+    - job: changelog-preview
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - when: manual
       allow_failure: true
-  needs:
-    - job: preview_changelog
+  image: $PYTHON3_IMAGE
+  variables:
+    SOURCE_BRANCH: ""
   before_script:
     - pip install requests
   script:
@@ -75,101 +77,64 @@ update_changelog:
                                                                            --user-email "${GITLAB_USER_EMAIL}"
                                                                            --description-file changelog_report.md
                                                                            --verbose
-  variables:
-    SOURCE_BRANCH: ""
 
-cta_tagged_rpm:
-  stage: build:tagged_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
-  rules:
-    - if: $ALMA9 == "OFF" && $CI_COMMIT_TAG
-  retry: 1
-  script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
-    - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
-    - yum install -y git
-    - git submodule update --init --recursive
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    # Note that unit tests cannot be disabled here
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
-                                                      --build-generator "${BUILD_GENERATOR}"
-                                                      --create-build-dir
-                                                      --srpm-dir build_srpm/RPM/SRPMS
-                                                      --cta-version ${TAG_VERSION}
-                                                      --vcs-version ${TAG_RELEASE}
-                                                      --xrootd-version ${XROOTD_VERSION}
-                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
-                                                      --scheduler-type ${SCHED_TYPE}
-                                                      --jobs $(nproc --ignore=1)
-                                                      --install
-  artifacts:
-    expire_in: 30 days
-    paths:
-    - build_tagged_rpm/RPM/RPMS
-
-cta_tagged_rpm_alma9:
-  stage: build:tagged_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  rules:
-    - if: $ALMA9 == "ON" && $CI_COMMIT_TAG
-  retry: 1
-  script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
-    - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
-    - yum install -y git
-    - git submodule update --init --recursive
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    # Note that unit tests cannot be disabled here
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_tagged_rpm
-                                                      --build-generator "${BUILD_GENERATOR}"
-                                                      --create-build-dir
-                                                      --srpm-dir build_srpm/RPM/SRPMS
-                                                      --cta-version ${TAG_VERSION}
-                                                      --vcs-version ${TAG_RELEASE}
-                                                      --xrootd-version ${XROOTD_VERSION}
-                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
-                                                      --scheduler-type ${SCHED_TYPE}
-                                                      --jobs $(nproc --ignore=1)
-                                                      --install
-  artifacts:
-    expire_in: 30 days
-    paths:
-    - build_tagged_rpm/RPM/RPMS
-
-publish_tagged_rpm:
-  stage: release
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+release-cta:
+  stage: release:internal
+  image: $EL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
-    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - |
+      if [ -z "${CI_COMMIT_TAG}" ]; then 
+        echo "This is not a tagged commit, exiting"; 
+        exit 0; 
+      fi
     - echo "Publishing to internal CTA repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH="/eos/user/c/ctareg/www/cta-repo" HOOK="/eos/user/c/ctareg/www/cta-repo/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
-    - if [ "${ALMA9}" == "OFF" ]; then echo "This is not an Alma9 pipeline, so we will not publish to the testing repo"; exit 0; fi
-    - echo "Publishing to public CTA 'testing' repository"
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS/x86_64 EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-repo
+                                                                  --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
-release_public_rpm:
-  stage: release
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+release-cta-testing:
+  stage: release:external
+  image: $EL9_IMAGE
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+  script:
+    - echo "Publishing to testing CTA repository"
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
+                                                                  --hook /eos/user/c/ctareg/www/public/update_repos.sh
+
+release-cta-stable:
+  stage: release:external
+  image: $EL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
     - echo "Publishing to public CTA repository"
-    - if [ "${ALMA9}" == "OFF" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
-    - if [ "${ALMA9}" == "ON" ]; then EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/release/upload_to_eos.sh; fi
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --source-dir build_tagged_rpm/RPM/RPMS
+                                                                  --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
+                                                                  --hook /eos/user/c/ctareg/www/public/update_repos.sh
 
-prepare_gitlab_rpm:
-  stage: release
-  image: alpine:latest
+release-cta-gitlab-prepare:
+  stage: release:external
+  needs: 
+    - job: release-cta-stable
   rules:
     - if: $CI_COMMIT_TAG
-  needs: 
-    - job: release_public_rpm
+  image: alpine:latest
   before_script:
     - apk add git curl
   script:
@@ -182,14 +147,14 @@ prepare_gitlab_rpm:
     paths:
     - release_notes.md
 
-release_gitlab_rpm:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+release-cta-gitlab:
+  stage: release:external
+  needs:
+    - job: release-cta-gitlab-prepare
+      artifacts: true
   rules:
     - if: $CI_COMMIT_TAG
-  needs:
-    - job: prepare_gitlab_rpm
-      artifacts: true
+  image: $GITLAB_RELEASE_CLI_IMAGE
   script:
     - echo "Creating release on GitLab"
   release:

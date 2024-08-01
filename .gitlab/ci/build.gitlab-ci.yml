@@ -1,21 +1,25 @@
-.cta_build:
+# Generic build job
+
+.build-cta:
   retry: 1
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $ALMA9 == "ON"
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
+  image: $EL9_IMAGE
   artifacts:
     expire_in: 30 days
     paths:
-    - ${BUILD_PATH}
+      - ${BUILD_PATH}
 
-.cta_srpm:
+# Generic build jobs for rpms and srpms
+
+.build-cta-srpm:
   extends:
-    - .cta_build
+    - .build-cta
+  variables:
+    BUILD_PATH: "build_srpm/RPM/SRPMS/"
   script:
     - yum install -y git
     - git submodule update --init --recursive
@@ -26,18 +30,17 @@
                                                        --create-build-dir
                                                        --cta-version ${CTA_VERSION}
                                                        --vcs-version ${CTA_BUILD_ID}
-                                                       --xrootd-version ${XROOTD_VERSION}
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --jobs $(nproc --ignore=1)
                                                        --install 
                                                        ${EXTRA_BUILD_FLAGS}
-  variables:
-    BUILD_PATH: "build_srpm/RPM/SRPMS/"
 
-.cta_rpm:
+.build-cta-rpm:
   extends:
-    - .cta_build
+    - .build-cta
+  variables:
+    BUILD_PATH: "build_rpm/RPM/RPMS"
   script:
     - yum install -y git
     - git submodule update --init --recursive
@@ -50,99 +53,79 @@
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${CTA_VERSION}
                                                       --vcs-version ${CTA_BUILD_ID}
-                                                      --xrootd-version ${XROOTD_VERSION}
                                                       --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --jobs $(nproc --ignore=1)
                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
-  variables:
-    BUILD_PATH: "build_rpm/RPM/RPMS"
 
-cta_srpm_alma9:
-  stage: build
-  retry: 1
-  extends:
-    - .cta_srpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $ALMA9 == "ON"
+# Regular alma9 build
 
-cta_rpm_alma9:
+build-cta-srpm:
   stage: build
-  needs: [ cta_srpm_alma9 ]
-  retry: 1
   extends:
-    - .cta_rpm
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    - .build-cta-srpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
+    - !reference [.build-cta, rules]
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+
+build-cta-rpm:
+  stage: build
+  extends:
+    - .build-cta-rpm
+  needs: [build-cta-srpm]
+  rules:
+    - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $ALMA9 == "ON"
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
-cta_srpm_xrootd5_pgsched:
+# Postgres build
+
+build-cta-srpm-pgsched:
   stage: build
   extends:
-    - .cta_srpm
+    - .build-cta-srpm
   rules:
-    - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - !reference [.build-cta, rules]
+    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
-cta_rpm_xrootd5_pgsched:
+build-cta-rpm-pgsched:
   stage: build
-  needs: [ cta_srpm_xrootd5_pgsched ]
   extends:
-    - .cta_rpm
+    - .build-cta-rpm
+  needs: [build-cta-srpm-pgsched]
   rules:
-    - !reference [.cta_build, rules]
+    - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
-cta_srpm_xrootd5:
+# No-oracle build
+
+build-cta-srpm-no-oracle:
   stage: build
   extends:
-    - .cta_srpm
+    - .build-cta-srpm
   rules:
-    - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - !reference [.build-cta, rules]
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
-cta_rpm_xrootd5:
+build-cta-rpm-no-oracle:
   stage: build
-  needs: [ cta_srpm_xrootd5 ]
+  needs: [build-cta-srpm-no-oracle]
   extends:
-    - .cta_rpm
+    - .build-cta-rpm
   rules:
-    - !reference [.cta_build, rules]
+    - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
-cta_srpm_no_oracle:
-  stage: build
-  extends:
-    - .cta_srpm
-  rules:
-    - !reference [.cta_build, rules]
-    - if: ($CI_COMMIT_TAG =~ /^.*v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+# Documentation export
 
-cta_rpm_no_oracle:
-  stage: build
-  needs: [ cta_srpm_no_oracle ]
-  extends:
-    - .cta_rpm
-  rules:
-    - !reference [.cta_build, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
-
-export_docs:
+export-docs:
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
