@@ -30,7 +30,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                               Shows help output."
   echo "  -r, --reset:                              Shut down the build container and start a new one to ensure a fresh build."
-  echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
+  echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                    Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --clean-build-dirs:                   Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
@@ -117,8 +117,8 @@ compile_deploy() {
         ;;
       -o | --operating-system)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [cc7, alma9]."
+          if [ "$2" != "alma9" ]; then
+            echo "-o | --operating-system must be one of [alma9]."
             exit 1
           fi
           operating_system="$2"
@@ -174,9 +174,6 @@ compile_deploy() {
       restarted=true
       echo "Starting a new build pod: ${build_pod_name}..."
       case "${operating_system}" in
-        cc7)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-cc7.yml -n ${build_namespace}
-          ;;
         alma9)
           kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
           ;;

@@ -14,10 +14,6 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-if (ALMA9)
-  add_definitions( -DALMA9 )
-endif()
-
 add_executable(cta-unitTests
   unit_tests.cpp)
 

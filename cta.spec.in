@@ -1,20 +1,4 @@
-# Detecting if we are building on ALMA9
-%if 0%{?rhel} == 9
-%if "%{_vendor}" == "redhat"
-%define alma9 1
-%else
-%define alma9 0
-%endif
-%else
-%define alma9 0
-%endif
-
-# Avoid problem with official Oracle RPMS not listing necessary capabilities
-%if %{alma9}
-  %global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
-%else
-  %global __requires_exclude ^libocci.so|^libclntsh.so
-%endif
+%global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
 
 # Generic macros
 #---------------
@@ -74,16 +58,9 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
 %define xrootdVersion 1:5.6.1-1.el9
-
-%if %{alma9}
-  %define radosVersion 2:17.2.7
-  %define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel
-  %define requiredProtobuf protobuf
-%else
-  %define radosVersion 2:15.2.15
-  %define requirementsOS protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1 oracle-instantclient19.3-devel grpc-static
-  %define requiredProtobuf protobuf3
-%endif
+%define radosVersion 2:17.2.7
+%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel
+%define requiredProtobuf protobuf
 BuildRequires: %{requirementsOS}
 BuildRequires: grpc, grpc-devel, grpc-plugins
 BuildRequires: xrootd-client-devel  = %{xrootdVersion}
@@ -289,9 +266,6 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-%if !%{alma9}
-Requires: oracle-instantclient19.3-basic
-%endif
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
 Shared libraries required to access the Oracle-based CTA catalogue
@@ -326,12 +300,7 @@ Shared libraries required to access the in-memory-based CTA catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: cta-lib-common
-%if %{alma9}
 Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
-%else
-Requires: cta-lib-catalogue-postgres = %{version}-%{release}
-Requires: cta-lib-catalogue-occi = %{version}-%{release}
-%endif
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: xrootd-client-libs = %{xrootdVersion}
 %description -n cta-lib-catalogue
@@ -603,11 +572,7 @@ Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
 CERN Tape Archive:
 Common items such as the creation of the cta local user and /var/log/cta
 %pre -n cta-common
-%if %{alma9}
-  /usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /usr/sbin/nologin -c "CTA system account" -g tape cta
-%else
-  /usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
-%endif
+/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /usr/sbin/nologin -c "CTA system account" -g tape cta
 %files -n cta-common
 %defattr(-,root,root)
 %attr(0755,cta,tape) %dir /var/log/cta
@@ -641,12 +606,7 @@ collects EOS disk copies that have been safely stored to tape.
 %package -n cta-release
 Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
-%if !%{alma9}
-Requires: yum-plugin-priorities
-Requires: yum-plugin-versionlock
-%else
 Requires: python3-dnf-plugin-versionlock
-%endif
 Requires: python
 Requires: jq
 %description -n cta-release

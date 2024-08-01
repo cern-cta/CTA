@@ -41,8 +41,8 @@ prepareImage() {
       -h | --help) usage ;;
       -o | --operating-system)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [cc7, alma9]."
+          if [ "$2" != "alma9" ]; then
+            echo "-o | --operating-system must be one of [alma9]."
             exit 1
           fi
           operating_system="$2"
@@ -100,10 +100,6 @@ prepareImage() {
   cp -r ${rpm_src} ${rpm_default_src}
 
   case "${operating_system}" in
-    cc7)
-      echo "Running on CC7"
-      (set -x; podman build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag} --network host)
-      ;;
     alma9)
       echo "Running on AlmaLinux 9"
       (set -x; podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host)

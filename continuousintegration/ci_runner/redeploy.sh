@@ -28,7 +28,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                   Shows help output."
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
-  echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [cc7, alma9]. Defaults to alma9 if not provided."
+  echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:   Path to the RPMs that should be deployed. Defaults to CTA/build_rpm/RPM/RPMS/x86_64 if not provided."
   exit 1
@@ -56,8 +56,8 @@ redeploy() {
         ;;
       -o | --operating-system)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" != "cc7" ] && [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [cc7, alma9]."
+          if [ "$2" != "alma9" ]; then
+            echo "-o | --operating-system must be one of [alma9]."
             exit 1
           fi
           operating_system="$2"

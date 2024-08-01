@@ -110,13 +110,9 @@ void JSONCObject::jsonSetValue(const std::string& key, const std::string & value
 
 template<>
 void JSONCObject::jsonSetValue(const std::string& key, const double & value){
-#ifdef ALMA9
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "%.6f", value);
   json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double_s(value, buffer));
-#else
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double(value));
-#endif
 }
 
 template<>

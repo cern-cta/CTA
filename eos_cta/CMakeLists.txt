@@ -54,8 +54,4 @@ add_library(EosCtaGrpc ${ProtoSourcesEosCtaGrpc} ${ProtoGrpcSourcesEosCtaGrpc})
 set_target_properties(EosCtaGrpc PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-if (ALMA9)
-  target_link_libraries(EosCtaGrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})
-else()
-  target_link_libraries(EosCtaGrpc gpr ${PROTOBUF3_GRPC_LIBRARIES})
-endif()
+target_link_libraries(EosCtaGrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})

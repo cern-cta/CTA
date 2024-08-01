@@ -32,15 +32,8 @@ function(safedl SOURCEURL DESTFILE)
   endif()
 endfunction()
 
-if(ALMA9)
-  set(OSV "9")
-  set(OS "alma9")
-else()
-# Default to el7
-  set(OSV "7")
-  set(OS "cc7")
-endif()
-
+set(OSV "9")
+set(OS "alma9")
 
 # Download package signing keys
 safedl("https://storage-ci.web.cern.ch/storage-ci/storageci.key"

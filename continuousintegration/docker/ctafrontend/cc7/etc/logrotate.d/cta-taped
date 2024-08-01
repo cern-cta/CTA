@@ -1,9 +1,0 @@
-/var/log/cta/cta-taped.log {
-    daily
-    missingok
-    rotate 500
-    copytruncate
-    create 755 cta tape
-    compress
-    delaycompress
-}

@@ -22,6 +22,6 @@ There must also be a keytab file provided in `/etc/cta/eos.grpc.keytab`. Use the
 eosdev           <eoshostname>.cern.ch:50051    <token>
 ```
 
-In `continuousintegration/docker/ctafrontend/cc7/etc/cta/cta-frontend-xrootd.conf` an option should specify the path to the file:
+In `continuousintegration/docker/ctafrontend/alma9/etc/cta/cta-frontend-xrootd.conf` an option should specify the path to the file:
 
 `cta.ns.config /etc/cta/eos.grpc.keytab`

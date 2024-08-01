@@ -28,7 +28,7 @@ usage() {
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
   echo ""
   echo "options:"
-  echo "  -i, --install:                        Installs the required packages. Supported operating systems: [cc7, alma9]."
+  echo "  -i, --install:                        Installs the required packages. Supported operating systems: [alma9]."
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
@@ -216,20 +216,8 @@ build_srpm() {
           ;;
       esac
       ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
-    elif [ "$(grep -c 'CentOS Linux release 7' /etc/redhat-release)" -eq 1 ]; then
-      # CentOS 7
-      echo "Found CentOS 7 install..."
-      if [[ ! ${build_generator} = "Unix Makefiles" ]]; then
-        # We only support Unix Makefiles for cc7
-        echo "Failure: Unsupported build generator for cc7: ${build_generator}"
-        exit 1
-      fi
-      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum install -y devtoolset-11 cmake3 make rpm-build
-      source /opt/rh/devtoolset-11/enable
     else
-      echo "Failure: Unsupported distribution. Must be one of: [cc7, alma9]"
+      echo "Failure: Unsupported distribution. Must be one of: [alma9]"
       exit 1
     fi
   fi
