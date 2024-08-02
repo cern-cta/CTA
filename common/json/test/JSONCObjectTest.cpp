@@ -29,7 +29,7 @@ TEST(JSONCObjectTest, testJSONGenerationFromObject) {
   to.double_number = 42.234567;
   to.integer_number = 42;
   to.str = "forty two";
-  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.234567}",to.getJSON());
+  ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.234567}", to.getJSON());
 }
 
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){

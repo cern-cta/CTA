@@ -1087,13 +1087,13 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
     )SQL";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindUint64(":ID", insertValue);
-    switch(m_login.dbType) {
-    case Login::DBTYPE_ORACLE:
-    case Login::DBTYPE_POSTGRESQL:
-      ASSERT_THROW(stmt.executeNonQuery(), UniqueConstraintError);
-      break;
-    default:
-      ASSERT_THROW(stmt.executeNonQuery(), PrimaryKeyError);
+    switch (m_login.dbType) {
+      case Login::DBTYPE_ORACLE:
+      case Login::DBTYPE_POSTGRESQL:
+        ASSERT_THROW(stmt.executeNonQuery(), UniqueConstraintError);
+        break;
+      default:
+        ASSERT_THROW(stmt.executeNonQuery(), PrimaryKeyError);
     }
   }
 }

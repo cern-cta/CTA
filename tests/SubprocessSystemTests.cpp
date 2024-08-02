@@ -33,7 +33,7 @@ TEST(SubProcessHelper, basicTests) {
   ASSERT_NE(std::string::npos, sp2.stderr().find("/no/such/file"));
   ASSERT_EQ(1, sp2.exitValue());
   EXPECT_THROW(cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"})),
-    cta::exception::Errnum);
+               cta::exception::Errnum);
 }
 
 TEST(SubProcessHelper, testSubprocessWithStdinInput) {
