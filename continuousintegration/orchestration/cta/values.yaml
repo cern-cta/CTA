@@ -1,7 +1,7 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7649588gitef974059
+  image: gitlab-registry.cern.ch/cta/ctageneric:7866462gite2d72d5c
 
 
 # Here are stored values for the project related pods
@@ -118,12 +118,11 @@ cta:
         command: ["/bin/sh", "-c"]
         args:
         - |
-          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab.tmp;
-          chmod 400 /etc/cta/eos.sss.keytab.tmp;
-          mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab;
+          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
+          chmod 400 /etc/cta/eos.sss.keytab;
           /opt/run/bin/ctafrontend.sh;
         isPriviliged: true
-        commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
+        # commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
         delay: 10
         failureTolerance: 10
         env:
@@ -144,7 +143,7 @@ cta:
           name: mylibrary
         - mountPath: /mnt/logs
           name: logstorage
-        - mountPath: /etc/cta/eos.grpc.keytab
+        - mountPath: /etc/config/eoscta/eos.grpc.keytab
           subPath: eos.grpc.keytab
           name: eosctaconfig
         - mountPath: /etc/cta/cta-frontend.krb5.keytab
@@ -528,7 +527,7 @@ kdc:
 
   pod:
     isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:7741596git50472b32
+    image: gitlab-registry.cern.ch/cta/ctageneric:7866462gite2d72d5c
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
     commandsAtRuntime: [ "cat", "/root/kdcReady"]
