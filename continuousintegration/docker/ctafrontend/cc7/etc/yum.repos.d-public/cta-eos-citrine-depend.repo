@@ -1,6 +1,0 @@
-[cta-eos-citrine-depend]
-name=dependencies for EOS citrine releases from EOS project
-baseurl=http://storage-ci.web.cern.ch/storage-ci/eos/citrine-depend/el-$releasever/$basearch/
-enabled=1
-gpgcheck=0
-priority=4

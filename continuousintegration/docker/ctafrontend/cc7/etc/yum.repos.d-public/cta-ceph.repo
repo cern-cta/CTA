@@ -1,9 +1,0 @@
-[cta-ceph]
-name=Ceph version 15.2.15 packages for $basearch
-baseurl=http://download.ceph.com/rpm-15.2.15/el$releasever/$basearch
-enabled=1
-priority=4
-gpgcheck=1
-protect=1
-type=rpm-md
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ceph

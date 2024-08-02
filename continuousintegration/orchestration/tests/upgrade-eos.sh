@@ -49,7 +49,7 @@ fi
 kubectl -n ${NAMESPACE} exec ctaeos -- yum-config-manager --disable cta-artifacts
 
 ####
-## CTA-CI REPOS HAVE A PRIORITY SET TO 4 (See: CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo)
+## CTA-CI REPOS HAVE A PRIORITY SET TO 4
 ## EOS REPOS SHOULD HAVE A HIGHER PRIORITY (HENCE LOWER NUMBER) SO THAT WE ARE UPGRADING FROM EOS REPOS
 ## AND NOT CTA-CI IF ONE BRANCH IS AHEAD OF EOS
 ####
