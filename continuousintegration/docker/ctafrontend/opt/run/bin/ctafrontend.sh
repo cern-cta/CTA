@@ -65,6 +65,8 @@ else
   echo 'KO'
 fi
 
+chown cta /etc/cta/eos.sss.keytab
+
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
   echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
