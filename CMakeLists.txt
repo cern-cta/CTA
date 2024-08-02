@@ -28,7 +28,7 @@ set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
-# to be tested once we have a stable compilation on CC7:
+# to be tested (note that a lot of these are already covered by Wall and Wextra; additionally not all of them are useful or valid)
 #-Wno-unused-parameter -Wlogical-op -Wfloat-equal -Wdeclaration-after- statement -Wundef -Wno-endif-labels -Wshadow -Wunsafe-loop- optimizations -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite- strings -Wconversion -Wmissing-field-initializers -Wredundant-decls -Wnested-externs -Wunreachable-code -Winline -Wvariadic-macros -Wtraditional -Wmissing-prototypes -Wmissing-declarations -Wold-style- definition -Wc++-compat -Wstrict-prototypes -Wpadded -Wcast-qual -Wnon-virtual-dtor -Wlogical-op -Wmissing-declarations -Wsign-conversion -Wredundant-decls -Wold-style-cast -Wshadow
 
 set (BUILD_CMDLINE_ONLY FALSE)
