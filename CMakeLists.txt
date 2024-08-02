@@ -213,7 +213,8 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
     "/.git/"
     "/build_srpm/"
     "/build_rpm/"
-    "/image_rpms/")
+    "/image_rpms/"
+    "/assets/")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
