@@ -36,8 +36,8 @@ RdbmsArchiveRouteCatalogue::RdbmsArchiveRouteCatalogue(log::Logger &log, std::sh
   m_log(log), m_connPool(connPool) {}
 
 void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName,
-  const std::string &comment) {
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+  const std::string &tapePoolName, const std::string &comment) {
   if(storageClassName.empty()) {
     throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create archive route because storage class name is an"
       " empty string");
@@ -56,7 +56,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
 
   const time_t now = time(nullptr);
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::archiveRouteExists(conn, storageClassName, copyNb)) {
+  if(archiveRouteExists(storageClassName, copyNb, archiveRouteType)) {
     exception::UserError ue;
     ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
       << "->" << tapePoolName << " because it already exists";
@@ -87,6 +87,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     INSERT INTO ARCHIVE_ROUTE(
       STORAGE_CLASS_ID,
       COPY_NB,
+      ARCHIVE_ROUTE_TYPE,
       TAPE_POOL_ID,
 
       USER_COMMENT,
@@ -101,6 +102,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     SELECT 
       STORAGE_CLASS_ID,
       :COPY_NB,
+      :ARCHIVE_ROUTE_TYPE,
       (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME) AS TAPE_POOL_ID,
 
       :USER_COMMENT,
@@ -122,6 +124,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindUint64(":COPY_NB", copyNb);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  stmt.bindString(":ARCHIVE_ROUTE_TYPE", cta::common::dataStructures::ArchiveRoute::typeToString(archiveRouteType));
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -136,7 +139,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
   stmt.executeNonQuery();
 }
 
-void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) {
+void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType) {
   const char* const sql = R"SQL(
     DELETE FROM 
       ARCHIVE_ROUTE 
@@ -169,6 +172,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
     SELECT 
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
       ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
+      ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE AS ARCHIVE_ROUTE_TYPE,
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
 
       ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT,
@@ -187,7 +191,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
     INNER JOIN TAPE_POOL ON 
       ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
     ORDER BY 
-      STORAGE_CLASS_NAME, COPY_NB
+      STORAGE_CLASS_NAME, COPY_NB, ARCHIVE_ROUTE_TYPE
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -197,6 +201,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
 
     route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
     route.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
+    route.type = common::dataStructures::ArchiveRoute::stringToType(rset.columnString("ARCHIVE_ROUTE_TYPE"));
     route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
     route.comment = rset.columnString("USER_COMMENT");
     route.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -224,7 +229,8 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
   const char* const sql = R"SQL(
     SELECT 
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME, 
-      ARCHIVE_ROUTE.COPY_NB AS COPY_NB, 
+      ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
+      ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE AS ARCHIVE_ROUTE_TYPE,
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME, 
 
       ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT, 
@@ -246,7 +252,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
       STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND 
       TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME 
     ORDER BY 
-      STORAGE_CLASS_NAME, COPY_NB
+      STORAGE_CLASS_NAME, COPY_NB, ARCHIVE_ROUTE_TYPE
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -257,6 +263,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
 
     route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
     route.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
+    route.type = common::dataStructures::ArchiveRoute::stringToType(rset.columnString("ARCHIVE_ROUTE_TYPE"));
     route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
     route.comment = rset.columnString("USER_COMMENT");
     route.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -273,7 +280,8 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
 }
 
 void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) {
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+  const std::string &tapePoolName) {
   try {
     const time_t now = time(nullptr);
     const char* const sql = R"SQL(
@@ -289,11 +297,11 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
           FROM 
             STORAGE_CLASS 
           WHERE 
-            STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+            STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB AND ARCHIVE_ROUTE_TYPE = :ARCHIVE_ROUTE_TYPE
     )SQL";
     auto conn = m_connPool->getConn();
 
-    if(!RdbmsCatalogueUtils::archiveRouteExists(conn, storageClassName, copyNb)) {
+    if(!archiveRouteExists(storageClassName, copyNb, archiveRouteType)) {
       throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
     }
 
@@ -308,6 +316,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
+    stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::ArchiveRoute::typeToString(archiveRouteType));
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
@@ -323,7 +332,8 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
 }
 
 void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) {
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type & archiveRouteType,
+  const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -339,7 +349,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
         FROM 
           STORAGE_CLASS 
         WHERE 
-          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB AND ARCHIVE_ROUTE_TYPE = :ARCHIVE_ROUTE_TYPE
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -349,6 +359,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindUint64(":COPY_NB", copyNb);
+  stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::ArchiveRoute::typeToString(archiveRouteType));
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
@@ -357,6 +368,29 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
       " and copy number " << copyNb << " because it does not exist";
     throw ue;
   }
+}
+
+bool RdbmsArchiveRouteCatalogue::archiveRouteExists(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type & archiveRouteType) {
+  const char* const sql = R"SQL(
+    SELECT
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
+      ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
+      ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE AS ARCHIVE_ROUTE_TYPE
+    FROM
+      ARCHIVE_ROUTE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    WHERE
+      STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND
+      ARCHIVE_ROUTE.COPY_NB = :COPY_NB
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+  stmt.bindUint64(":COPY_NB", copyNb);
+  stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::ArchiveRoute::typeToString(archiveRouteType));
+  auto rset = stmt.executeQuery();
+  return rset.next();
 }
 
 }  // namespace cta::catalogue

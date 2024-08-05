@@ -57,7 +57,6 @@ public:
   static bool tapeExists(rdbms::Conn &conn, const std::string &vid);
   static bool archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId);
   static bool mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName);
-  static bool archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName, const uint32_t copyNb);
   static bool requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
     const std::string &requesterName, const std::string &activityRegex);
   static bool diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileId);

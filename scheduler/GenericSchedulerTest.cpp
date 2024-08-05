@@ -267,8 +267,8 @@ public:
       tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
-      archiveRouteComment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
+                                                 s_tapePoolName, archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -938,10 +938,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string archiveRoute2Comment = "Archive-route for copy number 2";
     const uint32_t archiveRoute1CopyNb = 1;
     const uint32_t archiveRoute2CopyNb = 2;
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb, tapePool1Name,
-      archiveRoute1Comment);
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, tapePool2Name,
-      archiveRoute1Comment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb,
+                                                 cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePool1Name, archiveRoute1Comment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb,
+                                                 cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePool2Name, archiveRoute1Comment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;

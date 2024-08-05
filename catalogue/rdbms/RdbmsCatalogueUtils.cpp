@@ -21,6 +21,7 @@
 
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
@@ -209,27 +210,6 @@ bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn &conn, const std::string
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
-  auto rset = stmt.executeQuery();
-  return rset.next();
-}
-
-bool RdbmsCatalogueUtils::archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName,
-  const uint32_t copyNb) {
-  const char* const sql = R"SQL(
-    SELECT 
-      ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
-      ARCHIVE_ROUTE.COPY_NB AS COPY_NB 
-    FROM 
-      ARCHIVE_ROUTE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    WHERE 
-      STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND 
-      ARCHIVE_ROUTE.COPY_NB = :COPY_NB
-  )SQL";
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
-  stmt.bindUint64(":COPY_NB", copyNb);
   auto rset = stmt.executeQuery();
   return rset.next();
 }

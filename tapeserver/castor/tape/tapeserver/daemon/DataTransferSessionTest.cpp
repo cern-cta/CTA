@@ -386,8 +386,8 @@ public:
       tapePoolEncryption, tapePoolSupply, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
-      archiveRouteComment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
+                                                 s_tapePoolName, archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
