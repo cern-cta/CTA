@@ -414,8 +414,8 @@ configs:
       config: library
       type: mhvtl
     data:
-      library.device: sg3
-      library.drivedevices: (nst1 nst0 nst2)
+      library.device: sg1
+      library.drivedevices: (nst0 nst2 nst1)
       library.drivenames: (VDSTK01 VDSTK02 VDSTK03)
       library.name: VLSTK10
       library.tapes: (V00101 V00102 V00103 V00104 V00105 V00106 V00107 V00108)
@@ -610,6 +610,6 @@ eos:
         secret:
           secretName: ca-certs
       volumeMounts:
-      - mountPath: /etc/grid-security/
+      - mountPath: /etc/grid-security/certificates/
         name: ca-certs
 
