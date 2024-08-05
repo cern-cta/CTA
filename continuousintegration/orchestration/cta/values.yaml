@@ -1,8 +1,7 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7866462gite2d72d5c
-
+  image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
 
 # Here are stored values for the project related pods
 cta:
@@ -39,7 +38,7 @@ cta:
           value: "0"
 # Its used by some hacky find and grep on 309 and 151 line of create_instance.sh
         - name: SCHEMA_VERSION
-          value: "14.0"
+          value: "15.0"
         isPriviliged: true
         volumeMounts:
         - mountPath: /shared
@@ -107,6 +106,7 @@ cta:
           secretName: ctaadmin1-keytab
       - name: sss-keytab
         secret:
+          defaultMode: 400
           secretName: eos-sss-keytab
       - name: krb5-config-volume
         configMap:
@@ -114,15 +114,16 @@ cta:
 
     ctafrontend:
       containers:
-      - image:  gitlab-registry.cern.ch/cta/ctageneric:7649588gitef974059
+      - image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
         command: ["/bin/sh", "-c"]
         args:
         - |
-          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
-          chmod 400 /etc/cta/eos.sss.keytab;
+          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab.tmp;
+          chmod 400 /etc/cta/eos.sss.keytab.tmp;
+          mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab;
           /opt/run/bin/ctafrontend.sh;
         isPriviliged: true
-        # commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
+        commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
         delay: 10
         failureTolerance: 10
         env:
@@ -143,7 +144,7 @@ cta:
           name: mylibrary
         - mountPath: /mnt/logs
           name: logstorage
-        - mountPath: /etc/config/eoscta/eos.grpc.keytab
+        - mountPath: /etc/cta/eos.grpc.keytab
           subPath: eos.grpc.keytab
           name: eosctaconfig
         - mountPath: /etc/cta/cta-frontend.krb5.keytab
@@ -211,6 +212,8 @@ cta:
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
+        - mountPath: /etc/grid-security/certificates/
+          name: ca-certs
       volumes:
       - name: shared
         hostPath:
@@ -230,6 +233,9 @@ cta:
       - name: krb5-config-volume
         configMap:
           name: krb5-config
+      - name: ca-certs
+        secret:
+          secretName: ca-certs
 
     tpsrv01:
       labels:
@@ -399,7 +405,7 @@ configs:
   - name: objectstore-config
     labels:
       config: objectstore
-      type: file
+    type: file
     data:
       objectstore.file.path: /shared/%NAMESPACE/objectstore
       objectstore.type: file
@@ -527,7 +533,7 @@ kdc:
 
   pod:
     isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:7866462gite2d72d5c
+    image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
     commandsAtRuntime: [ "cat", "/root/kdcReady"]
@@ -596,3 +602,14 @@ eos:
     # Default: false
     http:
       enabled: false
+
+  mgm:
+    extraVolumes:
+      volumes:
+      - name: ca-certs
+        secret:
+          secretName: ca-certs
+      volumeMounts:
+      - mountPath: /etc/grid-security/
+        name: ca-certs
+
