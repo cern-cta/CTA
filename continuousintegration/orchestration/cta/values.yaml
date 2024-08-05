@@ -572,7 +572,7 @@ kdc:
 eos:
   global:
     repository: gitlab-registry.cern.ch/dss/eos/eos-all
-    tag: 5.2.24
+    tag: 5.2.22
 
 
     #
