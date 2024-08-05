@@ -227,6 +227,9 @@ if [ $? -eq 0 ]; then
 fi
 
 echo 'Creating cta instance in ${instance} namespace'
+helm dependency build ./cta
+helm dependency update ./cta
+
 
 helm install cta ./cta -n ${instance}
 
