@@ -285,8 +285,8 @@ public:
       tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
-      archiveRouteComment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
+                                                 s_tapePoolName, archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -1263,10 +1263,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string archiveRoute2Comment = "Archive-route for copy number 2";
     const uint32_t archiveRoute1CopyNb = 1;
     const uint32_t archiveRoute2CopyNb = 2;
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb, tapePool1Name,
-      archiveRoute1Comment);
-    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, tapePool2Name,
-      archiveRoute1Comment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
+                                                 tapePool1Name, archiveRoute1Comment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
+                                                 tapePool2Name, archiveRoute1Comment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -4693,8 +4693,8 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the two archive routes for the new copies
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool2Name,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape
   std::string vidDestination1 = "VIDDESTINATION1";
@@ -4943,7 +4943,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the one archive route for the second copy
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool2Name,"ArchiveRoute3");
 
   //Create two other destinationTape
   std::string vidCopyNb2_source = "VIDCOPYNB2_SOURCE";
@@ -5035,7 +5035,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   }
   catalogue.Tape()->setTapeFull(admin,vidCopyNb2_source,true);
   //Delete the archive route of the second copy and repack the tape that contains these second copies
-  catalogue.ArchiveRoute()->deleteArchiveRoute(storageClass.name,2);
+  catalogue.ArchiveRoute()->deleteArchiveRoute(storageClass.name,2, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT);
   {
     std::string vid = vidCopyNb2_source;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
@@ -5129,8 +5129,8 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the two archive routes for the new copies
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool2Name,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "VIDDESTINATION1";
@@ -6667,7 +6667,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.StorageClass()->modifyStorageClassNbCopies(s_adminOnAdminHost,storageClass.name,storageClass.nbCopies);
 
    //Create the new archive routes for the second copy
-  catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,newTapepool,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,newTapepool,"ArchiveRoute2");
 
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;

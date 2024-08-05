@@ -117,7 +117,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rule
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -183,7 +183,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -260,7 +260,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -330,7 +330,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_gro
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -400,7 +400,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -497,7 +497,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -603,7 +603,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -666,7 +666,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_grou
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -745,7 +745,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapePoolName, archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 

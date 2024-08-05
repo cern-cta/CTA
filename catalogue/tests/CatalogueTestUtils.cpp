@@ -81,7 +81,7 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
   const auto archiveRoutes = catalogue->ArchiveRoute()->getArchiveRoutes();
   for(auto &archiveRoute: archiveRoutes) {
     catalogue->ArchiveRoute()->deleteArchiveRoute(archiveRoute.storageClassName,
-      archiveRoute.copyNb);
+      archiveRoute.copyNb, archiveRoute.type);
   }
   const auto amRules = catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules();
   for(const auto &rule: amRules) {

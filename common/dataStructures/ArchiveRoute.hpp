@@ -32,11 +32,22 @@ namespace cta::common::dataStructures {
  */
 struct ArchiveRoute {
 
+  enum Type {
+    DEFAULT = 1,
+    REPACK = 2,
+  };
+
   ArchiveRoute();
 
   bool operator==(const ArchiveRoute &rhs) const;
 
   bool operator!=(const ArchiveRoute &rhs) const;
+
+  static std::string typeToString(const ArchiveRoute::Type & type);
+
+  static ArchiveRoute::Type stringToType(const std::string& typeStr);
+
+  static std::string getAllPossibleTypes();
 
   /**
    * The name of the storage class which is only guranateed to be unique within
@@ -45,9 +56,14 @@ struct ArchiveRoute {
   std::string storageClassName;
 
   /**
-   * The cipy number of the tape file.
+   * The copy number of the tape file.
    */
   uint8_t copyNb;
+
+  /**
+ * The type of the archive route.
+ */
+  Type type;
 
   std::string tapePoolName;
   EntryLog creationLog;
@@ -56,6 +72,10 @@ struct ArchiveRoute {
   
   typedef std::map<uint32_t, ArchiveRoute> StorageClassMap;
   typedef std::map<std::string /*storage class*/, StorageClassMap> FullMap;
+
+private:
+  static const std::map<Type,std::string> TYPE_TO_STRING_MAP;
+  static const std::map<std::string,Type> STRING_TO_TYPE_MAP;
 
 }; // struct ArchiveRoute
 

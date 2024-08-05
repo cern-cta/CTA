@@ -27,9 +27,9 @@ public:
   ~DummyArchiveRouteCatalogue() override = default;
 
   void createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName,
-    const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) override;
+    const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType, const std::string &tapePoolName, const std::string &comment) override;
 
-  void deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) override;
+  void deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
 
@@ -37,10 +37,11 @@ public:
     const std::string &tapePoolName) const override;
 
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
+    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType, const std::string &tapePoolName) override;
 
   void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
+    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+    const std::string &comment) override;
 };
 
 } // namespace cta::catalogue
