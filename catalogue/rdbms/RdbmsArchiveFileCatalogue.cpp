@@ -59,8 +59,8 @@ uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::stri
   const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
   try {
     const auto storageClass = catalogue::StorageClass(storageClassName);
-    const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
-    const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
+    const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass, false);
+    const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass, false);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -115,8 +115,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsArchiveFileCatalogue::getA
   const std::string &diskInstanceName, const std::string &storageClassName,
   const common::dataStructures::RequesterIdentity &user) {
   const auto storageClass = catalogue::StorageClass(storageClassName);
-  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
-  const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
+  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass, false);
+  const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass, false);
 
   // Check that the number of archive routes is correct
   if(copyToPoolMap.empty()) {
@@ -504,19 +504,19 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
 }
 
 common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getCachedTapeCopyToPoolMap(
-  const catalogue::StorageClass &storageClass) const {
-  auto l_getNonCachedValue = [this,&storageClass] {
+  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
+  auto l_getNonCachedValue = [this,&storageClass,&useRepackArchiveRoute] {
     auto conn = m_connPool->getConn();
-    return getTapeCopyToPoolMap(conn, storageClass);
+    return getTapeCopyToPoolMap(conn, storageClass, useRepackArchiveRoute);
   };
   return m_tapeCopyToPoolCache.getCachedValue(storageClass, l_getNonCachedValue).value;
 }
 
 uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(
-  const catalogue::StorageClass &storageClass) const {
-  auto l_getNonCachedValue = [this,&storageClass] {
+  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
+  auto l_getNonCachedValue = [this,&storageClass,&useRepackArchiveRoute] {
     auto conn = m_connPool->getConn();
-    return getExpectedNbArchiveRoutes(conn, storageClass);
+    return getExpectedNbArchiveRoutes(conn, storageClass, useRepackArchiveRoute);
   };
   return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, l_getNonCachedValue).value;
 }
@@ -598,11 +598,12 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getTapeContentsItor(const std::string
 }
 
 common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopyToPoolMap(rdbms::Conn &conn,
-  const catalogue::StorageClass &storageClass) const {
+  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
-  const char* const sql = R"SQL(
+  std::string sql = R"SQL(
     SELECT 
       ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
+      ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE AS ARCHIVE_ROUTE_TYPE,
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
     FROM 
       ARCHIVE_ROUTE 
@@ -613,12 +614,22 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
     WHERE 
       STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
+  if (!useRepackArchiveRoute) {
+    sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
+           + common::dataStructures::ArchiveRoute::typeToString(common::dataStructures::ArchiveRoute::Type::REPACK) + "'";
+  }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     const auto copyNb = static_cast<uint32_t>(rset.columnUint64("COPY_NB"));
     const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
+    auto archiveRouteTypeStr = rset.columnString("ARCHIVE_ROUTE_TYPE");
+    auto archiveRouteType = common::dataStructures::ArchiveRoute::stringToType(archiveRouteTypeStr);
+    if (archiveRouteType == common::dataStructures::ArchiveRoute::Type::DEFAULT && copyToPoolMap.count(copyNb)) {
+      // A DEFAULT archive route type should not override a previously found value
+      continue;
+    }
     copyToPoolMap[copyNb] = tapePoolName;
   }
 
@@ -626,17 +637,26 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
 }
 
 uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn,
-  const catalogue::StorageClass &storageClass) const {
-  const char* const sql = R"SQL(
-    SELECT 
-      COUNT(*) AS NB_ROUTES 
-    FROM 
-      ARCHIVE_ROUTE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    WHERE 
-      STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
+  std::string sql = R"SQL(
+    SELECT
+      COUNT(*) AS NB_ROUTES
+    FROM (
+      SELECT DISTINCT
+        ARCHIVE_ROUTE.STORAGE_CLASS_ID,
+        ARCHIVE_ROUTE.COPY_NB
+      FROM
+        ARCHIVE_ROUTE
+      INNER JOIN STORAGE_CLASS ON
+        ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+      WHERE
+        STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
+  if (!useRepackArchiveRoute) {
+    sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
+            + common::dataStructures::ArchiveRoute::typeToString(common::dataStructures::ArchiveRoute::Type::REPACK) + "'";
+  }
+  sql += ")";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
   auto rset = stmt.executeQuery();
