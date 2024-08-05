@@ -417,10 +417,14 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
 
   auto& scn      = getRequired(OptionString::STORAGE_CLASS);
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
+  auto  art_opt  = getOptional(OptionString::ARCHIVE_ROUTE_TYPE);
   auto& tapepool = getRequired(OptionString::TAPE_POOL);
   auto& comment  = getRequired(OptionString::COMMENT);
 
-  m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, static_cast<uint32_t>(cn), cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapepool, comment);
+  // Adding a new archive route without type is allowed. If so, it should default to DEFAULT.
+  auto art = art_opt.has_value() ? common::dataStructures::ArchiveRoute::stringToType(art_opt.value()) : cta::common::dataStructures::ArchiveRoute::Type::DEFAULT;
+
+  m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, tapepool, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -428,14 +432,17 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
 void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn      = getRequired(OptionString::STORAGE_CLASS);
-  auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& scn     = getRequired(OptionString::STORAGE_CLASS);
+  auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
+
+  auto art = common::dataStructures::ArchiveRoute::stringToType(art_str);
 
   if(const auto comment = getOptional(OptionString::COMMENT); comment) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, comment.value());
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, comment.value());
   }
   if(const auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), cta::common::dataStructures::ArchiveRoute::Type::DEFAULT, tapepool.value());
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, tapepool.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -444,10 +451,13 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
 void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn = getRequired(OptionString::STORAGE_CLASS);
-  auto& cn  = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& scn     = getRequired(OptionString::STORAGE_CLASS);
+  auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
 
-  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn), cta::common::dataStructures::ArchiveRoute::Type::DEFAULT);
+  auto art = common::dataStructures::ArchiveRoute::stringToType(art_str);
+
+  m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn), art);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }

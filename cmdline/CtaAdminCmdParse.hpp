@@ -346,7 +346,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL },
    { "--reason",                OptionString::REASON },
    { "--state",                 OptionString::STATE },
-   {  "--activityregex",        OptionString::ACTIVITY_REGEX},
+   { "--activityregex",         OptionString::ACTIVITY_REGEX},
    { "--diskinstance",          OptionString::DISK_INSTANCE },
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
@@ -358,7 +358,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--type",                  OptionString::LIBRARY_TYPE },
    { "--guiurl",                OptionString::GUI_URL },
    { "--webcamurl",             OptionString::WEBCAM_URL },
-   { "--location",              OptionString::LIBRARY_LOCATION }
+   { "--location",              OptionString::LIBRARY_LOCATION },
+   { "--archiveroutetype",      OptionString::ARCHIVE_ROUTE_TYPE }
 };
 
 
@@ -781,6 +782,7 @@ const Option opt_isrepackvo                   { Option::OPT_BOOL,     "--isrepac
 const Option opt_max_files_to_select          { Option::OPT_UINT,     "--maxfilestoselect",          "--mfts", " <max_files_to_select>" };
 const Option opt_log_unixtime_min             { Option::OPT_UINT,     "--logunixtimemin",            "--ltmin", " <min_recycle_log_unixtime>" };
 const Option opt_log_unixtime_max             { Option::OPT_UINT,     "--logunixtimemax",            "--ltmax", " <max_recycle_log_unixtime>" };
+const Option opt_archive_route_type           { Option::OPT_STR,      "--archiveroutetype",          "--art",  " <archive_route_type>" };
 
 /*!
  * Subset of commands that return streaming output
@@ -821,10 +823,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD   },
-      { opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
+      { opt_storageclass, opt_copynb, opt_archive_route_type.optional(), opt_tapepool, opt_comment }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_CH    },
-      { opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_storageclass, opt_copynb }},
+      { opt_storageclass, opt_copynb, opt_archive_route_type, opt_tapepool.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_storageclass, opt_copynb, opt_archive_route_type }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd, opt_reason.optional() }},
