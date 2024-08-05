@@ -56,7 +56,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
 
   const time_t now = time(nullptr);
   auto conn = m_connPool->getConn();
-  if(archiveRouteExists(storageClassName, copyNb, archiveRouteType)) {
+  if(archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
     exception::UserError ue;
     ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
       << "->" << tapePoolName << " because it already exists";
@@ -301,7 +301,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
     )SQL";
     auto conn = m_connPool->getConn();
 
-    if(!archiveRouteExists(storageClassName, copyNb, archiveRouteType)) {
+    if(!archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
       throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
     }
 
@@ -370,7 +370,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   }
 }
 
-bool RdbmsArchiveRouteCatalogue::archiveRouteExists(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type & archiveRouteType) {
+bool RdbmsArchiveRouteCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type & archiveRouteType) {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
@@ -382,9 +382,9 @@ bool RdbmsArchiveRouteCatalogue::archiveRouteExists(const std::string &storageCl
       ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
     WHERE
       STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND
-      ARCHIVE_ROUTE.COPY_NB = :COPY_NB
+      ARCHIVE_ROUTE.COPY_NB = :COPY_NB AND
+      ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE = :ARCHIVE_ROUTE_TYPE
   )SQL";
-  auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindUint64(":COPY_NB", copyNb);

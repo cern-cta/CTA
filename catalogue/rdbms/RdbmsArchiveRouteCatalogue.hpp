@@ -57,7 +57,7 @@ public:
 
 private:
 
-  bool archiveRouteExists(const std::string &storageClassName, const uint32_t copyNb,
+  bool archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName, const uint32_t copyNb,
                           const common::dataStructures::ArchiveRoute::Type & archiveRouteType);
 
   log::Logger &m_log;
