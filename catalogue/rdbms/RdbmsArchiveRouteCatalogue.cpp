@@ -66,7 +66,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
   if(const auto routes = getArchiveRoutes(conn, storageClassName, tapePoolName); !routes.empty()) {
     exception::UserError ue;
     ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
-      << "->" << tapePoolName << " because a route already exists for this storage class and tape pool";
+      << "->" << tapePoolName << " because a route already exists for this storage class, tape pool and type";
     throw ue;
   }
   if(!RdbmsCatalogueUtils::storageClassExists(conn, storageClassName)) {
