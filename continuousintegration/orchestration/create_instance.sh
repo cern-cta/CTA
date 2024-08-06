@@ -281,13 +281,26 @@ if [[ $(kubectl -n toto get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.
 fi
 echo OK
 
+kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
+
+echo -n "Waiting for EOS to be configured"
+for ((i=0; i<300; i++)); do
+  echo -n "."
+  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
+  sleep 1
+done
+[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+echo OK
 
 
 
+
+echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 
 echo -n "Using kinit for ctacli and client"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
+
 
 
 # space=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
@@ -301,6 +314,9 @@ kubectl --namespace=${instance} exec client -- klist
 
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist
+
+
+
 
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
@@ -316,7 +332,7 @@ CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
 for WORKFLOW in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
-  kubectl --namespace=${instance} exec cta-mgm-0 -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
+  kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
 done
 
 echo "Instance ${instance} successfully created:"

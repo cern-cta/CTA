@@ -26,8 +26,8 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
-EOSINSTANCE="root://cta-mgm"
-EOSINSTANCENAME="cta-mgm"
+EOSINSTANCE="root://ctaeos"
+EOSINSTANCENAME="ctaeos"
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
