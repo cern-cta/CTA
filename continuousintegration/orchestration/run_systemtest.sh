@@ -34,7 +34,7 @@ useceph=0
 # by default do not use systemd to manage services in containers
 usesystemd=0
 # time out for the kubernetes eoscta instance creation
-CREATEINSTANCE_TIMEOUT=1400
+CREATEINSTANCE_TIMEOUT=5000
 # preflight test script
 PREFLIGHTTEST_SCRIPT='tests/preflighttest.sh'
 # default preflight checks timeout is 60 seconds
