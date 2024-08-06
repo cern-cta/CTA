@@ -281,12 +281,22 @@ public:
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
     const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
-      tapePoolSupply, tapePoolComment);
+
     const uint32_t copyNb = 1;
-    const std::string archiveRouteComment = "Archive-route comment";
+
+    // Tape pool for default archive route
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName_default, vo.name, nbPartialTapes, tapePoolEncryption,
+                                         tapePoolSupply, tapePoolComment);
+    const std::string archiveRouteComment_default = "Archive-route comment - default";
     catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,
-                                                 s_tapePoolName, archiveRouteComment);
+                                                 s_tapePoolName_default, archiveRouteComment_default);
+
+    // Tape pool for repack archive route
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName_repack, vo.name, nbPartialTapes, tapePoolEncryption,
+                                         tapePoolSupply, tapePoolComment);
+    const std::string archiveRouteComment_repack = "Archive-route comment - repack";
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRoute::Type::REPACK,
+                                                 s_tapePoolName_repack, archiveRouteComment_repack);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -311,7 +321,7 @@ public:
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
+    tape.tapePoolName = s_tapePoolName_default;
     tape.full = false;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
@@ -357,7 +367,8 @@ protected:
   const std::string s_diskInstance = "disk_instance";
   const std::string s_storageClassName = "TestStorageClass";
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
-  const std::string s_tapePoolName = "TapePool";
+  const std::string s_tapePoolName_default = "TapePool_default";
+  const std::string s_tapePoolName_repack = "TapePool_repack";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TESTVID";
   const std::string s_mediaType = "TestMediaType";
@@ -424,7 +435,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const std::string pool = poolItor->first;
-    ASSERT_TRUE(s_tapePoolName == pool);
+    ASSERT_TRUE(s_tapePoolName_default == pool);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
@@ -598,8 +609,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
-    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -820,8 +831,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
-    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1042,8 +1053,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
-    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1693,8 +1704,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
-    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1944,8 +1955,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
-    ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -2724,8 +2735,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         JobQueueType::JobsToTransferForUser}) {
         ASSERT_EQ(0, re.dumpArchiveQueues(queueType).size());
       }
-      // Now check we find all our requests in the archive queue.
-      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, JobQueueType::JobsToTransferForRepack),
+      // Now check we find all our requests in the archive queue for the repack tape pool
+      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName_repack, JobQueueType::JobsToTransferForRepack),
           schedulerDB.getBackend());
       aq.fetchNoLock();
       std::set<uint64_t> archiveIdsSeen;
@@ -3222,6 +3233,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination;
+    tape.tapePoolName = s_tapePoolName_repack;
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
@@ -3481,6 +3493,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestinationRepack;
+    tape.tapePoolName = s_tapePoolName_repack;
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4510,7 +4523,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       auto & osdb=getSchedulerDB();
       auto mi=osdb.getMountInfo(lc);
       ASSERT_EQ(1, mi->existingOrNextMounts.size());
-      ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
+      ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
       std::unique_ptr<cta::ArchiveMount> archiveMount;
       archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
       ASSERT_NE(nullptr, archiveMount.get());
@@ -4692,12 +4705,12 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   storageClass.comment = "Create storage class";
   catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
-  //Create the two archive routes for the new copies
+  //Create the two archive routes for the new copies, mark 3rd one as repack
   catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool2Name,"ArchiveRoute2");
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::REPACK,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape
-  std::string vidDestination1 = "VIDDESTINATION1";
+  std::string vidDestination1 = "VIDDESTINATION2";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
@@ -4705,7 +4718,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidDestination2 = "VIDDESTINATION2";
+  std::string vidDestination2 = "VIDDESTINATION3";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
@@ -5128,12 +5141,12 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   storageClass.comment = "Create storage class";
   catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
-  //Create the two archive routes for the new copies
+  //Create the two archive routes for the new copies, mark 3rd one as repack
   catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool2Name,"ArchiveRoute2");
-  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::DEFAULT,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRoute::Type::REPACK,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape and one for the move workflow
-  std::string vidDestination1 = "VIDDESTINATION1";
+  std::string vidDestination1 = "VIDDESTINATION2";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
@@ -5141,7 +5154,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidDestination2 = "VIDDESTINATION2";
+  std::string vidDestination2 = "VIDDESTINATION3";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
@@ -5154,6 +5167,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   {
     auto tape = getDefaultTape();
     tape.vid = vidMove;
+    tape.tapePoolName = s_tapePoolName_repack;
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
@@ -5576,8 +5590,8 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       }
     }
     re.fetchNoLock();
-    //Get all archive subrequests in the ArchiveQueue
-    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, JobQueueType::JobsToTransferForRepack),backend);
+    //Get all archive subrequests in the ArchiveQueue for repack
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName_repack, JobQueueType::JobsToTransferForRepack), backend);
     aq.fetchNoLock();
     for(auto & job: aq.dumpJobs()){
       cta::objectstore::ArchiveRequest archiveReq(job.address,backend);
@@ -5646,7 +5660,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     ar->setArchiveFile(aFile);
-    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->addJob(1, s_tapePoolName_default, agentReference.getAgentAddress(), 1, 1, 1);
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     cta::common::dataStructures::MountPolicy mp;
     mp.archiveMinRequestAge = 250000;
@@ -5682,7 +5696,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     aFile.fileSize = 667;
     aFile.storageClass = s_storageClassName;
     ar->setArchiveFile(aFile);
-    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->addJob(1, s_tapePoolName_default, agentReference.getAgentAddress(), 1, 1, 1);
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     cta::common::dataStructures::MountPolicy mp;
     mp.archiveMinRequestAge = 250000;
@@ -6451,6 +6465,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
   //Create a repack destination tape
   auto tape2 = getDefaultTape();
   tape2.vid = "REPACK_DESTINATION_VID";
+  tape2.tapePoolName = s_tapePoolName_repack;
   catalogue.Tape()->createTape(s_adminOnAdminHost, tape2);
 
   const std::string tapeDrive = "tape_drive";
@@ -6734,7 +6749,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
     aFile.fileSize = archiveFileSize;
     aFile.storageClass = "sc";
     ar->setArchiveFile(aFile);
-    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->addJob(1, s_tapePoolName_default, agentReference.getAgentAddress(), 1, 1, 1);
     ar->addJob(2, newTapepool, agentReference.getAgentAddress(), 1, 1, 1);
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     ar->setJobStatus(2, serializers::ArchiveJobStatus::AJS_ToTransferForUser);
@@ -6931,7 +6946,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   {
     cta::objectstore::ScopedExclusiveLock sel(re);
     re.fetch();
-    archiveForUserQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForUser);
+    archiveForUserQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName_default, agentReference, JobQueueType::JobsToTransferForUser);
   }
 
   cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd;
@@ -6953,7 +6968,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   {
     cta::objectstore::ScopedExclusiveLock sel(re);
     re.fetch();
-    archiveForRepackQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForRepack);
+    archiveForRepackQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName_default, agentReference, JobQueueType::JobsToTransferForRepack);
   }
 
   cta::objectstore::ArchiveQueue::JobToAdd repackArchiveJob;
@@ -6990,7 +7005,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
 
   //Test the ArchiveForUser QueueAndMountSummary
-  std::string tapePool = s_tapePoolName;
+  std::string tapePool = s_tapePoolName_default;
   res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [tapePool](const cta::common::dataStructures::QueueAndMountSummary & qams){
     return qams.mountType == cta::common::dataStructures::MountType::ArchiveForUser && qams.tapePool == tapePool;
   });
@@ -7080,7 +7095,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     aFile.fileSize = fileSize;
     aFile.storageClass = "sc";
     ar->setArchiveFile(aFile);
-    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->addJob(1, s_tapePoolName_default, agentReference.getAgentAddress(), 1, 1, 1);
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     cta::common::dataStructures::MountPolicy mp;
     //We want the archiveMinRequestAge to be taken into account and trigger the mount
@@ -7140,7 +7155,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     aFile.fileSize = fileSize;
     aFile.storageClass = "sc";
     ar->setArchiveFile(aFile);
-    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->addJob(1, s_tapePoolName_default, agentReference.getAgentAddress(), 1, 1, 1);
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForUser);
     cta::common::dataStructures::MountPolicy mp;
     //We want the archiveMinRequestAge to be taken into account and trigger the mount
@@ -7217,7 +7232,7 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
     const std::string driveName = "drive0";
     auto tapeDrive = catalogue.DriveState()->getTapeDrive(driveName);
     // Insert tape pool name to the drive
-    tapeDrive.value().currentTapePool = s_tapePoolName;
+    tapeDrive.value().currentTapePool = s_tapePoolName_default;
     tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::CleaningUp;
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in CleaningUp state, and it didn't go to Down state
@@ -7309,7 +7324,7 @@ TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
     const std::string driveName = "drive0";
     auto tapeDrive = catalogue.DriveState()->getTapeDrive(driveName);
     // Insert tape pool name to the drive
-    tapeDrive.value().currentTapePool = s_tapePoolName;
+    tapeDrive.value().currentTapePool = s_tapePoolName_default;
     tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::Shutdown;
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in Shutdown state, and it didn't go to Down state
