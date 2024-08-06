@@ -92,7 +92,7 @@ if [ "$KEEP_DATABASE" == "0" ]; then
     if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
       # pause to let db come up
       echo "Database connection failed, pausing before a retry"
-      sleep 5
+      sleep 5000
       echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
       echo "Database wiped"
     fi
