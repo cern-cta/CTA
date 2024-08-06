@@ -1,7 +1,7 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
+  image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
 
 # Here are stored values for the project related pods
 cta:
@@ -24,6 +24,15 @@ cta:
       ports:
       - name: ctafrontend
         port: 10955
+        protocol: TCP
+    ctaeos:
+      selectors:
+        k8s-app: ctaeos-mgm
+      labels:
+        k8s-app: ctaeos-mgm
+      ports:
+      - name: ctaeos-mgm
+        port: 1094
         protocol: TCP
   pods:
     init:
@@ -114,7 +123,7 @@ cta:
 
     ctafrontend:
       containers:
-      - image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
+      - image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
         command: ["/bin/sh", "-c"]
         args:
         - |
@@ -212,8 +221,8 @@ cta:
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
-        - mountPath: /etc/grid-security/certificates/
-          name: ca-certs
+        # - mountPath: /etc/grid-security/certificates/
+        #   name: ca-certs
       volumes:
       - name: shared
         hostPath:
@@ -233,9 +242,9 @@ cta:
       - name: krb5-config-volume
         configMap:
           name: krb5-config
-      - name: ca-certs
-        secret:
-          secretName: ca-certs
+      # - name: ca-certs
+      #   secret:
+      #     secretName: ca-certs
 
     tpsrv01:
       labels:
@@ -375,6 +384,63 @@ cta:
         persistentVolumeClaim:
           claimName: claimlogs
 
+    ctaeos:
+      labels:
+        k8s-app: ctaeos-mgm
+      containers:
+      - name: mgm
+        isPriviliged: true
+        env:
+        - name: frontend
+          value: 'cta-frontend:10955'
+        - name: TERM
+          value: "xterm"
+        command: ['/opt/run/bin/ctaeos-mgm-log-wrapper.sh']
+        args: ["none"]
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /mnt/logs
+          name: logstorage
+        - mountPath: /fst
+          name: stgstorage
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /etc/config/eoscta
+          name: eosctaconfig
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
+          subPath: krb5.conf
+        - mountPath: /etc/eos-server.krb5.keytab
+          name: keytab
+          subPath: eos-server.krb5.keytab
+        # - mountPath: /etc/grid-security/certificates/
+        #   name: ca-certs
+      volumes:
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: claimlogs
+      - name: stgstorage
+        persistentVolumeClaim:
+          claimName: claimstg
+      - name: eosconfig
+        configMap:
+          name: eos-config
+      - name: eosctaconfig
+        configMap:
+          name: eos-grpc-keytab
+      - name: krb5-config-volume
+        configMap:
+          name: krb5-config
+      - name: keytab
+        secret:
+          secretName: eos-server-keytab
+      # - name: ca-certs
+      #   secret:
+      #     secretName: ca-certs
 
 # Here are stored values for the pvc's
 pvcs:
@@ -533,7 +599,7 @@ kdc:
 
   pod:
     isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:7880318git8074773a
+    image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
     commandsAtRuntime: [ "cat", "/root/kdcReady"]

@@ -56,8 +56,8 @@ if [[ ${PREPARE} -eq 1 ]]; then
   fi
 fi
 
-# EOSINSTANCE=ctaeos
-EOSINSTANCE=cta-mgm-0
+EOSINSTANCE=ctaeos
+# EOSINSTANCE=cta-mgm-0
 
 echo
 echo "Copying test scripts to client pod."

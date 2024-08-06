@@ -20,7 +20,8 @@ set -a
 touch /tmp/RC
 # EOSINSTANCE=cta-mgm-0
 # its actually service name
-EOSINSTANCE=cta-mgm
+# EOSINSTANCE=cta-mgm
+EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 DATA_SOURCE=/dev/urandom

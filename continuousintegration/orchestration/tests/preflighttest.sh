@@ -65,8 +65,8 @@ echo
 # invalid check:
 # [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
-# EOSINSTANCE="ctaeos"
-EOSINSTANCE="cta-mgm-0"
+EOSINSTANCE="ctaeos"
+# EOSINSTANCE="cta-mgm-0"
 
 FLIGHTTEST_TPC_RC=0
 TEST_LOG="${TMPDIR}/tpc_cap.log"
