@@ -43,8 +43,8 @@ if [ ! -z "${error}" ]; then
 fi
 
 # eos instance identified by SSS username
-EOSINSTANCE=cta-mgm-0
-# EOSINSTANCE=ctaeos
+# EOSINSTANCE=cta-mgm-0
+EOSINSTANCE=ctaeos
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
