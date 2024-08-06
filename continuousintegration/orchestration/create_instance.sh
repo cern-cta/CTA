@@ -291,7 +291,7 @@ echo "Creating pods in instance"
 sed "s/SCHEMA_VERSION_VALUE/${SCHEMA_VERSION}/g" ${poddir}/pod-init.yaml | kubectl create --namespace=${instance} -f -
 
 echo -n "Waiting for init"
-for ((i=0; i<400; i++)); do
+for ((i=0; i<5000; i++)); do
   echo -n "."
   kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
