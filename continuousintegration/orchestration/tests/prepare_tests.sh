@@ -311,7 +311,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
      --name powerusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
 ###
-# This mount policy is for repack
+# This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
     --name repack_ctasystest                                                 \
     --archivepriority 2                                               \
@@ -402,30 +402,4 @@ setup_tapes_for_multicopy_test() {
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[1]} --tapepool ctasystest_B
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[2]} --tapepool ctasystest_C
 
-}
-
-setup_tapes_for_repack_test() {
-  # Setup default tapepool and storage class
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-    --name ctasystest_repack                                             \
-    --vo vo                                                              \
-    --partialtapesnumber 5                                               \
-    --encrypted false                                                    \
-    --comment "ctasystest"
-
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-    --storageclass ctaStorageClass                                           \
-    --copynb 1                                                               \
-    --type REPACK                                                            \
-    --tapepool ctasystest_repack                                             \
-    --comment "ctasystest_repack"
-
-  # Find 1 non-full tape and assign it to each to the repack tapepool
-  mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
-  if ((${#nonFullTapes[@]} < 3)); then
-    echo "Not enought non-full tapes"
-    return 1
-  fi
-
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[0]} --tapepool ctasystest_repack
 }
