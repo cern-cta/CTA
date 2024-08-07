@@ -456,15 +456,15 @@ pvcs:
     storage: 2Gi
     accessModes:
       - ReadWriteMany
-  claimlibrary:
-    annotations:
-      volume.beta.kubernetes.io/storage-class: "librarydevice"
-    selectors:
-      config: library
-      type: mhvtl
-    storage: 1Mi
-    accessModes:
-      - ReadWriteOnce
+  # claimlibrary:
+  #   annotations:
+  #     volume.beta.kubernetes.io/storage-class: "librarydevice"
+  #   selectors:
+  #     config: library
+  #     type: mhvtl
+  #   storage: 1Mi
+  #   accessModes:
+  #     - ReadWriteOnce
 
 # Here are stored ALL configMaps needed for the project to be build
 configs:
