@@ -16,6 +16,12 @@
 #               submit itself to any jurisdiction.
 
 
+if command -v helm &> /dev/null ;  then
+    echo "Helm is installed. Exiting"
+    exit 0
+fi
+
+echo "Installing helm"
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 mkdir ~/bin
