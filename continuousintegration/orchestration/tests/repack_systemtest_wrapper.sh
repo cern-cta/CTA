@@ -96,6 +96,9 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
 source ./repack_helper.sh
 kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
 
+echo "Setting up repack tapepool"
+setup_tapes_for_repack_test
+
 roundTripRepack() {
   echo
   echo "***********************************************************"
