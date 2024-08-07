@@ -19,7 +19,7 @@
     - echo "Invalidating default common before_script for kubernetes-test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - bash ./ontinuousintegration/ci_helpers/install_helm.sh
+    - bash ./continuousintegration/ci_helpers/install_helm.sh
 
   script:
     - git submodule update --init --recursive
