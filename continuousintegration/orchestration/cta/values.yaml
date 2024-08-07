@@ -475,17 +475,17 @@ configs:
     data:
       objectstore.file.path: /shared/%NAMESPACE/objectstore
       objectstore.type: file
-  - name: library-config
-    labels:
-      config: library
-      type: mhvtl
-    data:
-      library.device: sg1
-      library.drivedevices: (nst0 nst2 nst1)
-      library.drivenames: (VDSTK01 VDSTK02 VDSTK03)
-      library.name: VLSTK10
-      library.tapes: (V00101 V00102 V00103 V00104 V00105 V00106 V00107 V00108)
-      library.type: mhvtl
+  # - name: library-config
+  #   labels:
+  #     config: library
+  #     type: mhvtl
+  #   data:
+  #     library.device: sg1
+  #     library.drivedevices: (nst0 nst2 nst1)
+  #     library.drivenames: (VDSTK01 VDSTK02 VDSTK03)
+  #     library.name: VLSTK10
+  #     library.tapes: (V00101 V00102 V00103 V00104 V00105 V00106 V00107 V00108)
+  #     library.type: mhvtl
   - name: database-config
     labels:
       config: database
