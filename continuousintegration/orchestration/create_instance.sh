@@ -233,6 +233,25 @@ helm dependency update ./cta
 
 helm install cta ./cta -n ${instance}
 
+
+echo "Requesting an unused ${model} library"
+kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
+for ((i=0; i<120; i++)); do
+  echo -n "."
+  kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
+  sleep 1
+done
+kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
+echo "OK"
+LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
+echo "Get library device: ${LIBRARY_DEVICE}"
+
+kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
+
+echo "Got library: ${LIBRARY_DEVICE}"
+
+
+
 kubectl --namespace=${instance} get pods
 
 
