@@ -463,10 +463,10 @@ test_assert || exit 1
 
 # Archive Route (ar)
 test_start "archvie route" "ar"
-test_and_check_cmd "Adding archive route" "${command}" "add" "-s ctaStorageClass -c 2 -t ctasystest_A -m 'cta-admin systest add'"\
+test_and_check_cmd "Adding archive route" "${command}" "add" "-s ctaStorageClass -c 2 --art DEFAULT -t ctasystest_A -m 'cta-admin systest add'"\
   'select(.storageClass=="ctaStorageClass" and .copyNumber==2 and .tapepool=="ctasystest_A" and .comment=="cta-admin systest add") | .storageClass'\
   "1" "adding archive route" || exit 1
-test_and_check_cmd "Changing archive route" "${command}" "ch" "-s ctaStorageClass -c 2 -t ctasystest_B -m 'cta-admin systest ch'"\
+test_and_check_cmd "Changing archive route" "${command}" "ch" "-s ctaStorageClass -c 2 --art DEFAULT -t ctasystest_B -m 'cta-admin systest ch'"\
   'select(.storageClass=="ctaStorageClass" and .copyNumber==2 and .tapepool=="ctasystest_B" and .comment=="cta-admin systest ch") | .storageClass'\
   "1" "changing archive route" || exit 1
 test_command "Removing archive route" "${command}" "rm" "-s ctaStorageClass -c 2" || exit 1

@@ -656,7 +656,7 @@ uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn
     sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
             + common::dataStructures::ArchiveRoute::typeToString(common::dataStructures::ArchiveRoute::Type::REPACK) + "'";
   }
-  sql += ")";
+  sql += ") AS TEMP";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
   auto rset = stmt.executeQuery();
