@@ -253,6 +253,7 @@ echo "Got library: ${LIBRARY_DEVICE}"
 
 
 kubectl --namespace=${instance} get pods
+kubectl --namespace=${instance} describe tpsrv01
 
 
 # kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Succeeded || die "TIMED OUT"
