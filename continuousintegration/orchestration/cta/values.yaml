@@ -308,7 +308,7 @@ cta:
         - name: TERM
           value: "xterm"
         - name: driveslot
-          value: "0"
+          value: "1"
         volumeMounts:
         - mountPath: /shared
           name: shared
