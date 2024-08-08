@@ -143,6 +143,8 @@ if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" ]; then
     usage
 fi
 
+# everyone needs poddir temporary directory to generate pod yamls
+poddir=$(mktemp -d)
 
 # Get Catalogue Schema version
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -183,8 +185,9 @@ if [ "${imagetag}" == "" ]; then
   exit 1
 fi
 echo "Creating instance using docker image with tag: ${imagetag}"
-file_to_replace=cta/values.yaml
-sed -i $file_to_replace -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+
+sed -i cta/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+sed -i init/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
 
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
@@ -226,14 +229,6 @@ if [ $? -eq 0 ]; then
   kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${instance} create -f -
 fi
 
-echo 'Creating cta instance in ${instance} namespace'
-helm dependency build ./cta
-helm dependency update ./cta
-
-
-helm install cta ./cta -n ${instance}
-
-
 echo "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
 for ((i=0; i<120; i++)); do
@@ -250,11 +245,28 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 
 echo "Got library: ${LIBRARY_DEVICE}"
 
+echo 'copying files to tmpdir'
+cp -R ./init ${poddir}
+cp -R ./cta ${poddir}
+cp ./pod-oracleunittests.yaml ${poddir}
+
+echo  "Setting up init and db pods."
+helm install init ${poddir}/init -n ${instance}
+
+echo -n "Waiting for init"
+for ((i=0; i<400; i++)); do
+  echo -n "."
+  kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+  sleep 1
+done
+
+echo 'Creating cta instance in ${instance} namespace'
+helm dependency build ${poddir}/cta
+helm dependency update ${poddir}/cta
+helm install cta ${poddir}/cta -n ${instance}
 
 
 kubectl --namespace=${instance} get pods
-kubectl --namespace=${instance} describe pod tpsrv01
-
 
 # kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Succeeded || die "TIMED OUT"
 # echo OK

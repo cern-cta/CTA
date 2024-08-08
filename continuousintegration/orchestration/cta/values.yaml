@@ -1,7 +1,7 @@
 # Here are stored global settings for all the project pods
 global:
   imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
+  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
 
 # Here are stored values for the project related pods
 cta:
@@ -35,48 +35,6 @@ cta:
         port: 1094
         protocol: TCP
   pods:
-    init:
-      containers:
-      - command: ['/opt/run/bin/init.sh']
-        args: ["none"]
-        env:
-# First two are another whacky hacky way by just creating configmap in cmd on line 244
-        - name: KEEP_DATABASE
-          value: "0"
-        - name: KEEP_OBJECTSTORE
-          value: "0"
-# Its used by some hacky find and grep on 309 and 151 line of create_instance.sh
-        - name: SCHEMA_VERSION
-          value: "15.0"
-        isPriviliged: true
-        volumeMounts:
-        - mountPath: /shared
-          name: shared
-        - mountPath: /etc/config/objectstore
-          name: myobjectstore
-        - mountPath: /etc/config/database
-          name: mydatabase
-        - mountPath: /etc/config/library
-          name: mylibrary
-        - mountPath: /mnt/logs
-          name: logstorage
-      volumes:
-      - name: shared
-        hostPath:
-          path: /opt/cta
-      - name: myobjectstore
-        configMap:
-          name: objectstore-config
-      - name: mydatabase
-        configMap:
-          name: database-config
-      - name: mylibrary
-        configMap:
-          name: library-config
-      - name: logstorage
-        persistentVolumeClaim:
-          claimName: claimlogs
-
     ctacli:
       containers:
       - command: ["/bin/sh", "-c"]
@@ -123,7 +81,7 @@ cta:
 
     ctafrontend:
       containers:
-      - image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
+      - image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
         command: ["/bin/sh", "-c"]
         args:
         - |
@@ -442,61 +400,9 @@ cta:
       #   secret:
       #     secretName: ca-certs
 
-# Here are stored values for the pvc's
-pvcs:
-  claimstg:
-    selectors:
-      type: stg
-    storage: 3Gi
-    accessModes:
-      - ReadWriteMany
-  claimlogs:
-    selectors:
-      type: logs
-    storage: 2Gi
-    accessModes:
-      - ReadWriteMany
-  # claimlibrary:
-  #   annotations:
-  #     volume.beta.kubernetes.io/storage-class: "librarydevice"
-  #   selectors:
-  #     config: library
-  #     type: mhvtl
-  #   storage: 1Mi
-  #   accessModes:
-  #     - ReadWriteOnce
 
 # Here are stored ALL configMaps needed for the project to be build
 configs:
-  - name: objectstore-config
-    labels:
-      config: objectstore
-    type: file
-    data:
-      objectstore.file.path: /shared/%NAMESPACE/objectstore
-      objectstore.type: file
-  # - name: library-config
-  #   labels:
-  #     config: library
-  #     type: mhvtl
-  #   data:
-  #     library.device: sg1
-  #     library.drivedevices: (nst0 nst2 nst1)
-  #     library.drivenames: (VDSTK01 VDSTK02 VDSTK03)
-  #     library.name: VLSTK10
-  #     library.tapes: (V00101 V00102 V00103 V00104 V00105 V00106 V00107 V00108)
-  #     library.type: mhvtl
-  - name: database-config
-    labels:
-      config: database
-      type: postgres
-    data:
-      database.postgres.database: cta
-      database.postgres.password: cta
-      database.postgres.path: /var/lib/postgresql/data/pgdata
-      database.postgres.server: postgres
-      database.postgres.username: cta
-      database.type: postgres
   - name: krb5-config
     file: krb5.conf
     labels:
@@ -545,38 +451,6 @@ configs:
         redis.password_file  /etc/eos.keytab.xrootd
 
 
-# Here is stored postgress db config. It might be moved as external dependency,
-postgres:
-  name: postgres
-  service:
-    ports:
-    - name: postgres
-      port: 5432
-      protocol: TCP
-  pod:
-    image: docker.io/postgres:14.10
-    env:
-    - name: POSTGRES_USER
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.username
-    - name: POSTGRES_PASSWORD
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.password
-    - name: PGDATA
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.path
-    - name: POSTGRES_DB
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.database
-
 # here will be stored the kdc config
 kdc:
   # it is used for the selectors, names
@@ -599,7 +473,7 @@ kdc:
 
   pod:
     isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:7883002gitac0808d7
+    image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
     command: ['/opt/run/bin/kdc.sh']
     args: ['none']
     commandsAtRuntime: [ "cat", "/root/kdcReady"]
