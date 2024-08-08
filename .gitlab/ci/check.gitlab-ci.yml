@@ -1,0 +1,28 @@
+# This job runs only for external triggers
+check_eos_packages:
+  stage: check
+  script:
+    - echo "Checking for packages for tag $TAG_NAME"
+    - |
+      RETRY_COUNT=0
+      MAX_RETRIES=12
+      DELAY=300
+      PACKAGE_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/eos-server-$TAG_NAME-1.el9.x86_64.rpm"
+      
+      until [ $RETRY_COUNT -ge $MAX_RETRIES ]
+      do
+        if curl --output /dev/null --silent --head --fail "$PACKAGE_URL"; then
+          echo "Packages found at $PACKAGE_URL"
+          break
+        else
+          RETRY_COUNT=$((RETRY_COUNT+1))
+          echo "Packages not found, retry $RETRY_COUNT/$MAX_RETRIES. Waiting $DELAY seconds..."
+          sleep $DELAY
+        fi
+      done
+
+    # Fail the job if the packages were not found
+    - if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then echo "Packages not found after $MAX_RETRIES retries. Exiting."; exit 1; fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+  when: on_success
