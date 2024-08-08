@@ -246,8 +246,8 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 echo "Got library: ${LIBRARY_DEVICE}"
 
 echo 'copying files to tmpdir'
-cp -R ./init ${poddir}
-cp -R ./cta ${poddir}
+cp -R ./helm_instances/init ${poddir}
+cp -R ./helm_instances/cta ${poddir}
 cp ./pod-oracleunittests.yaml ${poddir}
 
 echo  "Setting up init and db pods."
