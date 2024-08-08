@@ -150,18 +150,19 @@ void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageCl
         FROM 
           STORAGE_CLASS 
         WHERE 
-          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB
+          STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND COPY_NB = :COPY_NB AND ARCHIVE_ROUTE_TYPE = :ARCHIVE_ROUTE_TYPE
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
   stmt.bindUint64(":COPY_NB", copyNb);
+  stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::ArchiveRoute::typeToString(archiveRouteType));
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot delete archive route for storage-class " << ":" + storageClassName +
-      " and copy number " << copyNb << " because it does not exist";
+    ue.getMessage() << "Cannot delete archive route for storage-class " << storageClassName +
+      ", copy number " << copyNb << " and type " << common::dataStructures::ArchiveRoute::typeToString(archiveRouteType) << " because it does not exist";
     throw ue;
   }
 }
