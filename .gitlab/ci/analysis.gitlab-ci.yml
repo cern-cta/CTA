@@ -10,6 +10,8 @@ cppcheck-run:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: never
     - when: always
   script:
     - cppcheck --xml
@@ -32,6 +34,8 @@ cppcheck-report:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -57,6 +61,8 @@ clang-format:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: never
     - when: always
   image: $EL9_IMAGE
   script:
@@ -74,6 +80,8 @@ catalogue-schema-version-check:
   stage: analysis
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never

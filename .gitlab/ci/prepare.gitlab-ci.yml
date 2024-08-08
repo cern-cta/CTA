@@ -1,0 +1,41 @@
+# Job to modify the file for external triggers
+modify_versionlock:
+  stage: prepare
+  script:
+    - |
+      echo "Extracting the currently versioned locked EOS version from the file..."
+      current_version=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list | awk -F '-' '{print $3}' | head -1)
+      echo "Current version found: $current_version"
+      if [ -z "$current_version" ]; then 
+        echo "Version not found! Exiting."; 
+        exit 1; 
+      fi
+      echo "Replacing $current_version with $TAG_NAME in the file..."
+      sed -i "s/$current_version/$TAG_NAME/g" continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+      
+      # Check if XROOTD_VERSION is provided and not just whitespace
+      trimmed_xrootd_version=$(echo "$XROOTD_VERSION" | xargs)
+      # Check if XROOTD_VERSION is provided
+      if [ -n "$trimmed_xrootd_version" ]; then
+        echo "Extracting the currently versioned locked XRootD version from the file..."
+        current_xrootd_version=$(grep -o 'xrootd-server-[0-9]:[0-9]\+\.[0-9]\+\.[0-9]\+' continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list | awk -F '-' '{print $3}' | head -1)
+        echo "Current XRootD version found: $current_xrootd_version"
+
+        if [ -n "$current_xrootd_version" ]; then
+          echo "Replacing $current_xrootd_version with $XROOTD_VERSION in the file..."
+          sed -i "s/$current_xrootd_version/$XROOTD_VERSION/g" continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+        else
+          echo "XRootD version not found in the file."
+        fi
+      else
+        echo "XROOTD_VERSION is not provided. Skipping XRootD version replacement."
+      fi
+    
+      echo "File content after replacement:"
+      cat continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+  artifacts:
+    paths:
+      - continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+  when: on_success

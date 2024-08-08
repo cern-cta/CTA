@@ -111,20 +111,6 @@ test-external-tape-formats:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-nightly1:
-  stage: test
-  extends:
-    - .kubernetes-test
-  only:
-    - triggers
-  variables:
-    TEST_SCRIPT: "tests/test_nightly1.sh"
-    EXTENDED_OPTIONS: "-O -D"
-  tags:
-    - kubernetes
-    - mhvtl
-    - xlarge
-
 # Regression tests
 
 test-regression-eos:
