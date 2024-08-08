@@ -229,8 +229,13 @@ cta:
 
       - name: taped
         isPriviliged: true
-        command: ['/opt/run/bin/taped.sh']
-        args: ["none"]
+        command: ["/bin/sh", "-c"]
+        # Not moving chown here due to the fact that the user might not yet exists
+        args:
+        - |
+          cat /tmp/dump/cta/cta-taped-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+          chmod 600 /etc/cta/cta-taped.sss.keytab;
+          /opt/run/bin/taped.sh;
         env:
         - name: MY_CONTAINER
           value: "taped"
@@ -253,7 +258,9 @@ cta:
           name: eosconfig
         - mountPath: /mnt/logs
           name: logstorage
-
+        - mountPath: /tmp/dump/cta/cta-taped-tmp.sss.keytab
+          name: tape-sss
+          subPath: cta-taped-tmp.sss.keytab
       volumes:
       - name: shared
         hostPath:
@@ -273,6 +280,9 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
+      - name: tape-sss
+        secret:
+          secretName: tapes-sss-keytab
     tpsrv02:
       labels:
         k8s-app: ctataped
@@ -298,8 +308,13 @@ cta:
 
       - name: taped
         isPriviliged: true
-        command: ['/opt/run/bin/taped.sh']
-        args: ["none"]
+        command: ["/bin/sh", "-c"]
+        # Not moving chown here due to the fact that the user might not yet exists
+        args:
+        - |
+          cat /tmp/dump/cta/cta-taped-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+          chmod 600 /etc/cta/cta-taped.sss.keytab;
+          /opt/run/bin/taped.sh;
         env:
         - name: MY_CONTAINER
           value: "taped"
@@ -322,6 +337,9 @@ cta:
           name: eosconfig
         - mountPath: /mnt/logs
           name: logstorage
+        - mountPath: /tmp/dump/cta/cta-taped-tmp.sss.keytab
+          name: tape-sss
+          subPath: cta-taped-tmp.sss.keytab
       volumes:
       - name: shared
         hostPath:
@@ -341,6 +359,9 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
+      - name: tape-sss
+        secret:
+          secretName: tapes-sss-keytab
 
     ctaeos:
       labels:
