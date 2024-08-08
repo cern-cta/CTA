@@ -17,3 +17,4 @@ modify_versionlock:
       - continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
   rules:
     - if: '$CI_PIPELINE_SOURCE == "trigger"'
+  when: on_success
