@@ -8,8 +8,9 @@ customEntrypoint:
   command: ['/opt/run/bin/init.sh']
   args: ["none"]
 
-imagePullSecret: "ctaregsecret"
-image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+global:
+  imagePullSecret: "ctaregsecret"
+  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
 
 pvcs:
   claimstg:
