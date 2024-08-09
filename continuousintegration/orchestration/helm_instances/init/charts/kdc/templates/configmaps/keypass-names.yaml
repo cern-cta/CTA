@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    config: keypass-names
+  name: keypass-names-config
+  namespace: {{.Release.Namespace}}
+data:
+  keypass-names.txt: |-
+    ctaadmin1 ctaadmin1.keytab
+    user1 user1.keytab
+    cta-frontend cta-frontend.krb5.keytab
+    eos-server eos-server.krb5.keytab
+    debug

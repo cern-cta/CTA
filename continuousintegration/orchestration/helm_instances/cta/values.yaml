@@ -472,63 +472,6 @@ configs:
         redis.password_file  /etc/eos.keytab.xrootd
 
 
-# here will be stored the kdc config
-kdc:
-  # it is used for the selectors, names
-  name: kdc
-  serviceAccount:
-    name: secret-creator
-    rules:
-    - apiGroups: [""]
-      resources: ["secrets"]
-      verbs: ["get", "list", "watch", "create"]
-
-  service:
-    ports:
-    - name: kdc-tcp
-      port: 88
-      protocol: TCP
-    - name: kdc-udp
-      port: 88
-      protocol: UDP
-
-  pod:
-    isPriviliged: true
-    image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
-    command: ['/opt/run/bin/kdc.sh']
-    args: ['none']
-    commandsAtRuntime: [ "cat", "/root/kdcReady"]
-    delay: 10
-    failureTolerance: 10
-    env:
-    - name: TERM
-      value: "xterm"
-    volumeMounts:
-    - mountPath: /shared
-      name: shared
-    - mountPath: /mnt/logs
-      name: logstorage
-    - mountPath: /etc/krb5.conf
-      name: krb5-config-volume
-      subPath: krb5.conf
-    - name: keypass-names
-      mountPath: /tmp/keypass-names.txt
-      subPath: keypass-names.txt
-
-    volumes:
-    - name: shared
-      hostPath:
-        path: /opt/cta
-    - name: logstorage
-      persistentVolumeClaim:
-        claimName: claimlogs
-    - name: keypass-names
-      configMap:
-        name: keypass-names-config
-    - name: krb5-config-volume
-      configMap:
-        name: krb5-config
-
 
 eos:
   global:
