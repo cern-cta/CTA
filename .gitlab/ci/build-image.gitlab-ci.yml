@@ -32,7 +32,12 @@ docker-build-ctageneric-triggered:
   stage: build:image
   dependencies:
     - modify_versionlock
-    - .build-cta
+    - build-cta-srpm
+    - build-cta-rpm
+    - build-cta-srpm-pgsched
+    - build-cta-rpm-pgsched
+    - build-cta-srpm-no-oracle
+    - build-cta-rpm-no-oracle
   retry: 1
   rules:
     - if: '$CI_PIPELINE_SOURCE == "trigger"'
