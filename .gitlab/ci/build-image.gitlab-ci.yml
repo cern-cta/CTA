@@ -8,6 +8,9 @@ docker-build-ctageneric:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      dependencies:
+      - modify_versionlock
     - when: always
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
@@ -22,3 +25,4 @@ docker-build-ctageneric:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
+    - cat continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
