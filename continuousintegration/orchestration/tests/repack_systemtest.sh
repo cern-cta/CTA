@@ -261,17 +261,26 @@ then
   { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
 fi
 
-amountArchivedFiles=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles"`
+amountFilesAtStart=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .totalFilesOnTapeAtStart"`
 amountRecyleTapeFilesNew=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
 amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
+filesLeftToRetrieve=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve"`
+filesLeftToArchive=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive"`
 
-echo "Amount of archived files = $amountArchivedFiles"
+echo "Amount of files at start = $amountFilesAtStart"
 echo "Amount of new recycled tape files = $amountRecyleTapeFiles"
-if [[ $amountArchivedFiles -eq $amountRecyleTapeFiles ]]
+echo "Amount of files left to retrieve = $filesLeftToRetrieve"
+echo "Amount of files left to archive = $filesLeftToArchive"
+
+if [[ "$filesLeftToRetrieve" -ne "0" ]] || [[ "$filesLeftToArchive" -ne "0" ]]
 then
-  echo "The amount of archived files is equal to the amount of new recycled tape files. Test OK"
+  echo "There were remaining files left to retrieve ($filesLeftToRetrieve) or archive ($filesLeftToArchive). Test FAILED"
+fi
+if [[ $amountFilesAtStart -eq $amountRecyleTapeFiles ]]
+then
+  echo "The amount of files at start is equal to the amount of new recycled tape files. Test OK"
 else
-  echo "The amount of archived files is not equal to the amount of new recycled tape files. Test FAILED"
+  echo "The amount of files at start is not equal to the amount of new recycled tape files. Test FAILED"
   exit 1
 fi
 
