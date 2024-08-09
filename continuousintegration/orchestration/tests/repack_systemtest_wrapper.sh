@@ -431,7 +431,7 @@ repackMoveAndAddCopies() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_default --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_default tapepool"
   echo "OK"
 
-  echo "Creating 1 destination tapepools for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
+  echo "Creating 1 destination tapepool for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_repack tapepool"
   echo "OK"
 
