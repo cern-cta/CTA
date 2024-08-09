@@ -44,3 +44,18 @@ Pick docker image. It may be from:
 {{- fail "You must either provide .Values.image or .Values.global.image value."}}
 {{- end }}
 {{- end -}}
+
+
+{{/* Pick image registry. It might be from:
+    - .Values.global.imagePullSecret (Takes priority)
+    - .Values.imagePullSecret
+*/}}
+{{- define "init.imageSecret" -}}
+{{- if (.Values.global ) }}
+{{- .Values.global.imagePullSecret | quote -}}
+{{- else if (.Values.imagePullSecret) }}
+{{- .Values.imagePullSecret | quote -}}
+{{- else}}
+{{ fail "You must provide imagePullSecret value either in .Values.global.imagePullSecret or in .Values.imagePullSecret"}}
+{{- end }}
+{{- end -}}

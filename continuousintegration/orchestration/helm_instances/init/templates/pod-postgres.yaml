@@ -1,6 +1,6 @@
 {{$namespace := .Release.Namespace }}
 {{$name := .Values.postgres.name}}
-{{$secret := .Values.imagePullSecret}}
+{{$secret := include "init.imageSecret" . }}
 {{- with .Values.postgres.service}}
 apiVersion: v1
 kind: Service
