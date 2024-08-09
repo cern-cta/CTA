@@ -498,8 +498,6 @@ repackMoveAndAddCopies() {
   retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
   archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
 
-  exit 1
-
   if [[ $retrievedFiles != $totalFilesToRetrieve ]]
   then
     echo "RetrievedFiles ($retrievedFiles) != totalFilesToRetrieve ($totalFilesToRetrieve), test FAILED"
