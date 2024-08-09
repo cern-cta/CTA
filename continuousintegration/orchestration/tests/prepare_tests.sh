@@ -21,10 +21,15 @@ EOF
 exit 1
 }
 
-while getopts "n:" o; do
+setup_repack_route=false
+
+while getopts "rn:" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
+            ;;
+        r)
+            setup_repack_route=true
             ;;
         *)
             usage
@@ -203,6 +208,23 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --copynb 1                                                               \
     --tapepool ctasystest                                                    \
     --comment "ctasystest"
+
+  if [ ${setup_repack_route} = true ]; then
+    # Setup tapepool and archive route for repack
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
+      --name ctasystest_repack                                             \
+      --vo vo                                                              \
+      --partialtapesnumber 5                                               \
+      --encrypted false                                                    \
+      --comment "ctasystest_repack"
+
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+      --storageclass ctaStorageClass                                           \
+      --copynb 1                                                               \
+      --archiveroutetype REPACK                                                \
+      --tapepool ctasystest_repack                                             \
+      --comment "ctasystest_repack"
+  fi
  
   # Setup tapepools and storage classes for multiple tape copies 
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
@@ -286,6 +308,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --full false                                                         \
       --comment "ctasystest"
   done
+
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
     --name ctasystest                                                 \
     --archivepriority 1                                               \

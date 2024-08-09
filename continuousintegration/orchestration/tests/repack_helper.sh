@@ -52,6 +52,11 @@ getFirstVidContainingFiles() {
   echo $vidToRepack
 }
 
+getFirstVidWithoutFiles() {
+  vidWithoutFiles=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json ta ls --all | jq -r '[.[] | select(.occupancy == "0") | select(.tapepool == "ctasystest") | select(.lastFseq == "0") | .vid] | .[0]')
+  echo $vidWithoutFiles
+}
+
 getNumberOfFilesOnTape() {
   numberOfFiles=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json tf ls --vid $1 | jq -r '. | length')
   echo $numberOfFiles

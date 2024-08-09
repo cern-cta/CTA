@@ -45,7 +45,7 @@ if [ ! -z "${error}" ]; then
 fi
 
 echo "Preparing namespace for the tests"
-./prepare_tests.sh -n ${NAMESPACE}
+./prepare_tests.sh -r -n ${NAMESPACE}
 
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 kubectl -n ${NAMESPACE} cp client_prepare_file.sh client:/root/client_prepare_file.sh
@@ -85,6 +85,32 @@ archiveFiles() {
   kubectl -n ${NAMESPACE} exec client -- bash -c "tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && . /root/client_env && /root/client_archive.sh && kill \${TAILPID} &> /dev/null" || exit 1
 }
 
+setEmptyTapeInRepackTapepool() {
+  EMPTY_VID=$(getFirstVidWithoutFiles)
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch      \
+    --vid ${EMPTY_VID}                                          \
+    --tapepool ctasystest_repack                                \
+    --comment "ctasystest_repack"
+}
+
+checkRepackTapepoolAndRefresh() {
+  EXPECTED_NB_FILES=$1
+  NB_FILES=$(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls --all | jq -r '[.[] | select(.tapepool == "ctasystest_repack") | .nbMasterFiles | tonumber] | add')
+  if [[ "$EXPECTED_NB_FILES" -ne "$NB_FILES" ]]
+  then
+    echo "Found ${NB_FILES} files in repack tapepool. Expected ${EXPECTED_NB_FILES} files."
+    exit 1
+  fi
+  echo "Found ${NB_FILES} files in repack tapepool, as expected. Clearing repack tapepool."
+
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls --all | jq -r '.[] | select(.tapepool == "ctasystest_repack") | .vid' | xargs -I{} \
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch    \
+    --vid {}                                                    \
+    --tapepool ctasystest                                       \
+    --comment "ctasystest"
+  setEmptyTapeInRepackTapepool
+}
+
 echo
 kubectl -n ${NAMESPACE} cp . client:/root/
 
@@ -96,11 +122,11 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
 source ./repack_helper.sh
 kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
 
-roundTripRepack() {
+repackJustMoveWithBackpressure() {
   echo
-  echo "***********************************************************"
-  echo "STEP $1. Launching a round trip repack \"just move\" request"
-  echo "***********************************************************"
+  echo "*****************************************************************"
+  echo "STEP $1. Testing Repack \"Just move\" workflow with backpressure"
+  echo "*****************************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ]
@@ -121,28 +147,9 @@ roundTripRepack() {
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
-  VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
-  then
-  echo
-    echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
-    modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
-    echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack -n repack_ctasystest  || exit 1
-  else
-    echo "No vid found to repack"
-    exit 1
-  fi
-
-  removeRepackRequest ${VID_TO_REPACK}
-  echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
-  modifyTapeState ${VID_TO_REPACK} ACTIVE
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-
   echo
   echo "*******************************************************************"
-  echo "STEP $1. Launching a round trip repack \"just move\" request TEST OK"
+  echo "STEP $1. Testing Repack \"Just move\" workflow with backpressure TEST OK"
   echo "*******************************************************************"
 }
 
@@ -476,10 +483,6 @@ repackMoveAndAddCopies() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin storageclass ch --name $storageClassName --numberofcopies 3
   echo "OK"
 
-  echo "Putting all drives up"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up VD.*
-  echo "OK"
-
   VID_TO_REPACK=$(getFirstVidContainingFiles)
 
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -731,16 +734,27 @@ repackTapeRepairNoRecall() {
   echo "*******************************************************"
 }
 
+echo "Putting all drives up"
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up VD.*
+
+# Set initial tape in repack tapepool
+setEmptyTapeInRepackTapepool
+
 #Execution of each tests
 archiveFiles 1 15
-roundTripRepack 1
+repackJustMoveWithBackpressure 1
+checkRepackTapepoolAndRefresh 1
 repackNonRepackingTape 2
 archiveFiles 1000 15
 repackJustMoveWithMaxFiles 3
+checkRepackTapepoolAndRefresh 1000
 archiveFiles 1152 15
 repackJustMove 4
+checkRepackTapepoolAndRefresh 1152
 repackTapeRepair 5
+checkRepackTapepoolAndRefresh 1152
 repackJustAddCopies 6
+checkRepackTapepoolAndRefresh 1152
 repackCancellation 7
 # repackMoveAndAddCopies 7
 repackTapeRepairNoRecall 8
