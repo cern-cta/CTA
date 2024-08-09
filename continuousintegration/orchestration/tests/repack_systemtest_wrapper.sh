@@ -422,17 +422,23 @@ repackMoveAndAddCopies() {
   echo "STEP $1. Testing Repack \"Move and Add copies\" workflow"
   echo "*******************************************************"
 
-  tapepoolDestination1="ctasystest2"
-  tapepoolDestination2="ctasystest3"
+  tapepoolDestination1_default="ctasystest2_default"
+  tapepoolDestination2_default="ctasystest3_default"
+  tapepoolDestination2_repack="ctasystest3_repack"
 
-  echo "Creating two destination tapepool : $tapepoolDestination1 and $tapepoolDestination2"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination1 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination1 tapepool"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2 tapepool"
+  echo "Creating 2 destination tapepools : $tapepoolDestination1_default and $tapepoolDestination2_default"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination1_default --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination1_default tapepool"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_default --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_default tapepool"
+  echo "OK"
+
+  echo "Adding 1 destination tapepools for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_repack tapepool"
   echo "OK"
 
   echo "Creating archive routes for adding two copies of the file"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1 --comment "ArchiveRoute2"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --tapepool $tapepoolDestination2 --comment "ArchiveRoute3"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1_default --comment "ArchiveRoute2_default"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --archiveroutetype DEFAULT --tapepool $tapepoolDestination2_default --comment "ArchiveRoute3_default"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --archiveroutetype REPACK --tapepool $tapepoolDestination2_repack --comment "ArchiveRoute3_repack"
   echo "OK"
 
   echo "Will change the tapepool of the tapes"
@@ -742,5 +748,5 @@ repackJustMove 4
 repackTapeRepair 5
 repackJustAddCopies 6
 repackCancellation 7
-# repackMoveAndAddCopies 7
 repackTapeRepairNoRecall 8
+repackMoveAndAddCopies 9
