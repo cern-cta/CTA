@@ -173,12 +173,21 @@ cta:
         - mountPath: /tmp/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
-        - mountPath: /root/user1.keytab
-          name: keytab
-          subPath: user1.keytab
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
+        - mountPath: /root/user1.keytab
+          name: user1-keytab
+          subPath: user1.keytab
+        - mountPath: /root/eosadmin1.keytab
+          name: eosadmin1-keytab
+          subPath: eosadmin1.keytab
+        - mountPath: /root/poweruser1.keytab
+          name: poweruser1-keytab
+          subPath: poweruser1.keytab
+        - mountPath: /root/ctaadmin2.keytab
+          name: ctaadmin2-keytab
+          subPath: ctaadmin2.keytab
         # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -191,15 +200,24 @@ cta:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-      - name: keytab
-        secret:
-          secretName: user1-keytab
       - name: sss-keytab
         secret:
           secretName: eos-sss-keytab
       - name: krb5-config-volume
         configMap:
           name: krb5-config
+      - name: user1-keytab
+        secret:
+          secretName: user1-keytab
+      - name: eosadmin1-keytab
+        secret:
+          secretName: eosadmin1-keytab
+      - name: poweruser1-keytab
+        secret:
+          secretName: poweruser1-keytab
+      - name: ctaadmin2-keytab
+        secret:
+          secretName: ctaadmin2-keytab
       # - name: ca-certs
       #   secret:
       #     secretName: ca-certs
@@ -295,7 +313,7 @@ cta:
         - name: MY_CONTAINER
           value: "rmcd"
         - name: driveslot
-          value: "0"
+          value: "1"
         - name: TERM
           value: "xterm"
         volumeMounts:
