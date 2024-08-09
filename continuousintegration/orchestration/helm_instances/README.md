@@ -9,36 +9,30 @@ You need to apply following commands:
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
-./get_helm.sh
+mkdir ~/bin
+USE_SUDO=false HELM_INSTALL_DIR=${HOME}/bin ./get_helm.sh
 ```
 
-Be sure that you run it as an account with enough privilliges (In case of working on CTA VM you should do it on a root account)
-
-## Installing CTA
-
-It's simple. You need only to invoke following commands
-
-```
-helm dependency update # It downloads required dependencies
-helm install <name-of-the-releases> -n <your_namespace> -f <your_values.yaml> <chart_directory>
-```
+CTA Runner is using two helmcharts: `cta` which contains all of the project pods, including `EOS` pod and `init` chart, which sets up PVCs, keypass'es and postgresql database.
 
 
-## Requirements
+## CTA values.yaml
 
-Thos are downloaded via `helm dependency update` command.
+<!-- ## Requirements
+
+Those are downloaded via `helm dependency update` command.
 
 | Repository | Name | Version |
 |------------|------|---------|
-| oci://registry.cern.ch/eos/charts | eos(server) | 0.2.0 |
+| oci://registry.cern.ch/eos/charts | eos(server) | 0.2.0 | -->
 
 
-## Values
+### Values
 
 Here are stored documented values.yaml contents.
 
 
-### Configmaps
+#### Configmaps
 
 To define configmaps to use within the chart you must provide their definition next to `configs` key.
 
@@ -47,7 +41,6 @@ To define configmaps to use within the chart you must provide their definition n
 | configs[0].name | string| - | Name for the configmap that will be used |
 | configs[0].labels | object list | - | Key value pairs indicating the type of the label and name of the label |
 | configs[0].data | object list | - |  Data that configmap stores as a list of key - value pairs
-| configs[0].filename | string | - | Name of the file from which should be configmap created. It is created as a file as well. Files from which configmaps will be created must be stored under `configmaps` directory |
 
 
 Examples:
@@ -64,24 +57,40 @@ configs:
       objectstore.type: file
 ```
 
-- file content
-```
-configs:
-- name: keypass-names-config
-    file: keypass-names.txt
-    labels:
-      config: keypass-names
-```
+## Init values.yaml
+
+### Global values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+|image | string | | sets image version that is being used by the kdc and init pods in the chart.
+|imagePullSecrets| string | | Name that contains password to the image registry.
+
+### Init pod
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+|volumes| object | null | Declares volumes which the kdc pod will be using.
+|volumeMounts| object | null | Mounts volumes declared for the pod
+|customEntrypoint.command| list | | Command to be invoked on the image.
+|customEntrypoint.args| list | | Arguments that are to be passed with the command
+|env | list |  | List of environment variables to the pod|
+|image| string  |  | Docker image from which init will be built. It has priority over `.Values.global.image` |
+|nameOverride| string| | Name to overwrite pod deployment name.
+|isPriviliged| bool| | Launches image with privilliges
+
 ### PVC config
 
 To create storage volume claim, you need to add following keys under `pvcs` key
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| pvcs.<name_of_your_claim>.accessModes | string | |   |
+| pvcs.<name_of_your_claim>.accessModes | string | |  Access mode that you would like storage volume to have. Possible values: `ReadWriteOnce` `ReadWriteMany` `ReadOnlyMany` `ReadWriteOncePod`. More details [here](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes)  |
 | pvcs.<name_of_your_claim>.annotations | string |  |  |
 | pvcs.<name_of_your_claim>.selectors | list |  | List of selectors on which claim will pick storage |
-| pvcs.<name_of_your_claim>.storage | string |  | Space that the claim will reserve.  |
+| pvcs.<name_of_your_claim>.storage | string |  | Space that the claim will reserve. |
+
+
 
 ### KDC config
 
@@ -102,7 +111,7 @@ To be able to do that, it needs to have service account that has rights to creat
 |kdc.pod.image| string  |  | Docker image from which kdc will be built |
 
 
-### EOS config
+<!-- ### EOS config
 
 For the more accurate docs fo each of the subchart that EOS uses please refer to its [repo](https://gitlab.cern.ch/eos/eos-charts/-/tree/master?ref_type=heads). Here are provided only required values to allow for CTA to work with EOS.
 
@@ -110,4 +119,4 @@ For the more accurate docs fo each of the subchart that EOS uses please refer to
 |-----|------|---------|-------------|
 | eos.global.repository | string | `"gitlab-registry.cern.ch/dss/eos/eos-all"` |  |
 | eos.global.tag | string | `"5.0.31"` |  |
-| eos.global.sssKeytab.secret | string | `"eos-sss-keytab"` | Name of the secret containing eos-sss-keytab to use.|
+| eos.global.sssKeytab.secret | string | `"eos-sss-keytab"` | Name of the secret containing eos-sss-keytab to use.| -->
