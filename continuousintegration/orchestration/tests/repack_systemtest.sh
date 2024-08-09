@@ -266,7 +266,7 @@ amountRecyleTapeFilesNew=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} |
 amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
 filesLeftToRetrieve=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve"`
 filesLeftToArchive=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive"`
-nbDestinationVids=`admin_cta --json repack ls --vid V00107 | jq -r ". [0] | .destinationInfos | length"`
+nbDestinationVids=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos | length"`
 
 echo "Amount of archived files = $amountArchivedFiles (${nbDestinationVids}x$((amountArchivedFiles/nbDestinationVids))"
 echo "Amount of new recycled tape files = $amountRecyleTapeFiles"
