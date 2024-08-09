@@ -107,7 +107,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     cta-admin tape rm -v {}
 
   kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json archiveroute ls |           \
-    jq '.[] |  " -s " + .storageClass + " -c " + (.copyNumber|tostring)' | \
+    jq '.[] |  " -s " + .storageClass + " -c " + (.copyNumber|tostring) + " --art " + .archiveRouteType' | \
     xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute rm {}"
 
   kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
