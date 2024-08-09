@@ -1,8 +1,6 @@
 # Job to modify the file for external triggers
 modify_versionlock:
   stage: prepare
-  needs:
-    - check_eos_packages
   script:
     - |
       echo "Extracting the currently versioned locked EOS version from the file..."
