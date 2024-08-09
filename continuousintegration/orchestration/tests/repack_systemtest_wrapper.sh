@@ -422,9 +422,10 @@ repackMoveAndAddCopies() {
   echo "STEP $1. Testing Repack \"Move and Add copies\" workflow"
   echo "*******************************************************"
 
-  tapepoolDestination1_default="ctasystest2_default"
-  tapepoolDestination2_default="ctasystest3_default"
-  tapepoolDestination2_repack="ctasystest3_repack"
+  defaultTapepool="ctasystest"
+  tapepoolDestination1_default="systest2_default"
+  tapepoolDestination2_default="systest3_default"
+  tapepoolDestination2_repack="systest3_repack"
 
   echo "Creating 2 destination tapepools : $tapepoolDestination1_default and $tapepoolDestination2_default"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination1_default --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination1_default tapepool"
@@ -513,6 +514,29 @@ repackMoveAndAddCopies() {
     exit 1
   else
      echo "ArchivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
+  fi
+
+  # Check that 2 copies were written to default tapepool (archive route 1 and 2) and 1 copy to repack tapepool (archive route 3)
+  TAPEPOOL_LIST=$(kubectl -n dev  exec ctacli -- cta-admin --json repack ls --vid V00101 | jq ".[] | .destinationInfos[] | .vid" | xargs -I{} kubectl -n dev  exec ctacli -- cta-admin --json tape ls --vid {} | jq -r '.[] .tapepool')
+
+  ctasystest
+  if [[ $TAPEPOOL_LIST != *"$defaultTapepool"* ]]; then
+    echo "Did not find $defaultTapepool in repack archive destination pools. Archive route failed."
+    exit 1
+  else
+    echo "Found $defaultTapepool in repack archive destination pools."
+  fi
+  if [[ $TAPEPOOL_LIST != *"$tapepoolDestination1_default"* ]]; then
+    echo "Did not find $tapepoolDestination1_default in repack archive destination pools. Archive route failed."
+    exit 1
+  else
+    echo "Found $tapepoolDestination1_default in repack archive destination pools."
+  fi
+  if [[ $TAPEPOOL_LIST != *"$tapepoolDestination2_repack"* ]]; then
+    echo "Did not find $tapepoolDestination2_repack in repack archive destination pools. Archive route failed."
+    exit 1
+  else
+    echo "Found $tapepoolDestination2_repack in repack archive destination pools."
   fi
 
   removeRepackRequest ${VID_TO_REPACK}
