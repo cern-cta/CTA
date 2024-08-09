@@ -23,6 +23,7 @@
 - cta/CTA#791 - Remove redundant Protobuf3 dependencies
 - cta/CTA#788 - Make SQL multiline strings use raw string literals
 - cta/CTA#811 - Removed all CC7 related files and code
+- cta/CTA#817 - Remove oracle tnsnames repo files 
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
