@@ -25,7 +25,9 @@ echo -n "Initing kdc... "
 /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited TEST.CTA || (echo Failed. ; exit 1)
 echo Done.
 
-KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
+keypasses_file="/tmp/keypass-names.txt"
+KEYTABS=$(cut -d ' ' -f 1 $keypasses_file)
+# KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
 
 # Start kdc
 echo -n "Starting kdc... "
@@ -47,9 +49,7 @@ KUBERNETES_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 KUBERNETES_CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 KUBERNETES_API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
-keypasses_file="/tmp/keypass-names.txt"
-
-while IFS=' ' read -r secret filename 
+while IFS=' ' read -r secret filename
 do
 content=$(base64 /root/$secret.keytab)
 
