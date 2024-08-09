@@ -184,10 +184,18 @@ if [ "${imagetag}" == "" ]; then
   echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
   exit 1
 fi
+
+echo 'copying files to tmpdir'
+cp -R ./helm_instances/init ${poddir}
+cp -R ./helm_instances/cta ${poddir}
+cp ./pod-oracleunittests.yaml ${poddir}
+
 echo "Creating instance using docker image with tag: ${imagetag}"
 
-sed -i cta/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-sed -i init/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+sed -i $poddir/cta/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+sed -i $poddir/init/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+
 
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
@@ -245,10 +253,7 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 
 echo "Got library: ${LIBRARY_DEVICE}"
 
-echo 'copying files to tmpdir'
-cp -R ./helm_instances/init ${poddir}
-cp -R ./helm_instances/cta ${poddir}
-cp ./pod-oracleunittests.yaml ${poddir}
+
 
 echo  "Setting up init and db pods."
 helm install init ${poddir}/init -n ${instance}
