@@ -431,7 +431,7 @@ repackMoveAndAddCopies() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_default --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_default tapepool"
   echo "OK"
 
-  echo "Adding 1 destination tapepools for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
+  echo "Creating 1 destination tapepools for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2_repack tapepool"
   echo "OK"
 
@@ -444,21 +444,19 @@ repackMoveAndAddCopies() {
   echo "Will change the tapepool of the tapes"
 
   allVID=`kubectl -n ${NAMESPACE}  exec ctacli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
-  read -a allVIDTable <<< $allVID
+  allVIDTable=($allVID)
 
   nbVid=${#allVIDTable[@]}
 
   allTapepool=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
-
-  read -a allTapepoolTable <<< $allTapepool
+  allTapepoolTable=($allTapepool)
 
   nbTapepool=${#allTapepoolTable[@]}
 
   nbTapePerTapepool=$(($nbVid / $nbTapepool))
 
   allTapepool=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
-  read -a allTapepoolTable <<< $allTapepool
-
+  allTapepoolTable=($allTapepool)
 
   countChanging=0
   tapepoolIndice=1 #We only change the vid of the remaining other tapes
