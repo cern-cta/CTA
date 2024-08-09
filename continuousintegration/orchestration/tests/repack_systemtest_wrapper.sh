@@ -517,7 +517,6 @@ repackMoveAndAddCopies() {
   # Check that 2 copies were written to default tapepool (archive route 1 and 2) and 1 copy to repack tapepool (archive route 3)
   TAPEPOOL_LIST=$(kubectl -n dev  exec ctacli -- cta-admin --json repack ls --vid V00101 | jq ".[] | .destinationInfos[] | .vid" | xargs -I{} kubectl -n dev  exec ctacli -- cta-admin --json tape ls --vid {} | jq -r '.[] .tapepool')
 
-  ctasystest
   if [[ $TAPEPOOL_LIST != *"$defaultTapepool"* ]]; then
     echo "Did not find $defaultTapepool in repack archive destination pools. Archive route failed."
     exit 1
