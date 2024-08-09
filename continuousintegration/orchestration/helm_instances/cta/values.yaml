@@ -424,18 +424,6 @@ cta:
 
 # Here are stored ALL configMaps needed for the project to be build
 configs:
-  - name: krb5-config
-    file: krb5.conf
-    labels:
-      config: keypass-config
-  - name: keypass-names-config
-    file: keypass-names.txt
-    labels:
-      config: keypass-names
-  - name: eos-grpc-keytab
-    file: eos.grpc.keytab
-    labels:
-      config: eoscta
   - name: eos-config
     labels:
       config: eos
