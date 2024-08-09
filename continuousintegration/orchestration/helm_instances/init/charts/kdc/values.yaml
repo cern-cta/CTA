@@ -1,5 +1,3 @@
-image: gitlab-registry.cern.ch/cta/ctageneric:7718545gitece7aeb4
-imagePullSecret: "ctaregsecret"
 
 nameOverride: kdc
 isPriviliged: true

@@ -35,4 +35,4 @@ spec:
   {{include "init.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ .Values.imagePullSecret }}
+  - name: {{ include "init.imageSecret" . }}
