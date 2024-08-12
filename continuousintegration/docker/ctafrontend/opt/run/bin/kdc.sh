@@ -26,8 +26,8 @@ echo -n "Initing kdc... "
 echo Done.
 
 keypasses_file="/tmp/keypass-names.txt"
-KEYTABS=$(cut -d ' ' -f 1 $keypasses_file)
-# KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
+# KEYTABS=$(cut -d ' ' -f 1 $keypasses_file)
+KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
 
 # Start kdc
 echo -n "Starting kdc... "
