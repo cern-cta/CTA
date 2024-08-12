@@ -179,15 +179,15 @@ cta:
         - mountPath: /root/user1.keytab
           name: user1-keytab
           subPath: user1.keytab
-        # - mountPath: /root/eosadmin1.keytab
-        #   name: eosadmin1-keytab
-        #   subPath: eosadmin1.keytab
-        # # - mountPath: /root/poweruser1.keytab
-        #   name: poweruser1-keytab
-        #   subPath: poweruser1.keytab
-        # - mountPath: /root/ctaadmin2.keytab
-        #   name: ctaadmin2-keytab
-        #   subPath: ctaadmin2.keytab
+        - mountPath: /root/eosadmin1.keytab
+          name: eosadmin1-keytab
+          subPath: eosadmin1.keytab
+        - mountPath: /root/poweruser1.keytab
+          name: poweruser1-keytab
+          subPath: poweruser1.keytab
+        - mountPath: /root/ctaadmin2.keytab
+          name: ctaadmin2-keytab
+          subPath: ctaadmin2.keytab
         # # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -209,15 +209,15 @@ cta:
       - name: user1-keytab
         secret:
           secretName: user1-keytab
-      # - name: eosadmin1-keytab
-      #   secret:
-      #     secretName: eosadmin1-keytab
-      # - name: poweruser1-keytab
-      #   secret:
-      #     secretName: poweruser1-keytab
-      # - name: ctaadmin2-keytab
-      #   secret:
-      #     secretName: ctaadmin2-keytab
+      - name: eosadmin1-keytab
+        secret:
+          secretName: eosadmin1-keytab
+      - name: poweruser1-keytab
+        secret:
+          secretName: poweruser1-keytab
+      - name: ctaadmin2-keytab
+        secret:
+          secretName: ctaadmin2-keytab
       # - name: ca-certs
       #   secret:
       #     secretName: ca-certs
