@@ -11,7 +11,7 @@ data:
     ctaadmin1 ctaadmin1.keytab
     poweruser1 poweruser1.keytab
     eosadmin1 eosadmin1.keytab
-    cta-frontend cta-frontend.krb5.keytab
-    eos-server eos-server.krb5.keytab
+    cta/cta-frontend cta-frontend.krb5.keytab
+    eos/eos-server eos-server.krb5.keytab
     ctaadmin2 ctaadmin2.keytab
     \n
