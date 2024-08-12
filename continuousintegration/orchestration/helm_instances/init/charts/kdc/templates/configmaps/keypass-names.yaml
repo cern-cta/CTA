@@ -8,13 +8,7 @@ metadata:
 data:
   keypass-names.txt: |-
     user1 user1.keytab
-    user2 user2.keytab
-    poweruser1 poweruser1.keytab
-    poweruser2 poweruser2.keytab
     ctaadmin1 ctaadmin1.keytab
-    ctaadmin2 ctaadmin2.keytab
-    eosadmin1 eosadmin1.keytab
-    eosadmin2 eosadmin2.keytab
     cta-frontend cta-frontend.krb5.keytab
     eos-server eos-server.krb5.keytab
     \n
