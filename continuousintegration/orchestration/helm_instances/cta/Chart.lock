@@ -1,6 +1,0 @@
-dependencies:
-- name: server
-  repository: oci://registry.cern.ch/eos/charts
-  version: 0.2.0
-digest: sha256:80748b59dc12db12d136fc1a9947eca3f071959c0379945535dace6e851e2979
-generated: "2024-07-16T14:15:36.03875679+02:00"
