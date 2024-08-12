@@ -392,8 +392,12 @@ cta:
           value: 'cta-frontend:10955'
         - name: TERM
           value: "xterm"
-        command: ['/opt/run/bin/ctaeos-mgm-log-wrapper.sh']
-        args: ["none"]
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat eos-tmp.sss.keytab > /etc/eos.keytab;
+          chmod 400 /etc/eos.keytab;
+          /opt/run/bin/ctaeos-mgm-log-wrapper.sh
         volumeMounts:
         - mountPath: /shared
           name: shared
@@ -411,6 +415,9 @@ cta:
         - mountPath: /etc/eos-server.krb5.keytab
           name: keytab
           subPath: eos-server.krb5.keytab
+        - mountPath: /tmp/eos-tmp.sss.keytab
+          name: sss-keytab
+          subPath: eos-tmp.sss.keytab
         # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -435,6 +442,8 @@ cta:
       - name: keytab
         secret:
           secretName: eos-server-keytab
+      - name: sss-keytab
+          secretName: eos-sss-keytab
       # - name: ca-certs
       #   secret:
       #     secretName: ca-certs

@@ -97,8 +97,8 @@ test -f /etc/config/eos/xrd.cf.fst && cat /etc/config/eos/xrd.cf.fst >> /etc/xrd
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
-echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab
-    chmod 400 /etc/eos.keytab
+# echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab
+#     chmod 400 /etc/eos.keytab
     chown daemon:daemon /etc/eos.keytab
   mkdir -p /run/lock/subsys
   mkdir -p /var/eos/config/${eoshost}
