@@ -39,6 +39,7 @@
 - cta/CTA#798 - Improved naming and structure of various ci jobs
 - cta/CTA#800 - Refactored the `deploy-eos.sh` script
 - cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
+- cta/CTA#822 - Patch `cpp-check` errors for version 2.15dev
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
