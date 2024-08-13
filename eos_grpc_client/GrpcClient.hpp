@@ -62,7 +62,7 @@ public:
     m_token = token;
   }
 
-  std::string token() const {
+  const std::string& token() const {
     return m_token;
   }
 

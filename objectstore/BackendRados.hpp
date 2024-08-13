@@ -48,10 +48,10 @@ public:
    */
   BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
   ~BackendRados() override;
-  std::string user() {
+  const std::string& user() {
     return m_user;
   }
-  std::string pool() {
+  const std::string& pool() {
     return m_pool;
   }
 

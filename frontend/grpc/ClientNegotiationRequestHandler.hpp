@@ -38,7 +38,7 @@ public:
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override; // can thorw
   
-  inline const std::string token() {
+  inline const std::string& token() {
     return m_strToken;
   }
 

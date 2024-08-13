@@ -61,11 +61,11 @@ public:
   /**
     * Returns the RAO algorithm name of this RAO data instance
     */
-  std::string getRAOAlgorithmName() const { return m_raoAlgorithmName; }
+  const std::string& getRAOAlgorithmName() const { return m_raoAlgorithmName; }
   /**
     * Returns the RAO algorithm options of this RAO data instance
     */
-  RAOOptions getRAOAlgorithmOptions() const { return m_raoAlgorithmOptions; }
+  const RAOOptions& getRAOAlgorithmOptions() const { return m_raoAlgorithmOptions; }
   /**
     * Disable RAO of this configuration
     */
