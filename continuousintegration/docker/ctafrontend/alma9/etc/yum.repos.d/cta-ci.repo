@@ -5,10 +5,3 @@ baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/
 priority=4
 gpgcheck=0
 enabled=1
-
-[dmc]
-name=DMC
-baseurl=https://dmc-repo.web.cern.ch/dmc-repo/el9/x86_64/
-priority=5
-gpgcheck=0
-enabled=1
