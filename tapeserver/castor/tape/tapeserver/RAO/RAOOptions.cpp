@@ -98,7 +98,7 @@ RAOOptions::FilePositionEstimatorType RAOOptions::getFilePositionEstimatorType()
   return RAOOptions::FilePositionEstimatorType::interpolation;
 }
 
-std::string RAOOptions::getOptionsString() {
+const std::string& RAOOptions::getOptionsString() {
   return m_options;
 }
 
