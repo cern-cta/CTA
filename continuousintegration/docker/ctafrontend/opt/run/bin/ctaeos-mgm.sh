@@ -408,18 +408,6 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
   eos vid set map -grpc key:${MIGRATION_TOKEN} vuid:${MIGRATION_UID} vgid:${MIGRATION_UID}
 fi
 
-# configuration for migration tools
-cat <<EOF >/etc/cta/castor-migration.conf
-castor.db_login               oracle:castor/<password>@castor
-castor.json                   true
-castor.max_num_connections    1
-castor.batch_size             100
-castor.prefix                 /castor/cern.ch
-eos.dry_run                   false
-eos.prefix                    /eos/grpctest
-eos.endpoint                  localhost:50051
-eos.token                     ${EOS_AUTH_KEY}
-EOF
 echo Migration tools configuration:
 cat /etc/cta/castor-migration.conf
 

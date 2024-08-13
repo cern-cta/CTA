@@ -418,6 +418,9 @@ cta:
         - mountPath: /tmp/eos.keytab
           name: sss-keytab
           subPath: eos.keytab
+        - mountPath: /etc/cta/castor-migration.conf
+          name: migration-conf
+          subPath: castor-migration.conf
         # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -445,6 +448,9 @@ cta:
       - name: sss-keytab
         secret:
           secretName: eos-sss-keytab
+      - name: migration-conf
+        configMap:
+          name: castor-migration-conf
       # - name: ca-certs
       #   secret:
       #     secretName: ca-certs
