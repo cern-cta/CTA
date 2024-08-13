@@ -39,9 +39,7 @@ public:
     m_token = token;
   }
 
-  const std::string& token() const {
-    return m_token;
-  }
+  const std::string& token() const { return m_token; }
 
   void *nextTag() {
     return reinterpret_cast<void*>(++m_tag);

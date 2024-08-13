@@ -196,7 +196,8 @@ class BackendVFS: public Backend {
      * @return the path to the VFS storage.
      */
     const std::string& getPath() { return m_path; }
-   private:
+
+  private:
     std::string m_path;
   };
 

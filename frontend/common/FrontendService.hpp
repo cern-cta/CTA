@@ -43,7 +43,7 @@ public:
   /*!
    * Get the Catalogue connection string
    */
-  const std::string& getCatalogueConnString() const {return m_catalogue_conn_string; }
+  const std::string& getCatalogueConnString() const { return m_catalogue_conn_string; }
 
   /*!
    * Get a reference to the Catalogue
