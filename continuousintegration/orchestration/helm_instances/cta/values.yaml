@@ -395,7 +395,7 @@ cta:
         command: ["/bin/sh", "-c"]
         args:
         - |
-          cat eos-tmp.sss.keytab > /etc/eos.keytab;
+          cat /tmp/eos.keytab > /etc/eos.keytab;
           chmod 400 /etc/eos.keytab;
           /opt/run/bin/ctaeos-mgm-log-wrapper.sh
         volumeMounts:
@@ -415,9 +415,9 @@ cta:
         - mountPath: /etc/eos-server.krb5.keytab
           name: keytab
           subPath: eos-server.krb5.keytab
-        - mountPath: /tmp/eos-tmp.sss.keytab
+        - mountPath: /tmp/eos.keytab
           name: sss-keytab
-          subPath: eos-tmp.sss.keytab
+          subPath: eos.keytab
         # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -443,6 +443,7 @@ cta:
         secret:
           secretName: eos-server-keytab
       - name: sss-keytab
+        secret:
           secretName: eos-sss-keytab
       # - name: ca-certs
       #   secret:
