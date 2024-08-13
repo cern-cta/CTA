@@ -16,6 +16,7 @@ cppcheck-run:
                --force
                --enable=warning,performance
                --inline-suppr
+               --check-level=exhaustive
                --suppressions-list=.cppcheck-suppressions.txt 
                . 2> cppcheck_out.xml
   artifacts:
