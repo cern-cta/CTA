@@ -102,5 +102,4 @@ const std::string& RAOOptions::getOptionsString() {
   return m_options;
 }
 
-
 } // namespace castor::tape::tapeserver::rao

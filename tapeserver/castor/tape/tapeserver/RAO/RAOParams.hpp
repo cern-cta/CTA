@@ -65,7 +65,7 @@ public:
   /**
     * Returns the RAO algorithm options of this RAO data instance
     */
-  const RAOOptions& getRAOAlgorithmOptions() const { return m_raoAlgorithmOptions; }
+  RAOOptions& getRAOAlgorithmOptions() { return m_raoAlgorithmOptions; }
   /**
     * Disable RAO of this configuration
     */
