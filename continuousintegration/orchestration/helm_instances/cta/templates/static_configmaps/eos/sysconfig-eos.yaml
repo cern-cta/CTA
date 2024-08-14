@@ -6,7 +6,7 @@ metadata:
   name: eos-sysconfig
   namespace: {{.Release.Namespace}}
 data:
-  eos:
+  eos: |
     # Should we run with another limit on the core file size other than the default?
     export DAEMON_COREFILE_LIMIT=unlimited
 
