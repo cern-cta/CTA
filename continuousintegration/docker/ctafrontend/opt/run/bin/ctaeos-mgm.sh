@@ -72,8 +72,6 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 # setup eos host and instance name
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/sysconfig/eos
   sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/sysconfig/eos
-  sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.mq
-  sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.fst
 
 # prepare eos startup
   # skip systemd for eos initscripts

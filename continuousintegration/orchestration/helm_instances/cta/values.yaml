@@ -440,6 +440,9 @@ cta:
         - mountPath: /etc/xrootd-quarkdb.cfg
           name: eos-config-quarkdb
           subPath: xrootd-quarkdb.cfg
+        - mountPath: /etc/sysconfig/eos
+          name: eos-sysconfig
+          subPath: eos
         # - mountPath: /etc/grid-security/certificates/
         #   name: ca-certs
       volumes:
@@ -479,6 +482,9 @@ cta:
       - name: eos-config-quarkdb
         configMap:
           name: eos-config-quarkdb
+      - name: eos-sysconfig
+        configMap:
+          name: eos-sysconfig
       # - name: ca-certs
       #   secret:
       #     secretName: ca-certs
