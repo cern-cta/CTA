@@ -379,14 +379,18 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  *       specific format and will be included verbatim into the CTA documentation and man pages.
  *       When adding or modifying a command option, take care to include the modifications into
  *       the documentation at the same time.
+ *
+ *       After modifying this source file, run the script compile_man_md.py to generate the man
+ *       page. The new man page should be added to the git commit.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   /**md
 activitymountrule (amr)
 
 :   Add, change, remove or list the activity mount rules. This is provided as an alternative to
-    requester mount rules and group mount rules, where the scheduling priority is based on metadata
-    sent by the client rather than the authenticated identity of the requestor.
+    requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
+    to be set based on metadata sent by the client rather than the authenticated identity of the
+    requestor.
   */
   {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}}            },
 
@@ -394,114 +398,114 @@ activitymountrule (amr)
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
-    users must exist in the administrator list and must authenticate themselves with a valid Kerberos
-    KRB5 credential.
+    users must be included in the administrator list in addition to being authenticated.
   */
   {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}                         },
 
  /**md
 archiveroute (ar)
 
-:   Add, change, remove or list the archive routes, which are the policies linking namespace entries
-    to tape pools.
+:   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
+    entries to tape pools.
   */
   {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}                  },
 
  /**md
 diskinstance (di)
 
-:   Add, change, remove or list the disk instances. A CTA installation has one or more disk instances.
-    A disk instance is a separate namespace. Multiple disk instances should be configured if it is
+:   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+    installation has one or more disk instances. Multiple disk instances can be configured if it is
     desired to have a separate namespace for each Virtual Organization (VO).
+
+    **\-\-name** specifies the disk instance name, which is the unique identifier of the disk
+    instance and cannot be changed.
   */
-  {AdminCmd::CMD_DISKINSTANCE,
-   {"diskinstance",
-    "di",
-    {"add", "ch", "rm", "ls"},
-    "\n  A disk instance is a separate namespace. A CTA installation has at least one disk instance and can\n"
-    "  have multiple disk instances.\n\n"
-    "  Add a disk instance with the \"add\" subcommand:\n"
-    "   * Specify the name (--name) of the disk instance. This is the unique identifier of the disk\n"
-    "     instance and cannot be changed.\n\n"}                                                          },
+  {AdminCmd::CMD_DISKINSTANCE,        {"diskinstance", "di", {"add", "ch", "rm", "ls"}}                  },
 
  /**md
 diskinstancespace (dis)
 
 :   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
-    disk instance spaces. A disk instance space is a partition of the disk. For example, it can be
-    desirable to have separate spaces for archival and retrieval operations on each instance.
+    disk instance spaces. A disk instance space is a partition of the disk.
+
+    A typical use case for disk instance spaces is to configure separate spaces for archival and
+    retrieval operations on each instance.
+
+    **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
+    and disk instance space name form a pair which is the unique identifier for the disk instance space.
+
+    **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
+    space. It should be specified in the following format:
+
+        eos:<name_of_eos_instance>:<name_of_eos_space>
+
+    Example:
+
+        eos:ctaeos:spinners
+
+    **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
+    will be used before performing a new query.
   */
-  {AdminCmd::CMD_DISKINSTANCESPACE,
-   {"diskinstancespace",
-    "dis",
-    {"add", "ch", "rm", "ls"},
-    "\n  A disk instance space is a partition of an disk instance.\n\n"
-    "  Add a disk instance space with the \"add\" subcommand:\n"
-    "   * Specify the name (--name) of the disk instance space and the respective disk instance\n"
-    "     (--diskinstance). This pair is the unique identifier of the disk instance space and cannot be\n"
-    "     changed.\n"
-    "   * Specify the URL to query the free disk space on this disk instance space (--freespacequeryurl).\n"
-    "     It should have the following format:\n\n"
-    "       eos:name_of_eos_instance:name_of_eos_space.\n\n"
-    "     Example: eos:ctaeos:spinners\n"
-    "   * The refresh interval (--refreshinterval) specifies how long (in seconds) the cached value of the\n"
-    "     free space query will be used before performing a new query.\n\n"}                             },
+  {AdminCmd::CMD_DISKINSTANCESPACE,   {"diskinstancespace", "dis", {"add", "ch", "rm", "ls"}}            },
 
  /**md
 disksystem (ds)
 
 :   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
     for CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree
-    on a disk instance space (specified using a regular expression). Backpressure can be configured
-    separately for each disk system (how much free space should be available before processing a batch
-    of retrieve requests; how long to sleep when the disk is full).
+    on a disk instance space.
+
+    **\-\-disksystem** specifies the unique identifier of the disk system.
+
+    **\-\-diskinstance** and **\-\-diskinstancespace** form a pair which specifies the disk instance
+    and partition where this disk system is physically located.
+
+    **\-\-fileregexp** specifies the regular expression to match filenames (from *destinationURL*) to disk systems.
+
+    Example:
+
+        destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners
+
+    will match the regular expression:
+
+        ^root://eos_instance//eos/cta(.*)eos.space=spinners
+
+    Two options are provided to configure backpressure for retrieve operations. Backpressure can be
+    configured separately for each disk system. Before a retrieve mount, the destination URL of each
+    file is pattern-matched to identify the disk system. The corresponding disk instance space is
+    queried to determine if there is sufficient free space to perform the mount. If there is
+    insufficient space, the tape server sleeps for the specified interval.
+
+    **\-\-targetedfreespace** specifies how much free space should be available before processing a
+    batch of retrieve requests. It should be calculated based on the free space update latency (based
+    on *diskinstancespace* parameters) and the expected bandwidth for transfers to the external Storage
+    Element.
+
+    **\-\-sleeptime** specifies how long (in seconds) to sleep when the disk system has insufficient
+    space, before retrying the retrieve mount.
   */
-  {AdminCmd::CMD_DISKSYSTEM,
-   {"disksystem",
-    "ds",
-    {"add", "ch", "rm", "ls"},
-    "\n  The disk system defines the disk buffer to be used for CTA archive and retrieval operations for\n"
-    "  each VO. It corresponds to a specific directory tree on a disk instance space (specified with a\n"
-    "  regular expression). Backpressure can be configured separately for each disk system (how much free\n"
-    "  space should be available before processing a batch of retrieve requests; how long to sleep when\n"
-    "  the disk is full).\n\n"
-    "  Before a Retrieve mount, the destination URL of each file is pattern-matched to identify the disk\n"
-    "  system. The corresponding disk instance space is queried to determine if there is sufficient\n"
-    "  space to perform the mount. If there is insufficient space, the tape server sleeps for the\n"
-    "  specified interval.\n\n"
-    "  Add a disk system with the \"add\" subcommand:\n"
-    "   * Specify the unique identifier (--disksystem) of the disk system.\n"
-    "   * Specify the disk instance (--diskinstance) and partition (--diskinstancespace) where this disk\n"
-    "     system is physically located.\n"
-    "   * Specify the regular expression (--fileregexp) to match filenames (from destinationURL) to disk\n"
-    "     systems.\n"
-    "     Example: destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners\n"
-    "              will match the regular expression ^root://eos_instance//eos/cta(.*)eos.space=spinners\n"
-    "   * The targeted free space (--targetedfreespace) should be calculated based on the free space\n"
-    "     update latency (based on diskinstancespace parameters) and the expected bandwidth for transfers\n"
-    "     to the external Storage Element.\n"
-    "   * The sleep time (--sleeptime) in seconds tells the tape server how long to sleep before retrying\n"
-    "     a retrieve mount when the disk system has insufficient space.\n\n"}                            },
+  {AdminCmd::CMD_DISKSYSTEM,          {"disksystem", "ds", {"add", "ch", "rm", "ls"}}                    },
 
  /**md
 drive (dr)
 
 :   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
 
-    **cta-admin drive ls** displays an exclamation mark (**!**) in front of the drive name, for drives
-    in DISABLED logical libraries.
+    This is a synchronous command to set and read back the state of one or more tape drives. The
+    *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
+    the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
+    *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
+    guarantee that the same drive will be used every time.
+
+    **down** Drives will complete any running mount before changing state. (Override with
+    **\-\-force**).
+
+    **ls** displays an exclamation mark (**!**) in front of the drive name for drives in DISABLED
+    libraries.
+
+    **rm** drives must be in the down state before deleting. (Override with **\-\-force**).
   */
-  {AdminCmd::CMD_DRIVE,
-   {"drive",
-    "dr",
-    {"up", "down", "ls", "ch", "rm"},
-    "\n  This is a synchronous command that sets and reads back the state of one or\n"
-    "  more drives. The <drive_name> option accepts a regular expression. If the\n"
-    "  --force option is not set, the drives will complete any running mount and\n"
-    "  drives must be in the down state before deleting. If the <drive_name> option\n"
-    "  is set to first, the up, down, ls and ch commands will use the drive from the\n"
-    "  first configuration file listed in /etc/cta. This does not guarantee that the\n"
-    "  same drive will be used every time.\n"}                                                           },
+  {AdminCmd::CMD_DRIVE,               {"drive", "dr", {"up", "down", "ls", "ch", "rm"}}                  },
 
  /**md
 failedrequest (fr)
@@ -520,11 +524,12 @@ groupmountrule (gmr)
  /**md
 logicallibrary (ll)
 
-:   Add, change, remove or list the logical libraries, which are logical groupings of tapes and
-    drives based on physical location and tape drive capabilities. A tape can be accessed by a
-    drive if it is in the same physical library and if the drive is capable of reading or writing
-    the tape. In this case, that tape and that drive should normally also be in the same logical
-    library.
+:   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
+    tapes and drives based on physical location and tape drive capabilities.
+
+    A tape can be accessed by a drive if it is in the same physical library and if the drive is
+    capable of reading or writing the tape. In this case, that tape and that drive should normally
+    be in the same logical library.
   */
   {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}                },
 
@@ -533,8 +538,9 @@ mediatype (mt)
 
 :   Add, change, remove or list the tape cartridge media types. This command is used to specify the
     nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
+
     Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
-    technology). See **cta-taped(1cta)** for details.
+    technology only). See **cta-taped(1cta)** for details.
   */
   {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}                     },
 
@@ -556,46 +562,50 @@ physicallibrary (pl)
 recycletf (rtf)
 
 :   List tape files in the recycle log.
+
+    Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,
+    ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
   */
-  {AdminCmd::CMD_RECYCLETAPEFILE,
-   {"recycletf",
-    "rtf",
-    {"ls"},
-    "\n  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,\n"
-    "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"}},
+  {AdminCmd::CMD_RECYCLETAPEFILE,     {"recycletf", "rtf", {"ls"}}                                       },
 
  /**md
 repack (re)
 
-:   Add or remove a request to repack one or more tapes. This command can also list repack requests
-    in progress and display any errors.
+:   Add or remove a request to repack one or more tapes, list repack requests in progress and display
+    any errors.
+
+    Repack requests are submitted using the **add** subcommand:
+
+    A single tape to repack can be specified on the command line with the **\-\-vid** option, or a
+    list of tapes can be provided in a file, using the **\-\-vidfile** option.
+
+    **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
+    (the retrieve and archive requests).
+
+    **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
+    URL (specified in the CTA Frontend configuration). It should follow this format:
+
+        root://eosinstance//path/to/repack/buffer
+
+    **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
+    value, overriding the default value (specified in the CTA Frontend configuration). Set the value
+    to zero to force all files to be selected.
+
+    **\-\-no-recall** inhibits the retrieve mount. Only files that are already located in the disk
+    buffer will be considered for archival.
+
+    By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
+    copies of the file. The expected number of copies is defined by the storage class of the file.
+
+    **\-\-justmove** means that the files located on the tape to repack will be migrated onto new
+    tape(s), without creating any additional copies.
+
+    **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
+    repack will be created on the new tape(s), but the source tape file will not be migrated.
+
+    **ls** A row marked with a \* flag means that not all files were selected for repack.
   */
-  {AdminCmd::CMD_REPACK,
-   {"repack",
-    "re",
-    {"add", "rm", "ls", "err"},
-    "\n  Submit a repack request by using the \"add\" subcommand :\n"
-    "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile\n"
-    "     option.\n"
-    "   * Specify the mount policy (--mountpolicy parameter) to give a specific mount policy that will be\n"
-    "     applied to the repack subrequests (retrieve and archive requests).\n"
-    "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the\n"
-    "     following format: root://eosinstance//path/to/repack/buffer.\n"
-    "     The default bufferURL is set in the CTA frontend configuration file.\n"
-    "   * If the option (--maxfilestoselect value) is set, the number of files to be selected for repack will\n"
-    "     be limited to this value. If not, it will use the default value configured in the CTA frontend.\n"
-    "     Set the value as zero to force all files to be selected.\n"
-    "     A flag '*' in a 'repack ls' row means that not all files were selected for repack.\n"
-    "   * If the --justmove option is set, the files located on the tape to repack will be migrated on\n"
-    "     one or multiple tapes.\n"
-    "   * If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class)\n"
-    "     of the files located on the tape to repack will be created and migrated.\n"
-    "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class)\n"
-    "     of the files located on the tape to repack.\n"
-    "     By default, a hardcoded mount policy is applied (all request priorities and minimum request\n"
-    "     ages = 1).\n"
-    "   * If the --no-recall flag is set, no retrieve mount will be triggered. Only the files that are\n"
-    "     located in the buffer will be considered for archival.\n\n"}                                   },
+  {AdminCmd::CMD_REPACK,              {"repack", "re", {"add", "rm", "ls", "err"}}                       },
 
  /**md
 requestermountrule (rmr)
@@ -614,10 +624,12 @@ showqueues (sq)
  /**md
 storageclass (sc)
 
-:   Add, change, remove or list the storage classes. Storage classes are associated with directories,
-    to specify the number of tape copies for each file, and the corresponding tape pool that each copy
-    should be archived to. In EOS, the storage class is added as an extended attribute of the directory,
-    which is inherited by the file at creation time.
+:   Add, change, remove or list the storage classes. The storage class of a file specifies its
+    expected number of tape copies, and the corresponding tape pool that each copy should be archived
+    to.
+
+    In EOS, the storage class is specified as an extended attribute of the directory, which is
+    inherited as an extended attribute of the file at creation time.
   */
   {AdminCmd::CMD_STORAGECLASS,        {"storageclass", "sc", {"add", "ch", "rm", "ls"}}                  },
 
@@ -632,25 +644,27 @@ tape (ta)
  /**md
 tapefile (tf)
 
-:   List files on a specified tape. **cta-admin tapefile ls -l** allows listing the disk metadata as
-    well as tape metadata. Use of this option requires that gRPC is correctly configured on the disk
-    system. See **FILES**, below.
+:   List files on a specified tape or delete a tape file.
+
+    **ls** Tape files can be listed by VID or by the (disk instance, disk file ID) pair.
+
+    EOS disk file IDs should be provided in hexadecimal format (*fxid*). A list of files can be
+    specified with the **\-\-fxidfile** option, which takes an input file in the same format as
+    the output of **eos find --fid <path>**.
+
+    **rm** Delete a tape copy of a file.
   */
-  {AdminCmd::CMD_TAPEFILE,
-   {"tapefile",
-    "tf",
-    {"ls", "rm"},
-    "\n  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
-    "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
-    "  takes a file in the same format as the output of 'eos find --fid <path>'\n"
-    "  Delete a file copy with the \"rm\" subcommand\n\n"}                                               },
+  {AdminCmd::CMD_TAPEFILE,            {"tapefile", "tf", {"ls", "rm"}}                                   },
 
  /**md
 tapepool (tp)
 
 :   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
-    manage the tape lifecycle: label -> supply -> user pool -> erase -> label. **cta-admin tapepool ls**
-    shows statistics such as the total number of tapes in the pool and number of free tapes.
+    manage the tape lifecycle:
+
+        label → supply pool → user pool → erase → label
+
+    **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
   */
   {AdminCmd::CMD_TAPEPOOL,            {"tapepool", "tp", {"add", "ch", "rm", "ls"}}                      },
 
@@ -665,23 +679,22 @@ version (v)
  /**md
 virtualorganization (vo)
 
-:   Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity
-    whose data transfers should be managed independently of the others, for example an experimental
+:   Add, change, remove or list the Virtual Organizations (VOs). A VO corresponds to an entity whose
+    data transfers and storage should be managed independently of the others, for example an experimental
     collaboration.
+
+    **\-\-vo** specifies the name of the virtual organization. It must be unique.
+
+    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for writing.
+
+    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for reading>
+
+    **\-\-maxfilesize** specifies the maximum file size for this virtual organization. Default is 0,
+    which means no limit.
   */
-  {AdminCmd::CMD_VIRTUALORGANIZATION,
-   {"virtualorganization",
-    "vo",
-    {"add", "ch", "rm", "ls"},
-    "\n  Add a virtual organization with the \"add\" subcommand:\n"
-    "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
-    "   * Specify the maximum number of drives the virtual organization is allowed to use for writing "
-    "(--writemaxdrives)\n"
-    "   * Specify the maximum number of drives the virtual organization is allowed to use for reading "
-    "(--readmaxdrives)\n"
-    "   * Specify a comment (--comment) for this virtual organization\n"
-    "   * Specify the maximum file size (--maxfilesize) for this virtual organization (optional, 0 means no "
-    "limit)\n\n"}                                                                                        },
+  {AdminCmd::CMD_VIRTUALORGANIZATION, {"virtualorganization", "vo", {"add", "ch", "rm", "ls"}}           },
 };
 
 /*
@@ -870,7 +883,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_no_recall.optional(), opt_max_files_to_select.optional() }},
+      { opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_no_recall.optional(), opt_max_files_to_select.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
@@ -939,7 +952,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstancespace_alias, opt_diskinstance }},
    {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
-
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
       { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),                                             opt_isrepackvo.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },

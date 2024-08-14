@@ -1,5 +1,5 @@
 ---
-date: 2024-07-18
+date:
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -27,7 +27,9 @@ cta-admin --- Administrative command-line interface to CTA Frontend
 
 # SYNOPSIS
 
-**cta-admin** \[\--json] \[\--config] \<path> *command* \[*subcommand*] \[*options*]
+**cta-admin** \[\--json] \[\--config *path*] *command* \[*subcommand*] \[*options*]
+
+**cta-admin** \--help
 
 # DESCRIPTION
 

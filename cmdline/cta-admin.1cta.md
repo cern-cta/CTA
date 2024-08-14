@@ -1,5 +1,5 @@
 ---
-date: 2024-07-18
+date: 2024-08-14
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -27,7 +27,9 @@ cta-admin --- Administrative command-line interface to CTA Frontend
 
 # SYNOPSIS
 
-**cta-admin** \[\--json] \[\--config] \<path> *command* \[*subcommand*] \[*options*]
+**cta-admin** \[\--json] \[\--config *path*] *command* \[*subcommand*] \[*options*]
+
+**cta-admin** \--help
 
 # DESCRIPTION
 
@@ -45,46 +47,104 @@ Commands have a long version and an abbreviated version (shown in brackets).
 activitymountrule (amr)
 
 :   Add, change, remove or list the activity mount rules. This is provided as an alternative to
-    requester mount rules and group mount rules, where the scheduling priority is based on metadata
-    sent by the client rather than the authenticated identity of the requestor.
+    requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
+    to be set based on metadata sent by the client rather than the authenticated identity of the
+    requestor.
 
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
-    users must exist in the administrator list and must authenticate themselves with a valid Kerberos
-    KRB5 credential.
+    users must be included in the administrator list in addition to being authenticated.
 
 archiveroute (ar)
 
-:   Add, change, remove or list the archive routes, which are the policies linking namespace entries
-    to tape pools.
+:   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
+    entries to tape pools.
 
 diskinstance (di)
 
-:   Add, change, remove or list the disk instances. A CTA installation has one or more disk instances.
-    A disk instance is a separate namespace. Multiple disk instances should be configured if it is
+:   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+    installation has one or more disk instances. Multiple disk instances can be configured if it is
     desired to have a separate namespace for each Virtual Organization (VO).
+
+    **\-\-name** specifies the disk instance name, which is the unique identifier of the disk
+    instance and cannot be changed.
 
 diskinstancespace (dis)
 
 :   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
-    disk instance spaces. A disk instance space is a partition of the disk. For example, it can be
-    desirable to have separate spaces for archival and retrieval operations on each instance.
+    disk instance spaces. A disk instance space is a partition of the disk.
+
+    A typical use case for disk instance spaces is to configure separate spaces for archival and
+    retrieval operations on each instance.
+
+    **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
+    and disk instance space name form a pair which is the unique identifier for the disk instance space.
+
+    **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
+    space. It should be specified in the following format:
+
+        eos:<name_of_eos_instance>:<name_of_eos_space>
+
+    Example:
+
+        eos:ctaeos:spinners
+
+    **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
+    will be used before performing a new query.
 
 disksystem (ds)
 
 :   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
     for CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree
-    on a disk instance space (specified using a regular expression). Backpressure can be configured
-    separately for each disk system (how much free space should be available before processing a batch
-    of retrieve requests; how long to sleep when the disk is full).
+    on a disk instance space.
+
+    **\-\-disksystem** specifies the unique identifier of the disk system.
+
+    **\-\-diskinstance** and **\-\-diskinstancespace** form a pair which specifies the disk instance
+    and partition where this disk system is physically located.
+
+    **\-\-fileregexp** specifies the regular expression to match filenames (from *destinationURL*) to disk systems.
+
+    Example:
+
+        destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners
+
+    will match the regular expression:
+
+        ^root://eos_instance//eos/cta(.*)eos.space=spinners
+
+    Two options are provided to configure backpressure for retrieve operations. Backpressure can be
+    configured separately for each disk system. Before a retrieve mount, the destination URL of each
+    file is pattern-matched to identify the disk system. The corresponding disk instance space is
+    queried to determine if there is sufficient free space to perform the mount. If there is
+    insufficient space, the tape server sleeps for the specified interval.
+
+    **\-\-targetedfreespace** specifies how much free space should be available before processing a
+    batch of retrieve requests. It should be calculated based on the free space update latency (based
+    on *diskinstancespace* parameters) and the expected bandwidth for transfers to the external Storage
+    Element.
+
+    **\-\-sleeptime** specifies how long (in seconds) to sleep when the disk system has insufficient
+    space, before retrying the retrieve mount.
 
 drive (dr)
 
 :   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
 
-    **cta-admin drive ls** displays an exclamation mark (**!**) in front of the drive name, for drives
-    in DISABLED logical libraries.
+    This is a synchronous command to set and read back the state of one or more tape drives. The
+    *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
+    the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
+    *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
+    guarantee that the same drive will be used every time.
+
+    **down** Drives will complete any running mount before changing state. (Override with
+    **\-\-force**).
+
+    **ls** displays an exclamation mark (**!**) in front of the drive name for drives in DISABLED
+    libraries.
+
+    **rm** drives must be in the down state before deleting. (Override with **\-\-force**).
 
 failedrequest (fr)
 
@@ -96,18 +156,20 @@ groupmountrule (gmr)
 
 logicallibrary (ll)
 
-:   Add, change, remove or list the logical libraries, which are logical groupings of tapes and
-    drives based on physical location and tape drive capabilities. A tape can be accessed by a
-    drive if it is in the same physical library and if the drive is capable of reading or writing
-    the tape. In this case, that tape and that drive should normally also be in the same logical
-    library.
+:   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
+    tapes and drives based on physical location and tape drive capabilities.
+
+    A tape can be accessed by a drive if it is in the same physical library and if the drive is
+    capable of reading or writing the tape. In this case, that tape and that drive should normally
+    be in the same logical library.
 
 mediatype (mt)
 
 :   Add, change, remove or list the tape cartridge media types. This command is used to specify the
     nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
+
     Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
-    technology). See **cta-taped(1cta)** for details.
+    technology only). See **cta-taped(1cta)** for details.
 
 mountpolicy (mp)
 
@@ -121,10 +183,44 @@ recycletf (rtf)
 
 :   List tape files in the recycle log.
 
+    Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,
+    ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
+
 repack (re)
 
-:   Add or remove a request to repack one or more tapes. This command can also list repack requests
-    in progress and display any errors.
+:   Add or remove a request to repack one or more tapes, list repack requests in progress and display
+    any errors.
+
+    Repack requests are submitted using the **add** subcommand:
+
+    A single tape to repack can be specified on the command line with the **\-\-vid** option, or a
+    list of tapes can be provided in a file, using the **\-\-vidfile** option.
+
+    **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
+    (the retrieve and archive requests).
+
+    **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
+    URL (specified in the CTA Frontend configuration). It should follow this format:
+
+        root://eosinstance//path/to/repack/buffer
+
+    **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
+    value, overriding the default value (specified in the CTA Frontend configuration). Set the value
+    to zero to force all files to be selected.
+
+    **\-\-no-recall** inhibits the retrieve mount. Only files that are already located in the disk
+    buffer will be considered for archival.
+
+    By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
+    copies of the file. The expected number of copies is defined by the storage class of the file.
+
+    **\-\-justmove** means that the files located on the tape to repack will be migrated onto new
+    tape(s), without creating any additional copies.
+
+    **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
+    repack will be created on the new tape(s), but the source tape file will not be migrated.
+
+    **ls** A row marked with a \* flag means that not all files were selected for repack.
 
 requestermountrule (rmr)
 
@@ -136,10 +232,12 @@ showqueues (sq)
 
 storageclass (sc)
 
-:   Add, change, remove or list the storage classes. Storage classes are associated with directories,
-    to specify the number of tape copies for each file, and the corresponding tape pool that each copy
-    should be archived to. In EOS, the storage class is added as an extended attribute of the directory,
-    which is inherited by the file at creation time.
+:   Add, change, remove or list the storage classes. The storage class of a file specifies its
+    expected number of tape copies, and the corresponding tape pool that each copy should be archived
+    to.
+
+    In EOS, the storage class is specified as an extended attribute of the directory, which is
+    inherited as an extended attribute of the file at creation time.
 
 tape (ta)
 
@@ -148,15 +246,24 @@ tape (ta)
 
 tapefile (tf)
 
-:   List files on a specified tape. **cta-admin tapefile ls -l** allows listing the disk metadata as
-    well as tape metadata. Use of this option requires that gRPC is correctly configured on the disk
-    system. See **FILES**, below.
+:   List files on a specified tape or delete a tape file.
+
+    **ls** Tape files can be listed by VID or by the (disk instance, disk file ID) pair.
+
+    EOS disk file IDs should be provided in hexadecimal format (*fxid*). A list of files can be
+    specified with the **\-\-fxidfile** option, which takes an input file in the same format as
+    the output of **eos find --fid <path>**.
+
+    **rm** Delete a tape copy of a file.
 
 tapepool (tp)
 
 :   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
-    manage the tape lifecycle: label -> supply -> user pool -> erase -> label. **cta-admin tapepool ls**
-    shows statistics such as the total number of tapes in the pool and number of free tapes.
+    manage the tape lifecycle:
+
+        label → supply pool → user pool → erase → label
+
+    **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
 
 version (v)
 
@@ -165,9 +272,20 @@ version (v)
 
 virtualorganization (vo)
 
-:   Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity
-    whose data transfers should be managed independently of the others, for example an experimental
+:   Add, change, remove or list the Virtual Organizations (VOs). A VO corresponds to an entity whose
+    data transfers and storage should be managed independently of the others, for example an experimental
     collaboration.
+
+    **\-\-vo** specifies the name of the virtual organization. It must be unique.
+
+    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for writing.
+
+    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for reading>
+
+    **\-\-maxfilesize** specifies the maximum file size for this virtual organization. Default is 0,
+    which means no limit.
 
 # OPTIONS
 
