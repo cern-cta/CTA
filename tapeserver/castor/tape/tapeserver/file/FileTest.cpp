@@ -295,7 +295,7 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   TempFile destinationFile(dst_path);
   // host part of file location
   const std::string lh_src = "localhost:" + sourceFile.path();
-  cosnt std::string lh_dst = lh_src + "_dst";
+  const std::string lh_dst = lh_src + "_dst";
   {
     std::unique_ptr<cta::disk::ReadFile> rf(
       fileFactory.createReadFile(lh_src);
