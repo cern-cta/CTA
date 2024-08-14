@@ -6,6 +6,9 @@
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 
+### Continuous Integration
+- cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
+
 # v4.10.11.0-1 / v5.10.11.0-1
 
 ### Features
