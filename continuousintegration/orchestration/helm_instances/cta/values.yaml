@@ -2,6 +2,14 @@
 global:
   imagePullSecret: "ctaregsecret"
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  volumes:
+  - name: versionlock-list
+    configMap:
+      name: versionlock-conf
+  volumeMounts:
+  - mountPath: /etc/dnf/plugins/versionlock.list
+    name: versionlock-list
+    subPath: versionlock.list
 
 # Here are stored values for the project related pods
 cta:
