@@ -59,13 +59,13 @@ public:
                       const std::string& hostName) override;
 
 private:
-  /** Acquire scheduler global lock */
-  void lock();
+  /** Acquire Scheduler DB advisory lock per tape pool */
+  void lock(std::string_view tapePool);
   /** Commit decision and release scheduler global lock */
   void commit();
 
   cta::RelationalDB& m_RelationalDB;
-  schedulerdb::Transaction m_txn;
+  std::unique_ptr<schedulerdb::Transaction> m_txn;
   std::string m_ownerId;
   bool m_lockTaken = false;
   log::Logger& m_logger;

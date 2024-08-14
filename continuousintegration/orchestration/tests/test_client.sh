@@ -93,30 +93,6 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-
-echo "Setting up client pod for HTTPs REST API test"
-echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
-kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
-kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
-rm -rf /tmp/certificates
-
-# We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
-# We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
-# with the specification.
-echo " Launching client_rest_api.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_rest_api.sh || exit 1
-
-# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
-TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
-echo " Launching client_archive_metadata.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
-echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
-
-echo
-echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
-
 echo
 echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
@@ -196,6 +172,29 @@ echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
 sleep 10
 echo "###"
+
+echo "Setting up client pod for HTTPs REST API test"
+echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
+kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
+kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
+rm -rf /tmp/certificates
+
+# We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
+# We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
+# with the specification.
+echo " Launching client_rest_api.sh on client pod"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_rest_api.sh || exit 1
+
+# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
+TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
+echo " Launching client_archive_metadata.sh on client pod"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
+echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
+
+echo
+echo "Launching immutable file test on client pod"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
 
 echo
 echo "Launching client_retrieve.sh on client pod"

@@ -156,7 +156,14 @@ public:
                              std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
                              std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
                              cta::log::LogContext& logContext);
-
+  /**
+  * Re-queues batch of jobs
+  * Serves PGSCHED purpose only
+  *
+  * @param jobIDsList
+  * @return number of jobs re-queued in the DB
+  */
+  virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const;
   /**
    * Returns the tape pool of the tape to be mounted.
    *

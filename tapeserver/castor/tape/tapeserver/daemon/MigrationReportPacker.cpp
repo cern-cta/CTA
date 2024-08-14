@@ -25,6 +25,7 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 
 using cta::log::LogContext;
 using cta::log::Param;

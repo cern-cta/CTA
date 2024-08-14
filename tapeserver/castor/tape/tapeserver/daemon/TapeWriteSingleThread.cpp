@@ -146,7 +146,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
-
     // We know we are the last thread, just report the drive Up
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
                                             std::nullopt,
@@ -297,6 +296,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeMountForWrite";
+#ifdef CTA_PGSCHED
+  std::unique_ptr<TapeWriteTask> task;
+#endif
   try {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
@@ -425,7 +427,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       uint64_t files = 0;
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
+#ifndef CTA_PGSCHED
       std::unique_ptr<TapeWriteTask> task;
+#endif
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
@@ -510,15 +514,49 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         m_watchdog.addToErrorCount(currentErrorToCount);
       }
     }
-
-    //first empty all the tasks and circulate mem blocks
+//first empty all the tasks and circulate mem blocks
+#ifdef CTA_PGSCHED
+    // fail the job of the last task which threw exception
+    //std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
+    std::list<std::string> jobIDsList;  // !!! serves for BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
+    if (nullptr != task) {
+      jobIDsList.emplace_back(task->getArchiveJob().getJobID());
+      //task->getArchiveJob().reportFailed(failureReason, m_logContext); // !!! will be decomissioned
+    }
+#endif
     while (true) {
-      std::unique_ptr<TapeWriteTask> task(m_tasks.pop());
-      if (task == nullptr) {
+      std::unique_ptr<TapeWriteTask> remaining_task(m_tasks.pop());
+      if (remaining_task == nullptr) {
         break;
       }
-      task->circulateMemBlocks();
+#ifdef CTA_PGSCHED
+      jobIDsList.emplace_back(remaining_task->getArchiveJob().getJobID());
+      //remaining_task->getArchiveJob().reportFailed(failureReason, m_logContext);
+#endif
+      remaining_task->circulateMemBlocks();
     }
+#ifdef CTA_PGSCHED
+    uint64_t njobs =
+      m_archiveMount.requeueJobBatch(jobIDsList, m_logContext);  // BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
+    cta::log::ScopedParamContainer requeueparam(m_logContext);
+    requeueparam.add("requeuedTaskQueueJobs", njobs);
+    m_logContext.log(
+      cta::log::INFO,
+      std::string(
+        "In TapeWriteSingleThread::run(): Requeued all remaining unprocessed task jobs of the failed queue."));
+
+    if (njobs != jobIDsList.size()) {
+      // handle the case of failed bunch update of the jobs !
+      std::string jobIDsString;
+      for (const auto& piece : jobIDsList) {
+        jobIDsString += piece;
+      }
+      m_logContext.log(cta::log::ERR,
+                       std::string("In TapeWriteSingleThread::run(): Did not requeue all task jobs of "
+                                   "the failed queue, job IDs attempting to update were: ") +
+                         jobIDsString);
+    }
+#endif
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;

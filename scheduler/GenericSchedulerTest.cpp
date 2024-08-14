@@ -3210,7 +3210,6 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
     pl.isDisabled                = true;
 
     catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
-
     catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
 
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
