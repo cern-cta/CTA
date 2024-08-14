@@ -54,11 +54,17 @@ spec:
     {{- if (.volumeMounts)}}
     volumeMounts:
     {{- .volumeMounts | toYaml | nindent 4}}
+    {{- if ($.Values.global.volumeMounts) }}
+      {{- $.Values.global.volumeMounts | toYaml | nindent 4}}
+    {{- end}}
     {{- end}}
   {{- end}}
   {{- if ($value.volumes)}}
   volumes:
     {{- $value.volumes | toYaml | nindent 2}}
+    {{- if ($.Values.global.volumes) }}
+      {{- $.Values.global.volumes | toYaml | nindent 2}}
+    {{- end}}
   {{- end}}
   imagePullSecrets:
   - name: {{$imageSecret}}
