@@ -1,0 +1,64 @@
+image:
+
+nameOverride: ctacli
+isPriviliged: true
+
+
+# Changes the entrypoint of the image to the script and provide arguments if needed
+customEntrypoint:
+  command: ["/bin/sh", "-c"]
+  args:
+  - |
+    cat /tmp/eos.keytab > /etc/eos.keytab;
+    chmod 600 /etc/eos.keytab;
+    /opt/run/bin/ctacli.sh
+
+# Additional environment variables
+env:
+- name: TERM
+  value: "xterm"
+
+
+service:
+  ports:
+  - name: ctacli
+    port: 1
+    protocol: TCP
+
+volumes:
+- name: shared
+  hostPath:
+    path: /opt/cta
+- name: logstorage
+  persistentVolumeClaim:
+    claimName: claimlogs
+- name: keytab
+  secret:
+    secretName: ctaadmin1-keytab
+- name: sss-keytab
+  secret:
+    defaultMode: 400
+    secretName: eos-sss-keytab
+- name: krb5-config-volume
+  configMap:
+    name: krb5-config
+
+volumeMounts:
+- name: keytab
+  mountPath: /root/ctaadmin1.keytab
+  subPath: ctaadmin1.keytab
+- name: sss-keytab
+  mountPath: /tmp/eos.keytab
+  subPath: eos.keytab
+- name: krb5-config-volume
+  mountPath: /etc/krb5.conf
+  subPath: krb5.conf
+- name: shared
+  mountPath: /shared
+- name: logstorage
+  mountPath: /mnt/logs
+
+
+readinessProbe:
+
+
