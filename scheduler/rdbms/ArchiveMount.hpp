@@ -20,8 +20,10 @@
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/JobPool.hpp"
 
 #include <list>
 #include <memory>
@@ -40,8 +42,10 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
 public:
   ArchiveMount(RelationalDB& pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType)
       : m_RelationalDB(pdb),
+        m_connPool(pdb.m_connPool),
         m_ownerId(ownerId),
-        m_queueType(queueType) {}
+        m_queueType(queueType),
+        m_jobPool(pdb.m_connPool) {}
 
   const MountInfo& getMountInfo() override;
 
@@ -92,11 +96,21 @@ public:
    */
   void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                               log::LogContext& lc) override;
+  /**
+    * Re-queue batch of jobs
+    * Serves PGSCHED purpose only
+    *
+    * @param jobIDsList
+    * @return number of jobs re-queued in the DB
+    */
+  uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
 
 private:
   cta::RelationalDB& m_RelationalDB;
+  cta::rdbms::ConnPool& m_connPool;
   const std::string& m_ownerId;
   common::dataStructures::JobQueueType m_queueType;
+  schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
 };
 
 }  // namespace cta::schedulerdb

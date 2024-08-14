@@ -25,6 +25,7 @@ variables:
 
   # Tests
   VALGRIND_DB_UNIT_TESTS: false
+  SKIP_UNIT_TESTS: "FALSE"
 
   # System Tests
   SYSTEMTESTS_ONLY: "FALSE"

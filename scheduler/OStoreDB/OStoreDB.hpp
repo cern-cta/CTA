@@ -256,6 +256,12 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
                                                                          uint64_t timeout_us) override;
 
+  // Only for RDBMS Scheduler backend
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
+
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
@@ -284,6 +290,11 @@ public:
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
   public:
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
+      // Do nothing in this implementation, serves only PGSCHED implementation
+      return 0;
+    }
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };

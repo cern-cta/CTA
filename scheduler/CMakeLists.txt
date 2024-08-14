@@ -56,7 +56,7 @@ include_directories (${CMAKE_BINARY_DIR}/scheduler)
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   rdbms/RelationalDB.cpp
   rdbms/ArchiveMount.cpp
-  rdbms/ArchiveJob.cpp
+  rdbms/ArchiveRdbJob.cpp
   rdbms/ArchiveJobQueueItor.cpp
   rdbms/ArchiveRequest.cpp
   rdbms/Helpers.cpp
