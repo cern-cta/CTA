@@ -222,6 +222,15 @@ public:
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) = 0;
     virtual void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                         log::LogContext& lc) = 0;
+
+    /**
+     * Re-queue batch of jobs
+     * Serves PGSCHED purpose only
+     *
+     * @param jobIDsList
+     * @return number of jobs re-queued in the DB
+     */
+    virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
@@ -243,8 +252,7 @@ public:
       CompletionReport,
       FailureReport,
       Report  ///< A generic grouped type
-    };
-    ReportType reportType = ReportType::CompletionReport;
+    } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
@@ -899,6 +907,9 @@ public:
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
+  // following method is used by RDBMS Scheduler DB type only
+  virtual std::unique_ptr<TapeMountDecisionInfo>
+  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding
