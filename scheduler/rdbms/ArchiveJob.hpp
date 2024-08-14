@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/log/LogContext.hpp"
+#include "rdbms/ConnPool.hpp"
 
 #include <list>
 #include <memory>
@@ -35,7 +35,7 @@ class ArchiveJob : public SchedulerDatabase::ArchiveJob {
  public:
 
    ArchiveJob();
-   ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
+   ArchiveJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
 
    void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
 
@@ -46,6 +46,7 @@ class ArchiveJob : public SchedulerDatabase::ArchiveJob {
    bool m_jobOwned = false;
    uint64_t m_mountId = 0;
    std::string m_tapePool;
+   rdbms::ConnPool& m_connPool;
 
 };
 
