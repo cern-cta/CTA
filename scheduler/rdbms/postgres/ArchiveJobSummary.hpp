@@ -57,7 +57,7 @@ struct ArchiveJobSummaryRow {
     oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
     archivePriority = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
-    lastUpdateTime = rset.columnUint32("LAST_UPDATE_TIME");
+    lastUpdateTime = rset.columnUint32("LAST_SUMMARY_UPDATE_TIME");
     lastJobUpdateTime = rset.columnUint32("LAST_JOB_UPDATE_TIME");
     return *this;
   }
@@ -77,18 +77,39 @@ struct ArchiveJobSummaryRow {
   }
 
   /**
-   * Select all rows
-   *
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   * uint64_t gc_delay = 43200
+   * @param txn        Transaction to use for this query
+   * @param gc_delay   Delay for garbage collection of jobs which were not processed
+   *                   until a final state by the mount where they started processing
+   *                   default is 1 hours
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectNotOwned(Transaction& txn) {
+  static rdbms::Rset selectJobsExceptDriveQueue(Transaction& txn, uint64_t gc_delay = 3600) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
     const char* const lock_sql = R"SQL(
     LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
     )SQL";
-    auto stmt = txn.conn().createStmt(lock_sql);
+    auto stmt = txn.getConn().createStmt(lock_sql);
     stmt.executeNonQuery();
+    //update archive_job_queue set in_drive_queue='f',mount_id=NULL; for all which
+    // are pending since a defined period of time
+    // gc_delay logic and liberating stuck mounts should be later moved elsewhere !
+    uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
+    const char* const update_sql = R"SQL(
+    UPDATE ARCHIVE_JOB_QUEUE SET
+      MOUNT_ID = NULL,
+      IN_DRIVE_QUEUE = FALSE
+    WHERE MOUNT_ID IS NOT NULL AND IN_DRIVE_QUEUE = TRUE AND STATUS = :STATUS AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY
+    )SQL";
+    stmt = txn.getConn().createStmt(update_sql);
+    ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
+    stmt.executeNonQuery();
+
     const char* const sql = R"SQL(
       SELECT 
         MOUNT_ID,
@@ -101,14 +122,38 @@ struct ArchiveJobSummaryRow {
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE, 
         LAST_JOB_UPDATE_TIME, 
-        LAST_UPDATE_TIME 
+        LAST_SUMMARY_UPDATE_TIME
       FROM 
         ARCHIVE_JOB_SUMMARY 
       WHERE 
-        MOUNT_ID IS NULL
+        IN_DRIVE_QUEUE IS FALSE
+        AND MOUNT_ID IS NULL
     )SQL";
 
-    stmt = txn.conn().createStmt(sql);
+    stmt = txn.getConn().createStmt(sql);
+    return stmt.executeQuery();
+  }
+
+  /**
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   *
+   * @return result set containing all rows in the table
+   */
+  static rdbms::Rset selectFailedJobSummary(Transaction& txn) {
+    // locking the view until commit (DB lock released)
+    // this is to prevent tape servers counting the rows all at the same time
+    const char* const sql = R"SQL(
+      SELECT
+        COUNT(*) AS JOBS_COUNT,
+        SUM(SIZE_IN_BYTES) AS JOBS_TOTAL_SIZE
+      FROM
+        ARCHIVE_FAILED_JOB_QUEUE
+      WHERE
+        STATUS = :STATUS::ARCHIVE_JOB_STATUS
+    )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":STATUS", "AJS_Failed");
     return stmt.executeQuery();
   }
 };

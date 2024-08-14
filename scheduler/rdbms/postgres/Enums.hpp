@@ -38,17 +38,19 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_Failed,
   AJS_Abandoned,
   AJS_ToTransferForRepack,
-  AJS_ToReportToRepackForFailure
+  AJS_ToReportToRepackForFailure,
+  ReadyForDeletion
 };
 
-constexpr const std::array<const char*, 8> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
+constexpr const std::array<const char*, 9> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                                                                       "AJS_ToReportToUserForTransfer",
                                                                       "AJS_Complete",
                                                                       "AJS_ToReportToUserForFailure",
                                                                       "AJS_Failed",
                                                                       "AJS_Abandoned",
                                                                       "AJS_ToTransferForRepack",
-                                                                      "AJS_ToReportToRepackForFailure"};
+                                                                      "AJS_ToReportToRepackForFailure",
+                                                                      "ReadyForDeletion"};
 
 // ================================ Job Queue Type =============================
 
@@ -82,16 +84,15 @@ enum class RetrieveJobStatus : uint8_t {
 
 constexpr const std::array<const char*, 5> StringsRetrieveJobStatus = {"RJS_ToTransfer"
                                                                        "RJS_ToReportToUserForFailure",
-                                                                       "RJS_Failed",
-                                                                       "RJS_ToReportToRepackForSuccess",
+                                                                       "RJS_Failed", "RJS_ToReportToRepackForSuccess",
                                                                        "RJS_ToReportToRepackForFailure"};
 
 // ============================== Repack Job Status ===========================
 
 enum class RepackJobStatus : uint8_t { RRS_Pending, RRS_ToExpand, RRS_Starting, RRS_Running, RRS_Complete, RRS_Failed };
 
-constexpr const std::array<const char*, 6> StringsRepackJobStatus =
-  {"RRS_Pending", "RRS_ToExpand", "RRS_Starting", "RRS_Running", "RRS_Complete", "RRS_Failed"};
+constexpr const std::array<const char*, 6> StringsRepackJobStatus = {"RRS_Pending", "RRS_ToExpand", "RRS_Starting",
+                                                                     "RRS_Running", "RRS_Complete", "RRS_Failed"};
 }  // namespace cta::schedulerdb
 
 // Define to_string and from_string in cta namespace

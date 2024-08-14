@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/log/LogContext.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 #include <list>
 #include <memory>
@@ -27,43 +28,47 @@
 #include <cstdint>
 #include <time.h>
 
+namespace cta {
+class RelationalDB;
+}
+
 namespace cta::schedulerdb {
 
-class ArchiveJob : public SchedulerDatabase::ArchiveJob {
+class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   friend class cta::RelationalDB;
 
 public:
-  ArchiveJob();
-  ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
+  // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
 
-  /*
-   * Sets the status of the job as failed in the Scheduler DB
-   *
-   * @param failureReason  The reason of the failure as string
-   * @param lc             The log context
-   *
-   * @return void
-   */
+  // Constructor to create empty ArchiveJob object with a reference to the connection pool
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
+
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
-  /*
-   * Sets the status of the report of the archive job to failed in Scheduler DB
-   *
-   * @param failureReason   The failure reason as string
-   * @param lc              The log context
-   *
-   * @return void
-   */
   void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
-  /*
-   * Currently unused function throwing an exception
-   */
   void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
+  /**
+   * Reinitialise the job object data members with
+   * new values after it has been poped from the pool
+   *
+   * @param connPool
+   * @param rset
+   */
+  void initialize(const rdbms::Rset& rset, log::LogContext& lc);
+  /**
+   * Reset all data members to return the job object to the pool
+   */
+  void reset();
+
+  postgres::ArchiveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;
   std::string m_tapePool;
+  rdbms::ConnPool& m_connPool;
+  //std::shared_ptr<rdbms::Conn> m_conn;
 };
 
 }  // namespace cta::schedulerdb

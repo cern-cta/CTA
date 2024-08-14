@@ -85,6 +85,22 @@ public:
    */
   Rset& operator=(Rset&& rhs);
 
+  // Generic method to handle calls to m_impl
+  template<typename ReturnType, typename... Args>
+  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::*func)(const std::string&) const,
+                      const std::string& colName) const {
+    try {
+      if (nullptr == m_impl) {
+        throw InvalidResultSet("This result set is invalid");
+      }
+      return (m_impl.get()->*func)(colName);
+    }
+    catch (exception::Exception& ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+      throw;
+    }
+  }
+
   /**
    * Returns the SQL statement.
    *
@@ -115,6 +131,25 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   bool columnIsNull(const std::string& colName) const;
+
+  /**
+   * Testing new PG methods without passing through optionals
+   * and handling the null case within the implementation
+   * These methods do not use columnOptional methods to check
+   * if value is Null and Throw
+   * They are expected to throw directly if the value is null
+   * from within their implementatinos ithout the need
+   * to construct additional optionals in between !
+   * @param colName
+   * @return
+   */
+  uint8_t columnUint8NoOpt(const std::string& colName) const;
+  uint16_t columnUint16NoOpt(const std::string& colName) const;
+  uint32_t columnUint32NoOpt(const std::string& colName) const;
+  uint64_t columnUint64NoOpt(const std::string& colName) const;
+  std::string columnStringNoOpt(const std::string& colName) const;
+  double columnDoubleNoOpt(const std::string& colName) const;
+  bool columnBoolNoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).

@@ -26,6 +26,9 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <sstream>
+#include <stdexcept>
+#include <type_traits>
 
 namespace cta::rdbms::wrapper {
 
@@ -57,6 +60,14 @@ public:
   bool columnIsNull(const std::string& colName) const override;
 
   /**
+   * Returns true if the specified column contains a null value.
+   *
+   * @param ifield The index of the column to check of the column.
+   * @return True if the specified column contains a null value.
+   */
+  bool isPGColumnNull(const int ifield) const;
+
+  /**
    * Returns the value of the specified column as a binary string (byte array).
    *
    * @param colName The name of the column.
@@ -64,6 +75,61 @@ public:
    */
   std::string columnBlob(const std::string& colName) const override;
 
+  /**
+    * Returns the value of the specified column as a binary string (byte array).
+    *
+    * @param colName The name of the column.
+    * @return The string value of the specified column.
+    */
+  bool columnBoolNoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as a string.
+   *
+   * @param colName
+   * @return
+   */
+  std::string columnStringNoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * @param colName
+   * @return
+   */
+  uint8_t columnUint8NoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * @param colName
+   * @return
+   */
+  uint16_t columnUint16NoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * @param colName
+   * @return
+   */
+  uint32_t columnUint32NoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * @param colName
+   * @return
+   */
+  uint64_t columnUint64NoOpt(const std::string& colName) const;
+
+  /**
+   * Returns the value of the specified column as an double.
+   *
+   * @param colName
+   * @return
+   */
+  double columnDoubleNoOpt(const std::string& colName) const;
   /**
    * Returns the value of the specified column as a string.
    *
@@ -141,11 +207,49 @@ public:
 
 private:
   /**
+   * Getting index of a column by using the columnIndexCache
+   * in order to avoid looking them up every time we fetch columns of
+   * each row of a result
+   * @param colName
+   * @return index of the column
+   */
+  int getColumnIndex(const std::string& colName) const;
+
+  /**
+   * Template method that converts a string to a required numeric type
+   * not used at the moment - might be good replacement in the future
+   * @tparam NumericType
+   * @param colName
+   * @param stringValue
+   * @return
+   */
+  template<typename NumericType>
+  NumericType getNumberFromString(const std::string& colName, const std::string& stringValue) const {
+    // At compile time ensure the type is numeric (e.g., int, double, uint64_t, etc.)
+    static_assert(std::is_arithmetic<NumericType>::value, "NumericType must be a numeric type.");
+
+    // Create a stringstream for converting the string to the target type
+    std::istringstream iss(stringValue);
+    NumericType result;
+    // Try to parse the string as the appropriate numeric type
+    iss >> result;
+    // If conversion failed or if there are extra characters, throw an error
+    if (iss.fail() || !iss.eof()) {
+      throw exception::Exception(std::string("Column ") + colName + std::string(" contains the value ") + stringValue +
+                                 std::string(" which is not a valid since it does not match required numeric type"));
+    }
+    return result;
+  }
+
+  /**
    * Clears the async command in process indicator on our conneciton,
    * if we haven't done so already.
    */
   void doClearAsync();
-
+  /**
+   * column index cache
+   */
+  mutable std::unordered_map<std::string, uint64_t> m_columnPQindexCache;
   /**
    * The SQL connection.
    */

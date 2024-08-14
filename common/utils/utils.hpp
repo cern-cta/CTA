@@ -5,11 +5,11 @@
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
  *               option) any later version.
- * 
+ *
  *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
  *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  *               In applying this licence, CERN does not waive the privileges and immunities
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
@@ -31,7 +31,7 @@ namespace cta::utils {
 
 /**
  * Returns true if the hostname is a valid IPv4 or IPv6 address.
- * 
+ *
  * The address is checked against two regular expressions adapted from:
  * https://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses#17871737
  */
@@ -39,12 +39,12 @@ bool isValidIPAddress(const std::string& address);
 
 /**
  * Throws an exception if the hostname is not a Fully-Qualified Domain Name (FQDN).
- * 
+ *
  * This is a simple regex check, we don't check that the name is a valid DNS name.
- * 
+ *
  * The regex is based on the hostname rules from this post on StackOverflow:
  * https://stackoverflow.com/questions/11809631/fully-qualified-domain-name-validation#20204811
- * 
+ *
  * Summary:
  * - Hostnames are composed of a series of labels concatenated with dots.
  * - Each label is 1 to 63 characters long, and may contain:
@@ -62,21 +62,21 @@ void assertIsFQDN(const std::string& hostname);
 /**
  * Throws an exception if the specified absolute path constains a
  * syntax error.
- * 
+ *
  * @param path The Absolute path.
  */
 void assertAbsolutePathSyntax(const std::string& path);
 
 /**
  * Returns the path of the enclosing directory of the specified path.
- * 
+ *
  * For example:
- * 
+ *
  * * path="/grandparent/parent/child" would return "/grandparent/parent/"
  * * path="/grandparent/parent" would return "/grandparent/"
  * * path="/grandparent" would return "/"
  * * path="/" would throw an exception
- * 
+ *
  * @param path The path.
  * @return The path of the enclosing directory.
  */
@@ -84,7 +84,7 @@ std::string getEnclosingPath(const std::string& path);
 
 /**
  * Returns the name of the enclosed file or directory of the specified path.
- * 
+ *
  * @param path The path.
  * @return The name of the enclosed file or directory.
  */
@@ -93,7 +93,7 @@ std::string getEnclosedName(const std::string& path);
 /**
  * Returns the names of the enclosed file or directory of each of the
  * specified paths.
- * 
+ *
  * @param paths The path
  * @return The names of the enclosed file or directory of each of the
  * specified paths.
@@ -103,7 +103,7 @@ std::list<std::string> getEnclosedNames(const std::list<std::string>& paths);
 /**
  * Returns the result of trimming both left and right slashes from the
  * specified string.
- * 
+ *
  * @param s The string to be trimmed.
  * @return The result of trimming the string.
  */
@@ -112,7 +112,7 @@ std::string trimSlashes(const std::string& s);
 /**
  * Returns the result of trimming right slashes from the
  * specified string.
- * 
+ *
  * @param s The string to be trimmed.
  * @return The result of trimming the string.
  */
@@ -121,9 +121,9 @@ std::string trimFinalSlashes(const std::string& s);
 /**
  * Splits the specified string into a vector of strings using the specified
  * separator.
- * 
+ *
  * Please note that the string to be split is NOT modified.
- * 
+ *
  * @param str The string to be split.
  * @param separator The separator to be used to split the specified string.
  * @param result The vector when the result of spliting the string will be
@@ -133,7 +133,7 @@ void splitString(const std::string& str, const char separator, std::vector<std::
 
 /**
  * Trims left and right white-space from the specified string
- * 
+ *
  * @param s The string to be trimmed
  * @return The input string with leading/trailing white-space removed
  */
@@ -174,14 +174,14 @@ std::string preEllipsis(const std::string& s, size_t maxSize);
 
 /**
  * Returns uuid in the form of a string.
- * 
+ *
  * @return uuid in the form of a string.
  */
 std::string generateUuid();
 
 /**
  * Returns true if the specified string ends with the specifie character.
- * 
+ *
  * @param str The string to be tested.
  * @param c The character to be looked for at the end of the string.
  * @return True if the specified string ends with the specified character.
@@ -190,7 +190,7 @@ bool endsWith(const std::string& str, const char c);
 
 /**
  * Returns the string reprsentation of the specified value.
- * 
+ *
  * @param value The value whose string representation is to be returned.
  * @return The string reprsentation of the specified value.
  */
@@ -205,7 +205,7 @@ std::string toString(const T& value) {
  * Creates and returns an std::string which is the result of replacing each
  * occurance of whitespace (a collection of on or more space and tab
  * characters) with a single space character.
- * 
+ *
  * @param str The original string.
  * @return    The newly created string with single spaces.
  */
@@ -213,7 +213,7 @@ std::string singleSpaceString(const std::string& str);
 
 /**
  * C++ wrapper around the setxtarr() function.
- * 
+ *
  * @param path The path to file to which the extended attribute belongs.
  * @param name The name of the extended attribute.
  * @param value The value of the extended attribute.
@@ -222,7 +222,7 @@ void setXattr(const std::string& path, const std::string& name, const std::strin
 
 /**
  * C++ wrapper around the getxattr() function.
- * 
+ *
  * @param path The path to file to which the extended attribute belongs.
  * @param name The name of the extended attribute.
  * @return The value of the extended attribute.
@@ -231,17 +231,66 @@ std::string getXattr(const std::string& path, const std::string& name);
 
 /**
  * Determines the string representation of the specified error number.
- * 
+ *
  * Please note this method is thread safe.
- * 
+ *
  * @param errnoValue The errno value.
  * @return The string representation.
  */
 std::string errnoToString(const int errnoValue);
 
 /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
+uint8_t toPGUint8(std::string_view str);
+
+/**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
+uint16_t toPGUint16(std::string_view str);
+
+/**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unsigned integer.
+   */
+uint32_t toPGUint32(std::string_view str);
+
+/**
+   * Parses the specified string representation of an unsigned 64-bit integer.
+   *
+   * Please note that "-1" is a valid string and will parse successfully.
+   *
+   * @return The parsed unsigned 64-bit integer.
+   */
+uint64_t toPGUint64(std::string_view str);
+
+/**
+   * Parses the specified string representation of a double.
+   *
+   * @return The parsed double.
+   */
+double toPGDouble(std::string_view str);
+
+/**
+   * Parses the specified string representation of an unsigned 64-bit integer.
+   *
+   * Please note that "-1" is a valid string and will parse successfully.
+   *
+   * @return The parsed unsigned 64-bit integer.
+   */
+uint64_t toUint64(const std::string& str);
+
+/**
  * Converts the specified string to an unsigned integer.
- * 
+ *
  * @param str The string.
  * @return The unisgned integer.
  */
@@ -249,7 +298,7 @@ uint8_t toUint8(const std::string& str);
 
 /**
  * Converts the specified string to an unsigned integer.
- * 
+ *
  * @param str The string.
  * @return The unisgned integer.
  */
@@ -257,7 +306,7 @@ uint16_t toUint16(const std::string& str);
 
 /**
  * Converts the specified string to an unsigned integer.
- * 
+ *
  * @param str The string.
  * @return The unsigned integer.
  */
@@ -265,7 +314,7 @@ uint32_t toUint32(const std::string& str);
 
 /**
  * Converts the specified string to a uid.
- * 
+ *
  * @param str The string.
  * @return The uid.
  */
@@ -273,7 +322,7 @@ uid_t toUid(const std::string& str);
 
 /**
  * Converts the specified string to a gid.
- * 
+ *
  * @param str The string.
  * @return The gid.
  */
@@ -281,7 +330,7 @@ gid_t toGid(const std::string& str);
 
 /**
  * Checks if the specified string is a valid unsigned integer.
- * 
+ *
  * @param str The string to be checked.
  * @returns true if the string is a valid unsigned integer, else false.
  */
@@ -289,16 +338,16 @@ bool isValidUInt(const std::string& str);
 
 /**
  * Parses the specified string representation of an unsigned 64-bit integer.
- * 
+ *
  * Please note that "-1" is a valid string and will parse successfully.
- * 
+ *
  * @return The parsed unsigned 64-bit integer.
  */
 uint64_t toUint64(const std::string& str);
 
 /**
  * Checks if the specified string is a valid decimal.
- * 
+ *
  * @param str The string to be checked.
  * @returns true if the string is a valid decimal, else false.
  */
@@ -306,21 +355,21 @@ bool isValidDecimal(const std::string& str);
 
 /**
  * Parses the specified string representation of a double.
- * 
+ *
  * @return The parsed double.
  */
 double toDouble(const std::string& str);
 
 /**
  * Converts the specified string to uppercase.
- * 
+ *
  * @param In/out parameter: The string to be converted.
  */
 void toUpper(std::string& str);
 
 /**
  * Checks if the specified string is uppercase.
- * 
+ *
  *  @param In/out parameter: The string to be checked.
  *  @return true if the string is uppercase.
  */
@@ -328,21 +377,21 @@ bool isUpper(const std::string& str);
 
 /**
  * Converts the specified string to lowercase.
- * 
+ *
  * @param In/out parameter: The string to be converted.
  */
 void toLower(std::string& str);
 
 /**
  * Gets the short host name from the system
- * 
+ *
  * @return the short host name
  */
 std::string getShortHostname();
 
 /**
  * Returns the alder32 checksum of the specified buffer.
- * 
+ *
  * @param buf The buffer.
  * @param len The length of the buffer in bytes.
  * @return the alder32 checksum of the specified buffer.
@@ -353,9 +402,9 @@ uint32_t getAdler32(const uint8_t* buf, const uint32_t len);
  * Returns true if the attributes of the current process indicate that it will
  * produce a core dump if it receives a signal whose behaviour is to produce a
  * core dump.
- * 
+ *
  * This method is implemented using prctl().
- * 
+ *
  * @return true if the current program is dumpable.
  */
 bool getDumpableProcessAttribute();
@@ -363,14 +412,14 @@ bool getDumpableProcessAttribute();
 /**
  * Sets the attributes of the current process to indicate hat it will produce a
  * core dump if it receives a signal whose behaviour is to produce a core dump.
- * 
+ *
  * @param dumpable true if the current program should be dumpable.
  */
 void setDumpableProcessAttribute(const bool dumpable);
 
 /**
  * Returns the hexadecimal dump of the specified memory.
- * 
+ *
  * @param mem Pointer to the memory to be dumped.
  * @param n The length of the memory to be dumped.
  * @return The hexadecimal dump.
@@ -380,7 +429,7 @@ std::string hexDump(const void* mem, unsigned int n);
 /**
  * Safely copies source string into destination string.  The destination
  * will always be null terminated if this function is successful.
- * 
+ *
  * @param dst     Destination string.
  * @param dstSize The size of the destination string including the terminating
  *               null character.
@@ -392,7 +441,7 @@ void copyString(char* const dst, const size_t dstSize, const std::string& src);
 /**
  * Safely copies source string into destination string.  The destination
  * will always be null terminated if this function is successful.
- * 
+ *
  * @param dst Destination string.
  * @param src Source string.
  */
@@ -425,7 +474,7 @@ std::string extractPathFromXrootdPath(const std::string& path);
 
 /**
  * Performs a search and replace operation on the specified string.
- * 
+ *
  * @param str In/out parameter which is the string to be modified.
  * @param search The search string.
  * @param replacement The replacement string.
@@ -509,11 +558,11 @@ std::string decimalToHexadecimal(const std::string& decimalNumber);
 
 /**
  * Checks if a string is a valid UUID.
- * 
+ *
  * A valid UUID is a string that is exactly 36 characters long and adheres to the
  * 8-4-4-4-12 format, where each number represents the number of hexadecimal digits
  * in each section of the UUID. The sections are separated by hyphens.
- * 
+ *
  * @param uuid The string to check.
  * @return `true` if the string is a valid UUID, `false` otherwise.
  */
@@ -521,10 +570,10 @@ bool isValidUUID(const std::string& uuid);
 
 /**
  * Checks if a string is a valid hexadecimal number.
- * 
+ *
  * A valid hexadecimal number is a string that contains only hexadecimal digits (0-9, a-f, A-F).
  * The string can optionally start with the prefix "0x" or "0X".
- * 
+ *
  * @param hexadecimal The string to check.
  * @return `true` if the string is a valid hexadecimal number, `false` otherwise.
  */
@@ -532,12 +581,12 @@ bool isValidHex(const std::string& hexadecimal);
 
 /**
  * Checks if a string is a valid ID.
- * 
+ *
  * A valid ID is a non-empty string that is either a valid decimal number, a valid UUID, or a valid hexadecimal number.
  * A valid decimal number is a string that contains only decimal digits (0-9).
  * A valid UUID is a string that is exactly 36 characters long and adheres to the 8-4-4-4-12 format, where each number represents the number of hexadecimal digits in each section of the UUID. The sections are separated by hyphens.
  * A valid hexadecimal number is a string that contains only hexadecimal digits (0-9, a-f, A-F). The string can optionally start with the prefix "0x" or "0X".
- * 
+ *
  * @param id The string to check.
  * @return `true` if the string is a valid ID, `false` otherwise.
  */

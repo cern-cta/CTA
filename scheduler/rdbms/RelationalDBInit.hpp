@@ -21,7 +21,10 @@
 #include <string>
 
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
+#include "common/Timer.hpp"
 
 namespace cta::catalogue {
 
@@ -33,9 +36,46 @@ namespace cta {
 class RelationalDBQCR {
   // QueueCleanupRunner
 public:
-  RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) {}
+  RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
-  void runOnePass(log::LogContext& lc) {}
+  void runOnePass(log::LogContext& lc) {
+    /* cta::utils::Timer timer;
+    // DELETE is implicit transaction in postgresql
+
+    std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindString(":STATUS", to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion));
+    stmt.executeNonQuery();
+    try {
+      m_conn.commit();
+    } catch (exception::Exception &ex) {
+      lc.log(log::ERR, "In RelationalDBQCR::runOnePass(): failed to delete rows of ARCHIVE_JOB_QUEUE" +
+                     ex.getMessageValue());
+      m_conn.rollback();
+    }
+    auto ndelrows = stmt.getNbAffectedRows();
+    auto tdelsec = timer.secs(cta::utils::Timer::resetCounter);
+    lc.log(log::INFO, std::string("In RelationalDBQCR::runOnePass(): Deleted ") +
+                      std::to_string(ndelrows) +
+                      std::string(" rows from the ARCHIVE_JOB_QUEUE. Operation took ") +
+                      std::to_string(tdelsec) + std::string(" seconds."));
+    */
+    /* Autovacuum might be heavy and degrading performance
+     * optionally we can partition the table and drop partitions,
+     * this drop operation locks only the specific partition
+     * without affecting other parts of the table
+     * 1. get the current time stamps in epoch and check existing partitions
+     * 2. create new partitions if needed
+     * 3. check and drop partitions which are ready to be dropped
+     * SELECT
+     * COUNT(*) = COUNT(CASE WHEN status = 'completed' THEN 1 END) AS all_rows_completed
+     * FROM
+     * partition_name;  -- Replace partition_name with the actual name
+     */
+  }
+
+private:
+  rdbms::Conn m_conn;
 };
 
 class RelationalDBGC {
@@ -61,7 +101,7 @@ public:
   }
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    const uint64_t nbConns = 2;
+    const uint64_t nbConns = 10;
     return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, nbConns);
   }
 

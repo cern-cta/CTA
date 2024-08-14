@@ -167,7 +167,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
                                                                                 queueCriteria.copyToPoolMap,
                                                                                 queueCriteria.mountPolicy);
 
+  cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
+  auto schedulerBackendTime = t2.secs();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
@@ -195,7 +197,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     .add("requesterGroup", request.requester.group)
     .add("srcURL", midEllipsis(request.srcURL, 50, 15))
     .add("catalogueTime", catalogueTime)
-    .add("schedulerDbTime", schedulerDbTime);
+    .add("schedulerDbTime", schedulerDbTime)
+    .add("schedulerBackendTime", schedulerBackendTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "Queued archive request");
   return archiveReqAddr;
@@ -1813,7 +1816,13 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   }
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
+#ifdef CTA_PGSCHED
+  lc.log(log::DEBUG,
+         "In Scheduler: calling getMountInfo() with DB lock on logicalLibraryName: " + std::string(logicalLibraryName));
+  mountInfo = m_db.getMountInfo(std::string_view(logicalLibraryName), lc, timeout_us);
+#else
   mountInfo = m_db.getMountInfo(lc, timeout_us);
+#endif
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
     m_db.trimEmptyQueues(lc);
