@@ -2,7 +2,17 @@
 global:
   imagePullSecret: "ctaregsecret"
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  volumes:
+  - name: versionlock-list
+    configMap:
+      name: versionlock-conf
+  volumeMounts:
+  - mountPath: /etc/dnf/plugins/versionlock.list
+    name: versionlock-list
+    subPath: versionlock.list
 
+# only temporary
+ctaoesName: "ctaeos"
 # Here are stored values for the project related pods
 cta:
     # TODO: Discuss about adding service type
@@ -196,7 +206,7 @@ cta:
           path: /opt/cta
       - name: eosconfig
         configMap:
-          name: eos-config
+          name: eos-config-base
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
@@ -294,7 +304,7 @@ cta:
           name: library-config
       - name: eosconfig
         configMap:
-          name: eos-config
+          name: eos-config-base
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
@@ -373,7 +383,7 @@ cta:
           name: library-config
       - name: eosconfig
         configMap:
-          name: eos-config
+          name: eos-config-base
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
@@ -392,8 +402,12 @@ cta:
           value: 'cta-frontend:10955'
         - name: TERM
           value: "xterm"
-        command: ['/opt/run/bin/ctaeos-mgm-log-wrapper.sh']
-        args: ["none"]
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /tmp/eos.keytab > /etc/eos.keytab;
+          chmod 400 /etc/eos.keytab;
+          /opt/run/bin/ctaeos-mgm-log-wrapper.sh
         volumeMounts:
         - mountPath: /shared
           name: shared
@@ -411,8 +425,25 @@ cta:
         - mountPath: /etc/eos-server.krb5.keytab
           name: keytab
           subPath: eos-server.krb5.keytab
-        # - mountPath: /etc/grid-security/certificates/
-        #   name: ca-certs
+        - mountPath: /tmp/eos.keytab
+          name: sss-keytab
+          subPath: eos.keytab
+        - mountPath: /etc/cta/castor-migration.conf
+          name: migration-conf
+          subPath: castor-migration.conf
+        - mountPath: /etc/xrd.cf.mgm
+          name: xrd-mgm-config
+          subPath: xrd.cf.mgm
+        - mountPath: /etc/xrd.cf.fst
+          name: xrd-fst-config
+          subPath: xrd.cf.fst
+        - mountPath: /etc/xrootd-quarkdb.cfg
+          name: eos-config-quarkdb
+          subPath: xrootd-quarkdb.cfg
+        - mountPath: /etc/sysconfig/eos
+          name: eos-sysconfig
+          subPath: eos
+
       volumes:
       - name: shared
         hostPath:
@@ -425,7 +456,7 @@ cta:
           claimName: claimstg
       - name: eosconfig
         configMap:
-          name: eos-config
+          name: eos-config-base
       - name: eosctaconfig
         configMap:
           name: eos-grpc-keytab
@@ -435,48 +466,28 @@ cta:
       - name: keytab
         secret:
           secretName: eos-server-keytab
-      # - name: ca-certs
-      #   secret:
-      #     secretName: ca-certs
+      - name: sss-keytab
+        secret:
+          secretName: eos-sss-keytab
+      - name: migration-conf
+        configMap:
+          name: castor-migration-conf
+      - name: xrd-mgm-config
+        configMap:
+          name: eos-config-mgm
+      - name: xrd-fst-config
+        configMap:
+          name: eos-config-fst
+      - name: eos-config-quarkdb
+        configMap:
+          name: eos-config-quarkdb
+      - name: eos-sysconfig
+        configMap:
+          name: eos-sysconfig
 
 
-# Here are stored ALL configMaps needed for the project to be build
+# Here you can store all additional configs that you would wish to generate
 configs:
-  - name: eos-config
-    labels:
-      config: eos
-    data:
-      eos5: |
-        use_eos5
-
-      xrd.cf.mgm: |
-        mgmofs.nslib /usr/lib64/libEosNsQuarkdb.so
-        mgmofs.qdbcluster localhost:7777
-        mgmofs.qdbpassword_file  /etc/eos.keytab
-        xrd.protocol  XrdHttp:8444 libXrdHttp.so
-        http.exthandler  EosMgmHttp libEosMgmHttp.so eos::mgm::http::redirect-to-https=0
-        http.exthandler  xrdtpc libXrdHttpTPC.so
-        http.trace  all -debug
-        xrd.tls  /etc/grid-security/daemon/hostcert.pem /etc/grid-security/daemon/hostkey.pem
-        xrd.tlsca  certdir /etc/grid-security/certificates/
-        all.sitename  cern_tape_archive_ctaeos_ci
-        taperestapi.sitename cern-cta-ctaeosci
-
-      xrd.cf.fst: |
-        xrd.protocol  XrdHttp:1140 libXrdHttp.so
-        http.exthandler  EosFstHttp /usr/lib64/libEosFstHttp.so none
-        http.exthandler  xrdtpc libXrdHttpTPC.so
-        xrd.tls  /etc/grid-security/daemon/hostcert.pem /etc/grid-security/daemon/hostkey.pem
-        xrd.tlsca  certdir /etc/grid-security/certificates/
-        http.trace  all -debug
-
-      xrootd-quarkdb.cfg: |
-        xrd.port 7777
-        xrd.protocol redis:7777 /usr/lib64/libXrdQuarkDB.so
-        redis.mode standalone
-        redis.database /var/lib/quarkdb/quarkdb1
-        redis.password_file  /etc/eos.keytab.xrootd
-
 
 
 eos:
