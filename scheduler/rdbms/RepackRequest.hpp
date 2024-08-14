@@ -33,16 +33,16 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
   friend class cta::RelationalDB;
 
 public:
-  RepackRequest(rdbms::ConnPool& pool, catalogue::Catalogue& catalogue, log::LogContext& lc)
-      : m_connPool(pool),
+  RepackRequest(rdbms::Conn& conn, catalogue::Catalogue& catalogue, log::LogContext& lc)
+      : m_conn(conn),
         m_catalogue(catalogue),
         m_lc(lc) {}
 
-  RepackRequest(rdbms::ConnPool& pool,
+  RepackRequest(rdbms::Conn& conn,
                 catalogue::Catalogue& catalogue,
                 log::LogContext& lc,
                 const schedulerdb::postgres::RepackJobQueueRow& row)
-      : m_connPool(pool),
+      : m_conn(conn),
         m_catalogue(catalogue),
         m_lc(lc) {
     *this = row;
@@ -107,7 +107,8 @@ public:
   std::unique_ptr<schedulerdb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool& m_connPool;
+  //rdbms::ConnPool      &m_connPool;
+  rdbms::Conn& m_conn;
   catalogue::Catalogue& m_catalogue;
   log::LogContext& m_lc;
 };

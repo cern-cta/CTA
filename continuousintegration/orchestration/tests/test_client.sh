@@ -93,7 +93,6 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
 kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm

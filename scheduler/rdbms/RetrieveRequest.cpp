@@ -21,8 +21,8 @@
 namespace cta::schedulerdb {
 
 /*!
- * Retrieve request exception
- */
+  * Retrieve request exception
+  */
 class RetrieveRequestException : public std::runtime_error {
   using std::runtime_error::runtime_error;
 };
@@ -148,16 +148,15 @@ void RetrieveRequest::insert() {
      */
   log::ScopedParamContainer params(m_lc);
   row.addParamsToLogContext(params);
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
 
-  m_txn.reset(new schedulerdb::Transaction(*m_connPool));
-
-  try {
-    row.insert(*m_txn);
-  } catch (exception::Exception& ex) {
-    params.add("exeptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
-    throw;
-  }
+  //try {
+  //  //row.insert(*m_txn);
+  //} catch(exception::Exception &ex) {
+  //  params.add("exceptionMessage", ex.getMessageValue());
+  //  m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
+  //  throw;
+  //}
 
   m_lc.log(log::INFO, "In RetrieveRequest::insert(): added job to queue.");
 }
@@ -167,10 +166,7 @@ void RetrieveRequest::update() const {
 }
 
 void RetrieveRequest::commit() {
-  if (m_txn) {
-    m_txn->commit();
-  }
-  m_txn.reset();
+  m_conn->commit();
 }
 
 [[noreturn]] void RetrieveRequest::setFailureReason([[maybe_unused]] std::string_view reason) const {

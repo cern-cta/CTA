@@ -90,10 +90,20 @@ void PostgresStmt::bindString(const std::string& paramName, const std::optional<
       m_paramValues[idx].clear();
       m_paramValuesPtrs[idx] = nullptr;
     }
-
   } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindBool
+//------------------------------------------------------------------------------
+void PostgresStmt::bindBool(const std::string& paramName, const std::optional<bool>& paramValue) {
+  if (paramValue) {
+    PostgresStmt::bindString(paramName, paramValue.value() ? std::string("t") : std::string("f"));
+  } else {
+    PostgresStmt::bindString(paramName, std::nullopt);
   }
 }
 
@@ -308,6 +318,9 @@ void PostgresStmt::executeCopyInsert(const size_t rows) {
   } catch (exception::LostDatabaseConnection& ex) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection for SQL statement " +
                                             getSqlForException() + ": " + ex.getMessage().str());
+  } catch (exception::Exception& ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               ex.getMessage().str());
   } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());

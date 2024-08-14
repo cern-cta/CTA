@@ -26,50 +26,69 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  m_txn.reset(new schedulerdb::Transaction(m_connPool));
-
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
+  //m_txn->start();
+  // Getting the next ID for the request possibly composed of multiple jobs
+  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
+  uint32_t areq_job_count = m_jobs.size();
+  // Inserting the jobs to the DB
+  //std::string tapePool = "";
   for (const auto& aj : m_jobs) {
-    cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
-
-    ajr.tapePool = aj.tapepool;
-    ajr.mountPolicy = m_mountPolicy.name;
-    ajr.priority = m_mountPolicy.archivePriority;
-    ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
-    ajr.archiveFile = m_archiveFile;
-    ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
-    ajr.copyNb = aj.copyNb;
-    ajr.startTime = time(nullptr);  // Time the job was queued in the DB
-    ajr.archiveReportUrl = m_archiveReportURL;
-    ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
-    ajr.requesterName = m_requesterIdentity.name;
-    ajr.requesterGroup = m_requesterIdentity.group;
-    ajr.srcUrl = m_srcURL;
-    ajr.retriesWithinMount = aj.retriesWithinMount;
-    ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
-    ajr.totalRetries = aj.totalRetries;
-    ajr.lastMountWithFailure = aj.lastMountWithFailure;
-    ajr.maxTotalRetries = aj.maxTotalRetries;
-
-    log::ScopedParamContainer params(m_lc);
-    ajr.addParamsToLogContext(params);
-
     try {
-      ajr.insert(*m_txn);
-    } catch (exception::Exception& ex) {
-      params.add("exeptionMessage", ex.getMessageValue());
-      m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
+      cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
+      ajr.reqId = areq_id;
+      ajr.reqJobCount = areq_job_count;
+      ajr.tapePool = aj.tapepool;
+      ajr.mountPolicy = m_mountPolicy.name;
+      ajr.priority = m_mountPolicy.archivePriority;
+      ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
+      ajr.archiveFile = m_archiveFile;
+      ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
+      ajr.copyNb = aj.copyNb;
+      ajr.startTime = time(nullptr);  // Time the job was queued in the DB
+      ajr.archiveReportUrl = m_archiveReportURL;
+      ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
+      ajr.requesterName = m_requesterIdentity.name;
+      ajr.requesterGroup = m_requesterIdentity.group;
+      ajr.srcUrl = m_srcURL;
+      ajr.retriesWithinMount = aj.retriesWithinMount;
+      ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
+      ajr.maxReportRetries = aj.maxReportRetries;
+      ajr.totalRetries = aj.totalRetries;
+      ajr.lastMountWithFailure = aj.lastMountWithFailure;
+      ajr.maxTotalRetries = aj.maxTotalRetries;
+
+      log::ScopedParamContainer params(m_lc);
+      ajr.addParamsToLogContext(params);
+      // locking DB operations on transaction level per tapePool
+      // requiring multiple locks succeeds in PostgreSQL
+      //if (tapePool != aj.tapepool || tapePool == ""){
+      //  tapePool = aj.tapepool;
+      //  m_txn.lockGlobal(aj.tapepool);
+      //}
+      //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
+      ajr.insert(m_conn);
+    }
+    catch (exception::Exception& ex) {
+      log::ScopedParamContainer params(m_lc);
+      params.add("exceptionMessage", ex.getMessageValue());
+      //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
+      m_conn.rollback();  // Rollback on error
       throw;
     }
-
-    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
-}
-
-void ArchiveRequest::commit() {
-  if (m_txn) {
-    m_txn->commit();
+  try {
+    //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
+    m_conn.commit();
+    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
   }
-  m_txn.reset();
+  catch (exception::Exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
+    m_conn.rollback();  // Rollback on error
+    throw;
+  }
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber,
