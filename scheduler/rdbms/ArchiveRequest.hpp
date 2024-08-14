@@ -18,7 +18,6 @@
 #pragma once
 
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
@@ -33,11 +32,10 @@ CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
 
 class ArchiveRequest {
 public:
-  ArchiveRequest(rdbms::ConnPool& pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) {}
+  ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
   void insert();
   [[noreturn]] void update() const;
-  void commit();
 
   // ============================== Job management =============================
   /*
@@ -185,6 +183,7 @@ public:
    * @return list of JobDump objects, currently not implemented
    *         throwing an exception
    */
+
   [[noreturn]] std::list<JobDump> dumpJobs() const;
 
 private:
@@ -204,10 +203,9 @@ private:
     int maxReportRetries;
   };
 
-  std::unique_ptr<schedulerdb::Transaction> m_txn;
-
   // References to external objects
-  rdbms::ConnPool& m_connPool;
+  //rdbms::ConnPool &m_connPool;
+  rdbms::Conn& m_conn;
   log::LogContext& m_lc;
 
   // ArchiveRequest state

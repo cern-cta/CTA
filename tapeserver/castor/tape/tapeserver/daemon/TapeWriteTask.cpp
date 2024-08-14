@@ -217,7 +217,6 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
-
   } catch (const cta::exception::Exception& e) {
     // We can end up there because
     // We failed to open the FileWriter
@@ -392,6 +391,13 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 //------------------------------------------------------------------------------
 const TapeSessionStats TapeWriteTask::getTaskStats() const {
   return m_taskStats;
+}
+
+//------------------------------------------------------------------------------
+//   getArchiveJob
+//------------------------------------------------------------------------------
+cta::ArchiveJob& TapeWriteTask::getArchiveJob() const {
+  return *m_archiveJob;
 }
 
 }  // namespace castor::tape::tapeserver::daemon

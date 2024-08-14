@@ -25,7 +25,15 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  explicit Transaction(rdbms::ConnPool& connPool);
+  // Constructors
+  Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
+  Transaction(cta::rdbms::ConnPool& connPool);
+
+  // Move constructor
+  Transaction(Transaction&& other) noexcept;
+
+  // Move assignment operator
+  Transaction& operator=(Transaction&& other) noexcept;
 
   /**
    * Prohibit copy construction
@@ -38,27 +46,22 @@ public:
   Transaction& operator=(const Transaction&) = delete;
 
   /**
-   * Get the transactional connection
-   *
-   * @return txn connection
-   */
-  rdbms::Conn& conn();
-
-  /**
-   * Commit any pending transactions
-   * and return the connection
-   *
-   * @return connection
-   */
-  rdbms::Conn& getNonTxnConn();
-  /**
-   * Take out a global advisory transaction lock
+   * Take out an advisory transaction lock per tape pool
    *
    * The lock will be automatically released when the transaction ends (or the connection is terminated).
    *
-   * @param lockId  Unique identifier for this lock
+   * @param lockIdString  Unique identifier for this lock
    */
-  void lockGlobal(uint64_t lockId);
+  void takeNamedLock(std::string_view lockIdString);
+
+  /**
+   * Take out a exclusive access lock on ARCHIVE_JOB_QUEUE and RETRIEVE_JOB_QUEUE
+   *
+   * The lock will be automatically released when the transaction ends
+   * (or the connection is terminated).
+   *
+   */
+  void lockGlobal();
 
   /**
    * Commit the transaction
@@ -83,8 +86,21 @@ public:
 
   ~Transaction() noexcept;
 
+  /**
+   * Provides access to the connection
+   */
+  cta::rdbms::Conn& getConn() const;
+
+  /**
+   * Allows to reset the transaction connection to a new one
+   *
+   * @param connPool
+   */
+  void resetConn(cta::rdbms::ConnPool& connPool);
+
 private:
-  rdbms::Conn m_conn;
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
+  bool m_ownConnection;
   bool m_begin = false;
 };
 
