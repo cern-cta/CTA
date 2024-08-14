@@ -43,7 +43,7 @@ public:
   /*!
    * Get the Catalogue connection string
    */
-  const std::string& getCatalogueConnString() const { return m_catalogue_conn_string; }
+  std::string_view getCatalogueConnString() const { return m_catalogue_conn_string; }
 
   /*!
    * Get a reference to the Catalogue
@@ -88,7 +88,7 @@ public:
   /*!
    * Get the verification mount policy
    */
-  const std::string& getVerificationMountPolicy() const { return m_verificationMountPolicy; }
+  std::string_view getVerificationMountPolicy() const { return m_verificationMountPolicy; }
 
   /*!
    * Get the endpoints for namespace queries

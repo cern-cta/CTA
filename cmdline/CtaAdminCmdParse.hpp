@@ -102,7 +102,7 @@ public:
    /*!
     * Return the help text for this option
     */
-   const std::string& get_help_text() const { return m_help_txt; }
+   std::string_view get_help_text() const { return m_help_txt; }
 
    /*!
     * Return per-option help string

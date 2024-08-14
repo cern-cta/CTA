@@ -61,7 +61,7 @@ public:
   /**
     * Returns the RAO algorithm name of this RAO data instance
     */
-  const std::string& getRAOAlgorithmName() const { return m_raoAlgorithmName; }
+  std::string_view getRAOAlgorithmName() const { return m_raoAlgorithmName; }
   /**
     * Returns the RAO algorithm options of this RAO data instance
     */

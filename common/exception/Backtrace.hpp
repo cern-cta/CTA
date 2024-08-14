@@ -26,7 +26,7 @@ class Backtrace {
 public:
   explicit Backtrace(bool fake = false);
 
-  const std::string& str() const { return m_trace; }
+  std::string_view str() const { return m_trace; }
 
 private:
   std::string m_trace;
