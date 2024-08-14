@@ -38,6 +38,7 @@
 #include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "tests/TempFile.hpp"
 
 namespace unitTests {
 
@@ -252,37 +253,6 @@ INSTANTIATE_TEST_CASE_P(FormatLabelsParam, castorTapeFileTest,
                   // , cta::common::dataStructures::Label::Format::OSM
 ));
 
-// Class creating a temporary file of 1kB and deleting it
-// automatically
-class TempFile {
-public:
-  TempFile() {
-    char path[] = "/tmp/testCTA-XXXXXX";
-    int fd = ::mkstemp(path);
-    cta::exception::Errnum::throwOnMinusOne(fd, "In TempFile::TempFile: failed to mkstemp: ");
-    ::close(fd);
-    m_path = path;
-  }
-
-  explicit TempFile(const std::string& path) : m_path(path) {}
-  std::string path() { return m_path; }
-  void randomFill(size_t size) {
-    std::ofstream out(m_path, std::ios::out | std::ios::binary);
-    std::ifstream in("/dev/urandom", std::ios::in|std::ios::binary);
-    std::unique_ptr<char[]> buff(new char[size]);
-    in.read(buff.get(), size);
-    out.write(buff.get(), size);
-  }
-  ~TempFile() {
-    if (m_path.size()) {
-      ::unlink(m_path.c_str());
-    }
-  }
-
-private:
-  std::string m_path;
-};
-
 TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   const uint32_t block_size = 1024;
   char *data1 = new char[block_size];
@@ -291,17 +261,14 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   cta::disk::DiskFileFactory fileFactory(0, striperPool);
   TempFile sourceFile;
   sourceFile.randomFill(1000);
-  std::string src_path = std::string(sourceFile.path());
-  std::string dst_path = src_path + "_dst";
-  TempFile destinationFile(dst_path);
+  TempFile destinationFile(sourceFile.path() + "_dst");
   // host part of file location
-  std::string lh_src = "localhost:" + src_path;
-  std::string lh_dst = lh_src + "_dst";
+  std::string lh = "localhost:";
   {
     std::unique_ptr<cta::disk::ReadFile> rf(
-      fileFactory.createReadFile(lh_src));
+      fileFactory.createReadFile(lh + sourceFile.path()));
     std::unique_ptr<cta::disk::WriteFile> wf(
-      fileFactory.createWriteFile(lh_dst));
+      fileFactory.createWriteFile(lh + destinationFile.path()));
     size_t res = 0;
     do {
       res = rf->read(data1, block_size);
@@ -310,9 +277,9 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     wf->close();
   }
   std::unique_ptr<cta::disk::ReadFile> src(
-      fileFactory.createReadFile(src_path));
+      fileFactory.createReadFile(sourceFile.path()));
   std::unique_ptr<cta::disk::ReadFile> dst(
-      fileFactory.createReadFile(dst_path));
+      fileFactory.createReadFile(destinationFile.path()));
   size_t res1 = 0;
   size_t res2 = 0;
   do {
