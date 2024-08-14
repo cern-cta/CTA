@@ -291,11 +291,12 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   cta::disk::DiskFileFactory fileFactory(0, striperPool);
   TempFile sourceFile;
   sourceFile.randomFill(1000);
-  const std::string dst_path = sourceFile.path() + "_dst";
+  std::string src_path = std::string(sourceFile.path());
+  std::string dst_path = src_path + "_dst";
   TempFile destinationFile(dst_path);
   // host part of file location
-  const std::string lh_src = "localhost:" + sourceFile.path();
-  const std::string lh_dst = lh_src + "_dst";
+  std::string lh_src = "localhost:" + src_path;
+  std::string lh_dst = lh_src + "_dst";
   {
     std::unique_ptr<cta::disk::ReadFile> rf(
       fileFactory.createReadFile(lh_src));
@@ -309,9 +310,9 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     wf->close();
   }
   std::unique_ptr<cta::disk::ReadFile> src(
-      fileFactory.createReadFile(sourceFile.path()));
+      fileFactory.createReadFile(src_path));
   std::unique_ptr<cta::disk::ReadFile> dst(
-      fileFactory.createReadFile(destinationFile.path()));
+      fileFactory.createReadFile(dst_path));
   size_t res1 = 0;
   size_t res2 = 0;
   do {
