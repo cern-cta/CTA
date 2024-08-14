@@ -4442,7 +4442,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for "
                        "repack, job does not exist in the objectstore.";
         } catch (cta::exception::Exception& ex) {
-          params.add("exeptionMessage", ex.getMessageValue());
+          params.add("exceptionMessage", ex.getMessageValue());
         } catch (std::exception& ex) {
           params.add("exceptionWhat", ex.what()).add("exceptionTypeName", typeid(ex).name());
         }
@@ -4506,7 +4506,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for "
                        "user, job does not exist in the objectstore.";
         } catch (cta::exception::Exception& ex) {
-          params.add("exeptionMessage", ex.getMessageValue());
+          params.add("exceptionMessage", ex.getMessageValue());
         } catch (std::exception& ex) {
           params.add("exceptionWhat", ex.what()).add("exceptionTypeName", typeid(ex).name());
         }

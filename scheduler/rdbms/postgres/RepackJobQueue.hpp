@@ -186,7 +186,7 @@ struct RepackJobQueueRow {
         :REPACK_FINISHED_TIME)
     )SQL";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":BUFFER_URL", bufferUrl);
     stmt.bindString(":STATUS", to_string(status));
@@ -324,7 +324,7 @@ struct RepackJobQueueRow {
         LIMIT :LIMIT
     )SQL";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
 
