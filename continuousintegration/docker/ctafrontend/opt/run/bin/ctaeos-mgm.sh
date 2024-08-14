@@ -72,23 +72,8 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 # setup eos host and instance name
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/sysconfig/eos
   sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/sysconfig/eos
-  sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.mgm
-  sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/xrd.cf.mgm
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.mq
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.fst
-
-# Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
-echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
-echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
-
-# Enable tape support
-echo "mgmofs.tapeenabled true"  >> /etc/xrd.cf.mgm
-
-# Add configmap based configuration (initially Namespace)
-# for MGM
-test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
-# For FST
-test -f /etc/config/eos/xrd.cf.fst && cat /etc/config/eos/xrd.cf.fst >> /etc/xrd.cf.fst
 
 # prepare eos startup
   # skip systemd for eos initscripts
@@ -97,9 +82,7 @@ test -f /etc/config/eos/xrd.cf.fst && cat /etc/config/eos/xrd.cf.fst >> /etc/xrd
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
-# echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab
-#     chmod 400 /etc/eos.keytab
-    chown daemon:daemon /etc/eos.keytab
+  chown daemon:daemon /etc/eos.keytab
   mkdir -p /run/lock/subsys
   mkdir -p /var/eos/config/${eoshost}
     chown daemon:root /var/eos/config
