@@ -15,30 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ArchiveJob.hpp"
-#include "common/exception/Exception.hpp"
+#include "JobPool.hpp"
+#include "ArchiveRdbJob.hpp"
 
 namespace cta::schedulerdb {
-
-ArchiveJob::ArchiveJob() = default;
-
-ArchiveJob::ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool)
-    : m_jobOwned(jobOwned),
-      m_mountId(mountID),
-      m_tapePool(tapePool) {
-  jobID = jid;
-};
-
-void ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void ArchiveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
-  throw cta::exception::Exception("Not implemented");
-}
-
+template class JobPool<ArchiveRdbJob>;  // Explicit instantiation
 }  // namespace cta::schedulerdb

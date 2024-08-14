@@ -53,6 +53,7 @@ class Catalogue;
 
 namespace schedulerdb {
 class ArchiveMount;
+class ArchiveRdbJob;
 class TapeMountDecisionInfo;
 }  // namespace schedulerdb
 
@@ -66,6 +67,7 @@ public:
 
   ~RelationalDB() override;
   friend class cta::schedulerdb::ArchiveMount;
+  friend class cta::schedulerdb::ArchiveRdbJob;
   friend class cta::schedulerdb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
 
@@ -103,8 +105,6 @@ public:
   /**
    * Get all archive queues with status:
    * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
-   * CHECK: how this reporting works for OStoreDB and make sure
-   * no selection criteria are missed (tapePool, hostname etc.)
    *
    * @param filesRequested  number of rows to be reported from the scheduler DB
    * @param logContext      logging context
@@ -221,11 +221,18 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
                                                                          uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
+
+  /**
+   * Provides access to a connection from the connection pool
+   */
+  cta::rdbms::Conn getConn();
 
 private:
   /*

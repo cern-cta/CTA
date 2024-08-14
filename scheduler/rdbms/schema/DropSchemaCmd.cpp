@@ -52,8 +52,9 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv
   auto conn = connPool.getConn();
 
   // Abort if the schema is already dropped
-  if (conn.getTableNames().empty() && conn.getSequenceNames().empty()) {
-    m_out << "Database contains no tables and no sequences." << std::endl
+  if (conn.getTableNames().empty() && conn.getSequenceNames().empty() && conn.getViewNames().empty() &&
+      conn.getTypeNames().empty()) {
+    m_out << "Database contains no tables, no sequences, no views and no type names." << std::endl
           << "Assuming the schema has already been dropped." << std::endl;
     return 0;
   }
@@ -70,7 +71,6 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv
   } else {
     m_out << "Aborting" << std::endl;
   }
-
   return 0;
 }
 

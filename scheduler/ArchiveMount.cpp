@@ -158,11 +158,13 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   utils::Timer t;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(
     m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext));
-  std::list<std::unique_ptr<ArchiveJob>> ret;
+  std::vector<std::unique_ptr<ArchiveJob>> retVector;
+  retVector.reserve(dbJobBatch.size());
   // We prepare the response
   for (auto& sdaj : dbJobBatch) {
-    ret.emplace_back(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
-    ret.back()->m_dbJob.reset(sdaj.release());
+    retVector.emplace_back(
+      std::unique_ptr<ArchiveJob>(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile)));
+    retVector.back()->m_dbJob.reset(sdaj.release());
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
@@ -170,8 +172,24 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
-
+  // Convert vector to list (which is expected as return type, to be revised in the future)
+  std::list<std::unique_ptr<cta::ArchiveJob>> ret;
+  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// requeueJobBatch
+//------------------------------------------------------------------------------
+uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
+                                            cta::log::LogContext& logContext) const {
+  if (jobIDsList.empty()) {
+    logContext.log(cta::log::INFO, "In cta::ArchiveMount::requeueJobBatch(): no job IDs provided to fail.");
+    return 0;
+  }
+  // Forward the job IDs to the database handler's requeueJobBatch method.
+  uint64_t njobs = m_dbMount->requeueJobBatch(jobIDsList, logContext);
+  return njobs;
 }
 
 //------------------------------------------------------------------------------
