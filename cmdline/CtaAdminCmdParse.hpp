@@ -842,7 +842,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD},        {opt_storageclass, opt_copynb, opt_tapepool, opt_comment}      },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH},
- 	  {opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional()}                                    },
+   {opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional()}                                    },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb}                                 },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -854,14 +854,17 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_ADD},
    {opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment}              },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_CH},
-   {opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional()}                                                                                 },
+   {opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(),
+    opt_refresh_interval.optional()}                                                                                         },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM},    {opt_diskinstancespace_alias, opt_diskinstance}                },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS},    {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD},
-   {opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time, opt_comment}                                                                                 },
+   {opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
+    opt_comment}                                                                                                             },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH},
-   {opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional()}                                                                                 },
+   {opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(),
+    opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM},           {opt_disksystem}                                               },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS},           {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -871,7 +874,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM},                {opt_drivename_cmd, opt_force_flag.optional()}                 },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_CH},                {opt_drivename_cmd, opt_comment}                               },
  /*-------------------------------------------------------------------------------------------------------------------------*/
-  {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS},        {opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(), opt_vid.optional(), opt_log.optional(), opt_summary.optional()}                                                                                 },
+  {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS},
+   {opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(), opt_vid.optional(),
+    opt_log.optional(), opt_summary.optional()}                                                                              },
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM},        {opt_object_id}                                                },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD},
@@ -882,45 +887,57 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS},       {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD},
-   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment}                                                                                 },
+   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment}                         },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH},
-   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(), opt_disabledreason.optional()}                                                                                 },
+   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(),
+    opt_disabledreason.optional()}                                                                                           },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM},       {opt_logicallibrary_alias}                                     },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS},       {opt_logicallibrary_disabled.optional()}                       },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},
-   {opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(), opt_comment}                                                                                 },
+   {opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(),
+    opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
+    opt_comment}                                                                                                             },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH},
-   {opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional()}                                                                                 },
+   {opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(),
+    opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional()}                   },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            {opt_mediatype_alias}                                          },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS},            {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD},
-   {opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority, opt_minretrieverequestage, opt_comment}                                                                                 },
+   {opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority, opt_minretrieverequestage,
+    opt_comment}                                                                                                             },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH},
-   {opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(), opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_comment.optional()}                                                                                 },
+   {opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(),
+    opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_comment.optional()}                           },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          {opt_mountpolicy_alias}                                        },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS},          {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_ADD},
-   {opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots, opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional()}                                                                                 },
+   {opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(),
+    opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
+    opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional()}                        },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
-   {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots.optional() ,opt_comment.optional()}                                                                                 },
+   {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(),
+    opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(),
+    opt_nb_physical_drive_slots.optional() ,opt_comment.optional()}                                                          },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},
-   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_no_recall.optional(), opt_max_files_to_select.optional()}                                                                                 },
+   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(),
+    opt_justaddcopies.optional(), opt_no_recall.optional(), opt_max_files_to_select.optional()}                              },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               {opt_vid}                                                      },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              {opt_vid}                                                      },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}                                                                                 },
+   {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(),
+    opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}            },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD},  {opt_instance, opt_username_alias, opt_mountpolicy, opt_comment}                                                                                 },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH},
-   {opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                                                                 },
+   {opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                    },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   {opt_instance, opt_username_alias}                             },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS},   {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -933,13 +950,19 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS},         {opt_storageclass_alias.optional()}                            },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
-   {opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional()}                                                                                 },
+   {opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_state.optional(),
+    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional()}                                            },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH},
-   {opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(), opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(), opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional()}                                                                                 },
+   {opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(), opt_tapepool.optional(),
+    opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(), opt_state.optional(),
+    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional()}                   },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM},                 {opt_vid}                                                      },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM},            {opt_vid}                                                      },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(), opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(), opt_physical_library.optional()}                                                                                 },
+   {opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
+    opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(), opt_full.optional(), opt_fidfile.optional(),
+    opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(),
+    opt_physical_library.optional()}                                                                                         },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
    {opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_archivefileid.optional()}   },
@@ -948,25 +971,30 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD},
    {opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment}                         },
-  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},             {opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_supply.optional(), opt_comment.optional()}                                                                                 },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},
+   {opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_supply.optional(),
+    opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
-  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},             {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                                                                 },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
+   {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                              },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE},            {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------*/
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD},
-   {opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(), opt_isrepackvo.optional()}                                                                                 },
+   {opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),
+    opt_isrepackvo.optional()}                                                                                               },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH},
-   {opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional()}                                                                                 },
+   {opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(),
+    opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional()}                                      },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM},  {opt_vo}                                                       },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
  /*-------------------------------------------------------------------------------------------------------------------------
-     COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
+   COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
-  // Used by cta-change-storageclass and cta-eos-namespace-inject
+ // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional()}                      },
-  // Used by cta-restore-deleted-files
+ // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
  /*-------------------------------------------------------------------------------------------------------------------------*/
