@@ -443,8 +443,7 @@ cta:
         - mountPath: /etc/sysconfig/eos
           name: eos-sysconfig
           subPath: eos
-        # - mountPath: /etc/grid-security/certificates/
-        #   name: ca-certs
+
       volumes:
       - name: shared
         hostPath:
@@ -485,9 +484,6 @@ cta:
       - name: eos-sysconfig
         configMap:
           name: eos-sysconfig
-      # - name: ca-certs
-      #   secret:
-      #     secretName: ca-certs
 
 
 # Here you can store all additional configs that you would wish to generate
