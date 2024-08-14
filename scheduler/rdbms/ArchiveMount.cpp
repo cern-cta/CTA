@@ -50,8 +50,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   try {
     logContext.log(cta::log::DEBUG,
                    "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
-    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo.tapePool,
-                                                                  mountInfo.mountId, mountInfo.vid, filesRequested);
+    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested);
     // we need to extract the JOB_IDs which were updated before we release the lock
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
@@ -84,7 +83,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       jobs.emplace_back(resultSet);
       jobs.back().jobId = resultSet.columnUint64("JOB_ID");
       totalBytes += jobs.back().archiveFile.fileSize;
-      auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, mountInfo.mountId, jobs.back().jobId, mountInfo.tapePool);
+      auto aj = std::make_unique<schedulerdb::ArchiveJob>(m_RelationalDB.m_connPool, true, mountInfo.mountId, jobs.back().jobId, mountInfo.tapePool);
       aj->jobID = jobs.back().jobId;
       aj->tapeFile.copyNb = jobs.back().copyNb;
       aj->archiveFile = jobs.back().archiveFile;

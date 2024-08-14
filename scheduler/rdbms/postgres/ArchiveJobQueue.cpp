@@ -16,36 +16,46 @@
  */
 
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
+#include "scheduler/rdbms/ArchiveMount.hpp"
+
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-
-rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string& vid, uint64_t limit){
+  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested){
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
-  const char* const sql = R"SQL(
-    WITH SET_SELECTION AS ( 
-      SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE 
-      WHERE TAPE_POOL = :TAPE_POOL 
-        AND STATUS = :STATUS 
-        AND MOUNT_ID IS NULL 
-      ORDER BY PRIORITY DESC, JOB_ID 
-      LIMIT :LIMIT FOR UPDATE) 
-    UPDATE ARCHIVE_JOB_QUEUE SET 
+    const char* const sql = R"SQL(
+    WITH SET_SELECTION AS (
+      SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
+    WHERE TAPE_POOL = :TAPE_POOL "
+    AND STATUS = :STATUS "
+    AND MOUNT_ID IS NULL "
+    ORDER BY PRIORITY DESC, JOB_ID "
+    LIMIT :LIMIT FOR UPDATE) "
+    UPDATE ARCHIVE_JOB_QUEUE SET "
       MOUNT_ID = :MOUNT_ID,
-      VID = :VID 
-    FROM SET_SELECTION 
-    WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID 
-    RETURNING SET_SELECTION.JOB_ID
-  )SQL";
+      VID = :VID,
+      DRIVE = :DRIVE,
+      HOST = :HOST,
+      MOUNT_TYPE = :MOUNT_TYPE,
+      LOGICAL_LIBRARY = :LOGICAL_LIB
+    "FROM SET_SELECTION
+    "WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+    "RETURNING SET_SELECTION.JOB_ID
+   )SQL";
+
   auto stmt = txn.conn().createStmt(sql);
-  stmt.bindString(":TAPE_POOL", tapepool);
+  stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindUint32(":LIMIT", limit);
-  stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.bindString(":VID", vid);
+  stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
+  stmt.bindString(":VID", mountInfo.vid);
+  stmt.bindString(":DRIVE", mountInfo.drive);
+  stmt.bindString(":HOST", mountInfo.host);
+  stmt.bindString(":MOUNT_TYPE", mountInfo.mountType);
+  stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
   return stmt.executeQuery();
 }
 

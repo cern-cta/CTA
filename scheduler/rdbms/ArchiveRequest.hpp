@@ -18,7 +18,6 @@
 #pragma once
 
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
