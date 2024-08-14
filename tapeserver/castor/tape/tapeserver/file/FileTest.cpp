@@ -298,7 +298,7 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   const std::string lh_dst = lh_src + "_dst";
   {
     std::unique_ptr<cta::disk::ReadFile> rf(
-      fileFactory.createReadFile(lh_src);
+      fileFactory.createReadFile(lh_src));
     std::unique_ptr<cta::disk::WriteFile> wf(
       fileFactory.createWriteFile(lh_dst));
     size_t res = 0;
