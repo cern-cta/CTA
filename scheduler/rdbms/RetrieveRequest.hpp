@@ -42,10 +42,10 @@ class RetrieveRequest {
   friend class cta::RelationalDB;
 
 public:
-  RetrieveRequest(rdbms::ConnPool& pool, log::LogContext& lc) : m_connPool(&pool), m_lc(lc) {}
+  RetrieveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(&conn), m_lc(lc) {}
 
   RetrieveRequest(log::LogContext& lc, const schedulerdb::postgres::RetrieveJobQueueRow& row)
-      : m_connPool(nullptr),
+      : m_conn(nullptr),
         m_lc(lc) {
     *this = row;
   }
@@ -143,10 +143,8 @@ public:
 
   std::list<RetrieveRequestJob> m_jobs;
 
-  std::unique_ptr<schedulerdb::Transaction> m_txn;
-
   // References to external objects
-  rdbms::ConnPool* m_connPool;
+  rdbms::Conn* m_conn;
   log::LogContext& m_lc;
 };
 
