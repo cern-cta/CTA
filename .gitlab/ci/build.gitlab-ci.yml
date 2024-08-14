@@ -70,6 +70,11 @@ build-cta-rpm:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
+    - |
+      UNIT_TEST_OPTION=""
+      if [ "${SKIP_UNIT_TESTS}" == "TRUE" ]; then
+        UNIT_TEST_OPTION="--skip-unit-tests"
+      fi
     - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
                                                  --build-generator "${BUILD_GENERATOR}"
                                                  --create-build-dir
@@ -81,7 +86,7 @@ build-cta-rpm:
                                                  --oracle-support ${ORACLE_SUPPORT}
                                                  --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                  --jobs $(nproc)
-                                                 --install-srpms
+                                                 --install-srpms ${UNIT_TEST_OPTION}
 
 # Documentation export
 

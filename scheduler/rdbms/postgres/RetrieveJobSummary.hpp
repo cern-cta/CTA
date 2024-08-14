@@ -66,7 +66,7 @@ struct RetrieveJobSummaryRow {
         VID,
         STATUS,
         JOBS_COUNT,
-        JOBS_TOTAL_SIZE,
+        JOBS_TOTAL_SIZE
       FROM RETRIEVE_JOB_SUMMARY WHERE 
         VID = :VID AND 
         STATUS = :STATUS
@@ -96,7 +96,7 @@ struct RetrieveJobSummaryRow {
         break;
     }
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();

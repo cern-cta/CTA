@@ -69,6 +69,31 @@ public:
   bool next() override;
 
   /**
+   * Testing new PG methods without passing through optionals
+   * and handling the null case within the implementation
+   * These methods do not use columnOptional methods to check
+   * if value is Null and Throw
+   * They are expected to throw directly if the value is null
+   * from within their implementatinos ithout the need
+   * to construct additional optionals in between !
+   * @param colName
+   * @return
+   */
+  uint8_t columnUint8NoOpt(const std::string& colName) const { return 0; };
+
+  uint16_t columnUint16NoOpt(const std::string& colName) const { return 0; };
+
+  uint32_t columnUint32NoOpt(const std::string& colName) const { return 0; };
+
+  uint64_t columnUint64NoOpt(const std::string& colName) const { return 0; };
+
+  std::string columnStringNoOpt(const std::string& colName) const { return std::string(); };
+
+  double columnDoubleNoOpt(const std::string& colName) const { return 0; };
+
+  bool columnBoolNoOpt(const std::string& colName) const { return false; };
+
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
