@@ -212,12 +212,12 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(cta::log::ERR, "An error occurred for this file, but migration will proceed as error is recoverable");
     circulateMemBlocks();
+
     // Record the fSeq in the tape session
     session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
-
   } catch (const cta::exception::Exception& e) {
     // We can end up there because
     // We failed to open the FileWriter
@@ -228,6 +228,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_errorFlag.set();
 
     // If we reached the end of tape, this is not an error (ENOSPC)
+    bool doReportJobError = true;
     try {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
@@ -235,6 +236,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
       if (en.errorNumber() != ENOSPC) {
         throw;
+      } else {
+        doReportJobError = false;
       }
       // This is indeed the end of the tape. Not an error.
       watchdog.setErrorCount("Info_tapeFilledUp", 1);
@@ -255,21 +258,31 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // This is how we communicate the fact that a tape is full to the client.
     // We also change the log level to INFO for the case of end of tape.
     int errorLevel = cta::log::ERR;
-    bool doReportJobError = true;
-    try {
-      const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
-      if (ENOSPC == errnum.errorNumber()) {
-        errorLevel = cta::log::INFO;
-        doReportJobError = false;
-      }
-    } catch (...) {}
+    if (!doReportJobError) {
+      errorLevel = cta::log::INFO;
+    };
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
+    // this last job will be either reported as failure or success
     if (doReportJobError) {
+      // we should report job failure for exception
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     }
-
+#ifdef CTA_PGSCHED
+    if (!doReportJobError) {
+      /* the job where ENOSPC was thrown shall also be reported;
+       * in objectstore this is forgotten and garbage collection
+       * requeues it without updating retry statistics
+       * For Postgres Scheduler DB, we report it as completed in order to avoid
+       * updating retry statistics (happening for reportFailedJob)
+       * and let it be requeued from m_successfulArchiveJobs in TWST
+       * We are guaranteed here that no tapeFlush will be called
+       * in TWST as we throw again below
+       */
+      reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
+    }
+#endif
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
@@ -392,6 +405,23 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 //------------------------------------------------------------------------------
 const TapeSessionStats TapeWriteTask::getTaskStats() const {
   return m_taskStats;
+}
+
+//------------------------------------------------------------------------------
+//   getArchiveJob
+//------------------------------------------------------------------------------
+cta::ArchiveJob& TapeWriteTask::getArchiveJob() const {
+  if (!m_archiveJob) {
+    throw cta::exception::Exception("No archive job found for the task.");
+  }
+  return *m_archiveJob;
+}
+
+//------------------------------------------------------------------------------
+//   hasArchiveJob
+//------------------------------------------------------------------------------
+bool TapeWriteTask::hasArchiveJob() const {
+  return static_cast<bool>(m_archiveJob);  // true if non-null
 }
 
 }  // namespace castor::tape::tapeserver::daemon

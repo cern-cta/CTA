@@ -24,6 +24,8 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <unordered_map>
+#include <mutex>
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
@@ -39,6 +41,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "common/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -53,6 +56,9 @@ class Catalogue;
 
 namespace schedulerdb {
 class ArchiveMount;
+class ArchiveRdbJob;
+class RetrieveMount;
+class RetrieveRdbJob;
 class TapeMountDecisionInfo;
 }  // namespace schedulerdb
 
@@ -66,6 +72,9 @@ public:
 
   ~RelationalDB() override;
   friend class cta::schedulerdb::ArchiveMount;
+  friend class cta::schedulerdb::ArchiveRdbJob;
+  friend class cta::schedulerdb::RetrieveMount;
+  friend class cta::schedulerdb::RetrieveRdbJob;
   friend class cta::schedulerdb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
 
@@ -103,8 +112,6 @@ public:
   /**
    * Get all archive queues with status:
    * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
-   * CHECK: how this reporting works for OStoreDB and make sure
-   * no selection criteria are missed (tapePool, hostname etc.)
    *
    * @param filesRequested  number of rows to be reported from the scheduler DB
    * @param logContext      logging context
@@ -221,12 +228,26 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
                                                                          uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
 
+  /**
+   * Provides access to a connection from the connection pool
+   */
+  cta::rdbms::Conn getConn();
+  /*
+   * Get list of diskSystemNames for which the system should
+   * not be picking up jobs for retrieve
+   * due to insufficient disk space for a specified sleep time interval
+   *
+   * @return list of diskSystemName strings
+   */
+  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter();
 private:
   /*
    * Get all the tape pools and tapes with queues (potential mounts)
@@ -242,12 +263,24 @@ private:
 
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
+  rdbms::ConnPool m_connPoolInsertOnly;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
-
+  /*
+   * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
+   * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
+   */
+  struct DiskSleepEntry {
+    uint64_t sleepTime;
+    time_t timestamp;
+    DiskSleepEntry() : sleepTime(0), timestamp(0) {}
+    DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
+  };
+  std::unordered_map<std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
+  cta::threading::Mutex m_diskSystemSleepCacheMutex;
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first

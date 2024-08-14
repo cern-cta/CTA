@@ -56,13 +56,13 @@ include_directories (${CMAKE_BINARY_DIR}/scheduler)
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   rdbms/RelationalDB.cpp
   rdbms/ArchiveMount.cpp
-  rdbms/ArchiveJob.cpp
+  rdbms/ArchiveRdbJob.cpp
   rdbms/ArchiveJobQueueItor.cpp
   rdbms/ArchiveRequest.cpp
   rdbms/Helpers.cpp
   rdbms/RetrieveMount.cpp
   rdbms/RetrieveRequest.cpp
-  rdbms/RetrieveJob.cpp
+  rdbms/RetrieveRdbJob.cpp
   rdbms/RetrieveJobQueueItor.cpp
   rdbms/RepackRequestPromotionStatistics.cpp
   rdbms/RepackRequest.cpp
@@ -86,7 +86,7 @@ else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
     target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
     add_library (ctascheduler-objectstore SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
-    target_link_libraries (ctascheduler-objectstore ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    target_link_libraries (ctascheduler-objectstore ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
     set_property(TARGET ctascheduler-objectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
     set_property(TARGET ctascheduler-objectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 endif()

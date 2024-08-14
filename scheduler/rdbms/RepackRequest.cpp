@@ -110,7 +110,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
       if (!srmap.at(rsr.fSeq)->isSubreqDeleted) {
         // We need to try and create the subrequest.
         // Create the sub request (it's a retrieve request now).
-        auto rr = std::make_shared<schedulerdb::RetrieveRequest>(m_connPool, m_lc /*srmap.at(rsr.fSeq)->address*/);
+        auto rr = std::make_shared<schedulerdb::RetrieveRequest>(m_conn, m_lc /*srmap.at(rsr.fSeq)->address*/);
 
         // Set the file info
         common::dataStructures::RetrieveRequest schedReq;
@@ -185,7 +185,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
         common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
         fileQueueCriteria.archiveFile = rsr.archiveFile;
         fileQueueCriteria.mountPolicy = m_mountPolicy;
-        rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
+        rr->fillJobsSetRetrieveFileQueueCriteria(fileQueueCriteria);
 
         // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
         // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
@@ -199,7 +199,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
             if (tc.vid == repackInfo.vid) {
               try {
                 // Try to select the repack VID from a one-vid list.
-                Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, *m_txn, true);
+                Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, m_txn->getConn(), true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve&) {}
@@ -215,7 +215,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
             candidateVids.insert(tc.vid);
           }
           try {
-            bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, *m_txn, true);
+            bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, m_txn->getConn(), true);
           } catch (Helpers::NoTapeAvailableForRetrieve&) {
             // Count the failure for this subrequest.
             notCreatedSubrequests.emplace_back(rsr);
@@ -413,16 +413,15 @@ void RepackRequest::insert() {
    */
   log::ScopedParamContainer params(m_lc);
   rjr.addParamsToLogContext(params);
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
 
-  m_txn.reset(new schedulerdb::Transaction(m_connPool));
-
-  try {
-    rjr.insert(*m_txn);
-  } catch (exception::Exception& ex) {
-    params.add("exeptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
-    throw;
-  }
+  //try {
+  //  rjr.insert(*m_txn);
+  //} catch(exception::Exception &ex) {
+  //  params.add("exceptionMessage", ex.getMessageValue());
+  //  m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
+  //  throw;
+  //}
 
   m_lc.log(log::INFO, "In RepackRequest::insert(): added request to queue.");
 }

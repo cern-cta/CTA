@@ -113,7 +113,7 @@ struct RepackJobQueueRow {
   void insert(Transaction& txn) const {
     // setting repackReqId; todo
     const char* const sql = R"SQL(
-      INSERT INTO REPACK_JOB_QUEUE(
+      INSERT INTO REPACK_ACTIVE_QUEUE(
         VID,
         BUFFER_URL,
         STATUS,
@@ -186,7 +186,7 @@ struct RepackJobQueueRow {
         :REPACK_FINISHED_TIME)
     )SQL";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":BUFFER_URL", bufferUrl);
     stmt.bindString(":STATUS", to_string(status));
@@ -317,14 +317,14 @@ struct RepackJobQueueRow {
         CREATE_TIME AS CREATE_TIME,
         REPACK_FINISHED_TIME AS REPACK_FINISHED_TIME 
       FROM 
-        REPACK_JOB_QUEUE 
+        REPACK_ACTIVE_QUEUE
       WHERE 
         STATUS = :STATUS 
       ORDER BY REPACK_REQID 
         LIMIT :LIMIT
     )SQL";
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
 

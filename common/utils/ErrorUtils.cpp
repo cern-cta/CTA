@@ -15,41 +15,46 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Timer.hpp"
+
+#include "common/utils/strerror_r_wrapper.hpp"
+#include "common/utils/ErrorUtils.hpp"
+#include <sstream>
+#include <stdint.h>
 
 namespace cta::utils {
+//------------------------------------------------------------------------------
+// errnoToString
+//------------------------------------------------------------------------------
+std::string errnoToString(const int errnoValue) {
+  char buf[100];
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-Timer::Timer() {
-  reset();
-}
+  if (!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
+    return buf;
+  } else {
+    const int errnoSetByStrerror_r_wrapper = errno;
+    std::ostringstream oss;
 
-//------------------------------------------------------------------------------
-// usecs
-//------------------------------------------------------------------------------
-int64_t Timer::usecs(reset_t reset) {
-  auto now = std::chrono::steady_clock::now();
-  int64_t elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - m_reference).count();
-  if (reset == resetCounter) {
-    m_reference = now;
+    switch (errnoSetByStrerror_r_wrapper) {
+      case EINVAL:
+        oss << "Failed to convert errnoValue to string: Invalid errnoValue"
+               ": errnoValue="
+            << errnoValue;
+        break;
+      case ERANGE:
+        oss << "Failed to convert errnoValue to string"
+               ": Destination buffer for error string is too small"
+               ": errnoValue="
+            << errnoValue;
+        break;
+      default:
+        oss << "Failed to convert errnoValue to string"
+               ": strerror_r_wrapper failed in an unknown way"
+               ": errnoValue="
+            << errnoValue;
+        break;
+    }
+
+    return oss.str();
   }
-  return elapsed;
 }
-
-//------------------------------------------------------------------------------
-// secs
-//------------------------------------------------------------------------------
-double Timer::secs(reset_t reset) {
-  return usecs(reset) * 1.0e-6;  // Convert microseconds to seconds
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void Timer::reset() {
-  m_reference = std::chrono::steady_clock::now();
-}
-
 }  // namespace cta::utils

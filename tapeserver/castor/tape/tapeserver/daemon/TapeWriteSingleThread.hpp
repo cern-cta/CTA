@@ -78,7 +78,13 @@ public:
   void setTaskInjector(MigrationTaskInjector *injector) {
     m_taskInjector = injector;
   }
-
+  /**
+   * Requeues all jobs in from the list of jobIDs failed tape tasks
+   *
+   * @param jobIDsList list of job IDs as strings
+   * @param lc         logging context
+   */
+  void requeueUnprocessedTasks(std::list<std::string> jobIDsList, cta::log::LogContext& lc) const;
   /**
    * 
    * @param lastFseq

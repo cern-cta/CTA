@@ -256,6 +256,12 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
                                                                          uint64_t timeout_us) override;
 
+  // Only for RDBMS Scheduler backend
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
+
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
@@ -284,6 +290,11 @@ public:
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
   public:
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
+      // This implementation, serves only PGSCHED implementation
+      throw cta::exception::Exception("Not implemented");
+    }
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -299,6 +310,8 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
+    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    void initialize(const rdbms::Rset& resultSet) override {};
 
   private:
     void asyncSucceedTransfer();
@@ -346,6 +359,11 @@ public:
     void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                          log::LogContext& logContext) override;
 
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
+      // Do nothing in this implementation, serves only PGSCHED implementation
+      return 0;
+    }
+
     bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
                           const std::string& externalFreeDiskSpaceScript,
                           log::LogContext& logContext) override;
@@ -383,6 +401,8 @@ public:
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;
+    void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                  log::LogContext& lc) override { /* empty implementaion, for CTA_PGSCHED only */  }
   };
   friend class RetrieveMount;
 
@@ -400,6 +420,8 @@ public:
     void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
+    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    void initialize(const rdbms::Rset& resultSet) override {};
     void abort(const std::string& abortReason, log::LogContext& lc) override;
     void fail() override;
     ~RetrieveJob() override;

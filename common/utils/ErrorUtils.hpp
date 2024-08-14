@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
+ * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,39 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RetrieveJob.hpp"
-#include "common/exception/Exception.hpp"
 
-namespace cta::schedulerdb {
+#include <string>
 
-[[noreturn]] RetrieveJob::RetrieveJob()
-{
-   throw cta::exception::Exception("Not implemented");
-}
+namespace cta::utils {
 
-void RetrieveJob::asyncSetSuccessful()
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void RetrieveJob::abort(const std::string &abortReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-void RetrieveJob::fail()
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-} // namespace cta::schedulerdb
+/**
+ * Determines the string representation of the specified error number.
+ *
+ * Please note this method is thread safe.
+ *
+ * @param errnoValue The errno value.
+ * @return The string representation.
+ */
+  std::string errnoToString(const int errnoValue);
+} // namespace cta::utils

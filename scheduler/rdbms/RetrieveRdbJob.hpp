@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/log/LogContext.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
 
 #include <list>
 #include <memory>
@@ -27,15 +28,20 @@
 #include <cstdint>
 #include <time.h>
 
+namespace cta {
+class RelationalDB;
+}
+
 namespace cta::schedulerdb {
 
-class ArchiveJob : public SchedulerDatabase::ArchiveJob {
+class RetrieveRdbJob : public SchedulerDatabase::RetrieveJob {
   friend class cta::RelationalDB;
 
 public:
-  ArchiveJob();
-  ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
 
+  // Constructor to create empty RetrieveJob object with a reference to the connection pool
+  explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
+  explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
   /*
    * Sets the status of the job as failed in the Scheduler DB
    *
@@ -47,7 +53,7 @@ public:
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
   /*
-   * Sets the status of the report of the archive job to failed in Scheduler DB
+   * Sets the status of the report of the retrieve job to failed in Scheduler DB
    *
    * @param failureReason   The failure reason as string
    * @param lc              The log context
@@ -56,14 +62,30 @@ public:
    */
   void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
-  /*
-   * Currently unused function throwing an exception
+  /**
+   * Reinitialise the job object data members with
+   * new values after it has been poped from the pool
+   *
+   * @param connPool
+   * @param rset
    */
-  void bumpUpTapeFileCount(uint64_t newFileCount) override;
+  void initialize(const rdbms::Rset& rset) override;
+  /**
+   * Reset all data members to return the job object to the pool
+   */
+  void reset();
 
+  postgres::RetrieveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;
-  std::string m_tapePool;
+  std::string m_tapePool="";
+  rdbms::ConnPool& m_connPool;
+  //std::shared_ptr<rdbms::Conn> m_conn;
+
+  void abort(const std::string& abortReason, log::LogContext& lc) override;
+  void asyncSetSuccessful() override;
+  void fail() override;
 };
+
 
 }  // namespace cta::schedulerdb

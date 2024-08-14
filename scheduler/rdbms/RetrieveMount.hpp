@@ -17,12 +17,14 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
+#include "scheduler/rdbms/RetrieveRdbJob.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/JobPool.hpp"
 
 #include <list>
 #include <memory>
@@ -34,41 +36,66 @@
 namespace cta::schedulerdb {
 
 class RetrieveMount : public SchedulerDatabase::RetrieveMount {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
+  friend class TapeMountDecisionInfo;
 
- public:
+public:
+  //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
+  //   , m_txn(txn), m_vid(vid) { }
+  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_jobPool(pdb.m_connPool) {}
 
-   RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
-      m_ownerId(ownerId), m_txn(txn), m_vid(vid) { }
+  const MountInfo& getMountInfo() override;
 
-   const MountInfo & getMountInfo() override;
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
+  getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-     uint64_t bytesRequested, log::LogContext& logContext) override;
+  bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+                        const std::string& externalFreeDiskSpaceScript,
+                        log::LogContext& logContext) override;
 
-   bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) override;
+  bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+                            const std::string& externalFreeDiskSpaceScript,
+                            log::LogContext& logContext) override;
 
-   bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) override;
+  /**
+    * Re-queue batch of jobs
+    * Serves PGSCHED purpose only
+    * This method purposely does not update retry statistics since used only
+    * in RecallTaskInjector when testing for available disk space !
+    *
+    * @param jobIDsList
+    * @return number of jobs re-queued in the DB
+    */
+  uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
 
-   void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-      log::LogContext& logContext) override;
+  void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
+                       cta::log::LogContext& logContext) override;
 
-   void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                                time_t completionTime, const std::optional<std::string> & reason = std::nullopt) override;
+  void setDriveStatus(common::dataStructures::DriveStatus status,
+                      common::dataStructures::MountType mountType,
+                      time_t completionTime,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
-   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
-   void flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) override;
+  void flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                log::LogContext& lc) override;
 
-   void addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip) override;
+  //------------------------------------------------------------------------------
+  // for compliance with OStoreDB only
+  //------------------------------------------------------------------------------
+  void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
+                                cta::log::LogContext& lc) override {};
 
-   void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) override;
+  void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) override;
 
-   const std::string& m_ownerId;
-   Transaction& m_txn;
-   const std::string m_vid;
+  void
+  putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) override;
+
+private:
+  cta::RelationalDB& m_RelationalDB;
+  cta::rdbms::ConnPool& m_connPool;
+  schedulerdb::JobPool<schedulerdb::RetrieveRdbJob> m_jobPool;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

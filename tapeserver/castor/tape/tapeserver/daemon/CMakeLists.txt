@@ -61,7 +61,7 @@ add_library(ctatapeserverdaemonunittests SHARED
 )
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries(ctatapeserverdaemonunittests ctaobjectstore)
-
+if (NOT CTA_USE_PGSCHED)
+  target_link_libraries(ctatapeserverdaemonunittests ctaobjectstore)
+endif()
 install(TARGETS ctatapeserverdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

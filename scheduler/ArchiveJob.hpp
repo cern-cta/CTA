@@ -69,6 +69,16 @@ protected:
              const common::dataStructures::TapeFile& tapeFile);
 
 public:
+  ArchiveJob(ArchiveMount* mount,
+             catalogue::Catalogue& catalogue,
+             std::unique_ptr<SchedulerDatabase::ArchiveJob> dbJob)
+      : m_dbJob(std::move(dbJob)),
+        m_mount(mount),
+        m_catalogue(catalogue),
+        archiveFile(m_dbJob->archiveFile),
+        srcURL(m_dbJob->srcURL),
+        tapeFile(m_dbJob->tapeFile) { }
+
   /**
    * Destructor
    */
@@ -126,6 +136,12 @@ public:
    */
   virtual std::string reportType();
 
+  /**
+   * Returns the SchedulerDatabase::ArchiveJob jobID
+   * Serves PGSCHED implementation
+   * @return jobID as a string for SQL queries
+   */
+  virtual std::string getJobID();
   /**
    * Triggers a scheduler update following the failure of the report. Retry policy will
    * be applied by the scheduler. Failure to report success will also be a failure reason.

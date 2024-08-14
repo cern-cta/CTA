@@ -85,6 +85,21 @@ public:
    */
   Rset& operator=(Rset&& rhs);
 
+  // Generic method to handle calls to m_impl
+  template<typename ReturnType, typename... Args>
+  ReturnType delegateToImpl(ReturnType (wrapper::RsetWrapper::* func)(const std::string&) const,
+                            const std::string& colName) const {
+    try {
+      if (nullptr == m_impl) {
+        throw InvalidResultSet("This result set is invalid");
+      }
+      return (m_impl.get()->*func)(colName);
+    } catch (exception::Exception& ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+      throw;
+    }
+  }
+
   /**
    * Returns the SQL statement.
    *
@@ -115,6 +130,32 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   bool columnIsNull(const std::string& colName) const;
+
+  /**
+   * Methods to get values without passing through optionals.
+   * The only downside is that these methods throw exception for NULL
+   * value inside the specific implementation rather than on the top RSet level
+   * and shall be used for columns where NULL is not expected.
+   * These methods return the converted strings directly from the Postgres memory buffer
+   * and do not have implementations for other DB backends for the moment.
+   * They were introduced in order to increase performance since the same ran with the corresponding
+   * optional methods made the performance 20 times slower. Many tests were run and code adjustments
+   * made in order to minimise string copy in the implementation with optionals,
+   * but none has shown performance increase so far.
+   *
+   * @param colName
+   * @return The specified output type based on the converted column string value.
+   * @throw InvalidResultSet if the result is invalid. NullDbValue in case null value is present
+   *        or any other exception
+   *
+   */
+  uint8_t columnUint8NoOpt(const std::string& colName) const;
+  uint16_t columnUint16NoOpt(const std::string& colName) const;
+  uint32_t columnUint32NoOpt(const std::string& colName) const;
+  uint64_t columnUint64NoOpt(const std::string& colName) const;
+  std::string columnStringNoOpt(const std::string& colName) const;
+  double columnDoubleNoOpt(const std::string& colName) const;
+  bool columnBoolNoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
