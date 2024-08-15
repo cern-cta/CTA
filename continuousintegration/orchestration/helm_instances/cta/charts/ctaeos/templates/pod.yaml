@@ -1,0 +1,41 @@
+{{$namespace := .Release.Namespace }}
+{{$name := include "ctaeos.name" . }}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{$name}}
+  namespace: {{ $namespace | quote}}
+  labels:
+    k8s-app: {{$name}}
+spec:
+  restartPolicy: Never
+  containers:
+  - name: {{$name}}
+    image: {{ include "ctaeos.image" . }}
+    stdin: true
+    env:
+    - name: MY_NAME
+      value: {{$name}}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote}}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote}}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
+    {{- end}}
+    {{- if (.Values.customEntrypoint)}}
+    command: {{.Values.customEntrypoint.command | toJson}}
+    args: {{.Values.customEntrypoint.args}}
+    {{- end}}
+    {{- if (.Values.readinessProbe)}}
+    {{include "ctaeos.readinessProbe" .Values.readinessProbe | nindent 4}}
+    {{- end}}
+    securityContext:
+      privileged: {{.isPriviliged}}
+    {{ include "ctaeos.volumeMounts" . | nindent 4 }}
+  # Here are volumes added
+  {{include "ctaeos.volumes" . | nindent 2}}
+
+  imagePullSecrets:
+  - name: {{ include "ctaeos.imageSecret" . }}
