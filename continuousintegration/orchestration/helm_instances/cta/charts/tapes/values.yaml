@@ -1,7 +1,7 @@
 
 # Here are stored values for the project related pods
-image: dupa
-imagePullSecret: dupa2
+image:
+imagePullSecret:
 
 tapes:
   tpsrv01:
