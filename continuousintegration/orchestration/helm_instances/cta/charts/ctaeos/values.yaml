@@ -1,6 +1,8 @@
-nameOverride: ctaeos
+nameOverride: "ctaeos"
 image:
+imagePullSecrets:
 isPriviliged: true
+readinessProbe:
 
 service:
   selectors:
@@ -12,14 +14,6 @@ service:
     port: 1094
     protocol: TCP
 
-labels:
-  k8s-app: ctaeos-mgm
-
-env:
-- name: frontend
-  value: 'cta-frontend:10955'
-- name: TERM
-  value: "xterm"
 
 customEntrypoint:
   command: ["/bin/sh", "-c"]
@@ -28,6 +22,51 @@ customEntrypoint:
     cat /tmp/eos.keytab > /etc/eos.keytab;
     chmod 400 /etc/eos.keytab;
     /opt/run/bin/ctaeos-mgm-log-wrapper.sh
+
+env:
+- name: frontend
+  value: 'cta-frontend:10955'
+- name: TERM
+  value: "xterm"
+
+labels:
+  k8s-app: ctaeos-mgm
+
+volumeMounts:
+- mountPath: /shared
+  name: shared
+- mountPath: /mnt/logs
+  name: logstorage
+- mountPath: /fst
+  name: stgstorage
+- mountPath: /etc/config/eos
+  name: eosconfig
+- mountPath: /etc/config/eoscta
+  name: eosctaconfig
+- mountPath: /etc/krb5.conf
+  name: krb5-config-volume
+  subPath: krb5.conf
+- mountPath: /etc/eos-server.krb5.keytab
+  name: keytab
+  subPath: eos-server.krb5.keytab
+- mountPath: /tmp/eos.keytab
+  name: sss-keytab
+  subPath: eos.keytab
+- mountPath: /etc/cta/castor-migration.conf
+  name: migration-conf
+  subPath: castor-migration.conf
+- mountPath: /etc/xrd.cf.mgm
+  name: xrd-mgm-config
+  subPath: xrd.cf.mgm
+- mountPath: /etc/xrd.cf.fst
+  name: xrd-fst-config
+  subPath: xrd.cf.fst
+- mountPath: /etc/xrootd-quarkdb.cfg
+  name: eos-config-quarkdb
+  subPath: xrootd-quarkdb.cfg
+- mountPath: /etc/sysconfig/eos
+  name: eos-sysconfig
+  subPath: eos
 
 volumes:
 - name: shared
@@ -69,43 +108,3 @@ volumes:
 - name: eos-sysconfig
   configMap:
     name: eos-sysconfig
-
-
-volumeMounts:
-- mountPath: /shared
-  name: shared
-- mountPath: /mnt/logs
-  name: logstorage
-- mountPath: /fst
-  name: stgstorage
-- mountPath: /etc/config/eos
-  name: eosconfig
-- mountPath: /etc/config/eoscta
-  name: eosctaconfig
-- mountPath: /etc/krb5.conf
-  name: krb5-config-volume
-  subPath: krb5.conf
-- mountPath: /etc/eos-server.krb5.keytab
-  name: keytab
-  subPath: eos-server.krb5.keytab
-- mountPath: /tmp/eos.keytab
-  name: sss-keytab
-  subPath: eos.keytab
-- mountPath: /etc/cta/castor-migration.conf
-  name: migration-conf
-  subPath: castor-migration.conf
-- mountPath: /etc/xrd.cf.mgm
-  name: xrd-mgm-config
-  subPath: xrd.cf.mgm
-- mountPath: /etc/xrd.cf.fst
-  name: xrd-fst-config
-  subPath: xrd.cf.fst
-- mountPath: /etc/xrootd-quarkdb.cfg
-  name: eos-config-quarkdb
-  subPath: xrootd-quarkdb.cfg
-- mountPath: /etc/sysconfig/eos
-  name: eos-sysconfig
-  subPath: eos
-
-
-readinessProbe:

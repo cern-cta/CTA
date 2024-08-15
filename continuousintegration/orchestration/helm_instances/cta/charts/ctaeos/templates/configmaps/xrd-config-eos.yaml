@@ -48,10 +48,10 @@ data:
     ###########################################################
     # this URL can be overwritten by EOS_BROKER_URL defined in /etc/sysconfig/eos
 
-    mgmofs.broker root://{{- .Values.ctaoesName}}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
+    mgmofs.broker root://{{- .Values.nameOverride}}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
     # this name can be overwritten by EOS_INSTANCE_NAME defined in /etc/sysconfig/eos
 
-    mgmofs.instance {{ .Values.ctaoesName}}
+    mgmofs.instance {{ .Values.nameOverride}}
 
     # configuration, namespace , transfer and authentication export directory
     mgmofs.configdir /var/eos/config
@@ -134,7 +134,7 @@ data:
     # ofs.tpc pgm should point to an existing executable file but it is completely ignored by eos ofs implementation
     ###########################################################
     # this URL can be overwritten by EOS_BROKER_URL defined /etc/sysconfig/xrd
-    fstofs.broker root://{{- .Values.ctaoesName}}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
+    fstofs.broker root://{{- .Values.nameOverride}}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
     fstofs.autoboot true
     fstofs.quotainterval 10
     fstofs.metalog /var/eos/md/
@@ -167,15 +167,3 @@ data:
     redis.mode standalone
     redis.database /var/lib/quarkdb/quarkdb1
     redis.password_file  /etc/eos.keytab.xrootd
-
-
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    config: eoscta
-  name: eos-config-quarkdb
-  namespace: {{.Release.Namespace}}
-data:
-
