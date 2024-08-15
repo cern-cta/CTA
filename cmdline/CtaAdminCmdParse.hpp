@@ -361,8 +361,6 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--location",              OptionString::LIBRARY_LOCATION }
 };
 
-
-
 /*!
  * Map string list options to Protocol Buffer enum values
  */
@@ -374,252 +372,544 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
 
 /**
  * Specify the help text for commands
- *
- * NOTE: Comment blocks beginning **md are markdown documentation blocks. These comments follow a
- *       specific format and will be included verbatim into the CTA documentation and man pages.
- *       When adding or modifying a command option, take care to include the modifications into
- *       the documentation at the same time.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
+  {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}} },
+  {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}              },
+  {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}       },
+  {AdminCmd::CMD_DISKINSTANCE,        {"diskinstance", "di", {"add", "ch", "rm", "ls"}}       },
+  {AdminCmd::CMD_DISKINSTANCESPACE,   {"diskinstancespace", "dis", {"add", "ch", "rm", "ls"}} },
+  {AdminCmd::CMD_DISKSYSTEM,          {"disksystem", "ds", {"add", "ch", "rm", "ls"}}         },
+  {AdminCmd::CMD_DRIVE,               {"drive", "dr", {"up", "down", "ls", "ch", "rm"}}       },
+  {AdminCmd::CMD_FAILEDREQUEST,       {"failedrequest", "fr", {"ls", "rm"}}                   },
+  {AdminCmd::CMD_GROUPMOUNTRULE,      {"groupmountrule", "gmr", {"add", "ch", "rm", "ls"}}    },
+  {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}     },
+  {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}          },
+  {AdminCmd::CMD_MOUNTPOLICY,         {"mountpolicy", "mp", {"add", "ch", "rm", "ls"}}        },
+  {AdminCmd::CMD_PHYSICALLIBRARY,     {"physicallibrary", "pl", {"add", "ch", "rm", "ls"}}    },
+  {AdminCmd::CMD_RECYCLETAPEFILE,     {"recycletf", "rtf", {"ls"}}                            },
+  {AdminCmd::CMD_REPACK,              {"repack", "re", {"add", "rm", "ls", "err"}}            },
+  {AdminCmd::CMD_REQUESTERMOUNTRULE,  {"requestermountrule", "rmr", {"add", "ch", "rm", "ls"}}},
+  {AdminCmd::CMD_SHOWQUEUES,          {"showqueues", "sq", {}}                                },
+  {AdminCmd::CMD_STORAGECLASS,        {"storageclass", "sc", {"add", "ch", "rm", "ls"}}       },
+  {AdminCmd::CMD_TAPE,                {"tape", "ta", {"add", "ch", "rm", "reclaim", "ls"}}    },
+  {AdminCmd::CMD_TAPEFILE,            {"tapefile", "tf", {"ls", "rm"}}                        },
+  {AdminCmd::CMD_TAPEPOOL,            {"tapepool", "tp", {"add", "ch", "rm", "ls"}}           },
+  {AdminCmd::CMD_VERSION,             {"version", "v", {}}                                    },
+  {AdminCmd::CMD_VIRTUALORGANIZATION, {"virtualorganization", "vo", {"add", "ch", "rm", "ls"}}},
+};
+
+/*
+ * Enumerate options
+ */
+const Option opt_all {Option::OPT_FLAG, "--all", "-a", ""};
+const Option opt_archivefileid {Option::OPT_UINT, "--id", "-I", " <archive_file_id>"};
+const Option opt_archivepriority {Option::OPT_UINT, "--archivepriority", "--ap", " <priority_value>"};
+const Option opt_bufferurl {Option::OPT_STR, "--bufferurl", "-b", " <buffer URL>"};
+const Option opt_capacity {Option::OPT_UINT, "--capacity", "-c", " <capacity_in_bytes>"};
+const Option opt_cartridge {Option::OPT_STR, "--cartridge", "-t", " <cartridge>"};
+const Option opt_comment {Option::OPT_STR, "--comment", "-m", " <\"comment\">"};
+const Option opt_copynb {Option::OPT_UINT, "--copynb", "-c", " <copy_number>"};
+const Option opt_copynb_alias {Option::OPT_UINT, "--numberofcopies", "-c", " <number_of_copies>", "--copynb"};
+const Option opt_disabled {Option::OPT_BOOL, "--disabled", "-d", " <\"true\" or \"false\">"};
+const Option opt_drivename_cmd {Option::OPT_CMD, "--drive", "", "<drive_name>"};
+const Option opt_encrypted {Option::OPT_BOOL, "--encrypted", "-e", " <\"true\" or \"false\">"};
+const Option opt_encryptionkeyname {Option::OPT_STR, "--encryptionkeyname", "-k", " <encryption_key_name>"};
+const Option opt_fid {Option::OPT_STR, "--fxid", "-f", " <eos_fxid>"};
+const Option opt_fidfile {Option::OPT_STR_LIST, "--fxidfile", "-F", " <filename>"};
+const Option opt_filename {Option::OPT_STR, "--file", "-f", " <filename>"};
+const Option opt_force {Option::OPT_BOOL, "--force", "-f", " <\"true\" or \"false\">"};
+const Option opt_force_flag {Option::OPT_FLAG, "--force", "-f", ""};
+const Option opt_fromcastor {Option::OPT_BOOL, "--fromcastor", "--fc", " <\"true\" or \"false\">"};
+const Option opt_dirtybit {Option::OPT_BOOL, "--dirtybit", "--db", " <\"true\" or \"false\">"};
+const Option opt_instance {Option::OPT_STR, "--instance", "-i", " <disk_instance>"};
+const Option opt_justarchive {Option::OPT_FLAG, "--justarchive", "-a", ""};
+const Option opt_justmove {Option::OPT_FLAG, "--justmove", "-m", ""};
+const Option opt_justaddcopies {Option::OPT_FLAG, "--justaddcopies", "-a", ""};
+const Option opt_justretrieve {Option::OPT_FLAG, "--justretrieve", "-r", ""};
+const Option opt_log {Option::OPT_FLAG, "--log", "-l", ""};
+const Option opt_logicallibrary {Option::OPT_STR, "--logicallibrary", "-l", " <logical_library_name>"};
+const Option opt_logicallibrary_alias {Option::OPT_STR, "--name", "-n", " <logical_library_name>", "--logicallibrary"};
+const Option opt_logicallibrary_disabled {Option::OPT_BOOL, "--disabled", "-d", " <\"true\" or \"false\">"};
+const Option opt_maxfilesize {Option::OPT_UINT, "--maxfilesize", "--mfs", " <maximum_file_size>"};
+const Option opt_maxlpos {Option::OPT_UINT, "--maxlpos", "--maxl", " <maximum_longitudinal_position>"};
+const Option opt_mediatype {Option::OPT_STR, "--mediatype", "--mt", " <media_type_name>"};
+const Option opt_mediatype_alias {Option::OPT_STR, "--name", "-n", " <media_type_name>", "--mediatype"};
+const Option opt_minarchiverequestage {Option::OPT_UINT, "--minarchiverequestage", "--aa", " <min_request_age>"};
+const Option opt_minlpos {Option::OPT_UINT, "--minlpos", "--minl", " <minimum_longitudinal_position>"};
+const Option opt_minretrieverequestage {Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>"};
+const Option opt_mountpolicy {Option::OPT_STR, "--mountpolicy", "-u", " <mount_policy_name>"};
+const Option opt_mountpolicy_alias {Option::OPT_STR, "--name", "-n", " <mount_policy_name>", "--mountpolicy"};
+const Option opt_number_of_wraps {Option::OPT_UINT, "--nbwraps", "-w", " <number_of_wraps>"};
+const Option opt_partialfiles {Option::OPT_UINT, "--partial", "-p", " <number_of_files_per_tape>"};
+const Option opt_partialtapes {Option::OPT_UINT, "--partialtapesnumber", "-p", " <number_of_partial_tapes>"};
+const Option opt_primarydensitycode {Option::OPT_UINT, "--primarydensitycode", "-p", " <primary_density_code>"};
+const Option opt_retrievepriority {Option::OPT_UINT, "--retrievepriority", "--rp", " <priority_value>"};
+const Option opt_secondarydensitycode {Option::OPT_UINT, "--secondarydensitycode", "-s", " <secondary_density_code>"};
+const Option opt_storageclass {Option::OPT_STR, "--storageclass", "-s", " <storage_class_name>"};
+const Option opt_storageclass_alias {Option::OPT_STR, "--name", "-n", " <storage_class_name>", "--storageclass"};
+const Option opt_summary {Option::OPT_FLAG, "--summary", "-S", ""};
+const Option opt_supply {Option::OPT_STR, "--supply", "-s", " <supply_value>"};
+const Option opt_tapepool {Option::OPT_STR, "--tapepool", "-t", " <tapepool_name>"};
+const Option opt_tapepool_alias {Option::OPT_STR, "--name", "-n", " <tapepool_name>", "--tapepool"};
+const Option opt_username {Option::OPT_STR, "--username", "-u", " <user_name>"};
+const Option opt_username_alias {Option::OPT_STR, "--name", "-n", " <user_name>", "--username"};
+const Option opt_groupname_alias {Option::OPT_STR, "--name", "-n", " <group_name>", "--username"};
+const Option opt_vendor {Option::OPT_STR, "--vendor", "--ve", " <vendor>"};
+const Option opt_vid {Option::OPT_STR, "--vid", "-v", " <vid>"};
+const Option opt_purchase_order {Option::OPT_STR, "--purchaseorder", "-p", " <purchase_order>"};
+const Option opt_vo {Option::OPT_STR, "--virtualorganisation", "--vo", " <virtual_organisation>"};
+const Option opt_vidfile {Option::OPT_STR_LIST, "--vidfile", "-f", " <filename>"};
+const Option opt_full {Option::OPT_BOOL, "--full", "-f", " <\"true\" or \"false\">"};
+const Option opt_disksystem {Option::OPT_STR, "--disksystem", "-n", " <disk_system_name>"};
+const Option opt_file_regexp {Option::OPT_STR, "--fileregexp", "-r", " <file_regexp>"};
+const Option opt_free_space_query_url {Option::OPT_STR, "--freespacequeryurl", "-u", " <free_space_query_url>"};
+const Option opt_refresh_interval {Option::OPT_UINT, "--refreshinterval", "-i", " <refresh_intreval>"};
+const Option opt_targeted_free_space {Option::OPT_UINT, "--targetedfreespace", "-f", " <targeted_free_space>"};
+const Option opt_sleep_time {Option::OPT_UINT, "--sleeptime", "-s", " <sleep time in s>"};
+const Option opt_reason {Option::OPT_STR, "--reason", "-r", " <reason_status_change>"};
+const Option opt_no_recall {Option::OPT_FLAG, "--no-recall", "--nr", ""};
+const Option opt_object_id {Option::OPT_STR, "--objectid", "-o", " <objectId>"};
+const Option opt_read_max_drives {Option::OPT_UINT, "--readmaxdrives", "--rmd", " <read_max_drives>"};
+const Option opt_write_max_drives {Option::OPT_UINT, "--writemaxdrives", "--wmd", " <write_max_drives>"};
+const Option opt_state {
+  Option::OPT_STR, "--state", "-s",
+  std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) + "\"" + " or \"" + Tape::stateToString(Tape::DISABLED) +
+    "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::EXPORTED) + "\" or \"" +
+    Tape::stateToString(Tape::REPACKING) + "\" or \"" + Tape::stateToString(Tape::REPACKING_DISABLED) + "\">"};
+const Option opt_activityregex {Option::OPT_STR, "--activityregex", "--ar", " <activity_regex>"};
+const Option opt_diskinstance {Option::OPT_STR, "--diskinstance", "--di", " <disk_instance_name>"};
+const Option opt_diskinstance_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_name>", "--diskinstance"};
+const Option opt_diskinstancespace {Option::OPT_STR, "--diskinstancespace", "--dis", " <disk_instance_space_name>"};
+const Option opt_diskinstancespace_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_space_name>",
+                                          "--diskinstancespace"};
+const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
+const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--id", "-I", " <archive_file_id>"};
+const Option opt_physical_library_alias {Option::OPT_STR, "--name", "-n", " <physical_library_name>",
+                                         "--physicallibrary"};
+const Option opt_physical_library {Option::OPT_STR, "--physicallibrary", "--pl", " <physical_library_name>",
+                                   "--physicallibrary"};
+const Option opt_manufacturer {Option::OPT_STR, "--manufacturer", "--ma", " <manufacturer>"};
+const Option opt_model {Option::OPT_STR, "--model", "--mo", " <model>"};
+const Option opt_type {Option::OPT_STR, "--type", "-t", " <type>"};
+const Option opt_gui_url {Option::OPT_STR, "--guiurl", "-g", " <gui_url>"};
+const Option opt_webcam_url {Option::OPT_STR, "--webcamurl", "-w", " <webcam_url>"};
+const Option opt_location {Option::OPT_STR, "--location", "-l", " <location>"};
+const Option opt_nb_physical_cartridge_slots {Option::OPT_UINT, "--nbphysicalcartridgeslots", "--npcs",
+                                              " <nb_physical_cartridge_slots>"};
+const Option opt_nb_available_cartridge_slots {Option::OPT_UINT, "--nbavailablecartridgeslots", "--nacs",
+                                               " <nb_available_cartridge_slots>"};
+const Option opt_nb_physical_drive_slots {Option::OPT_UINT, "--nbphysicaldriveslots", "--npds",
+                                          " <nb_physical_drive_slots >"};
+const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", " <\"true\" or \"false\">"};
+const Option opt_max_files_to_select {Option::OPT_UINT, "--maxfilestoselect", "--mfts", " <max_files_to_select>"};
+const Option opt_log_unixtime_min {Option::OPT_UINT, "--logunixtimemin", "--ltmin", " <min_recycle_log_unixtime>"};
+const Option opt_log_unixtime_max {Option::OPT_UINT, "--logunixtimemax", "--ltmax", " <max_recycle_log_unixtime>"};
+
+/*!
+ * Subset of commands that return streaming output
+ */
+const std::set<cmd_key_t> streamCmds = {
+  {AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_ADMIN,               AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_ARCHIVEROUTE,        AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_DISKINSTANCE,        AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_DISKINSTANCESPACE,   AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_DISKSYSTEM,          AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_DRIVE,               AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_FAILEDREQUEST,       AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_GROUPMOUNTRULE,      AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_LOGICALLIBRARY,      AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_MEDIATYPE,           AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_MOUNTPOLICY,         AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_RECYCLETAPEFILE,     AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_REPACK,              AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_REQUESTERMOUNTRULE,  AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_SHOWQUEUES,          AdminCmd::SUBCMD_NONE},
+  {AdminCmd::CMD_STORAGECLASS,        AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_TAPE,                AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_TAPEFILE,            AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_TAPEPOOL,            AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_VERSION,             AdminCmd::SUBCMD_NONE},
+  {AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_PHYSICALLIBRARY,     AdminCmd::SUBCMD_LS  },
+};
+
+/**
+ * Specify the options for each (command, subcommand) pair
+ *
+ * The options specified here are checked for validity by cta-admin AND by the CTA Frontend.
+ *
+ * NOTE: Comment blocks beginning **md are Markdown documentation blocks. These comments will be
+ *       included verbatim into the CTA documentation and man pages.
+ *
+ *       When adding or modifying a command option, take care to include the modifications into
+ *       the documentation at the same time. Note that the documentation comments follow a specific
+ *       format and indentation is significant.
+ *
+ *       After modifying this source file, run the following script to generate the man page:
+ *
+ *           ./compile_man_md.py cta-admin.1cta.md.in
+ *
+ *       This will generate "cta-admin.1cta.md", which should be added to the git commit.
+ */
+const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   /**md
 activitymountrule (amr)
 
 :   Add, change, remove or list the activity mount rules. This is provided as an alternative to
-    requester mount rules and group mount rules, where the scheduling priority is based on metadata
-    sent by the client rather than the authenticated identity of the requestor.
+    requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
+    to be set based on metadata sent by the client rather than the authenticated identity of the
+    requestor.
   */
-  {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}}            },
+  {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_ADD},
+   {opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy, opt_comment}                                       },
+  {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_CH},
+   {opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy.optional(), opt_comment.optional()}                 },
+  {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM},    {opt_instance, opt_username_alias, opt_activityregex}          },
+  {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS},    {}                                                             },
 
  /**md
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
-    users must exist in the administrator list and must authenticate themselves with a valid Kerberos
-    KRB5 credential.
+    users must be included in the list of administrators, in addition to being authenticated.
   */
-  {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}                         },
+  {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD},               {opt_username, opt_comment}                                    },
+  {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH},                {opt_username, opt_comment}                                    },
+  {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM},                {opt_username}                                                 },
+  {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS},                {}                                                             },
 
  /**md
 archiveroute (ar)
 
-:   Add, change, remove or list the archive routes, which are the policies linking namespace entries
-    to tape pools.
+:   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
+    entries to tape pools.
   */
-  {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}                  },
+  {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD},        {opt_storageclass, opt_copynb, opt_tapepool, opt_comment}      },
+  {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional()}                                           },
+  {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb}                                 },
+  {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
 
  /**md
 diskinstance (di)
 
-:   Add, change, remove or list the disk instances. A CTA installation has one or more disk instances.
-    A disk instance is a separate namespace. Multiple disk instances should be configured if it is
+:   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+    installation has one or more disk instances. Multiple disk instances can be configured if it is
     desired to have a separate namespace for each Virtual Organization (VO).
+
+    **\-\-name** specifies the disk instance name, which is the unique identifier of the disk
+    instance and cannot be changed.
   */
-  {AdminCmd::CMD_DISKINSTANCE,
-   {"diskinstance",
-    "di",
-    {"add", "ch", "rm", "ls"},
-    "\n  A disk instance is a separate namespace. A CTA installation has at least one disk instance and can\n"
-    "  have multiple disk instances.\n\n"
-    "  Add a disk instance with the \"add\" subcommand:\n"
-    "   * Specify the name (--name) of the disk instance. This is the unique identifier of the disk\n"
-    "     instance and cannot be changed.\n\n"}                                                          },
+  {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_ADD},        {opt_diskinstance_alias, opt_comment}                          },
+  {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_CH},         {opt_diskinstance_alias, opt_comment.optional()}               },
+  {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_RM},         {opt_diskinstance_alias}                                       },
+  {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_LS},         {}                                                             },
 
  /**md
 diskinstancespace (dis)
 
 :   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
-    disk instance spaces. A disk instance space is a partition of the disk. For example, it can be
-    desirable to have separate spaces for archival and retrieval operations on each instance.
+    disk instance spaces. A disk instance space is a partition of the disk.
+
+    A typical use case for disk instance spaces is to configure separate spaces for archival and
+    retrieval operations on each instance.
+
+    **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
+    and disk instance space name form a pair which is the unique identifier for the disk instance space.
+
+    **\-\-diskinstance** specifies the name of the disk instance to query, e.g. **eosctapublic**
+
+    **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
+    space. It should be specified in the following format:
+
+        <query protocol>:<name of disk space>
+
+    Example:
+
+        eosSpace:retrieve
+
+    **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
+    will be used before performing a new query.
   */
-  {AdminCmd::CMD_DISKINSTANCESPACE,
-   {"diskinstancespace",
-    "dis",
-    {"add", "ch", "rm", "ls"},
-    "\n  A disk instance space is a partition of an disk instance.\n\n"
-    "  Add a disk instance space with the \"add\" subcommand:\n"
-    "   * Specify the name (--name) of the disk instance space and the respective disk instance\n"
-    "     (--diskinstance). This pair is the unique identifier of the disk instance space and cannot be\n"
-    "     changed.\n"
-    "   * Specify the URL to query the free disk space on this disk instance space (--freespacequeryurl).\n"
-    "     It should have the following format:\n\n"
-    "       eos:name_of_eos_instance:name_of_eos_space.\n\n"
-    "     Example: eos:ctaeos:spinners\n"
-    "   * The refresh interval (--refreshinterval) specifies how long (in seconds) the cached value of the\n"
-    "     free space query will be used before performing a new query.\n\n"}                             },
+  {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_ADD},
+   {opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment}              },
+  {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_CH},
+   {opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(),
+    opt_refresh_interval.optional()}                                                                                         },
+  {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM},    {opt_diskinstancespace_alias, opt_diskinstance}                },
+  {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS},    {}                                                             },
 
  /**md
 disksystem (ds)
 
 :   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
     for CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree
-    on a disk instance space (specified using a regular expression). Backpressure can be configured
-    separately for each disk system (how much free space should be available before processing a batch
-    of retrieve requests; how long to sleep when the disk is full).
+    on a disk instance space.
+
+    **\-\-disksystem** specifies the unique identifier of the disk system.
+
+    **\-\-diskinstance** and **\-\-diskinstancespace** form a pair which specifies the disk instance
+    and partition where this disk system is physically located.
+
+    **\-\-fileregexp** specifies the regular expression to match filenames (from *destinationURL*) to disk systems.
+
+    Example:
+
+        destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners
+
+    will match the regular expression:
+
+        ^root://eos_instance//eos/cta(.*)eos.space=spinners
+
+    The two options below are provided to configure backpressure for retrieve operations. Backpressure
+    is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
+    disk space. It can be configured separately for each disk system.
+    
+    Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
+    system. The corresponding disk instance space is queried to determine if there is sufficient free
+    space to perform the mount. If there is insufficient space, the tape server sleeps for the specified
+    interval.
+
+    **\-\-targetedfreespace** specifies how much free space should be available before processing a
+    batch of retrieve requests. It should be calculated based on the free space update latency (based
+    on *diskinstancespace* parameters) and the expected bandwidth for transfers to the external Storage
+    Element.
+
+    **\-\-sleeptime** specifies how long (in seconds) to sleep when the disk system has insufficient
+    space, before retrying the retrieve mount.
   */
-  {AdminCmd::CMD_DISKSYSTEM,
-   {"disksystem",
-    "ds",
-    {"add", "ch", "rm", "ls"},
-    "\n  The disk system defines the disk buffer to be used for CTA archive and retrieval operations for\n"
-    "  each VO. It corresponds to a specific directory tree on a disk instance space (specified with a\n"
-    "  regular expression). Backpressure can be configured separately for each disk system (how much free\n"
-    "  space should be available before processing a batch of retrieve requests; how long to sleep when\n"
-    "  the disk is full).\n\n"
-    "  Before a Retrieve mount, the destination URL of each file is pattern-matched to identify the disk\n"
-    "  system. The corresponding disk instance space is queried to determine if there is sufficient\n"
-    "  space to perform the mount. If there is insufficient space, the tape server sleeps for the\n"
-    "  specified interval.\n\n"
-    "  Add a disk system with the \"add\" subcommand:\n"
-    "   * Specify the unique identifier (--disksystem) of the disk system.\n"
-    "   * Specify the disk instance (--diskinstance) and partition (--diskinstancespace) where this disk\n"
-    "     system is physically located.\n"
-    "   * Specify the regular expression (--fileregexp) to match filenames (from destinationURL) to disk\n"
-    "     systems.\n"
-    "     Example: destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners\n"
-    "              will match the regular expression ^root://eos_instance//eos/cta(.*)eos.space=spinners\n"
-    "   * The targeted free space (--targetedfreespace) should be calculated based on the free space\n"
-    "     update latency (based on diskinstancespace parameters) and the expected bandwidth for transfers\n"
-    "     to the external Storage Element.\n"
-    "   * The sleep time (--sleeptime) in seconds tells the tape server how long to sleep before retrying\n"
-    "     a retrieve mount when the disk system has insufficient space.\n\n"}                            },
+  {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD},
+   {opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
+    opt_comment}                                                                                                             },
+  {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH},
+   {opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(),
+    opt_comment.optional()}                                                                                                  },
+  {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM},           {opt_disksystem}                                               },
+  {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS},           {}                                                             },
 
  /**md
 drive (dr)
 
 :   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
 
-    **cta-admin drive ls** displays an exclamation mark (**!**) in front of the drive name, for drives
-    in DISABLED logical libraries.
+    This is a synchronous command to set and read back the state of one or more tape drives. The
+    *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
+    the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
+    *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
+    guarantee that the same drive will be used every time.
+
+    **up** puts a drive into active state, able to perform an archive or retrieve mount.
+
+    **down** puts a drive into inactive state, unable to mount. Drives will complete any running session
+    and dismount the tape before changing state.
+
+    **\-\-reason** specifies the reason (free text) why the drive is being put down. The reason will
+    be displayed in the output of **ls**.
+
+    **ls** lists the drives matching *drive_name*, or all drives by default. An exclamation mark (**!**)
+    is displayed in front of the drive name for drives in disabled libraries.
+
+    **rm** deletes the drive definition. Drives must be in the **down** state before deleting.
+    (Override with **\-\-force**).
   */
-  {AdminCmd::CMD_DRIVE,
-   {"drive",
-    "dr",
-    {"up", "down", "ls", "ch", "rm"},
-    "\n  This is a synchronous command that sets and reads back the state of one or\n"
-    "  more drives. The <drive_name> option accepts a regular expression. If the\n"
-    "  --force option is not set, the drives will complete any running mount and\n"
-    "  drives must be in the down state before deleting. If the <drive_name> option\n"
-    "  is set to first, the up, down, ls and ch commands will use the drive from the\n"
-    "  first configuration file listed in /etc/cta. This does not guarantee that the\n"
-    "  same drive will be used every time.\n"}                                                           },
+  {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP},                {opt_drivename_cmd, opt_reason.optional()}                     },
+  {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN},              {opt_drivename_cmd, opt_reason, opt_force_flag.optional()}     },
+  {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS},                {opt_drivename_cmd.optional()}                                 },
+  {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM},                {opt_drivename_cmd, opt_force_flag.optional()}                 },
+  {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_CH},                {opt_drivename_cmd, opt_comment}                               },
 
  /**md
 failedrequest (fr)
 
 :   List and remove requests which failed and for which all retry attempts failed.
   */
-  {AdminCmd::CMD_FAILEDREQUEST,       {"failedrequest", "fr", {"ls", "rm"}}                              },
+  {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS},
+   {opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(), opt_vid.optional(),
+    opt_log.optional(), opt_summary.optional()}                                                                              },
+  {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM},        {opt_object_id}                                                },
 
  /**md
 groupmountrule (gmr)
 
 :   Add, change, remove or list the group mount rules.
   */
-  {AdminCmd::CMD_GROUPMOUNTRULE,      {"groupmountrule", "gmr", {"add", "ch", "rm", "ls"}}               },
+  {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD},
+   {opt_instance, opt_groupname_alias, opt_mountpolicy, opt_comment}                                                         },
+  {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH},
+   {opt_instance, opt_groupname_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                   },
+  {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM},       {opt_instance, opt_groupname_alias}                            },
+  {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS},       {}                                                             },
 
  /**md
 logicallibrary (ll)
 
-:   Add, change, remove or list the logical libraries, which are logical groupings of tapes and
-    drives based on physical location and tape drive capabilities. A tape can be accessed by a
-    drive if it is in the same physical library and if the drive is capable of reading or writing
-    the tape. In this case, that tape and that drive should normally also be in the same logical
-    library.
+:   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
+    tapes and drives based on physical location and tape drive capabilities.
+
+    A tape can be accessed by a drive if it is in the same physical library and if the drive is
+    capable of reading or writing the tape. In this case, that tape and that drive should normally
+    be in the same logical library.
   */
-  {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}                },
+  {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD},
+   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment}                         },
+  {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH},
+   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(),
+    opt_disabledreason.optional()}                                                                                           },
+  {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM},       {opt_logicallibrary_alias}                                     },
+  {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS},       {opt_logicallibrary_disabled.optional()}                       },
 
  /**md
 mediatype (mt)
 
 :   Add, change, remove or list the tape cartridge media types. This command is used to specify the
     nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
+
     Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
-    technology). See **cta-taped(1cta)** for details.
+    technology only). See **cta-taped(1cta)** for details.
   */
-  {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}                     },
+  {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},
+   {opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(),
+    opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
+    opt_comment}                                                                                                             },
+  {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH},
+   {opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(),
+    opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
+    opt_comment.optional()}                                                                                                  },
+  {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            {opt_mediatype_alias}                                          },
+  {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS},            {}                                                             },
 
  /**md
 mountpolicy (mp)
 
 :   Add, change, remove or list the mount policies.
   */
-  {AdminCmd::CMD_MOUNTPOLICY,         {"mountpolicy", "mp", {"add", "ch", "rm", "ls"}}                   },
+  {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD},
+   {opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
+    opt_minretrieverequestage, opt_comment}                                                                                  },
+  {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH},
+   {opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(),
+    opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_comment.optional()}                           },
+  {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          {opt_mountpolicy_alias}                                        },
+  {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS},          {}                                                             },
 
  /**md
 physicallibrary (pl)
 
 :   Add, change, remove or list the physical tape libraries.
   */
-  {AdminCmd::CMD_PHYSICALLIBRARY,     {"physicallibrary", "pl", {"add", "ch", "rm", "ls"}}               },
+  {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_ADD},
+   {opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(),
+    opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
+    opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots, opt_comment.optional()}                        },
+  {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
+   {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(),
+    opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(),
+    opt_nb_physical_drive_slots.optional(), opt_comment.optional()}                                                          },
+  {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
+  {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
 
  /**md
 recycletf (rtf)
 
 :   List tape files in the recycle log.
+
+    Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,
+    ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
   */
-  {AdminCmd::CMD_RECYCLETAPEFILE,
-   {"recycletf",
-    "rtf",
-    {"ls"},
-    "\n  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,\n"
-    "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"}},
+  {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS},
+   {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(),
+    opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}            },
 
  /**md
 repack (re)
 
-:   Add or remove a request to repack one or more tapes. This command can also list repack requests
-    in progress and display any errors.
+:   Add or remove a request to repack one or more tapes, list repack requests in progress, display
+    repack errors.
+
+    **add** adds one or more tapes to the active repack requests:
+
+    **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
+    (the retrieve and archive requests).
+
+    **\-\-vid** specifies a single tape to repack.
+
+    **\-\-vidfile** specifies the filename of a text file containing a list of tapes to repack.
+
+    **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
+    URL (specified in the CTA Frontend configuration). It should follow this format:
+
+        root://eos_instance//path/to/repack/buffer
+
+    **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
+    value, overriding the default value (specified in the CTA Frontend configuration). Set the value
+    to zero to force all files to be selected.
+
+    **\-\-no-recall** inhibits the retrieve mount. Only files that are already located in the disk
+    buffer will be considered for archival.
+
+    By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
+    copies of the file. The expected number of copies is defined by the storage class of the file.
+
+    **\-\-justmove** means that the files located on the tape to repack will be migrated onto new
+    tape(s), without creating any additional copies.
+
+    **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
+    repack will be created on the new tape(s), but the source tape file will not be migrated.
+
+    **rm** removes a tape from the list of tapes to repack.
+
+    **ls** lists repack requests in progress. Rows marked with the **\*** flag indicate that not all
+    files were selected for repack. The number of files to repack at once can be restricted to avoid
+    overloading the Scheduler Database. To repack the remaining files, repeat the operation.
+
+    **err** displays any repack errors.
   */
-  {AdminCmd::CMD_REPACK,
-   {"repack",
-    "re",
-    {"add", "rm", "ls", "err"},
-    "\n  Submit a repack request by using the \"add\" subcommand :\n"
-    "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile\n"
-    "     option.\n"
-    "   * Specify the mount policy (--mountpolicy parameter) to give a specific mount policy that will be\n"
-    "     applied to the repack subrequests (retrieve and archive requests).\n"
-    "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the\n"
-    "     following format: root://eosinstance//path/to/repack/buffer.\n"
-    "     The default bufferURL is set in the CTA frontend configuration file.\n"
-    "   * If the option (--maxfilestoselect value) is set, the number of files to be selected for repack will\n"
-    "     be limited to this value. If not, it will use the default value configured in the CTA frontend.\n"
-    "     Set the value as zero to force all files to be selected.\n"
-    "     A flag '*' in a 'repack ls' row means that not all files were selected for repack.\n"
-    "   * If the --justmove option is set, the files located on the tape to repack will be migrated on\n"
-    "     one or multiple tapes.\n"
-    "   * If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class)\n"
-    "     of the files located on the tape to repack will be created and migrated.\n"
-    "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class)\n"
-    "     of the files located on the tape to repack.\n"
-    "     By default, a hardcoded mount policy is applied (all request priorities and minimum request\n"
-    "     ages = 1).\n"
-    "   * If the --no-recall flag is set, no retrieve mount will be triggered. Only the files that are\n"
-    "     located in the buffer will be considered for archival.\n\n"}                                   },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},
+   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(),
+    opt_max_files_to_select.optional(), opt_no_recall.optional(), opt_justmove.optional(),
+    opt_justaddcopies.optional()}                                                                                            },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               {opt_vid}                                                      },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              {opt_vid}                                                      },
 
  /**md
 requestermountrule (rmr)
 
 :   Add, change, remove or list the requester mount rules.
   */
-  {AdminCmd::CMD_REQUESTERMOUNTRULE,  {"requestermountrule", "rmr", {"add", "ch", "rm", "ls"}}           },
+  {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD},
+   {opt_instance, opt_username_alias, opt_mountpolicy, opt_comment}                                                          },
+  {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH},
+   {opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                    },
+  {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   {opt_instance, opt_username_alias}                             },
+  {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS},   {}                                                             },
 
  /**md
 showqueues (sq)
 
-:   Show the status of all active queues.
+:   Show the status of all active queues. The bottom section shows requests already being serviced by
+    tape servers, which is why the values of some fields are at zero.
   */
-  {AdminCmd::CMD_SHOWQUEUES,          {"showqueues", "sq", {}}                                           },
+  {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},         {}                                                             },
 
  /**md
 storageclass (sc)
 
-:   Add, change, remove or list the storage classes. Storage classes are associated with directories,
-    to specify the number of tape copies for each file, and the corresponding tape pool that each copy
-    should be archived to. In EOS, the storage class is added as an extended attribute of the directory,
-    which is inherited by the file at creation time.
+:   Add, change, remove or list the storage classes. The storage class of a file specifies its
+    expected number of tape copies, and the corresponding tape pool that each copy should be archived
+    to.
+
+    In EOS, the storage class is specified as an extended attribute of the directory, which is
+    inherited as an extended attribute of the file at creation time.
   */
-  {AdminCmd::CMD_STORAGECLASS,        {"storageclass", "sc", {"add", "ch", "rm", "ls"}}                  },
+  {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD},        {opt_storageclass_alias, opt_copynb_alias, opt_vo, opt_comment}},
+  {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH},
+   {opt_storageclass_alias, opt_copynb_alias.optional(), opt_vo.optional(), opt_comment.optional()}                          },
+  {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM},         {opt_storageclass_alias}                                       },
+  {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS},         {opt_storageclass_alias.optional()}                            },
 
  /**md
 tape (ta)
@@ -627,32 +917,77 @@ tape (ta)
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
     tape cartridges in each library.
   */
-  {AdminCmd::CMD_TAPE,                {"tape", "ta", {"add", "ch", "rm", "reclaim", "ls"}}               },
+  {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
+   {opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_state.optional(),
+    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional()}                                            },
+  {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH},
+   {opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(), opt_tapepool.optional(),
+    opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(), opt_state.optional(),
+    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional()}                   },
+  {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM},                 {opt_vid}                                                      },
+  {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM},            {opt_vid}                                                      },
+  {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS},
+   {opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
+    opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(), opt_full.optional(), opt_fidfile.optional(),
+    opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(),
+    opt_physical_library.optional()}                                                                                         },
 
  /**md
 tapefile (tf)
 
-:   List files on a specified tape. **cta-admin tapefile ls -l** allows listing the disk metadata as
-    well as tape metadata. Use of this option requires that gRPC is correctly configured on the disk
-    system. See **FILES**, below.
+:   List files on a specified tape or delete a tape file.
+
+    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
+    disk file ID) pair, or the archive file ID.
+
+    **\-\-vid** specifies the volume identifier (VID) of a tape.
+
+    **\-\-fxid** specifies the disk file ID. EOS disk file IDs should be provided in hexadecimal
+    format.
+
+    **\-\-instance** specifies on which disk instance the disk file ID is located.
+
+    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
+    in hexadecimal formal. The format of this file is the same as the output of
+    **eos find --fid <path>**.
+
+    **\-\-id** specifies an archive file ID.
+
+    **rm** deletes a single tape file. Note that some disk files have more than one associated tape file.
   */
-  {AdminCmd::CMD_TAPEFILE,
-   {"tapefile",
-    "tf",
-    {"ls", "rm"},
-    "\n  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
-    "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
-    "  takes a file in the same format as the output of 'eos find --fid <path>'\n"
-    "  Delete a file copy with the \"rm\" subcommand\n\n"}                                               },
+  {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
+   {opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
+    opt_archivefileid.optional()}                                                                                            },
+  {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
+   {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason}                          },
 
  /**md
 tapepool (tp)
 
 :   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
-    manage the tape lifecycle: label -> supply -> user pool -> erase -> label. **cta-admin tapepool ls**
-    shows statistics such as the total number of tapes in the pool and number of free tapes.
+    manage the tape lifecycle:
+
+        label → supply pool → user pool → erase → label
+
+    **add** creates a new tapepool:
+
+    **\-\-partialtapesnumber** specifies the number of tapes which should be made available for
+    writing in this tape pool. If the number of tapes eligible for writing falls below this number
+    (for example, because a tape becomes full), a new tape will be added from a supply pool.
+
+    **\-\-supply** specifies a comma-separated list of tape pools to use as supply pools, when
+    adding new (empty) tapes to this tape pool.
+
+    **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
   */
-  {AdminCmd::CMD_TAPEPOOL,            {"tapepool", "tp", {"add", "ch", "rm", "ls"}}                      },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD},
+   {opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment}                         },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},
+   {opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_supply.optional(),
+    opt_comment.optional()}                                                                                                  },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
+  {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
+   {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                              },
 
  /**md
 version (v)
@@ -660,323 +995,50 @@ version (v)
 :   Display the version of **cta-admin**, the CTA Frontend, the protocol buffer used for client/server
     communication, and the CTA Catalogue schema.
   */
-  {AdminCmd::CMD_VERSION,             {"version", "v", {}}                                               },
+  {{AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE},            {}                                                             },
 
  /**md
 virtualorganization (vo)
 
-:   Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity
-    whose data transfers should be managed independently of the others, for example an experimental
+:   Add, change, remove or list the Virtual Organisations (VOs). A VO corresponds to an entity whose
+    data transfers and storage should be managed independently of the others, for example an experimental
     collaboration.
+
+    **\-\-virtualorganisation** specifies the name of the virtual organisation. It must be unique.
+
+    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organisation is allowed
+    to use for reading>
+
+    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organisation is allowed
+    to use for writing.
+
+    **\-\-maxfilesize** specifies the maximum file size for this virtual organisation. Default is 0,
+    which means no limit.
+
+    **\-\-isrepackvo** if set to **true**, normal data archival and retrieval is inhibited for this VO;
+    it can only be used for repack operations.
   */
-  {AdminCmd::CMD_VIRTUALORGANIZATION,
-   {"virtualorganization",
-    "vo",
-    {"add", "ch", "rm", "ls"},
-    "\n  Add a virtual organization with the \"add\" subcommand:\n"
-    "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
-    "   * Specify the maximum number of drives the virtual organization is allowed to use for writing "
-    "(--writemaxdrives)\n"
-    "   * Specify the maximum number of drives the virtual organization is allowed to use for reading "
-    "(--readmaxdrives)\n"
-    "   * Specify a comment (--comment) for this virtual organization\n"
-    "   * Specify the maximum file size (--maxfilesize) for this virtual organization (optional, 0 means no "
-    "limit)\n\n"}                                                                                        },
+  {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD},
+   {opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),
+    opt_isrepackvo.optional()}                                                                                               },
+  {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH},
+   {opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(),
+    opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional()}                                      },
+  {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM},  {opt_vo}                                                       },
+  {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
+
+ /*-------------------------------------------------------------------------------------------------------------------------
+   COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
+   -------------------------------------------------------------------------------------------------------------------------*/
+
+  // Used by cta-change-storageclass and cta-eos-namespace-inject
+  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional()}                      },
+ // Used by cta-restore-deleted-files
+  {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
+   {opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
+ /*-------------------------------------------------------------------------------------------------------------------------*/
 };
-
-/*
- * Enumerate options
- */
-const Option opt_all                          { Option::OPT_FLAG,     "--all",                       "-a",     "" };
-const Option opt_archivefileid                { Option::OPT_UINT,     "--id",                        "-I",     " <archive_file_id>" };
-const Option opt_archivepriority              { Option::OPT_UINT,     "--archivepriority",           "--ap",   " <priority_value>" };
-const Option opt_bufferurl                    { Option::OPT_STR,      "--bufferurl",                 "-b",     " <buffer URL>" };
-const Option opt_capacity                     { Option::OPT_UINT,     "--capacity",                  "-c",     " <capacity_in_bytes>" };
-const Option opt_cartridge                    { Option::OPT_STR,      "--cartridge",                 "-t",     " <cartridge>" };
-const Option opt_comment                      { Option::OPT_STR,      "--comment",                   "-m",     " <\"comment\">" };
-const Option opt_copynb                       { Option::OPT_UINT,     "--copynb",                    "-c",     " <copy_number>" };
-const Option opt_copynb_alias                 { Option::OPT_UINT,     "--numberofcopies",            "-c",     " <number_of_copies>", "--copynb" };
-const Option opt_disabled                     { Option::OPT_BOOL,     "--disabled",                  "-d",     " <\"true\" or \"false\">" };
-const Option opt_drivename_cmd                { Option::OPT_CMD,      "--drive",                     "",       "<drive_name>" };
-const Option opt_encrypted                    { Option::OPT_BOOL,     "--encrypted",                 "-e",     " <\"true\" or \"false\">" };
-const Option opt_encryptionkeyname            { Option::OPT_STR,      "--encryptionkeyname",         "-k",     " <encryption_key_name>" };
-const Option opt_fid                          { Option::OPT_STR,      "--fxid",                      "-f",     " <eos_fxid>" };
-const Option opt_fidfile                      { Option::OPT_STR_LIST, "--fxidfile",                  "-F",     " <filename>" };
-const Option opt_filename                     { Option::OPT_STR,      "--file",                      "-f",     " <filename>" };
-const Option opt_force                        { Option::OPT_BOOL,     "--force",                     "-f",     " <\"true\" or \"false\">" };
-const Option opt_force_flag                   { Option::OPT_FLAG,     "--force",                     "-f",     "" };
-const Option opt_fromcastor                   { Option::OPT_BOOL,     "--fromcastor",                "--fc",   " <\"true\" or \"false\">"};
-const Option opt_dirtybit                     { Option::OPT_BOOL,     "--dirtybit",                  "--db",   " <\"true\" or \"false\">"};
-const Option opt_instance                     { Option::OPT_STR,      "--instance",                  "-i",     " <disk_instance>" };
-const Option opt_justarchive                  { Option::OPT_FLAG,     "--justarchive",               "-a",     "" };
-const Option opt_justmove                     { Option::OPT_FLAG,     "--justmove",                  "-m",     "" };
-const Option opt_justaddcopies                { Option::OPT_FLAG,     "--justaddcopies",             "-a",     "" };
-const Option opt_justretrieve                 { Option::OPT_FLAG,     "--justretrieve",              "-r",     "" };
-const Option opt_log                          { Option::OPT_FLAG,     "--log",                       "-l",     "" };
-const Option opt_logicallibrary               { Option::OPT_STR,      "--logicallibrary",            "-l",     " <logical_library_name>" };
-const Option opt_logicallibrary_alias         { Option::OPT_STR,      "--name",                      "-n",     " <logical_library_name>", "--logicallibrary" };
-const Option opt_logicallibrary_disabled      { Option::OPT_BOOL,     "--disabled",                  "-d",     " <\"true\" or \"false\">" };
-const Option opt_maxfilesize                  { Option::OPT_UINT,     "--maxfilesize",               "--mfs",  " <maximum_file_size>" };
-const Option opt_maxlpos                      { Option::OPT_UINT,     "--maxlpos",                   "--maxl", " <maximum_longitudinal_position>" };
-const Option opt_mediatype                    { Option::OPT_STR,      "--mediatype",                 "--mt",   " <media_type_name>" };
-const Option opt_mediatype_alias              { Option::OPT_STR,      "--name",                      "-n",     " <media_type_name>", "--mediatype" };
-const Option opt_minarchiverequestage         { Option::OPT_UINT,     "--minarchiverequestage",      "--aa",   " <min_request_age>" };
-const Option opt_minlpos                      { Option::OPT_UINT,     "--minlpos",                   "--minl", " <minimum_longitudinal_position>" };
-const Option opt_minretrieverequestage        { Option::OPT_UINT,     "--minretrieverequestage",     "--ra",   " <min_request_age>" };
-const Option opt_mountpolicy                  { Option::OPT_STR,      "--mountpolicy",               "-u",     " <mount_policy_name>" };
-const Option opt_mountpolicy_alias            { Option::OPT_STR,      "--name",                      "-n",     " <mount_policy_name>", "--mountpolicy" };
-const Option opt_number_of_wraps              { Option::OPT_UINT,     "--nbwraps",                   "-w",     " <number_of_wraps>" };
-const Option opt_partialfiles                 { Option::OPT_UINT,     "--partial",                   "-p",     " <number_of_files_per_tape>" };
-const Option opt_partialtapes                 { Option::OPT_UINT,     "--partialtapesnumber",        "-p",     " <number_of_partial_tapes>" };
-const Option opt_primarydensitycode           { Option::OPT_UINT,     "--primarydensitycode",        "-p",     " <primary_density_code>" };
-const Option opt_retrievepriority             { Option::OPT_UINT,     "--retrievepriority",          "--rp",   " <priority_value>" };
-const Option opt_secondarydensitycode         { Option::OPT_UINT,     "--secondarydensitycode",      "-s",     " <secondary_density_code>" };
-const Option opt_storageclass                 { Option::OPT_STR,      "--storageclass",              "-s",     " <storage_class_name>" };
-const Option opt_storageclass_alias           { Option::OPT_STR,      "--name",                      "-n",     " <storage_class_name>", "--storageclass" };
-const Option opt_summary                      { Option::OPT_FLAG,     "--summary",                   "-S",     "" };
-const Option opt_supply                       { Option::OPT_STR,      "--supply",                    "-s",     " <supply_value>" };
-const Option opt_tapepool                     { Option::OPT_STR,      "--tapepool",                  "-t",     " <tapepool_name>" };
-const Option opt_tapepool_alias               { Option::OPT_STR,      "--name",                      "-n",     " <tapepool_name>", "--tapepool" };
-const Option opt_username                     { Option::OPT_STR,      "--username",                  "-u",     " <user_name>" };
-const Option opt_username_alias               { Option::OPT_STR,      "--name",                      "-n",     " <user_name>", "--username" };
-const Option opt_groupname_alias              { Option::OPT_STR,      "--name",                      "-n",     " <group_name>", "--username" };
-const Option opt_vendor                       { Option::OPT_STR,      "--vendor",                    "--ve",   " <vendor>" };
-const Option opt_vid                          { Option::OPT_STR,      "--vid",                       "-v",     " <vid>" };
-const Option opt_purchase_order               { Option::OPT_STR,      "--purchaseorder",             "-p",     " <purchase_order>" };
-const Option opt_vo                           { Option::OPT_STR,      "--virtualorganisation",       "--vo",   " <virtual_organisation>" };
-const Option opt_vidfile                      { Option::OPT_STR_LIST, "--vidfile",                   "-f",     " <filename>" };
-const Option opt_full                         { Option::OPT_BOOL,     "--full",                      "-f",     " <\"true\" or \"false\">" };
-const Option opt_disksystem                   { Option::OPT_STR,      "--disksystem",                "-n",     " <disk_system_name>" };
-const Option opt_file_regexp                  { Option::OPT_STR,      "--fileregexp",                "-r",     " <file_regexp>" };
-const Option opt_free_space_query_url         { Option::OPT_STR,      "--freespacequeryurl",         "-u",     " <free_space_query_url>" };
-const Option opt_refresh_interval             { Option::OPT_UINT,     "--refreshinterval",           "-i",     " <refresh_intreval>" };
-const Option opt_targeted_free_space          { Option::OPT_UINT,     "--targetedfreespace",         "-f",     " <targeted_free_space>" };
-const Option opt_sleep_time                   { Option::OPT_UINT,     "--sleeptime",                 "-s",     " <sleep time in s>" };
-const Option opt_reason                       { Option::OPT_STR,      "--reason",                    "-r",     " <reason_status_change>" };
-const Option opt_no_recall                    { Option::OPT_FLAG,     "--no-recall",                 "--nr",   "" };
-const Option opt_object_id                    { Option::OPT_STR,      "--objectid",                  "-o",     " <objectId>" };
-const Option opt_read_max_drives              { Option::OPT_UINT,     "--readmaxdrives",             "--rmd",  " <read_max_drives>" };
-const Option opt_write_max_drives             { Option::OPT_UINT,     "--writemaxdrives",            "--wmd",  " <write_max_drives>" };
-const Option opt_state                        { Option::OPT_STR,      "--state",                     "-s",     std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::EXPORTED) + "\" or \"" + Tape::stateToString(Tape::REPACKING) + "\" or \"" + Tape::stateToString(Tape::REPACKING_DISABLED) + "\">" };
-const Option opt_activityregex                { Option::OPT_STR,      "--activityregex",             "--ar",   " <activity_regex>"};
-const Option opt_diskinstance                 { Option::OPT_STR,      "--diskinstance",              "--di",   " <disk_instance_name>" };
-const Option opt_diskinstance_alias           { Option::OPT_STR,      "--name",                      "-n",     " <disk_instance_name>", "--diskinstance" };
-const Option opt_diskinstancespace            { Option::OPT_STR,      "--diskinstancespace",         "--dis",  " <disk_instance_space_name>" };
-const Option opt_diskinstancespace_alias      { Option::OPT_STR,      "--name",                      "-n",     " <disk_instance_space_name>", "--diskinstancespace" };
-const Option opt_verificationstatus           { Option::OPT_STR,      "--verificationstatus",        "--vs",   " <verification_status>" };
-const Option opt_disabledreason               { Option::OPT_STR,      "--disabledreason",            "--dr",   " <disabled_reason>" };
-const Option opt_archive_file_ids             { Option::OPT_STR_LIST, "--id",                        "-I",     " <archive_file_id>" };
-const Option opt_physical_library_alias       { Option::OPT_STR,      "--name",                      "-n",     " <physical_library_name>", "--physicallibrary"};
-const Option opt_physical_library             { Option::OPT_STR,      "--physicallibrary",           "--pl",   " <physical_library_name>", "--physicallibrary"};
-const Option opt_manufacturer                 { Option::OPT_STR,      "--manufacturer",              "--ma",   " <manufacturer>" };
-const Option opt_model                        { Option::OPT_STR,      "--model",                     "--mo",   " <model>" };
-const Option opt_type                         { Option::OPT_STR,      "--type",                      "-t",     " <type>" };
-const Option opt_gui_url                      { Option::OPT_STR,      "--guiurl",                    "-g",     " <gui_url>" };
-const Option opt_webcam_url                   { Option::OPT_STR,      "--webcamurl",                 "-w",     " <webcam_url>" };
-const Option opt_location                     { Option::OPT_STR,      "--location",                  "-l",     " <location>" };
-const Option opt_nb_physical_cartridge_slots  { Option::OPT_UINT,     "--nbphysicalcartridgeslots",  "--npcs", " <nb_physical_cartridge_slots>" };
-const Option opt_nb_available_cartridge_slots { Option::OPT_UINT,     "--nbavailablecartridgeslots", "--nacs", " <nb_available_cartridge_slots>" };
-const Option opt_nb_physical_drive_slots      { Option::OPT_UINT,     "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
-const Option opt_isrepackvo                   { Option::OPT_BOOL,     "--isrepackvo",                "--irvo", " <\"true\" or \"false\">" };
-const Option opt_max_files_to_select          { Option::OPT_UINT,     "--maxfilestoselect",          "--mfts", " <max_files_to_select>" };
-const Option opt_log_unixtime_min             { Option::OPT_UINT,     "--logunixtimemin",            "--ltmin", " <min_recycle_log_unixtime>" };
-const Option opt_log_unixtime_max             { Option::OPT_UINT,     "--logunixtimemax",            "--ltmax", " <max_recycle_log_unixtime>" };
-
-/*!
- * Subset of commands that return streaming output
- */
-const std::set<cmd_key_t> streamCmds = {
-  { AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_ADMIN,               AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_ARCHIVEROUTE,        AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_DISKINSTANCE,        AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_DISKINSTANCESPACE,   AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_DISKSYSTEM,          AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_DRIVE,               AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_FAILEDREQUEST,       AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_GROUPMOUNTRULE,      AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_LOGICALLIBRARY,      AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_MEDIATYPE,           AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_MOUNTPOLICY,         AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_RECYCLETAPEFILE,     AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_REPACK,              AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_REQUESTERMOUNTRULE,  AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_SHOWQUEUES,          AdminCmd::SUBCMD_NONE },
-  { AdminCmd::CMD_STORAGECLASS,        AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_TAPE,                AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_TAPEFILE,            AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_TAPEPOOL,            AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_VERSION,             AdminCmd::SUBCMD_NONE },
-  { AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS },
-  { AdminCmd::CMD_PHYSICALLIBRARY,     AdminCmd::SUBCMD_LS },
-};
-
-/*!
- * Map valid options to commands
- */
-const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
-   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_ADD   }, { opt_username, opt_comment }},
-   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH    }, { opt_username, opt_comment }},
-   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM    }, { opt_username }},
-   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD   },
-      { opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_CH    },
-      { opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_storageclass, opt_copynb }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd, opt_reason.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_reason, opt_force_flag.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename_cmd.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional()}},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_CH    }, { opt_drivename_cmd, opt_comment }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
-      { opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(),
-        opt_vid.optional(), opt_log.optional(), opt_summary.optional() }},
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RM    }, { opt_object_id }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_groupname_alias, opt_mountpolicy, opt_comment }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_groupname_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_groupname_alias }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
-      { opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    },
-      { opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(), opt_disabledreason.optional() }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { opt_logicallibrary_disabled.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_ADD   },
-      { opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(), opt_comment }},
-   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_CH    },
-      { opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional() }},
-   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_RM    }, { opt_mediatype_alias }},
-   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_ADD   },
-      { opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
-        opt_minretrieverequestage, opt_comment }},
-   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_CH    },
-      { opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(),
-        opt_retrievepriority.optional(), opt_minretrieverequestage.optional(),
-        opt_comment.optional() }},
-   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_RM    }, { opt_mountpolicy_alias }},
-   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_no_recall.optional(), opt_max_files_to_select.optional() }},
-   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
-   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
-   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_username_alias, opt_mountpolicy, opt_comment }},
-   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
-   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
-      { opt_storageclass_alias, opt_copynb_alias, opt_vo, opt_comment }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_CH    },
-      { opt_storageclass_alias, opt_copynb_alias.optional(), opt_vo.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_storageclass_alias }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { opt_storageclass_alias.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full,
-        opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
-      { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-        opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(),
-        opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional() }},
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
-      { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
-        opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(), opt_physical_library.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
-      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
-        opt_archivefileid.optional() }},
-   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_RM    },
-     { opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
-      { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH    },
-      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(),
-        opt_supply.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_ADD   },
-      { opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
-        opt_comment }},
-   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_CH    },
-      { opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
-   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_ADD   }, { opt_diskinstance_alias, opt_comment }},
-   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_CH    }, { opt_diskinstance_alias, opt_comment.optional() }},
-   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstance_alias }},
-   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_ADD   }, 
-      { opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment }},
-   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_CH    }, 
-      { opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional() }},
-   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstancespace_alias, opt_diskinstance }},
-   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-
-   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),                                             opt_isrepackvo.optional() }},
-   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
-      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional() }},
-   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
-      { opt_vo }},
-   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
-      { }},
-   {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
-   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS },
-   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional(),                opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional() }},
-   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE },
-   { opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
-      /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy, opt_comment }},
-   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias, opt_activityregex }},
-   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   // The command below is used for cta-change-storageclass and cta-eos-namespace-inject
-   {{ AdminCmd::CMD_ARCHIVEFILE,   AdminCmd::SUBCMD_CH   },
-      { opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
-      /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_ADD   },
-      { opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
-        opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional() }},
-   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_CH    },
-      { opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
-        opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots.optional() ,opt_comment.optional() }},
-   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_RM    }, { opt_physical_library_alias }},
-   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-};
-
-
 
 /*!
  * Validate that all required command line options are present

@@ -21,6 +21,7 @@
 import sys
 import os
 import re
+from datetime import datetime
 
 # Parse source code, extracting all lines between comment delimiters /**md and */
 def include_md(filename):
@@ -65,5 +66,7 @@ with open(infile, 'r') as fin, open(outfile, 'w') as fout:
                         fout.write(subline)
                     if re.match(r'^ *\/\*\*md$', subline):
                         output = True
+        elif re.match(r'^date:$', line):
+            fout.write("date: " + datetime.now().strftime('%Y-%m-%d') + "\n")
         else:
             fout.write(line)
