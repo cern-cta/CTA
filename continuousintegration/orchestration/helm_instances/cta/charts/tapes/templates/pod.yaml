@@ -1,7 +1,7 @@
 
 {{$namespace := .Release.Namespace }}
-{{$imageVersion := include "ctafrontend.image" . }}
-{{$imageSecret := include "ctafrontend.imageSecret" . }}
+{{$imageVersion := include "tapes.image" . }}
+{{$imageSecret := include "tapes.imageSecret" . }}
 {{- range $key, $value := .Values.tapes}}
 
 apiVersion: v1
@@ -21,7 +21,7 @@ spec:
   {{- range $value.containers}}
     {{$containerName := .name | default $key | quote }}
   - name: {{ $containerName }}
-    image: {{ default $imageVersion .image  | quote }}
+    image: {{ $imageVersion }}
     {{- if (.commandsAtRuntime)}}
     readinessProbe:
       exec:
