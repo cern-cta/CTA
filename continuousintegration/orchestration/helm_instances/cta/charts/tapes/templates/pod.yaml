@@ -1,8 +1,8 @@
 
 {{$namespace := .Release.Namespace }}
-{{$imageVersion := .Values.global.image}}
-{{$imageSecret := .Values.global.imagePullSecret}}
-{{- range $key, $value := .Values.cta.pods}}
+{{$imageVersion := include "ctafrontend.image" . }}
+{{$imageSecret := include "ctafrontend.imageSecret" . }}
+{{- range $key, $value := .Values.tapes}}
 
 apiVersion: v1
 kind: Pod
@@ -54,7 +54,7 @@ spec:
     {{- if (.volumeMounts)}}
     volumeMounts:
     {{- .volumeMounts | toYaml | nindent 4}}
-    {{- if ($.Values.global.volumeMounts) }}
+    {{- if ($.Values.global) }}
       {{- $.Values.global.volumeMounts | toYaml | nindent 4}}
     {{- end}}
     {{- end}}
@@ -62,7 +62,7 @@ spec:
   {{- if ($value.volumes)}}
   volumes:
     {{- $value.volumes | toYaml | nindent 2}}
-    {{- if ($.Values.global.volumes) }}
+    {{- if ($.Values.global) }}
       {{- $.Values.global.volumes | toYaml | nindent 2}}
     {{- end}}
   {{- end}}

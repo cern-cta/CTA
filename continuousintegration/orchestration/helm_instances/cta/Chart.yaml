@@ -1,14 +1,6 @@
 apiVersion: v2
 name: cta
-description: A CTA helmchart for CI runner
+description: A CTA helmchart for CI runner. On itself it only contains configmaps that are used in every other subchart
 type: application
 version: 0.1.0
 appVersion: "1.16.0"
-
-# TODO: Add dependency list
-# dependencies:
-# - name: server
-#   alias: eos
-#   version: 0.2.0
-#   repository: "oci://registry.cern.ch/eos/charts"
-# Maybe ask Elvin later
