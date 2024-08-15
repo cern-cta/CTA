@@ -890,8 +890,8 @@ requestermountrule (rmr)
  /**md
 showqueues (sq)
 
-:   Show the status of all active queues. Requests which are already being serviced by a tape server
-    are listed at the bottom.
+:   Show the status of all active queues. The bottom section shows requests already being serviced by
+    tape servers, which is why the values of some fields are at zero.
   */
   {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},         {}                                                             },
 
