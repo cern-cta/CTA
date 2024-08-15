@@ -32,10 +32,10 @@ spec:
     {{include "client.readinessProbe" .Values.readinessProbe | nindent 4}}
     {{- end}}
     securityContext:
-      privileged: {{.isPriviliged}}
-    {{ include "client.volumeMounts" . | nindent 4 }}
+      privileged: {{.Values.isPriviliged}}
+    {{- include "client.volumeMounts" . | nindent 4 }}
   # Here are volumes added
-  {{include "client.volumes" . | nindent 2}}
+  {{- include "client.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ .Values.global.imagePullSecret }}
+  - name: {{ include "client.imageSecret" . }}

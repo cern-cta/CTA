@@ -1,4 +1,5 @@
 image:
+imagePullSecret:
 
 nameOverride: client
 isPriviliged: true
@@ -44,7 +45,8 @@ volumes:
   secret:
     secretName: poweruser1-keytab
 - name: ctaadmin2-keytab
-
+  secret:
+    secretName: ctaadmin2-keytab
 
 volumeMounts:
 - mountPath: /shared
@@ -69,7 +71,8 @@ volumeMounts:
   name: poweruser1-keytab
   subPath: poweruser1.keytab
 - mountPath: /root/ctaadmin2.keytab
-
+  name: ctaadmin2-keytab
+  subPath: ctaadmin2.keytab
 
 
 readinessProbe:

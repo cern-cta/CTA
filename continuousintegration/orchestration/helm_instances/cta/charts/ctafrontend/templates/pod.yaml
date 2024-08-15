@@ -43,4 +43,4 @@ spec:
   {{include "ctafrontend.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ .Values.global.imagePullSecret }}
+  - name: {{ include "ctafrontend.imageSecret" . }}
