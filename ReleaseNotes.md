@@ -41,6 +41,7 @@
 - cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
 - cta/CTA#822 - Patch `cpp-check` errors for version 2.15dev and add DMC repo
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
+- cta/CTA#535 - Adding option to trigger CTA pipeline based on tagged EOS release
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0

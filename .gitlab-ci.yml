@@ -1,4 +1,5 @@
 stages:
+  - prepare
   - analysis
   - build
   - build:image
