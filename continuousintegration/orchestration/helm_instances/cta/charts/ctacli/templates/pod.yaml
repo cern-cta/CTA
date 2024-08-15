@@ -38,4 +38,4 @@ spec:
   {{include "ctacli.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ .Values.global.imagePullSecret }}
+  - name: {{ include "ctacli.imageSecret" . }}

@@ -47,12 +47,14 @@ readinessProbe:
 
 
 {{/*
-Sets pesistent volumes for the chart.
+Sets pesistent volumes for the chart. When loaded as as subchart
+it will load additionally all of the global configs as well
+(or if .Values.global is defined in subchart as well)
 */}}
 {{- define "ctacli.volumes" -}}
-{{ if or (.Values.global.volumes) (.Values.volumes) }}
+{{ if or (.Values.global) (.Values.volumes) }}
 volumes:
-    {{- if (.Values.global.volumes)}}
+    {{- if (.Values.global)}}
     {{- .Values.global.volumes | toYaml | nindent 2}}
     {{- end }}
     {{- if (.Values.volumes)}}
@@ -62,13 +64,27 @@ volumes:
 {{- end -}}
 
 {{- define "ctacli.volumeMounts" -}}
-{{ if or (.Values.global.volumeMounts) (.Values.volumeMounts) }}
+{{ if or (.Values.global) (.Values.volumeMounts) }}
 volumeMounts:
-  {{- if (.Values.global.volumeMounts)}}
+  {{- if .Values.global}}
     {{- .Values.global.volumeMounts | toYaml | nindent 1 }}
   {{- end }}
   {{- if (.Values.volumeMounts)}}
     {{- .Values.volumeMounts | toYaml | nindent 1 -}}
   {{- end }}
 {{- end}}
+{{- end -}}
+
+{{/* Pick image registry. It might be from:
+    - .Values.global.imagePullSecret (Takes priority)
+    - .Values.imagePullSecret
+*/}}
+{{- define "ctacli.imageSecret" -}}
+{{- if (.Values.global ) }}
+{{- .Values.global.imagePullSecret | quote -}}
+{{- else if (.Values.imagePullSecret) }}
+{{- .Values.imagePullSecret | quote -}}
+{{- else}}
+{{ fail "You must provide imagePullSecret value either in .Values.global.imagePullSecret or in .Values.imagePullSecret"}}
+{{- end }}
 {{- end -}}
