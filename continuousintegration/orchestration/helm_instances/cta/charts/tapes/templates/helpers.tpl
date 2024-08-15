@@ -2,7 +2,7 @@
     - .Values.global.imagePullSecret (Takes priority)
     - .Values.imagePullSecret
 */}}
-{{- define "ctafrontend.imageSecret" -}}
+{{- define "tapes.imageSecret" -}}
 {{- if (.Values.global ) }}
 {{- .Values.global.imagePullSecret | quote -}}
 {{- else if (.Values.imagePullSecret) }}
@@ -18,7 +18,7 @@ Pick docker image. It may be from:
     - `.Values.image` (Has the higher priority)
     - `.Values.global.image` (Has lower priority)
 */}}
-{{- define "ctafrontend.image" -}}
+{{- define "tapes.image" -}}
 {{- if .Values.global }}
 {{- .Values.global.image | quote -}}
 {{- else if .Values.image  }}
