@@ -374,326 +374,30 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
 
 /**
  * Specify the help text for commands
- *
- * NOTE: Comment blocks beginning **md are markdown documentation blocks. These comments follow a
- *       specific format and will be included verbatim into the CTA documentation and man pages.
- *       When adding or modifying a command option, take care to include the modifications into
- *       the documentation at the same time.
- *
- *       After modifying this source file, run the script compile_man_md.py to generate the man
- *       page. The new man page should be added to the git commit.
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
-  /**md
-activitymountrule (amr)
-
-:   Add, change, remove or list the activity mount rules. This is provided as an alternative to
-    requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
-    to be set based on metadata sent by the client rather than the authenticated identity of the
-    requestor.
-  */
   {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}} },
-
- /**md
-admin (ad)
-
-:   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
-    users must be included in the administrator list in addition to being authenticated.
-  */
   {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}              },
-
- /**md
-archiveroute (ar)
-
-:   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
-    entries to tape pools.
-  */
   {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}       },
-
- /**md
-diskinstance (di)
-
-:   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
-    installation has one or more disk instances. Multiple disk instances can be configured if it is
-    desired to have a separate namespace for each Virtual Organization (VO).
-
-    **\-\-name** specifies the disk instance name, which is the unique identifier of the disk
-    instance and cannot be changed.
-  */
   {AdminCmd::CMD_DISKINSTANCE,        {"diskinstance", "di", {"add", "ch", "rm", "ls"}}       },
-
- /**md
-diskinstancespace (dis)
-
-:   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
-    disk instance spaces. A disk instance space is a partition of the disk.
-
-    A typical use case for disk instance spaces is to configure separate spaces for archival and
-    retrieval operations on each instance.
-
-    **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
-    and disk instance space name form a pair which is the unique identifier for the disk instance space.
-
-    **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
-    space. It should be specified in the following format:
-
-        eos:<name_of_eos_instance>:<name_of_eos_space>
-
-    Example:
-
-        eos:ctaeos:spinners
-
-    **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
-    will be used before performing a new query.
-  */
   {AdminCmd::CMD_DISKINSTANCESPACE,   {"diskinstancespace", "dis", {"add", "ch", "rm", "ls"}} },
-
- /**md
-disksystem (ds)
-
-:   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
-    for CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree
-    on a disk instance space.
-
-    **\-\-disksystem** specifies the unique identifier of the disk system.
-
-    **\-\-diskinstance** and **\-\-diskinstancespace** form a pair which specifies the disk instance
-    and partition where this disk system is physically located.
-
-    **\-\-fileregexp** specifies the regular expression to match filenames (from *destinationURL*) to disk systems.
-
-    Example:
-
-        destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners
-
-    will match the regular expression:
-
-        ^root://eos_instance//eos/cta(.*)eos.space=spinners
-
-    Two options are provided to configure backpressure for retrieve operations. Backpressure can be
-    configured separately for each disk system. Before a retrieve mount, the destination URL of each
-    file is pattern-matched to identify the disk system. The corresponding disk instance space is
-    queried to determine if there is sufficient free space to perform the mount. If there is
-    insufficient space, the tape server sleeps for the specified interval.
-
-    **\-\-targetedfreespace** specifies how much free space should be available before processing a
-    batch of retrieve requests. It should be calculated based on the free space update latency (based
-    on *diskinstancespace* parameters) and the expected bandwidth for transfers to the external Storage
-    Element.
-
-    **\-\-sleeptime** specifies how long (in seconds) to sleep when the disk system has insufficient
-    space, before retrying the retrieve mount.
-  */
   {AdminCmd::CMD_DISKSYSTEM,          {"disksystem", "ds", {"add", "ch", "rm", "ls"}}         },
-
- /**md
-drive (dr)
-
-:   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
-
-    This is a synchronous command to set and read back the state of one or more tape drives. The
-    *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
-    the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
-    *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
-    guarantee that the same drive will be used every time.
-
-    **down** Drives will complete any running mount before changing state. (Override with
-    **\-\-force**).
-
-    **ls** displays an exclamation mark (**!**) in front of the drive name for drives in DISABLED
-    libraries.
-
-    **rm** drives must be in the down state before deleting. (Override with **\-\-force**).
-  */
   {AdminCmd::CMD_DRIVE,               {"drive", "dr", {"up", "down", "ls", "ch", "rm"}}       },
-
- /**md
-failedrequest (fr)
-
-:   List and remove requests which failed and for which all retry attempts failed.
-  */
   {AdminCmd::CMD_FAILEDREQUEST,       {"failedrequest", "fr", {"ls", "rm"}}                   },
-
- /**md
-groupmountrule (gmr)
-
-:   Add, change, remove or list the group mount rules.
-  */
   {AdminCmd::CMD_GROUPMOUNTRULE,      {"groupmountrule", "gmr", {"add", "ch", "rm", "ls"}}    },
-
- /**md
-logicallibrary (ll)
-
-:   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
-    tapes and drives based on physical location and tape drive capabilities.
-
-    A tape can be accessed by a drive if it is in the same physical library and if the drive is
-    capable of reading or writing the tape. In this case, that tape and that drive should normally
-    be in the same logical library.
-  */
   {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}     },
-
- /**md
-mediatype (mt)
-
-:   Add, change, remove or list the tape cartridge media types. This command is used to specify the
-    nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
-
-    Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
-    technology only). See **cta-taped(1cta)** for details.
-  */
   {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}          },
-
- /**md
-mountpolicy (mp)
-
-:   Add, change, remove or list the mount policies.
-  */
   {AdminCmd::CMD_MOUNTPOLICY,         {"mountpolicy", "mp", {"add", "ch", "rm", "ls"}}        },
-
- /**md
-physicallibrary (pl)
-
-:   Add, change, remove or list the physical tape libraries.
-  */
   {AdminCmd::CMD_PHYSICALLIBRARY,     {"physicallibrary", "pl", {"add", "ch", "rm", "ls"}}    },
-
- /**md
-recycletf (rtf)
-
-:   List tape files in the recycle log.
-
-    Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,
-    ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
-  */
   {AdminCmd::CMD_RECYCLETAPEFILE,     {"recycletf", "rtf", {"ls"}}                            },
-
- /**md
-repack (re)
-
-:   Add or remove a request to repack one or more tapes, list repack requests in progress and display
-    any errors.
-
-    Repack requests are submitted using the **add** subcommand:
-
-    A single tape to repack can be specified on the command line with the **\-\-vid** option, or a
-    list of tapes can be provided in a file, using the **\-\-vidfile** option.
-
-    **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
-    (the retrieve and archive requests).
-
-    **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
-    URL (specified in the CTA Frontend configuration). It should follow this format:
-
-        root://eosinstance//path/to/repack/buffer
-
-    **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
-    value, overriding the default value (specified in the CTA Frontend configuration). Set the value
-    to zero to force all files to be selected.
-
-    **\-\-no-recall** inhibits the retrieve mount. Only files that are already located in the disk
-    buffer will be considered for archival.
-
-    By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
-    copies of the file. The expected number of copies is defined by the storage class of the file.
-
-    **\-\-justmove** means that the files located on the tape to repack will be migrated onto new
-    tape(s), without creating any additional copies.
-
-    **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
-    repack will be created on the new tape(s), but the source tape file will not be migrated.
-
-    **ls** A row marked with a \* flag means that not all files were selected for repack.
-  */
   {AdminCmd::CMD_REPACK,              {"repack", "re", {"add", "rm", "ls", "err"}}            },
-
- /**md
-requestermountrule (rmr)
-
-:   Add, change, remove or list the requester mount rules.
-  */
   {AdminCmd::CMD_REQUESTERMOUNTRULE,  {"requestermountrule", "rmr", {"add", "ch", "rm", "ls"}}},
-
- /**md
-showqueues (sq)
-
-:   Show the status of all active queues.
-  */
   {AdminCmd::CMD_SHOWQUEUES,          {"showqueues", "sq", {}}                                },
-
- /**md
-storageclass (sc)
-
-:   Add, change, remove or list the storage classes. The storage class of a file specifies its
-    expected number of tape copies, and the corresponding tape pool that each copy should be archived
-    to.
-
-    In EOS, the storage class is specified as an extended attribute of the directory, which is
-    inherited as an extended attribute of the file at creation time.
-  */
   {AdminCmd::CMD_STORAGECLASS,        {"storageclass", "sc", {"add", "ch", "rm", "ls"}}       },
-
- /**md
-tape (ta)
-
-:   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
-    tape cartridges in each library.
-  */
   {AdminCmd::CMD_TAPE,                {"tape", "ta", {"add", "ch", "rm", "reclaim", "ls"}}    },
-
- /**md
-tapefile (tf)
-
-:   List files on a specified tape or delete a tape file.
-
-    **ls** Tape files can be listed by VID or by the (disk instance, disk file ID) pair.
-
-    EOS disk file IDs should be provided in hexadecimal format (*fxid*). A list of files can be
-    specified with the **\-\-fxidfile** option, which takes an input file in the same format as
-    the output of **eos find --fid <path>**.
-
-    **rm** Delete a tape copy of a file.
-  */
   {AdminCmd::CMD_TAPEFILE,            {"tapefile", "tf", {"ls", "rm"}}                        },
-
- /**md
-tapepool (tp)
-
-:   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
-    manage the tape lifecycle:
-
-        label → supply pool → user pool → erase → label
-
-    **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
-  */
   {AdminCmd::CMD_TAPEPOOL,            {"tapepool", "tp", {"add", "ch", "rm", "ls"}}           },
-
- /**md
-version (v)
-
-:   Display the version of **cta-admin**, the CTA Frontend, the protocol buffer used for client/server
-    communication, and the CTA Catalogue schema.
-  */
   {AdminCmd::CMD_VERSION,             {"version", "v", {}}                                    },
-
- /**md
-virtualorganization (vo)
-
-:   Add, change, remove or list the Virtual Organizations (VOs). A VO corresponds to an entity whose
-    data transfers and storage should be managed independently of the others, for example an experimental
-    collaboration.
-
-    **\-\-vo** specifies the name of the virtual organization. It must be unique.
-
-    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organization is allowed
-    to use for writing.
-
-    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organization is allowed
-    to use for reading>
-
-    **\-\-maxfilesize** specifies the maximum file size for this virtual organization. Default is 0,
-    which means no limit.
-  */
   {AdminCmd::CMD_VIRTUALORGANIZATION, {"virtualorganization", "vo", {"add", "ch", "rm", "ls"}}},
 };
 
@@ -824,33 +528,102 @@ const std::set<cmd_key_t> streamCmds = {
   { AdminCmd::CMD_PHYSICALLIBRARY,     AdminCmd::SUBCMD_LS },
 };
 
-/*!
- * Map valid options to commands
+/**
+ * Specify the options for each (command, subcommand) pair
+ *
+ * The options specified here are checked for validity by cta-admin AND by the CTA Frontend.
+ *
+ * NOTE: Comment blocks beginning **md are Markdown documentation blocks. These comments will be
+ *       included verbatim into the CTA documentation and man pages.
+ *
+ *       When adding or modifying a command option, take care to include the modifications into
+ *       the documentation at the same time. Note that the documentation comments follow a specific
+ *       format and indentation is significant.
+ *
+ *       After modifying this source file, run the following script to generate the man page:
+ *
+ *           ./compile_man_md.py cta-admin.1cta.md.in
+ *
+ *       This will generate "cta-admin.1cta.md", which should be added to the git commit.
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
+  /**md
+activitymountrule (amr)
+
+:   Add, change, remove or list the activity mount rules. This is provided as an alternative to
+    requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
+    to be set based on metadata sent by the client rather than the authenticated identity of the
+    requestor.
+  */
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_ADD},
    {opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy, opt_comment}                                       },
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_CH},
    {opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy.optional(), opt_comment.optional()}                 },
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM},    {opt_instance, opt_username_alias, opt_activityregex}          },
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS},    {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+admin (ad)
+
+:   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
+    users must be included in the list of administrators, in addition to being authenticated.
+  */
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD},               {opt_username, opt_comment}                                    },
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH},                {opt_username, opt_comment}                                    },
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM},                {opt_username}                                                 },
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS},                {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+archiveroute (ar)
+
+:   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
+    entries to tape pools.
+  */
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD},        {opt_storageclass, opt_copynb, opt_tapepool, opt_comment}      },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH},
    {opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional()}                                           },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb}                                 },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+diskinstance (di)
+
+:   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+    installation has one or more disk instances. Multiple disk instances can be configured if it is
+    desired to have a separate namespace for each Virtual Organization (VO).
+
+    **\-\-name** specifies the disk instance name, which is the unique identifier of the disk
+    instance and cannot be changed.
+  */
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_ADD},        {opt_diskinstance_alias, opt_comment}                          },
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_CH},         {opt_diskinstance_alias, opt_comment.optional()}               },
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_RM},         {opt_diskinstance_alias}                                       },
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_LS},         {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+diskinstancespace (dis)
+
+:   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
+    disk instance spaces. A disk instance space is a partition of the disk.
+
+    A typical use case for disk instance spaces is to configure separate spaces for archival and
+    retrieval operations on each instance.
+
+    **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
+    and disk instance space name form a pair which is the unique identifier for the disk instance space.
+
+    **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
+    space. It should be specified in the following format:
+
+        eos:<name_of_eos_instance>:<name_of_eos_space>
+
+    Example:
+
+        eos:ctaeos:spinners
+
+    **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
+    will be used before performing a new query.
+  */
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_ADD},
    {opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment}              },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_CH},
@@ -858,7 +631,43 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_refresh_interval.optional()}                                                                                         },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM},    {opt_diskinstancespace_alias, opt_diskinstance}                },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS},    {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+disksystem (ds)
+
+:   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
+    for CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree
+    on a disk instance space.
+
+    **\-\-disksystem** specifies the unique identifier of the disk system.
+
+    **\-\-diskinstance** and **\-\-diskinstancespace** form a pair which specifies the disk instance
+    and partition where this disk system is physically located.
+
+    **\-\-fileregexp** specifies the regular expression to match filenames (from *destinationURL*) to disk systems.
+
+    Example:
+
+        destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners
+
+    will match the regular expression:
+
+        ^root://eos_instance//eos/cta(.*)eos.space=spinners
+
+    Two options are provided to configure backpressure for retrieve operations. Backpressure can be
+    configured separately for each disk system. Before a retrieve mount, the destination URL of each
+    file is pattern-matched to identify the disk system. The corresponding disk instance space is
+    queried to determine if there is sufficient free space to perform the mount. If there is
+    insufficient space, the tape server sleeps for the specified interval.
+
+    **\-\-targetedfreespace** specifies how much free space should be available before processing a
+    batch of retrieve requests. It should be calculated based on the free space update latency (based
+    on *diskinstancespace* parameters) and the expected bandwidth for transfers to the external Storage
+    Element.
+
+    **\-\-sleeptime** specifies how long (in seconds) to sleep when the disk system has insufficient
+    space, before retrying the retrieve mount.
+  */
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD},
    {opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
     opt_comment}                                                                                                             },
@@ -867,25 +676,67 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM},           {opt_disksystem}                                               },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS},           {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+drive (dr)
+
+:   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
+
+    This is a synchronous command to set and read back the state of one or more tape drives. The
+    *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
+    the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
+    *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
+    guarantee that the same drive will be used every time.
+
+    **up** puts a drive into active state, able to perform an archive or retrieve mount.
+
+    **down** puts a drive into inactive state, unable to mount. Drives will complete any running mount
+    before changing state. (Override with **\-\-force**).
+
+    **ls** lists the drives matching *drive_name*, or all drives by default. An exclamation mark (**!**)
+    is displayed in front of the drive name for drives in disabled libraries.
+
+    **rm** deletes the drive definition. Drives must be in the **down** state before deleting.
+    (Override with **\-\-force**).
+  */
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP},                {opt_drivename_cmd, opt_reason.optional()}                     },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN},              {opt_drivename_cmd, opt_reason, opt_force_flag.optional()}     },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS},                {opt_drivename_cmd.optional()}                                 },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM},                {opt_drivename_cmd, opt_force_flag.optional()}                 },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_CH},                {opt_drivename_cmd, opt_comment}                               },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+failedrequest (fr)
+
+:   List and remove requests which failed and for which all retry attempts failed.
+  */
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS},
    {opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(), opt_vid.optional(),
     opt_log.optional(), opt_summary.optional()}                                                                              },
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM},        {opt_object_id}                                                },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+groupmountrule (gmr)
+
+:   Add, change, remove or list the group mount rules.
+  */
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD},
    {opt_instance, opt_groupname_alias, opt_mountpolicy, opt_comment}                                                         },
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH},
    {opt_instance, opt_groupname_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                   },
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM},       {opt_instance, opt_groupname_alias}                            },
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS},       {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+logicallibrary (ll)
+
+:   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
+    tapes and drives based on physical location and tape drive capabilities.
+
+    A tape can be accessed by a drive if it is in the same physical library and if the drive is
+    capable of reading or writing the tape. In this case, that tape and that drive should normally
+    be in the same logical library.
+  */
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD},
    {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment}                         },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH},
@@ -893,7 +744,16 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_disabledreason.optional()}                                                                                           },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM},       {opt_logicallibrary_alias}                                     },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS},       {opt_logicallibrary_disabled.optional()}                       },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+mediatype (mt)
+
+:   Add, change, remove or list the tape cartridge media types. This command is used to specify the
+    nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
+
+    Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
+    technology only). See **cta-taped(1cta)** for details.
+  */
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},
    {opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(),
     opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
@@ -904,7 +764,12 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            {opt_mediatype_alias}                                          },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS},            {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+mountpolicy (mp)
+
+:   Add, change, remove or list the mount policies.
+  */
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD},
    {opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
     opt_minretrieverequestage, opt_comment}                                                                                  },
@@ -913,7 +778,12 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_comment.optional()}                           },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          {opt_mountpolicy_alias}                                        },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS},          {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+physicallibrary (pl)
+
+:   Add, change, remove or list the physical tape libraries.
+  */
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_ADD},
    {opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(),
     opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
@@ -924,33 +794,111 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_nb_physical_drive_slots.optional(), opt_comment.optional()}                                                          },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
-  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},
-   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(),
-    opt_justaddcopies.optional(), opt_no_recall.optional(), opt_max_files_to_select.optional()}                              },
-  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               {opt_vid}                                                      },
-  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
-  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              {opt_vid}                                                      },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+recycletf (rtf)
+
+:   List tape files in the recycle log.
+
+    Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,
+    ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
+  */
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS},
    {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(),
     opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}            },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+repack (re)
+
+:   Add or remove a request to repack one or more tapes, list repack requests in progress, display
+    repack errors.
+
+    **add** adds one or more tapes to the active repack requests:
+
+    **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
+    (the retrieve and archive requests).
+
+    **\-\-vid** specifies a single tape to repack.
+
+    **\-\-vidfile** specifies the filename of a text file containing a list of tapes to repack.
+
+    **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
+    URL (specified in the CTA Frontend configuration). It should follow this format:
+
+        root://eosinstance//path/to/repack/buffer
+
+    **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
+    value, overriding the default value (specified in the CTA Frontend configuration). Set the value
+    to zero to force all files to be selected.
+
+    **\-\-no-recall** inhibits the retrieve mount. Only files that are already located in the disk
+    buffer will be considered for archival.
+
+    By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
+    copies of the file. The expected number of copies is defined by the storage class of the file.
+
+    **\-\-justmove** means that the files located on the tape to repack will be migrated onto new
+    tape(s), without creating any additional copies.
+
+    **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
+    repack will be created on the new tape(s), but the source tape file will not be migrated.
+
+    **rm** removes a tape from the list of tapes to repack.
+
+    **ls** lists repack requests in progress. Rows marked with the **\*** flag indicate that not all
+    files were selected for repack.
+
+    **err** displays any repack errors.
+  */
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},
+   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(),
+    opt_max_files_to_select.optional(), opt_no_recall.optional(), opt_justmove.optional(),
+    opt_justaddcopies.optional()}                                                                                            },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               {opt_vid}                                                      },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
+  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              {opt_vid}                                                      },
+
+ /**md
+requestermountrule (rmr)
+
+:   Add, change, remove or list the requester mount rules.
+  */
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD},
    {opt_instance, opt_username_alias, opt_mountpolicy, opt_comment}                                                          },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH},
    {opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                    },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   {opt_instance, opt_username_alias}                             },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS},   {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+showqueues (sq)
+
+:   Show the status of all active queues.
+  */
   {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},         {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+storageclass (sc)
+
+:   Add, change, remove or list the storage classes. The storage class of a file specifies its
+    expected number of tape copies, and the corresponding tape pool that each copy should be archived
+    to.
+
+    In EOS, the storage class is specified as an extended attribute of the directory, which is
+    inherited as an extended attribute of the file at creation time.
+  */
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD},        {opt_storageclass_alias, opt_copynb_alias, opt_vo, opt_comment}},
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH},
    {opt_storageclass_alias, opt_copynb_alias.optional(), opt_vo.optional(), opt_comment.optional()}                          },
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM},         {opt_storageclass_alias}                                       },
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS},         {opt_storageclass_alias.optional()}                            },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+tape (ta)
+
+:   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
+    tape cartridges in each library.
+  */
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
    {opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_state.optional(),
     opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional()}                                            },
@@ -965,13 +913,36 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(), opt_full.optional(), opt_fidfile.optional(),
     opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(),
     opt_physical_library.optional()}                                                                                         },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+tapefile (tf)
+
+:   List files on a specified tape or delete a tape file.
+
+    **ls** Tape files can be listed by VID or by the (disk instance, disk file ID) pair.
+
+    EOS disk file IDs should be provided in hexadecimal format (*fxid*). A list of files can be
+    specified with the **\-\-fxidfile** option, which takes an input file in the same format as
+    the output of **eos find --fid <path>**.
+
+    **rm** Delete a tape copy of a file.
+  */
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
    {opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
    {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason}                          },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+tapepool (tp)
+
+:   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
+    manage the tape lifecycle:
+
+        label → supply pool → user pool → erase → label
+
+    **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
+  */
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD},
    {opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment}                         },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},
@@ -980,9 +951,33 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
    {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                              },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+version (v)
+
+:   Display the version of **cta-admin**, the CTA Frontend, the protocol buffer used for client/server
+    communication, and the CTA Catalogue schema.
+  */
   {{AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE},            {}                                                             },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+
+ /**md
+virtualorganization (vo)
+
+:   Add, change, remove or list the Virtual Organizations (VOs). A VO corresponds to an entity whose
+    data transfers and storage should be managed independently of the others, for example an experimental
+    collaboration.
+
+    **\-\-vo** specifies the name of the virtual organization. It must be unique.
+
+    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for writing.
+
+    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    to use for reading>
+
+    **\-\-maxfilesize** specifies the maximum file size for this virtual organization. Default is 0,
+    which means no limit.
+  */
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD},
    {opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),
     opt_isrepackvo.optional()}                                                                                               },
@@ -991,9 +986,11 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
     opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional()}                                      },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM},  {opt_vo}                                                       },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
+
  /*-------------------------------------------------------------------------------------------------------------------------
    COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
+
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional()}                      },

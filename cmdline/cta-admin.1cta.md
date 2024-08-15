@@ -1,5 +1,5 @@
 ---
-date: 2024-08-14
+date: 2024-08-15
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -54,7 +54,7 @@ activitymountrule (amr)
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
-    users must be included in the administrator list in addition to being authenticated.
+    users must be included in the list of administrators, in addition to being authenticated.
 
 archiveroute (ar)
 
@@ -138,13 +138,16 @@ drive (dr)
     *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
     guarantee that the same drive will be used every time.
 
-    **down** Drives will complete any running mount before changing state. (Override with
-    **\-\-force**).
+    **up** puts a drive into active state, able to perform an archive or retrieve mount.
 
-    **ls** displays an exclamation mark (**!**) in front of the drive name for drives in DISABLED
-    libraries.
+    **down** puts a drive into inactive state, unable to mount. Drives will complete any running mount
+    before changing state. (Override with **\-\-force**).
 
-    **rm** drives must be in the down state before deleting. (Override with **\-\-force**).
+    **ls** lists the drives matching *drive_name*, or all drives by default. An exclamation mark (**!**)
+    is displayed in front of the drive name for drives in disabled libraries.
+
+    **rm** deletes the drive definition. Drives must be in the **down** state before deleting.
+    (Override with **\-\-force**).
 
 failedrequest (fr)
 
@@ -188,16 +191,17 @@ recycletf (rtf)
 
 repack (re)
 
-:   Add or remove a request to repack one or more tapes, list repack requests in progress and display
-    any errors.
+:   Add or remove a request to repack one or more tapes, list repack requests in progress, display
+    repack errors.
 
-    Repack requests are submitted using the **add** subcommand:
-
-    A single tape to repack can be specified on the command line with the **\-\-vid** option, or a
-    list of tapes can be provided in a file, using the **\-\-vidfile** option.
+    **add** adds one or more tapes to the active repack requests:
 
     **\-\-mountpolicy** specifies the mount policy that will be applied to the repack subrequests
     (the retrieve and archive requests).
+
+    **\-\-vid** specifies a single tape to repack.
+
+    **\-\-vidfile** specifies the filename of a text file containing a list of tapes to repack.
 
     **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
     URL (specified in the CTA Frontend configuration). It should follow this format:
@@ -220,7 +224,12 @@ repack (re)
     **\-\-justaddcopies** means that new (or missing) copies of the files located on the tape to
     repack will be created on the new tape(s), but the source tape file will not be migrated.
 
-    **ls** A row marked with a \* flag means that not all files were selected for repack.
+    **rm** removes a tape from the list of tapes to repack.
+
+    **ls** lists repack requests in progress. Rows marked with the **\*** flag indicate that not all
+    files were selected for repack.
+
+    **err** displays any repack errors.
 
 requestermountrule (rmr)
 
