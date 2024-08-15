@@ -81,14 +81,16 @@ diskinstancespace (dis)
     **\-\-name** specifies the disk instance space name. The disk instance name (**\-\-diskinstance**)
     and disk instance space name form a pair which is the unique identifier for the disk instance space.
 
+    **\-\-diskinstance** specifies the name of the disk instance to query, e.g. **eosctapublic**
+
     **\-\-freespacequeryurl** specifies the URL to query the free disk space on this disk instance
     space. It should be specified in the following format:
 
-        eos:<name_of_eos_instance>:<name_of_eos_space>
+        <query protocol>:<name of disk space>
 
     Example:
 
-        eos:ctaeos:spinners
+        eosSpace:retrieve
 
     **\-\-refreshinterval** specifies how long (in seconds) the cached value of the free space query
     will be used before performing a new query.
@@ -114,11 +116,14 @@ disksystem (ds)
 
         ^root://eos_instance//eos/cta(.*)eos.space=spinners
 
-    Two options are provided to configure backpressure for retrieve operations. Backpressure can be
-    configured separately for each disk system. Before a retrieve mount, the destination URL of each
-    file is pattern-matched to identify the disk system. The corresponding disk instance space is
-    queried to determine if there is sufficient free space to perform the mount. If there is
-    insufficient space, the tape server sleeps for the specified interval.
+    The two options below are provided to configure backpressure for retrieve operations. Backpressure
+    is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
+    disk space. It can be configured separately for each disk system.
+    
+    Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
+    system. The corresponding disk instance space is queried to determine if there is sufficient free
+    space to perform the mount. If there is insufficient space, the tape server sleeps for the specified
+    interval.
 
     **\-\-targetedfreespace** specifies how much free space should be available before processing a
     batch of retrieve requests. It should be calculated based on the free space update latency (based
@@ -140,8 +145,11 @@ drive (dr)
 
     **up** puts a drive into active state, able to perform an archive or retrieve mount.
 
-    **down** puts a drive into inactive state, unable to mount. Drives will complete any running mount
-    before changing state. (Override with **\-\-force**).
+    **down** puts a drive into inactive state, unable to mount. Drives will complete any running session
+    and dismount the tape before changing state.
+
+    **\-\-reason** specifies the reason (free text) why the drive is being put down. The reason will
+    be displayed in the output of **ls**.
 
     **ls** lists the drives matching *drive_name*, or all drives by default. An exclamation mark (**!**)
     is displayed in front of the drive name for drives in disabled libraries.
@@ -206,7 +214,7 @@ repack (re)
     **\-\-bufferurl** optionally specifies the buffer to use in place of the default repack buffer
     URL (specified in the CTA Frontend configuration). It should follow this format:
 
-        root://eosinstance//path/to/repack/buffer
+        root://eos_instance//path/to/repack/buffer
 
     **\-\-maxfilestoselect** optionally limits the the number of files to be repacked to the specified
     value, overriding the default value (specified in the CTA Frontend configuration). Set the value
@@ -227,7 +235,8 @@ repack (re)
     **rm** removes a tape from the list of tapes to repack.
 
     **ls** lists repack requests in progress. Rows marked with the **\*** flag indicate that not all
-    files were selected for repack.
+    files were selected for repack. The number of files to repack at once can be restricted to avoid
+    overloading the Scheduler Database. To repack the remaining files, repeat the operation.
 
     **err** displays any repack errors.
 
@@ -237,7 +246,8 @@ requestermountrule (rmr)
 
 showqueues (sq)
 
-:   Show the status of all active queues.
+:   Show the status of all active queues. Requests which are already being serviced by a tape server
+    are listed at the bottom.
 
 storageclass (sc)
 
@@ -257,13 +267,23 @@ tapefile (tf)
 
 :   List files on a specified tape or delete a tape file.
 
-    **ls** Tape files can be listed by VID or by the (disk instance, disk file ID) pair.
+    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
+    disk file ID) pair, or the archive file ID.
 
-    EOS disk file IDs should be provided in hexadecimal format (*fxid*). A list of files can be
-    specified with the **\-\-fxidfile** option, which takes an input file in the same format as
-    the output of **eos find --fid <path>**.
+    **\-\-vid** specifies the volume identifier (VID) of a tape.
 
-    **rm** Delete a tape copy of a file.
+    **\-\-fxid** specifies the disk file ID. EOS disk file IDs should be provided in hexadecimal
+    format.
+
+    **\-\-instance** specifies on which disk instance the disk file ID is located.
+
+    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
+    in hexadecimal formal. The format of this file is the same as the output of
+    **eos find --fid <path>**.
+
+    **\-\-id** specifies an archive file ID.
+
+    **rm** deletes a single tape file. Note that some disk files have more than one associated tape file.
 
 tapepool (tp)
 
@@ -271,6 +291,15 @@ tapepool (tp)
     manage the tape lifecycle:
 
         label → supply pool → user pool → erase → label
+
+    **add** creates a new tapepool:
+
+    **\-\-partialtapesnumber** specifies the number of tapes which should be made available for
+    writing in this tape pool. If the number of tapes eligible for writing falls below this number
+    (for example, because a tape becomes full), a new tape will be added from a supply pool.
+
+    **\-\-supply** specifies a comma-separated list of tape pools to use as supply pools, when
+    adding new (empty) tapes to this tape pool.
 
     **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
 
@@ -281,31 +310,32 @@ version (v)
 
 virtualorganization (vo)
 
-:   Add, change, remove or list the Virtual Organizations (VOs). A VO corresponds to an entity whose
+:   Add, change, remove or list the Virtual Organisations (VOs). A VO corresponds to an entity whose
     data transfers and storage should be managed independently of the others, for example an experimental
     collaboration.
 
-    **\-\-vo** specifies the name of the virtual organization. It must be unique.
+    **\-\-virtualorganisation** specifies the name of the virtual organisation. It must be unique.
 
-    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organization is allowed
-    to use for writing.
-
-    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organization is allowed
+    **\-\-readmaxdrives** specifies the maximum number of drives the virtual organisation is allowed
     to use for reading>
 
-    **\-\-maxfilesize** specifies the maximum file size for this virtual organization. Default is 0,
+    **\-\-writemaxdrives** specifies the maximum number of drives the virtual organisation is allowed
+    to use for writing.
+
+    **\-\-maxfilesize** specifies the maximum file size for this virtual organisation. Default is 0,
     which means no limit.
+
+    **\-\-isrepackvo** if set to **true**, normal data archival and retrieval is inhibited for this VO;
+    it can only be used for repack operations.
 
 # OPTIONS
 
-\--json
+**\-\-json**
 
-:   Some commands, such as **cta-admin tapefile ls**, can return an arbitrarily long list of results,
-    which are normally returned in plain text format, with one record per line. If the \--json option
-    is supplied, the results are returned as an array of records in JSON format. This option is intended
-    for use by scripts to ease automated processing of results.
+:   Return the output of **cta-admin** as a JSON object rather than columnar text. This option is
+    intended for use by scripts to ease automated processing of results.
 
-\--config
+**\-\-config**
 
 :   Override the default configuration file */etc/cta/cta-cli.conf*.
 
@@ -340,7 +370,7 @@ If there is an error, a message will be printed on *stderr*. XRootD errors, prot
 errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tape pool or VID) return
 with exit code 2.
 
-In the case of user errors, when the \--json option is specified, **cta-admin** will return an empty JSON array
+In the case of user errors, when the **\-\-json** option is specified, **cta-admin** will return an empty JSON array
 to *stdout* in addition to the error message printed on *stderr*. Scripts using **cta-admin** should interpret
 the error code to determine whether valid parameters were used.
 
@@ -348,9 +378,7 @@ the error code to determine whether valid parameters were used.
 
 XrdSecPROTOCOL
 
-:   Sets the XRootD security protocol to use for client/server connections. Note that the CTA Frontend
-    enforces the use of the *krb5* protocol. Admin commands sent using a different security protocol
-    will be rejected.
+:   Sets the XRootD security protocol to use for client/server connections.
 
 XrdSsiPbLogLevel *none*
 
