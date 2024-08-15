@@ -16,14 +16,16 @@ Expand the name of the chart.
 
 {{/*
 Pick docker image. It may be from:
-    - `.Values.image` (Has the highest priority)
+    - `.Values.image` (Has the higher priority)
     - `.Values.global.image` (Has lower priority)
 */}}
 {{- define "ctaeos.image" -}}
-{{- if or .Values.image .Values.global.image }}
-{{- default .Values.global.image .Values.image | quote -}}
-{{- else}}
-{{- fail "You must either provide .Values.image or .Values.global.image value."}}
+{{- if .Values.global }}
+{{- .Values.global.image | quote -}}
+{{- else if .Values.image  }}
+{{- .Values.image | quote -}}
+{{- else }}
+{{- fail "You must provide docker image, either by .Values.image or .Values.global.image value."}}
 {{- end }}
 {{- end -}}
 
