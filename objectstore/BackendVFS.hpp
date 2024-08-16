@@ -84,7 +84,7 @@ class BackendVFS: public Backend {
     ~ScopedLock() override { ScopedLock::release(); }
   private:
     ScopedLock(): m_fdSet(false), m_fd(0) {}
-    void set(int fd, const std::string& path) { m_fd = fd; m_fdSet = true; m_path = path; }
+    void set(int fd, std::string_view path) { m_fd = fd; m_fdSet = true; m_path = path; }
     bool m_fdSet;
     std::string m_path;
     int m_fd;
@@ -195,7 +195,7 @@ class BackendVFS: public Backend {
      * A more specific member, giving access to the path itself
      * @return the path to the VFS storage.
      */
-    //std::string_view getPath() { return m_path; }
+    //std::string_view getPath() const { return m_path; }
 
   private:
     std::string m_path;

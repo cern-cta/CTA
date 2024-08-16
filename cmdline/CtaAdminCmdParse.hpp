@@ -42,12 +42,10 @@ public:
    Option(option_t type, const std::string &long_opt, const std::string &short_opt,
           const std::string &help_txt, const std::string &alias = "") :
       m_type(type),
-      m_lookup_key((alias.size() == 0) ? long_opt : alias),
+      m_lookup_key((alias.empty() ? long_opt : alias),
       m_long_opt(long_opt),
       m_short_opt(short_opt),
-      m_help_txt(help_txt),
-      m_is_optional(false) {
-   }
+      m_help_txt(help_txt) { }
 
    /*!
     * Copy-construct an optional version of this option
@@ -61,7 +59,7 @@ public:
    /*!
     * Check if the supplied key matches the option
     */
-   bool operator==(const std::string &option) const {
+   bool operator==(std::string_view option) const {
       return option == m_short_opt || option == m_long_opt;
    }
 
@@ -121,7 +119,7 @@ private:
    std::string m_long_opt;      //!< Long command option
    std::string m_short_opt;     //!< Short command option
    std::string m_help_txt;      //!< Option help text
-   bool        m_is_optional;   //!< Option is optional or compulsory
+   bool        m_is_optional = false;   //!< Option is optional or compulsory
 };
 
 
@@ -155,7 +153,7 @@ public:
    /*!
     * Can we parse subcommands for this command?
     */
-   bool has_subcommand() const { return m_sub_cmd.size() > 0; }
+   bool has_subcommand() const { return ! m_sub_cmd.empty(); }
 
    /*!
     * Return the short help message
@@ -402,6 +400,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 /*
  * Enumerate options
  */
+const std::string true_or_false = R" <"true" or "false">";
 const Option opt_all {Option::OPT_FLAG, "--all", "-a", ""};
 const Option opt_archivefileid {Option::OPT_UINT, "--id", "-I", " <archive_file_id>"};
 const Option opt_archivepriority {Option::OPT_UINT, "--archivepriority", "--ap", " <priority_value>"};
@@ -411,17 +410,17 @@ const Option opt_cartridge {Option::OPT_STR, "--cartridge", "-t", " <cartridge>"
 const Option opt_comment {Option::OPT_STR, "--comment", "-m", " <\"comment\">"};
 const Option opt_copynb {Option::OPT_UINT, "--copynb", "-c", " <copy_number>"};
 const Option opt_copynb_alias {Option::OPT_UINT, "--numberofcopies", "-c", " <number_of_copies>", "--copynb"};
-const Option opt_disabled {Option::OPT_BOOL, "--disabled", "-d", " <\"true\" or \"false\">"};
+const Option opt_disabled {Option::OPT_BOOL, "--disabled", "-d", true_or_false};
 const Option opt_drivename_cmd {Option::OPT_CMD, "--drive", "", "<drive_name>"};
-const Option opt_encrypted {Option::OPT_BOOL, "--encrypted", "-e", " <\"true\" or \"false\">"};
+const Option opt_encrypted {Option::OPT_BOOL, "--encrypted", "-e", true_or_false};
 const Option opt_encryptionkeyname {Option::OPT_STR, "--encryptionkeyname", "-k", " <encryption_key_name>"};
 const Option opt_fid {Option::OPT_STR, "--fxid", "-f", " <eos_fxid>"};
 const Option opt_fidfile {Option::OPT_STR_LIST, "--fxidfile", "-F", " <filename>"};
 const Option opt_filename {Option::OPT_STR, "--file", "-f", " <filename>"};
-const Option opt_force {Option::OPT_BOOL, "--force", "-f", " <\"true\" or \"false\">"};
+const Option opt_force {Option::OPT_BOOL, "--force", "-f", true_or_false};
 const Option opt_force_flag {Option::OPT_FLAG, "--force", "-f", ""};
-const Option opt_fromcastor {Option::OPT_BOOL, "--fromcastor", "--fc", " <\"true\" or \"false\">"};
-const Option opt_dirtybit {Option::OPT_BOOL, "--dirtybit", "--db", " <\"true\" or \"false\">"};
+const Option opt_fromcastor {Option::OPT_BOOL, "--fromcastor", "--fc", true_or_false};
+const Option opt_dirtybit {Option::OPT_BOOL, "--dirtybit", "--db", true_or_false};
 const Option opt_instance {Option::OPT_STR, "--instance", "-i", " <disk_instance>"};
 const Option opt_justarchive {Option::OPT_FLAG, "--justarchive", "-a", ""};
 const Option opt_justmove {Option::OPT_FLAG, "--justmove", "-m", ""};
@@ -430,7 +429,7 @@ const Option opt_justretrieve {Option::OPT_FLAG, "--justretrieve", "-r", ""};
 const Option opt_log {Option::OPT_FLAG, "--log", "-l", ""};
 const Option opt_logicallibrary {Option::OPT_STR, "--logicallibrary", "-l", " <logical_library_name>"};
 const Option opt_logicallibrary_alias {Option::OPT_STR, "--name", "-n", " <logical_library_name>", "--logicallibrary"};
-const Option opt_logicallibrary_disabled {Option::OPT_BOOL, "--disabled", "-d", " <\"true\" or \"false\">"};
+const Option opt_logicallibrary_disabled {Option::OPT_BOOL, "--disabled", "-d", true_or_false};
 const Option opt_maxfilesize {Option::OPT_UINT, "--maxfilesize", "--mfs", " <maximum_file_size>"};
 const Option opt_maxlpos {Option::OPT_UINT, "--maxlpos", "--maxl", " <maximum_longitudinal_position>"};
 const Option opt_mediatype {Option::OPT_STR, "--mediatype", "--mt", " <media_type_name>"};
@@ -460,7 +459,7 @@ const Option opt_vid {Option::OPT_STR, "--vid", "-v", " <vid>"};
 const Option opt_purchase_order {Option::OPT_STR, "--purchaseorder", "-p", " <purchase_order>"};
 const Option opt_vo {Option::OPT_STR, "--virtualorganisation", "--vo", " <virtual_organisation>"};
 const Option opt_vidfile {Option::OPT_STR_LIST, "--vidfile", "-f", " <filename>"};
-const Option opt_full {Option::OPT_BOOL, "--full", "-f", " <\"true\" or \"false\">"};
+const Option opt_full {Option::OPT_BOOL, "--full", "-f", R" <"true" or "false">"};
 const Option opt_disksystem {Option::OPT_STR, "--disksystem", "-n", " <disk_system_name>"};
 const Option opt_file_regexp {Option::OPT_STR, "--fileregexp", "-r", " <file_regexp>"};
 const Option opt_free_space_query_url {Option::OPT_STR, "--freespacequeryurl", "-u", " <free_space_query_url>"};
@@ -502,7 +501,7 @@ const Option opt_nb_available_cartridge_slots {Option::OPT_UINT, "--nbavailablec
                                                " <nb_available_cartridge_slots>"};
 const Option opt_nb_physical_drive_slots {Option::OPT_UINT, "--nbphysicaldriveslots", "--npds",
                                           " <nb_physical_drive_slots >"};
-const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", " <\"true\" or \"false\">"};
+const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", true_or_false};
 const Option opt_max_files_to_select {Option::OPT_UINT, "--maxfilestoselect", "--mfts", " <max_files_to_select>"};
 const Option opt_log_unixtime_min {Option::OPT_UINT, "--logunixtimemin", "--ltmin", " <min_recycle_log_unixtime>"};
 const Option opt_log_unixtime_max {Option::OPT_UINT, "--logunixtimemax", "--ltmax", " <max_recycle_log_unixtime>"};

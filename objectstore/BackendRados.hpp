@@ -179,7 +179,6 @@ private:
     void wait() { cta::threading::Thread::wait(); }
   private:
     BackendRados & m_parentBackend;
-    const int m_threadID;
     log::LogContext m_lc;
     void run() override;
   };
