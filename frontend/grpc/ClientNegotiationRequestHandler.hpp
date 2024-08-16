@@ -38,7 +38,7 @@ public:
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override;  // can thorw
 
-  inline std::string_view token() { return m_strToken; }
+  inline const std::string& token() { return m_strToken; }
 
 private:
   enum class StreamState : unsigned int {

@@ -195,7 +195,7 @@ class BackendVFS: public Backend {
      * A more specific member, giving access to the path itself
      * @return the path to the VFS storage.
      */
-    std::string_view getPath() { return m_path; }
+    //std::string_view getPath() { return m_path; }
 
   private:
     std::string m_path;

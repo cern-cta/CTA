@@ -76,7 +76,7 @@ public:
    * Returns the RAOLTOAlgorithmOptions
    * @return 
    */
-  std::string_view getOptionsString() const { return m_options; };
+  const std::string& getOptionsString() const { return m_options; };
 
 private:
   std::string m_options;
