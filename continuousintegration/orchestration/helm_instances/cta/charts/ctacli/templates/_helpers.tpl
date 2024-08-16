@@ -20,9 +20,9 @@ Pick docker image. It may be from:
     - `.Values.global.image` (Has lower priority)
 */}}
 {{- define "ctacli.image" -}}
-{{- if .Values.global }}
-{{- .Values.global.image | quote -}}
-{{- else if .Values.image  }}
+{{- if .Values.image }}
+{{- .Values.image | quote -}}
+{{- else if .Values.global.image  }}
 {{- .Values.image | quote -}}
 {{- else }}
 {{- fail "You must provide docker image, either by .Values.image or .Values.global.image value."}}
