@@ -196,12 +196,6 @@ class BackendVFS: public Backend {
      */
     std::string toURL() override;
 
-    /**
-     * A more specific member, giving access to the path itself
-     * @return the path to the VFS storage.
-     */
-    //std::string_view getPath() const { return m_path; }
-
   private:
     std::string m_path;
   };
