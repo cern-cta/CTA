@@ -4,3 +4,20 @@ description: A CTA helmchart for CI runner. On itself it only contains configmap
 type: application
 version: 0.1.0
 appVersion: "1.16.0"
+
+dependencies:
+- name: ctafrontend
+  alias: ctafrontend
+  version: 0.1.0
+- name: ctacli
+  alias: ctacli
+  version: 0.1.0
+- name: client
+  alias: client
+  version: 0.1.0
+- name: tapes
+  alias: tapes
+  version: 0.1.0
+- name: ctaeos
+  alias: ctaeos
+  version: 0.1.0
