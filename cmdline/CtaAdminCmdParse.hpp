@@ -100,7 +100,8 @@ public:
    /*!
     * Return the help text for this option
     */
-   const std::string& get_help_text() const { return m_help_txt; }
+   const std::string& get_help_text() const {
+    return m_help_txt; }
 
    /*!
     * Return per-option help string
@@ -153,7 +154,7 @@ public:
    /*!
     * Can we parse subcommands for this command?
     */
-   bool has_subcommand() const { return ! m_sub_cmd.empty(); }
+   bool has_subcommand() const { return !m_sub_cmd.empty(); }
 
    /*!
     * Return the short help message
@@ -459,7 +460,7 @@ const Option opt_vid {Option::OPT_STR, "--vid", "-v", " <vid>"};
 const Option opt_purchase_order {Option::OPT_STR, "--purchaseorder", "-p", " <purchase_order>"};
 const Option opt_vo {Option::OPT_STR, "--virtualorganisation", "--vo", " <virtual_organisation>"};
 const Option opt_vidfile {Option::OPT_STR_LIST, "--vidfile", "-f", " <filename>"};
-const Option opt_full {Option::OPT_BOOL, "--full", "-f", R" <"true" or "false">"};
+const Option opt_full {Option::OPT_BOOL, "--full", "-f", R" <"true " or " false ">"};
 const Option opt_disksystem {Option::OPT_STR, "--disksystem", "-n", " <disk_system_name>"};
 const Option opt_file_regexp {Option::OPT_STR, "--fileregexp", "-r", " <file_regexp>"};
 const Option opt_free_space_query_url {Option::OPT_STR, "--freespacequeryurl", "-u", " <free_space_query_url>"};

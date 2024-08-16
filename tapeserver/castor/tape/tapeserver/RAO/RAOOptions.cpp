@@ -44,7 +44,8 @@ bool RAOOptions::getBooleanValue(const std::string& name) const {
           ret = true;
         }//Any other value than "true" will be considered false
         found = true;
-      } catch (const std::out_of_range &){
+      }
+      catch (const std::out_of_range&) {
         std::string errorMsg = "The RAO configuration option parameter named " + name + " does not contain any boolean value";
         throw cta::exception::Exception(errorMsg);
       }
@@ -68,7 +69,8 @@ std::string RAOOptions::getStringValue(const std::string& name) const {
       try {
         ret = keyValue.at(1);
         found = true;
-      } catch (const std::out_of_range &){
+      }
+      catch (const std::out_of_range&) {
         std::string errorMsg = "The RAO configuration option parameter named " + name + " does not contain any string value";
         throw cta::exception::Exception(errorMsg);
       }

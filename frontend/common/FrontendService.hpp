@@ -99,7 +99,9 @@ private:
   /*!
    * Set the verification mount policy
    */
-  void setVerificationMountPolicy(std::string_view verificationMountPolicy) { m_verificationMountPolicy = verificationMountPolicy; }
+  void setVerificationMountPolicy(std::string_view verificationMountPolicy) {
+    m_verificationMountPolicy = verificationMountPolicy;
+  }
 
   /*!
    * Populate the namespace endpoint configuration from a keytab file

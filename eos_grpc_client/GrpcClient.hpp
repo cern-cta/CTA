@@ -26,8 +26,7 @@ namespace eos::client {
 class GrpcClient
 {
 public:
-  explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) :
-    stub_(eos::rpc::Eos::NewStub(channel)) { }
+  explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(eos::rpc::Eos::NewStub(channel)) {}
 
   // factory function
   static std::unique_ptr<GrpcClient> Create(std::string endpoint, std::string token);
@@ -50,9 +49,7 @@ public:
 
   bool ssl() const { return m_SSL; }
 
-  void set_token(std::string_view token) {
-    m_token = token;
-  }
+  void set_token(std::string_view token) { m_token = token; }
 
   const std::string& token() const { return m_token; }
 
@@ -65,8 +62,8 @@ private:
   std::string m_token;
   bool m_SSL = false;
   uint64_t m_tag = 0;
-  uint64_t m_eos_cid = 0;   //!< EOS current container ID
-  uint64_t m_eos_fid = 0;   //!< EOS current file ID
+  uint64_t m_eos_cid = 0;  //!< EOS current container ID
+  uint64_t m_eos_fid = 0;  //!< EOS current file ID
 };
 
 } // namespace eos::client
