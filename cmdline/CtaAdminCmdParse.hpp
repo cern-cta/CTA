@@ -42,7 +42,7 @@ public:
    Option(option_t type, const std::string &long_opt, const std::string &short_opt,
           const std::string &help_txt, const std::string &alias = "") :
       m_type(type),
-      m_lookup_key((alias.empty() ? long_opt : alias),
+      m_lookup_key(alias.empty() ? long_opt : alias),
       m_long_opt(long_opt),
       m_short_opt(short_opt),
       m_help_txt(help_txt) { }
