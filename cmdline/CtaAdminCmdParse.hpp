@@ -39,13 +39,16 @@ public:
    /*!
     * Constructor
     */
-   Option(option_t type, const std::string &long_opt, const std::string &short_opt,
-          const std::string &help_txt, const std::string &alias = "") :
-      m_type(type),
-      m_lookup_key(alias.empty() ? long_opt : alias),
-      m_long_opt(long_opt),
-      m_short_opt(short_opt),
-      m_help_txt(help_txt) { }
+   Option(option_t type,
+          const std::string& long_opt,
+          const std::string& short_opt,
+          const std::string& help_txt,
+          const std::string& alias = "")
+       : m_type(type),
+         m_lookup_key(alias.empty() ? long_opt : alias),
+         m_long_opt(long_opt),
+         m_short_opt(short_opt),
+         m_help_txt(help_txt) {}
 
    /*!
     * Copy-construct an optional version of this option
@@ -59,9 +62,7 @@ public:
    /*!
     * Check if the supplied key matches the option
     */
-   bool operator==(std::string_view option) const {
-      return option == m_short_opt || option == m_long_opt;
-   }
+   bool operator==(std::string_view option) const { return option == m_short_opt || option == m_long_opt; }
 
    /*!
     * Check if the supplied option matches the option
@@ -100,8 +101,7 @@ public:
    /*!
     * Return the help text for this option
     */
-   const std::string& get_help_text() const {
-    return m_help_txt; }
+   const std::string& get_help_text() const { return m_help_txt; }
 
    /*!
     * Return per-option help string
@@ -120,7 +120,7 @@ private:
    std::string m_long_opt;      //!< Long command option
    std::string m_short_opt;     //!< Short command option
    std::string m_help_txt;      //!< Option help text
-   bool        m_is_optional = false;   //!< Option is optional or compulsory
+   bool m_is_optional = false;  //!< Option is optional or compulsory
 };
 
 

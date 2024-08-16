@@ -567,9 +567,11 @@ BackendRados::ScopedLock* BackendRados::lockShared(const std::string& name, uint
   return ret.release();
 }
 
-BackendRados::RadosWorkerThreadAndContext::RadosWorkerThreadAndContext(BackendRados & parentBackend,
-  int threadID, log::Logger & logger):
-  m_parentBackend(parentBackend), m_lc(logger) {
+BackendRados::RadosWorkerThreadAndContext::RadosWorkerThreadAndContext(BackendRados& parentBackend,
+                                                                       int threadID,
+                                                                       log::Logger& logger)
+    : m_parentBackend(parentBackend),
+      m_lc(logger) {
   log::ScopedParamContainer params(m_lc);
   m_lc.pushOrReplace(log::Param("thread", "radosWorker"));
   m_lc.pushOrReplace(log::Param("threadID", threadID));
