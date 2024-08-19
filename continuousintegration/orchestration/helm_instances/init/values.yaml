@@ -27,12 +27,10 @@ pvcs:
       - ReadWriteMany
 
 env:
-# First two are another whacky hacky way by just creating configmap in cmd on line 244
 - name: KEEP_DATABASE
   value: "0"
 - name: KEEP_OBJECTSTORE
   value: "0"
-# It is used by some hacky find and grep on 309 and 151 line of create_instance.sh
 - name: SCHEMA_VERSION
   value: "15.0"
 

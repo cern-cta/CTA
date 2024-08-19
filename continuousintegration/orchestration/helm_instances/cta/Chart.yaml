@@ -15,8 +15,8 @@ dependencies:
 - name: client
   alias: client
   version: 0.1.0
-- name: tapes
-  alias: tapes
+- name: tpsrv
+  alias: tpsrv
   version: 0.1.0
 - name: ctaeos
   alias: ctaeos

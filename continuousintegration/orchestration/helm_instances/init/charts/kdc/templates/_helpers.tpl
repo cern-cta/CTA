@@ -15,7 +15,7 @@ Expand the name of the chart.
 
 
 {{/*
-Pick docker image. It may be from:
+Pick container image. It may be from:
     - `.Values.image` (Has the highest priority)
     - `.Values.global.image` (Has lower priority)
 */}}
@@ -69,7 +69,7 @@ volumeMounts:
 {{- end}}
 {{- end -}}
 
-{{/* Pick image registry. It might be from:
+{{/* Pick image pull secret. It might be from:
     - .Values.global.imagePullSecret (Takes priority)
     - .Values.imagePullSecret
 */}}

@@ -3,7 +3,7 @@
 image:
 imagePullSecret:
 
-tapes:
+tpsrv:
   tpsrv01:
     labels:
       k8s-app: ctataped
@@ -33,7 +33,7 @@ tapes:
       # Not moving chown here due to the fact that the user might not yet exists
       args:
       - |
-        cat /tmp/dump/cta/cta-taped-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+        cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
         chmod 600 /etc/cta/cta-taped.sss.keytab;
         /opt/run/bin/taped.sh;
       env:
@@ -58,9 +58,9 @@ tapes:
         name: eosconfig
       - mountPath: /mnt/logs
         name: logstorage
-      - mountPath: /tmp/dump/cta/cta-taped-tmp.sss.keytab
+      - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
         name: tape-sss
-        subPath: cta-taped-tmp.sss.keytab
+        subPath: cta-tpsrv-tmp.sss.keytab
     volumes:
     - name: shared
       hostPath:
@@ -82,7 +82,7 @@ tapes:
         claimName: claimlogs
     - name: tape-sss
       secret:
-        secretName: tapes-sss-keytab
+        secretName: tpsrv-sss-keytab
   tpsrv02:
     labels:
       k8s-app: ctataped
@@ -112,7 +112,7 @@ tapes:
       # Not moving chown here due to the fact that the user might not yet exists
       args:
       - |
-        cat /tmp/dump/cta/cta-taped-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+        cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
         chmod 600 /etc/cta/cta-taped.sss.keytab;
         /opt/run/bin/taped.sh;
       env:
@@ -137,9 +137,9 @@ tapes:
         name: eosconfig
       - mountPath: /mnt/logs
         name: logstorage
-      - mountPath: /tmp/dump/cta/cta-taped-tmp.sss.keytab
+      - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
         name: tape-sss
-        subPath: cta-taped-tmp.sss.keytab
+        subPath: cta-tpsrv-tmp.sss.keytab
     volumes:
     - name: shared
       hostPath:
@@ -161,5 +161,5 @@ tapes:
         claimName: claimlogs
     - name: tape-sss
       secret:
-        secretName: tapes-sss-keytab
+        secretName: tpsrv-sss-keytab
 

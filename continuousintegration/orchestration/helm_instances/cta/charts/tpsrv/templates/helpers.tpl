@@ -1,8 +1,8 @@
-{{/* Pick image registry. It might be from:
+{{/* Pick image pull secret. It might be from:
     - .Values.global.imagePullSecret (Takes priority)
     - .Values.imagePullSecret
 */}}
-{{- define "tapes.imageSecret" -}}
+{{- define "tpsrv.imageSecret" -}}
 {{- if (.Values.global ) }}
 {{- .Values.global.imagePullSecret | quote -}}
 {{- else if (.Values.imagePullSecret) }}
@@ -14,16 +14,16 @@
 
 
 {{/*
-Pick docker image. It may be from:
+Pick container image. It may be from:
     - `.Values.image` (Has the higher priority)
     - `.Values.global.image` (Has lower priority)
 */}}
-{{- define "tapes.image" -}}
+{{- define "tpsrv.image" -}}
 {{- if .Values.image }}
 {{- .Values.image | quote -}}
 {{- else if .Values.global.image  }}
 {{- .Values.global.image | quote -}}
 {{- else }}
-{{- fail "You must provide docker image, either by .Values.image or .Values.global.image value."}}
+{{- fail "You must provide container image, either by .Values.image or .Values.global.image value."}}
 {{- end }}
 {{- end -}}

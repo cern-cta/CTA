@@ -389,9 +389,6 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
   eos vid set map -grpc key:${MIGRATION_TOKEN} vuid:${MIGRATION_UID} vgid:${MIGRATION_UID}
 fi
 
-echo Migration tools configuration:
-cat /etc/cta/castor-migration.conf
-
 
 touch /EOSOK
 

@@ -1,8 +1,8 @@
 
 {{$namespace := .Release.Namespace }}
-{{$imageVersion := include "tapes.image" . }}
-{{$imageSecret := include "tapes.imageSecret" . }}
-{{- range $key, $value := .Values.tapes}}
+{{$imageVersion := include "tpsrv.image" . }}
+{{$imageSecret := include "tpsrv.imageSecret" . }}
+{{- range $key, $value := .Values.tpsrv}}
 
 apiVersion: v1
 kind: Pod
