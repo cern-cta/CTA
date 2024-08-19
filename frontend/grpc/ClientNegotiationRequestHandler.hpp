@@ -36,11 +36,9 @@ public:
   ~NegotiationRequestHandler() override = default;
   
   void init() override {}; //  Nothnig todo
-  bool next(const bool bOk) override; // can thorw
-  
-  inline const std::string token() {
-    return m_strToken;
-  }
+  bool next(const bool bOk) override;  // can thorw
+
+  inline const std::string& token() { return m_strToken; }
 
 private:
   enum class StreamState : unsigned int {

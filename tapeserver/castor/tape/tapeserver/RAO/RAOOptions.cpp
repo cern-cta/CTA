@@ -44,7 +44,8 @@ bool RAOOptions::getBooleanValue(const std::string& name) const {
           ret = true;
         }//Any other value than "true" will be considered false
         found = true;
-      } catch (const std::out_of_range & ex){
+      }
+      catch (const std::out_of_range&) {
         std::string errorMsg = "The RAO configuration option parameter named " + name + " does not contain any boolean value";
         throw cta::exception::Exception(errorMsg);
       }
@@ -68,7 +69,8 @@ std::string RAOOptions::getStringValue(const std::string& name) const {
       try {
         ret = keyValue.at(1);
         found = true;
-      } catch (const std::out_of_range & ex){
+      }
+      catch (const std::out_of_range&) {
         std::string errorMsg = "The RAO configuration option parameter named " + name + " does not contain any string value";
         throw cta::exception::Exception(errorMsg);
       }
@@ -81,7 +83,7 @@ std::string RAOOptions::getStringValue(const std::string& name) const {
   return ret;
 }
 
-RAOOptions::CostHeuristicType RAOOptions::getCostHeuristicType() {
+RAOOptions::CostHeuristicType RAOOptions::getCostHeuristicType() const {
   try {
     std::string costHeuristicName = getStringValue("cost_heuristic_name");
     return c_mapStringCostHeuristicType.at(costHeuristicName);
@@ -92,15 +94,10 @@ RAOOptions::CostHeuristicType RAOOptions::getCostHeuristicType() {
   }
 }
 
-RAOOptions::FilePositionEstimatorType RAOOptions::getFilePositionEstimatorType() {
+RAOOptions::FilePositionEstimatorType RAOOptions::getFilePositionEstimatorType() const {
   //For now we only support interpolation.
   //This method should be modified if we want to support other types of FilePositionEstimator
   return RAOOptions::FilePositionEstimatorType::interpolation;
 }
-
-std::string RAOOptions::getOptionsString() {
-  return m_options;
-}
-
 
 } // namespace castor::tape::tapeserver::rao

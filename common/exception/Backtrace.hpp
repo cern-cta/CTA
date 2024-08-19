@@ -25,7 +25,9 @@ namespace cta::exception {
 class Backtrace {
 public:
   explicit Backtrace(bool fake = false);
-  std::string str() const { return m_trace; }
+
+  const std::string& str() const { return m_trace; }
+
 private:
   std::string m_trace;
   /**

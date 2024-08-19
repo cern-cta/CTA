@@ -44,10 +44,6 @@ TempFile::~TempFile() {
   }
 }
 
-std::string TempFile::path() {
-  return m_path;
-}
-
 void TempFile::randomFill(size_t size) {
   std::ofstream out(m_path, std::ios::out | std::ios::binary);
   std::ifstream in("/dev/urandom", std::ios::in | std::ios::binary);

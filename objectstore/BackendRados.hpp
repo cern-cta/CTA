@@ -48,13 +48,6 @@ public:
    */
   BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
   ~BackendRados() override;
-  std::string user() {
-    return m_user;
-  }
-  std::string pool() {
-    return m_pool;
-  }
-
 
   void create(const std::string& name, const std::string& content) override;
 
@@ -181,8 +174,7 @@ private:
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
   private:
-    BackendRados & m_parentBackend;
-    const int m_threadID;
+    BackendRados& m_parentBackend;
     log::LogContext m_lc;
     void run() override;
   };

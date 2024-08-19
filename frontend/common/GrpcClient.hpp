@@ -25,9 +25,7 @@ namespace eos::client {
 class GrpcClient
 {
 public:
-  explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) :
-    stub_(eos::rpc::Eos::NewStub(channel)),
-    m_tag(0) { }
+  explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(eos::rpc::Eos::NewStub(channel)) {}
 
   // factory function
   static std::unique_ptr<GrpcClient> Create(std::string endpoint, std::string token);
@@ -35,13 +33,9 @@ public:
   // Obtain container or file metadata
   eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path);
 
-  void set_token(const std::string &token) {
-    m_token = token;
-  }
+  void set_token(std::string_view token) { m_token = token; }
 
-  std::string token() const {
-    return m_token;
-  }
+  const std::string& token() const { return m_token; }
 
   void *nextTag() {
     return reinterpret_cast<void*>(++m_tag);
@@ -50,7 +44,7 @@ public:
 private:
   std::unique_ptr<eos::rpc::Eos::Stub> stub_;
   std::string m_token;
-  uint64_t m_tag;
+  uint64_t m_tag = 0;
 };
 
 } // namespace eos::client

@@ -44,7 +44,7 @@ public:
    * Get the position informations about this file
    * @return the position informations about this file
    */
-  FilePositionInfos getFilePositionInfos() const { return m_filePositionInfos; }
+  const FilePositionInfos& getFilePositionInfos() const { return m_filePositionInfos; }
   /**
    * Add a distance between this file and another RAOFile
    * @param distance the distance to go from this file to another RAOFile

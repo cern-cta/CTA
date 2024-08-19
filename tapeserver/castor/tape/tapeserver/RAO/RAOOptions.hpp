@@ -61,7 +61,7 @@ public:
    * @return the cost heuristic type
    * @throws cta::exception::Exception if the CostHeuristicType is unknown or if it cannot be fetched
    */
-  CostHeuristicType getCostHeuristicType();
+  CostHeuristicType getCostHeuristicType() const;
 
   /**
    * Returns the file position estimator type from the RAO option string passed in the constructor
@@ -70,13 +70,13 @@ public:
    * @return the file position estimator type
    * @throws cta::exception::Exception if the FilePositionEstimatorType is unknown or if it cannot be fetched
    */
-  FilePositionEstimatorType getFilePositionEstimatorType();
+  FilePositionEstimatorType getFilePositionEstimatorType() const;
 
   /**
    * Returns the RAOLTOAlgorithmOptions
    * @return 
    */
-  std::string getOptionsString();
+  const std::string& getOptionsString() const { return m_options; };
 
 private:
   std::string m_options;
