@@ -22,7 +22,7 @@ Pick docker image. It may be from:
 {{- if .Values.image }}
 {{- .Values.image | quote -}}
 {{- else if .Values.global.image  }}
-{{- .Values.image | quote -}}
+{{- .Values.global.image | quote -}}
 {{- else }}
 {{- fail "You must provide docker image, either by .Values.image or .Values.global.image value."}}
 {{- end }}
