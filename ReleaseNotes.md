@@ -45,6 +45,7 @@
 - cta/CTA#535 - Adding option to trigger CTA pipeline based on tagged EOS release
 - cta/CTA#827 - Install pandoc in GitHub runners
 - cta/CTA#828 - Fix SonarCloud warnings
+- cta/CTA#815 - Updated build pod resource request and limits to be more flexible
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
