@@ -41,7 +41,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   ArchiveRdbJob();
   ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
-  explicit ArchiveRdbJob(const postgres::ArchiveJobQueueRow& jobQueueRow, rdbms::ConnPool& connPool);
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJobQueueRow& jobQueueRow);
 
   void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
 

@@ -26,7 +26,7 @@ ArchiveRdbJob::ArchiveRdbJob() = default;
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool) :
                        m_connPool(pool), m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool), m_archiveRequest(jid, pool) { jobID = jid; };
 
-ArchiveRdbJob::ArchiveRdbJob(const postgres::ArchiveJobQueueRow& jobQueueRow, rdbms::ConnPool& connPool):
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJobQueueRow& jobQueueRow):
   m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
   m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
   m_tapePool(jobQueueRow.tapePool),
