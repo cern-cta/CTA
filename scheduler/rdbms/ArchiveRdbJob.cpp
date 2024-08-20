@@ -22,10 +22,6 @@
 
 namespace cta::schedulerdb {
 
-ArchiveRdbJob::ArchiveRdbJob() = default;
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool) :
-                       m_connPool(pool), m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool) { jobID = jid; };
-
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJobQueueRow& jobQueueRow):
   m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
   m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
@@ -81,10 +77,6 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
     // We have to determine if this was the last copy to fail/succeed.
     if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
       // Wrong status, but the context leaves no ambiguity and we set the job to report failure.
-      log::ScopedParamContainer params(lc);
-      params.add("event", eventToString(jobEvent))
-              .add("status", ArchiveRequest::statusToString(*currentStatus))
-              .add("fileId", m_payload.archivefileid());
       lc.log(log::WARNING,
              "In ArchiveRdbJob::failTransfer(): unexpected status." + TO_STRING(m_jobRow.status) + "Assuming ToTransfer." );
     }
