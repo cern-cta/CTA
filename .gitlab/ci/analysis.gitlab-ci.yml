@@ -97,7 +97,7 @@ clang-format-apply:
   before_script:
     - yum install -y git git-clang-format
     - git config user.email $GITLAB_USER_EMAIL
-    - git config user.name $GITLAB_USER_NAME
+    - git config user.name $GITLAB_USER_LOGIN
   script:
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
