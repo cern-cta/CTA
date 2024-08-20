@@ -98,7 +98,7 @@ clang-format-apply:
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_NAME
   script:
-    - yum install -y git-clang-format
+    - yum install -y git git-clang-format
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
