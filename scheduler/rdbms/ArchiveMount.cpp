@@ -80,21 +80,13 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     // Construct the return value
     uint64_t totalBytes = 0;
     while (resultSet.next()) {
-      jobs.emplace_back(resultSet);
-      jobs.back().jobId = resultSet.columnUint64("JOB_ID");
-      totalBytes += jobs.back().archiveFile.fileSize;
-      auto aj = std::make_unique<schedulerdb::ArchiveJob>(m_RelationalDB.m_connPool, true, mountInfo.mountId, jobs.back().jobId, mountInfo.tapePool);
-      aj->jobID = jobs.back().jobId;
-      aj->tapeFile.copyNb = jobs.back().copyNb;
-      aj->archiveFile = jobs.back().archiveFile;
-      aj->archiveReportURL = jobs.back().archiveReportUrl;
-      aj->errorReportURL = jobs.back().archiveErrorReportUrl;
-      aj->srcURL = jobs.back().srcUrl;
-      aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      aj->tapeFile.vid = mountInfo.vid;
-      aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+      schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
+      totalBytes += jobRow.archiveFile.fileSize;
+      jobRow.tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      jobRow.tapeFile.vid = mountInfo.vid;
+      jobRow.tapeFile.blockId = std::numeric_limits<decltype(jobRow.tapeFile.blockId)>::max();
       // reportType ?
-      ret.emplace_back(std::move(aj));
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow));
       if (totalBytes >= bytesRequested) break;
     }
     // returning connection to the pool
