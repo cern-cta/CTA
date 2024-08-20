@@ -64,7 +64,7 @@ void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
   ar.commit();
   // Set the agent register as owner and backup owner
   setBackupOwner(ar.getAddressIfSet());
-    setOwner(ar.getAddressIfSet());
+  setOwner(ar.getAddressIfSet());
   // Create the agent
   insert();
   // And release the agent register's lock
