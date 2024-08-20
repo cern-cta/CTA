@@ -95,7 +95,7 @@ clang-format-apply:
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
   before_script:
-    - yum install -y git git-clang-format
+    - yum install -y git git-clang-format patch
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_LOGIN
   script:
