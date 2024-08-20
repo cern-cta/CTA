@@ -396,7 +396,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset updateMountInfo(txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested);
+  static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit);
 
   /**
    * Update job status
