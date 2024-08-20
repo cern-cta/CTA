@@ -26,6 +26,23 @@ ArchiveRdbJob::ArchiveRdbJob() = default;
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool) :
                        m_connPool(pool), m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool), m_archiveRequest(jid, pool) { jobID = jid; };
 
+ArchiveRdbJob::ArchiveRdbJob(const postgres::ArchiveJobQueueRow& jobQueueRow, rdbms::ConnPool& connPool):
+  m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
+  m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
+  m_tapePool(jobQueueRow.tapePool),
+  m_connPool(connPool),
+  m_jobRow(jobQueueRow)
+  {
+    // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
+    jobID = jobQueueRow.jobId;
+    srcURL = jobQueueRow.srcUrl;
+    archiveReportURL = jobQueueRow.archiveReportUrl;
+    errorReportURL = jobQueueRow.archiveErrorReportUrl;
+    archiveFile = jobQueueRow.archiveFile; // assuming ArchiveFile is copyable
+    tapeFile.copyNb = jobQueueRow.copyNb;
+    // Set other attributes or perform any necessary initialization
+  };
+
 void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogContext & lc) {
   if (!m_jobOwned) {
     throw JobNotOwned("In schedulerdb::ArchiveRdbJob::failTransfer: cannot fail a job not owned");
