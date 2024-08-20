@@ -1,5 +1,4 @@
-
-# Here are stored values for the project related pods
+# Container image that user would like to use if chart is used on its own
 image:
 imagePullSecret:
 

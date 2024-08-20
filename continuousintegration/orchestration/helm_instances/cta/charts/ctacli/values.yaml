@@ -1,4 +1,6 @@
+# Container image that user would like to use if chart is used on its own
 image:
+imagePullSecrets:
 
 nameOverride: ctacli
 isPriviliged: true
@@ -25,6 +27,7 @@ service:
     port: 1
     protocol: TCP
 
+# defines all of the volumes consumed by pod
 volumes:
 - name: shared
   hostPath:

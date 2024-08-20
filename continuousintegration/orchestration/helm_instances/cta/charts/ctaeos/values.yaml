@@ -1,7 +1,9 @@
 nameOverride: "ctaeos"
+# Container image that user would like to use if chart is used on its own
 image:
 imagePullSecrets:
 isPriviliged: true
+# readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
 readinessProbe:
 
 service:
@@ -14,7 +16,7 @@ service:
     port: 1094
     protocol: TCP
 
-
+# Changes the entrypoint of the container's image to the script and provide arguments if needed
 customEntrypoint:
   command: ["/bin/sh", "-c"]
   args:
@@ -31,6 +33,8 @@ env:
 
 labels:
   k8s-app: ctaeos-mgm
+
+# defines all of the volumes consumed by pod
 
 volumeMounts:
 - mountPath: /shared

@@ -1,10 +1,11 @@
+# Container image that user would like to use if chart is used on its own
 image:
-
+imagePullSecret:
 nameOverride: ctafrontend
 isPriviliged: true
 
 
-# Changes the entrypoint of the image to the script and provide arguments if needed
+# Changes the entrypoint of the container's image to the script and provide arguments if needed
 customEntrypoint:
   command: ["/bin/sh", "-c"]
   args:
@@ -17,12 +18,14 @@ env:
 - name: TERM
   value: "xterm"
 
+# defines service ports for the pod
 service:
   ports:
   - name: ctafrontend
     port: 10955
     protocol: TCP
 
+# defines all of the volumes consumed by pod
 volumes:
 - name: shared
   hostPath:
@@ -77,12 +80,12 @@ volumeMounts:
   subPath: krb5.conf
 
 
-# As to mark whether the kdc has generated all of the secrets needed
+# readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
 readinessProbe:
   commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
   delay: 10
   failureTolerance: 10
-
+# Ports opened in container
 ports:
 - containerPort: 10955
   name: ctafrontend
