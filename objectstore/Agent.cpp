@@ -27,10 +27,10 @@
 #include <cxxabi.h>
 #include <google/protobuf/util/json_util.h>
 
-cta::objectstore::Agent::Agent(GenericObject& go):
-  ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
+cta::objectstore::Agent::Agent(GenericObject & go):
+    ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
-  go.transplantHeader(*this);
+  go.transplantHeader (*this);
   // And interpret the header.
   getPayloadFromHeader();
 }

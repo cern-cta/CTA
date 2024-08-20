@@ -49,9 +49,9 @@ public:
   explicit Agent(GenericObject& go);
   Agent(const std::string& name, Backend& os);
 
-  void initialize() override;
+  void initialize () override;
 
-  void insertAndRegisterSelf(log::LogContext & lc);
+    void insertAndRegisterSelf(log::LogContext & lc);
 
   void removeAndUnregisterSelf(log::LogContext & lc);
 
