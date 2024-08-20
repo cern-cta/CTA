@@ -50,7 +50,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   try {
     logContext.log(cta::log::DEBUG,
                    "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
-    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested);
+    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, filesRequested);
     // we need to extract the JOB_IDs which were updated before we release the lock
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
@@ -83,9 +83,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       totalBytes += jobRow.archiveFile.fileSize;
       ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, jobRow));
-      ret.back().tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      ret.back().tapeFile.vid = mountInfo.vid;
-      ret.back().tapeFile.blockId = std::numeric_limits<decltype(ret.back().tapeFile.blockId)>::max();
+      ret.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      ret.back()->tapeFile.vid = mountInfo.vid;
+      ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
       // reportType ?
       if (totalBytes >= bytesRequested) break;
     }
