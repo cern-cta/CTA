@@ -40,16 +40,14 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
   };
 
 void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogContext & lc) {
-  if (!m_jobOwned) {
-    throw JobNotOwned("In schedulerdb::ArchiveRdbJob::failTransfer: cannot fail a job not owned");
-  }
+
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                            " " + failureReason;
 
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
   log::ScopedParamContainer(lc)
-          .add("jobID", m_jobId)
+          .add("jobID", jobID)
           .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
           .add("mountId", m_mountId)
           .add("tapePool", m_tapePool)
@@ -71,20 +69,19 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
   // for now we do not pur failure log into the DB just log it
   // not sure if this is necessary
   //m_jobRow.failureLogs.emplace_back(failureReason);
-
+  cta::schedulerdb::Transaction txn(m_connPool);
   // here we either decide if we report the failure to user or requeue the job
-  if (m_jobRow.totalRetries() >= m_jobRow.maxTotalRetries) {
+  if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
     // We have to determine if this was the last copy to fail/succeed.
     if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
       // Wrong status, but the context leaves no ambiguity and we set the job to report failure.
       lc.log(log::WARNING,
              "In ArchiveRdbJob::failTransfer(): unexpected status." + TO_STRING(m_jobRow.status) + "Assuming ToTransfer." );
     }
-    cta::schedulerdb::Transaction txn(m_connPool);
     try {
       postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure,
                                                           m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                          m_jobRow.lastMountWithFailure, m_jobRow.jobID)
+                                                          m_jobRow.lastMountWithFailure, m_jobRow.jobId)
       txn.commit();
     } catch (exception::Exception &ex) {
       lc.log(cta::log::WARNING,
@@ -99,7 +96,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
           postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
                                                               m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobID, 0)
+                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId, 0)
           txn.commit();
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
@@ -112,7 +109,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           // requeue to the same mount simply by changing status and updating all other stat fields
           postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
                                                               m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobID)
+                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId)
           txn.commit();
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
