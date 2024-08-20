@@ -34,7 +34,7 @@ CTA CI is organised into two main charts:
 
 ## CTA
 
-CTA chart contains 4 smaller charts on its own:
+CTA chart contains 5 smaller charts on its own:
 - client
 - ctafrontend
 - ctaeos
@@ -71,33 +71,6 @@ In case of the tapes pod situation looks a bit different:
 | tapes.(tape).containers.isPrivilliged | bool  | Run container in privilliged mode|
 
 
-#### Examples
-- volumes and volumeMounts:
-
-```yaml
-volumeMounts:
-- mountPath: /root/ctaadmin2.keytab
-  name: ctaadmin2-keytab
-  subPath: ctaadmin2.keytab
-volume:
-- name: ctaadmin2-keytab
-  secret:
-    secretName: ctaadmin2-keytab
-```
-Sets up a volume and mounts a file in a given pod within `values.yaml` file
-
-- customEntrypoint:
-```yaml
-customEntrypoint:
-  command: ["/bin/sh", "-c"]
-  args:
-  - |
-    cat /tmp/eos.keytab > /etc/eos.keytab;
-    chmod 600 /etc/eos.keytab;
-    /opt/run/bin/client.sh;
-```
-Sets shell to apply multiple commands within pod (in this case in client pod)
-
 ### Global config
 Each of the pods has the possibility to have set up additional values by `global`
 
@@ -122,7 +95,8 @@ To define configmaps to use within the chart you must provide their definition n
 | configs[0].data | object list |   Data that configmap stores as a list of key - value pairs
 
 
-Examples:
+### Examples
+#### Configs
 ```yaml
 configs:
 - name: objectstore-config
@@ -133,6 +107,120 @@ configs:
       objectstore.file.path: /shared/%NAMESPACE/objectstore
       objectstore.type: file
 ```
+
+##### Custom entrypoint:
+```yaml
+customEntrypoint:
+  command: ["/bin/sh", "-c"]
+  args:
+  - |
+    cat /tmp/eos.keytab > /etc/eos.keytab;
+    chmod 600 /etc/eos.keytab;
+    /opt/run/bin/client.sh;
+```
+Sets shell to apply multiple commands within pod
+
+
+#### Volumes and VolumeMounts:
+
+```yaml
+volumeMounts:
+- mountPath: /root/ctaadmin2.keytab
+  name: ctaadmin2-keytab
+  subPath: ctaadmin2.keytab
+volume:
+- name: ctaadmin2-keytab
+  secret:
+    secretName: ctaadmin2-keytab
+```
+Sets up a volume and mounts a file in a given pod within `values.yaml` file
+
+#### Singular tpsrv configuration
+```yaml
+tpsrv01:
+    labels:
+      k8s-app: ctataped
+    containers:
+    - name: rmcd
+      isPriviliged: true
+      command: ['/opt/run/bin/rmcd.sh']
+      args: ["none"]
+      env:
+      - name: MY_CONTAINER
+        value: "rmcd"
+      - name: driveslot
+        value: "0"
+      - name: TERM
+        value: "xterm"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /mnt/logs
+        name: logstorage
+
+    - name: taped
+      isPriviliged: true
+      command: ["/bin/sh", "-c"]
+      args:
+      - |
+        cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+        chmod 600 /etc/cta/cta-taped.sss.keytab;
+        /opt/run/bin/taped.sh;
+      env:
+      - name: MY_CONTAINER
+        value: "taped"
+      - name: eoshost
+        value: "mgm"
+      - name: TERM
+        value: "xterm"
+      - name: driveslot
+        value: "0"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/objectstore
+        name: myobjectstore
+      - mountPath: /etc/config/database
+        name: mydatabase
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /etc/config/eos
+        name: eosconfig
+      - mountPath: /mnt/logs
+        name: logstorage
+      - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
+        name: tape-sss
+        subPath: cta-tpsrv-tmp.sss.keytab
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: myobjectstore
+      configMap:
+        name: objectstore-config
+    - name: mydatabase
+      configMap:
+        name: database-config
+    - name: mylibrary
+      configMap:
+        name: library-config
+    - name: eosconfig
+      configMap:
+        name: eos-config-base
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: tape-sss
+      secret:
+        secretName: tpsrv-sss-keytab
+```
+It creates a **tpsrv01** pod with:
+- two containers named `ctataped` and `rmcd`
+- both of them contain configuration of environment variables as a list
+- both contain mouning of the configuration files and secrets
+
 
 ## Init
 
@@ -186,22 +274,119 @@ To be able to do that, it needs to have service account that has rights to creat
 |kdc.pod.command| list | Command to be invoked on the image.
 |kdc.pod.env | list |   List of environment variables to the pod|
 |kdc.pod.image| string  |  Docker image from which kdc will be built |
+| kdc.serviceAccount.name |string | Secret account name to bind with the pod
+| kdc.serviceAccount.rules | object| Rules that the service account has access to
+### Examples of values:
+#### service account
+```yaml
+serviceAccount:
+  name: secret-creator
+  rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create"]
+```
+creates a service account with name `secret-createor` which will bind it with kdc pod with that name. The service account listed has following `rules`:
+- `apiGroups`: indicates that we are using Kubernetes API
+- `resources`: grants access to the listed resources (here only for `secrets`)
+- `verbs`: words that allow the account for the following actions: list, retrieve create, and watch secrets.
+
+#### service
+```yaml
+service:
+  ports:
+  - name: kdc-tcp
+    port: 88
+    protocol: TCP
+  - name: kdc-udp
+    port: 88
+    protocol: UDP
+```
+creates a headless service that opens `UDP` and `TCP` traffic on port number 88
+
+#### PVCS
+
+```yaml
+pvcs:
+  claimstg:
+    selectors:
+      type: stg
+    storage: 3Gi
+    accessModes:
+      - ReadWriteMany
+```
+Defines a PVC:
+- that will have name `claimstg`
+- has defined selector of type `stg`
+- claims `3Gi` of storage
+- has access mode `ReadWriteMany`
+
+## Basic workflow
+
+### Installing the chart
+The helm charts contain already prefilled values.yaml files that will launch working CTA instance if launched in order:
+1. Init
+2. CTA
+
+To install a helm chart you will need to invoke the following command:
+
+```bash
+  helm install <name of the release> <directory where the chart exists>
+```
+For example command `helm install cta ./cta/` invoked in `helm_instances` directory will install `cta` chart with all of its subcharts (`ctacli`, `client`, etc).
+
+Command arguments that might be handy in work with charts:
+
+- `-n <namespace_name>` - namespace on which chart will be installed. The namespace must exists.
+- `-f <filename>` - allows to override the default values.yaml file with yours
+
+More can be found on the [documentation](https://helm.sh/docs/helm/helm_install/) site
+
+### Modyfing the values.yaml files for subcharts
+
+Here will be focused the recommended way to do it. If you would like for example change parts of the configuration for the ```ctafrontend``` pod, you would need to do it like given below
+
+```yaml
+# Its the base for the CTA chart
+global:
+  imagePullSecret: "ctaregsecret"
+  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  volumes:
+  - name: versionlock-list
+    configMap:
+      name: versionlock-conf
+  volumeMounts:
+  - mountPath: /etc/dnf/plugins/versionlock.list
+    name: versionlock-list
+    subPath: versionlock.list
+
+# Here begins section for subchart
+ctafrontend:
+  image:  my_custom_image
+  env:
+  - name: "foo"
+    value: "bar"
+# Other configurations that you would like to change....
+...
+values.yaml
+```
+Whenever you wish to modify the values for the subchart, you need to provide corresponding name of that subchart, and under its key you can provide the values and other keys that the subchart supports. For example file above defines the values for the `ctafrontend` subchart which overrides the following fields
+- `image` adds the container image that will be used instead of `global.image` (by default `image` is null)
+-  `env`: provides the list of the environment variables that replaces the default ones in `ctafrontend/values.yaml`
+
+If you launch it will `helm install` command described before the `ctafrontend` pod will have `image` and `env` fields modified and the rest of the fields will remain unchanged
 
 
-## Usefull commands for developers
+### Usefull commands for developers
 
 If you wanted to restart one of the pods and provide another image for example in ctafrontend pod, you may do this:
 
-1. Modify values.yaml file by providing:
-```yaml
-ctafrontend:
-  image: <your_docker_image>
-```
+1. Modify values.yaml file for the subchart as described above.
 2. Use helm upgrade command (must be withing main chart directory)
 ```bash
 helm upgrade -f values.yml cta ./ --version 0.1.0
 ```
-I will upgrade the chart and restart the ctafrontend pod to allow for changes to apply.
+It will upgrade the chart and restart the ctafrontend pod to allow for changes to apply.
 
 ## How to improve in the future
 
