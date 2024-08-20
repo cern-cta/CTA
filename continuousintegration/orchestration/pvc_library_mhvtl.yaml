@@ -1,0 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: claimlibrary
+spec:
+  storageClassName: "librarydevice"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Mi
+  selector:
+    matchLabels:
+      config: library
+      type: mhvtl
