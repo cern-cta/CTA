@@ -78,7 +78,7 @@ clang-format-report:
 
 clang-format-apply:
   stage: analysis
-  needs: [clang-format-report]
+  needs: [clang-format-report]  
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -102,9 +102,9 @@ clang-format-apply:
     - git config user.name $GITLAB_USER_LOGIN
   script:
     - |
-      if [ $(wc -l < "$CLANG_FORMAT_REPORT") -le 1]; then
-        cat $CLANG_FORMAT_REPORT 
-        exit 0
+      if [ $(wc -l < "$CLANG_FORMAT_REPORT") -le 1 ]; then
+        cat $CLANG_FORMAT_REPORT;
+        exit 0;
       fi
     - cat $CLANG_FORMAT_REPORT | patch -p1
     - git commit -am "Applied clang format to changed lines"
