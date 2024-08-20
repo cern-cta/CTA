@@ -20,6 +20,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "rdbms/NullDbValue.hpp"
