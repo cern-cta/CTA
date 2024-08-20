@@ -16,7 +16,7 @@
  */
 
 #include "scheduler/rdbms/ArchiveMount.hpp"
-#include "scheduler/rdbms/ArchiveJob.hpp"
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
