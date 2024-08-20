@@ -20,6 +20,8 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/postgres/ArchiveJobQueue.hpp"
+#include "rdbms/RelationalDB.hpp"
+
 
 
 #include <list>
