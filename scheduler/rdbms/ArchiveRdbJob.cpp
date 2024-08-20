@@ -24,7 +24,7 @@ namespace cta::schedulerdb {
 
 ArchiveRdbJob::ArchiveRdbJob() = default;
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool) :
-                       m_connPool(pool), m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool), m_archiveRequest(jid, pool) { jobID = jid; };
+                       m_connPool(pool), m_jobOwned(jobOwned), m_mountId(mountID), m_tapePool(tapePool) { jobID = jid; };
 
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJobQueueRow& jobQueueRow):
   m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),

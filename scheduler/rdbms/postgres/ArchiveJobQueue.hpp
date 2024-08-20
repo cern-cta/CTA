@@ -391,14 +391,12 @@ struct ArchiveJobQueueRow {
    *
    * @param txn        Transaction to use for this query
    * @param status     Archive Job Status to select on
-   * @param tapepool   Tapepool to select on
-   * @param mountId    Mount ID to assign
-   * @param vid        VID to assign
+   * @param mountInfo  mountInfo object
    * @param limit      Maximum number of rows to return
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string &vid, uint64_t limit);
+  static rdbms::Rset updateMountInfo(txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested);
 
   /**
    * Update job status
