@@ -82,11 +82,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     while (resultSet.next()) {
       schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       totalBytes += jobRow.archiveFile.fileSize;
-      jobRow.tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      jobRow.tapeFile.vid = mountInfo.vid;
-      jobRow.tapeFile.blockId = std::numeric_limits<decltype(jobRow.tapeFile.blockId)>::max();
-      // reportType ?
       ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow));
+      ret.back().tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      ret.back().tapeFile.vid = mountInfo.vid;
+      ret.back().tapeFile.blockId = std::numeric_limits<decltype(jobRow.tapeFile.blockId)>::max();
+      // reportType ?
       if (totalBytes >= bytesRequested) break;
     }
     // returning connection to the pool
