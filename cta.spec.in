@@ -1,4 +1,4 @@
-%global __requires_exclude ^libocci.so|^libocci_gcc53.so|^libclntsh.so
+%global __requires_exclude ^libocci.so|^libclntsh.so
 
 # Generic macros
 #---------------

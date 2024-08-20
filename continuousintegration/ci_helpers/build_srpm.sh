@@ -215,7 +215,6 @@ build_srpm() {
           exit 1
           ;;
       esac
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"
       exit 1
