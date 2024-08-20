@@ -51,7 +51,7 @@ cppcheck-report:
     reports:
       codequality: cppcheck.json
 
-clang-format:
+clang-format-report:
   stage: analysis
   allow_failure: true
   rules:
@@ -75,6 +75,40 @@ clang-format:
     when: always
     paths:
       - clang-format.output
+
+clang-format-apply:
+  stage: analysis
+  needs: [clang-format-report]  
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: never
+    - when: manual
+  image: $EL9_IMAGE
+  variables:
+    REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+    CLANG_FORMAT_REPORT: clang-format.output 
+  before_script:
+    - yum install -y git git-clang-format patch
+    - git config user.email $GITLAB_USER_EMAIL
+    - git config user.name $GITLAB_USER_LOGIN
+  script:
+    - |
+      if [ $(wc -l < "$CLANG_FORMAT_REPORT") -le 1 ]; then
+        cat $CLANG_FORMAT_REPORT;
+        exit 0;
+      fi
+    - cat $CLANG_FORMAT_REPORT | patch -p1
+    - git commit -am "Applied clang format to changed lines"
+    - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
 
 catalogue-schema-version-check:
   stage: analysis
