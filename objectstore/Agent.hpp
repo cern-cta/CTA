@@ -51,7 +51,7 @@ public:
 
   void initialize() override;
 
-  void insertAndRegisterSelf(log::LogContext& lc);
+  void insertAndRegisterSelf(log::LogContext & lc);
 
   void removeAndUnregisterSelf(log::LogContext & lc);
 
