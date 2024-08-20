@@ -14,8 +14,11 @@ spec:
     command: ["sleep", "infinity"]
     resources:
       limits:
-        memory: 8Gi
-        ephemeral-storage: "4Gi"
+        memory: 12Gi
+        ephemeral-storage: 12Gi
+      requests:
+        memory: 3Gi
+        ephemeral-storage: 4Gi
     volumeMounts:
     - mountPath: /shared
       name: shared
@@ -24,6 +27,3 @@ spec:
   - name: shared
     hostPath:
       path: /opt/cta
-
-  imagePullSecrets:
-  - name: ctaregsecret
