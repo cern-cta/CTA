@@ -73,6 +73,36 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   return;
 };
 
+void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
+                                               uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId = std::nullopt){
+  if(jobIDs.empty()) {
+    return;
+  }
+  std::string sql = R"SQL(
+    UPDATE ARCHIVE_JOB_QUEUE SET
+      STATUS = :STATUS,
+      TOTAL_RETRIES = :TOTAL_RETRIES,
+      RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
+      LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE
+    )SQL";
+  // Add MOUNT_ID to the query if mountId is provided
+  if (mountId.has_value() && *mountId == 0) {
+    sql += ", MOUNT_ID = NULL ";
+  }
+  // Continue the query
+  sql += R"SQL(
+    WHERE JOB_ID = :JOB_ID
+  )SQL";
+  auto stmt = txn.conn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":TOTAL_RETRIES", totalRetries);
+  stmt.bindString(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+  stmt.bindString(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":JOB_ID", jobID);
+  stmt.executeNonQuery();
+  return;
+};
+
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
   std::string sql = R"SQL(
     WITH SET_SELECTION AS ( 

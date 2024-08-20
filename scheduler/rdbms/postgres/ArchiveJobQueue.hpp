@@ -409,7 +409,20 @@ struct ArchiveJobQueueRow {
    */
   static void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
 
-  };
+  /**
+   * Update failed job status
+   *
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   * @param retriesWithinMount   Number of retires withint a mount
+   * @param totalRetries         Number of total retries attempted
+   * @param lastMountWithFailure Mount ID of the last mount with failure
+   * @param jobID                jobID to select the job for update
+   */
+  static void updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
+                                    uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId = std::nullopt);
+
+};
 
 
 } // namespace cta::schedulerdb::postgres
