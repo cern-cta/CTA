@@ -67,7 +67,7 @@ class RelationalDB: public SchedulerDatabase {
 
   ~RelationalDB() override;
   friend class cta::schedulerdb::ArchiveMount;
-  friend class cta::schedulerdb::ArchiveJob;
+  friend class cta::schedulerdb::ArchiveRdbJob;
   friend class cta::schedulerdb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
 

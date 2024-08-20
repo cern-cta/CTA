@@ -23,8 +23,7 @@
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
-#include "scheduler/rdbms/ArchiveJob.hpp"
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
 #include "scheduler/rdbms/Helpers.hpp"
@@ -176,13 +175,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   auto sqlconn = m_connPool.getConn();
   auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After getting archive row AJS_ToReportToDiskRunnerForTransfer.");
-  std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
+  //std::list<cta::schedulerdb::postgres::ArchiveJobQueueRow> jobs;
+  std::list<schedulerdb::ArchiveRdbJob> dbjobs;
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   try {
     while(resultSet.next()) {
       logContext.log(log::DEBUG,
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
-      jobs.emplace_back(resultSet);
+      schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
+      // Create an ArchiveRdbJob object using the jobRow data
+      schedulerdb::ArchiveRdbJob archiveJob(m_connPool, jobRow);
+      dbjobs.emplace_back(std::move(archiveJob));
+      //jobs.emplace_back(resultSet);
     }
     // this is not query commit, but conn commit returning
     // the connection to the pool !
@@ -193,16 +197,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   }
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After emplace_back resultSet_ForTransfer.");
   // Construct the return value
-  for (const auto &j : jobs) {
-    auto aj = std::make_unique<schedulerdb::ArchiveJob>(true, j.mountId.value(), j.jobId, j.tapePool);
-    aj->jobID = j.jobId;
-    logContext.log(log::DEBUG, std::string("In RelationalDB::getNextArchiveJobsToReportBatch(): Job IDs, ArchiveFileIDs: ") + std::to_string(j.jobId) + " " + std::to_string(aj->jobID) + " " + std::to_string(j.archiveFile.archiveFileID));
-    aj->tapeFile.copyNb = j.copyNb;
-    aj->archiveFile = j.archiveFile;
-    aj->archiveReportURL = j.archiveReportUrl;
-    aj->errorReportURL = j.archiveErrorReportUrl;
-    aj->srcURL = j.srcUrl;
-    ret.emplace_back(std::move(aj));
+  for (const auto &j : dbjobs) {
+    ret.emplace_back(std::move(j));
   }
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): After Archive Jobs filled, before return.");
 
