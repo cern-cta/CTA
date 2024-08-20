@@ -41,7 +41,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   ArchiveRdbJob();
   ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
-  explicit ArchiveRdbJob(const cta::schedulerdb::postgres::ArchiveJobQueueRow& jobQueueRow, rdbms::ConnPool& connPool)
+  explicit ArchiveRdbJob(const postgres::ArchiveJobQueueRow& jobQueueRow, rdbms::ConnPool& connPool)
           : m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
             m_jobRow(jobQueueRow),
             m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
@@ -68,7 +68,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   uint64_t m_mountId = 0;
   std::string m_tapePool;
   rdbms::ConnPool& m_connPool;
-  ArchiveJobQueueRow m_jobRow; // Job data is encapsulated in this member
+  postgres::ArchiveJobQueueRow m_jobRow; // Job data is encapsulated in this member
 
 };
 
