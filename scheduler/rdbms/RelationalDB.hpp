@@ -53,7 +53,7 @@ namespace cta {
   }
   namespace schedulerdb {
     class ArchiveMount;
-    class ArchiveJob;
+    class ArchiveRdbJob;
     class TapeMountDecisionInfo;
   }
 
