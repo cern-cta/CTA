@@ -31,7 +31,7 @@ namespace cta::schedulerdb::postgres {
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
-    AND MOUNT_ID IS NULL
+    AND IN_DRIVE_QUEUE IS FALSE
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE)
     UPDATE ARCHIVE_JOB_QUEUE SET
@@ -40,7 +40,8 @@ namespace cta::schedulerdb::postgres {
       DRIVE = :DRIVE,
       HOST = :HOST,
       MOUNT_TYPE = :MOUNT_TYPE,
-      LOGICAL_LIBRARY = :LOGICAL_LIB
+      LOGICAL_LIBRARY = :LOGICAL_LIB,
+      IN_DRIVE_QUEUE = TRUE
     FROM SET_SELECTION
     WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
     RETURNING SET_SELECTION.JOB_ID
@@ -80,7 +81,8 @@ void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatu
       STATUS = :STATUS,
       TOTAL_RETRIES = :TOTAL_RETRIES,
       RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
-      LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE
+      LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
+      IN_DRIVE_QUEUE = FALSE
     )SQL";
   // Add MOUNT_ID to the query if mountId is provided
   if (mountId.has_value() && *mountId == 0) {
@@ -121,11 +123,11 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
     j++;
   }
   sql += R"SQL(
-      ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS NULL 
+      ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
       ORDER BY PRIORITY DESC, JOB_ID 
       LIMIT :LIMIT FOR UPDATE) 
     UPDATE ARCHIVE_JOB_QUEUE SET 
-      IS_REPORTING = 1 
+      IS_REPORTING = TRUE
     FROM SET_SELECTION 
     WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID 
     RETURNING SET_SELECTION.JOB_ID

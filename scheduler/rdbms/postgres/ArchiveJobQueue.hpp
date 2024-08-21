@@ -62,16 +62,13 @@ struct ArchiveJobQueueRow {
   
 
   common::dataStructures::ArchiveFile archiveFile;
+  archiveFile.reconciliationTime = 0;
+  archiveFile.archiveFileID = 0;
+  archiveFile.fileSize = 0;
+  archiveFile.diskFileInfo.owner_uid = 0;
+  archiveFile.diskFileInfo.gid = 0;
+  archiveFile.creationTime = 0;
 
-  ArchiveJobQueueRow()
-  {
-       archiveFile.reconciliationTime = 0;
-       archiveFile.archiveFileID = 0;
-       archiveFile.fileSize = 0;
-       archiveFile.diskFileInfo.owner_uid = 0;
-       archiveFile.diskFileInfo.gid = 0;
-       archiveFile.creationTime = 0;
-  }
 
   /**
    * Constructor from row
