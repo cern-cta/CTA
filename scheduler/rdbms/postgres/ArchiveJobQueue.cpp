@@ -54,7 +54,7 @@ namespace cta::schedulerdb::postgres {
   stmt.bindString(":VID", mountInfo.vid);
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
-  stmt.bindString(":MOUNT_TYPE", mountInfo.mountType);
+  stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
   return stmt.executeQuery();
 }
@@ -92,10 +92,10 @@ void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatu
   )SQL";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
-  stmt.bindString(":TOTAL_RETRIES", totalRetries);
-  stmt.bindString(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
-  stmt.bindString(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-  stmt.bindString(":JOB_ID", jobID);
+  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
+  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindUint64(":JOB_ID", jobID);
   stmt.executeNonQuery();
   return;
 };
