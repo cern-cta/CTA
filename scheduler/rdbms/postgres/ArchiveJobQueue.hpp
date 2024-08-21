@@ -55,7 +55,7 @@ struct ArchiveJobQueueRow {
   std::string failureLogs = "";
   std::string reportFailureLogs = "";
   bool is_repack = false;
-  book is_reporting = false;
+  bool is_reporting = false;
   uint64_t repackId = 0;
   std::string repackFilebufUrl = "";
   uint64_t repackFseq = 0;
@@ -428,4 +428,4 @@ struct ArchiveJobQueueRow {
   void updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
 
 
-} // namespace cta::schedulerdb::postgres
+}; // namespace cta::schedulerdb::postgres
