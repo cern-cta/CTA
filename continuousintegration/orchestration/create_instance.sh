@@ -186,8 +186,8 @@ if [ "${imagetag}" == "" ]; then
 fi
 
 echo 'copying files to tmpdir'
-cp -R ./helm_instances/init ${poddir}
-cp -R ./helm_instances/cta ${poddir}
+cp -R ./helm/init ${poddir}
+cp -R ./helm/cta ${poddir}
 cp ./pod-oracleunittests.yaml ${poddir}
 
 echo "Creating instance using docker image with tag: ${imagetag}"
