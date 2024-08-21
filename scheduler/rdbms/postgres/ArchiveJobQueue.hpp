@@ -34,17 +34,17 @@ struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
   std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
-  std::string tapePool;
-  std::string mountPolicy;
+  std::string tapePool = "";
+  std::string mountPolicy = "";
   uint64_t priority = 0;
   uint64_t minArchiveRequestAge = 0;
   uint8_t copyNb = 0;
   time_t startTime = 0;                       //!< Time the job was inserted into the queue
-  std::string archiveReportUrl;
-  std::string archiveErrorReportUrl;
-  std::string requesterName;
-  std::string requesterGroup;
-  std::string srcUrl;
+  std::string archiveReportUrl = "";
+  std::string archiveErrorReportUrl = "";
+  std::string requesterName = "";
+  std::string requesterGroup = "";
+  std::string srcUrl = "";
   uint32_t retriesWithinMount = 0;
   uint32_t totalRetries = 0;
   uint64_t lastMountWithFailure = 0;
@@ -56,18 +56,21 @@ struct ArchiveJobQueueRow {
   std::vector<std::string> reportFailureLogs;
   bool is_repack = false;
   uint64_t repackId = 0;
-  std::string repackFilebufUrl;
+  std::string repackFilebufUrl = "";
   uint64_t repackFseq = 0;
-  std::string repackDestVid;
+  std::string repackDestVid = "";
   
 
   common::dataStructures::ArchiveFile archiveFile;
-  archiveFile.reconciliationTime = 0;
-  archiveFile.archiveFileID = 0;
-  archiveFile.fileSize = 0;
-  archiveFile.diskFileInfo.owner_uid = 0;
-  archiveFile.diskFileInfo.gid = 0;
-  archiveFile.creationTime = 0;
+  ArchiveJobQueueRow()
+  {
+    archiveFile.reconciliationTime = 0;
+    archiveFile.archiveFileID = 0;
+    archiveFile.fileSize = 0;
+    archiveFile.diskFileInfo.owner_uid = 0;
+    archiveFile.diskFileInfo.gid = 0;
+    archiveFile.creationTime = 0;
+  }
 
 
   /**
