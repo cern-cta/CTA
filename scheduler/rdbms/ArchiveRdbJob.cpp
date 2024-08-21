@@ -81,7 +81,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
     try {
       postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure,
                                                           m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                          m_jobRow.lastMountWithFailure, m_jobRow.jobId)
+                                                          m_jobRow.lastMountWithFailure, m_jobRow.jobId);
       txn.commit();
     } catch (exception::Exception &ex) {
       lc.log(cta::log::WARNING,
@@ -96,7 +96,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
           postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
                                                               m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId, 0)
+                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId, 0);
           txn.commit();
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
@@ -109,7 +109,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           // requeue to the same mount simply by changing status and updating all other stat fields
           postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
                                                               m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId)
+                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId);
           txn.commit();
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
