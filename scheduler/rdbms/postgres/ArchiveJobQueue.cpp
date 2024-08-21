@@ -74,15 +74,15 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   return;
 };
 
-void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
-                                               uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId){
+void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
   std::string sql = R"SQL(
     UPDATE ARCHIVE_JOB_QUEUE SET
       STATUS = :STATUS,
       TOTAL_RETRIES = :TOTAL_RETRIES,
       RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
       LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-      IN_DRIVE_QUEUE = FALSE
+      IN_DRIVE_QUEUE = FALSE,
+      FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
     )SQL";
   // Add MOUNT_ID to the query if mountId is provided
   if (mountId.has_value() && *mountId == 0) {
@@ -97,6 +97,29 @@ void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatu
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":FAILURE_LOG", failureLogs);
+  stmt.bindUint64(":JOB_ID", jobID);
+  stmt.executeNonQuery();
+  return;
+};
+
+void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
+
+  std::string sql = R"SQL(
+    UPDATE ARCHIVE_JOB_QUEUE SET
+      STATUS = :STATUS,
+      TOTAL_REPORT_RETRIES = :TOTAL_RETRIES,
+      IS_REPORTING =: IS_REPORTING,
+      IN_DRIVE_QUEUE = FALSE,
+      FAILURE_REPORT_LOG = FAILURE_REPORT_LOG || :FAILURE_REPORT_LOG
+    WHERE JOB_ID = :JOB_ID
+  )SQL";
+
+  auto stmt = txn.conn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
+  stmt.bindUint32(":IS_REPORTING", is_reporting);
+  stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
   stmt.bindUint64(":JOB_ID", jobID);
   stmt.executeNonQuery();
   return;
