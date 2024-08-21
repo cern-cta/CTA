@@ -74,7 +74,7 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
 };
 
 void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
-                                               uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId = std::nullopt){
+                                               uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId){
   std::string sql = R"SQL(
     UPDATE ARCHIVE_JOB_QUEUE SET
       STATUS = :STATUS,
