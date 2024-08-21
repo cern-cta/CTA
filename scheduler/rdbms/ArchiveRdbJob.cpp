@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ArchiveRdbJob.hpp"
 #include "common/exception/Exception.hpp"
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
@@ -148,7 +148,7 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
     } else {
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.is_reporting = false;
-      m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+      m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
     }
     txn.commit();
   } catch (exception::Exception &ex) {
