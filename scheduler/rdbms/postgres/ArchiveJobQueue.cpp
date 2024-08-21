@@ -22,7 +22,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, filesRequested){
+  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit){
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
@@ -75,9 +75,6 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
 
 void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
                                                uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId = std::nullopt){
-  if(jobIDs.empty()) {
-    return;
-  }
   std::string sql = R"SQL(
     UPDATE ARCHIVE_JOB_QUEUE SET
       STATUS = :STATUS,
