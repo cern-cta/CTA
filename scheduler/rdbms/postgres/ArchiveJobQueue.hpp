@@ -52,9 +52,10 @@ struct ArchiveJobQueueRow {
   uint32_t maxRetriesWithinMount = 0;
   uint32_t maxReportRetries = 0;
   uint32_t totalReportRetries = 0;
-  std::vector<std::string> failureLogs;
-  std::vector<std::string> reportFailureLogs;
+  std::string failureLogs = "";
+  std::string reportFailureLogs = "";
   bool is_repack = false;
+  book is_reporting = false;
   uint64_t repackId = 0;
   std::string repackFilebufUrl = "";
   uint64_t repackFseq = 0;
@@ -114,6 +115,7 @@ struct ArchiveJobQueueRow {
     totalRetries              = rset.columnUint16("TOTAL_RETRIES");
     lastMountWithFailure      = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
     maxTotalRetries           = rset.columnUint16("MAX_TOTAL_RETRIES");
+    is_reporting              = rset.columnBool("IS_REPORTING");
     return *this;
   }
 
@@ -413,15 +415,17 @@ struct ArchiveJobQueueRow {
    *
    * @param txn                  Transaction to use for this query
    * @param status               Archive Job Status to select on
-   * @param retriesWithinMount   Number of retires withint a mount
-   * @param totalRetries         Number of total retries attempted
-   * @param lastMountWithFailure Mount ID of the last mount with failure
    * @param jobID                jobID to select the job for update
    */
-  static void updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, uint32_t retriesWithinMount, uint32_t totalRetries,
-                                    uint64_t lastMountWithFailure, uint64_t jobID, std::optional<uint64_t> mountId = std::nullopt);
+  void updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId = std::nullopt);
 
-};
+  /**
+   * Update job status when job report failed
+   *
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   */
+  void updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
 
 
 } // namespace cta::schedulerdb::postgres

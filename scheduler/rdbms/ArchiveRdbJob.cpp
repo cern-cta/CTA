@@ -43,7 +43,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
 
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                            " " + failureReason;
-
+  m_jobRow.failureLogs += failureLog;
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
   log::ScopedParamContainer(lc)
@@ -81,13 +81,12 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
              + std::string("Assuming ToTransfer."));
     }
     try {
-      postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure,
-                                                          m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                          m_jobRow.lastMountWithFailure, m_jobRow.jobId);
+      m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
       txn.commit();
+      reportType = ReportType::FailureReport
     } catch (exception::Exception &ex) {
       lc.log(cta::log::WARNING,
-             "In schedulerdb::ArchiveJob::failTransfer(): failed to update job status for reporting a failure. Aborting the transaction." +
+             "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status for reporting a failure. Aborting the transaction." +
              ex.getMessageValue());
       txn.abort();
     }
@@ -96,26 +95,26 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
       if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount){
         try {
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-          postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
-                                                              m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId, 0);
+          m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, 0);
           txn.commit();
+          // since requeueing, we do not report and we do not
+          // set reportType to a particular value here
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
-                 "In schedulerdb::ArchiveJob::failTransfer(): failed to update job status to requeue the failed job on a new mount. Aborting the transaction." +
+                 "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status to requeue the failed job on a new mount. Aborting the transaction." +
                  ex.getMessageValue());
           txn.abort();
         }
       } else {
         try {
           // requeue to the same mount simply by changing status and updating all other stat fields
-          postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
-                                                              m_jobRow.retriesWithinMount, m_jobRow.totalRetries,
-                                                              m_jobRow.lastMountWithFailure, m_jobRow.jobId);
+          m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser);
           txn.commit();
+          // since requeueing, we do not report and we do not
+          // set reportType to a particular value here
         } catch (exception::Exception &ex) {
           lc.log(cta::log::WARNING,
-                 "In schedulerdb::ArchiveJob::failTransfer(): failed to update job status to requeue the failed job. Aborting the transaction." +
+                 "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status to requeue the failed job. Aborting the transaction." +
                  ex.getMessageValue());
           txn.abort();
         }
@@ -125,7 +124,40 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
 
 void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContext & lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING,
+         "In schedulerdb::ArchiveRdbJob::failReport(): passes as half-dummy implementation !");
+  std::string reportFailureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+                                 " " + failureReason;
+  log::ScopedParamContainer(lc)
+          .add("jobID", jobID)
+          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+          .add("mountId", m_mountId)
+          .add("tapePool", m_tapePool)
+          .add("reportFailureReason", reportFailureLog)
+          .log(log::INFO,
+               "In schedulerdb::ArchiveRdbJob::failReport(): received failed job to be reported.");
+  m_jobRow.reportFailureLogs += reportFailureLog;
+  m_jobRow.totalReportRetries += 1;
+
+  // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
+  // attempt to report failed due to an exception, for example if the file was deleted on close.
+  cta::schedulerdb::Transaction txn(m_connPool);
+  try {
+    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
+      m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+    } else {
+      // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
+      m_jobRow.is_reporting = false;
+      m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+    }
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::WARNING,
+           "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed report case. Aborting the transaction." +
+           ex.getMessageValue());
+    txn.abort();
+  }
+  return;
 }
 
 void ArchiveRdbJob::bumpUpTapeFileCount(uint64_t newFileCount)

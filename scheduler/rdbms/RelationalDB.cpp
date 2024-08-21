@@ -183,7 +183,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
       logContext.log(log::DEBUG,
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
       schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow));
+      auto RdbJobPtr = std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow);
+      if (RdbJobPtr->status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer){
+        RdbJobPtr->reportType = ReportType::CompletionReport
+      }
+      if (RdbJobPtr->status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure){
+        RdbJobPtr->reportType = ReportType::FailureReport
+      }
+      ret.emplace_back(std::move(RdbJobPtr));
       //schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       // Create an ArchiveRdbJob object using the jobRow data
       //schedulerdb::ArchiveRdbJob archiveJob(m_connPool, jobRow);
@@ -236,9 +243,8 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
   lc.log(log::WARNING, "RelationalDB::setArchiveJobBatchReported() half-dummy implementation for successful jobs !");
-  // We can have a mixture of failed and successful jobs, so we will sort them before batch queue/discarding them.
-  // First, sort the jobs. Done jobs get deleted (no need to sort further) and failed jobs go to their per-VID queues/containers.
-  // Status gets updated on the fly on the latter case.
+  // Once jobs are reported we can have cases of failed or successful reports that need to be handled separatelly
+  // If job is done we will delete it (if the full request was served) - to be implemented !
   std::list<std::string> jobIDsList;
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
@@ -248,7 +254,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
             .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
             .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
             .log(log::INFO,
-                 "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job to be reported.");
+                 "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job which has been reported already.");
     jobsBatchItor++;
   }
   schedulerdb::Transaction txn(m_connPool);
