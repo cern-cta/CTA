@@ -76,7 +76,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
     if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
       // Wrong status, but the context leaves no ambiguity and we set the job to report failure.
       lc.log(log::WARNING,
-             "In ArchiveRdbJob::failTransfer(): unexpected status." + TO_STRING(m_jobRow.status) + "Assuming ToTransfer." );
+             "In ArchiveRdbJob::failTransfer(): unexpected status." + to_string(m_jobRow.status) + "Assuming ToTransfer." );
     }
     try {
       postgres::ArchiveJobQueueRow::updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure,
