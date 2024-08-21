@@ -19,8 +19,8 @@
 
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 
 

@@ -86,7 +86,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       ret.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       ret.back()->tapeFile.vid = mountInfo.vid;
       ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
-      // reportType ?
       if (totalBytes >= bytesRequested) break;
     }
     // returning connection to the pool
