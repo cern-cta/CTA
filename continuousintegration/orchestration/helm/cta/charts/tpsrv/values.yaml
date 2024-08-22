@@ -1,0 +1,164 @@
+# Container image that user would like to use if chart is used on its own
+image:
+imagePullSecret:
+
+tpsrv:
+  tpsrv01:
+    labels:
+      k8s-app: ctataped
+    containers:
+    - name: rmcd
+      isPriviliged: true
+      command: ['/opt/run/bin/rmcd.sh']
+      args: ["none"]
+      env:
+      - name: MY_CONTAINER
+        value: "rmcd"
+      - name: driveslot
+        value: "0"
+      - name: TERM
+        value: "xterm"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /mnt/logs
+        name: logstorage
+
+    - name: taped
+      isPriviliged: true
+      command: ["/bin/sh", "-c"]
+      # Not moving chown here due to the fact that the user might not yet exists
+      args:
+      - |
+        cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+        chmod 600 /etc/cta/cta-taped.sss.keytab;
+        /opt/run/bin/taped.sh;
+      env:
+      - name: MY_CONTAINER
+        value: "taped"
+      - name: eoshost
+        value: "mgm"
+      - name: TERM
+        value: "xterm"
+      - name: driveslot
+        value: "0"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/objectstore
+        name: myobjectstore
+      - mountPath: /etc/config/database
+        name: mydatabase
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /etc/config/eos
+        name: eosconfig
+      - mountPath: /mnt/logs
+        name: logstorage
+      - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
+        name: tape-sss
+        subPath: cta-tpsrv-tmp.sss.keytab
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: myobjectstore
+      configMap:
+        name: objectstore-config
+    - name: mydatabase
+      configMap:
+        name: database-config
+    - name: mylibrary
+      configMap:
+        name: library-config
+    - name: eosconfig
+      configMap:
+        name: eos-config-base
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: tape-sss
+      secret:
+        secretName: tpsrv-sss-keytab
+  tpsrv02:
+    labels:
+      k8s-app: ctataped
+    containers:
+    - name: rmcd
+      isPriviliged: true
+      command: ['/opt/run/bin/rmcd.sh']
+      args: ["none"]
+      env:
+      - name: MY_CONTAINER
+        value: "rmcd"
+      - name: driveslot
+        value: "1"
+      - name: TERM
+        value: "xterm"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /mnt/logs
+        name: logstorage
+
+    - name: taped
+      isPriviliged: true
+      command: ["/bin/sh", "-c"]
+      # Not moving chown here due to the fact that the user might not yet exists
+      args:
+      - |
+        cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+        chmod 600 /etc/cta/cta-taped.sss.keytab;
+        /opt/run/bin/taped.sh;
+      env:
+      - name: MY_CONTAINER
+        value: "taped"
+      - name: eoshost
+        value: "mgm"
+      - name: TERM
+        value: "xterm"
+      - name: driveslot
+        value: "1"
+      volumeMounts:
+      - mountPath: /shared
+        name: shared
+      - mountPath: /etc/config/objectstore
+        name: myobjectstore
+      - mountPath: /etc/config/database
+        name: mydatabase
+      - mountPath: /etc/config/library
+        name: mylibrary
+      - mountPath: /etc/config/eos
+        name: eosconfig
+      - mountPath: /mnt/logs
+        name: logstorage
+      - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
+        name: tape-sss
+        subPath: cta-tpsrv-tmp.sss.keytab
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: myobjectstore
+      configMap:
+        name: objectstore-config
+    - name: mydatabase
+      configMap:
+        name: database-config
+    - name: mylibrary
+      configMap:
+        name: library-config
+    - name: eosconfig
+      configMap:
+        name: eos-config-base
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    - name: tape-sss
+      secret:
+        secretName: tpsrv-sss-keytab
+

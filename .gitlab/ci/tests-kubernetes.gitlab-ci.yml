@@ -19,14 +19,16 @@
     - echo "Invalidating default common before_script for kubernetes-test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - bash ./continuousintegration/ci_helpers/install_helm.sh
+
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
     - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
-    - ./run_systemtest.sh -n ${NAMESPACE} 
-                          -p ${CI_PIPELINE_ID} 
-                          -s ${TEST_SCRIPT} 
-                          ${EXTENDED_OPTIONS} 
+    - ./run_systemtest.sh -n ${NAMESPACE}
+                          -p ${CI_PIPELINE_ID}
+                          -s ${TEST_SCRIPT}
+                          ${EXTENDED_OPTIONS}
                           ${ONLY_SYSTEST_OPT}
   artifacts:
     when: always

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tpsrv
+description: A Helm chart of tape servers for the Kubernetes CI test instance. It defines pods and resources consumed by the pods.
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

@@ -1,0 +1,15 @@
+{{- $name := include "ctafrontend.name" .}}
+{{- with .Values.service}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{$name}}
+  labels:
+    k8s-app: {{$name}}
+spec:
+  selector:
+    k8s-app: {{$name}}
+  clusterIP: None
+  ports:
+  {{- .ports | toYaml | nindent 4}}
+{{- end}}

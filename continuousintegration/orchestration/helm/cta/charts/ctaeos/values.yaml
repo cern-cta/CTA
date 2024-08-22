@@ -1,0 +1,114 @@
+nameOverride: "ctaeos"
+# Container image that user would like to use if chart is used on its own
+image:
+imagePullSecrets:
+isPriviliged: true
+# readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
+readinessProbe:
+
+service:
+  selectors:
+    k8s-app: ctaeos-mgm
+  labels:
+    k8s-app: ctaeos-mgm
+  ports:
+  - name: ctaeos-mgm
+    port: 1094
+    protocol: TCP
+
+# Changes the entrypoint of the container's image to the script and provide arguments if needed
+customEntrypoint:
+  command: ["/bin/sh", "-c"]
+  args:
+  - |
+    cat /tmp/eos.keytab > /etc/eos.keytab;
+    chmod 400 /etc/eos.keytab;
+    /opt/run/bin/ctaeos-mgm-log-wrapper.sh
+
+env:
+- name: frontend
+  value: 'cta-frontend:10955'
+- name: TERM
+  value: "xterm"
+
+labels:
+  k8s-app: ctaeos-mgm
+
+# defines all of the volumes consumed by pod
+
+volumeMounts:
+- mountPath: /shared
+  name: shared
+- mountPath: /mnt/logs
+  name: logstorage
+- mountPath: /fst
+  name: stgstorage
+- mountPath: /etc/config/eos
+  name: eosconfig
+- mountPath: /etc/config/eoscta
+  name: eosctaconfig
+- mountPath: /etc/krb5.conf
+  name: krb5-config-volume
+  subPath: krb5.conf
+- mountPath: /etc/eos-server.krb5.keytab
+  name: keytab
+  subPath: eos-server.krb5.keytab
+- mountPath: /tmp/eos.keytab
+  name: sss-keytab
+  subPath: eos.keytab
+- mountPath: /etc/cta/castor-migration.conf
+  name: migration-conf
+  subPath: castor-migration.conf
+- mountPath: /etc/xrd.cf.mgm
+  name: xrd-mgm-config
+  subPath: xrd.cf.mgm
+- mountPath: /etc/xrd.cf.fst
+  name: xrd-fst-config
+  subPath: xrd.cf.fst
+- mountPath: /etc/xrootd-quarkdb.cfg
+  name: eos-config-quarkdb
+  subPath: xrootd-quarkdb.cfg
+- mountPath: /etc/sysconfig/eos
+  name: eos-sysconfig
+  subPath: eos
+
+volumes:
+- name: shared
+  hostPath:
+    path: /opt/cta
+- name: logstorage
+  persistentVolumeClaim:
+    claimName: claimlogs
+- name: stgstorage
+  persistentVolumeClaim:
+    claimName: claimstg
+- name: eosconfig
+  configMap:
+    name: eos-config-base
+- name: eosctaconfig
+  configMap:
+    name: eos-grpc-keytab
+- name: krb5-config-volume
+  configMap:
+    name: krb5-config
+- name: keytab
+  secret:
+    secretName: eos-server-keytab
+- name: sss-keytab
+  secret:
+    secretName: eos-sss-keytab
+- name: migration-conf
+  configMap:
+    name: castor-migration-conf
+- name: xrd-mgm-config
+  configMap:
+    name: eos-config-mgm
+- name: xrd-fst-config
+  configMap:
+    name: eos-config-fst
+- name: eos-config-quarkdb
+  configMap:
+    name: eos-config-quarkdb
+- name: eos-sysconfig
+  configMap:
+    name: eos-sysconfig
