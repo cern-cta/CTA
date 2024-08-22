@@ -19,7 +19,6 @@
 
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 
@@ -30,6 +29,11 @@
 #include <string>
 #include <cstdint>
 #include <time.h>
+
+
+namespace cta{
+  class RelationalDB;
+}
 
 namespace cta::schedulerdb {
 
