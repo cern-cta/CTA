@@ -59,7 +59,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(sqlStmt.size() <= 0) {
+      if (sqlStmt.size() <= 0) {
         // Ignore empty statements
         continue;
       }
@@ -70,17 +70,17 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
         // Ensure the dimensions are correct
         continue;
       }
-      tableSql[1] += ","; // hack for parsing 
+      tableSql[1] += ",";  // hack for parsing
       // we use the same logic here as for trailing ';'
       std::string::size_type searchPosComma = 0;
       std::string::size_type findResultComma = std::string::npos;
       while (std::string::npos != (findResultComma = tableSql[1].find(',', searchPosComma))) {
         const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
-        const std::string sqlStmtComma = utils::trimString(
-            std::string_view(tableSql[1]).substr(searchPosComma, stmtLenComma));
+        const std::string sqlStmtComma =
+          utils::trimString(std::string_view(tableSql[1]).substr(searchPosComma, stmtLenComma));
         searchPosComma = findResultComma + 1;
 
-        if(sqlStmtComma.size() <= 0) {
+        if (sqlStmtComma.size() <= 0) {
           // Ignore empty statements
           continue;
         }
@@ -91,7 +91,6 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
           schemaColumnNames.try_emplace(columnSql[1], columnSql[2]);
         }
       }
-
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

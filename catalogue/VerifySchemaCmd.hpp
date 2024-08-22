@@ -65,7 +65,7 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string& tableName, const rdbms::Conn &conn) const;
+  bool tableExists(const std::string& tableName, const rdbms::Conn& conn) const;
 
   /*
    * Returns true if the catalogue is upgrading

@@ -116,12 +116,13 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
 //------------------------------------------------------------------------------
 // dropSingleTable
 //------------------------------------------------------------------------------
-bool DropSchemaCmd::dropSingleTable(rdbms::Conn &conn, const std::string& tableName) {
+bool DropSchemaCmd::dropSingleTable(rdbms::Conn& conn, const std::string& tableName) {
   try {
     conn.executeNonQuery(std::string("DROP TABLE ") + tableName);
     m_out << "Dropped table " << tableName << std::endl;
     return true;
-  } catch(exception::Exception &) {
+  }
+  catch (exception::Exception&) {
     return false;
   }
 }
@@ -129,11 +130,12 @@ bool DropSchemaCmd::dropSingleTable(rdbms::Conn &conn, const std::string& tableN
 //------------------------------------------------------------------------------
 // dropCtaCatalogueTable
 //------------------------------------------------------------------------------
-void DropSchemaCmd::dropCtaCatalogueTable(rdbms::Conn &conn) {
+void DropSchemaCmd::dropCtaCatalogueTable(rdbms::Conn& conn) {
   try {
     conn.executeNonQuery(R"SQL(DROP TABLE CTA_CATALOGUE)SQL");
     m_out << "Dropped table CTA_CATALOGUE" << std::endl;
-  } catch(exception::Exception &) {
+  }
+  catch (exception::Exception&) {
     // Ignore reason for failure
   }
 }

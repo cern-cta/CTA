@@ -72,45 +72,53 @@ void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::st
 }
 
 void DriveConfig::setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-    sourcedParameter.value(), sourcedParameter.source());
+                                                  sourcedParameter.value(), sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+void DriveConfig::setConfigToDB(
+  const cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
+  catalogue::Catalogue* catalogue,
+  const std::string& tapeDriveName) {
   std::string key = sourcedParameter.key();
   cta::utils::searchAndReplace(key, "Bytes", "");
   cta::utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Files"));
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
-    std::to_string(sourcedParameter.value().maxFiles), sourcedParameter.source());
+                                                  std::to_string(sourcedParameter.value().maxFiles),
+                                                  sourcedParameter.source());
   cta::utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Bytes"));
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
-    std::to_string(sourcedParameter.value().maxBytes), sourcedParameter.source());
+                                                  std::to_string(sourcedParameter.value().maxBytes),
+                                                  sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const cta::SourcedParameter<uint32_t>& sourcedParameter,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-    std::to_string(sourcedParameter.value()), sourcedParameter.source());
+                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const cta::SourcedParameter<uint64_t>& sourcedParameter,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-    std::to_string(sourcedParameter.value()), sourcedParameter.source());
+                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const cta::SourcedParameter<time_t>& sourcedParameter,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-    std::to_string(sourcedParameter.value()), sourcedParameter.source());
+                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
 }
 
 }  // namespace cta
