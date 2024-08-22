@@ -94,7 +94,7 @@ SCHEMA_VERSION_MAJOR.SCHEMA_VERSION_MINOR
 *Example: 1.0, 1.1, 2.0*
 
 **WARNING**
-    The changing of the *SCHEMA_VERSION_MAJOR* number has to be modified **ONLY** if the changes made to the schema are [not backward-compatible](https://eoscta.docs.cern.ch/catalogue/upgrade/backward_incompatible_upgrades/) with the currently running version of CTA.
+    The changing of the *SCHEMA_VERSION_MAJOR* number has to be modified **ONLY** if the changes made to the schema are [not backward-compatible](https://eoscta.docs.cern.ch/latest/dev/architecture/components/catalogue/modifying_the_schema/backward_incompatible_upgrades/) with the currently running version of CTA.
 
 **DANGER**
     While starting, CTA will check the *SCHEMA_VERSION_MAJOR* schema version it is supposed to run against. If the *SCHEMA_VERSION_MAJOR* is not the correct one, CTA will not start.
@@ -129,4 +129,4 @@ In order to modify the Catalogue schema, please follow the following steps.
 **TIP**
         You can use the **cta-catalogue-schema-create** tool to create the new schema
 
-6. If everything works, let's define a [upgrade strategy](https://eoscta.docs.cern.ch/catalogue/upgrade/).
+6. If everything works, let's define a [upgrade strategy](https://eoscta.docs.cern.ch/latest/dev/architecture/components/catalogue/modifying_the_schema/create_liquibase_changelog_file/).
