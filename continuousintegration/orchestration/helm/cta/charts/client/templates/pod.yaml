@@ -1,0 +1,41 @@
+{{$namespace := .Release.Namespace }}
+{{$name := include "client.name" . }}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{$name}}
+  namespace: {{ $namespace | quote}}
+  labels:
+    k8s-app: {{$name}}
+spec:
+  restartPolicy: Never
+  containers:
+  - name: {{$name}}
+    image: {{ include "client.image" . }}
+    stdin: true
+    env:
+    - name: MY_NAME
+      value: {{$name}}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote}}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote}}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
+    {{- end}}
+    {{- if (.Values.customEntrypoint)}}
+    command: {{.Values.customEntrypoint.command  | toJson}}
+    args: {{.Values.customEntrypoint.args}}
+    {{- end}}
+    {{- if (.Values.readinessProbe)}}
+    {{include "client.readinessProbe" .Values.readinessProbe | nindent 4}}
+    {{- end}}
+    securityContext:
+      privileged: {{.Values.isPriviliged}}
+    {{- include "client.volumeMounts" . | nindent 4 }}
+  # Here are volumes added
+  {{- include "client.volumes" . | nindent 2}}
+
+  imagePullSecrets:
+  - name: {{ include "client.imageSecret" . }}

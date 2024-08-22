@@ -1,0 +1,43 @@
+{{$namespace := .Release.Namespace }}
+{{$accountName := .Values.serviceAccount.name }}
+{{$name := include "kdc.name" . }}
+{{$secret := include "kdc.imageSecret" .}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{$name}}
+  namespace: {{ $namespace | quote}}
+  labels:
+    k8s-app: {{$name}}
+spec:
+  serviceAccountName: {{$accountName}}
+  restartPolicy: Never
+  containers:
+  - name: {{$name}}
+    image: {{ include "kdc.image" . }}
+    stdin: true
+    env:
+    - name: MY_NAME
+      value: {{$name}}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote}}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote}}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
+    {{- end}}
+    {{- if (.Values.customEntrypoint)}}
+    command: {{.Values.customEntrypoint.command}}
+    args: {{.Values.customEntrypoint.args}}
+    {{- end}}
+    {{- if (.Values.readinessProbe)}}
+    {{include "kdc.readinessProbe" .Values.readinessProbe | nindent 4}}
+    {{- end}}
+    securityContext:
+      privileged: {{.isPriviliged}}
+    {{ include "kdc.volumeMounts" . | nindent 4 }}
+  # Here are volumes added
+  {{include "kdc.volumes" . | nindent 2}}
+
+  imagePullSecrets:
+  - name: {{$secret}}
