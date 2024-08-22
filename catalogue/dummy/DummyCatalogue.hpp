@@ -57,7 +57,7 @@ public:
   const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() override;
   const std::unique_ptr<DriveStateCatalogue>& DriveState() override;
 
-private:
+protected:
   std::unique_ptr<SchemaCatalogue> m_schema;
   std::unique_ptr<AdminUserCatalogue> m_adminUser;
   std::unique_ptr<DiskSystemCatalogue> m_diskSystem;
