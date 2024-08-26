@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctacli
+  labels:
+    k8s-app: ctacli
+spec:
+  selector:
+    k8s-app: ctacli
+  clusterIP: None
+  ports:
+  - name: ctacli
+    port: 1
+    protocol: TCP

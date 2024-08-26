@@ -1,6 +1,0 @@
-apiVersion: v2
-name: ctacli
-description: A Ctacli helm chart for Kubernetes in CTA project. Sets up a cli pod and a service with defined configuration in values.yaml file.
-type: application
-version: 0.1.0
-appVersion: "1.16.0"

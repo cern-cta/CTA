@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: objectstore-config
+  labels:
+    config: objectstore
+    type: file
+data:
+  objectstore.type: file
+  objectstore.file.path: /shared/%NAMESPACE/objectstore
