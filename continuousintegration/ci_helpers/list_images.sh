@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,22 +15,59 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# env variables used:
-# DOCKER_LOGIN_USERNAME
-# DOCKER_LOGIN_PASSWORD
-#
-# set in /etc/gitlab/gitlabregistry.txt managed by Puppet
-. /etc/gitlab/gitlabregistry.txt
+list_images() {
+  # The Kubernetes secret stores a base64 encoded .dockerconfigjson. This json has the following format:
+  # {
+  #   "auths": {
+  #     "gitlab-registry.cern.ch": {
+  #       "auth": "base64 encoded string of 'username:password'"
+  #     }
+  #   }
+  # }
 
-TO=gitlab-registry.cern.ch/cta/ctageneric
+  local secret_name="ctaregsecret"
+  local registry_name="cta/ctageneric"
+  local gitlab_server="gitlab.cern.ch"
 
-CI_REGISTRY=$(echo ${TO} | sed -e 's%/.*%%')
-REPOSITORY=$(echo ${TO} | sed -e 's%[^/]\+/%%')
+  local auth_json=$(kubectl get secret $secret_name -o jsonpath='{.data.\.dockerconfigjson}' | base64 --decode | jq -r '.auths')
 
-GITLAB_HOST=gitlab.cern.ch
+  local docker_registry=$(echo $auth_json | jq -r 'keys[0]')
+  local docker_login_username=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f1)
+  local docker_login_password=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
 
-JWT_PULL_PUSH_TOKEN=$(curl -q -u ${DOCKER_LOGIN_USERNAME}:${DOCKER_LOGIN_PASSWORD} \
-  "https://${GITLAB_HOST}/jwt/auth?service=container_registry&scope=repository:${REPOSITORY}:pull,push" | cut -d\" -f4 )
+  if [[ -z "$docker_registry" ]]; then
+    echo "ERROR: Missing required variable: docker_registry"
+    return 1
+  fi
+  if [[ -z "$docker_login_username" ]]; then
+    echo "ERROR: Missing required variable: docker_login_username"
+    return 1
+  fi
+  if [[ -z "$docker_login_password" ]]; then
+    echo "ERROR: Missing required variable: docker_login_password"
+    return 1
+  fi
 
-# echo "List of tags in registry"
-curl "https://${CI_REGISTRY}/v2/${REPOSITORY}/tags/list" -H "Authorization: Bearer ${JWT_PULL_PUSH_TOKEN}" | jq -c ".tags[]" | sed -e 's/^"//;s/"$//'
+  # Retrieve JWT pull token from GitLab
+  local jwt_pull_token=$(curl -s -u "${docker_login_username}:${docker_login_password}" \
+    "https://${gitlab_server}/jwt/auth?service=container_registry&scope=repository:${registry_name}:pull,push" | jq -r '.token')
+
+  if [[ -z "$jwt_pull_token" ]]; then
+    echo "Error: Failed to retrieve JWT pull token."
+    return 1
+  fi
+
+  # List the tags in the Docker registry repository
+  local list_response=$(curl -s "https://${docker_registry}/v2/${registry_name}/tags/list" -H "Authorization: Bearer ${jwt_pull_token}")
+  local tags=$(echo "$list_response" | jq -c ".tags[]" | sed -e 's/^"//;s/"$//')
+
+  if [[ -z "$tags" ]]; then
+    echo "Error: Failed to retrieve tags from repository:"
+    echo "$list_response"
+    return 1
+  fi
+
+  echo "$tags"
+}
+
+list_images
