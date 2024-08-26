@@ -22,7 +22,6 @@
 #include "cmdline/CtaAdminCmdParse.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "AdminCmd.hpp"
-#include "GrpcEndpoint.hpp"
 #include "PbException.hpp"
 
 namespace cta::frontend {
@@ -1203,9 +1202,9 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   }
   
   auto archiveFile = m_catalogue.ArchiveFile()->getArchiveFileForDeletion(searchCriteria);
-  grpc::EndpointMap endpoints(m_namespaceMap);
-  auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
-  archiveFile.diskFileInfo.path = diskFilePath;
+  // grpc::EndpointMap endpoints(m_namespaceMap);
+  // auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
+  // archiveFile.diskFileInfo.path = diskFilePath;
 
   m_catalogue.TapeFile()->deleteTapeFileCopy(archiveFile, reason);
   response.set_type(xrd::Response::RSP_SUCCESS);
