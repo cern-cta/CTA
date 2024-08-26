@@ -53,6 +53,7 @@
 - cta/CTA#847 - Introduced version-lock for Oracle instant client
 - cta/CTA#821 - Improved pipeline logic for faster performance and correct cancel propagation
 - cta/CTA#708 - Added a basic test for the archive metadata to the CI
+- cta/CTA#835 - Refactor scripts that made use of /etc/gitlab/gitlabregistry.txt to use kubernetes secret instead
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
