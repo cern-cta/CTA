@@ -12,7 +12,6 @@ cppcheck-run:
       when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
-    - when: always
   script:
     - cppcheck --xml
                --force
@@ -39,7 +38,6 @@ cppcheck-report:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - when: always
   image: $EL9_IMAGE
   before_script:
     - yum -y install python-pip
@@ -63,7 +61,6 @@ clang-format-report:
       when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
-    - when: always
   image: $EL9_IMAGE
   script:
     - yum install -y git-clang-format
