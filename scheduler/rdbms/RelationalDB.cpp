@@ -183,14 +183,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
       logContext.log(log::DEBUG,
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
       schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
-      auto RdbJobPtr = std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow);
-      if (RdbJobPtr->status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer){
-        RdbJobPtr->reportType = ReportType::CompletionReport
-      }
-      if (RdbJobPtr->status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure){
-        RdbJobPtr->reportType = ReportType::FailureReport
-      }
-      ret.emplace_back(std::move(RdbJobPtr));
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, jobRow));
       //schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       // Create an ArchiveRdbJob object using the jobRow data
       //schedulerdb::ArchiveRdbJob archiveJob(m_connPool, jobRow);
@@ -216,7 +209,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
 
 SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(log::LogContext &logContext)
 {
-   throw cta::exception::Exception("Not implemented");
+  SchedulerDatabase::JobsFailedSummary ret;
+  // Get the jobs from DB
+  cta::schedulerdb::Transaction txn(m_connPool);
+  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
+  while(rset.next()) {
+    cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
+    ret.totalFiles += afjsr.jobsCount;
+    ret.totalBytes += afjsr.jobsTotalSize;
+  }
+  return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RelationalDB::getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc)
@@ -245,10 +247,19 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   lc.log(log::WARNING, "RelationalDB::setArchiveJobBatchReported() half-dummy implementation for successful jobs !");
   // Once jobs are reported we can have cases of failed or successful reports that need to be handled separatelly
   // If job is done we will delete it (if the full request was served) - to be implemented !
-  std::list<std::string> jobIDsList;
+  std::list<std::string> jobIDsList_success;
+  std::list<std::string> jobIDsList_failure;
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
-    jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+    switch((*jobsBatchItor)->reportType) {
+      case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
+        jobIDsList_success.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
+        jobIDsList_failure.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      default:
+        continue;
     log::ScopedParamContainer(lc)
             .add("jobID", (*jobsBatchItor)->jobID)
             .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
@@ -259,12 +270,22 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   }
   schedulerdb::Transaction txn(m_connPool);
   try {
-    // ALL JOBS CURRENTLY REPORTED AS SUCCESS !
-    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList);
+    if ()
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
     txn.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Complete. Aborting the transaction." +
+           ex.getMessageValue());
+    txn.abort();
+  }
+  txn(m_connPool);
+  try {
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::DEBUG,
+           "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Failed. Aborting the transaction." +
            ex.getMessageValue());
     txn.abort();
   }
@@ -295,6 +316,7 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     log::LogContext &logContext)
 {
   utils::Timer timer;
+
   schedulerdb::Transaction txn(m_connPool);
 
    // Get the best vid from the cache
@@ -633,7 +655,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   std::map<std::pair<common::dataStructures::MountType, std::string>,SchedulerDatabase::PotentialMount> potentialMounts;
 
   // Iterate over all archive queues
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNotOwned(txn);
+  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue(txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     // Set the queue type

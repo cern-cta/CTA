@@ -236,7 +236,6 @@ class SchedulerDatabase {
       FailureReport,
       Report  ///< A generic grouped type
     };
-    ReportType reportType = ReportType::CompletionReport;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void failTransfer(const std::string & failureReason, log::LogContext & lc) = 0;

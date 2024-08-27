@@ -32,6 +32,8 @@ namespace cta::schedulerdb::postgres {
 
   struct ArchiveJobQueueRow {
     uint64_t jobId = 0;
+    uint64_t reqId = 0;
+    uint32_t reqJobCount = 1;
     std::optional <std::uint64_t> mountId = std::nullopt;
     ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
     std::string tapePool = "";
@@ -85,6 +87,8 @@ namespace cta::schedulerdb::postgres {
 
     ArchiveJobQueueRow &operator=(const rdbms::Rset &rset) {
       jobId = rset.columnUint64("JOB_ID");
+      reqId = rset.columnUint64("ARCHIVE_REQUEST_ID");
+      reqJobCount = rset.columnUint32("REQUEST_JOB_COUNT");
       mountId = rset.columnOptionalUint64("MOUNT_ID");
       status = from_string<ArchiveJobStatus>(
               rset.columnString("STATUS"));
@@ -124,6 +128,8 @@ namespace cta::schedulerdb::postgres {
       // does not set mountId or jobId
       const char *const sql = R"SQL(
       INSERT INTO ARCHIVE_JOB_QUEUE(
+        ARCHIVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
         STATUS,
         TAPE_POOL,
         MOUNT_POLICY,
@@ -151,6 +157,8 @@ namespace cta::schedulerdb::postgres {
         TOTAL_RETRIES,
         LAST_MOUNT_WITH_FAILURE,
         MAX_TOTAL_RETRIES) VALUES (
+        :ARCHIVE_REQUEST_ID,
+        :REQUEST_JOB_COUNT,
         :STATUS,
         :TAPE_POOL,
         :MOUNT_POLICY,
@@ -181,6 +189,8 @@ namespace cta::schedulerdb::postgres {
     )SQL";
 
       auto stmt = txn.conn().createStmt(sql);
+      stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
+      stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
       stmt.bindString(":STATUS", to_string(status));
       stmt.bindString(":TAPE_POOL", tapePool);
       stmt.bindString(":MOUNT_POLICY", mountPolicy);
@@ -216,6 +226,9 @@ namespace cta::schedulerdb::postgres {
     void addParamsToLogContext(log::ScopedParamContainer &params) const {
       // does not set jobId
       params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
+      params.add("jobID",  std::to_string(jobId));
+      params.add("reqId",  std::to_string(reqId));
+      params.add("reqJobCount",  std::to_string(reqJobCount));
       params.add("status", to_string(status));
       params.add("tapePool", tapePool);
       params.add("mountPolicy", mountPolicy);
@@ -262,6 +275,8 @@ namespace cta::schedulerdb::postgres {
       std::string sql = R"SQL(
       SELECT 
         JOB_ID AS JOB_ID,
+        ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
+        REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
         MOUNT_ID AS MOUNT_ID,
         STATUS AS STATUS,
         TAPE_POOL AS TAPE_POOL,
@@ -314,6 +329,8 @@ namespace cta::schedulerdb::postgres {
       std::string sql = R"SQL(
       SELECT 
         JOB_ID AS JOB_ID,
+        ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
+        REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
         MOUNT_ID AS MOUNT_ID,
         STATUS AS STATUS,
         TAPE_POOL AS TAPE_POOL,
@@ -430,6 +447,32 @@ namespace cta::schedulerdb::postgres {
      */
     void updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
 
-
-  }; // namespace cta::schedulerdb::postgres
-}
+    /**
+     * Increment Archive Request ID and return the new value
+     *
+     * @param txn  Transaction to use for this query
+     *
+     * @return     Archive Request ID
+     */
+    static uint64_t getNextArchiveRequestID(Transaction &txn) {
+      try {
+        const char *const sql = R"SQL(
+          SELECT NEXTVAL('ARCHIVE_REQUEST_ID_SEQ') AS ARCHIVE_REQUEST_ID
+        )SQL";
+        txn.start();
+        auto stmt = txn.conn().createStmt(sql);
+        auto rset = stmt.executeQuery();
+        if (!rset.next()) {
+          throw exception::Exception("Result set is unexpectedly empty");
+        }
+        return rset.columnUint64("ARCHIVE_REQUEST_ID");
+      } catch (exception::UserError &ex) {
+        ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+        throw;
+      } catch (exception::Exception &ex) {
+        ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+        throw;
+      }
+    }
+  }
+}; // namespace cta::schedulerdb::postgres
