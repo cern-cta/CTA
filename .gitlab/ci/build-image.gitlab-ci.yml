@@ -10,7 +10,7 @@ docker-build-ctageneric:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    when: on_success
+    - when: on_success
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
     entrypoint: [""]
