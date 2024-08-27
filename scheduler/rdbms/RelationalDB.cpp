@@ -270,7 +270,6 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   }
   schedulerdb::Transaction txn(m_connPool);
   try {
-    if ()
     schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
     txn.commit();
   } catch (exception::Exception &ex) {

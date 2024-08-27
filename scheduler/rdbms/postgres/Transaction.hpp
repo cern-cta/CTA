@@ -56,9 +56,9 @@ public:
    *
    * The lock will be automatically released when the transaction ends (or the connection is terminated).
    *
-   * @param lockId  Unique identifier for this lock
+   * @param lockIdString  Unique identifier for this lock
    */
-  void lockGlobal(uint64_t lockId);
+  void lockGlobal(std::string_view lockIdString);
 
   /**
    * Commit the transaction

@@ -474,5 +474,5 @@ namespace cta::schedulerdb::postgres {
         throw;
       }
     }
-  }
+  };
 }; // namespace cta::schedulerdb::postgres
