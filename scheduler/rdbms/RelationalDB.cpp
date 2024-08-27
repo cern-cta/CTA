@@ -260,6 +260,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
         break;
       default:
         continue;
+    }
     log::ScopedParamContainer(lc)
             .add("jobID", (*jobsBatchItor)->jobID)
             .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
@@ -268,25 +269,25 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                  "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a job which has been reported already.");
     jobsBatchItor++;
   }
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn1(m_connPool);
   try {
-    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
-    txn.commit();
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn1, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
+    txn1.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Complete. Aborting the transaction." +
            ex.getMessageValue());
-    txn.abort();
+    txn1.abort();
   }
-  txn(m_connPool);
+  schedulerdb::Transaction txn2(m_connPool);
   try {
-    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
-    txn.commit();
+    schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn2, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
+    txn2.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status to AJS_Failed. Aborting the transaction." +
            ex.getMessageValue());
-    txn.abort();
+    txn2.abort();
   }
 }
 
