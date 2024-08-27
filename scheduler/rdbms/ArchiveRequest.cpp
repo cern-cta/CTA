@@ -28,7 +28,7 @@ namespace cta::schedulerdb {
 void ArchiveRequest::insert() {
   m_txn.reset(new schedulerdb::Transaction(m_connPool));
   // Getting the next ID for the request possibly composed of multiple jobs
-  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_txn);
+  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_txn);
   uint32_t areq_job_count = m_jobs.size();
   // Inserting the jobs to the DB
   std::string tapePool = "";
