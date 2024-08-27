@@ -161,4 +161,3 @@ tpsrv:
     - name: tape-sss
       secret:
         secretName: tpsrv-sss-keytab
-
