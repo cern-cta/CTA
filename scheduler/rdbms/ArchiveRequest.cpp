@@ -27,10 +27,15 @@ namespace cta::schedulerdb {
 
 void ArchiveRequest::insert() {
   m_txn.reset(new schedulerdb::Transaction(m_connPool));
-
+  // Getting the next ID for the request possibly composed of multiple jobs
+  uint64_t areq_id = getNextArchiveRequestID(m_txn);
+  uint32_t areq_job_count = m_jobs.size();
+  // Inserting the jobs to the DB
+  std::string tapePool = "";
   for(const auto &aj : m_jobs) {
     cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
-
+    ajr.reqId = areq_id;
+    ajr.reqJobCount = areq_job_count;
     ajr.tapePool = aj.tapepool;
     ajr.mountPolicy = m_mountPolicy.name;
     ajr.priority = m_mountPolicy.archivePriority;
@@ -52,8 +57,13 @@ void ArchiveRequest::insert() {
 
     log::ScopedParamContainer params(m_lc);
     ajr.addParamsToLogContext(params);
-
     try {
+      // locking DB operations on transaction level per tapePool
+      // requiring multiple locks succeeds in PostgreSQL
+      //if (tapePool != aj.tapepool || tapePool == ""){
+      //  tapePool = aj.tapepool;
+      //  m_txn.lockGlobal(aj.tapepool);
+      //}
       ajr.insert(*m_txn);
     } catch(exception::Exception &ex) {
       params.add("exeptionMessage", ex.getMessageValue());

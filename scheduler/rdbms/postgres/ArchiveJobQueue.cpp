@@ -31,6 +31,7 @@ namespace cta::schedulerdb::postgres {
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
+    AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
     AND IN_DRIVE_QUEUE IS FALSE
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE)
@@ -50,6 +51,7 @@ namespace cta::schedulerdb::postgres {
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
   stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
   stmt.bindString(":VID", mountInfo.vid);

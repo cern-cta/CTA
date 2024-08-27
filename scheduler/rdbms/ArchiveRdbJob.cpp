@@ -37,6 +37,14 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
     archiveFile = jobQueueRow.archiveFile; // assuming ArchiveFile is copyable
     tapeFile.copyNb = jobQueueRow.copyNb;
     // Set other attributes or perform any necessary initialization
+    // Setting the internal report type - in case is_reporting == false No Report type required
+    if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
+      reportType = ReportType::CompletionReport
+    } else if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure) {
+      reportType = ReportType::FailureReport
+    } else {
+      reportType = ReportType::NoReportRequired
+    }
   };
 
 void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogContext & lc) {
@@ -54,6 +62,12 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           .add("failureReason", failureLog)
           .log(log::INFO,
                "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
+
+  // For multiple jobs existing more might need to be done to ensure the file on EOS
+  // is deleted only when both requests succeed !
+  //if (m_jobRow.reqJobCount > 1){
+    //query
+  //}
 
   // I need to add handling of multiple JOBS OF THE SAME REQUEST in cases when
   // not all jobs succeeded - do we report failure for all ? - I guess so,
@@ -107,7 +121,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
         }
       } else {
         try {
-          // requeue to the same mount simply by changing status and updating all other stat fields
+          // requeue to the same mount simply by changing IN_DRIVE_QUEUE to False and updating all other stat fields
           m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser);
           txn.commit();
           // since requeueing, we do not report and we do not
