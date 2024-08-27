@@ -20,47 +20,18 @@ find_package(GRPC REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
-set(PROTOBUF_CtaFrontend_DIR ${PROJECT_SOURCE_DIR}/frontend/grpc/grpc-proto/protobuf)
-file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CtaFrontend_DIR}/*.proto")
-
 # depends on CTA_EOS definitions
-set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
-file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-set(PROTOBUF3_INCLUDE_PATH "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_CtaFrontend_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
-PROTOBUF3_GENERATE_CPP(ProtoSourcesCtaFrontend ProtoHeadersCtaFrontend ${ProtoFilesCtaFrontend})
-
-set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/frontend/grpc")
-set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
-grpc_generate_cpp(ProtoGrpcSourcesCtaFrontend ProtoGrpcHeadersCtaFrontend ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaFrontend})
-
-set_source_files_properties(
-  ${ProtoSourcesCtaFrontend} ${ProtoHeadersCtaFrontend}
-  ${ProtoGrpcSourcesCtaFrontend} ${ProtoGrpcHeadersCtaFrontend}
-  PROPERTIES GENERATED TRUE
-)
-
-foreach(PROTO_SRC ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
-  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
-  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
-  if(CMAKE_COMPILER_IS_GNUCC)
-    if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-      set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
-    endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-  endif(CMAKE_COMPILER_IS_GNUCC)
-endforeach(PROTO_SRC)
-
-include_directories(${CMAKE_BINARY_DIR}/frontend/grpc ${CMAKE_BINARY_DIR}/eos_cta
-                    ${PROTOBUF3_INCLUDE_DIRS})
-
-add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
+add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp)
+target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
-    EosCtaGrpc ctascheduler ctacommon ctacatalogue)
+    ctascheduler ctacommon ctacatalogue)
 else()
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
-    EosCtaGrpc ctascheduler ctacommon ctaobjectstore ctacatalogue)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
@@ -90,17 +61,17 @@ add_executable(cta-frontend-async-grpc
   ServerNegotiationRequestHandler.cpp
   RequestMessage.cpp
   utils.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend}
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
 )
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
+          ProtoCtaFrontend ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
+          ProtoCtaFrontend ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
 endif()
 
 
@@ -115,20 +86,19 @@ add_executable(cta-admin-grpc
   utils.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
-  ${ProtoSourcesCtaFrontend}
-  ${ProtoGrpcSourcesCtaFrontend}
 )
+target_link_libraries(cta-admin-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-admin-grpc
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp gssapi_krb5)
 else()
   target_link_libraries(cta-admin-grpc
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          EosCtaGrpc ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
 endif()

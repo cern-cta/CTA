@@ -45,7 +45,7 @@
 #include "XrdCtaVirtualOrganizationLs.hpp"
 
 #include "frontend/common/PbException.hpp"
-#include "frontend/common/GrpcEndpoint.hpp"
+// #include "frontend/common/GrpcEndpoint.hpp"
 #include "frontend/common/AdminCmd.hpp"
 
 namespace cta::frontend {

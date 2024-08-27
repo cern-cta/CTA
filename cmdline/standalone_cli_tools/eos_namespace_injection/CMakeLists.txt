@@ -28,7 +28,7 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-eos-namespace-inject EosNamespaceInjection.cpp EosNamespaceInjectionMain.cpp ../../CtaAdminCmdParse.cpp MetaData.cpp)
-target_link_libraries(cta-eos-namespace-inject XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient stdc++fs ctaCmdlineToolsCommon)
+target_link_libraries(cta-eos-namespace-inject ctaCmdlineToolsCommon)
 set_property (TARGET cta-eos-namespace-inject APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-eos-namespace-inject DESTINATION usr/bin)
