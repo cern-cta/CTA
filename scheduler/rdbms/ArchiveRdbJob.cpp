@@ -39,11 +39,11 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
     // Set other attributes or perform any necessary initialization
     // Setting the internal report type - in case is_reporting == false No Report type required
     if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
-      reportType = ReportType::CompletionReport
+      reportType = ReportType::CompletionReport;
     } else if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure) {
-      reportType = ReportType::FailureReport
+      reportType = ReportType::FailureReport;
     } else {
-      reportType = ReportType::NoReportRequired
+      reportType = ReportType::NoReportRequired;
     }
   };
 
@@ -97,7 +97,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
     try {
       m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
       txn.commit();
-      reportType = ReportType::FailureReport
+      reportType = ReportType::FailureReport;
     } catch (exception::Exception &ex) {
       lc.log(cta::log::WARNING,
              "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status for reporting a failure. Aborting the transaction." +

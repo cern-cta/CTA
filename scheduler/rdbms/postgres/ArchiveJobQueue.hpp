@@ -466,9 +466,6 @@ namespace cta::schedulerdb::postgres {
           throw exception::Exception("Result set is unexpectedly empty");
         }
         return rset.columnUint64("ARCHIVE_REQUEST_ID");
-      } catch (exception::UserError &ex) {
-        ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-        throw;
       } catch (exception::Exception &ex) {
         ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
         throw;
