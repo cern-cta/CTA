@@ -33,8 +33,8 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "frontend/common/PbException.hpp"
 
-#include "XrdSsiPbException.hpp"
 #include "version.h"
 
 #include <cryptopp/base64.h>
@@ -200,7 +200,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
       }
       break;
     default:
-      throw XrdSsiPb::PbException(
+      throw cta::exception::PbException(
         "Admin command pair <"
         + cta::admin::AdminCmd_Cmd_Name(m_request.admincmd().cmd())
         + ", "
