@@ -65,6 +65,7 @@ unit-test-postgresql:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
+    - when: on_success
   image: $EL9_IMAGE
   variables:
     CTAREPODIR: /tmp/repo
@@ -100,6 +101,7 @@ test-cta-release:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
+    - when: on_success
   image: $EL9_IMAGE
   variables:
     CTAREPODIR: /tmp/repo
