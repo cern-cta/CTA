@@ -12,5 +12,6 @@ build_rpm/
 image_rpms/
 pod_logs/
 
-# helm.lock file
+# helm files
 Chart.lock
+**/get_helm.sh
