@@ -58,7 +58,7 @@ systest_only=0
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID>] [-i <docker image tag>] \
+      [-p <gitlab pipeline ID>] [-i <docker image tag>] [-r <docker registry>] \
       [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q]
 
 Options:
@@ -70,13 +70,16 @@ Options:
   -u    Prepare the pods to run the liquibase test
   -T    Execute tests for external tape formats
   -Q    Create the cluster using the last ctageneric image from main
+  -r    Provide the docker registry. Defaults to gitlab-registry.cern.ch/cta"
 EOF
 exit 1
 }
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ" o; do
+REGISTRY_HOST="gitlab-registry.cern.ch/cta"
+
+while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG}
@@ -106,6 +109,9 @@ while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumTQ" o; do
             ;;
         i)
             dockerimage=${OPTARG}
+            ;;
+        r)
+            REGISTRY_HOST=${OPTARG}
             ;;
         S)
             usesystemd=1
@@ -192,10 +198,11 @@ cp ./pod-oracleunittests.yaml ${poddir}
 
 echo "Creating instance using docker image with tag: ${imagetag}"
 
-sed -i $poddir/cta/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-sed -i $poddir/init/values.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
+# For now we do a search replace of the image tag for this pod. 
+# Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
+# Eventually this should also be integrated into helm and be overriden using the --set flag. 
+# Then the tmp dir is also no longer necessary
 sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-
 
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
@@ -204,6 +211,8 @@ fi
 
 if [ $usesystemd == 1 ] ; then
     echo "Using systemd to start services on some pods"
+    # TODO: this shouldn't be happening by a find-replace, but rather by updating the values.yml
+    # E.g. either setting an option or using a different values.yml
     for podname in ctafrontend tpsrv ctaeos; do
         sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
     done
@@ -253,10 +262,10 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 
 echo "Got library: ${LIBRARY_DEVICE}"
 
-
+IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
 
 echo  "Setting up init and db pods."
-helm install init ${poddir}/init -n ${instance}
+helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE}
 
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
@@ -264,11 +273,11 @@ for ((i=0; i<400; i++)); do
   kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
 done
-
-echo 'Creating cta instance in ${instance} namespace'
+echo ""
+echo "Creating cta instance in ${instance} namespace"
 helm dependency build ${poddir}/cta
 helm dependency update ${poddir}/cta
-helm install cta ${poddir}/cta -n ${instance}
+helm install cta ${poddir}/cta -n ${instance}  --set global.image=${IMAGE}
 
 
 kubectl --namespace=${instance} get pods

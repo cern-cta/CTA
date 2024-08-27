@@ -6,9 +6,14 @@ catalogue/AllCatalogueSchema.hpp
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
 
+# RPM files
 build_srpm/
 build_rpm/
 image_rpms/
 
 # helm.lock file
 Chart.lock
+get_helm.sh
+
+# Pod files
+pod_logs

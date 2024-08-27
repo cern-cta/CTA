@@ -77,4 +77,3 @@ volumeMounts:
 
 
 readinessProbe:
-

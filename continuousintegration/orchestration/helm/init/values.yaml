@@ -10,6 +10,9 @@ customEntrypoint:
 
 global:
   imagePullSecret: "ctaregsecret"
+  # TODO: this should at some point be split into registry, image, and tag.
+  # The tag should then always be empty and need to be set by the user
+  # That prevents any confusing situations with existing nonsense tags
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
 
 pvcs:
