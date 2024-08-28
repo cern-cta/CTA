@@ -58,7 +58,7 @@ struct ArchiveJobSummaryRow {
     oldestJobStartTime   = rset.columnUint64("OLDEST_JOB_START_TIME");
     archivePriority      = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
-    lastUpdateTime     = rset.columnUint32("LAST_UPDATE_TIME");
+    lastUpdateTime     = rset.columnUint32("LAST_SUMMARY_UPDATE_TIME");
     lastJobUpdateTime  = rset.columnUint32("LAST_JOB_UPDATE_TIME");
     return *this;
   }
