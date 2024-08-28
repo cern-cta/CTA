@@ -52,13 +52,22 @@ public:
    */
   rdbms::Conn &getNonTxnConn();
   /**
-   * Take out a global advisory transaction lock
+   * Take out an advisory transaction lock per tape pool
    *
    * The lock will be automatically released when the transaction ends (or the connection is terminated).
    *
    * @param lockIdString  Unique identifier for this lock
    */
-  void lockGlobal(std::string lockIdString);
+  void lockForTapePool(std::string lockIdString);
+
+  /**
+   * Take out a exclusive access lock on ARCHIVE_JOB_QUEUE and RETRIEVE_JOB_QUEUE
+   *
+   * The lock will be automatically released when the transaction ends
+   * (or the connection is terminated).
+   *
+   */
+  void lockGlobal();
 
   /**
    * Commit the transaction
