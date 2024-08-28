@@ -48,7 +48,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // start a new transaction
   cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
-  txn.lockGlobal(mountInfo.tapePool);
+  txn.lockForTapePool(mountInfo.tapePool);
   try {
     logContext.log(cta::log::DEBUG,
                    "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");

@@ -133,7 +133,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
 }
 
 void TapeMountDecisionInfo::lock() {
-  m_txn.lockGlobal("global_advisory_lock");
+  m_txn.lockGlobal();
   m_lockTaken = true;
 }
 
