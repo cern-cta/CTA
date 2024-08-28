@@ -38,7 +38,7 @@ namespace cta::schedulerdb::postgres {
     ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
     std::string tapePool = "";
     std::string mountPolicy = "";
-    uint64_t priority = 0;
+    uint32_t priority = 0;
     uint64_t minArchiveRequestAge = 0;
     uint8_t copyNb = 0;
     time_t startTime = 0;                       //!< Time the job was inserted into the queue
@@ -264,7 +264,7 @@ namespace cta::schedulerdb::postgres {
      * @param jobIDs     List of jobID strings to select
      * @return  result set
      */
-    static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list <std::string> &jobIDs) {
+    static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list <std::string> &jobIDs) const {
       if (jobIDs.empty()) {
         rdbms::Rset ret;
         return ret;
@@ -325,7 +325,7 @@ namespace cta::schedulerdb::postgres {
      *
      * @return  result set
      */
-    static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, std::list <ArchiveJobStatus> statusList, uint64_t limit) {
+    static rdbms::Rset selectJobsByStatus(rdbms::Conn &conn, const std::list <ArchiveJobStatus> statusList, uint64_t limit) const {
       std::string sql = R"SQL(
       SELECT 
         JOB_ID AS JOB_ID,
@@ -454,22 +454,6 @@ namespace cta::schedulerdb::postgres {
      *
      * @return     Archive Request ID
      */
-    static uint64_t getNextArchiveRequestID(Transaction &txn) {
-      try {
-        const char *const sql = R"SQL(
-          SELECT NEXTVAL('ARCHIVE_REQUEST_ID_SEQ') AS ARCHIVE_REQUEST_ID
-        )SQL";
-        txn.start();
-        auto stmt = txn.conn().createStmt(sql);
-        auto rset = stmt.executeQuery();
-        if (!rset.next()) {
-          throw exception::Exception("Result set is unexpectedly empty");
-        }
-        return rset.columnUint64("ARCHIVE_REQUEST_ID");
-      } catch (exception::Exception &ex) {
-        ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-        throw;
-      }
-    }
+    static uint64_t getNextArchiveRequestID(Transaction &txn);
   };
 }; // namespace cta::schedulerdb::postgres

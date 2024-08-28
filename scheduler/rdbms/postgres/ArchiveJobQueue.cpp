@@ -23,9 +23,9 @@
 
 namespace cta::schedulerdb::postgres {
   rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit){
-  /* using write row lock FOR UPDATE for the select statement
-   * since it is the same lock used for UPDATE
-   */
+    /* using write row lock FOR UPDATE for the select statement
+     * since it is the same lock used for UPDATE
+     */
     const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
@@ -46,125 +46,142 @@ namespace cta::schedulerdb::postgres {
     FROM SET_SELECTION
     WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
     RETURNING SET_SELECTION.JOB_ID
-   )SQL";
-
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
-  stmt.bindString(":STATUS", to_string(status));
-  stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
-  stmt.bindUint32(":LIMIT", limit);
-  stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
-  stmt.bindString(":VID", mountInfo.vid);
-  stmt.bindString(":DRIVE", mountInfo.drive);
-  stmt.bindString(":HOST", mountInfo.host);
-  stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
-  stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
-  return stmt.executeQuery();
-}
-
-void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
-  if(jobIDs.empty()) {
-    return;
-  }
-  std::string sqlpart;
-  for (const auto &piece : jobIDs) sqlpart += piece + ",";
-  if (!sqlpart.empty()) { sqlpart.pop_back(); }
-  std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
-  stmt.executeNonQuery();
-  return;
-};
-
-void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
-  std::string sql = R"SQL(
-    UPDATE ARCHIVE_JOB_QUEUE SET
-      STATUS = :STATUS,
-      TOTAL_RETRIES = :TOTAL_RETRIES,
-      RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
-      LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-      IN_DRIVE_QUEUE = FALSE,
-      FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
     )SQL";
-  // Add MOUNT_ID to the query if mountId is provided
-  if (mountId.has_value() && *mountId == 0) {
-    sql += ", MOUNT_ID = NULL ";
+
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
+    stmt.bindUint32(":LIMIT", limit);
+    stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
+    stmt.bindString(":VID", mountInfo.vid);
+    stmt.bindString(":DRIVE", mountInfo.drive);
+    stmt.bindString(":HOST", mountInfo.host);
+    stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
+    stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
+    return stmt.executeQuery();
   }
-  // Continue the query
-  sql += R"SQL(
-    WHERE JOB_ID = :JOB_ID
-  )SQL";
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
-  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
-  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
-  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-  stmt.bindString(":FAILURE_LOG", failureLogs);
-  stmt.bindUint64(":JOB_ID", jobId);
-  stmt.executeNonQuery();
-  return;
-};
 
-void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
-
-  std::string sql = R"SQL(
-    UPDATE ARCHIVE_JOB_QUEUE SET
-      STATUS = :STATUS,
-      TOTAL_REPORT_RETRIES = :TOTAL_RETRIES,
-      IS_REPORTING =: IS_REPORTING,
-      IN_DRIVE_QUEUE = FALSE,
-      FAILURE_REPORT_LOG = FAILURE_REPORT_LOG || :FAILURE_REPORT_LOG
-    WHERE JOB_ID = :JOB_ID
-  )SQL";
-
-  auto stmt = txn.conn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
-  stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
-  stmt.bindUint32(":IS_REPORTING", is_reporting);
-  stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
-  stmt.bindUint64(":JOB_ID", jobId);
-  stmt.executeNonQuery();
-  return;
-};
-
-rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
-  std::string sql = R"SQL(
-    WITH SET_SELECTION AS ( 
-      SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE 
-      WHERE STATUS = ANY(ARRAY[
-  )SQL";
-  // we can move this to new bindArray method for stmt
-  std::vector<std::string> statusVec;
-  std::vector<std::string> placeholderVec;
-  size_t j = 1;
-  for (const auto &jstatus : statusList) {
-    statusVec.push_back(to_string(jstatus));
-    std::string plch = std::string(":STATUS") + std::to_string(j);
-    placeholderVec.push_back(plch);
-    sql += plch;
-    if (&jstatus != &statusList.back()) {
-      sql += std::string(",");
+  void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
+    if(jobIDs.empty()) {
+      return;
     }
-    j++;
-  }
-  sql += R"SQL(
-      ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
-      ORDER BY PRIORITY DESC, JOB_ID 
-      LIMIT :LIMIT FOR UPDATE) 
-    UPDATE ARCHIVE_JOB_QUEUE SET 
-      IS_REPORTING = TRUE
-    FROM SET_SELECTION 
-    WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID 
-    RETURNING SET_SELECTION.JOB_ID
-  )SQL";
-  auto stmt = txn.conn().createStmt(sql);
-  // we can move the array binding to new bindArray method for STMT
-  size_t sz = statusVec.size();
-  for (size_t i = 0; i < sz; ++i) {
-    stmt.bindString(placeholderVec[i], statusVec[i]);
-  }
-  stmt.bindUint64(":LIMIT", limit);
-  return stmt.executeQuery();
-}
+    std::string sqlpart;
+    for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    if (!sqlpart.empty()) { sqlpart.pop_back(); }
+    std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.executeNonQuery();
+    return;
+  };
 
+  void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
+    std::string sql = R"SQL(
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        STATUS = :STATUS,
+        TOTAL_RETRIES = :TOTAL_RETRIES,
+        RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
+        LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
+        IN_DRIVE_QUEUE = FALSE,
+        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
+      )SQL";
+    // Add MOUNT_ID to the query if mountId is provided
+    if (mountId.has_value() && *mountId == 0) {
+      sql += ", MOUNT_ID = NULL ";
+    }
+    // Continue the query
+    sql += R"SQL(
+      WHERE JOB_ID = :JOB_ID
+    )SQL";
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
+    stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+    stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+    stmt.bindString(":FAILURE_LOG", failureLogs);
+    stmt.bindUint64(":JOB_ID", jobId);
+    stmt.executeNonQuery();
+    return;
+  };
+
+  void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
+
+    std::string sql = R"SQL(
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        STATUS = :STATUS,
+        TOTAL_REPORT_RETRIES = :TOTAL_RETRIES,
+        IS_REPORTING =: IS_REPORTING,
+        IN_DRIVE_QUEUE = FALSE,
+        FAILURE_REPORT_LOG = FAILURE_REPORT_LOG || :FAILURE_REPORT_LOG
+      WHERE JOB_ID = :JOB_ID
+    )SQL";
+
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
+    stmt.bindUint32(":IS_REPORTING", is_reporting);
+    stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
+    stmt.bindUint64(":JOB_ID", jobId);
+    stmt.executeNonQuery();
+    return;
+  };
+
+  rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+    std::string sql = R"SQL(
+      WITH SET_SELECTION AS (
+        SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
+        WHERE STATUS = ANY(ARRAY[
+    )SQL";
+    // we can move this to new bindArray method for stmt
+    std::vector<std::string> statusVec;
+    std::vector<std::string> placeholderVec;
+    size_t j = 1;
+    for (const auto &jstatus : statusList) {
+      statusVec.push_back(to_string(jstatus));
+      std::string plch = std::string(":STATUS") + std::to_string(j);
+      placeholderVec.push_back(plch);
+      sql += plch;
+      if (&jstatus != &statusList.back()) {
+        sql += std::string(",");
+      }
+      j++;
+    }
+    sql += R"SQL(
+        ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
+        ORDER BY PRIORITY DESC, JOB_ID
+        LIMIT :LIMIT FOR UPDATE)
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        IS_REPORTING = TRUE
+      FROM SET_SELECTION
+      WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+      RETURNING SET_SELECTION.JOB_ID
+    )SQL";
+    auto stmt = txn.conn().createStmt(sql);
+    // we can move the array binding to new bindArray method for STMT
+    size_t sz = statusVec.size();
+    for (size_t i = 0; i < sz; ++i) {
+      stmt.bindString(placeholderVec[i], statusVec[i]);
+    }
+    stmt.bindUint64(":LIMIT", limit);
+    return stmt.executeQuery();
+  }
+
+  uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(Transaction &txn) {
+    try {
+      const char *const sql = R"SQL(
+          SELECT NEXTVAL('ARCHIVE_REQUEST_ID_SEQ') AS ARCHIVE_REQUEST_ID
+        )SQL";
+      txn.start();
+      auto stmt = txn.conn().createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if (!rset.next()) {
+        throw exception::Exception("Result set is unexpectedly empty");
+      }
+      return rset.columnUint64("ARCHIVE_REQUEST_ID");
+    } catch (exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+      throw;
+    }
+  }
 } // namespace cta::schedulerdb::postgres
