@@ -100,7 +100,7 @@ void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatu
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs);
-  stmt.bindUint64(":JOB_ID", jobID);
+  stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeNonQuery();
   return;
 };
@@ -122,7 +122,7 @@ void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, Archiv
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
   stmt.bindUint32(":IS_REPORTING", is_reporting);
   stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
-  stmt.bindUint64(":JOB_ID", jobID);
+  stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeNonQuery();
   return;
 };

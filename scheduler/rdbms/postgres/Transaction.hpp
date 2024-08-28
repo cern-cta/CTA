@@ -58,7 +58,7 @@ public:
    *
    * @param lockIdString  Unique identifier for this lock
    */
-  void lockGlobal(std::string_view lockIdString);
+  void lockGlobal(std::string lockIdString);
 
   /**
    * Commit the transaction
