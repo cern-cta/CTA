@@ -34,9 +34,9 @@ Transaction::~Transaction() {
 void Transaction::lockGlobal() {
   // a global access lock to the whole database
   // for anyone trying to acquire the same lock
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID)";
+  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID::bigint)";
   auto stmt = m_conn.createStmt(sql);
-  stmt.bindUint8(":LOCK_ID",0);
+  stmt.bindUint64(":LOCK_ID",0);
   stmt.executeQuery();
 }
 
@@ -48,7 +48,7 @@ void Transaction::lockForTapePool(std::string tapePoolString) {
   uint64_t hash64 = static_cast<uint64_t>(lock_id);
 
   //std::cout << "Hash value (64-bit): " << hash64 << std::endl;
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH64)";
+  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH64::bigint)";
   auto stmt = m_conn.createStmt(sql);
   stmt.bindUint64(":HASH64",hash64);
   stmt.executeQuery();
