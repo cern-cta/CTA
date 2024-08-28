@@ -635,15 +635,13 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
       }
     }
 
-    if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies){
-      //We are in the case where we possibly need to create new copies (if the number of copies the storage class of the current ArchiveFile
-      //is greater than the number of tape files we have in the current ArchiveFile)
-      uint64_t nbFilesAlreadyArchived = getNbFilesAlreadyArchived(archiveFile);
-      uint64_t nbCopiesInStorageClass = sc.nbCopies;
-      uint64_t filesToArchive = nbCopiesInStorageClass - nbFilesAlreadyArchived;
-      if(filesToArchive > 0){
-        totalStatsFile.totalFilesToArchive += filesToArchive;
-        totalStatsFile.totalBytesToArchive += (filesToArchive * archiveFile.fileSize);
+    if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies) {
+      // If the number of copies specified in the storage class of the current ArchiveFile is greater than the number of
+      // tape files we currently have, create an extra copy in addition to the repacked copy.
+      uint64_t numberOfAdditionalCopies = sc.nbCopies > archiveFile.tapeFiles.size() ? sc.nbCopies - archiveFile.tapeFiles.size() : 0;
+      if(numberOfAdditionalCopies > 0) {
+        totalStatsFile.totalFilesToArchive += numberOfAdditionalCopies;
+        totalStatsFile.totalBytesToArchive += (numberOfAdditionalCopies * archiveFile.fileSize);
         std::set<uint64_t> copyNbsAlreadyInCTA;
         for (auto & tc: archiveFile.tapeFiles) {
           copyNbsAlreadyInCTA.insert(tc.copyNb);
@@ -664,7 +662,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
             retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
           }
         }
-        if(retrieveSubRequest.copyNbsToRearchive.size() < filesToArchive){
+        if(retrieveSubRequest.copyNbsToRearchive.size() < numberOfAdditionalCopies) {
           deleteRepackBuffer(std::move(dir),lc);
           throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
         }
@@ -1418,11 +1416,6 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
     lc.log(log::ERR,"In Scheduler::deleteRepackBuffer() unable to delete the directory located in " + repackBuffer->getURL());
   }
 }
-
-uint64_t Scheduler::getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile) {
-  return archiveFile.tapeFiles.size();
-}
-
 
 //------------------------------------------------------------------------------
 // checkNeededEnvironmentVariables

@@ -309,8 +309,6 @@ private:
 
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc);
 
-  uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
-
   /**
    * Checks that the environment variables needed by the tapeserver to work
    * are set correctly.
