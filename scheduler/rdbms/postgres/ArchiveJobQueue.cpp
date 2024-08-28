@@ -120,7 +120,7 @@ namespace cta::schedulerdb::postgres {
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
-    stmt.bindUint32(":IS_REPORTING", is_reporting);
+    stmt.bindBool(":IS_REPORTING", is_reporting);
     stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();

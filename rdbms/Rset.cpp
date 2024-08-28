@@ -219,12 +219,30 @@ std::optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
-
-    const auto column = columnOptionalUint64(colName);
-    if(column) {
-      return std::optional<bool>(column.value() != 0 ? true : false);
-    } else {
-      return std::nullopt;
+    // Attempt to get the column as a uint64
+    try {
+      const auto column = columnOptionalUint64(colName);
+      if (column) {
+        return std::optional<bool>(column.value() != 0 ? true : false);
+      } else {
+        return std::nullopt;
+      }
+    } catch(exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+      // ignoring this exception and continue looking for string 'f' or 't'
+      const auto column = columnOptionalString(colName);
+      if (column) {
+        const std::string& strValue = column.value();
+        if (strValue == "t" || strValue == "true") {
+          return std::optional<bool>(true);
+        } else if (strValue == "f" || strValue == "false") {
+          return std::optional<bool>(false);
+        } else {
+          throw exception::Exception("Invalid boolean string representation: " + strValue);
+        }
+      } else {
+        return std::nullopt;
+      }
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
