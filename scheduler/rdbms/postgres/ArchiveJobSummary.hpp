@@ -103,7 +103,7 @@ struct ArchiveJobSummaryRow {
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE, 
         LAST_JOB_UPDATE_TIME, 
-        LAST_UPDATE_TIME 
+        LAST_SUMMARY_UPDATE_TIME
       FROM 
         ARCHIVE_JOB_SUMMARY 
       WHERE 
