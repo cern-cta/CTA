@@ -591,9 +591,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   auto privateRet = std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
-  // We do not take an exclusive lock on the scheduling DB entirely
-  // We lock the summary table access only instead
-  // privateRet->lock();
+  // Do we really need to take this lock ?
+  privateRet->lock();
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
