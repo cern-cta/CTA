@@ -58,6 +58,7 @@ namespace cta::schedulerdb::postgres {
     std::string reportFailureLogs = "";
     bool is_repack = false;
     bool is_reporting = false;
+    bool in_drive_queue = false;
     uint64_t repackId = 0;
     std::string repackFilebufUrl = "";
     uint64_t repackFseq = 0;
@@ -120,6 +121,7 @@ namespace cta::schedulerdb::postgres {
       lastMountWithFailure = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
       maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
       is_reporting = rset.columnBool("IS_REPORTING");
+      in_drive_queue = rset.columnBool("IN_DRIVE_QUEUE");
       return *this;
     }
 
@@ -304,7 +306,9 @@ namespace cta::schedulerdb::postgres {
         MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
         TOTAL_RETRIES AS TOTAL_RETRIES,
         LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
-        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES 
+        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
+        IS_REPORTING,
+        IN_DRIVE_QUEUE
       FROM ARCHIVE_JOB_QUEUE 
       WHERE 
         JOB_ID IN (
