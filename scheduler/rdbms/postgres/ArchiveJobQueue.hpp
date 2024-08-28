@@ -264,7 +264,7 @@ namespace cta::schedulerdb::postgres {
      * @param jobIDs     List of jobID strings to select
      * @return  result set
      */
-    static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list <std::string> &jobIDs) const {
+    static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list <std::string> &jobIDs) {
       if (jobIDs.empty()) {
         rdbms::Rset ret;
         return ret;
