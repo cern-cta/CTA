@@ -54,8 +54,8 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
                                                                          const std::string& hostName) override;
 
   private:
-    /** Acquire scheduler exclusive table lock */
-    void lock(std::string_view tablename);
+    /** Acquire Scheduler DB global lock */
+    void lock();
     /** Commit decision and release scheduler global lock */
     void commit();
 
