@@ -31,14 +31,14 @@ Transaction::~Transaction() {
   }
 }
 
-void Transaction::lockGlobal(std::string_view tapePoolString) {
+void Transaction::lockGlobal(std::string tapePoolString) {
   std::hash<std::string> lock_id_hasher;
   std::size_t lock_id = lock_id_hasher(tapePoolString);
   // Convert to 64-bit integer
   uint64_t hash64 = static_cast<uint64_t>(lock_id);
 
-  std::cout << "Hash value (64-bit): " << hash64 << std::endl;
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(" + std::to_string(lockId) + ")";
+  //std::cout << "Hash value (64-bit): " << hash64 << std::endl;
+  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(" + std::to_string(hash64) + ")";
   auto stmt = m_conn.createStmt(sql);
   stmt.executeQuery();
 }
