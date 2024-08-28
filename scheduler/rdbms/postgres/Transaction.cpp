@@ -46,11 +46,12 @@ void Transaction::lockForTapePool(std::string tapePoolString) {
   std::size_t lock_id = lock_id_hasher(tapePoolString);
   // Convert to 64-bit integer
   uint64_t hash64 = static_cast<uint64_t>(lock_id);
+  uint32_t hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
 
   //std::cout << "Hash value (64-bit): " << hash64 << std::endl;
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH64::bigint)";
+  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
   auto stmt = m_conn.createStmt(sql);
-  stmt.bindUint64(":HASH64",hash64);
+  stmt.bindUint64(":HASH32",hash32);
   stmt.executeQuery();
 }
 
