@@ -4,4 +4,4 @@ name=CTA CI repo any additional needed RPM cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/
 priority=4
 gpgcheck=0
-enabled=1
+enabled=0
