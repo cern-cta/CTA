@@ -635,11 +635,12 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
       }
     }
 
-    if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies) {
+    if (repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies) {
       // If the number of copies specified in the storage class of the current ArchiveFile is greater than the number of
       // tape files we currently have, create an extra copy in addition to the repacked copy.
-      uint64_t numberOfAdditionalCopies = sc.nbCopies > archiveFile.tapeFiles.size() ? sc.nbCopies - archiveFile.tapeFiles.size() : 0;
-      if(numberOfAdditionalCopies > 0) {
+      uint64_t numberOfAdditionalCopies =
+        sc.nbCopies > archiveFile.tapeFiles.size() ? sc.nbCopies - archiveFile.tapeFiles.size() : 0;
+      if (numberOfAdditionalCopies > 0) {
         totalStatsFile.totalFilesToArchive += numberOfAdditionalCopies;
         totalStatsFile.totalBytesToArchive += (numberOfAdditionalCopies * archiveFile.fileSize);
         std::set<uint64_t> copyNbsAlreadyInCTA;
@@ -662,11 +663,12 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
             retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
           }
         }
-        if(retrieveSubRequest.copyNbsToRearchive.size() < numberOfAdditionalCopies) {
+        if (retrieveSubRequest.copyNbsToRearchive.size() < numberOfAdditionalCopies) {
           deleteRepackBuffer(std::move(dir),lc);
           throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
         }
-      } else {
+      }
+      else {
         if(repackInfo.type == RepackType::AddCopiesOnly){
           //Nothing to Archive so nothing to Retrieve as well
           retrieveSubrequests.pop_back();
@@ -674,7 +676,6 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         }
       }
     }
-
 
     std::stringstream fileName;
     fileName << std::setw(9) << std::setfill('0') << retrieveSubRequest.fSeq;
