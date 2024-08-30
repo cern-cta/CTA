@@ -1,3 +1,6 @@
+# All of the below tests use only the docker image generated in the build:image stage
+# As such, by specifying "dependencies: []" we ensure no artifacts are downloaded
+
 .manual-rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -11,7 +14,7 @@
       allow_failure: false
 
 .kubernetes-test:
-  dependencies: [] # do not download artifacts from previous jobs
+  dependencies: []
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:

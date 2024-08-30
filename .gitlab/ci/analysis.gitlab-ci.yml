@@ -13,7 +13,7 @@ cppcheck-run:
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - when: always
-  dependencies: []
+  dependencies: [] # Ensure no artifacts are downloaded
   script:
     - cppcheck --xml
                --force
@@ -54,6 +54,7 @@ cppcheck-report:
 
 clang-format-report:
   stage: analysis
+  dependencies: [] # Ensure no artifacts are downloaded
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -66,7 +67,6 @@ clang-format-report:
       when: never
     - when: always
   image: $EL9_IMAGE
-  dependencies: []
   script:
     - yum install -y git-clang-format
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
@@ -80,7 +80,7 @@ clang-format-report:
 
 clang-format-apply:
   stage: analysis
-  needs: [clang-format-report]  
+  needs: [clang-format-report]
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -114,6 +114,7 @@ clang-format-apply:
 
 catalogue-schema-version-check:
   stage: analysis
+  dependencies: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -151,7 +152,6 @@ catalogue-schema-version-check:
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   image: $EL9_IMAGE
-  dependencies: []
   before_script:
     - yum install -y git
     - git submodule update --init --recursive
