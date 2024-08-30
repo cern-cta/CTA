@@ -11,6 +11,7 @@
       allow_failure: false
 
 .kubernetes-test:
+  dependencies: [] # do not download artifacts from previous jobs
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
@@ -20,7 +21,6 @@
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - bash ./continuousintegration/ci_helpers/install_helm.sh
-
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/

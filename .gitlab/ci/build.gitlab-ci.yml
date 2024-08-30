@@ -8,6 +8,7 @@
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
   image: $EL9_IMAGE
+  dependencies: []
   artifacts:
     expire_in: 30 days
     paths:
@@ -75,6 +76,8 @@ build-cta-rpm:
   extends:
     - .build-cta-rpm
   needs: [build-cta-srpm]
+  dependencies:
+    - build-cta-srpm
   rules:
     - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
@@ -96,6 +99,8 @@ build-cta-rpm-pgsched:
   extends:
     - .build-cta-rpm
   needs: [build-cta-srpm-pgsched]
+  dependencies:
+    - build-cta-srpm-pgsched
   rules:
     - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
@@ -115,6 +120,8 @@ build-cta-srpm-no-oracle:
 build-cta-rpm-no-oracle:
   stage: build
   needs: [build-cta-srpm-no-oracle]
+  dependencies:
+    - build-cta-srpm-no-oracle
   extends:
     - .build-cta-rpm
   rules:
@@ -126,6 +133,7 @@ build-cta-rpm-no-oracle:
 # Documentation export
 
 export-docs:
+  dependencies: []
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
