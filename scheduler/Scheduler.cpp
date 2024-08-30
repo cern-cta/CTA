@@ -1674,7 +1674,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     return std::unique_ptr<TapeMount>();
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfo(lc, timeout_us);
+  #ifdef CTA_PGSCHED
+    mountInfo = m_db.getMountInfo(driveName, lc, timeout_us);
+  #else
+    mountInfo = m_db.getMountInfo(lc, timeout_us);
+  #endif
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
     m_db.trimEmptyQueues(lc);

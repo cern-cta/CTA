@@ -70,7 +70,7 @@ struct RetrieveJobSummaryRow {
         VID,
         STATUS,
         JOBS_COUNT,
-        JOBS_TOTAL_SIZE,
+        JOBS_TOTAL_SIZE
       FROM RETRIEVE_JOB_SUMMARY WHERE 
         VID = :VID AND 
         STATUS = :STATUS

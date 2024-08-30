@@ -132,8 +132,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   return ret;
 }
 
-void TapeMountDecisionInfo::lock() {
-  m_txn.lockGlobal();
+void TapeMountDecisionInfo::lock(std::string_view tapePool) {
+  m_txn.lockForTapePool(tapePool);
   m_lockTaken = true;
 }
 

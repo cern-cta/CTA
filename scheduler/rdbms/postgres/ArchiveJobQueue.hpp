@@ -63,6 +63,7 @@ namespace cta::schedulerdb::postgres {
     std::string repackFilebufUrl = "";
     uint64_t repackFseq = 0;
     std::string repackDestVid = "";
+    std::string vid = "";
 
 
     common::dataStructures::ArchiveFile archiveFile;
@@ -122,6 +123,7 @@ namespace cta::schedulerdb::postgres {
       maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
       is_reporting = rset.columnBool("IS_REPORTING");
       in_drive_queue = rset.columnBool("IN_DRIVE_QUEUE");
+      vid = rset.columnString("VID");
       return *this;
     }
 

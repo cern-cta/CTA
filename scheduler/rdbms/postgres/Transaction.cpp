@@ -40,9 +40,8 @@ void Transaction::lockGlobal() {
   stmt.executeQuery();
 }
 
-
-void Transaction::lockForTapePool(std::string tapePoolString) {
-  std::hash<std::string> lock_id_hasher;
+void Transaction::lockForTapePool(std::string_view tapePoolString) {
+  std::hash<std::string_view> lock_id_hasher;
   std::size_t lock_id = lock_id_hasher(tapePoolString);
   // Convert to 64-bit integer
   uint64_t hash64 = static_cast<uint64_t>(lock_id);
@@ -70,15 +69,6 @@ void Transaction::commit() {
 void Transaction::abort() {
   m_conn.rollback();
   m_begin = false;
-}
-
-rdbms::Conn &Transaction::getNonTxnConn() {
-  if (!m_begin) {
-    return m_conn;
-  } else {
-    commit();
-    return m_conn;
-  }
 }
 
 rdbms::Conn &Transaction::conn() {
