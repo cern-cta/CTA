@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  labels:
+    k8s-app: client
+spec:
+  restartPolicy: Never
+  containers:
+  - name: client
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    stdin: true
+    env:
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: TERM
+      value: "xterm"
+    command: ['/opt/run/bin/client.sh']
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /mnt/logs
+      name: logstorage
+    - mountPath: /etc/config/eos
+      name: eosconfig
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+  - name: eosconfig
+    configMap:
+      name: eos-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+
+  imagePullSecrets:
+  - name: ctaregsecret

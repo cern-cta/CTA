@@ -1,0 +1,71 @@
+###
+# Internal postgres server
+# implements:
+# - a postgres server relying on official docker images
+# - a postgres service
+# - a configmap for pod configuration and CTA configuration
+###
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    k8s-app: postgres
+spec:
+  selector:
+    k8s-app: postgres
+  clusterIP: None
+  ports:
+  - name: postgres
+    port: 5432
+    protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  labels:
+    config: database
+    type: postgres
+data:
+  database.type: postgres
+  database.postgres.username: cta
+  database.postgres.password: cta
+  database.postgres.database: cta
+  database.postgres.path: /var/lib/postgresql/data/pgdata
+  # postgres service points to the postgresql container in namespace
+  database.postgres.server: postgres
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+  labels:
+    k8s-app: postgres
+spec:
+  restartPolicy: Never
+  containers:
+  - name: postgres
+    image: docker.io/postgres:14.10
+    stdin: true
+    env:
+    - name: POSTGRES_USER
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.username
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.password
+    - name: PGDATA
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.path
+    - name: POSTGRES_DB
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: database.postgres.database
