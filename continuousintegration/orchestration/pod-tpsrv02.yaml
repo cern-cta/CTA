@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tpsrv02
+  labels:
+    k8s-app: ctataped
+spec:
+  restartPolicy: Never
+  containers:
+  - name: rmcd
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    stdin: true
+    env:
+    - name: MY_CONTAINER
+      value: "rmcd"
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: TERM
+      value: "xterm"
+    - name: driveslot
+      value: "1"
+    command: ['/opt/run/bin/rmcd.sh']
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /etc/config/library
+      name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
+    securityContext:
+      privileged: true
+
+  - name: taped
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    stdin: true
+    env:
+    - name: MY_CONTAINER
+      value: "taped"
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: eoshost
+      value: "mgm"
+    - name: TERM
+      value: "xterm"
+    - name: driveslot
+      value: "1"
+    command: ['/opt/run/bin/taped.sh']
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /etc/config/objectstore
+      name: myobjectstore
+    - mountPath: /etc/config/database
+      name: mydatabase
+    - mountPath: /etc/config/library
+      name: mylibrary
+    - mountPath: /etc/config/eos
+      name: eosconfig
+    - mountPath: /mnt/logs
+      name: logstorage
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+  - name: myobjectstore
+    configMap:
+      name: objectstore-config
+  - name: mydatabase
+    configMap:
+      name: database-config
+  - name: mylibrary
+    configMap:
+      name: library-config
+  - name: eosconfig
+    configMap:
+      name: eos-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+
+  imagePullSecrets:
+  - name: ctaregsecret

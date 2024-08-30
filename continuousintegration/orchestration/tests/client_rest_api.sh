@@ -25,9 +25,8 @@ admin_kinit &>/dev/null
 eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
-#NOTE: In this context it should be eos service names.
 EOSINSTANCE="root://ctaeos"
-EOSINSTANCENAME="ctaeos"
+
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
@@ -53,10 +52,10 @@ eos "${EOSINSTANCE}" token --token "${TOKEN_EOSPOWER}" | jq .
 echo
 
 # Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8444
-HTTPS_URI=$(curl --insecure "https://${EOSINSTANCENAME}:8444/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
+HTTPS_URI=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
 echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint"
-WELL_KNOWN=$(curl --insecure "https://${EOSINSTANCENAME}:8444/.well-known/wlcg-tape-rest-api")
+WELL_KNOWN=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api)
 echo "Full well known: ${WELL_KNOWN}"
 
 test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
@@ -73,7 +72,7 @@ test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EO
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOSINSTANCENAME}:8444/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" https://ctaeos:8444/eos/ctaeos/preprod/test_http-rest-api --upload-file "${tmp_file}"
 
 FINAL_COUNT=0
 TIMEOUT=90

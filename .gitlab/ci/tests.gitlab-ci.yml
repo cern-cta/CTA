@@ -13,9 +13,6 @@
   - createrepo ${CTAREPODIR}
   - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
   - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
-  - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-  - chmod 700 get_helm.sh
-  - ./get_helm.sh
 
 test-cta-valgrind:
   stage: test

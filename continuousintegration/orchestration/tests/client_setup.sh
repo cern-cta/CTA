@@ -18,9 +18,6 @@
 set -a
 
 touch /tmp/RC
-# EOSINSTANCE=cta-mgm-0
-# its actually service name
-# EOSINSTANCE=cta-mgm
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
@@ -214,7 +211,7 @@ eospower_kinit
 
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+${TOKEN_TIMEOUT}"  | bc)
-TOKEN=$(eos "root://${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
+TOKEN=$(eos root://ctaeos token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
 
 TOKEN_EOSPOWER=$(eospower_eos root://"${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
 

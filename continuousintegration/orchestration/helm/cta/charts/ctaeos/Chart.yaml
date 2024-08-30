@@ -1,7 +1,0 @@
-apiVersion: v2
-name: ctaeos
-description: A ctaeos helm chart for Kubernetes in CTA project. Sets up an eos instance pod containing everything related to EOS in singular container, and a service with defined configuration in values.yaml file. It contains also all of the configuration files needed for eos in templates directory.
-type: application
-version: 0.1.0
-
-appVersion: "1.16.0"
