@@ -27,7 +27,7 @@ jobs:
         run: |
           dnf -y update
           dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock yum-plugin-versionlock
-          dnf -y --enablerepo=crb install wget git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build pandoc
+          dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build pandoc
 
       - name: Download CTA
         uses: actions/checkout@v4
@@ -63,9 +63,6 @@ jobs:
           fi
           git config --global --add safe.directory $(pwd)
           git submodule update --init --recursive
-          # This is a temporary hack because Oracle has not made the correct RPMs available in a repo. Once the RPMs are
-          # available, they should be installed using the package manager in the usual way. See issue cta/CTA#608.
-          ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
           mkdir build_srpm
           cd build_srpm
           echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"

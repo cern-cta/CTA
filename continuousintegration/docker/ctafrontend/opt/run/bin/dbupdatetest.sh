@@ -15,10 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# This libraries are needed to install oracle-instant-client
-# (TO BE FIXED: by #747)
-yum install --assumeyes wget libaio
-
 # Create wrapper to use the entrypoint of the container
 echo "
 #/bin/bash

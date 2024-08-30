@@ -245,7 +245,7 @@ compile_deploy() {
       --oracle-support ${oracle_support} \
       ${build_rpm_flags}
 
-    echo "Build successfull"
+    echo "Build successful"
   fi
 
   if [ ${skip_deploy} = false ]; then

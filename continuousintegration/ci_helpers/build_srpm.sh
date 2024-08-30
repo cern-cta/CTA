@@ -202,7 +202,7 @@ build_srpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
-      yum install -y wget gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
+      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
       case "${build_generator}" in
         "Unix Makefiles")
           yum install -y make
@@ -215,7 +215,6 @@ build_srpm() {
           exit 1
           ;;
       esac
-      ./continuousintegration/docker/ctafrontend/alma9/installOracle21.sh
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"
       exit 1
@@ -235,11 +234,17 @@ build_srpm() {
   if [[ ${oracle_support} = false ]]; then
     echo "Disabling Oracle Support"
     cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON"
+  else
+    # the else clause is necessary to prevent cmake from caching this variable
+    cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
   fi
 
   if [[ ${skip_unit_tests} = true ]]; then
     echo "Skipping unit tests"
     cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
+  else
+    # the else clause is necessary to prevent cmake from caching this variable
+    cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
   fi
 
   if [[ ${scheduler_type} != "objectstore" ]]; then
