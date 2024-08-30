@@ -144,7 +144,8 @@ void ArchiveMount::setJobBatchTransferred(
 {
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation !");
-  std::list<std::string> jobIDsList;
+  std::vector<std::string> jobIDsList;
+  jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
     jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
