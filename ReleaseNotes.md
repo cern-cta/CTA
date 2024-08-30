@@ -51,7 +51,7 @@
 - cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
 - cta/CTA#830 - Add script for building CTA locally
 - cta/CTA#847 - Introduced version-lock for Oracle instant client
-- cta/CTA#821 - Ensured pipeline stages are not triggered when the previous stage failed
+- cta/CTA#821 - Improved pipeline logic for faster performance and correct cancel propagation
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
