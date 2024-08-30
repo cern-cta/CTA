@@ -86,7 +86,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       totalBytes += jobRow.archiveFile.fileSize;
       ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, jobRow));
       ret.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      ret.back()->tapeFile.vid = mountInfo.vid;
       ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
       if (totalBytes >= bytesRequested) break;
     }
