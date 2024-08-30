@@ -125,7 +125,6 @@ redeploy() {
   echo "Building image based on ${rpm_src}"
   ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}" --operating-system "${operating_system}"
   # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
-  # Note that this will only work when running this script on an alma9 machine. At some point we should look into abstracting this more
   podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
   echo "Loading new image into minikube"
   minikube image load ctageneric_${image_tag}.tar
@@ -134,7 +133,7 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n ${kube_namespace} -i ${image_tag} -D -O -d internal_postgres.yaml
+  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O
 
   echo "Pods redeployed."
 }

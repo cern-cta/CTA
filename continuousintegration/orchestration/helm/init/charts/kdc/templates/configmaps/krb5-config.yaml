@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2024-08-09T06:35:11Z"
+  labels:
+    config: keypass-config
+  name: krb5-config
+  namespace: {{.Release.Namespace}}
+data:
+  krb5.conf: |
+    [libdefaults]
+    default_realm = TEST.CTA
+
+    [realms]
+    TEST.CTA = {
+      kdc=kdc
+    }

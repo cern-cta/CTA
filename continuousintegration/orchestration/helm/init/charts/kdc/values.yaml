@@ -1,0 +1,55 @@
+
+nameOverride: kdc
+isPriviliged: true
+
+
+# Changes the entrypoint of the image to the script and provide arguments if needed
+customEntrypoint:
+  command: ['/opt/run/bin/kdc.sh']
+  args: ['none']
+
+# Additional environment variables
+env:
+- name: TERM
+  value: "xterm"
+
+# Service account that gives the kdc pod privilliges
+# to create secrets out of keytab files
+serviceAccount:
+  name: secret-creator
+  rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create"]
+
+service:
+  ports:
+  - name: kdc-tcp
+    port: 88
+    protocol: TCP
+  - name: kdc-udp
+    port: 88
+    protocol: UDP
+
+volumes:
+  - name: keypass-names
+    configMap:
+      name: keypass-names-config
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
+
+volumeMounts:
+  - name: krb5-config-volume
+    mountPath: /etc/krb5.conf
+    subPath: krb5.conf
+  - name: keypass-names
+    mountPath: /tmp/keypass-names.txt
+    subPath: keypass-names.txt
+
+# As to mark whether the kdc has generated all of the secrets needed
+readinessProbe:
+  commandsAtRuntime: [ "cat", "/root/kdcReady"]
+  delay: 10
+  failureTolerance: 10
+
