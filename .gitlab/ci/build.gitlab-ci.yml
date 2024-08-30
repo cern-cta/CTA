@@ -8,7 +8,6 @@
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
   image: $EL9_IMAGE
-  dependencies: []
   artifacts:
     expire_in: 30 days
     paths:
@@ -35,7 +34,7 @@
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --jobs $(nproc --ignore=1)
-                                                       --install 
+                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
 
 .build-cta-rpm:
@@ -76,8 +75,7 @@ build-cta-rpm:
   stage: build
   extends:
     - .build-cta-rpm
-  needs: [build-cta-srpm]
-  dependencies:
+  needs:
     - build-cta-srpm
   rules:
     - !reference [.build-cta, rules]
@@ -99,8 +97,7 @@ build-cta-rpm-pgsched:
   stage: build
   extends:
     - .build-cta-rpm
-  needs: [build-cta-srpm-pgsched]
-  dependencies:
+  needs:
     - build-cta-srpm-pgsched
   rules:
     - !reference [.build-cta, rules]
@@ -120,8 +117,7 @@ build-cta-srpm-no-oracle:
 
 build-cta-rpm-no-oracle:
   stage: build
-  needs: [build-cta-srpm-no-oracle]
-  dependencies:
+  needs:
     - build-cta-srpm-no-oracle
   extends:
     - .build-cta-rpm
@@ -134,7 +130,7 @@ build-cta-rpm-no-oracle:
 # Documentation export
 
 export-docs:
-  dependencies: []
+  needs: []
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"

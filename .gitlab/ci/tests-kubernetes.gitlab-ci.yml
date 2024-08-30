@@ -1,5 +1,5 @@
 # All of the below tests use only the docker image generated in the build:image stage
-# As such, by specifying "dependencies: []" we ensure no artifacts are downloaded
+# These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
 .manual-rules:
   rules:
@@ -14,7 +14,8 @@
       allow_failure: false
 
 .kubernetes-test:
-  dependencies: []
+  needs:
+    - docker-build-ctageneric
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:

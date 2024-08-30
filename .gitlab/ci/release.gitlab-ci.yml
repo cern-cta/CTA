@@ -23,7 +23,7 @@ changelog-preview:
     - |
       if [ -z "${FROM_REF}" ]; then
         apk add git
-        FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT}) 
+        FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT})
       fi
     - python3 continuousintegration/ci_helpers/release/check_commits.py --api-url ${CI_SERVER_URL}
                                                                         --project-id ${CI_PROJECT_ID}
@@ -46,7 +46,7 @@ changelog-preview:
 changelog-update:
   stage: release:changelog
   needs:
-    - job: changelog-preview
+    - changelog-preview
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -81,7 +81,8 @@ changelog-update:
 
 release-cta:
   stage: release:internal
-  dependencies: [] # Ensure no artifacts are downloaded
+  dependencies:
+    - build-cta-tagged-rpm
   image: $EL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
@@ -89,20 +90,21 @@ release-cta:
       allow_failure: true
   script:
     - |
-      if [ -z "${CI_COMMIT_TAG}" ]; then 
-        echo "This is not a tagged commit, exiting"; 
-        exit 0; 
+      if [ -z "${CI_COMMIT_TAG}" ]; then
+        echo "This is not a tagged commit, exiting";
+        exit 0;
       fi
     - echo "Publishing to internal CTA repository"
     - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_tagged_rpm/RPM/RPMS
                                                                   --eos-path /eos/user/c/ctareg/www/cta-repo
                                                                   --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
 release-cta-testing:
   stage: release:external
-  dependencies: [] # Ensure no artifacts are downloaded
+  dependencies:
+    - build-cta-tagged-rpm
   image: $EL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
@@ -111,14 +113,15 @@ release-cta-testing:
   script:
     - echo "Publishing to testing CTA repository"
     - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_tagged_rpm/RPM/RPMS
                                                                   --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
                                                                   --hook /eos/user/c/ctareg/www/public/update_repos.sh
 
 release-cta-stable:
   stage: release:external
-  dependencies: [] # Ensure no artifacts are downloaded
+  dependencies:
+    - build-cta-tagged-rpm
   image: $EL9_IMAGE
   rules:
     - if: $CI_COMMIT_TAG
@@ -127,15 +130,15 @@ release-cta-stable:
   script:
     - echo "Publishing to public CTA repository"
     - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD} 
+                                                                  --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_tagged_rpm/RPM/RPMS
                                                                   --eos-path /eos/user/c/ctareg/www/cta-public-repo/testing/cta-5/el9/cta
                                                                   --hook /eos/user/c/ctareg/www/public/update_repos.sh
 
 release-cta-gitlab-prepare:
   stage: release:external
-  needs: 
-    - job: release-cta-stable
+  needs:
+    - release-cta-stable
   rules:
     - if: $CI_COMMIT_TAG
   image: alpine:latest
@@ -154,8 +157,7 @@ release-cta-gitlab-prepare:
 release-cta-gitlab:
   stage: release:external
   needs:
-    - job: release-cta-gitlab-prepare
-      artifacts: true
+    - release-cta-gitlab-prepare
   rules:
     - if: $CI_COMMIT_TAG
   image: $GITLAB_RELEASE_CLI_IMAGE

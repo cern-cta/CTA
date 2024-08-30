@@ -1,5 +1,12 @@
 docker-build-ctageneric:
   stage: build:image
+  needs: # Needs one of these RPM artifacts to build the image
+    - job: build-cta-rpm
+      optional: true
+    - job: build-cta-rpm-pgsched
+      optional: true
+    - job: build-cta-rpm-no-oracle
+      optional: true
   retry: 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -11,13 +18,6 @@ docker-build-ctageneric:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - when: on_success
-  needs: # Needs one of these RPM artifacts to build the image
-    - job: build-cta-rpm
-      optional: true
-    - job: build-cta-rpm-pgsched
-      optional: true
-    - job: build-cta-rpm-no-oracle
-      optional: true
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
     entrypoint: [""]
@@ -32,7 +32,7 @@ docker-build-ctageneric:
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
 
-# This job is the same as the one above, except that it builds the Docker image 
+# This job is the same as the one above, except that it builds the Docker image
 # depending on modify_versionlock when triggered by EOS project (tagged release trigger).
 docker-build-ctageneric-triggered:
   stage: build:image
