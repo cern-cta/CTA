@@ -19,7 +19,6 @@
 
 #include "catalogue/CatalogueItor.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
-// #include "frontend/common/GrpcEndpoint.hpp"
 #include "XrdCtaStream.hpp"
 
 namespace cta::xrd {

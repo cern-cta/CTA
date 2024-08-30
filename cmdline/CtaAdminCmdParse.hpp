@@ -62,13 +62,17 @@ public:
    /*!
     * Check if the supplied key matches the option
     */
-   bool operator==(std::string_view option) const { return option == m_short_opt || option == m_long_opt; }
+   friend bool operator==(const Option& option, std::string_view option_str) {
+     return option.m_short_opt == option_str ||
+     option.m_long_opt == option_str;
+   }
 
    /*!
     * Check if the supplied option matches the option
     */
-   bool operator==(const Option &option) const {
-      return option == m_short_opt || option == m_long_opt;
+   friend bool operator==(const Option& lhs, const Option& rhs) {
+      return lhs.m_short_opt == rhs.m_short_opt &&
+	     lhs.m_long_opt == rhs.m_long_opt;
    }
 
    /*!
