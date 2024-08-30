@@ -62,7 +62,7 @@ namespace cta::schedulerdb::postgres {
     return stmt.executeQuery();
   }
 
-  void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
+  void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs){
     if(jobIDs.empty()) {
       return;
     }
