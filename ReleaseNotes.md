@@ -26,7 +26,7 @@
 - cta/CTA#811 - Removed all CC7 related files and code
 - cta/CTA#817 - Remove oracle tnsnames repo files 
 - cta/CTA#823 - Fix returnByReference errors from cpp-check
-- cta/CTA#763 - Upgrade Oracle Instant Client from 21 to 23, removing the installOracle21.sh script
+- cta/CTA#763 - Removed the installOracle21.sh script
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
