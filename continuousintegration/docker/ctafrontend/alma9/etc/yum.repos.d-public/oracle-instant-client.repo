@@ -1,7 +1,8 @@
+# Repository is disabled since there is no v21 version available for alma9
 [cta-oracle-instant-client]
 name=Oracle instant client
-baseurl=https://yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient21/$basearch
+baseurl=https://yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient23/$basearch
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 gpgcheck=1
-enabled=1
+enabled=0
 priority=1
