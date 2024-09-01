@@ -50,6 +50,7 @@
 - cta/CTA#815 - Updated build pod resource request and limits to be more flexible
 - cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
 - cta/CTA#830 - Add script for building CTA locally
+- cta/CTA#847 - Introduced version-lock for Oracle instant client
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
