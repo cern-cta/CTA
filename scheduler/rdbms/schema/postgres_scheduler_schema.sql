@@ -6,7 +6,8 @@ CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_Failed',
   'AJS_Abandoned',
   'AJS_ToTransferForRepack',
-  'AJS_ToReportToRepackForFailure' );
+  'AJS_ToReportToRepackForFailure',
+  'ReadyForDeletion');
 CREATE TYPE RETRIEVE_JOB_STATUS AS ENUM (
   'RJS_ToTransfer',
   'RJS_ToReportToUserForFailure',
@@ -78,7 +79,7 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
 /* ARCHIVE specific columns */
   FAILURE_LOG TEXT,
   LAST_UPDATE_TIME INTEGER DEFAULT (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER),
-  FAILURE_REPORT_LOG TEXT,
+  REPORT_FAILURE_LOG TEXT,
   TOTAL_REPORT_RETRIES SMALLINT,
   MAX_REPORT_RETRIES SMALLINT
 /*  REPACK_FILEBUF_URL VARCHAR(2000),*/
@@ -102,7 +103,7 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   DISK_FILE_PATH VARCHAR(2000),
                                   ARCHIVE_ERROR_REPORT_URL VARCHAR(2000),
                                   ARCHIVE_REPORT_URL VARCHAR(2000),
-                                  FAILURE_REPORT_LOG TEXT,
+                                  REPORT_FAILURE_LOG TEXT,
 /* ARCHIVE specific columns */
                                   FAILURE_LOG TEXT,
                                   TOTAL_RETRIES SMALLINT,

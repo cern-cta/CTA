@@ -22,7 +22,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit){
+  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay){
     /* using write row lock FOR UPDATE for the select statement
      * since it is the same lock used for UPDATE
      */
@@ -31,7 +31,8 @@ namespace cta::schedulerdb::postgres {
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
-    AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
+    AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID OR
+          (MOUNT_ID != :DRIVE_MOUNT_ID AND (LAST_UPDATE_TIME - CREATION_TIME) > :GC_DELAY) )
     AND IN_DRIVE_QUEUE IS FALSE
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE)
@@ -54,6 +55,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
     stmt.bindUint32(":LIMIT", limit);
     stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
+    stmt.bindUint64(":GC_DELAY", gc_delay);
     stmt.bindString(":VID", mountInfo.vid);
     stmt.bindString(":DRIVE", mountInfo.drive);
     stmt.bindString(":HOST", mountInfo.host);
@@ -65,6 +67,12 @@ namespace cta::schedulerdb::postgres {
   void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs){
     if(jobIDs.empty()) {
       return;
+    }
+    if (status == ArchiveJobStatus::AJS_Completed) {
+      status = ArchiveJobStatus::ReadyForDeletion;
+    } else if (status == ArchiveJobStatus::AJS_Failed)
+      status = ArchiveJobStatus::ReadyForDeletion;
+      moveToFailedJobTable(txn);
     }
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
@@ -105,6 +113,61 @@ namespace cta::schedulerdb::postgres {
     return;
   };
 
+  void ArchiveJobQueueRow::moveToFailedJobTable(Transaction &txn){
+    std::string sql = R"SQL(
+    INSERT INTO ARCHIVE_FAILED_JOB_QUEUE (
+            JOB_ID,
+            ARCHIVE_REQUEST_ID,
+            REQUEST_JOB_COUNT,
+    :STATUS AS STATUS
+    CREATION_TIME,
+            MOUNT_POLICY,
+            TAPE_POOL,
+            VID,
+            MOUNT_ID,
+            DRIVE,
+            HOST,
+            MOUNT_TYPE,
+            LOGICAL_LIBRARY,
+            START_TIME,
+            PRIORITY,
+            STORAGE_CLASS,
+            MIN_ARCHIVE_REQUEST_AGE,
+            COPY_NB,
+            SIZE_IN_BYTES,
+            ARCHIVE_FILE_ID,
+            CHECKSUMBLOB,
+            REQUESTER_NAME,
+            REQUESTER_GROUP,
+            SRC_URL,
+            DISK_INSTANCE,
+            DISK_FILE_PATH,
+            DISK_FILE_ID,
+            DISK_FILE_GID,
+            DISK_FILE_OWNER_UID,
+            ARCHIVE_ERROR_REPORT_URL,
+            ARCHIVE_REPORT_URL,
+            TOTAL_RETRIES,
+            MAX_TOTAL_RETRIES,
+            RETRIES_WITHIN_MOUNT,
+            MAX_RETRIES_WITHIN_MOUNT,
+            LAST_MOUNT_WITH_FAILURE,
+            IS_REPORTING,
+            IN_DRIVE_QUEUE,
+            FAILURE_LOG,
+            LAST_UPDATE_TIME,
+            REPORT_FAILURE_LOG,
+            TOTAL_REPORT_RETRIES,
+            MAX_REPORT_RETRIES) FROM ARCHIVE_JOB_QUEUE
+    WHERE JOB_ID = :JOB_ID
+    )SQL";
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
+    stmt.bindUint64(":JOB_ID", jobId);
+    stmt.executeNonQuery();
+    return;
+  }
+
   void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
 
     std::string sql = R"SQL(
@@ -113,7 +176,7 @@ namespace cta::schedulerdb::postgres {
         TOTAL_REPORT_RETRIES = :TOTAL_RETRIES,
         IS_REPORTING =: IS_REPORTING,
         IN_DRIVE_QUEUE = FALSE,
-        FAILURE_REPORT_LOG = FAILURE_REPORT_LOG || :FAILURE_REPORT_LOG
+        REPORT_FAILURE_LOG = REPORT_FAILURE_LOG || :REPORT_FAILURE_LOG
       WHERE JOB_ID = :JOB_ID
     )SQL";
 
@@ -121,9 +184,12 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindBool(":IS_REPORTING", is_reporting);
-    stmt.bindString(":FAILURE_REPORT_LOG", reportFailureLogs);
+    stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs);
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
+    if (status == ArchiveJobStatus::ReadyForDeletion){
+      moveToFailedJobTable(txn);
+    }
     return;
   };
 

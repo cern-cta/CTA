@@ -38,7 +38,8 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_Failed,
   AJS_Abandoned,
   AJS_ToTransferForRepack,
-  AJS_ToReportToRepackForFailure
+  AJS_ToReportToRepackForFailure,
+  ReadyForDeletion
 };
 
 constexpr std::array<const char*, 8> const StringsArchiveJobStatus = {
@@ -49,7 +50,8 @@ constexpr std::array<const char*, 8> const StringsArchiveJobStatus = {
   "AJS_Failed",
   "AJS_Abandoned",
   "AJS_ToTransferForRepack",
-  "AJS_ToReportToRepackForFailure"
+  "AJS_ToReportToRepackForFailure",
+  "ReadyForDeletion"
 };
 
 // ================================ Job Queue Type =============================
