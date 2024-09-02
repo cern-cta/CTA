@@ -42,7 +42,7 @@ enum class ArchiveJobStatus : uint8_t {
   ReadyForDeletion
 };
 
-constexpr std::array<const char*, 8> const StringsArchiveJobStatus = {
+constexpr std::array<const char*, 9> const StringsArchiveJobStatus = {
   "AJS_ToTransferForUser",
   "AJS_ToReportToUserForTransfer",
   "AJS_Complete",
