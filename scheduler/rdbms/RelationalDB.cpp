@@ -598,12 +598,12 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   //tapeDrive.currentTapePool, tapeDrive.nextTapePool
   logContext.log(log::INFO, "In RelationalDB::getMountInfo(): Current tape pool:" +
                              std::string(tapePool) + " for drive." + std::string(driveName) +
-                             " will be locked, next tape pool will be: " + std::string(tapeDriveState->nextTapePool));
+                             " will be locked, next tape pool will be: " + std::string(tapeDriveState->nextTapePool.value()));
 
   if (tapePool.empty()) {
     logContext.log(log::WARNING, "In RelationalDB::getMountInfo(): no current tape pool:" +
                                 std::string(tapePool) + " for drive." + std::string(driveName) +
-                                " next tape pool is: " + std::string(tapeDriveState->nextTapePool));
+                                " next tape pool is: " + std::string(tapeDriveState->nextTapePool.value()));
     tapePool = "all";
 
   }
