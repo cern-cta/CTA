@@ -19,6 +19,7 @@
 
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
+#include "frontend/common/PbException.hpp"
 
 namespace cta::frontend {
 

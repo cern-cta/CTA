@@ -85,7 +85,7 @@ int main(const int argc, char *const *const argv) {
     std::string port = "17017";
 
     char c;
-    bool shortHeader = false;
+    // bool shortHeader = false;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
     bool useTLS = false;
@@ -98,11 +98,11 @@ int main(const int argc, char *const *const argv) {
                 port = std::string(optarg);
                 break;
             case 'n':
-                shortHeader = false;
-                break;
+              // shortHeader = false;
+              break;
             case 's':
-                shortHeader = true;
-                break;
+              // shortHeader = true;
+              break;
             case 'h':
                 printHelpAndExit(0);
                 break;
@@ -120,80 +120,18 @@ int main(const int argc, char *const *const argv) {
         }
     }
 
-    log::StdoutLogger logger(shortHostName, "cta-frontend-grpc", shortHeader);
-    log::LogContext lc(logger);
+    std::string config_file("/etc/cta/cta.conf");
+    // Initialize catalogue, scheduler, logContext
+    CtaRpcImpl svc(config_file);
+    // get the log context
+    log::LogContext lc = svc.getFrontendService().getLogContext();
 
     // use castor config to avoid dependency on xroot-ssi
-    Configuration config("/etc/cta/cta.conf");
-
-    {
-      std::map<std::string, std::string> staticParamMap;
-      try {
-        staticParamMap["instance"] = config.getConfEntString("general", "InstanceName");
-      } catch (cta::exception::Exception &) {
-        // Instance name was not set, log this as info.
-        lc.log(log::ERR, "Instance name was not specified in the configuration file.");
-        exit(1);
-      }
-      try {
-            staticParamMap["sched_backend"] = config.getConfEntString("general", "SchedulerBackendName") ;
-        } catch (cta::exception::Exception &) {
-            // Scheduler backend name was not set, log this as info.
-            lc.log(log::ERR, "Scheduler backend name was not specified in the configuration file.");
-        exit(1);
-      }
-
-      if(!staticParamMap.empty()) {
-        logger.setStaticParams(staticParamMap);
-      }
-    }
+    Configuration config(config_file);
 
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     std::string server_address("0.0.0.0:" + port);
-
-    // Initialise the Catalogue
-    std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
-    const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);
-
-    const uint64_t nbArchiveFileListingConns = 2;
-    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(logger, catalogueLogin,
-                                                                       10,
-                                                                       nbArchiveFileListingConns);
-    auto catalogue = catalogueFactory->create();
-    try {
-        catalogue->Schema()->ping();
-        lc.log(log::INFO, "Connected to catalog " + catalogue->Schema()->getSchemaVersion().
-            getSchemaVersion<std::string>());
-    } catch (cta::exception::Exception &ex) {
-        lc.log(cta::log::CRIT, ex.getMessageValue());
-        exit(1);
-    }
-
-    // Initialise the Scheduler
-    auto backed = config.getConfEntString("ObjectStore", "BackendPath");
-    lc.log(log::INFO, "Using scheduler backend: " + backed);
-
-    // Check the scheduler DB cache timeout values
-    try {
-      auto tapeCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "TapeCacheMaxAgeSecs");
-      log::ScopedParamContainer params(lc);
-      params.add("tapeCacheMaxAgeSecs", tapeCacheMaxAgeSecs);
-      lc.log(log::INFO, "Using custom tape cache timout value");
-    } catch(Configuration::NoEntry &ex) {}
-    try {
-      auto retrieveQueueCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "RetrieveQueueCacheMaxAgeSecs");
-      log::ScopedParamContainer params(lc);
-      params.add("retrieveQueueCacheMaxAgeSecs", retrieveQueueCacheMaxAgeSecs);
-      lc.log(log::INFO, "Using custom retrieve queue cache timout value");
-    } catch(Configuration::NoEntry &ex) {}
-
-    auto sInit = std::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
-    auto scheddb = sInit->getSchedDB(*catalogue, logger);
-    scheddb->initConfig(std::nullopt, std::nullopt);
-    auto scheduler = std::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
-
-    CtaRpcImpl svc(&logger, catalogue, scheduler);
 
     // start gRPC service
 
