@@ -85,11 +85,10 @@ CREATE TABLE ARCHIVE_JOB_QUEUE(
 /*  REPACK_FSEQ NUMERIC(20, 0)*/
 );
 CREATE INDEX IDX_MOUNT_ID ON ARCHIVE_JOB_QUEUE(MOUNT_ID);
+CREATE TABLE ARCHIVE_FAILED_JOB_QUEUE (LIKE ARCHIVE_JOB_QUEUE INCLUDING ALL);
 CREATE TABLE ARCHIVE_JOB_REPORTS(
 /* Common part with RETRIEVE table - request related info */
                                   JOB_ID BIGINT PRIMARY KEY REFERENCES ARCHIVE_JOB_QUEUE(JOB_ID),
-                                  STATUS ARCHIVE_JOB_STATUS CONSTRAINT AJQ_S_NN NOT NULL,
-                                  IS_OWNED BOOLEAN,
                                   CREATION_TIME BIGINT,
                                   MOUNT_ID BIGINT,
                                   START_TIME BIGINT,
@@ -99,8 +98,6 @@ CREATE TABLE ARCHIVE_JOB_REPORTS(
                                   SIZE_IN_BYTES BIGINT,
                                   ARCHIVE_FILE_ID BIGINT,
                                   CHECKSUMBLOB BYTEA,
-                                  REQUESTER_NAME VARCHAR(100),
-                                  REQUESTER_GROUP VARCHAR(100),
                                   DISK_INSTANCE VARCHAR(100),
                                   DISK_FILE_PATH VARCHAR(2000),
                                   ARCHIVE_ERROR_REPORT_URL VARCHAR(2000),
