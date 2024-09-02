@@ -105,6 +105,14 @@ test-cta-release:
   image: $EL9_IMAGE
   variables:
     CTAREPODIR: /tmp/repo
+  before_script: 
+    # This needs to be done manually since v21 RPMs are not available in the OL9 oracle yum repos
+    # This can be removed again once the upgrade to v23 is complete
+    - yum -y install wget
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
   script:
     - yum install -y createrepo epel-release almalinux-release-devel
     - mkdir -p ${CTAREPODIR}

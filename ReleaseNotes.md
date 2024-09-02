@@ -26,7 +26,7 @@
 - cta/CTA#811 - Removed all CC7 related files and code
 - cta/CTA#817 - Remove oracle tnsnames repo files 
 - cta/CTA#823 - Fix returnByReference errors from cpp-check
-- cta/CTA#763 - Upgrade Oracle Instant Client from 21 to 23, removing the installOracle21.sh script
+- cta/CTA#763 - Removed the installOracle21.sh script
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
@@ -50,6 +50,7 @@
 - cta/CTA#815 - Updated build pod resource request and limits to be more flexible
 - cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
 - cta/CTA#830 - Add script for building CTA locally
+- cta/CTA#847 - Introduced version-lock for Oracle instant client
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
