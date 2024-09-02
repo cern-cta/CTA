@@ -5,7 +5,7 @@ stages:
   - build:image
   - build:tagged
   - test
-  - test:regressions
+  - test:kubernetes
   - release:changelog
   - release:internal
   - release:external
