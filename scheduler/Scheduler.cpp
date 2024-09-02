@@ -1675,7 +1675,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   #ifdef CTA_PGSCHED
-    lc.log(log::DEBUG, "In Sheduler: calling getMountInfo() with drivename: " + std::string(driveName));
+    lc.log(log::DEBUG, "In Scheduler: calling getMountInfo() with drivename: " + std::string(driveName));
     mountInfo = m_db.getMountInfo(std::string_view(driveName), lc, timeout_us);
   #else
     mountInfo = m_db.getMountInfo(lc, timeout_us);

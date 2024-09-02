@@ -596,10 +596,14 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // We lock the any drive which would try to access the same tapepool out
+  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():befor getTapeDrive");
   auto tapeDriveState = m_catalogue.DriveState()->getTapeDrive(std::string(driveName));
+  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():after getTapeDrive");
   std::string_view tapePool = tapeDriveState.has_value() ?
                               (tapeDriveState->currentTapePool.has_value() ?
                               tapeDriveState->currentTapePool.value() : "") : "";
+  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():after log getTapeDrive");
+
   //tapeDrive.currentTapePool, tapeDrive.nextTapePool
   logContext.log(log::INFO, "In RelationalDB::getMountInfo(): Current tape pool:" +
                              std::string(tapePool) + " for drive." + std::string(driveName) +
