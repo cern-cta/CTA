@@ -8,6 +8,7 @@
 - cta/CTA#771 - Remove `cta-versionlock` script and extract `cta-checkpkg` script. Added strict version checking for XRootD
 - cta/CTA#696 - Added a completely new README.md
 - cta/CTA#782 - Added functionality to allow for the automatic generation of the CHANGELOG.md
+- cta/CTA#738 - Add new support for repack archive routes
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
