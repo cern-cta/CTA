@@ -219,7 +219,7 @@ namespace cta::schedulerdb::postgres {
             MAX_REPORT_RETRIES) FROM ARCHIVE_JOB_QUEUE
     WHERE JOB_ID IN (
     )SQL";
-    sql += sqlpart + ")"
+    sql += sqlpart + ")";
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.executeNonQuery();
