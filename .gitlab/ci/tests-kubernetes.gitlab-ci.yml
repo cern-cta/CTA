@@ -85,16 +85,6 @@ k8s-test-cta-admin:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-k8s-unit-test-oracle:
-  stage: test
-  extends:
-    - .kubernetes-test
-  except:
-    - tags
-  variables:
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
-
 # Manually triggered
 
 k8s-test-liquibase-update:

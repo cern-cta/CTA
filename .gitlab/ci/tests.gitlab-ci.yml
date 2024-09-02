@@ -66,6 +66,22 @@ system-test-cta:
   script:
     - /usr/bin/cta-systemTests
 
+# This test is disabled ("." prefix) for now as it has not yet been implemented
+.unit-test-oracle:
+  stage: test
+  needs: *rpm_needs
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - when: on_success
+  image: $EL9_IMAGE
+  script:
+    - /usr/bin/true
+
 unit-test-postgresql:
   stage: test
   needs: *rpm_needs
