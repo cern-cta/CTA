@@ -158,7 +158,10 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+
+      //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+      m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
+      // requeue job to failure table !
     } else {
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.is_reporting = false;

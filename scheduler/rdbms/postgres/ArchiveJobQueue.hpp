@@ -64,6 +64,10 @@ namespace cta::schedulerdb::postgres {
     uint64_t repackFseq = 0;
     std::string repackDestVid = "";
     std::string vid = "";
+    std::string drive = "";
+    std::string host = "";
+    std::string mount_type = "";
+    std::string logical_library = "";
 
 
     common::dataStructures::ArchiveFile archiveFile;
@@ -124,6 +128,12 @@ namespace cta::schedulerdb::postgres {
       is_reporting = rset.columnBool("IS_REPORTING");
       in_drive_queue = rset.columnBool("IN_DRIVE_QUEUE");
       vid = rset.columnString("VID");
+      drive = rset.columnString("DRIVE");
+      host = rset.columnString("HOST");
+      mount_type = rset.columnString("MOUNT_TYPE");
+      logical_library = rset.columnString("LOGICAL_LIBRARY");
+      failureLogs = rset.columnString("FAILURE_LOG");
+      reportFailureLogs = rset.columnString("REPORT_FAILURE_LOG");
       return *this;
     }
 
@@ -282,6 +292,7 @@ namespace cta::schedulerdb::postgres {
         ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
         MOUNT_ID AS MOUNT_ID,
+        VID AS VID,
         STATUS AS STATUS,
         TAPE_POOL AS TAPE_POOL,
         MOUNT_POLICY AS MOUNT_POLICY,
@@ -307,10 +318,16 @@ namespace cta::schedulerdb::postgres {
         RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
         MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
         TOTAL_RETRIES AS TOTAL_RETRIES,
+        FAILURE_LOG AS FAILURE_LOG,
+        REPORT_FAILURE_LOG AS REPORT_FAILURE_LOG,
         LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
         MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
-        IS_REPORTING,
-        IN_DRIVE_QUEUE
+        IS_REPORTING AS IS_REPORTING,
+        IN_DRIVE_QUEUE AS IN_DRIVE_QUEUE,
+        DRIVE AS DRIVE,
+        HOST AS HOST,
+        MOUNT_TYPE AS MOUNT_TYPE,
+        LOGICAL_LIBRARY AS LOGICAL_LIBRARY
       FROM ARCHIVE_JOB_QUEUE 
       WHERE 
         JOB_ID IN (
@@ -341,11 +358,14 @@ namespace cta::schedulerdb::postgres {
      * @param status     Archive Job Status to select on
      * @param mountInfo  mountInfo object
      * @param limit      Maximum number of rows to return
+     * @param gc_delay   delay for garbage collection of jobs which were not processed
+     *                   untill a final state by the mount where they started processing
+     *                   defalut is 3 days
      *
      * @return  result set containing job IDs of the rows which were updated
      */
     static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status,
-                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit);
+                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay = 259200);
 
     /**
      * Update job status
