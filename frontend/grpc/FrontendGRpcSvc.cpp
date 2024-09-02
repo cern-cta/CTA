@@ -20,25 +20,26 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
+#include "frontend/common/WorkflowEvent.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "frontend/common/FrontendService.hpp"
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 Status
 CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
+  cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
 
   lc.log(cta::log::INFO, "Create");
 
   try {
-    auto& instance = request->notification().wf().instance().name();
-    auto& storageClass = request->notification().file().storage_class();
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = request->notification().cli().user().username();
-    requester.group = request->notification().cli().user().groupname();
-    uint64_t archiveFileId = m_scheduler->checkAndGetNextArchiveFileId(instance, storageClass, requester, lc);
-    response->set_archive_file_id(std::to_string(archiveFileId));  // need to update this
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                 client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
   } catch (cta::exception::Exception &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
@@ -49,7 +50,7 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
+  cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
 
   lc.log(cta::log::INFO, "Archive request");
@@ -108,33 +109,11 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   sp.add("fileID", request->notification().file().disk_file_id());
 
   try {
-    auto archiveFileId = request->notification().file().archive_file_id();
-    sp.add("archiveID", archiveFileId);
-
-    cta::common::dataStructures::ArchiveRequest archiveRequest;
-    cta::checksum::ProtobufToChecksumBlob(request->notification().file().csb(), archiveRequest.checksumBlob);
-    archiveRequest.diskFileInfo.owner_uid = request->notification().file().owner().uid();
-    archiveRequest.diskFileInfo.gid = request->notification().file().owner().gid();
-    archiveRequest.diskFileInfo.path = request->notification().file().lpath();
-    archiveRequest.diskFileID = request->notification().file().disk_file_id();
-    archiveRequest.fileSize = request->notification().file().size();
-    archiveRequest.requester.name = request->notification().cli().user().username();
-    archiveRequest.requester.group = request->notification().cli().user().groupname();
-    archiveRequest.storageClass = storageClass;
-    archiveRequest.srcURL = request->notification().transport().dst_url();
-    archiveRequest.archiveReportURL = request->notification().transport().report_url();
-    archiveRequest.archiveErrorReportURL = request->notification().transport().error_report_url();
-    archiveRequest.creationLog.host = context->peer();
-    archiveRequest.creationLog.username = instance;
-    archiveRequest.creationLog.time = time(nullptr);
-
-    std::string reqId = m_scheduler->queueArchiveWithGivenId(archiveFileId, instance, archiveRequest, lc);
-    sp.add("reqId", reqId);
-
-    lc.log(cta::log::INFO, "Archive request for storageClass: " + storageClass +
-                             " archiveFileId: " + std::to_string(archiveFileId) + " RequestID: " + reqId);
-
-    response->set_request_objectstore_id(reqId);
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                 client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
   }
   catch (cta::exception::Exception& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
@@ -146,7 +125,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
+  cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
@@ -191,44 +170,31 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   }
 
   auto instance = request->notification().wf().instance().name();
-  // Unpack message
-  cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
-  deleteRequest.requester.name = request->notification().cli().user().username();
-  deleteRequest.requester.group = request->notification().cli().user().groupname();
 
   sp.add("instance", instance);
   sp.add("username", request->notification().cli().user().username());
   sp.add("groupname", request->notification().cli().user().groupname());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  deleteRequest.diskFilePath = request->notification().file().lpath();
-  deleteRequest.diskFileId = request->notification().file().disk_file_id();
-  deleteRequest.diskInstance = instance;
-
-  // remove pending scheduler entry, if any
-  deleteRequest.archiveFileID = request->notification().file().archive_file_id();
-  if (!request->notification().file().request_objectstore_id().empty()) {
-    deleteRequest.address = request->notification().file().request_objectstore_id();
-  }
-
-  // Delete the file from the catalogue or from the objectstore if archive request is created
-  cta::utils::Timer t;
+  // done with validation, now add the workflow processing logic
   try {
-    deleteRequest.archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(deleteRequest.archiveFileID);
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                 client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
+    lc.log(cta::log::INFO, "archive file deleted.");
   }
   catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::WARNING, "Deleted file is not in catalog.");
+    lc.log(cta::log::ERR, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
   }
-  m_scheduler->deleteArchive(instance, deleteRequest, lc);
-
-  lc.log(cta::log::INFO, "archive file deleted.");
-
   return Status::OK;
 }
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
+  cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
@@ -286,35 +252,12 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  // Unpack message
-  cta::common::dataStructures::RetrieveRequest retrieveRequest;
-  retrieveRequest.requester.name = request->notification().cli().user().username();
-  retrieveRequest.requester.group = request->notification().cli().user().groupname();
-  retrieveRequest.dstURL = request->notification().transport().dst_url();
-  retrieveRequest.retrieveReportURL = request->notification().transport().report_url();
-  retrieveRequest.errorReportURL = request->notification().transport().error_report_url();
-  retrieveRequest.diskFileInfo.owner_uid = request->notification().file().owner().uid();
-  retrieveRequest.diskFileInfo.gid = request->notification().file().owner().gid();
-  retrieveRequest.diskFileInfo.path = request->notification().file().lpath();
-  retrieveRequest.creationLog.host = context->peer();
-  retrieveRequest.creationLog.username = instance;
-  retrieveRequest.creationLog.time = time(nullptr);
-  retrieveRequest.isVerifyOnly = false;
-
-  retrieveRequest.archiveFileID = request->notification().file().archive_file_id();
-  sp.add("archiveID", request->notification().file().archive_file_id());
-  sp.add("fileID", request->notification().file().disk_file_id());
-
-  cta::utils::Timer t;
-
-  // Queue the request
   try {
-    std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, lc);
-    sp.add("reqId", reqId);
-    lc.log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass + " archiveFileId: " +
-                             std::to_string(retrieveRequest.archiveFileID) + " RequestID: " + reqId);
-
-    response->set_request_objectstore_id(reqId);
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                 client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
   }
   catch (cta::exception::Exception& ex) {
     lc.log(cta::log::CRIT, ex.getMessageValue());
@@ -326,7 +269,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
+  cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
@@ -356,12 +299,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   }
 
   auto instance = request->notification().wf().instance().name();
-  // Unpack message
-  cta::common::dataStructures::CancelRetrieveRequest cancelRequest;
-  cancelRequest.requester.name = request->notification().cli().user().username();
-  cancelRequest.requester.group = request->notification().cli().user().groupname();
-  cancelRequest.archiveFileID = request->notification().file().archive_file_id();
-  cancelRequest.retrieveRequestId = request->notification().file().request_objectstore_id();
 
   sp.add("instance", instance);
   sp.add("username", request->notification().cli().user().username());
@@ -369,14 +306,27 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("fileID", request->notification().file().archive_file_id());
   sp.add("schedulerJobID", request->notification().file().archive_file_id());
 
-  m_scheduler->abortRetrieve(instance, cancelRequest, lc);
-
-  lc.log(cta::log::INFO, "retrieve request canceled.");
+  // field verification done, now try to call the process method
+  try {
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                 client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
+    lc.log(cta::log::INFO, "retrieve request canceled.");
+  }
+  catch (cta::exception::Exception& ex) {
+    lc.log(cta::log::CRIT, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  }
+  return Status::OK;
 
   return Status::OK;
 }
 
-CtaRpcImpl::CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr <cta::Scheduler> &scheduler):
-    m_catalogue(std::move(catalogue)), m_scheduler(std::move(scheduler)) {
-    m_log = logger;
-}
+/* initialize the frontend service
+ * this iniitalizes the catalogue, scheduler, logger
+ * and makes the rpc calls available through this class
+ */
+CtaRpcImpl::CtaRpcImpl(const std::string& config)
+    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)) {}
