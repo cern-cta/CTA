@@ -166,6 +166,11 @@ if [ "$updatedatabasetest" == "1" ] ; then
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
+../ci_helpers/check_registry_credentials.sh
+if [ $? -ne 0 ]; then
+  echo "Error: Credential check failed"
+  exit 1
+fi
 if [[ ${systest_only} -eq 1 ]]; then
   COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
 else
