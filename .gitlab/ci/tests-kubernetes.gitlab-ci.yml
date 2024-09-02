@@ -45,7 +45,7 @@
 
 # Tests
 
-test-client:
+k8s-test-client:
   stage: test
   extends:
     - .kubernetes-test
@@ -55,7 +55,7 @@ test-client:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-client-gfal2:
+k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
@@ -65,7 +65,7 @@ test-client-gfal2:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-repack:
+k8s-test-repack:
   stage: test
   extends:
     - .kubernetes-test
@@ -75,7 +75,7 @@ test-repack:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-cta-admin:
+k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
@@ -85,7 +85,7 @@ test-cta-admin:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-unit-test-oracle:
+k8s-unit-test-oracle:
   stage: test
   extends:
     - .kubernetes-test
@@ -97,7 +97,7 @@ unit-test-oracle:
 
 # Manually triggered
 
-test-liquibase-update:
+k8s-test-liquibase-update:
   stage: test
   extends:
     - .kubernetes-test
@@ -107,7 +107,7 @@ test-liquibase-update:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
 
-test-external-tape-formats:
+k8s-test-external-tape-formats:
   stage: test
   extends:
     - .kubernetes-test
@@ -119,7 +119,7 @@ test-external-tape-formats:
 
 # Regression tests
 
-test-regression-eos:
+k8s-test-regression-eos:
   stage: test
   extends:
     - .kubernetes-test
