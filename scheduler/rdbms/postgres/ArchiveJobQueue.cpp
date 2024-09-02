@@ -68,11 +68,11 @@ namespace cta::schedulerdb::postgres {
     if(jobIDs.empty()) {
       return;
     }
-    if (status == ArchiveJobStatus::AJS_Completed) {
+    if (status == ArchiveJobStatus::AJS_Complete) {
       status = ArchiveJobStatus::ReadyForDeletion;
-    } else if (status == ArchiveJobStatus::AJS_Failed)
+    } else if (status == ArchiveJobStatus::AJS_Failed) {
       status = ArchiveJobStatus::ReadyForDeletion;
-      moveToFailedJobTable(txn);
+      ArchiveJobQueueRow::moveToFailedJobTable(txn);
     }
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
@@ -188,7 +188,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
     if (status == ArchiveJobStatus::ReadyForDeletion){
-      moveToFailedJobTable(txn);
+      ArchiveJobQueueRow::moveToFailedJobTable(txn);
     }
     return;
   };
