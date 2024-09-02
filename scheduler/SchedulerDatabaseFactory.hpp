@@ -201,6 +201,10 @@ public:
     return m_SchedDB->getMountInfo(logContext, timeout_us);
   }
 
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us) override {
+    return m_SchedDB->getMountInfo(driveName, logContext, timeout_us);
+  }
+
   void trimEmptyQueues(log::LogContext& lc) override {
     m_SchedDB->trimEmptyQueues(lc);
   }
