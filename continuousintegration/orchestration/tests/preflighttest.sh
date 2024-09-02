@@ -45,6 +45,7 @@ fi
 TMPDIR=$(mktemp -d --suffix .testflight)
 
 FLIGHTTEST_RC=0 # flighttest return code
+EOSINSTANCE="ctaeos"
 
 echo "Running preflight checks on the following eos version:"
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- eos version
@@ -65,7 +66,6 @@ echo
 # invalid check:
 # [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
-EOSINSTANCE="ctaeos"
 # EOSINSTANCE="cta-mgm-0"
 
 FLIGHTTEST_TPC_RC=0
