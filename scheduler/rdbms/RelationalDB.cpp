@@ -260,7 +260,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                 .add("jobID", (*jobsBatchItor)->jobID)
                 .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
                 .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
-                .log(cta::log::WARNING, "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): Skipping handling of a reported job")
+                .log(cta::log::WARNING, "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): Skipping handling of a reported job");
         jobsBatchItor++;
         continue;
     }
@@ -591,7 +591,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // We lock the any drive which would try to access the same tapepool out
-  auto tapeDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
+  auto tapeDriveState = m_catalogue.DriveState()->getTapeDrive(std::string(driveName));
   std::string_view tapePool = tapeDriveState.currentTapePool
   //tapeDrive.currentTapePool, tapeDrive.nextTapePool
   logContext.log(log::INFO, "In RelationalDB::getMountInfo(): Current tape pool:" +
@@ -599,9 +599,10 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
                              " will be locked, next tape pool will be: " + std::string(tapeDriveState.nextTapePool));
 
   if (tapePool.empty()) {
-    logContext.log(log::ERROR, "In RelationalDB::getMountInfo(): no current tape pool:" +
+    logContext.log(log::WARNING, "In RelationalDB::getMountInfo(): no current tape pool:" +
                                 std::string(tapePool) + " for drive." + std::string(driveName) +
                                 " next tape pool is: " + std::string(tapeDriveState.nextTapePool));
+    tapePool = "all";
 
   }
   privateRet->lock(tapePool);
