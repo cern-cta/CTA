@@ -395,6 +395,13 @@ namespace cta::schedulerdb::postgres {
     void updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
 
     /**
+     * Move the job to the ARCHIVE FAILED JOB TABLE
+     *
+     * @param txn                  Transaction to use for this query
+     */
+    void moveToFailedJobTable(Transaction &txn);
+
+    /**
      * Increment Archive Request ID and return the new value
      *
      * @param txn  Transaction to use for this query
