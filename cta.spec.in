@@ -55,10 +55,11 @@ Group: Application/cta
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
-%define oracleVersion 21.12.0.0.0-1
+%define oracleVersionMin 21.12
+%define oracleVersionMax 21.13
 %define xrootdVersion 1:5.6.1-1.el9
 %define radosVersion 2:17.2.7
-%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel = %{oracleVersion}
+%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin} oracle-instantclient-devel < %{oracleVersionMax}
 %define requiredProtobuf protobuf
 BuildRequires: %{requirementsOS}
 BuildRequires: grpc, grpc-devel, grpc-plugins
@@ -265,7 +266,8 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: oracle-instantclient-basic = %{oracleVersion}
+Requires: oracle-instantclient-basic >= %{oracleVersionMin}
+Requires: oracle-instantclient-basic < %{oracleVersionMax}
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
 Shared libraries required to access the Oracle-based CTA catalogue
