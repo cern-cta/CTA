@@ -406,7 +406,7 @@ namespace cta::schedulerdb::postgres {
      *
      * @param txn                  Transaction to use for this query
      */
-    static void moveToFailedJobTable(Transaction &txn const std::vector<std::string>& jobIDs);
+    static void moveToFailedJobTable(Transaction &txn, const std::vector<std::string>& jobIDs);
 
     /**
      * Increment Archive Request ID and return the new value
