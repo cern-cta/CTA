@@ -167,7 +167,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     nextMountTimeout = false;
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
-        tapeMount = m_scheduler.getNextMount(tapePool, m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc,
+        tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc,
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
     } catch (cta::exception::TimeoutException &e) {

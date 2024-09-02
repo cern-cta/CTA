@@ -584,7 +584,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& logContext, uint64_t timeout_us)
 {
-  return RelationalDB::getMountInfo(logContext, 0);
+  return RelationalDB::getMountInfo("anydrivename", logContext, timeout_us);
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us)
