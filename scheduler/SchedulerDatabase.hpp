@@ -854,6 +854,8 @@ class SchedulerDatabase {
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
+  // following method is used by RDBMS Scheduler DB type only
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding
