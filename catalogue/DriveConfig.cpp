@@ -26,8 +26,9 @@
 
 namespace cta {
 
-void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfiguration &tapedConfiguration,
-  catalogue::Catalogue* catalogue, const std::string& tapeDriveName) {
+void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfiguration& tapedConfiguration,
+                                        catalogue::Catalogue* catalogue,
+                                        const std::string& tapeDriveName) {
   setConfigToDB(tapedConfiguration.daemonUserName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.daemonGroupName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.logMask, catalogue, tapeDriveName);
