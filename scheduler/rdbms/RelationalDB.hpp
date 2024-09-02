@@ -187,7 +187,7 @@ class RelationalDB: public SchedulerDatabase {
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
-  //std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
