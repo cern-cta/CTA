@@ -68,12 +68,6 @@ namespace cta::schedulerdb::postgres {
     if(jobIDs.empty()) {
       return;
     }
-    if (status == ArchiveJobStatus::AJS_Complete) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-    } else if (status == ArchiveJobStatus::AJS_Failed) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-      ArchiveJobQueueRow::moveToFailedJobTable(txn);
-    }
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
@@ -81,6 +75,12 @@ namespace cta::schedulerdb::postgres {
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.executeNonQuery();
+    if (status == ArchiveJobStatus::AJS_Complete) {
+      status = ArchiveJobStatus::ReadyForDeletion;
+    } else if (status == ArchiveJobStatus::AJS_Failed) {
+      status = ArchiveJobStatus::ReadyForDeletion;
+      ArchiveJobQueueRow::moveToFailedJobTable(txn, jobIDs);
+    }
     return;
   };
 
@@ -164,6 +164,64 @@ namespace cta::schedulerdb::postgres {
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.bindUint64(":JOB_ID", jobId);
+    stmt.executeNonQuery();
+    return;
+  }
+
+  void ArchiveJobQueueRow::moveToFailedJobTable(Transaction &txn, const std::vector<std::string>& jobIDs){
+    std::string sqlpart;
+    for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    if (!sqlpart.empty()) { sqlpart.pop_back(); }
+    std::string sql = R"SQL(
+    INSERT INTO ARCHIVE_FAILED_JOB_QUEUE (
+            JOB_ID,
+            ARCHIVE_REQUEST_ID,
+            REQUEST_JOB_COUNT,
+    :STATUS AS STATUS
+    CREATION_TIME,
+            MOUNT_POLICY,
+            TAPE_POOL,
+            VID,
+            MOUNT_ID,
+            DRIVE,
+            HOST,
+            MOUNT_TYPE,
+            LOGICAL_LIBRARY,
+            START_TIME,
+            PRIORITY,
+            STORAGE_CLASS,
+            MIN_ARCHIVE_REQUEST_AGE,
+            COPY_NB,
+            SIZE_IN_BYTES,
+            ARCHIVE_FILE_ID,
+            CHECKSUMBLOB,
+            REQUESTER_NAME,
+            REQUESTER_GROUP,
+            SRC_URL,
+            DISK_INSTANCE,
+            DISK_FILE_PATH,
+            DISK_FILE_ID,
+            DISK_FILE_GID,
+            DISK_FILE_OWNER_UID,
+            ARCHIVE_ERROR_REPORT_URL,
+            ARCHIVE_REPORT_URL,
+            TOTAL_RETRIES,
+            MAX_TOTAL_RETRIES,
+            RETRIES_WITHIN_MOUNT,
+            MAX_RETRIES_WITHIN_MOUNT,
+            LAST_MOUNT_WITH_FAILURE,
+            IS_REPORTING,
+            IN_DRIVE_QUEUE,
+            FAILURE_LOG,
+            LAST_UPDATE_TIME,
+            REPORT_FAILURE_LOG,
+            TOTAL_REPORT_RETRIES,
+            MAX_REPORT_RETRIES) FROM ARCHIVE_JOB_QUEUE
+    WHERE JOB_ID IN (
+    )SQL";
+    sql += sqlpart + ")"
+    auto stmt = txn.conn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.executeNonQuery();
     return;
   }
