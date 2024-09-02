@@ -128,19 +128,6 @@ bool DropSchemaCmd::dropSingleTable(rdbms::Conn& conn, const std::string& tableN
 }
 
 //------------------------------------------------------------------------------
-// dropCtaCatalogueTable
-//------------------------------------------------------------------------------
-void DropSchemaCmd::dropCtaCatalogueTable(rdbms::Conn& conn) {
-  try {
-    conn.executeNonQuery(R"SQL(DROP TABLE CTA_CATALOGUE)SQL");
-    m_out << "Dropped table CTA_CATALOGUE" << std::endl;
-  }
-  catch (exception::Exception&) {
-    // Ignore reason for failure
-  }
-}
-
-//------------------------------------------------------------------------------
 // dropDatabaseTables
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
@@ -160,7 +147,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (tables.size() > 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
     }
-    dropCtaCatalogueTable(conn);
+    dropSingleTable(conn, "CTA_CATALOGUE");
 
     tables = conn.getTableNames();
     if (!tables.empty()) {

@@ -95,13 +95,6 @@ private:
   bool dropSingleTable(rdbms::Conn& conn, const std::string& tableName);
 
   /**
-   * Drops a the CTA_CATALOGUE database table.
-   *
-   * @param conn The database connection.
-   */
-  void dropCtaCatalogueTable(rdbms::Conn& conn);
-
-  /**
    * Drops the database sequences with the specified names.
    *
    * @param conn The database connection.

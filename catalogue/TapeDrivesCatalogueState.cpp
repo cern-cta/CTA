@@ -69,7 +69,7 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
   }
 }
 
-void TapeDrivesCatalogueState::removeDrive(const std::string& drive, [[maybe_unused]] log::LogContext& lc) {
+void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext& lc) {
   try {
     m_catalogue.DriveState()->deleteTapeDrive(drive);
     log::ScopedParamContainer params(lc);
