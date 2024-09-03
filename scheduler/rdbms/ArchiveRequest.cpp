@@ -26,7 +26,10 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  m_txn.reset(new schedulerdb::Transaction(m_connPool));
+  if (!m_txn) {
+    m_txn.reset(new schedulerdb::Transaction(m_connPool));
+  }
+  m_txn.start();
   // Getting the next ID for the request possibly composed of multiple jobs
   uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_txn);
   uint32_t areq_job_count = m_jobs.size();
@@ -68,6 +71,7 @@ void ArchiveRequest::insert() {
     } catch(exception::Exception &ex) {
       params.add("exeptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
+      m_txn->abort(); // Rollback on error
       throw;
     }
 
@@ -77,7 +81,11 @@ void ArchiveRequest::insert() {
 
 void ArchiveRequest::commit() {
   if (m_txn) {
-    m_txn->commit();
+    try {
+      m_txn->commit();
+    } catch(exception::Exception &ex) {
+      m_txn->abort();
+    }
   }
   m_txn.reset();
 }
