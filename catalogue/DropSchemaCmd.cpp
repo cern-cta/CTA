@@ -84,7 +84,7 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 
   std::string userResponse;
   while(userResponse != "yes" && userResponse != "no") {
-    m_out << "Please type either \"yes\" or \"no\" > ";
+    m_out << R"(Please type either "yes" or "no" > )";
     std::getline(m_in, userResponse);
   }
 
@@ -114,6 +114,20 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
 }
 
 //------------------------------------------------------------------------------
+// dropSingleTable
+//------------------------------------------------------------------------------
+bool DropSchemaCmd::dropSingleTable(rdbms::Conn& conn, const std::string& tableName) {
+  try {
+    conn.executeNonQuery(std::string("DROP TABLE ") + tableName);
+    m_out << "Dropped table " << tableName << std::endl;
+    return true;
+  }
+  catch (exception::Exception&) {
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
 // dropDatabaseTables
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
@@ -124,13 +138,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       auto tables = conn.getTableNames();
       tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
       for (const auto& table : tables) {
-        try {
-          conn.executeNonQuery(std::string("DROP TABLE ") + table);
-          m_out << "Dropped table " << table << std::endl;
-          droppedAtLeastOneTable = true;
-        } catch(exception::Exception &ex) {
-          // Ignore reason for failure
-        }
+        droppedAtLeastOneTable |= dropSingleTable(conn, table);
       }
     }
 
@@ -139,12 +147,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (tables.size() > 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
     }
-    try {
-      conn.executeNonQuery(R"SQL(DROP TABLE CTA_CATALOGUE)SQL");
-      m_out << "Dropped table CTA_CATALOGUE" << std::endl;
-    } catch(exception::Exception &ex) {
-      // Ignore reason for failure
-    }
+    dropSingleTable(conn, "CTA_CATALOGUE");
 
     tables = conn.getTableNames();
     if (!tables.empty()) {

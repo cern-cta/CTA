@@ -86,6 +86,15 @@ private:
   void dropDatabaseTables(rdbms::Conn &conn);
 
   /**
+   * Drops a single database table with the provided name.
+   *
+   * @param conn The database connection.
+   * @param tableName The name of the table to drop.
+   * @return true if the table was dropped, false otherwise
+   */
+  bool dropSingleTable(rdbms::Conn& conn, const std::string& tableName);
+
+  /**
    * Drops the database sequences with the specified names.
    *
    * @param conn The database connection.

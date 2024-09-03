@@ -29,7 +29,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckNam
   auto login = rdbms::Login::parseString("in_memory");
   //Create SQLite connection
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
-  m_sqliteConn = std::move(m_sqliteConnPool->getConn());
+  m_sqliteConn = m_sqliteConnPool->getConn();
   //Create the Metadata getter
   auto sqliteCatalogueMetadataGetter = std::make_unique<SQLiteDatabaseMetadataGetter>(m_sqliteConn);
   //Create the Schema Metadata Getter that will filter the SQLite schema metadata according to the catalogue database type we would like to compare
@@ -38,7 +38,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckNam
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
   //Release the connection before the connPool is deleted
-  m_sqliteConn.~Conn();
+  m_sqliteConn.reset();
   m_sqliteConnPool.reset();
 }
 

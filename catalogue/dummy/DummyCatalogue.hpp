@@ -82,5 +82,4 @@ protected:
   std::unique_ptr<DriveStateCatalogue> m_driveState;
 };
 
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

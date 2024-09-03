@@ -91,7 +91,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool VerifySchemaCmd::tableExists(const std::string& tableName, rdbms::Conn &conn) const {
+bool VerifySchemaCmd::tableExists(const std::string& tableName, const rdbms::Conn& conn) const {
   const auto names = conn.getTableNames();
   return std::any_of(names.begin(), names.end(), [&](const auto& name) {
     return tableName == name;

@@ -59,29 +59,36 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
-        const std::string createTableSQL = "CREATE[a-zA-Z ]+TABLE " + tableName + "[ ]*\\(([a-zA-Z0-9_, '\\)\\(]+)\\)";
-        cta::utils::Regex tableSqlRegex(createTableSQL.c_str());
-        auto tableSql = tableSqlRegex.exec(sqlStmt);
-        if (2 == tableSql.size()) {
-          tableSql[1] += ","; // hack for parsing 
-          // we use the same logic here as for trailing ';'
-          std::string::size_type searchPosComma = 0;
-          std::string::size_type findResultComma = std::string::npos;
-          while (std::string::npos != (findResultComma = tableSql[1].find(',', searchPosComma))) {
-            const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
-            const std::string sqlStmtComma = utils::trimString(
-              std::string_view(tableSql[1]).substr(searchPosComma, stmtLenComma));
-            searchPosComma = findResultComma + 1;
-            if(0 < sqlStmtComma.size()) { // Ignore empty statements
-              const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
-              cta::utils::Regex columnSqlRegex(columnSQL.c_str());
-              auto columnSql = columnSqlRegex.exec(sqlStmtComma);
-              if (3 == columnSql.size()) {
-                schemaColumnNames.try_emplace(columnSql[1], columnSql[2]);
-              }
-            }
-          }
+      if (sqlStmt.empty()) {
+        // Ignore empty statements
+        continue;
+      }
+      const std::string createTableSQL = "CREATE[a-zA-Z ]+TABLE " + tableName + "[ ]*\\(([a-zA-Z0-9_, '\\)\\(]+)\\)";
+      cta::utils::Regex tableSqlRegex(createTableSQL.c_str());
+      auto tableSql = tableSqlRegex.exec(sqlStmt);
+      if (tableSql.size() != 2) {
+        // Ensure the dimensions are correct
+        continue;
+      }
+      tableSql[1] += ",";  // hack for parsing
+      // we use the same logic here as for trailing ';'
+      std::string::size_type searchPosComma = 0;
+      std::string::size_type findResultComma = std::string::npos;
+      while (std::string::npos != (findResultComma = tableSql[1].find(',', searchPosComma))) {
+        const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
+        const std::string sqlStmtComma =
+          utils::trimString(std::string_view(tableSql[1]).substr(searchPosComma, stmtLenComma));
+        searchPosComma = findResultComma + 1;
+
+        if (sqlStmtComma.empty()) {
+          // Ignore empty statements
+          continue;
+        }
+        const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
+        cta::utils::Regex columnSqlRegex(columnSQL.c_str());
+        auto columnSql = columnSqlRegex.exec(sqlStmtComma);
+        if (3 == columnSql.size()) {
+          schemaColumnNames.try_emplace(columnSql[1], columnSql[2]);
         }
       }
     }
