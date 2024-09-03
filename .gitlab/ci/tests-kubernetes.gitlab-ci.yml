@@ -93,7 +93,7 @@ unit-test-oracle:
 
 # Manually triggered
 
-test-liquibase-update:
+test-liquib:
   stage: test
   extends:
     - .kubernetes-test
@@ -103,7 +103,7 @@ test-liquibase-update:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
 
-test-external-tape-formats:
+test-ext-tape-f:
   stage: test
   extends:
     - .kubernetes-test
