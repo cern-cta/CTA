@@ -107,7 +107,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
     stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
     stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-    stmt.bindString(":FAILURE_LOG", failureLogs);
+    stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
     return;
@@ -242,7 +242,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindBool(":IS_REPORTING", is_reporting);
-    stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs);
+    stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
     if (status == ArchiveJobStatus::ReadyForDeletion){

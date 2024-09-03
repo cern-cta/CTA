@@ -54,8 +54,8 @@ namespace cta::schedulerdb::postgres {
     uint32_t maxRetriesWithinMount = 0;
     uint32_t maxReportRetries = 0;
     uint32_t totalReportRetries = 0;
-    std::string failureLogs = "";
-    std::string reportFailureLogs = "";
+    std::optional <std::string> failureLogs = std::nullopt;
+    std::optional <std::string> reportFailureLogs = std::nullopt;
     bool is_repack = false;
     bool is_reporting = false;
     bool in_drive_queue = false;
@@ -132,8 +132,8 @@ namespace cta::schedulerdb::postgres {
       host = rset.columnString("HOST");
       mount_type = rset.columnString("MOUNT_TYPE");
       logical_library = rset.columnString("LOGICAL_LIBRARY");
-      failureLogs = rset.columnString("FAILURE_LOG");
-      reportFailureLogs = rset.columnString("REPORT_FAILURE_LOG");
+      failureLogs = rset.columnOptionalString("FAILURE_LOG");
+      reportFailureLogs = rset.columnOptionalString("REPORT_FAILURE_LOG");
       return *this;
     }
 
