@@ -36,6 +36,7 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
     errorReportURL = jobQueueRow.archiveErrorReportUrl;
     archiveFile = jobQueueRow.archiveFile; // assuming ArchiveFile is copyable
     tapeFile.vid = jobQueueRow.vid;
+    tapeFile.copyNb = jobQueueRow.copyNb;
     // Set other attributes or perform any necessary initialization
     // Setting the internal report type - in case is_reporting == false No Report type required
     if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
