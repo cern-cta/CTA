@@ -51,7 +51,9 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
 
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                            " " + failureReason;
-  m_jobRow.failureLogs += failureLog;
+  if (m_jobRow.failureLogs) {
+    m_jobRow.failureLogs.value() += failureLog;
+  }
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
   log::ScopedParamContainer(lc)
@@ -150,7 +152,9 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
           .add("reportFailureReason", reportFailureLog)
           .log(log::INFO,
                "In schedulerdb::ArchiveRdbJob::failReport(): received failed job to be reported.");
-  m_jobRow.reportFailureLogs += reportFailureLog;
+  if (m_jobRow.reportFailureLogs) {
+    m_jobRow.reportFailureLogs.value() += reportFailureLog;
+  }
   m_jobRow.totalReportRetries += 1;
 
   // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
