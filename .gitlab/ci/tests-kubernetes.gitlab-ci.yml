@@ -110,9 +110,7 @@ test-liquibase-update:
   extends:
     - .kubernetes-test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - when: manual
+    - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"

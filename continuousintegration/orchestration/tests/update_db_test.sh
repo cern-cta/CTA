@@ -24,6 +24,20 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
+verify_migration_in_progress() {
+  DESIRED_SCHEMA_VERSION=$1
+  # Get the current schema version
+  CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
+    | grep -o -E '[0-9]+\.[0-9]')
+
+  # Check if the current schema version is the same as the previous one
+  if [ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]; then
+    echo "The current Catalogue Schema Version is already the same as the desired schema: ${CURRENT_SCHEMA_VERSION}"
+    echo "No migration to test. Exiting..."
+    exit 0
+  fi
+}
+
 # Define a function to check the current schema version
 check_schema_version() {
   DESIRED_SCHEMA_VERSION=$1
@@ -101,6 +115,9 @@ MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue
 NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
 MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
+
+# First check if we even should be executing this test
+verify_migration_in_progress ${NEW_SCHEMA_VERSION}
 
 # Get yum repositories from current commit (will go to standard /shared/yum.repos.d directory in cta-catalogue-updater container)
 YUM_REPOS="$(realpath "$(dirname "$0")/../../docker/ctafrontend/alma9/etc/yum.repos.d")"

@@ -51,7 +51,7 @@
 - cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
 - cta/CTA#830 - Add script for building CTA locally
 - cta/CTA#847 - Introduced version-lock for Oracle instant client
-- cta/CTA#812 - Fix test-external-tape-formats failing and prevent running liquibase-update on schedule
+- cta/CTA#812 - Fix test-external-tape-formats and liquibase-update from failing
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
