@@ -86,8 +86,8 @@ void ArchiveRequest::commit() {
     } catch(exception::Exception &ex) {
       m_txn->abort();
     }
+    m_txn.reset();
   }
-  m_txn.reset();
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {

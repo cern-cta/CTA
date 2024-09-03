@@ -54,6 +54,8 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
                            " " + failureReason;
   if (m_jobRow.failureLogs) {
     m_jobRow.failureLogs.value() += failureLog;
+  } else {
+    m_jobRow.failureLogs.value() = failureLog;
   }
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
@@ -155,6 +157,8 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
                "In schedulerdb::ArchiveRdbJob::failReport(): received failed job to be reported.");
   if (m_jobRow.reportFailureLogs) {
     m_jobRow.reportFailureLogs.value() += reportFailureLog;
+  } else {
+    m_jobRow.reportFailureLogs = reportFailureLog;
   }
   m_jobRow.totalReportRetries += 1;
 

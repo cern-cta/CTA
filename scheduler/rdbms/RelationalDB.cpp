@@ -77,7 +77,6 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
   utils::Timer timer;
-
   // Construct the archive request object
   auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool, logContext);
 
