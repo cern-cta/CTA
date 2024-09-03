@@ -133,7 +133,7 @@ struct ArchiveJobSummaryRow {
       WHERE
         STATUS = :STATUS::ARCHIVE_JOB_STATUS
     )SQL";
-    stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", "AJS_Failed");
     return stmt.executeQuery();
   }
