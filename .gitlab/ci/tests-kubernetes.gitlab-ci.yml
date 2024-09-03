@@ -18,7 +18,7 @@
   before_script:
     - echo "Invalidating default common before_script for kubernetes-test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-    - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - export NAMESPACE="${JOB_NAME}-${CI_JOB_ID}"
     - bash ./continuousintegration/ci_helpers/install_helm.sh
 
   script:
@@ -93,17 +93,7 @@ unit-test-oracle:
 
 # Manually triggered
 
-test-liquib:
-  stage: test
-  extends:
-    - .kubernetes-test
-  rules:
-    - !reference [.manual-rules, rules]
-  variables:
-    TEST_SCRIPT: "tests/update_db_test.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
-
-test-ext-tape-f:
+test-external-tape-formats:
   stage: test
   extends:
     - .kubernetes-test
@@ -112,6 +102,18 @@ test-ext-tape-f:
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+# This test should only be triggered to check the liquibase migration script
+# before the upgrade to a new catalogue version happens
+test-liquibase-update:
+  stage: test
+  extends:
+    - .kubernetes-test
+  rules:
+    - when: manual
+  variables:
+    TEST_SCRIPT: "tests/update_db_test.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
 
 # Regression tests
 
