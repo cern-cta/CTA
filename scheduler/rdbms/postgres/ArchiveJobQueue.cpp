@@ -78,7 +78,7 @@ namespace cta::schedulerdb::postgres {
       status = ArchiveJobStatus::ReadyForDeletion;
     } else if (status == ArchiveJobStatus::AJS_Failed) {
       status = ArchiveJobStatus::ReadyForDeletion;
-      ArchiveJobQueueRow::moveToFailedJobTable(txn, jobIDs);
+      ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
     }
     stmt.bindString(":STATUS", to_string(status));
     stmt.executeNonQuery();
@@ -114,7 +114,7 @@ namespace cta::schedulerdb::postgres {
     return;
   };
 
-  void ArchiveJobQueueRow::moveToFailedJobTable(Transaction &txn){
+  void ArchiveJobQueueRow::copyToFailedJobTable(Transaction &txn){
     std::string sql = R"SQL(
     INSERT INTO ARCHIVE_FAILED_JOB_QUEUE (
             JOB_ID,
@@ -169,7 +169,7 @@ namespace cta::schedulerdb::postgres {
     return;
   }
 
-  void ArchiveJobQueueRow::moveToFailedJobTable(Transaction &txn, const std::vector<std::string>& jobIDs){
+  void ArchiveJobQueueRow::copyToFailedJobTable(Transaction &txn, const std::vector<std::string>& jobIDs){
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
@@ -247,7 +247,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
     if (status == ArchiveJobStatus::ReadyForDeletion){
-      ArchiveJobQueueRow::moveToFailedJobTable(txn);
+      ArchiveJobQueueRow::copyToFailedJobTable(txn);
     }
     return;
   };
