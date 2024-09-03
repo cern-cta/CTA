@@ -25,6 +25,12 @@ Transaction::Transaction(rdbms::ConnPool &connPool) :
   start();
 }
 
+Transaction::Transaction(rdbms::ConnPool &connPool, bool insert) :
+  m_conn(connPool.getConn())
+{
+  start_insert();
+}
+
 Transaction::~Transaction() { 
   if (m_begin) {
     m_conn.rollback();
@@ -57,6 +63,12 @@ void Transaction::lockForTapePool(std::string_view tapePoolString) {
 void Transaction::start() {
   if (!m_begin) {
     m_conn.executeNonQuery(R"SQL(BEGIN)SQL");
+    m_begin = true;
+  }
+}
+
+void Transaction::start_insert() {
+  if (!m_begin) {
     m_begin = true;
   }
 }
