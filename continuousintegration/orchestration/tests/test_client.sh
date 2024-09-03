@@ -103,9 +103,8 @@ kubectl -n ${NAMESPACE} cp /tmp/certificates client:/etc/grid-security/
 echo " Launching client_rest_api.sh on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
 
-# The test data below is a base64 encoded string of the following: {"scheduling_hints": "test 4"}
 # Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
-TEST_METADATA="e3NjaGVkdWxpbmdfaGludHM6IHRlc3QgNH0="
+TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
 echo " Launching client_archive_metadata.sh on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
 echo " Launching grep_eosreport_for_archive_metadata.sh on ctaeos pod"
