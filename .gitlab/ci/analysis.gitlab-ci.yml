@@ -13,13 +13,14 @@ cppcheck-run:
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - when: always
+  dependencies: [] # Ensure no artifacts are downloaded
   script:
     - cppcheck --xml
                --force
                --enable=warning,performance
                --inline-suppr
                --check-level=exhaustive
-               --suppressions-list=.cppcheck-suppressions.txt 
+               --suppressions-list=.cppcheck-suppressions.txt
                . 2> cppcheck_out.xml
   artifacts:
     expire_in: 2 days
@@ -29,7 +30,8 @@ cppcheck-run:
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck-report:
   stage: analysis
-  needs: [cppcheck-run]
+  needs:
+    - cppcheck-run
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -53,6 +55,7 @@ cppcheck-report:
 
 clang-format-report:
   stage: analysis
+  dependencies: [] # Ensure no artifacts are downloaded
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -78,7 +81,8 @@ clang-format-report:
 
 clang-format-apply:
   stage: analysis
-  needs: [clang-format-report]  
+  needs:
+    - clang-format-report
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -95,7 +99,7 @@ clang-format-apply:
   image: $EL9_IMAGE
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
-    CLANG_FORMAT_REPORT: clang-format.output 
+    CLANG_FORMAT_REPORT: clang-format.output
   before_script:
     - yum install -y git git-clang-format patch
     - git config user.email $GITLAB_USER_EMAIL
@@ -112,6 +116,7 @@ clang-format-apply:
 
 catalogue-schema-version-check:
   stage: analysis
+  dependencies: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never

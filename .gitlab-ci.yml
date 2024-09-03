@@ -5,7 +5,6 @@ stages:
   - build:image
   - build:tagged
   - test
-  - test:regressions
   - release:changelog
   - release:internal
   - release:external

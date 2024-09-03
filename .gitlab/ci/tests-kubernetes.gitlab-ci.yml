@@ -1,3 +1,6 @@
+# All of the below tests use only the docker image generated in the build:image stage
+# These are also the only tests executed on our personal cirunners instead of the GitLab runners
+
 .manual-rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -11,6 +14,8 @@
       allow_failure: false
 
 .kubernetes-test:
+  needs:
+    - docker-build-ctageneric
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
@@ -18,9 +23,9 @@
   before_script:
     - echo "Invalidating default common before_script for kubernetes-test"
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-    - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    # Keep the namespace name under 64 characters;
+    - export NAMESPACE="${JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
     - bash ./continuousintegration/ci_helpers/install_helm.sh
-
   script:
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
@@ -41,7 +46,7 @@
 
 # Tests
 
-test-client:
+k8s-test-client:
   stage: test
   extends:
     - .kubernetes-test
@@ -51,7 +56,7 @@ test-client:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-client-gfal2:
+k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
@@ -61,7 +66,7 @@ test-client-gfal2:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-repack:
+k8s-test-repack:
   stage: test
   extends:
     - .kubernetes-test
@@ -71,7 +76,7 @@ test-repack:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-test-cta-admin:
+k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
@@ -81,19 +86,9 @@ test-cta-admin:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-unit-test-oracle:
-  stage: test
-  extends:
-    - .kubernetes-test
-  except:
-    - tags
-  variables:
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
-
 # Manually triggered
 
-test-liquibase-update:
+k8s-test-liquibase-update:
   stage: test
   extends:
     - .kubernetes-test
@@ -103,7 +98,7 @@ test-liquibase-update:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
 
-test-external-tape-formats:
+k8s-test-external-tape-formats:
   stage: test
   extends:
     - .kubernetes-test
@@ -115,8 +110,8 @@ test-external-tape-formats:
 
 # Regression tests
 
-test-regression-eos:
-  stage: test:regressions
+k8s-test-regression-eos:
+  stage: test
   extends:
     - .kubernetes-test
   rules:
