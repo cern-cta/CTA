@@ -25,40 +25,20 @@ list_images() {
   #   }
   # }
 
-  local secret_name="ctaregsecret"
   local registry_name="cta/ctageneric"
-  local gitlab_server="gitlab.cern.ch"
+  local docker_registry="gitlab-registry.cern.ch"
 
-  local auth_json=$(kubectl get secret $secret_name -o jsonpath='{.data.\.dockerconfigjson}' | base64 --decode | jq -r '.auths')
+  
+  local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local jwt_token=$(bash ${script_dir}/get_registry_credentials.sh)
 
-  local docker_registry=$(echo $auth_json | jq -r 'keys[0]')
-  local docker_login_username=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f1)
-  local docker_login_password=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
-
-  if [[ -z "$docker_registry" ]]; then
-    echo "ERROR: Missing required variable: docker_registry"
-    return 1
-  fi
-  if [[ -z "$docker_login_username" ]]; then
-    echo "ERROR: Missing required variable: docker_login_username"
-    return 1
-  fi
-  if [[ -z "$docker_login_password" ]]; then
-    echo "ERROR: Missing required variable: docker_login_password"
-    return 1
-  fi
-
-  # Retrieve JWT pull token from GitLab
-  local jwt_pull_token=$(curl -s -u "${docker_login_username}:${docker_login_password}" \
-    "https://${gitlab_server}/jwt/auth?service=container_registry&scope=repository:${registry_name}:pull,push" | jq -r '.token')
-
-  if [[ -z "$jwt_pull_token" ]]; then
-    echo "Error: Failed to retrieve JWT pull token."
+  if [[ -z "$jwt_token" ]]; then
+    echo "Error: Failed to retrieve JWT token."
     return 1
   fi
 
   # List the tags in the Docker registry repository
-  local list_response=$(curl -s "https://${docker_registry}/v2/${registry_name}/tags/list" -H "Authorization: Bearer ${jwt_pull_token}")
+  local list_response=$(curl -s "https://${docker_registry}/v2/${registry_name}/tags/list" -H "Authorization: Bearer ${jwt_token}")
   local tags=$(echo "$list_response" | jq -c ".tags[]" | sed -e 's/^"//;s/"$//')
 
   if [[ -z "$tags" ]]; then

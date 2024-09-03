@@ -19,7 +19,7 @@ secret_is_dockerconfigjson() {
   test $(kubectl get secret $1 -o jsonpath='{.type}') == "kubernetes.io/dockerconfigjson" 
 }
 
-check_credentials() {
+get_credentials() {
   # The Kubernetes secret stores a base64 encoded .dockerconfigjson. This json has the following format:
   # {
   #   "auths": {
@@ -29,14 +29,23 @@ check_credentials() {
   #   }
   # }
 
+  local check_mode=false
+  while [[ "$#" -gt 0 ]]; do
+      case $1 in
+          --check) check_mode=true ;;
+          *) echo "Unknown option: $1" ;;
+      esac
+      shift
+  done
+
   local secret_name="ctaregsecret"
   local registry_name="cta/ctageneric"
   local gitlab_server="gitlab.cern.ch"
 
   # These variable are capatalised to match the variable in gitlabregistry.txt
-  local DOCKER_REGISTRY=$(echo $auth_json | jq -r 'keys[0]')
-  local DOCKER_LOGIN_USERNAME=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f1)
-  local DOCKER_LOGIN_PASSWORD=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
+  local DOCKER_REGISTRY=""
+  local DOCKER_LOGIN_USERNAME=""
+  local DOCKER_LOGIN_PASSWORD=""
   if secret_is_dockerconfigjson $secret_name ; then
     local auth_json=$(kubectl get secret $secret_name -o jsonpath='{.data.\.dockerconfigjson}' | base64 --decode | jq -r '.auths')
 
@@ -61,18 +70,22 @@ check_credentials() {
   fi
 
   # Retrieve JWT pull token from GitLab
-  local jwt_pull_token=$(curl -s -u "${DOCKER_LOGIN_USERNAME}:${DOCKER_LOGIN_PASSWORD}" \
+  local jwt_token=$(curl -s -u "${DOCKER_LOGIN_USERNAME}:${DOCKER_LOGIN_PASSWORD}" \
     "https://${gitlab_server}/jwt/auth?service=container_registry&scope=repository:${registry_name}:pull,push" | jq -r '.token')
 
-  if [[ -z "$jwt_pull_token" ]]; then
+  if [[ -z "$jwt_token" ]]; then
     echo "Error: Failed to retrieve JWT pull token."
     echo "\tRegistry: $DOCKER_REGISTRY"
     echo "\tUsername: $DOCKER_LOGIN_USERNAME"
     return 1
   fi
 
-  echo "Credentials verified"
+  if [[ $check_only == true ]]; then
+    echo "Credentials verified"
+  else
+    echo $jwt_token
+  fi
   return 0
 }
 
-check_credentials
+get_credentials "$@"
