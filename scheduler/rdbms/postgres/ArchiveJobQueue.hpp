@@ -120,11 +120,6 @@ namespace cta::schedulerdb::postgres {
       requesterGroup = rset.columnString("REQUESTER_GROUP");
       srcUrl = rset.columnString("SRC_URL");
       archiveFile.storageClass = rset.columnString("STORAGE_CLASS");
-      retriesWithinMount = rset.columnUint16("RETRIES_WITHIN_MOUNT");
-      maxRetriesWithinMount = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
-      totalRetries = rset.columnUint16("TOTAL_RETRIES");
-      lastMountWithFailure = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
-      maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
       is_reporting = rset.columnBool("IS_REPORTING");
       in_drive_queue = rset.columnBool("IN_DRIVE_QUEUE");
       vid = rset.columnString("VID");
@@ -134,6 +129,12 @@ namespace cta::schedulerdb::postgres {
       logical_library = rset.columnString("LOGICAL_LIBRARY");
       failureLogs = rset.columnOptionalString("FAILURE_LOG");
       reportFailureLogs = rset.columnOptionalString("REPORT_FAILURE_LOG");
+      lastMountWithFailure = rset.columnUint32("LAST_MOUNT_WITH_FAILURE");
+      retriesWithinMount = rset.columnUint16("RETRIES_WITHIN_MOUNT");
+      maxRetriesWithinMount = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
+      totalRetries = rset.columnUint16("TOTAL_RETRIES");
+      maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
+      totalReportRetries = rset.columnUint16("TOTAL_REPORT_RETRIES");
       return *this;
     }
 
