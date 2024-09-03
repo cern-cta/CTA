@@ -421,7 +421,7 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
   auto& comment  = getRequired(OptionString::COMMENT);
 
   // Adding a new archive route without type is allowed. If so, it should default to DEFAULT.
-  auto art = art_opt.has_value() ? common::dataStructures::ArchiveRoute::stringToType(art_opt.value()) : cta::common::dataStructures::ArchiveRoute::Type::DEFAULT;
+  auto art = art_opt.has_value() ? common::dataStructures::strToArchiveRouteType(art_opt.value()) : cta::common::dataStructures::ArchiveRouteType::DEFAULT;
 
   m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, tapepool, comment);
 
@@ -435,7 +435,7 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
 
-  auto art = common::dataStructures::ArchiveRoute::stringToType(art_str);
+  auto art = common::dataStructures::strToArchiveRouteType(art_str);
 
   if(const auto comment = getOptional(OptionString::COMMENT); comment) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, comment.value());
@@ -454,7 +454,7 @@ void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
   auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
 
-  auto art = common::dataStructures::ArchiveRoute::stringToType(art_str);
+  auto art = common::dataStructures::strToArchiveRouteType(art_str);
 
   m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn), art);
 

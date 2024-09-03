@@ -21,6 +21,7 @@
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
+#include <common/dataStructures/ArchiveRouteType.hpp>
 
 #include "common/utils/utils.hpp"
 

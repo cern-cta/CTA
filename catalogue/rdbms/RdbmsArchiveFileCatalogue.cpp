@@ -616,7 +616,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
   )SQL";
   if (!useRepackArchiveRoute) {
     sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
-           + common::dataStructures::ArchiveRoute::typeToString(common::dataStructures::ArchiveRoute::Type::REPACK) + "'";
+           + common::dataStructures::toString(common::dataStructures::ArchiveRouteType::REPACK) + "'";
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
@@ -625,8 +625,8 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
     const auto copyNb = static_cast<uint32_t>(rset.columnUint64("COPY_NB"));
     const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
     auto archiveRouteTypeStr = rset.columnString("ARCHIVE_ROUTE_TYPE");
-    auto archiveRouteType = common::dataStructures::ArchiveRoute::stringToType(archiveRouteTypeStr);
-    if (archiveRouteType == common::dataStructures::ArchiveRoute::Type::DEFAULT && copyToPoolMap.count(copyNb)) {
+    auto archiveRouteType = common::dataStructures::strToArchiveRouteType(archiveRouteTypeStr);
+    if (archiveRouteType == common::dataStructures::ArchiveRouteType::DEFAULT && copyToPoolMap.count(copyNb)) {
       // A DEFAULT archive route type should not override a previously found value
       continue;
     }
@@ -654,7 +654,7 @@ uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn
   )SQL";
   if (!useRepackArchiveRoute) {
     sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
-            + common::dataStructures::ArchiveRoute::typeToString(common::dataStructures::ArchiveRoute::Type::REPACK) + "'";
+            + common::dataStructures::toString(common::dataStructures::ArchiveRouteType::REPACK) + "'";
   }
   sql += ") ROUTES";
   auto stmt = conn.createStmt(sql);

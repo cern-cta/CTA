@@ -21,11 +21,11 @@
 namespace cta::catalogue {
 
 void DummyArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName,
-  const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType, const std::string &tapePoolName, const std::string &comment) {
+  const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType, const std::string &tapePoolName, const std::string &comment) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); 
 }
 
-void DummyArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType) {
+void DummyArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
@@ -39,13 +39,13 @@ std::list<common::dataStructures::ArchiveRoute> DummyArchiveRouteCatalogue::getA
 }
 
 void DummyArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
   const std::string &tapePoolName) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
 void DummyArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
   const std::string &comment) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }

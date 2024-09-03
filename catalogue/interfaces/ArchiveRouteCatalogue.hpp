@@ -45,7 +45,7 @@ public:
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &storageClassName,
     const uint32_t copyNb,
-    const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+    const common::dataStructures::ArchiveRouteType &archiveRouteType,
     const std::string &tapePoolName,
     const std::string &comment) = 0;
 
@@ -58,7 +58,7 @@ public:
   virtual void deleteArchiveRoute(
     const std::string &storageClassName,
     const uint32_t copyNb,
-    const common::dataStructures::ArchiveRoute::Type &archiveRouteType) = 0;
+    const common::dataStructures::ArchiveRouteType &archiveRouteType) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
 
@@ -88,11 +88,11 @@ public:
    * non-existent tape pool.
    */
   virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
     const std::string &tapePoolName) = 0;
 
   virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRoute::Type &archiveRouteType,
+    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
     const std::string &comment) = 0;
 };
 

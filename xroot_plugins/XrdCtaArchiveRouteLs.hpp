@@ -18,6 +18,7 @@
 #pragma once
 
 #include <xroot_plugins/XrdCtaStream.hpp>
+#include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
 
 namespace cta::xrd {
 
@@ -72,7 +73,7 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
 
     ar_item->set_storage_class(ar.storageClassName);
     ar_item->set_copy_number(ar.copyNb);
-    ar_item->set_archive_route_type(common::dataStructures::ArchiveRoute::typeToString(ar.type));
+    ar_item->set_archive_route_type(cta::admin::ArchiveRouteTypeFormatToProtobuf(ar.type));
     ar_item->set_tapepool(ar.tapePoolName);
     ar_item->mutable_creation_log()->set_username(ar.creationLog.username);
     ar_item->mutable_creation_log()->set_host(ar.creationLog.host);

@@ -46,6 +46,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/ArchiveJob.cpp
   dataStructures/ArchiveRequest.cpp
   dataStructures/ArchiveRoute.cpp
+  dataStructures/ArchiveRouteType.cpp
   dataStructures/CancelRetrieveRequest.cpp
   dataStructures/DiskSpaceReservationRequest.cpp
   dataStructures/DeleteArchiveRequest.cpp

@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/ArchiveRouteType.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -27,18 +28,7 @@ namespace cta::common::dataStructures {
 // constructor
 //------------------------------------------------------------------------------
 ArchiveRoute::ArchiveRoute():
-  copyNb(0), type(ArchiveRoute::Type::DEFAULT) {}
-
-
-const std::map<ArchiveRoute::Type,std::string> ArchiveRoute::TYPE_TO_STRING_MAP = {
-        {ArchiveRoute::Type::DEFAULT,"DEFAULT"},
-        {ArchiveRoute::Type::REPACK,"REPACK"},
-};
-
-const std::map<std::string,ArchiveRoute::Type> ArchiveRoute::STRING_TO_TYPE_MAP = {
-        {"DEFAULT",ArchiveRoute::Type::DEFAULT},
-        {"REPACK",ArchiveRoute::Type::REPACK},
-};
+  copyNb(0), type(ArchiveRouteType::DEFAULT) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -46,6 +36,7 @@ const std::map<std::string,ArchiveRoute::Type> ArchiveRoute::STRING_TO_TYPE_MAP 
 bool ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
   return storageClassName==rhs.storageClassName
       && copyNb==rhs.copyNb
+      && type==rhs.type
       && tapePoolName==rhs.tapePoolName
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -65,39 +56,12 @@ bool ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
 std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj) {
   os << "(storageClassName=" << obj.storageClassName
      << " copyNb=" << obj.copyNb
+     << " archiveRouteType=" << obj.type
      << " tapePoolName=" << obj.tapePoolName
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";
   return os;
-}
-
-std::string ArchiveRoute::typeToString(const ArchiveRoute::Type & type) {
-  try {
-    return TYPE_TO_STRING_MAP.at(type);
-  } catch (std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("The type given (") + std::to_string(type) + ") does not exist.");
-  }
-}
-
-ArchiveRoute::Type ArchiveRoute::stringToType(const std::string& typeStr) {
-  std::string typeUpperCase = typeStr;
-  cta::utils::toUpper(typeUpperCase);
-  try {
-    return STRING_TO_TYPE_MAP.at(typeUpperCase);
-  } catch(std::out_of_range &ex){
-    throw cta::exception::UserError(std::string("The type given (") + typeUpperCase + ") does not exist. Possible values are " + ArchiveRoute::getAllPossibleTypes());
-  }
-}
-
-std::string ArchiveRoute::getAllPossibleTypes(){
-  std::string ret;
-  for(auto &kv: STRING_TO_TYPE_MAP){
-    ret += kv.first + " ";
-  }
-  if(ret.size())
-    ret.pop_back();
-  return ret;
 }
 
 } // namespace cta::common::dataStructures
