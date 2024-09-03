@@ -63,6 +63,7 @@ echo
 echo "Copying test scripts to client pod."
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOSINSTANCE}:/root/"
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOSINSTANCE}:/root/"
 
 NB_FILES=10000
 FILE_SIZE_KB=15
@@ -102,6 +103,12 @@ kubectl -n ${NAMESPACE} cp /tmp/certificates client:/etc/grid-security/
 echo " Launching client_rest_api.sh on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
 
+# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
+TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
+echo " Launching client_archive_metadata.sh on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
+echo " Launching grep_eosreport_for_archive_metadata.sh on ctaeos pod"
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
 
 echo
 echo "Launching immutable file test on client pod"
