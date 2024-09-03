@@ -53,6 +53,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
+    stmt.bindUint64(":DRIVE_MOUNT_ID", mountInfo.mountId);
     stmt.bindUint32(":LIMIT", limit);
     stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
     stmt.bindUint64(":GC_DELAY", gc_delay);
@@ -73,14 +74,14 @@ namespace cta::schedulerdb::postgres {
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
     std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
     auto stmt = txn.conn().createStmt(sql);
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.executeNonQuery();
     if (status == ArchiveJobStatus::AJS_Complete) {
       status = ArchiveJobStatus::ReadyForDeletion;
     } else if (status == ArchiveJobStatus::AJS_Failed) {
       status = ArchiveJobStatus::ReadyForDeletion;
       ArchiveJobQueueRow::moveToFailedJobTable(txn, jobIDs);
     }
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.executeNonQuery();
     return;
   };
 
