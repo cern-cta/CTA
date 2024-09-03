@@ -24,7 +24,7 @@
 - cta/CTA#791 - Remove redundant Protobuf3 dependencies
 - cta/CTA#788 - Make SQL multiline strings use raw string literals
 - cta/CTA#811 - Removed all CC7 related files and code
-- cta/CTA#817 - Remove oracle tnsnames repo files 
+- cta/CTA#817 - Remove oracle tnsnames repo files
 - cta/CTA#823 - Fix returnByReference errors from cpp-check
 - cta/CTA#763 - Removed the installOracle21.sh script
 
@@ -51,6 +51,7 @@
 - cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
 - cta/CTA#830 - Add script for building CTA locally
 - cta/CTA#847 - Introduced version-lock for Oracle instant client
+- cta/CTA#812 - Fix test-external-tape-formats failing and prevent running liquibase-update on schedule
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
@@ -90,7 +91,7 @@
 
 ### Continuous Integration
 - cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
-- cta/CTA#597 - Validate staging activity field metadata is correctly set 
+- cta/CTA#597 - Validate staging activity field metadata is correctly set
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
@@ -211,7 +212,7 @@
 - cta/CTA#460 - Fix "trying to unlock an unlocked lock" error
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#469 - Fix command 'cta-admin drive ls' not showing REPACK VO on mounts of type ARCHIVE_FOR_REPACK
-- cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
+- cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit
 - cta/CTA#473 - Fix some code smells from repack expansion changes
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
