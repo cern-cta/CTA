@@ -124,17 +124,12 @@ struct ArchiveJobSummaryRow {
   static rdbms::Rset selectFailedJobSummary(Transaction &txn) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
-    const char* const lock_sql = R"SQL(
-    LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
-    )SQL";
-    auto stmt = txn.conn().createStmt(lock_sql);
-    stmt.executeNonQuery();
     const char* const sql = R"SQL(
       SELECT
-        JOBS_COUNT,
-        JOBS_TOTAL_SIZE
+        COUNT(*) AS JOBS_COUNT,
+        SUM(SIZE_IN_BYTES) AS JOBS_TOTAL_SIZE
       FROM
-        ARCHIVE_JOB_SUMMARY
+        ARCHIVE_FAILED_JOB_QUEUE
       WHERE
         STATUS = :STATUS::ARCHIVE_JOB_STATUS
     )SQL";
