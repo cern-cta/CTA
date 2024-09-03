@@ -36,15 +36,15 @@ check_credentials() {
   local docker_login_password=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
 
   if [[ -z "$docker_registry" ]]; then
-    echo "ERROR: Missing required variable: docker_registry"
+    echo "Error: Missing required variable: docker_registry"
     return 1
   fi
   if [[ -z "$docker_login_username" ]]; then
-    echo "ERROR: Missing required variable: docker_login_username"
+    echo "Error: Missing required variable: docker_login_username"
     return 1
   fi
   if [[ -z "$docker_login_password" ]]; then
-    echo "ERROR: Missing required variable: docker_login_password"
+    echo "Error: Missing required variable: docker_login_password"
     return 1
   fi
 
