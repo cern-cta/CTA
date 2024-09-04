@@ -53,6 +53,9 @@ get_credentials() {
     DOCKER_LOGIN_USERNAME=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f1)
     DOCKER_LOGIN_PASSWORD=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
   else
+    if [[ $check_only == true ]]; then
+      echo "No secret with name $secret_name of type \"kubernetes.io/dockerconfigjson\" was found. Falling back to /etc/gitlab/gitlabregistry.txt..."
+    fi
     source /etc/gitlab/gitlabregistry.txt
   fi
 
