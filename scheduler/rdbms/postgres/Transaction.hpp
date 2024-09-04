@@ -25,8 +25,7 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  explicit Transaction(rdbms::ConnPool &connPool);
-  explicit Transaction(rdbms::ConnPool &connPool, bool insert);
+  explicit Transaction(rdbms::ConnPool &connPool, bool insert = false);
 
   /**
    * Prohibit copy construction
@@ -72,6 +71,7 @@ public:
    * Start new transaction unless it has started already
    */
   void start();
+  void start_insert();
 
   /**
    * Abort and roll back the transaction
