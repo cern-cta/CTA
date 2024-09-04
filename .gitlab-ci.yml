@@ -12,7 +12,7 @@ stages:
 variables:
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
-  ORACLE_SUPPORT: "ON"
+  ORACLE_SUPPORT: "OFF"
   UNIT_TEST: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
