@@ -21,6 +21,8 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: SCHEMA_VERSION
+      value: {{ .Values.catalogue.schemaVersion | quote}}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}

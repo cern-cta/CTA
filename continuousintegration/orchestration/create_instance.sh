@@ -158,11 +158,13 @@ MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-sc
 SCHEMA_VERSION="$MAJOR.$MINOR"
 
 # It sets as schema version the previous to the current one to create a database with that schema version
-if [ "$updatedatabasetest" == "1" ] ; then
-    MIGRATION_FILE=$(find ../../catalogue/cta-catalogue-schema -name "*to${SCHEMA_VERSION}.sql")
-    PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
-    NEW_SCHEMA_VERSION=$SCHEMA_VERSION
-    SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
+if [[ "$updatedatabasetest" == "1" ]] ; then
+  MIGRATION_FILE=$(find ../../catalogue/cta-catalogue-schema -name "*to${SCHEMA_VERSION}.sql")
+  PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
+  SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
+  echo "Deploying with previous catalogue schema version: ${SCHEMA_VERSION}"
+else
+  echo "Deploying with current catalogue schema version: ${SCHEMA_VERSION}"
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
@@ -266,7 +268,7 @@ echo "Got library: ${LIBRARY_DEVICE}"
 IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
 
 echo  "Setting up init and db pods."
-helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE}
+helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --set catalogue.schemaVersion="${SCHEMA_VERSION}"
 
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
