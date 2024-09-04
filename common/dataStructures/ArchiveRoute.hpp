@@ -51,8 +51,8 @@ struct ArchiveRoute {
   uint8_t copyNb;
 
   /**
- * The type of the archive route.
- */
+   * The type of the archive route.
+   */
   ArchiveRouteType type;
 
   std::string tapePoolName;

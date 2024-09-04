@@ -31,7 +31,7 @@ std::string toString(ArchiveRouteType type) {
   case ArchiveRouteType::REPACK:
     return "REPACK";
   default:
-    throw cta::exception::Exception(std::string("The type given (") + std::to_string(type) + ") does not exist.");
+    throw cta::exception::Exception(std::string("The type given (") + std::to_string(type) + ") does not exist. Possible values are DEFAULT and REPACK.");
   }
 }
 

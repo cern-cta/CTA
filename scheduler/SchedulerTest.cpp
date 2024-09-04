@@ -4710,7 +4710,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,cta::common::dataStructures::ArchiveRouteType::REPACK,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape
-  std::string vidDestination1 = "VIDDESTINATION2";
+  std::string vidDestination1 = "VIDDESTINATION1";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
@@ -4718,7 +4718,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidDestination2 = "VIDDESTINATION3";
+  std::string vidDestination2 = "VIDDESTINATION2";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
