@@ -58,6 +58,7 @@
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --jobs $(nproc --ignore=1)
+                                                      --skip-unit-tests
                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
 

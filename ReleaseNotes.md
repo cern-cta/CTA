@@ -53,6 +53,7 @@
 - cta/CTA#847 - Introduced version-lock for Oracle instant client
 - cta/CTA#821 - Improved pipeline logic for faster performance and correct cancel propagation
 - cta/CTA#708 - Added a basic test for the archive metadata to the CI
+- cta/CTA#846 - Made CTA unit tests run as separate job in CI instead of as part of the build process
 
 ### Catalogue Schema
 - cta/CTA#801 - Update CTA catalogue schema to version 15.0
