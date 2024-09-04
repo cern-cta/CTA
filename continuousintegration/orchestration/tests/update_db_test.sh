@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+# Note that this tests relies on the cta-catalogue schema being set to the previous version using the -u flag in create_instance
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>

@@ -15,6 +15,9 @@ global:
   # That prevents any confusing situations with existing nonsense tags
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
 
+catalogue:
+  schemaVersion: "15.0"
+
 pvcs:
   claimstg:
     selectors:
@@ -34,8 +37,6 @@ env:
   value: "0"
 - name: KEEP_OBJECTSTORE
   value: "0"
-- name: SCHEMA_VERSION
-  value: "15.0"
 
 
 volumeMounts:
