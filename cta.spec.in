@@ -5,7 +5,7 @@
 %define ctaRelease @CTA_RELEASE@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
-%define occiSupport @RPM_USING_ORACLE
+%define occiSupport @RPM_USING_ORACLE@
 %define schedOpt @RPM_SCHEDOPT@
 %define oracleOpt @RPM_ORACLE@
 %define buildGenerator @CMAKE_GENERATOR@
