@@ -16,6 +16,7 @@
 - cta/CTA#781 - Fixed security issues with build pods
 - cta/CTA#772 - Make sonarcloud use yum.repos.d-public repos instead of the interal repos
 - cta/CTA#839 - Integer underflow when repacking tapes where number of files in storage class is less than number of existing tape copies
+- cta/CTA#786 - Allow CTA to be build without Oracle support again
 
 ### Maintenance
 - cta/CTA#779 - Removed outdated doxygen files
