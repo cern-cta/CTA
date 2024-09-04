@@ -5,7 +5,7 @@
 %define ctaRelease @CTA_RELEASE@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
-%define occiSupport %{?_OCCI_SUPPORT:@OCCI_SUPPORT@}
+%define occiSupport @RPM_USING_ORACLE
 %define schedOpt @RPM_SCHEDOPT@
 %define oracleOpt @RPM_ORACLE@
 %define buildGenerator @CMAKE_GENERATOR@
@@ -264,7 +264,7 @@ The shared libraries base
 %{_libdir}/libctacommon.so*
 %{_libdir}/libctatapedaemoncommon.so*
 
-%if "%{occiSupport}" == "ON"
+%if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
