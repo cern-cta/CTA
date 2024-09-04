@@ -5,6 +5,7 @@
 %define ctaRelease @CTA_RELEASE@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
+%define occiSupport %{?_OCCI_SUPPORT:@OCCI_SUPPORT@}
 %define schedOpt @RPM_SCHEDOPT@
 %define oracleOpt @RPM_ORACLE@
 %define buildGenerator @CMAKE_GENERATOR@
@@ -263,6 +264,7 @@ The shared libraries base
 %{_libdir}/libctacommon.so*
 %{_libdir}/libctatapedaemoncommon.so*
 
+%if "%{occiSupport}" == "ON"
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
@@ -275,6 +277,7 @@ Shared libraries required to access the Oracle-based CTA catalogue
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogueocci.so*
 %{_libdir}/libctardbmsocci.so*
+%endif
 
 %package -n cta-lib-catalogue-postgres
 Summary: CERN Tape Archive libraries
@@ -969,3 +972,4 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 * Mon Dec 09 2019 Cedric CAFFY <cedric.caffy@cern.ch> - 1.0-1
 - Release 1.0-1
+
