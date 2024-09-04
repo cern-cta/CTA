@@ -51,7 +51,7 @@ public:
   std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
   void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
-    common::dataStructures::UpdatePhysicalLibrary& pl) override;
+    const common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;

@@ -109,7 +109,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);
     dr_item->set_host(dr.host);
-    dr_item->set_logical_library_disabled(dr.logicalLibraryDisabled);
+    dr_item->set_logical_library_disabled(dr.logicalLibraryDisabled ? dr.logicalLibraryDisabled.value() : false);
     dr_item->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
     dr_item->set_mount_type(cta::admin::MountTypeToProtobuf(dr.mountType));
     dr_item->set_drive_status(cta::admin::DriveStatusToProtobuf(dr.driveStatus));
@@ -128,7 +128,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
     dr_item->set_physical_library(dr.physicalLibraryName ? dr.physicalLibraryName.value() : "");
-    dr_item->set_physical_library_disabled(dr.physicalLibraryDisabled);
+    dr_item->set_physical_library_disabled(dr.physicalLibraryDisabled ? dr.physicalLibraryDisabled.value() : false);
     if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
       dr_item->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
       dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);

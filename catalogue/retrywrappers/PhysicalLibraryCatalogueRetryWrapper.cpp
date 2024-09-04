@@ -50,7 +50,7 @@ std::list<common::dataStructures::PhysicalLibrary> PhysicalLibraryCatalogueRetry
 }
 
 void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibrary(
-  const common::dataStructures::SecurityIdentity &admin,  common::dataStructures::UpdatePhysicalLibrary& pl) {
+  const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
   return retryOnLostConnection(m_log, [this,&admin,&pl] {
     return m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(admin, pl);
   }, m_maxTriesToConnect);

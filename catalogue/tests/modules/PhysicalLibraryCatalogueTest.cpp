@@ -150,7 +150,7 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
 
     const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
     ASSERT_TRUE(lib.isDisabled);
-    ASSERT_TRUE((bool)lib.disabledReason);
+    ASSERT_TRUE(lib.disabledReason.has_value());
     ASSERT_EQ(lib.disabledReason.value(), "physical library disabled reason");
   }
   // modify the disabled reason only
@@ -163,10 +163,10 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
     const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
     const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
     ASSERT_TRUE(lib.isDisabled);
-    ASSERT_TRUE((bool)lib.disabledReason);
+    ASSERT_TRUE(lib.disabledReason.has_value());
     ASSERT_EQ(lib.disabledReason.value(), "physical library disabled reason updated");
   }
-  // now enable it again, the reason should've been wiped
+  // now enable it again, the reason should not have been wiped
   {
     cta::common::dataStructures::UpdatePhysicalLibrary pl;
     pl.name = m_physicalLibrary2.name;
@@ -177,7 +177,7 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
     const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
     const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
     ASSERT_FALSE(lib.isDisabled);
-    ASSERT_FALSE((bool)lib.disabledReason);
+    ASSERT_TRUE(lib.disabledReason.has_value());
   }
   // try to disable without providing a reason
   {

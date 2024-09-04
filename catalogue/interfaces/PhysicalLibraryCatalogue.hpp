@@ -48,7 +48,7 @@ public:
   virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
 
   virtual void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
-   common::dataStructures::UpdatePhysicalLibrary& pl) = 0;
+   const common::dataStructures::UpdatePhysicalLibrary& pl) = 0;
 };
 
 }} // namespace cta::catalogue

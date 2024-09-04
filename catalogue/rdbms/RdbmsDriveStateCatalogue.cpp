@@ -351,8 +351,8 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   tapeDrive.host = rset->columnString("HOST");
   tapeDrive.logicalLibrary = rset->columnString("LOGICAL_LIBRARY");
   tapeDrive.sessionId = rset->columnOptionalUint64("SESSION_ID");
-  tapeDrive.logicalLibraryDisabled = rset->columnOptionalBool("LOGICAL_IS_DISABLED") ? rset->columnOptionalBool("LOGICAL_IS_DISABLED").value() : false;
-  tapeDrive.physicalLibraryDisabled = rset->columnOptionalBool("PHYSICAL_IS_DISABLED") ? rset->columnOptionalBool("PHYSICAL_IS_DISABLED").value() : false;
+  tapeDrive.logicalLibraryDisabled = rset->columnOptionalBool("LOGICAL_IS_DISABLED");
+  tapeDrive.physicalLibraryDisabled = rset->columnOptionalBool("PHYSICAL_IS_DISABLED");
 
   tapeDrive.bytesTransferedInSession = rset->columnOptionalUint64("BYTES_TRANSFERED_IN_SESSION");
   tapeDrive.filesTransferedInSession = rset->columnOptionalUint64("FILES_TRANSFERED_IN_SESSION");
