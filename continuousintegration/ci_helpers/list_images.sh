@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,22 +15,39 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# env variables used:
-# DOCKER_LOGIN_USERNAME
-# DOCKER_LOGIN_PASSWORD
-#
-# set in /etc/gitlab/gitlabregistry.txt managed by Puppet
-. /etc/gitlab/gitlabregistry.txt
+list_images() {
+  # The Kubernetes secret stores a base64 encoded .dockerconfigjson. This json has the following format:
+  # {
+  #   "auths": {
+  #     "gitlab-registry.cern.ch": {
+  #       "auth": "base64 encoded string of 'username:password'"
+  #     }
+  #   }
+  # }
 
-TO=gitlab-registry.cern.ch/cta/ctageneric
+  local registry_name="cta/ctageneric"
+  local docker_registry="gitlab-registry.cern.ch"
 
-CI_REGISTRY=$(echo ${TO} | sed -e 's%/.*%%')
-REPOSITORY=$(echo ${TO} | sed -e 's%[^/]\+/%%')
+  
+  local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local jwt_token=$(bash ${script_dir}/get_registry_credentials.sh)
 
-GITLAB_HOST=gitlab.cern.ch
+  if [[ -z "$jwt_token" ]]; then
+    echo "Error: Failed to retrieve JWT token."
+    return 1
+  fi
 
-JWT_PULL_PUSH_TOKEN=$(curl -q -u ${DOCKER_LOGIN_USERNAME}:${DOCKER_LOGIN_PASSWORD} \
-  "https://${GITLAB_HOST}/jwt/auth?service=container_registry&scope=repository:${REPOSITORY}:pull,push" | cut -d\" -f4 )
+  # List the tags in the Docker registry repository
+  local list_response=$(curl -s "https://${docker_registry}/v2/${registry_name}/tags/list" -H "Authorization: Bearer ${jwt_token}")
+  local tags=$(echo "$list_response" | jq -c ".tags[]" | sed -e 's/^"//;s/"$//')
 
-# echo "List of tags in registry"
-curl "https://${CI_REGISTRY}/v2/${REPOSITORY}/tags/list" -H "Authorization: Bearer ${JWT_PULL_PUSH_TOKEN}" | jq -c ".tags[]" | sed -e 's/^"//;s/"$//'
+  if [[ -z "$tags" ]]; then
+    echo "Error: Failed to retrieve tags from repository:"
+    echo "$list_response"
+    return 1
+  fi
+
+  echo "$tags"
+}
+
+list_images
