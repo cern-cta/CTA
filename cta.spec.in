@@ -357,8 +357,7 @@ The shared libraries
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
-Requires: cta-lib-catalogue-postgres = %{version}-%{release}
-Requires: cta-lib-catalogue-occi = %{version}-%{release}
+Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
