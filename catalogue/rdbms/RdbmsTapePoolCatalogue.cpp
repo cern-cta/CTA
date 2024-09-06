@@ -496,10 +496,6 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  /* we need to somehow signal that this query is done, or we get an SQL error. Best to open a new connection */
-  rset.next(); // should be done with this query now
-  // conn.closeUnderlyingStmtsAndConn();
-  // auto newconn = m_connPool->getConn();
   pool.supply_source = getTapePoolSupplySources(conn, tapePoolName);
   pool.supply_destination = getTapePoolSupplyDestinations(conn, tapePoolName);
 
