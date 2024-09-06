@@ -131,8 +131,7 @@ test-cta-release:
     # - if: $CI_COMMIT_TAG
     #   when: never
     # - when: on_success
-    - when: manual
-    - allow_failure: true
+    - when: never
   image: $EL9_IMAGE
   variables:
     CTAREPODIR: /tmp/repo
