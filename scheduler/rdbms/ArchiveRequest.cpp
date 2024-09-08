@@ -69,7 +69,7 @@ void ArchiveRequest::insert() {
       //}
       ajr.insert(*m_txn);
     } catch(exception::Exception &ex) {
-      params.add("exeptionMessage", ex.getMessageValue());
+      params.add("exceptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
       m_txn->abort(); // Rollback on error
       throw;

@@ -154,7 +154,7 @@ namespace cta::schedulerdb {
     try {
       row.insert(*m_txn);
     } catch(exception::Exception &ex) {
-      params.add("exeptionMessage", ex.getMessageValue());
+      params.add("exceptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
       throw;
     }

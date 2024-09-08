@@ -438,7 +438,7 @@ void RepackRequest::insert()
   try {
     rjr.insert(*m_txn);
   } catch(exception::Exception &ex) {
-    params.add("exeptionMessage", ex.getMessageValue());
+    params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
     throw;
   }
