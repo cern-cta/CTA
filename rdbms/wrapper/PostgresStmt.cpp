@@ -101,11 +101,11 @@ void PostgresStmt::bindString(const std::string &paramName, const std::optional<
 //------------------------------------------------------------------------------
 // bindBool
 //------------------------------------------------------------------------------
-void bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
+void PostgresStmt::bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
   if(paramValue) {
-    bindString(paramName, paramValue.value() ? std::string("t") : std::string("f"));
+    PostgresStmt::bindString(paramName, paramValue.value() ? std::string("t") : std::string("f"));
   } else {
-    bindString(paramName, std::nullopt);
+    PostgresStmt::bindString(paramName, std::nullopt);
   }
 }
 
