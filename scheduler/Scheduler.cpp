@@ -149,7 +149,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
   const common::dataStructures::ArchiveFileQueueCriteriaAndFileId catalogueInfo(archiveFileId,
     queueCriteria.copyToPoolMap, queueCriteria.mountPolicy);
 
+  cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
+  auto schedulerBackendTime = t2.secs();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
@@ -177,7 +179,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
      .add("requesterGroup", request.requester.group)
      .add("srcURL", midEllipsis(request.srcURL, 50, 15))
      .add("catalogueTime", catalogueTime)
-     .add("schedulerDbTime", schedulerDbTime);
+     .add("schedulerDbTime", schedulerDbTime)
+     .add("schedulerBackendTime", schedulerBackendTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "Queued archive request");
   return archiveReqAddr;
