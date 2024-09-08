@@ -116,14 +116,11 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 
   utils::Timer timerinsert;
   // Insert the object into the DB
-  for (int i=0; i< 100000; i++) {
-
-    aReq->insert();
-    // Commit the transaction
-    aReq->commit();
-  }
+  aReq->insert();
+  // Commit the transaction
+  aReq->commit();
   log::ScopedParamContainer params(logContext);
-  params.add("InsertCommitTimeSec for 100000", timerinsert.secs());
+  params.add("InsertCommitTimeSec", timerinsert.secs());
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): insert() and commit() done.");
 
   return aReq->getIdStr();
