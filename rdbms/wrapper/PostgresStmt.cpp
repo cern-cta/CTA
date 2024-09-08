@@ -99,6 +99,17 @@ void PostgresStmt::bindString(const std::string &paramName, const std::optional<
 }
 
 //------------------------------------------------------------------------------
+// bindBool
+//------------------------------------------------------------------------------
+void bindBool(const std::string &paramName, const std::optional<bool> &paramValue);
+  if(paramValue) {
+    bindString(paramName, paramValue.value() ? std::string("t") : std::string("f"));
+  } else {
+    bindString(paramName, std::nullopt);
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint8
 //------------------------------------------------------------------------------
 void PostgresStmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {

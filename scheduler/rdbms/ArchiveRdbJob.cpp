@@ -154,7 +154,7 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
           .add("tapePool", m_tapePool)
           .add("reportFailureReason", reportFailureLog)
           .log(log::INFO,
-               "In schedulerdb::ArchiveRdbJob::failReport(): received failed job to be reported.");
+               "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
   if (m_jobRow.reportFailureLogs) {
     m_jobRow.reportFailureLogs.value() += reportFailureLog;
   } else {
