@@ -393,7 +393,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
       anotherTapePoolIsEncrypted, supply, anotherTapePoolComment);
     const uint32_t copyNb = 1;
     const std::string comment = "Create a separate archive route";
-    m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_anotherStorageClass.name, copyNb, anotherTapePoolName, comment);
+    m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_anotherStorageClass.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, anotherTapePoolName, comment);
   }
 
   {
@@ -587,7 +587,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();

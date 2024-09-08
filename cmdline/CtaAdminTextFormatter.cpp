@@ -21,6 +21,7 @@
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
+#include <common/dataStructures/ArchiveRouteType.hpp>
 
 #include "common/utils/utils.hpp"
 
@@ -227,6 +228,7 @@ void TextFormatter::printArchiveRouteLsHeader() {
   push_back(
     "storage class",
     "copy number",
+    "type",
     "tapepool",
     "c.user",
     "c.host",
@@ -242,6 +244,7 @@ void TextFormatter::print(const ArchiveRouteLsItem &arls_item) {
   push_back(
     arls_item.storage_class(),
     arls_item.copy_number(),
+    arls_item.archive_route_type(),
     arls_item.tapepool(),
     arls_item.creation_log().username(),
     arls_item.creation_log().host(),

@@ -164,11 +164,12 @@ private:
    *
    * @param storageClass The fully qualified storage class, in other words the
    * name of the disk instance and the name of the storage class.
+   * @param useRepackArchiveRoute True if looking for repack archive routes.
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
   common::dataStructures::TapeCopyToPoolMap getCachedTapeCopyToPoolMap(
-    const catalogue::StorageClass &storageClass) const;
+    const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const;
 
   /**
    * Returns a cached version of the expected number of archive routes for the
@@ -180,9 +181,10 @@ private:
    *
    * @param storageClass The fully qualified storage class, in other words the
    * name of the disk instance and the name of the storage class.
+   * @param useRepackArchiveRoute True if looking for repack archive routes.
    * @return The expected number of archive routes.
    */
-  uint64_t getCachedExpectedNbArchiveRoutes(const catalogue::StorageClass &storageClass) const;
+  uint64_t getCachedExpectedNbArchiveRoutes(const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const;
 
   /**
    * Returns a cached version of the specified requester mount-policy or std::nullopt
@@ -251,12 +253,13 @@ private:
    *
    * @param conn The database connection.
    * @param storageClass The fully qualified storage class, in other words the
+   * @param isRepack True if we are mapping copies to repack tape pools
    * name of the disk instance and the name of the storage class.
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
   common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(rdbms::Conn &conn,
-    const catalogue::StorageClass &storageClass) const;
+    const catalogue::StorageClass &storageClass, bool isRepack) const;
 
   /**
    * Returns the expected number of archive routes for the specified storage
@@ -269,7 +272,7 @@ private:
    * name of the disk instance and the name of the storage class.
    * @return The expected number of archive routes.
    */
-  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const catalogue::StorageClass &storageClass) const;
+  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const;
 
   /**
    * Throws an exception if the delete request passed in parameter is not consistent

@@ -48,7 +48,7 @@ executeReclaim() {
 }
 
 getFirstVidContainingFiles() {
-  vidToRepack=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json ta ls --all | jq -r '[.[] | select(.occupancy != "0") | select(.lastFseq != 0) | .vid] | .[0]')
+  vidToRepack=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json ta ls --all | jq -r '[.[] | select(.occupancy != "0") | select(.lastFseq != "0") | .vid] | .[0]')
   echo $vidToRepack
 }
 

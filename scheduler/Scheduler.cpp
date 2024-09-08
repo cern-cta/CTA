@@ -494,6 +494,11 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
   for(const auto& route: routes){
     //insert the route into the map to allow a quick retrieval
+    if (route.type == common::dataStructures::ArchiveRouteType::DEFAULT
+        && archiveRoutesMap.count(route.storageClassName) && archiveRoutesMap[route.storageClassName].count(route.copyNb)) {
+      // A DEFAULT archive route type should not override a previously found one
+      continue;
+    }
     archiveRoutesMap[route.storageClassName][route.copyNb] = route;
   }
   uint64_t fSeq;

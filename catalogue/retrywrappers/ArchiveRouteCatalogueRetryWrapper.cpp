@@ -30,16 +30,16 @@ ArchiveRouteCatalogueRetryWrapper::ArchiveRouteCatalogueRetryWrapper(const std::
   : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {}
 
 void ArchiveRouteCatalogueRetryWrapper::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName,
-  const std::string &comment) {
-  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&tapePoolName,&comment] {
-    return m_catalogue->ArchiveRoute()->createArchiveRoute(admin, storageClassName, copyNb, tapePoolName, comment);
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
+  const std::string &tapePoolName, const std::string &comment) {
+  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&archiveRouteType,&tapePoolName,&comment] {
+    return m_catalogue->ArchiveRoute()->createArchiveRoute(admin, storageClassName, copyNb, archiveRouteType, tapePoolName, comment);
   }, m_maxTriesToConnect);
 }
 
-void ArchiveRouteCatalogueRetryWrapper::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) {
-  return retryOnLostConnection(m_log, [this,&storageClassName,&copyNb] {
-    return m_catalogue->ArchiveRoute()->deleteArchiveRoute(storageClassName, copyNb);
+void ArchiveRouteCatalogueRetryWrapper::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType) {
+  return retryOnLostConnection(m_log, [this,&storageClassName,&copyNb,&archiveRouteType] {
+    return m_catalogue->ArchiveRoute()->deleteArchiveRoute(storageClassName, copyNb, archiveRouteType);
   }, m_maxTriesToConnect);
 }
 
@@ -58,16 +58,16 @@ std::list<common::dataStructures::ArchiveRoute> ArchiveRouteCatalogueRetryWrappe
 
 void ArchiveRouteCatalogueRetryWrapper::modifyArchiveRouteTapePoolName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb,
-  const std::string &tapePoolName) {
-  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&tapePoolName] {
-    return m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(admin, storageClassName, copyNb, tapePoolName);
+  const common::dataStructures::ArchiveRouteType &archiveRouteType, const std::string &tapePoolName) {
+  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&archiveRouteType,&tapePoolName] {
+    return m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(admin, storageClassName, copyNb, archiveRouteType, tapePoolName);
   }, m_maxTriesToConnect);
 }
 
 void ArchiveRouteCatalogueRetryWrapper::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) {
-  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&comment] {
-    return m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(admin, storageClassName, copyNb, comment);
+  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType, const std::string &comment) {
+  return retryOnLostConnection(m_log, [this,&admin,&storageClassName,&copyNb,&archiveRouteType,&comment] {
+    return m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(admin, storageClassName, copyNb, archiveRouteType, comment);
   }, m_maxTriesToConnect);
 }
 

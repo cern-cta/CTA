@@ -16,8 +16,11 @@
  */
 
 #include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/ArchiveRouteType.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -25,7 +28,7 @@ namespace cta::common::dataStructures {
 // constructor
 //------------------------------------------------------------------------------
 ArchiveRoute::ArchiveRoute():
-  copyNb(0) {}
+  copyNb(0), type(ArchiveRouteType::DEFAULT) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -33,6 +36,7 @@ ArchiveRoute::ArchiveRoute():
 bool ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
   return storageClassName==rhs.storageClassName
       && copyNb==rhs.copyNb
+      && type==rhs.type
       && tapePoolName==rhs.tapePoolName
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -52,6 +56,7 @@ bool ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
 std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj) {
   os << "(storageClassName=" << obj.storageClassName
      << " copyNb=" << obj.copyNb
+     << " archiveRouteType=" << obj.type
      << " tapePoolName=" << obj.tapePoolName
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog

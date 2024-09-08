@@ -60,7 +60,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -118,8 +118,8 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringStorageClas
   const std::string storageClassName = "";
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, storageClassName, copyNb,
-   tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringStorageClassName);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, storageClassName, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                               tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringStorageClassName);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_zeroCopyNb) {
@@ -134,8 +134,8 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_zeroCopyNb) {
 
   const uint32_t copyNb = 0;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb,
-    m_tape1.tapePoolName, comment), cta::catalogue::UserSpecifiedAZeroCopyNb);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                               m_tape1.tapePoolName, comment), cta::catalogue::UserSpecifiedAZeroCopyNb);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringTapePoolName) {
@@ -147,7 +147,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringTapePoolNam
   const std::string tapePoolName = "";
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringComment) {
@@ -162,8 +162,8 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringComment) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb,
-    m_tape1.tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringComment);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                               m_tape1.tapePoolName, comment), cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_storage_class) {
@@ -178,7 +178,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_storage_c
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, storageClassName, copyNb, m_tape1.tapePoolName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, storageClassName, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_tape_pool) {
@@ -191,7 +191,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_tape_pool
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
 
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, comment), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_same_twice) {
@@ -206,8 +206,8 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_same_twice) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), cta::exception::Exception);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment), cta::exception::Exception);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_two_routes_same_pool) {
@@ -222,11 +222,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_two_routes_same_pool) 
 
   const uint32_t copyNb1 = 1;
   const std::string comment1 = "Create archive route for copy 1";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb1, m_tape1.tapePoolName, comment1);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb1, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment1);
 
   const uint32_t copyNb2 = 2;
   const std::string comment2 = "Create archive route for copy 2";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb2, m_tape1.tapePoolName, comment2), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb2, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment2), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
@@ -241,7 +241,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -260,13 +260,13 @@ TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
   const cta::common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  m_catalogue->ArchiveRoute()->deleteArchiveRoute(m_storageClassSingleCopy.name, copyNb);
+  m_catalogue->ArchiveRoute()->deleteArchiveRoute(m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT);
 
   ASSERT_TRUE(m_catalogue->ArchiveRoute()->getArchiveRoutes().empty());
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute_non_existent) {
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->deleteArchiveRoute("non_existent_storage_class", 1234), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->deleteArchiveRoute("non_existent_storage_class", 1234, cta::common::dataStructures::ArchiveRouteType::DEFAULT), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_deleteStorageClass) {
@@ -281,7 +281,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_deleteStorageClass) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -319,7 +319,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -340,7 +340,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, anotherTapePoolName);
+  m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, anotherTapePoolName);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -374,7 +374,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -395,7 +395,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, "non_existent_tape_pool"), cta::catalogue::UserSpecifiedANonExistentTapePool);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, "non_existent_tape_pool"), cta::catalogue::UserSpecifiedANonExistentTapePool);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExistentArchiveRoute) {
@@ -409,7 +409,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName), cta::catalogue::UserSpecifiedANonExistentArchiveRoute);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName), cta::catalogue::UserSpecifiedANonExistentArchiveRoute);
 }
 
 TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
@@ -424,7 +424,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, m_tape1.tapePoolName, comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -446,7 +446,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, modifiedComment);
+  m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, modifiedComment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -477,7 +477,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment_nonExistentArch
 
   const uint32_t copyNb = 1;
   const std::string comment = "Comment";
-  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, comment), cta::exception::UserError);
 }
 
 }  // namespace unitTests
