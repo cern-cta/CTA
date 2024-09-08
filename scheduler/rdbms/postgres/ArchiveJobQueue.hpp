@@ -171,7 +171,9 @@ namespace cta::schedulerdb::postgres {
         MAX_RETRIES_WITHIN_MOUNT,
         TOTAL_RETRIES,
         LAST_MOUNT_WITH_FAILURE,
-        MAX_TOTAL_RETRIES) VALUES (
+        MAX_TOTAL_RETRIES,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES) VALUES (
         :ARCHIVE_REQUEST_ID,
         :REQUEST_JOB_COUNT,
         :STATUS,
@@ -200,7 +202,9 @@ namespace cta::schedulerdb::postgres {
         :MAX_RETRIES_WITHIN_MOUNT,
         :TOTAL_RETRIES,
         :LAST_MOUNT_WITH_FAILURE,
-        :MAX_TOTAL_RETRIES)
+        :MAX_TOTAL_RETRIES,
+        :TOTAL_REPORT_RETRIES,
+        :MAX_REPORT_RETRIES)
     )SQL";
 
       auto stmt = txn.conn().createStmt(sql);
@@ -233,7 +237,8 @@ namespace cta::schedulerdb::postgres {
       stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
       stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
       stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
-
+      stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
+      stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
       stmt.executeNonQuery();
 
     }
