@@ -26,8 +26,7 @@ namespace cta::schedulerdb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(RelationalDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_RelationalDB(pdb),
-  m_conn(std::make_shared<cta::rdbms::Conn>(pdb.m_connPool.getConn())),
-  m_txn(m_conn),
+  m_txn(pdb.m_connPool),
   m_ownerId(ownerId),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
