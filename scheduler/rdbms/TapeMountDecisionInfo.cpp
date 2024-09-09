@@ -115,6 +115,9 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   }
 
   // Get the next Mount Id
+  if(!m_txn->getConn()->isOpen()){
+    m_txn = std::make_unique<schedulerdb::Transaction>(m_RelationalDB.m_connPool);
+  }
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
   commit();
 
