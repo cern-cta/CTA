@@ -60,7 +60,7 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
     void commit();
 
     cta::RelationalDB& m_RelationalDB;
-    schedulerdb::Transaction m_txn;
+    std::unique_ptr<schedulerdb::Transaction> m_txn;
     std::string m_ownerId;
     bool m_lockTaken = false;
     log::Logger&           m_logger;

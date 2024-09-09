@@ -79,6 +79,7 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 {
   utils::Timer timer;
   if(m_conn == nullptr){
+    m_conn.reset();
     m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
   // Construct the archive request object
@@ -153,7 +154,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   if(m_conn == nullptr){
     m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
-  schedulerdb::Transaction txn(m_conn);
+  schedulerdb::Transaction txn(m_connPool);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
@@ -215,7 +216,7 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
   if(m_conn == nullptr){
     m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
-  cta::schedulerdb::Transaction txn(m_conn);
+  cta::schedulerdb::Transaction txn(m_connPool);
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
@@ -284,7 +285,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   if(m_conn == nullptr){
     m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
-  schedulerdb::Transaction txn(m_conn);
+  schedulerdb::Transaction txn(m_connPool);
   try {
     if (jobIDsList_success.size() > 0){
       schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
@@ -330,7 +331,7 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
   if(m_conn == nullptr){
     m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
-  schedulerdb::Transaction txn(m_conn);
+  schedulerdb::Transaction txn(m_connPool);
 
    // Get the best vid from the cache
   std::set<std::string, std::less<>> candidateVids;

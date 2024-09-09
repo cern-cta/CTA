@@ -26,7 +26,7 @@ namespace cta::schedulerdb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(RelationalDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_RelationalDB(pdb),
-  m_txn(pdb.m_connPool),
+  m_txn(std::make_unique<schedulerdb::Transaction>(pdb.m_connPool)),
   m_ownerId(ownerId),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
@@ -70,10 +70,10 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   }
 
   // Get the next Mount Id
-  if(!m_txn.getConn()->isOpen()){
-    m_txn = schedulerdb::Transaction(m_RelationalDB.m_connPool);
+  if(!m_txn->getConn()->isOpen()){
+    m_txn = std::make_unique(schedulerdb::Transaction(m_RelationalDB.m_connPool));
   }
-  auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(m_txn);
+  auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
   commit();
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
   // Fill up the mount info
@@ -103,10 +103,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
     const std::string& hostName
   )
 {
-  if(!m_txn.getConn()->isOpen()){
-    m_txn = schedulerdb::Transaction(m_RelationalDB.m_connPool);
+  if(!m_txn->getConn()->isOpen()){
+    m_txn = std::make_unique(schedulerdb::Transaction(m_RelationalDB.m_connPool));
   }
-  auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, m_txn, mount.vid);
+  auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, *m_txn, mount.vid);
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if(!m_lockTaken) {
@@ -115,7 +115,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   }
 
   // Get the next Mount Id
-  auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(m_txn);
+  auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
   commit();
 
   // Fill up the mount info
@@ -139,12 +139,12 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
 }
 
 void TapeMountDecisionInfo::lock(std::string_view tapePool) {
-  m_txn.lockForTapePool(tapePool);
+  m_txn->lockForTapePool(tapePool);
   m_lockTaken = true;
 }
 
 void TapeMountDecisionInfo::commit() {
-  m_txn.commit();
+  m_txn->commit();
   m_lockTaken = false;
 }
 
