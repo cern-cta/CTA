@@ -71,7 +71,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
 
   // Get the next Mount Id
   if(!m_txn->getConn()->isOpen()){
-    m_txn = std::make_unique(schedulerdb::Transaction(m_RelationalDB.m_connPool));
+    m_txn = std::make_unique<schedulerdb::Transaction>(m_RelationalDB.m_connPool);
   }
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
   commit();
@@ -104,7 +104,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   )
 {
   if(!m_txn->getConn()->isOpen()){
-    m_txn = std::make_unique(schedulerdb::Transaction(m_RelationalDB.m_connPool));
+    m_txn = std::make_unique<schedulerdb::Transaction>(m_RelationalDB.m_connPool);
   }
   auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, *m_txn, mount.vid);
   auto &rm = *privateRet;
