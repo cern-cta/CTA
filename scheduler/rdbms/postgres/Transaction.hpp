@@ -28,6 +28,22 @@ public:
   //explicit Transaction(rdbms::ConnPool &connPool, bool insert = false);
   explicit Transaction(rdbms::Conn &conn, bool insert = false);
 
+  // Move constructor
+  Transaction(Transaction&& other) noexcept;
+
+  // Move assignment operator
+  Transaction& operator=(Transaction&& other) noexcept;
+
+  /**
+   * Prohibit copy construction
+   */
+  Transaction(Transaction&) = delete;
+
+  /**
+   * Prohibit copy assignment
+   */
+  Transaction &operator=(const Transaction &) = delete;
+
   /**
    * Take out an advisory transaction lock per tape pool
    *

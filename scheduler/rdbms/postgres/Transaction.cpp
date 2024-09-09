@@ -29,6 +29,12 @@ Transaction::Transaction(cta::rdbms::Conn& conn, bool insert) :
   }
 }
 
+Transaction::Transaction(Transaction&& other) noexcept : m_conn(other.m_conn) { }
+
+Transaction& Transaction::operator=(Transaction&& other) noexcept {
+  return *this;
+}
+
 Transaction::~Transaction() { 
   if (m_begin) {
     m_conn.rollback();
