@@ -85,6 +85,8 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
+      // Close parent side of socket.
+      m_socketPair->close(server::SocketPair::Side::parent);
       return ret;
     } else {
       // We are in the parent process
