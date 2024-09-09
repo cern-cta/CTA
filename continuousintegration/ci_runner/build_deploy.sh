@@ -273,8 +273,8 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
-      kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
-        --build-dir /shared/CTA/build_srpm \
+      kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ${src_dir}/CTA/continuousintegration/ci_helpers/build_srpm.sh \
+        --build-dir ${src_dir}/CTA/build_srpm \
         --build-generator "${build_generator}" \
         --create-build-dir \
         --cta-version ${cta_version} \
@@ -314,11 +314,11 @@ build_deploy() {
     fi
 
     echo "Building RPMs..."
-    kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
-      --build-dir /shared/CTA/build_rpm \
+    kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ${src_dir}/CTA/continuousintegration/ci_helpers/build_rpm.sh \
+      --build-dir ${src_dir}/CTA/build_rpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
-      --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
+      --srpm-dir ${src_dir}/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \
       --vcs-version ${vcs_version} \
       --xrootd-ssi-version ${xrootd_ssi_version} \
