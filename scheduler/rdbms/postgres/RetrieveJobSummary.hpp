@@ -101,7 +101,7 @@ struct RetrieveJobSummaryRow {
         break;
     }
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = txn.m_conn().createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
