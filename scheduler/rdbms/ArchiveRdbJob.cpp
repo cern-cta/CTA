@@ -27,7 +27,6 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
   m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
   m_tapePool(jobQueueRow.tapePool),
   m_connPool(connPool),
-  m_conn(std::make_shared<cta::rdbms::Conn>(m_connPool.getConn())),
   m_jobRow(jobQueueRow)
   {
     // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
@@ -90,7 +89,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
   // not sure if this is necessary
   //m_jobRow.failureLogs.emplace_back(failureReason);
   //cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(m_conn);
+  cta::schedulerdb::Transaction txn(m_connPool);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
     // We have to determine if this was the last copy to fail/succeed.
@@ -167,7 +166,7 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
   // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
   // attempt to report failed due to an exception, for example if the file was deleted on close.
   //cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(m_conn);
+  cta::schedulerdb::Transaction txn(m_connPool);
   try {
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
 
