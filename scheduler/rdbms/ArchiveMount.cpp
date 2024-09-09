@@ -46,7 +46,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   std::list <std::string> jobIDsList;
   std::string jobIDsString;
   // start a new transaction
-  cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  cta::rdbms::Conn txn_conn = m_RelationalDB.m_connPool.getConn();
+  cta::schedulerdb::Transaction txn(txn_conn);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.lockForTapePool(mountInfo.tapePool);
   try {
@@ -162,7 +163,8 @@ void ArchiveMount::setJobBatchTransferred(
    * AJS_ToReportToUserForFailure
    * AJS_ToReportToUserForTransfer
    */
-  cta::schedulerdb::Transaction txn(m_RelationalDB.m_connPool);
+  cta::rdbms::Conn txn_conn = m_RelationalDB.m_connPool.getConn();
+  cta::schedulerdb::Transaction txn(txn_conn);
   try {
     // To be checked if all jobs for which setJobBatchTransferred is called can be reported as SUCCESS !
     postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);

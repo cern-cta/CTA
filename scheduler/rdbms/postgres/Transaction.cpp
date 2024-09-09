@@ -19,16 +19,6 @@
 
 namespace cta::schedulerdb {
 
-Transaction::Transaction(rdbms::ConnPool &connPool, bool insert)
-{
-  m_conn = connPool.getConn();
-  if (insert){
-    start_insert();
-  } else {
-    start();
-  }
-}
-
 Transaction::Transaction(cta::rdbms::Conn& conn, bool insert) :
         m_conn(conn)
 {

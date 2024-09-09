@@ -25,8 +25,8 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  explicit Transaction(rdbms::ConnPool &connPool, bool insert = false);
-  explicit Transaction(cta::rdbms::Conn &conn, bool insert = false);
+  //explicit Transaction(rdbms::ConnPool &connPool, bool insert = false);
+  explicit Transaction(rdbms::Conn &conn, bool insert = false);
 
   /**
    * Prohibit copy construction
@@ -86,7 +86,7 @@ public:
 
 private:
 
-  cta::rdbms::Conn& m_conn;
+  rdbms::Conn& m_conn;
   bool m_begin = false;
 };
 

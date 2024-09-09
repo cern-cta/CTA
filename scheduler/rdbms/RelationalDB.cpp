@@ -150,7 +150,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
      log::LogContext & logContext)
 {
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  cta::rdbms::Conn txn_conn = m_connPool.getConn();
+  schedulerdb::Transaction txn(txn_conn);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
@@ -209,7 +210,8 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
 {
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::rdbms::Conn txn_conn = m_connPool.getConn();
+  cta::schedulerdb::Transaction txn(txn_conn);
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
@@ -275,7 +277,8 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                  "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a reported job for a status change to Failed or Completed.");
     jobsBatchItor++;
   }
-  schedulerdb::Transaction txn(m_connPool);
+  cta::rdbms::Conn txn_conn = m_connPool.getConn();
+  schedulerdb::Transaction txn(txn_conn);
   try {
     if (jobIDsList_success.size() > 0){
       schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
@@ -318,8 +321,8 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     log::LogContext &logContext)
 {
   utils::Timer timer;
-
-  schedulerdb::Transaction txn(m_connPool);
+  cta::rdbms::Conn txn_conn = m_connPool.getConn();
+  schedulerdb::Transaction txn(txn_conn);
 
    // Get the best vid from the cache
   std::set<std::string, std::less<>> candidateVids;
