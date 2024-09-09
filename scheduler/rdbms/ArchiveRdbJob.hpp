@@ -56,6 +56,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   uint64_t m_mountId = 0;
   std::string m_tapePool;
   rdbms::ConnPool& m_connPool;
+  std::shared_ptr<rdbms::Conn> m_conn;
   postgres::ArchiveJobQueueRow m_jobRow; // Job data is encapsulated in this member
 
 };

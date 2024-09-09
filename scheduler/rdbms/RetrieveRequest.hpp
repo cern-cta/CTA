@@ -42,9 +42,9 @@ class RetrieveRequest {
   friend class cta::RelationalDB;
 
 public:
-  RetrieveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(&pool), m_lc(lc) { }
+  RetrieveRequest(std::shared_ptr<rdbms::Conn> conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) { }
 
-  RetrieveRequest(log::LogContext& lc, const schedulerdb::postgres::RetrieveJobQueueRow &row) : m_connPool(nullptr), m_lc(lc) {
+  RetrieveRequest(log::LogContext& lc, const schedulerdb::postgres::RetrieveJobQueueRow &row) : m_conn(nullptr), m_lc(lc) {
     *this = row;
   }
 
@@ -144,7 +144,7 @@ public:
   std::unique_ptr<schedulerdb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool *m_connPool;
+  std::shared_ptr<rdbms::Conn> m_conn;
   log::LogContext &m_lc;
 };
 

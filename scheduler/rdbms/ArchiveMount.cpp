@@ -46,8 +46,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   std::list <std::string> jobIDsList;
   std::string jobIDsString;
   // start a new transaction
-  cta::rdbms::Conn txn_conn = m_RelationalDB.m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(txn_conn);
+  cta::schedulerdb::Transaction txn(m_conn);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.lockForTapePool(mountInfo.tapePool);
   try {
@@ -73,11 +72,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
     // fetch a non transactional connection from the PGSCHED connection pool
-    auto conn = m_RelationalDB.m_connPool.getConn();
+    //auto conn = m_RelationalDB.m_connPool.getConn();
     rdbms::Rset resultSet;
     // retrieve more job information about the updated batch
     logContext.log(cta::log::DEBUG, "Query for job IDs " + jobIDsString + " ArchiveMount::getNextJobBatch()");
-    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(conn, jobIDsList);
+    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(*m_conn, jobIDsList);
     logContext.log(cta::log::DEBUG, "Job info of the updated jobs has been queueried, passing it on for execution");
     std::list <postgres::ArchiveJobQueueRow> jobs;
     // Construct the return value
@@ -159,14 +158,9 @@ void ArchiveMount::setJobBatchTransferred(
                  "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
     jobsBatchItor++;
   }
-  /* Update Status in ARCHIVE_JOB_QUEUE and table to either of the following 2 states:
-   * AJS_ToReportToUserForFailure
-   * AJS_ToReportToUserForTransfer
-   */
-  cta::rdbms::Conn txn_conn = m_RelationalDB.m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(txn_conn);
+  cta::schedulerdb::Transaction txn(m_conn);
   try {
-    // To be checked if all jobs for which setJobBatchTransferred is called can be reported as SUCCESS !
+    // all jobs for which setJobBatchTransferred is called shall be reported as successful
     postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
     txn.commit();
   } catch (exception::Exception &ex) {
