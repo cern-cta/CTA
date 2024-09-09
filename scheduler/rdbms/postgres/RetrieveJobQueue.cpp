@@ -28,19 +28,19 @@ void RetrieveJobQueueRow::updateMountID(Transaction &txn, const std::list<Retrie
     const char* const sqltt = R"SQL(
       CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP
     )SQL";
-    txn.conn().executeNonQuery(sqltt);
+    txn.m_conn().executeNonQuery(sqltt);
   } catch(exception::Exception &ex) {
     const char* const sqltrunc = R"SQL(
       TRUNCATE TABLE TEMP_JOB_IDS
     )SQL";
-    txn.conn().executeNonQuery(sqltrunc);
+    txn.m_conn().executeNonQuery(sqltrunc);
   }
 
   const char* const sqlcopy = R"SQL(
     COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --:JOB_ID
   )SQL";
 
-  auto stmt = txn.conn().createStmt(sqlcopy);
+  auto stmt = txn.m_conn().createStmt(sqlcopy);
   auto & postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
 
   const size_t nbrows = rowList.size();
@@ -61,7 +61,7 @@ void RetrieveJobQueueRow::updateMountID(Transaction &txn, const std::list<Retrie
        JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)
   )SQL";
 
-  stmt = txn.conn().createStmt(sql);
+  stmt = txn.m_conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeQuery();
 }
