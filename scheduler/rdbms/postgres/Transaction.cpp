@@ -29,6 +29,16 @@ Transaction::Transaction(rdbms::ConnPool &connPool, bool insert) :
   }
 }
 
+Transaction::Transaction(rdbms::Conn &conn, bool insert) :
+        m_conn(conn)
+{
+  if (insert){
+    start_insert();
+  } else {
+    start();
+  }
+}
+
 Transaction::~Transaction() { 
   if (m_begin) {
     m_conn.rollback();
