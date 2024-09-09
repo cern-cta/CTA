@@ -29,7 +29,7 @@ Transaction::Transaction(rdbms::ConnPool &connPool, bool insert) :
   }
 }
 
-Transaction::Transaction(rdbms::Conn &conn, bool insert) :
+Transaction::Transaction(cta::rdbms::Conn& conn, bool insert) :
         m_conn(conn)
 {
   if (insert){
@@ -91,10 +91,4 @@ void Transaction::abort() {
   m_begin = false;
 }
 
-rdbms::Conn &Transaction::conn() {
-  if (!m_begin) {
-    throw SQLError(std::string("No transaction"));
-  }
-  return m_conn;
-}
 } // namespace cta::schedulerdb

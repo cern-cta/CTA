@@ -39,11 +39,11 @@ RelationalDB::RelationalDB( const std::string &ownerId,
                                   const uint64_t nbConns) :
    m_ownerId(ownerId),
    m_connPool(login, nbConns),
-   m_connForInsert(m_connPool.getConn()),
    m_catalogue(catalogue),
    m_logger(logger)
 {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+  m_connForInsert = std::make_unique<rdbms::Conn>(m_connPool.getConn());
 }
 
 RelationalDB::~RelationalDB() = default;
@@ -78,11 +78,11 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
   utils::Timer timer;
-  if(!m_connForInsert.isOpen()){
-    m_connForInsert = m_connPool.getConn();
+  if(m_connForInsert == nullptr){
+    m_connForInsert = std::make_unique<rdbms::Conn>(m_connPool.getConn());
   }
   // Construct the archive request object
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool, m_connForInsert, logContext);
+  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool, *m_connForInsert, logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;

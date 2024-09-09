@@ -26,7 +26,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
   explicit Transaction(rdbms::ConnPool &connPool, bool insert = false);
-  explicit Transaction(rdbms::Conn &conn, bool insert = false);
+  explicit Transaction(cta::rdbms::Conn &conn, bool insert = false);
 
   /**
    * Prohibit copy construction
@@ -37,13 +37,6 @@ public:
    * Prohibit copy assignment
    */
   Transaction &operator=(const Transaction &) = delete;
-
-  /**
-   * Get the transactional connection
-   *
-   * @return txn connection
-   */
-  rdbms::Conn &conn();
 
   /**
    * Take out an advisory transaction lock per tape pool
@@ -89,7 +82,7 @@ public:
 
 private:
 
-  rdbms::Conn m_conn;
+  cta::rdbms::Conn& m_conn;
   bool m_begin = false;
 };
 
