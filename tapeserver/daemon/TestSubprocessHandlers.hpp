@@ -40,6 +40,7 @@ public:
 
   SubprocessHandler::ProcessingStatus fork() override {
     m_childProcess = ::fork();
+    m_processingStatus.forkRequested = false;
     cta::exception::Errnum::throwOnMinusOne(m_childProcess, 
         "In EchoSubprocess::fork(): failed to fork(): ");
     if (!m_childProcess) { // We are on the child side
