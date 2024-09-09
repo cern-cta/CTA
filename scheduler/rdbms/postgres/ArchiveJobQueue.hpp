@@ -207,7 +207,7 @@ namespace cta::schedulerdb::postgres {
         :MAX_REPORT_RETRIES)
     )SQL";
 
-      auto stmt = txn.m_conn().createStmt(sql);
+      auto stmt = txn.getConn().createStmt(sql);
       stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
       stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
       stmt.bindString(":STATUS", to_string(status));

@@ -80,6 +80,10 @@ public:
 
   ~Transaction() noexcept;
 
+  cta::rdbms::Conn& getConn() {
+    return m_conn;
+  }
+
 private:
 
   cta::rdbms::Conn& m_conn;
