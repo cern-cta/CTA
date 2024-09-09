@@ -29,16 +29,6 @@ public:
   explicit Transaction(rdbms::Conn &conn, bool insert = false);
 
   /**
-   * Prohibit copy construction
-   */
-  Transaction(Transaction&) = delete;
-
-  /**
-   * Prohibit copy assignment
-   */
-  Transaction &operator=(const Transaction &) = delete;
-
-  /**
    * Take out an advisory transaction lock per tape pool
    *
    * The lock will be automatically released when the transaction ends (or the connection is terminated).
@@ -60,12 +50,6 @@ public:
    * Commit the transaction
    */
   void commit();
-
-  /*
-   * Method to set a new connection
-   * @param newConn reference to a new connection
-   */
-  void setConn(cta::rdbms::Conn& newConn);
 
   /**
    * Start new transaction unless it has started already
