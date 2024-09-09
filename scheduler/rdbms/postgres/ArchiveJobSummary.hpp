@@ -89,7 +89,7 @@ struct ArchiveJobSummaryRow {
     const char* const lock_sql = R"SQL(
     LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
     )SQL";
-    auto stmt = txn.m_conn().createStmt(lock_sql);
+    auto stmt = txn.getConn().createStmt(lock_sql);
     stmt.executeNonQuery();
     const char* const sql = R"SQL(
       SELECT 
@@ -111,7 +111,7 @@ struct ArchiveJobSummaryRow {
         AND MOUNT_ID IS NULL
     )SQL";
 
-    stmt = txn.m_conn().createStmt(sql);
+    stmt = txn.getConn().createStmt(sql);
     return stmt.executeQuery();
   }
 
@@ -133,7 +133,7 @@ struct ArchiveJobSummaryRow {
       WHERE
         STATUS = :STATUS::ARCHIVE_JOB_STATUS
     )SQL";
-    auto stmt = txn.m_conn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", "AJS_Failed");
     return stmt.executeQuery();
   }
