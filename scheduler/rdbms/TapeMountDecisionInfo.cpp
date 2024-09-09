@@ -26,7 +26,7 @@ namespace cta::schedulerdb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(RelationalDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_RelationalDB(pdb),
-  m_conn(pdb.m_connPool.getConn()),
+  m_conn(std::make_shared<cta::rdbms::Conn>(pdb.m_connPool.getConn())),
   m_txn(m_conn),
   m_ownerId(ownerId),
   m_logger(logger),
@@ -71,10 +71,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   }
 
   // Get the next Mount Id
-  std::optional<cta::rdbms::Conn> newConn;
   if(!m_txn.getConn()->isOpen()){
-    newConn = m_RelationalDB.m_connPool.getConn();
-    m_txn = schedulerdb::Transaction(*newConn);
+    m_txn = schedulerdb::Transaction(m_RelationalDB.m_connPool);
   }
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(m_txn);
   commit();
@@ -106,10 +104,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
     const std::string& hostName
   )
 {
-  std::optional<cta::rdbms::Conn> newConn;
   if(!m_txn.getConn()->isOpen()){
-    newConn = m_RelationalDB.m_connPool.getConn();
-    m_txn = schedulerdb::Transaction(*newConn);
+    m_txn = schedulerdb::Transaction(m_RelationalDB.m_connPool);
   }
   auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, m_txn, mount.vid);
   auto &rm = *privateRet;
