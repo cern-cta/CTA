@@ -78,7 +78,7 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
   utils::Timer timer;
-  if(m_connForInsert == nullptr || !m_connForInsert.isOpen()){
+  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
     m_connForInsert = std::make_unique<rdbms::Conn>(m_connPool.getConn());
   }
   // Construct the archive request object
