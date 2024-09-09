@@ -61,6 +61,12 @@ public:
    */
   void commit();
 
+  /*
+   * Method to set a new connection
+   * @param newConn reference to a new connection
+   */
+  void setConn(cta::rdbms::Conn& newConn);
+
   /**
    * Start new transaction unless it has started already
    */

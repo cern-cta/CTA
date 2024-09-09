@@ -81,4 +81,9 @@ void Transaction::abort() {
   m_begin = false;
 }
 
+void Transaction::setConn(cta::rdbms::Conn& newConn) {
+  m_conn = newConn;  // Reset the connection
+  // Perform additional reinitialization steps if needed
+}
+
 } // namespace cta::schedulerdb
