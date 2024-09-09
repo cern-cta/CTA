@@ -432,8 +432,8 @@ void RepackRequest::insert()
    */
   log::ScopedParamContainer params(m_lc);
   rjr.addParamsToLogContext(params);
-
-  m_txn.reset(new schedulerdb::Transaction(m_connPool));
+  cta::rdbms::Conn txn_conn = m_connPool.getConn();
+  m_txn.reset(new schedulerdb::Transaction(txn_conn));
 
   try {
     rjr.insert(*m_txn);
