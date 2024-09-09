@@ -98,7 +98,7 @@ private:
 
   // References to external objects
   rdbms::ConnPool &m_connPool;
-  rdbms::ConnPool &m_conn;
+  rdbms::Conn &m_conn;
   log::LogContext&  m_lc;
 
   // ArchiveRequest state
