@@ -27,7 +27,7 @@ namespace cta::schedulerdb {
 
 void ArchiveRequest::insert() {
   if (!m_txn) {
-    m_txn.reset(new schedulerdb::Transaction(m_connPool, true));
+    m_txn.reset(new schedulerdb::Transaction(m_conn, true));
   }
   //m_txn->start();
   // Getting the next ID for the request possibly composed of multiple jobs

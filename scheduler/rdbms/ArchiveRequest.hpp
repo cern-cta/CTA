@@ -32,7 +32,7 @@ CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   
 class ArchiveRequest {
 public:
-  ArchiveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) { }
+  ArchiveRequest(rdbms::ConnPool &pool, rdbms::Conn &conn, log::LogContext& lc) : m_connPool(pool), m_conn(conn), m_lc(lc) { }
 
   void insert();
   [[noreturn]] void update() const;
@@ -98,6 +98,7 @@ private:
 
   // References to external objects
   rdbms::ConnPool &m_connPool;
+  rdbms::ConnPool &m_conn;
   log::LogContext&  m_lc;
 
   // ArchiveRequest state
