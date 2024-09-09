@@ -26,8 +26,8 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
   m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
   m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
   m_tapePool(jobQueueRow.tapePool),
-  m_connPool(m_connPool),
-  m_conn(std::make_shared<cta::rdbms::Conn>(m_connPool.getConn()))
+  m_connPool(connPool),
+  m_conn(std::make_shared<cta::rdbms::Conn>(m_connPool.getConn())),
   m_jobRow(jobQueueRow)
   {
     // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
