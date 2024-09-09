@@ -26,7 +26,8 @@ namespace cta::schedulerdb {
 
 TapeMountDecisionInfo::TapeMountDecisionInfo(RelationalDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger) :
   m_RelationalDB(pdb),
-  m_txn(pdb.m_connPool),
+  m_conn(pdb.m_connPool.getConn()),
+  m_txn(m_conn),
   m_ownerId(ownerId),
   m_logger(logger),
   m_tapeDrivesState(drivesState)
@@ -70,6 +71,10 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   }
 
   // Get the next Mount Id
+  if(!m_txn.getConn().isOpen()){
+    cta::rdbms::Conn newconn = m_RelationalDB.m_connPool.getConn();
+    m_txn = schedulerdb::Transaction(newconn);
+  }
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(m_txn);
   commit();
   am.nbFilesCurrentlyOnTape    = tape.lastFSeq;
@@ -100,6 +105,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
     const std::string& hostName
   )
 {
+  if(!m_txn.getConn().isOpen()){
+    cta::rdbms::Conn newconn = m_RelationalDB.m_connPool.getConn();
+    m_txn = schedulerdb::Transaction(newconn);
+  }
   auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, m_txn, mount.vid);
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
