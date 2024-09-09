@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/threading/SocketPair.hpp"
+#include "common/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 
 #include <future>
@@ -35,7 +36,7 @@ public:
    * pair.
    * @param sopcketPair Reference to the socket pair.
    */
-  explicit DriveHandlerProxy(server::SocketPair & sopcketPair);
+  explicit DriveHandlerProxy(server::SocketPair & sopcketPair, cta::log::LogContext& lc);
   ~DriveHandlerProxy() override;
   void reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) override;
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
@@ -52,6 +53,8 @@ private:
   std::optional<std::function<void()>> m_refreshLoggerHandler;
   std::future<void> m_refreshLoggerAsyncFut;
   std::atomic<bool> m_refreshLoggerClosing = false;
+  // The log context
+  cta::log::LogContext& m_lc;
 };
 
 } // namespace cta::tape::daemon

@@ -1061,7 +1061,7 @@ std::shared_ptr<cta::tape::daemon::TapedProxy> DriveHandler::createDriveHandlerP
   if (!m_socketPair) {
     throw exception::Exception("In DriveHandler::createDriveHandlerProxy(): socket pair is null.");
   }
-  return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair);
+  return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair, m_lc);
 }
 
 } // namespace cta::tape::daemon
