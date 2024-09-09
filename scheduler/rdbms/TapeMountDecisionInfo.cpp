@@ -72,7 +72,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
 
   // Get the next Mount Id
   std::optional<cta::rdbms::Conn> newConn;
-  if(!m_txn.getConn().isOpen()){
+  if(!m_txn.getConn()->isOpen()){
     newConn = m_RelationalDB.m_connPool.getConn();
     m_txn = schedulerdb::Transaction(*newConn);
   }
@@ -107,7 +107,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   )
 {
   std::optional<cta::rdbms::Conn> newConn;
-  if(!m_txn.getConn().isOpen()){
+  if(!m_txn.getConn()->isOpen()){
     newConn = m_RelationalDB.m_connPool.getConn();
     m_txn = schedulerdb::Transaction(*newConn);
   }

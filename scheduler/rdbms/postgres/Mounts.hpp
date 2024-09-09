@@ -62,7 +62,7 @@ struct MountsRow {
         SELECT NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID
       )SQL";
       txn.start();
-      auto stmt = txn.getConn().createStmt(sql);
+      auto stmt = txn.getConn()->createStmt(sql);
       auto rset = stmt.executeQuery();
       if (!rset.next()) {
         throw exception::Exception("Result set is unexpectedly empty");

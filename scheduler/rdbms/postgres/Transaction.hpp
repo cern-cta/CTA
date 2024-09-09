@@ -26,8 +26,8 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
   // Constructors
-  Transaction::Transaction(std::shared_ptr<cta::rdbms::Conn> conn, bool ownConnection);
-  Transaction::Transaction(cta::rdbms::ConnPool& connPool);
+  Transaction(std::shared_ptr<cta::rdbms::Conn> conn, bool ownConnection);
+  Transaction(cta::rdbms::ConnPool& connPool);
 
   // Move constructor
   Transaction(Transaction&& other) noexcept;
@@ -90,14 +90,14 @@ public:
   /**
    * Provides access to the connection
    */
-  std::shared_ptr<cta::rdbms::Conn> Transaction::getConn() const;
+  std::shared_ptr<cta::rdbms::Conn> getConn() const;
 
   /**
    * Allows to reset the transaction connection to a new one
    *
    * @param connPool
    */
-  void Transaction::resetConn(cta::rdbms::ConnPool& connPool);
+  void resetConn(cta::rdbms::ConnPool& connPool);
 
 private:
   std::shared_ptr<cta::rdbms::Conn> m_conn;

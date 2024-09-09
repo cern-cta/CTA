@@ -204,7 +204,7 @@ struct RetrieveJobQueueRow {
         :IS_FAILED)
     )SQL";
 
-    auto stmt = txn.getConn().createStmt(sql);
+    auto stmt = txn.getConn()->createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQID", retrieveReqId);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindString(":VID", vid);
@@ -352,7 +352,7 @@ struct RetrieveJobQueueRow {
         LIMIT :LIMIT
     )SQL";
 
-    auto stmt = txn.getConn().createStmt(sql);
+    auto stmt = txn.getConn()->createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
@@ -422,7 +422,7 @@ struct RetrieveJobQueueRow {
         LIMIT :LIMIT
     )SQL";
 
-    auto stmt = txn.getConn().createStmt(sql);
+    auto stmt = txn.getConn()->createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":LIMIT", limit);
 
