@@ -697,7 +697,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   std::map<std::pair<common::dataStructures::MountType, std::string>,SchedulerDatabase::PotentialMount> potentialMounts;
 
   // Iterate over all archive queues
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue0(*txn);
+  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue(*txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     // Set the queue type
@@ -734,8 +734,14 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   }
   // release the lock on the view,
   // so that other tape servers can query the job summary
-  txn.commit();
-
+  try{
+    txn->commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::WARNING,
+           "In RelationalDB::fetchMountInfo: failed to commit and release the DB lock" +
+           ex.getMessageValue());
+    txn->abort();
+  }
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
     lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): pushing back potential mount to the vector.");
