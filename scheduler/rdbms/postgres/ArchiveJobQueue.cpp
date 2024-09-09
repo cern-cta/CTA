@@ -297,7 +297,6 @@ namespace cta::schedulerdb::postgres {
       const char *const sql = R"SQL(
           SELECT NEXTVAL('ARCHIVE_REQUEST_ID_SEQ') AS ARCHIVE_REQUEST_ID
         )SQL";
-      txn.start();
       auto stmt = txn.getConn().createStmt(sql);
       auto rset = stmt.executeQuery();
       if (!rset.next()) {

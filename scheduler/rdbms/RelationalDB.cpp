@@ -78,11 +78,11 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
   utils::Timer timer;
-  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
-    m_connForInsert = std::make_unique<rdbms::Conn>(m_connPool.getConn());
+  if(m_conn == nullptr){
+    m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
   // Construct the archive request object
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool, *m_connForInsert, logContext);
+  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_conn, logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -150,8 +150,10 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
      log::LogContext & logContext)
 {
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  schedulerdb::Transaction txn(txn_conn);
+  if(m_conn == nullptr){
+    m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
+  schedulerdb::Transaction txn(m_conn);
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before getting archive row.");
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
@@ -210,8 +212,10 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
 {
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
-  cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(txn_conn);
+  if(m_conn == nullptr){
+    m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
+  cta::schedulerdb::Transaction txn(m_conn);
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
@@ -277,8 +281,10 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                  "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): received a reported job for a status change to Failed or Completed.");
     jobsBatchItor++;
   }
-  cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  schedulerdb::Transaction txn(txn_conn);
+  if(m_conn == nullptr){
+    m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
+  schedulerdb::Transaction txn(m_conn);
   try {
     if (jobIDsList_success.size() > 0){
       schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
@@ -321,8 +327,10 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     log::LogContext &logContext)
 {
   utils::Timer timer;
-  cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  schedulerdb::Transaction txn(txn_conn);
+  if(m_conn == nullptr){
+    m_conn = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
+  schedulerdb::Transaction txn(m_conn);
 
    // Get the best vid from the cache
   std::set<std::string, std::less<>> candidateVids;

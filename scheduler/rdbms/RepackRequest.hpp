@@ -34,9 +34,9 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
 
  public:
 
-  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext &lc) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) { }
+  RepackRequest(std::shared_ptr<rdbms::Conn> conn, catalogue::Catalogue &catalogue, log::LogContext &lc) : m_conn(conn), m_catalogue(catalogue), m_lc(lc) { }
 
-  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext& lc, const schedulerdb::postgres::RepackJobQueueRow &row) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) {
+  RepackRequest(std::shared_ptr<rdbms::Conn> conn, catalogue::Catalogue &catalogue, log::LogContext& lc, const schedulerdb::postgres::RepackJobQueueRow &row) : m_conn(conn), m_catalogue(catalogue), m_lc(lc) {
     *this = row;
   }
 
@@ -94,7 +94,8 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
   std::unique_ptr<schedulerdb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool      &m_connPool;
+  //rdbms::ConnPool      &m_connPool;
+  std::shared_ptr<rdbms::Conn> m_conn;
   catalogue::Catalogue &m_catalogue;
   log::LogContext      &m_lc;
 };

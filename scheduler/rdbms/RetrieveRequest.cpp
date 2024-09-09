@@ -148,9 +148,7 @@ namespace cta::schedulerdb {
      */
     log::ScopedParamContainer params(m_lc);
     row.addParamsToLogContext(params);
-    cta::rdbms::Conn txn_conn = m_connPool->getConn();
-
-    m_txn.reset(new schedulerdb::Transaction(txn_conn));
+    m_txn.reset(new schedulerdb::Transaction(m_conn));
 
     try {
       row.insert(*m_txn);
