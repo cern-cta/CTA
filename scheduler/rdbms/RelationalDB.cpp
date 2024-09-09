@@ -697,7 +697,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   std::map<std::pair<common::dataStructures::MountType, std::string>,SchedulerDatabase::PotentialMount> potentialMounts;
 
   // Iterate over all archive queues
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue(txn);
+  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue0(*txn);
   while(rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     // Set the queue type
