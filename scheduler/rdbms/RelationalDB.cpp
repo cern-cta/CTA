@@ -39,7 +39,7 @@ RelationalDB::RelationalDB( const std::string &ownerId,
                                   const uint64_t nbConns) :
    m_ownerId(ownerId),
    m_connPool(login, nbConns),
-   m_connForInsert(m_connPool.getConn())
+   m_connForInsert(m_connPool.getConn()),
    m_catalogue(catalogue),
    m_logger(logger)
 {
