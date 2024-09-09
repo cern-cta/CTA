@@ -39,11 +39,11 @@ RelationalDB::RelationalDB( const std::string &ownerId,
                                   const uint64_t nbConns) :
    m_ownerId(ownerId),
    m_connPool(login, nbConns),
+   m_conn(std::make_unique<rdbms::Conn>(m_connPool.getConn())),
    m_catalogue(catalogue),
    m_logger(logger)
 {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
-  m_connForInsert = std::make_unique<rdbms::Conn>(m_connPool.getConn());
 }
 
 RelationalDB::~RelationalDB() = default;
@@ -352,7 +352,7 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
   }
 
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connPool,logContext);
+  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_conn,logContext);
   ret.requestId = rReq->getIdStr();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
@@ -433,7 +433,7 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
 
   // Prepare the repack request object in memory.
   cta::utils::Timer t;
-  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool,m_catalogue,logContext);
+  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_conn,m_catalogue,logContext);
   rr->setVid(vid);
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
