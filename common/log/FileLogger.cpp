@@ -69,14 +69,14 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
 //------------------------------------------------------------------------------
 void FileLogger::refresh() {
   // In the case of FileLogger this means getting a new fd (to rotate the log file).
-  operator()(INFO, "Rotating log file");
+  operator()(INFO, "Refreshing log file descriptor...");
   {
     threading::MutexLocker lock(m_mutex);
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH );
     exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to refresh log file: ") +
                                              std::string(m_filePath));
   }
-  operator()(INFO, "Using new log file");
+  operator()(INFO, "Log file descriptor reopened");
 }
 
 } // namespace cta::log

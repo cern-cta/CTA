@@ -20,7 +20,7 @@
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc): m_socketPair(socketPair), m_lc(lc) {
   m_socketPair.close(server::SocketPair::Side::parent);
 }
 
@@ -90,19 +90,33 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
     m_refreshLoggerHandler = handler;
     m_refreshLoggerClosingSock = std::make_unique<cta::server::SocketPair>();
     m_refreshLoggerAsyncFut = std::async(std::launch::async, [this] {
-      server::SocketPair::pollMap pollList;
-      pollList["0"] = &m_socketPair;
-      pollList["1"] = m_refreshLoggerClosingSock.get();
-      while (!m_refreshLoggerClosing) {
-        try {
-          server::SocketPair::poll(pollList, 300, server::SocketPair::Side::parent); // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
-        } catch (server::SocketPair::Timeout &) {
-          // Do nothing
-          continue;
+      try {
+        server::SocketPair::pollMap pollList;
+        pollList["0"] = &m_socketPair;
+        pollList["1"] = m_refreshLoggerClosingSock.get();
+        m_lc.log(log::INFO, "In DriveHandlerProxy::setRefreshLoggerHandler(): Waiting for refresh logger signal.");
+        while (!m_refreshLoggerClosing) {
+          try {
+            server::SocketPair::poll(pollList, 300,
+                                     server::SocketPair::Side::parent); // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
+          } catch (server::SocketPair::Timeout &) {
+            // Do nothing
+            continue;
+          }
+          m_socketPair.receive();
+          auto handler = m_refreshLoggerHandler.value();
+          handler();
         }
-        m_socketPair.receive();
-        auto handler = m_refreshLoggerHandler.value();
-        handler();
+      } catch(cta::exception::Exception & ex) {
+        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
+        m_lc.logBacktrace(log::INFO, ex.backtrace());
+        throw ex;
+      } catch(std::exception &ex) {
+        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
+        throw ex;
+      } catch(...) {
+        m_lc.log(log::ERR, "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
+        throw;
       }
     });
   } else {
