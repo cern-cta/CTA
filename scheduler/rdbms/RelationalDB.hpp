@@ -201,7 +201,7 @@ private:
 
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
-  std::shared_ptr<rdbms::Conn> m_conn;
+  std::shared_ptr<rdbms::Conn> m_connForInsert;
   catalogue::Catalogue&  m_catalogue;
   log::Logger&           m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
