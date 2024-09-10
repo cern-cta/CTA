@@ -65,7 +65,7 @@ void RelationalDB::ping()
         found_scheddb = true;
       }
     }
-    conn.close();
+    conn.commit();
     if(!found_scheddb) {
       throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
