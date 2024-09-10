@@ -26,9 +26,7 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  if (!m_txn) {
-    m_txn.reset(new schedulerdb::Transaction(m_conn));
-  }
+  m_txn.reset(new schedulerdb::Transaction(m_conn));
   //m_txn->start();
   // Getting the next ID for the request possibly composed of multiple jobs
   uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_txn);
@@ -77,19 +75,8 @@ void ArchiveRequest::insert() {
       m_txn->abort(); // Rollback on error
       throw;
     }
-
+    m_txn->reset();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
-  }
-}
-
-void ArchiveRequest::commit() {
-  if (m_txn) {
-    try {
-      m_txn->commit();
-    } catch(exception::Exception &ex) {
-      m_txn->abort();
-    }
-    m_txn.reset();
   }
 }
 
