@@ -178,8 +178,8 @@ namespace cta::schedulerdb::postgres {
             JOB_ID,
             ARCHIVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
-    :STATUS AS STATUS
-    CREATION_TIME,
+            :STATUS AS STATUS,
+            CREATION_TIME,
             MOUNT_POLICY,
             TAPE_POOL,
             VID,
