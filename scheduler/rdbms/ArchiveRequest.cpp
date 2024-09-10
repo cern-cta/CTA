@@ -67,10 +67,13 @@ void ArchiveRequest::insert() {
       //  tapePool = aj.tapepool;
       //  m_txn.lockGlobal(aj.tapepool);
       //}
+      m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
       ajr.insert(*m_txn);
+      m_txn->commit();
+      m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): done insert row.");
     } catch(exception::Exception &ex) {
       params.add("exceptionMessage", ex.getMessageValue());
-      m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
+      m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
       m_txn->abort(); // Rollback on error
       throw;
     }

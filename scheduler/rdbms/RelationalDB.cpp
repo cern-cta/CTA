@@ -127,10 +127,7 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest insert.");
 
   aReq->insert();
-  // Commit the transaction
-  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest commit.");
 
-  aReq->commit();
   log::ScopedParamContainer params(logContext);
   params.add("InsertCommitTimeSec", timerinsert.secs());
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): insert() and commit() done.");
