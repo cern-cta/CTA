@@ -241,6 +241,6 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_er
 
 echo
 echo "Launching log_rotate_test.sh on ${CTA_TPSRV_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -- bash /root/log_rotate_test.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash /root/log_rotate_test.sh || exit 1
 
 exit 0
