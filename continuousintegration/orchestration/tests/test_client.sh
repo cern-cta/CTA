@@ -245,6 +245,6 @@ kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_erro
 
 echo
 echo "Launching log_rotate_test.sh on ${TPSRV01} pod"
-kubectl -n ${NAMESPACE} exec ${TPSRV01} -- bash /root/log_rotate_test.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${TPSRV01} -c taped -- bash /root/log_rotate_test.sh || exit 1
 
 exit 0
