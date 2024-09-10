@@ -288,7 +288,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair->receive(server::SocketPair::Side::parent);
+    auto datagram = m_socketPair->receive(server::SocketPair::Side::child);
     if (!message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);
@@ -320,20 +320,18 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       m_socketPair.reset(nullptr);
     }
     else {
-      m_lc.log(log::ERR,
-                                        "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
+      m_lc.log(log::ERR, "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
     }
     // We expect to be woken up by the child's signal.
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::DEBUG,
-                                      "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
+    m_lc.log(log::DEBUG, "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR,
-                                      "In DriveHandler::processEvent(): failed");
+    m_lc.log(log::ERR, "In DriveHandler::processEvent(): failed. Backtrace follows.");
+    m_lc.logBacktrace(log::INFO, ex.backtrace());
     return m_processingStatus;
   }
 }
