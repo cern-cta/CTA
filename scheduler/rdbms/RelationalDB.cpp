@@ -423,10 +423,13 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
 
   std::string bufferURL = repackRequest.m_repackBufferURL;
   common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
-
+  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
+    m_connForInsert.reset();
+    m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
   // Prepare the repack request object in memory.
   cta::utils::Timer t;
-  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_conn,m_catalogue,logContext);
+  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_connForInsert,m_catalogue,logContext);
   rr->setVid(vid);
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
