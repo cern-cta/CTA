@@ -26,7 +26,7 @@ DriveHandlerProxy::~DriveHandlerProxy() {
   if (m_refreshLoggerClosingSock) {
     m_refreshLoggerClosing = true;
     // Send a signal to stop the waiting thread
-    m_refreshLoggerClosingSock->send("\0", server::SocketPair::Side::child);
+    m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
     m_refreshLoggerAsyncFut.wait();
   }
 }
