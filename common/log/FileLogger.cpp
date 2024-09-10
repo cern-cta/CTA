@@ -72,6 +72,9 @@ void FileLogger::refresh() {
   operator()(INFO, "Refreshing log file descriptor...");
   {
     threading::MutexLocker lock(m_mutex);
+    if (-1 != m_fd) {
+      ::close(m_fd);
+    }
     m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH );
     exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to refresh log file: ") +
                                              std::string(m_filePath));
