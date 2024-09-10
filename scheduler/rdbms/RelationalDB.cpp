@@ -340,9 +340,12 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
       break;
     }
   }
-
+  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
+    m_connForInsert.reset();
+    m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  }
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_conn,logContext);
+  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connForInsert,logContext);
   ret.requestId = rReq->getIdStr();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
