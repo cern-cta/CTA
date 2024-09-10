@@ -65,6 +65,7 @@ void RelationalDB::ping()
         found_scheddb = true;
       }
     }
+    conn.close();
     if(!found_scheddb) {
       throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
@@ -79,10 +80,12 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 {
   utils::Timer timer;
   if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
+    logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): resetting connection.");
     m_connForInsert.reset();
     m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   }
   // Construct the archive request object
+  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest with RDB connection.");
   auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connForInsert, logContext);
 
   // Summarize all as an archiveFile
@@ -121,8 +124,12 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 
   utils::Timer timerinsert;
   // Insert the object into the DB
+  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest insert.");
+
   aReq->insert();
   // Commit the transaction
+  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest commit.");
+
   aReq->commit();
   log::ScopedParamContainer params(logContext);
   params.add("InsertCommitTimeSec", timerinsert.secs());
