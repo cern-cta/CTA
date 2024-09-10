@@ -57,13 +57,15 @@ if [[ ${PREPARE} -eq 1 ]]; then
 fi
 
 EOSINSTANCE=ctaeos
+TPSRV01=tpsrv01
 # EOSINSTANCE=cta-mgm-0
 
 echo
-echo "Copying test scripts to client pod."
+echo "Copying test scripts to client and ${TPSRV01} pods."
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOSINSTANCE}:/root/"
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOSINSTANCE}:/root/"
+kubectl -n ${NAMESPACE} cp log_rotate_test.sh "${TPSRV01}:/root/"
 
 NB_FILES=10000
 FILE_SIZE_KB=15
@@ -240,5 +242,9 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+echo
+echo "Launching log_rotate_test.sh on ${TPSRV01} pod"
+kubectl -n ${NAMESPACE} exec ${TPSRV01} -- bash /root/log_rotate_test.sh || exit 1
 
 exit 0
