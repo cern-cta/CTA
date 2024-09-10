@@ -75,7 +75,7 @@ void ArchiveRequest::insert() {
       m_txn->abort(); // Rollback on error
       throw;
     }
-    m_txn->reset();
+    m_txn.reset();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
 }
