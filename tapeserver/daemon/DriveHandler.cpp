@@ -513,7 +513,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() 
 // SignalHandler::refreshLogger
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::refreshLogger() {
-  m_socketPair->send("\0", server::SocketPair::Side::child);
+  m_socketPair->send("refresh_logger", server::SocketPair::Side::child);
   return m_processingStatus;
 }
 
