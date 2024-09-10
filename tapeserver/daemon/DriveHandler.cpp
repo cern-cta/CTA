@@ -164,8 +164,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
       // Compute the next timeout
       m_processingStatus.nextTimeout = nextTimeout();
-      // Register our socket pair side for epoll after closing child side.
-      m_socketPair->close(server::SocketPair::Side::child);
+      // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
@@ -289,7 +288,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair->receive();
+    auto datagram = m_socketPair->receive(server::SocketPair::Side::parent);
     if (!message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);

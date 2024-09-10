@@ -20,9 +20,7 @@
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc): m_socketPair(socketPair), m_lc(lc) {
-  m_socketPair.close(server::SocketPair::Side::parent);
-}
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc): m_socketPair(socketPair), m_lc(lc) {}
 
 DriveHandlerProxy::~DriveHandlerProxy() {
   if (m_refreshLoggerClosingSock) {
@@ -47,7 +45,7 @@ void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames) {
@@ -63,7 +61,7 @@ void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::resetLogParams() {
@@ -103,7 +101,7 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
             // Do nothing
             continue;
           }
-          m_socketPair.receive();
+          m_socketPair.receive(server::SocketPair::Side::parent);
           auto handler = m_refreshLoggerHandler.value();
           handler();
         }
@@ -137,7 +135,7 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
@@ -154,7 +152,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 } // namespace cta::tape::daemon
