@@ -59,12 +59,14 @@ fi
 CLIENT_POD="client-0"
 EOS_MGM_POD="ctaeos"
 EOS_MGM_HOST="ctaeos"
+CTA_TPSRV_POD="cta-tpsrv01-0"
 
 echo
-echo "Copying test scripts to ${CLIENT_POD} and ${EOS_MGM_POD} pods."
+echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/"
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/"
+kubectl -n ${NAMESPACE} cp log_rotate_test.sh "${CTA_TPSRV_POD}:/root/"
 
 NB_FILES=10000
 FILE_SIZE_KB=15
@@ -236,5 +238,9 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+echo
+echo "Launching log_rotate_test.sh on ${CTA_TPSRV_POD} pod"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -- bash /root/log_rotate_test.sh || exit 1
 
 exit 0
