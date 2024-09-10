@@ -38,7 +38,6 @@ public:
 
   void insert();
   [[noreturn]] void update() const;
-  void commit();
 
   // ============================== Job management =============================
   void addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
