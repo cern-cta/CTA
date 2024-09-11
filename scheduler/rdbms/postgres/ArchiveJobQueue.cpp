@@ -319,7 +319,7 @@ namespace cta::schedulerdb::postgres {
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
         STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
     )SQL";
-    auto stmt = conn.createStmt(sql);
+    auto stmt = txn.getConn()->createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
     stmt.bindString(":NEWSTATUS",
