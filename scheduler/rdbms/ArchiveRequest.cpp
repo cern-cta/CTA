@@ -34,31 +34,32 @@ void ArchiveRequest::insert() {
   // Inserting the jobs to the DB
   std::string tapePool = "";
   for(const auto &aj : m_jobs) {
-    cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
-    ajr.reqId = areq_id;
-    ajr.reqJobCount = areq_job_count;
-    ajr.tapePool = aj.tapepool;
-    ajr.mountPolicy = m_mountPolicy.name;
-    ajr.priority = m_mountPolicy.archivePriority;
-    ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
-    ajr.archiveFile = m_archiveFile;
-    ajr.archiveFile.creationTime = m_entryLog.time; // Time the job was received by the CTA Frontend
-    ajr.copyNb = aj.copyNb;
-    ajr.startTime = time(nullptr); // Time the job was queued in the DB
-    ajr.archiveReportUrl = m_archiveReportURL;
-    ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
-    ajr.requesterName = m_requesterIdentity.name;
-    ajr.requesterGroup = m_requesterIdentity.group;
-    ajr.srcUrl = m_srcURL;
-    ajr.retriesWithinMount = aj.retriesWithinMount;
-    ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
-    ajr.totalRetries = aj.totalRetries;
-    ajr.lastMountWithFailure = aj.lastMountWithFailure;
-    ajr.maxTotalRetries = aj.maxTotalRetries;
-
-    log::ScopedParamContainer params(m_lc);
-    ajr.addParamsToLogContext(params);
     try {
+
+      cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
+      ajr.reqId = areq_id;
+      ajr.reqJobCount = areq_job_count;
+      ajr.tapePool = aj.tapepool;
+      ajr.mountPolicy = m_mountPolicy.name;
+      ajr.priority = m_mountPolicy.archivePriority;
+      ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
+      ajr.archiveFile = m_archiveFile;
+      ajr.archiveFile.creationTime = m_entryLog.time; // Time the job was received by the CTA Frontend
+      ajr.copyNb = aj.copyNb;
+      ajr.startTime = time(nullptr); // Time the job was queued in the DB
+      ajr.archiveReportUrl = m_archiveReportURL;
+      ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
+      ajr.requesterName = m_requesterIdentity.name;
+      ajr.requesterGroup = m_requesterIdentity.group;
+      ajr.srcUrl = m_srcURL;
+      ajr.retriesWithinMount = aj.retriesWithinMount;
+      ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
+      ajr.totalRetries = aj.totalRetries;
+      ajr.lastMountWithFailure = aj.lastMountWithFailure;
+      ajr.maxTotalRetries = aj.maxTotalRetries;
+
+      log::ScopedParamContainer params(m_lc);
+      ajr.addParamsToLogContext(params);
       // locking DB operations on transaction level per tapePool
       // requiring multiple locks succeeds in PostgreSQL
       //if (tapePool != aj.tapepool || tapePool == ""){
@@ -67,17 +68,24 @@ void ArchiveRequest::insert() {
       //}
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
       ajr.insert(*m_txn);
-      m_txn->commit();
-      m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): done insert row.");
     } catch(exception::Exception &ex) {
       params.add("exceptionMessage", ex.getMessageValue());
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
       m_txn->abort(); // Rollback on error
       throw;
     }
-    m_txn.reset();
-    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
+  try {
+    m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
+    m_txn->commit();
+    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
+  } catch {
+    params.add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
+    m_txn->abort(); // Rollback on error
+    throw;
+  }
+  m_txn.reset();
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
