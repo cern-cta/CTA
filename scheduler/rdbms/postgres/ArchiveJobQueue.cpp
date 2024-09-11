@@ -335,6 +335,6 @@ namespace cta::schedulerdb::postgres {
                     to_string(ArchiveJobStatus::AJS_Failed)
                     + std::string("::ARCHIVE_JOB_STATUS"));
     stmt.executeNonQuery();
-    return stmt.getAffectedRows();
+    return stmt.getNbAffectedRows();
   }
 } // namespace cta::schedulerdb::postgres
