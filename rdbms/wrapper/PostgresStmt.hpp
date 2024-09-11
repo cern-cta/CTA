@@ -242,6 +242,11 @@ private:
   void setAffectedRows(const uint64_t val) { m_nbAffectedRows = val; }
 
   /**
+   * Get m_nbAffectedRows. Processed in last stmt.
+   */
+  uint64_t getAffectedRows() { return m_nbAffectedRows; }
+
+  /**
    * Called on DB error to generate error message and exception
    *
    * @param res The PGresult

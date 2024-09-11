@@ -346,10 +346,21 @@ namespace cta::schedulerdb::postgres {
     }
 
     /**
+     * When CTA received the deleteArchive request from the disk buffer,
+     * this ensures removal from the queue
+     *
+     * @param txn           Transaction handling the connection to the backend database
+     * @param diskInstance  Name of the disk instance where the archive request was issued from
+     * @param archiveFileID The archive file ID assigned originally
+     *
+     * @return  The number of affected jobs
+     */
+    static uint64_t cancelArchiveJob(Transaction &txn, const std::string& diskInstance, uint64_t archiveFileID);
+    /**
      * Select any jobs with specified status(es) from the report,
      * flag them as being reported and return the job IDs
      *
-     * @param conn       Connection to the backend database
+     * @param txn       Transaction handlign the connection to the backend database
      * @param statusList List of Archive Job Status to select on
      * @param limit      Maximum number of rows to return
      *
