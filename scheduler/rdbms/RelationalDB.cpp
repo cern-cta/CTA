@@ -292,7 +292,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   schedulerdb::Transaction txn(m_connPool);
   try {
     if (jobIDsList_success.size() > 0){
-      schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Complete, jobIDsList_success);
+      schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, jobIDsList_success);
     }
     if (jobIDsList_failure.size() > 0) {
       schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
