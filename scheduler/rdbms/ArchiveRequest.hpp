@@ -95,8 +95,6 @@ private:
     int maxReportRetries;
   };
 
-  std::unique_ptr<schedulerdb::Transaction> m_txn;
-
   // References to external objects
   //rdbms::ConnPool &m_connPool;
   std::shared_ptr<rdbms::Conn> m_conn;

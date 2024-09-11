@@ -138,7 +138,7 @@ namespace cta::schedulerdb::postgres {
       return *this;
     }
 
-    void insert(Transaction &txn) const {
+    void insert(rdbms::Conn &conn) const {
 
       // does not set mountId or jobId
       const char *const sql = R"SQL(
@@ -207,7 +207,7 @@ namespace cta::schedulerdb::postgres {
         :MAX_REPORT_RETRIES)
     )SQL";
 
-      auto stmt = txn.getConn()->createStmt(sql);
+      auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
       stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
       stmt.bindString(":STATUS", to_string(status));
@@ -418,10 +418,10 @@ namespace cta::schedulerdb::postgres {
     /**
      * Increment Archive Request ID and return the new value
      *
-     * @param txn  Transaction to use for this query
+     * @param conn  DB connection to use for this query
      *
      * @return     Archive Request ID
      */
-    static uint64_t getNextArchiveRequestID(Transaction &txn);
+    static uint64_t getNextArchiveRequestID(rdbms::Conn &conn);
   };
 }; // namespace cta::schedulerdb::postgres

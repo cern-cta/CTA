@@ -292,12 +292,12 @@ namespace cta::schedulerdb::postgres {
     return stmt.executeQuery();
   }
 
-  uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(Transaction &txn) {
+  uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(rdbms::Conn &conn) {
     try {
       const char *const sql = R"SQL(
           SELECT NEXTVAL('ARCHIVE_REQUEST_ID_SEQ') AS ARCHIVE_REQUEST_ID
         )SQL";
-      auto stmt = txn.getConn()->createStmt(sql);
+      auto stmt = conn.createStmt(sql);
       auto rset = stmt.executeQuery();
       if (!rset.next()) {
         throw exception::Exception("Result set is unexpectedly empty");
