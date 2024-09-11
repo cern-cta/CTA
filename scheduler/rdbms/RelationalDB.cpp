@@ -87,7 +87,8 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
   //}
   // Construct the archive request object
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest with RDB connection.");
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool.getConn(), logContext);
+  auto sqlconn = m_connPool.getConn();
+  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(sqlconn, logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -352,7 +353,8 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     }
   }
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connPool.getConn(),logContext);
+  auto sqlconn = m_connPool.getConn();
+  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(sqlconn,logContext);
   ret.requestId = rReq->getIdStr();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
