@@ -29,7 +29,7 @@ void ArchiveRequest::insert() {
   //m_txn.reset(new schedulerdb::Transaction(m_conn));
   //m_txn->start();
   // Getting the next ID for the request possibly composed of multiple jobs
-  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_conn);
+  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
   uint32_t areq_job_count = m_jobs.size();
   // Inserting the jobs to the DB
   //std::string tapePool = "";
