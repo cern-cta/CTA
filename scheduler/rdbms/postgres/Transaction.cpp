@@ -61,7 +61,7 @@ void Transaction::lockGlobal() {
   stmt.executeQuery();
 }
 
-void Transaction::lockForTapePool(std::string_view tapePoolString) {
+void Transaction::takeNamedLock(std::string_view tapePoolString) {
   std::hash<std::string_view> lock_id_hasher;
   std::size_t lock_id = lock_id_hasher(tapePoolString);
   // Convert to 64-bit integer
