@@ -2,6 +2,7 @@
 
 ### Features
 - cta/CTA#565 - Improve logging of 'Tape session finished' message
+- cta/CTA#570 - Add support for log rotation on CTA tape servers
 - cta/CTA#334 - Refactor the libctacatalogue DB interface such that in can be build only with the chosen DB client library, either Oracle or Postgres
 - cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
 - cta/CTA#355 - Added option to build CTA with ninja
