@@ -401,7 +401,28 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc)
 {
-   throw cta::exception::Exception("Not implemented");
+  schedulerdb::Transaction txn(m_connPool);
+  uint64_t nrows = cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
+
+  try {
+    txn.commit();
+    log::ScopedParamContainer(lc)
+            .add("archiveFileID", request.archiveFileID)
+            .add("diskInstance", request.diskInstance)
+            .add("n_affectedJobs", nrows)
+            .log(log::INFO,
+                 "In RelationalDB::cancelArchive(): removed archive request from the queue");
+    if (nrows > 1){
+      lc.log(cta::log::WARNING, "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, please check if that is expected.");
+    }
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction." +
+           ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 void RelationalDB::deleteFailed(const std::string &objectId, log::LogContext &lc)

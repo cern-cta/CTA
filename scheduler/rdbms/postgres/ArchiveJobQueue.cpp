@@ -308,4 +308,33 @@ namespace cta::schedulerdb::postgres {
       throw;
     }
   }
+
+  uint64_t ArchiveJobQueueRow::cancelArchiveJob(Transaction &txn, const std::string& diskInstance, uint64_t archiveFileID) {
+    std::string sqlpart;
+    std::string sql = R"SQL(
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        STATUS = :NEWSTATUS
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
+        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
+    )SQL";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+    stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindString(":NEWSTATUS",
+                    to_string(ArchiveJobStatus::ReadyForDeletion)
+                    + std::string("::ARCHIVE_JOB_STATUS"));
+    stmt.bindString(":COMPLETE",
+                    to_string(ArchiveJobStatus::AJS_Complete)
+                    + std::string("::ARCHIVE_JOB_STATUS"));
+    stmt.bindString(":FORDELETION",
+                    to_string(ArchiveJobStatus::ReadyForDeletion)
+                    + std::string("::ARCHIVE_JOB_STATUS"));
+    stmt.bindString(":FAILED",
+                    to_string(ArchiveJobStatus::AJS_Failed)
+                    + std::string("::ARCHIVE_JOB_STATUS"));
+    stmt.executeNonQuery();
+    return stmt.getAffectedRows();
+  }
 } // namespace cta::schedulerdb::postgres
