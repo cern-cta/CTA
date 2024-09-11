@@ -120,8 +120,8 @@ namespace cta::schedulerdb::postgres {
             JOB_ID,
             ARCHIVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
-    :STATUS AS STATUS
-    CREATION_TIME,
+            :STATUS AS STATUS,
+            CREATION_TIME,
             MOUNT_POLICY,
             TAPE_POOL,
             VID,
@@ -323,17 +323,13 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
     stmt.bindString(":NEWSTATUS",
-                    to_string(ArchiveJobStatus::ReadyForDeletion)
-                    + std::string("::ARCHIVE_JOB_STATUS"));
+                    to_string(ArchiveJobStatus::ReadyForDeletion));
     stmt.bindString(":COMPLETE",
-                    to_string(ArchiveJobStatus::AJS_Complete)
-                    + std::string("::ARCHIVE_JOB_STATUS"));
+                    to_string(ArchiveJobStatus::AJS_Complete));
     stmt.bindString(":FORDELETION",
-                    to_string(ArchiveJobStatus::ReadyForDeletion)
-                    + std::string("::ARCHIVE_JOB_STATUS"));
+                    to_string(ArchiveJobStatus::ReadyForDeletion));
     stmt.bindString(":FAILED",
-                    to_string(ArchiveJobStatus::AJS_Failed)
-                    + std::string("::ARCHIVE_JOB_STATUS"));
+                    to_string(ArchiveJobStatus::AJS_Failed));
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
   }
