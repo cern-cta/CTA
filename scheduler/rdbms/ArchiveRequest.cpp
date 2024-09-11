@@ -32,7 +32,7 @@ void ArchiveRequest::insert() {
   uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_txn);
   uint32_t areq_job_count = m_jobs.size();
   // Inserting the jobs to the DB
-  std::string tapePool = "";
+  //std::string tapePool = "";
   for(const auto &aj : m_jobs) {
     try {
 
@@ -69,6 +69,7 @@ void ArchiveRequest::insert() {
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
       ajr.insert(*m_txn);
     } catch(exception::Exception &ex) {
+      log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
       m_txn->abort(); // Rollback on error
@@ -80,6 +81,7 @@ void ArchiveRequest::insert() {
     m_txn->commit();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
   } catch {
+    log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
     m_txn->abort(); // Rollback on error
