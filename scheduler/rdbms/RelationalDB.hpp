@@ -39,7 +39,6 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
-#include "common/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -189,7 +188,7 @@ class RelationalDB: public SchedulerDatabase {
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
 
@@ -197,15 +196,11 @@ class RelationalDB: public SchedulerDatabase {
     log::LogContext& logContext) override;
 
 private:
-  /**
-   * Mutex used to serialize access to the insert connection being shared.
-   */
-  threading::Mutex m_mutex;
+
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
 
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
-  std::shared_ptr<rdbms::Conn> m_connForInsert;
   catalogue::Catalogue&  m_catalogue;
   log::Logger&           m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;

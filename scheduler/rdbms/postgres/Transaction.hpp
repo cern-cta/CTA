@@ -52,7 +52,7 @@ public:
    *
    * @param lockIdString  Unique identifier for this lock
    */
-  void lockForTapePool(std::string_view lockIdString);
+  void takeNamedLock(std::string_view lockIdString);
 
   /**
    * Take out a exclusive access lock on ARCHIVE_JOB_QUEUE and RETRIEVE_JOB_QUEUE

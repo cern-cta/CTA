@@ -20,7 +20,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
@@ -40,7 +39,6 @@ RelationalDB::RelationalDB( const std::string &ownerId,
                                   const uint64_t nbConns) :
    m_ownerId(ownerId),
    m_connPool(login, nbConns),
-   m_connForInsert(std::make_shared<rdbms::Conn>(m_connPool.getConn())),
    m_catalogue(catalogue),
    m_logger(logger)
 {
@@ -81,15 +79,15 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 {
   utils::Timer timer;
   // serialise access to queueArchive using a lock
-  threading::MutexLocker locker(m_mutex);
-  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
-    logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): resetting connection.");
-    m_connForInsert.reset();
-    m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
-  }
+  //threading::MutexLocker locker(m_mutex);
+  //if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
+  //  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): resetting connection.");
+  //  m_connForInsert.reset();
+  //  m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
+  //}
   // Construct the archive request object
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest with RDB connection.");
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connForInsert, logContext);
+  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(m_connPool.getConn(), logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -224,7 +222,13 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
     ret.totalFiles += afjsr.jobsCount;
     ret.totalBytes += afjsr.jobsTotalSize;
   }
-  txn.commit();
+  try {
+    txn.commit();
+  } catch (cta::exception::Exception & e) {
+    std::string bt = e.backtrace();
+    logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    txn.abort();
+  }
   return ret;
 }
 
@@ -347,12 +351,8 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
       break;
     }
   }
-  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
-    m_connForInsert.reset();
-    m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
-  }
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connForInsert,logContext);
+  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connPool.getConn().,logContext);
   ret.requestId = rReq->getIdStr();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
@@ -430,13 +430,9 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
 
   std::string bufferURL = repackRequest.m_repackBufferURL;
   common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
-  if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
-    m_connForInsert.reset();
-    m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
-  }
   // Prepare the repack request object in memory.
   cta::utils::Timer t;
-  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_connForInsert,m_catalogue,logContext);
+  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool.getConn(),m_catalogue,logContext);
   rr->setVid(vid);
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
@@ -604,7 +600,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   return RelationalDB::getMountInfo("all", logContext, timeout_us);
 }
 
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us)
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us)
 {
   utils::Timer t;
   logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():STARTING");
@@ -612,31 +608,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
   auto privateRet = std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
-  // We lock the any drive which would try to access the same tapepool out
-  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():befor getTapeDrive");
-  auto tapeDriveState = m_catalogue.DriveState()->getTapeDrive(std::string(driveName));
-  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():after getTapeDrive");
-  std::string_view tapePool = tapeDriveState.has_value() ?
-                              (tapeDriveState->currentTapePool.has_value() ?
-                              tapeDriveState->currentTapePool.value() : "") : "";
-  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():after log getTapeDrive");
-
-  std::string nextTapePoolStr = tapeDriveState->nextTapePool.has_value() ?
-                                std::string(tapeDriveState->nextTapePool.value()) :
-                                "No next tape pool";
-  //tapeDrive.currentTapePool, tapeDrive.nextTapePool
-  logContext.log(log::INFO, "In RelationalDB::getMountInfo(): Current tape pool:" +
-                             std::string(tapePool) + " for drive." + std::string(driveName) +
-                             " will be locked, next tape pool will be: " + nextTapePoolStr);
-
-  if (tapePool.empty()) {
-    logContext.log(log::WARNING, "In RelationalDB::getMountInfo(): no current tape pool:" +
-                                std::string(tapePool) + " for drive." + std::string(driveName) +
-                                " next tape pool is: " + nextTapePoolStr);
-    tapePool = "all";
-
-  }
-  privateRet->lock(tapePool);
+  privateRet->lock(logicalLibraryName);
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
@@ -734,16 +706,16 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
-  // release the lock on the view,
+  // release the named lock on the DB,
   // so that other tape servers can query the job summary
-  try{
-    txn->commit();
-  } catch (exception::Exception &ex) {
-    lc.log(cta::log::WARNING,
-           "In RelationalDB::fetchMountInfo: failed to commit and release the DB lock" +
-           ex.getMessageValue());
-    txn->abort();
-  }
+  //try{
+  //  txn->commit();
+  //} catch (exception::Exception &ex) {
+  //  lc.log(cta::log::WARNING,
+  //         "In RelationalDB::fetchMountInfo: failed to commit and release the DB lock" +
+  //         ex.getMessageValue());
+  //  txn->abort();
+  //}
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
     lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): pushing back potential mount to the vector.");
