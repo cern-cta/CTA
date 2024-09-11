@@ -402,7 +402,7 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc)
 {
   schedulerdb::Transaction txn(m_connPool);
-  uint64_t nrows = cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
+  uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
 
   try {
     txn.commit();
