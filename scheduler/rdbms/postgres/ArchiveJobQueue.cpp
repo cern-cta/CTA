@@ -120,7 +120,7 @@ namespace cta::schedulerdb::postgres {
             JOB_ID,
             ARCHIVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
-            :STATUS AS STATUS,
+            STATUS,
             CREATION_TIME,
             MOUNT_POLICY,
             TAPE_POOL,
@@ -163,7 +163,7 @@ namespace cta::schedulerdb::postgres {
     WHERE JOB_ID = :JOB_ID
     )SQL";
     auto stmt = txn.getConn()->createStmt(sql);
-    stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
+    //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
     return;
@@ -178,7 +178,7 @@ namespace cta::schedulerdb::postgres {
             JOB_ID,
             ARCHIVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
-            :STATUS AS STATUS,
+            STATUS,
             CREATION_TIME,
             MOUNT_POLICY,
             TAPE_POOL,
@@ -222,7 +222,7 @@ namespace cta::schedulerdb::postgres {
     )SQL";
     sql += sqlpart + ")";
     auto stmt = txn.getConn()->createStmt(sql);
-    stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
+    //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.executeNonQuery();
     return;
   }

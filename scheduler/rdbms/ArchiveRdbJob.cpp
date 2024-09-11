@@ -64,7 +64,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
           .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
           .add("mountId", m_mountId)
           .add("tapePool", m_tapePool)
-          .add("failureReason", failureLog)
+          .add("failureReason", m_jobRow.failureLogs.value_or(""))
           .log(log::INFO,
                "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
 
@@ -148,20 +148,20 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
          "In schedulerdb::ArchiveRdbJob::failReport(): passes as half-dummy implementation !");
   std::string reportFailureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                                  " " + failureReason;
-  log::ScopedParamContainer(lc)
-          .add("jobID", jobID)
-          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-          .add("mountId", m_mountId)
-          .add("tapePool", m_tapePool)
-          .add("reportFailureReason", reportFailureLog)
-          .log(log::INFO,
-               "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
   if (m_jobRow.reportFailureLogs.has_value()) {
     m_jobRow.reportFailureLogs.value() += reportFailureLog;
   } else {
     m_jobRow.reportFailureLogs = reportFailureLog;
   }
   m_jobRow.totalReportRetries += 1;
+  log::ScopedParamContainer(lc)
+          .add("jobID", jobID)
+          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+          .add("mountId", m_mountId)
+          .add("tapePool", m_tapePool)
+          .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+          .log(log::INFO,
+               "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
 
   // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
   // attempt to report failed due to an exception, for example if the file was deleted on close.
