@@ -26,10 +26,10 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  m_txn.reset(new schedulerdb::Transaction(m_conn));
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
   //m_txn->start();
   // Getting the next ID for the request possibly composed of multiple jobs
-  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_txn);
+  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(*m_conn);
   uint32_t areq_job_count = m_jobs.size();
   // Inserting the jobs to the DB
   //std::string tapePool = "";
@@ -67,27 +67,26 @@ void ArchiveRequest::insert() {
       //  m_txn.lockGlobal(aj.tapepool);
       //}
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
-      ajr.insert(*m_txn);
+      ajr.insert(*m_conn);
     } catch(exception::Exception &ex) {
       log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
       m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
-      m_txn->abort(); // Rollback on error
+      m_conn->rollback(); // Rollback on error
       throw;
     }
   }
   try {
     m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
-    m_txn->commit();
+    m_conn->commit();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
   } catch(exception::Exception &ex) {
     log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
-    m_txn->abort(); // Rollback on error
+    m_conn->rollback(); // Rollback on error
     throw;
   }
-  m_txn.reset();
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
