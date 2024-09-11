@@ -20,6 +20,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
@@ -79,6 +80,8 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
   utils::Timer timer;
+  // serialise access to queueArchive using a lock
+  threading::MutexLocker locker(m_mutex);
   if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
     logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): resetting connection.");
     m_connForInsert.reset();
