@@ -52,10 +52,10 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
 
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
                            " " + failureReason;
-  if (m_jobRow.failureLogs) {
+  if (m_jobRow.failureLogs.has_value()) {
     m_jobRow.failureLogs.value() += failureLog;
   } else {
-    m_jobRow.failureLogs.value() = failureLog;
+    m_jobRow.failureLogs = failureLog;
   }
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
@@ -156,7 +156,7 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
           .add("reportFailureReason", reportFailureLog)
           .log(log::INFO,
                "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
-  if (m_jobRow.reportFailureLogs) {
+  if (m_jobRow.reportFailureLogs.has_value()) {
     m_jobRow.reportFailureLogs.value() += reportFailureLog;
   } else {
     m_jobRow.reportFailureLogs = reportFailureLog;

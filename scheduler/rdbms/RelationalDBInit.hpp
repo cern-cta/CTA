@@ -35,7 +35,13 @@ class RelationalDBQCR {
 public:
 
   RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) { }
-  void runOnePass(log::LogContext & lc) { }
+  void runOnePass(log::LogContext & lc) {
+    // get the current time stamps in epoch
+
+    // create new partitions if needed
+
+    // check and drop partitions which are ready to be dropped
+  }
 };
 
 class RelationalDBGC {
