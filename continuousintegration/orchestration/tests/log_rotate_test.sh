@@ -52,7 +52,7 @@ echo "Found 'cta-tpd-maint' process PID: ${tpd_maint_pid}"
 echo "Found 'cta-tpd-XXXXX' drive handler process PID: ${tpd_srv_pid}"
 
 # Get number of file descriptor used to open the log file
-log_file_fd=$(lsof -p 269 | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
+log_file_fd=$(lsof -p "${tpd_master_pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
 if [ -z "${log_file_fd}" ]; then
   echo "ERROR: No file descriptor found for log file ${log_file}."
   exit 1
