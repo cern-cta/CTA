@@ -432,15 +432,15 @@ void RepackRequest::insert()
    */
   log::ScopedParamContainer params(m_lc);
   rjr.addParamsToLogContext(params);
-  m_txn.reset(new schedulerdb::Transaction(m_conn));
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
 
-  try {
-    rjr.insert(*m_txn);
-  } catch(exception::Exception &ex) {
-    params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
-    throw;
-  }
+  //try {
+  //  rjr.insert(*m_txn);
+  //} catch(exception::Exception &ex) {
+  //  params.add("exceptionMessage", ex.getMessageValue());
+  //  m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
+  //  throw;
+  //}
 
   m_lc.log(log::INFO, "In RepackRequest::insert(): added request to queue.");
 }
