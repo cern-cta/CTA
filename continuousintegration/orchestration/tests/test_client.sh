@@ -65,7 +65,7 @@ echo "Copying test scripts to client and ${TPSRV01} pods."
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOSINSTANCE}:/root/"
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOSINSTANCE}:/root/"
-kubectl -n ${NAMESPACE} cp log_rotate_test.sh "${TPSRV01}:/root/"
+kubectl -n ${NAMESPACE} cp log_rotate_test.sh "${TPSRV01}:/root/" -c taped
 
 NB_FILES=10000
 FILE_SIZE_KB=15
