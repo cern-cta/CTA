@@ -93,6 +93,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createAr
   try{
     m_txn->commit();
   } catch (exception::Exception &ex) {
+    log::LogContext lc(m_logger);
     lc.log(cta::log::ERR,
            "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the DB and release the named DB lock on the logical library." +
            ex.getMessageValue());
@@ -143,6 +144,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> TapeMountDecisionInfo::createR
   try{
     m_txn->commit();
   } catch (exception::Exception &ex) {
+    log::LogContext lc(m_logger);
     lc.log(cta::log::ERR,
            "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to the DB and release the named DB lock on the logical library." +
            ex.getMessageValue());
