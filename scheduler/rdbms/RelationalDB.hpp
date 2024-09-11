@@ -39,6 +39,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "common/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -196,7 +197,10 @@ class RelationalDB: public SchedulerDatabase {
     log::LogContext& logContext) override;
 
 private:
-
+  /**
+   * Mutex used to serialize access to the insert connection being shared.
+   */
+  threading::Mutex m_mutex;
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
 
   std::string m_ownerId;
