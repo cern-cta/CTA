@@ -97,8 +97,8 @@ private:
 
   // References to external objects
   //rdbms::ConnPool &m_connPool;
-  log::LogContext&  m_lc;
   rdbms::Conn& m_conn;
+  log::LogContext&  m_lc;
 
   // ArchiveRequest state
   bool m_isReportDecided = false;
