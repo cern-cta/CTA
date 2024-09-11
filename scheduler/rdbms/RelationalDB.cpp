@@ -434,7 +434,8 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
   common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
   // Prepare the repack request object in memory.
   cta::utils::Timer t;
-  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool.getConn(),m_catalogue,logContext);
+  auto sqlconn = m_connPool.getConn();
+  auto rr=std::make_unique<cta::schedulerdb::RepackRequest>(sqlconn,m_catalogue,logContext);
   rr->setVid(vid);
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
