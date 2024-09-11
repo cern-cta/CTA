@@ -352,7 +352,7 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     }
   }
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connPool.getConn().,logContext);
+  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(m_connPool.getConn(),logContext);
   ret.requestId = rReq->getIdStr();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
