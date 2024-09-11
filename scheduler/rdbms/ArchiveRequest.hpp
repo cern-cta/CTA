@@ -32,7 +32,7 @@ CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   
 class ArchiveRequest {
 public:
-  ArchiveRequest(std::shared_ptr<rdbms::Conn> conn, log::LogContext& lc) :
+  ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) :
     m_conn(conn),
     m_lc(lc) { }
 
@@ -97,8 +97,8 @@ private:
 
   // References to external objects
   //rdbms::ConnPool &m_connPool;
-  std::shared_ptr<rdbms::Conn> m_conn;
   log::LogContext&  m_lc;
+  rdbms::Conn& m_conn;
 
   // ArchiveRequest state
   bool m_isReportDecided = false;
