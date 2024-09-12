@@ -165,7 +165,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   rdbms::Rset jobIDresultSet;
   std::list<std::string> jobIDsList;
   try {
-    jobIDresultSet = schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, filesRequested);
+    // gc_delay 3h delay for each report, if not reported, requeue for reporting
+    uint64_t gc_delay = 10800;
+    jobIDresultSet = schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
     while (jobIDresultSet.next()) {
       jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
     }

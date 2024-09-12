@@ -33,7 +33,7 @@ namespace cta::schedulerdb::postgres {
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
     AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID OR
-          (MOUNT_ID != :DRIVE_MOUNT_ID AND (LAST_UPDATE_TIME - CREATION_TIME) > :GC_DELAY) )
+          (MOUNT_ID != :DRIVE_MOUNT_ID AND (EXTRACT(EPOCH FROM NOW()) - LAST_UPDATE_TIME) > :GC_DELAY) )
     AND IN_DRIVE_QUEUE IS FALSE
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE)
@@ -171,7 +171,7 @@ namespace cta::schedulerdb::postgres {
     return;
   };
 
-  rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+  rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t gc_delay, uint64_t limit) {
     std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
@@ -193,6 +193,7 @@ namespace cta::schedulerdb::postgres {
     }
     sql += R"SQL(
         ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
+        OR (IS_REPORTING IS TRUE AND (EXTRACT(EPOCH FROM NOW()) - LAST_UPDATE_TIME) > :GC_DELAY)
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE)
       UPDATE ARCHIVE_JOB_QUEUE SET
@@ -208,6 +209,8 @@ namespace cta::schedulerdb::postgres {
       stmt.bindString(placeholderVec[i], statusVec[i]);
     }
     stmt.bindUint64(":LIMIT", limit);
+    stmt.bindUint64(":GC_DELAY", gc_delay);
+
     return stmt.executeQuery();
   }
 
