@@ -22,6 +22,7 @@
 
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 
 namespace cta::catalogue {
@@ -43,10 +44,16 @@ public:
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":STATUS", to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion));
     stmt.executeNonQuery();
-    sqlconn.commit();
+    try {
+      m_conn.commit();
+    } catch (exception::Exception &ex) {
+      lc.log(log::ERR, "In RelationalDBQCR::runOnePass(): failed to delete rows of ARCHIVE_JOB_QUEUE" +
+                     ex.getMessageValue());
+      m_conn.rollback();
+    }
     auto ndelrows = stmt.getNbAffectedRows();
     auto tdelsec = timer.secs(utils::Timer::resetCounter);
-    lc.log(log::INFO, std::string("RelationalDBQCR::runOnePass: Deleted ") +
+    lc.log(log::INFO, std::string("In RelationalDBQCR::runOnePass(): Deleted ") +
                       std::to_string(ndelrows) +
                       std::string(" rows from the ARCHIVE_JOB_QUEUE. Operation took ") +
                       std::to_string(tdelsec) + std::string(" seconds."));
