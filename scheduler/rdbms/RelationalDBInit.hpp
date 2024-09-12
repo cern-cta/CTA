@@ -39,7 +39,7 @@ public:
 
   RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_conn(pgs.getConn()) { }
   void runOnePass(log::LogContext & lc) {
-    utils::Timer timer;
+    cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
     auto stmt = m_conn.createStmt(sql);
@@ -53,7 +53,7 @@ public:
       m_conn.rollback();
     }
     auto ndelrows = stmt.getNbAffectedRows();
-    auto tdelsec = timer.secs(utils::Timer::resetCounter);
+    auto tdelsec = timer.secs(cta::utils::Timer::resetCounter);
     lc.log(log::INFO, std::string("In RelationalDBQCR::runOnePass(): Deleted ") +
                       std::to_string(ndelrows) +
                       std::string(" rows from the ARCHIVE_JOB_QUEUE. Operation took ") +
