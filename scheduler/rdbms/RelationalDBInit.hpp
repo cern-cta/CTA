@@ -31,9 +31,6 @@ class Catalogue;
 
 namespace cta {
 
-  namespace schedulerdb {
-    enum class ArchiveJobStatus;
-  }
 class RelationalDBQCR {
 // QueueCleanupRunner
 public:
@@ -44,15 +41,15 @@ public:
     // DELETE is implicit transaction in postgresql
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindString(":STATUS", to_string(schedulerdb::ArchiveJobStatus::ReadyForDeletion));
+    stmt.bindString(":STATUS", to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion));
     stmt.executeNonQuery();
     sqlconn.commit();
     auto ndelrows = stmt.getNbAffectedRows();
     auto tdelsec = timer.secs(utils::Timer::resetCounter);
     lc.log(log::INFO, std::string("RelationalDBQCR::runOnePass: Deleted ") +
-                      std::string(ndelrows) +
-                      std::string(" rows from the ARCHIVE_JOB_QUEUE took ") +
-                      std::string(tdelsec));
+                      std::to_string(ndelrows) +
+                      std::string(" rows from the ARCHIVE_JOB_QUEUE. Operation took ") +
+                      std::to_string(tdelsec) + std::string(" seconds."));
     /* Autovacuum might be heavy and degrading performance
      * optionally we can partition the table and drop partitions,
      * this drop operation locks only the specific partition
