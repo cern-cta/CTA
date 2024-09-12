@@ -495,6 +495,10 @@ void RelationalDB::cancelRepack(const std::string& vid, log::LogContext & lc)
    throw cta::exception::Exception("Not implemented");
 }
 
+cta::rdbms::Conn RelationalDB::getConn() const {
+  return m_connPool.getConn();
+}
+
 //------------------------------------------------------------------------------
 // RelationalDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 //------------------------------------------------------------------------------

@@ -195,6 +195,11 @@ class RelationalDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
     log::LogContext& logContext) override;
 
+  /**
+   * Provides access to a connection from the connection pool
+   */
+  cta::rdbms::Conn getConn() const;
+
 private:
 
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);

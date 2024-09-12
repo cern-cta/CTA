@@ -32,20 +32,20 @@ class Catalogue;
 namespace cta {
 
   namespace schedulerdb {
-
+    enum class ArchiveJobStatus;
   }
 class RelationalDBQCR {
 // QueueCleanupRunner
 public:
 
-  RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_connPool(pgs.m_connPool) { }
+  RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_conn(pgs.getConn()) { }
   void runOnePass(log::LogContext & lc) {
     utils::Timer timer;
     auto sqlconn = m_connPool.getConn();
     // DELETE is implicit transaction in postgresql
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
-    auto stmt = sqlconn.createStmt(sql);
-    stmt.bindString(":STATUS", to_string(schedulerdb::ArchiveJobStatus::ArchiveJobStatus::ReadyForDeletion));
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindString(":STATUS", to_string(schedulerdb::ArchiveJobStatus::ReadyForDeletion));
     stmt.executeNonQuery();
     sqlconn.commit();
     auto ndelrows = stmt.getNbAffectedRows();
@@ -68,7 +68,7 @@ public:
      */
   }
 private:
-  rdbms::ConnPool& m_connPool;
+  rdbms::Conn m_conn;
 };
 
 class RelationalDBGC {
