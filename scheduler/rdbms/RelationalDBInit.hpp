@@ -24,6 +24,7 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta::catalogue {
 
