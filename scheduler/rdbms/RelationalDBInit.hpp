@@ -49,9 +49,9 @@ public:
     sqlconn.commit();
     auto ndelrows = stmt.getNbAffectedRows();
     auto tdelsec = timer.secs(utils::Timer::resetCounter);
-    lc.log(log::INFO, "RelationalDBQCR::runOnePass: Deleted " +
+    lc.log(log::INFO, std::string("RelationalDBQCR::runOnePass: Deleted ") +
                       std::string(ndelrows) +
-                      " rows from the ARCHIVE_JOB_QUEUE took " +
+                      std::string(" rows from the ARCHIVE_JOB_QUEUE took ") +
                       std::string(tdelsec));
     /* Autovacuum might be heavy and degrading performance
      * optionally we can partition the table and drop partitions,
