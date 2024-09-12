@@ -198,7 +198,7 @@ class RelationalDB: public SchedulerDatabase {
   /**
    * Provides access to a connection from the connection pool
    */
-  cta::rdbms::Conn getConn() const;
+  cta::rdbms::Conn getConn();
 
 private:
 
