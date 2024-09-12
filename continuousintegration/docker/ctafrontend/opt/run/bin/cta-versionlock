@@ -118,6 +118,8 @@ def checkpg() -> None:
     retcode = 0
     json_output = False
 
+    actions: list[str] = ["check", "apply", "remove"]
+
     parser = argparse.ArgumentParser(
         description="Tool that checks the consistency between installed packages and CTA versionlock requirements"
     )

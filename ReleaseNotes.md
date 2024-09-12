@@ -5,7 +5,7 @@
 - cta/CTA#334 - Refactor the libctacatalogue DB interface such that in can be build only with the chosen DB client library, either Oracle or Postgres
 - cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
 - cta/CTA#355 - Added option to build CTA with ninja
-- cta/CTA#771 - Remove `cta-versionlock` script and extract `cta-checkpkg` script. Added strict version checking for XRootD
+- cta/CTA#771 - Remove redundant functionality from `cta-versionlock` script. Added strict version checking for XRootD
 - cta/CTA#696 - Added a completely new README.md
 - cta/CTA#782 - Added functionality to allow for the automatic generation of the CHANGELOG.md
 - cta/CTA#738 - Add new support for repack archive routes
