@@ -77,7 +77,6 @@ void RelationalDB::ping()
 std::string RelationalDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
-  utils::Timer timer;
   // serialise access to queueArchive using a lock
   //threading::MutexLocker locker(m_mutex);
   //if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
@@ -331,7 +330,6 @@ SchedulerDatabase::RetrieveRequestInfo RelationalDB::queueRetrieve(cta::common::
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext)
 {
-  utils::Timer timer;
   schedulerdb::Transaction txn(m_connPool);
 
    // Get the best vid from the cache
