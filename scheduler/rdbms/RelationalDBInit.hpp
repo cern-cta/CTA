@@ -41,7 +41,6 @@ public:
   RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_conn(pgs.getConn()) { }
   void runOnePass(log::LogContext & lc) {
     utils::Timer timer;
-    auto sqlconn = m_connPool.getConn();
     // DELETE is implicit transaction in postgresql
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
     auto stmt = m_conn.createStmt(sql);
@@ -49,9 +48,9 @@ public:
     stmt.executeNonQuery();
     sqlconn.commit();
     auto ndelrows = stmt.getNbAffectedRows();
-    auto tdelsec = timer.secs(utils::Timer::resetCounter)
+    auto tdelsec = timer.secs(utils::Timer::resetCounter);
     lc.log(log::INFO, "RelationalDBQCR::runOnePass: Deleted " +
-                      std::string(RelationalDBQCR) +
+                      std::string(ndelrows) +
                       " rows from the ARCHIVE_JOB_QUEUE took " +
                       std::string(tdelsec));
     /* Autovacuum might be heavy and degrading performance
