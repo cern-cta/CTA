@@ -21,6 +21,7 @@
 #include <string>
 
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
 #include "common/log/Logger.hpp"
 
 namespace cta::catalogue {
@@ -30,13 +31,16 @@ class Catalogue;
 
 namespace cta {
 
+  namespace schedulerdb {
+
+  }
 class RelationalDBQCR {
 // QueueCleanupRunner
 public:
 
-  RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) { }
+  RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_connPool(pgs.m_connPool) { }
   void runOnePass(log::LogContext & lc) {
-    auto sqlconn = pgs.m_connPool.getConn();
+    auto sqlconn = m_connPool.getConn();
     // DELETE is implicit transaction in postgresql
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
     auto stmt = sqlconn.createStmt(sql);
@@ -56,6 +60,8 @@ public:
      * partition_name;  -- Replace partition_name with the actual name
      */
   }
+private:
+  rdbms::ConnPool& m_connPool;
 };
 
 class RelationalDBGC {
