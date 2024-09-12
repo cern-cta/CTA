@@ -36,11 +36,25 @@ public:
 
   RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) { }
   void runOnePass(log::LogContext & lc) {
-    // get the current time stamps in epoch
-
-    // create new partitions if needed
-
-    // check and drop partitions which are ready to be dropped
+    auto sqlconn = pgs.m_connPool.getConn();
+    // DELETE is implicit transaction in postgresql
+    std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
+    auto stmt = sqlconn.createStmt(sql);
+    stmt.bindString(":STATUS", to_string(schedulerdb::ArchiveJobStatus::ArchiveJobStatus::ReadyForDeletion));
+    stmt.executeNonQuery();
+    sqlconn.commit();
+    /* Autovacuum might be heavy and degrading performance
+     * optionally we can partition the table and drop partitions,
+     * this drop operation locks only the specific partition
+     * without affecting other parts of the table
+     * 1. get the current time stamps in epoch and check existing partitions
+     * 2. create new partitions if needed
+     * 3. check and drop partitions which are ready to be dropped
+     * SELECT
+     * COUNT(*) = COUNT(CASE WHEN status = 'completed' THEN 1 END) AS all_rows_completed
+     * FROM
+     * partition_name;  -- Replace partition_name with the actual name
+     */
   }
 };
 
