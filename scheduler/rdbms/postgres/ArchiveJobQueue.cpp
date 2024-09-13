@@ -15,6 +15,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
 
@@ -27,13 +28,14 @@ namespace cta::schedulerdb::postgres {
      * since it is the same lock used for UPDATE
      */
     /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
+    uint64_t gc_now_minus_delay = (uint64_t)cta::utils::getCurrentEpochTime()  - gc_delay;
     const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
     AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID OR
-          (MOUNT_ID != :DRIVE_MOUNT_ID AND (EXTRACT(EPOCH FROM NOW()) - LAST_UPDATE_TIME) > :GC_DELAY) )
+          (MOUNT_ID != :DRIVE_MOUNT_ID AND LAST_UPDATE_TIME < NOW_MINUS_DELAY) )
     AND IN_DRIVE_QUEUE IS FALSE
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE)
@@ -57,7 +59,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindUint64(":DRIVE_MOUNT_ID", mountInfo.mountId);
     stmt.bindUint32(":LIMIT", limit);
     stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
-    stmt.bindUint64(":GC_DELAY", gc_delay);
+    stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
     stmt.bindString(":VID", mountInfo.vid);
     stmt.bindString(":DRIVE", mountInfo.drive);
     stmt.bindString(":HOST", mountInfo.host);
@@ -73,16 +75,28 @@ namespace cta::schedulerdb::postgres {
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
-    std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-    auto stmt = txn.getConn()->createStmt(sql);
     if (status == ArchiveJobStatus::AJS_Complete) {
       status = ArchiveJobStatus::ReadyForDeletion;
     } else if (status == ArchiveJobStatus::AJS_Failed) {
       status = ArchiveJobStatus::ReadyForDeletion;
       ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+    } else {
+      std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+      auto stmt = txn.getConn()->createStmt(sql);
+      stmt.bindString(":STATUS", to_string(status));
+      stmt.executeNonQuery();
     }
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.executeNonQuery();
+    if (status == ArchiveJobStatus::ReadyForDeletion) {
+      std::string sql = R"SQL(
+      DELETE FROM ARCHIVE_JOB_QUEUE
+      WHERE
+        JOB_ID IN ("
+      )SQL";
+      sql += sqlpart + std::string(")");
+      stmt = txn.getConn()->createStmt(sql);
+      stmt.bindString(":STATUS", to_string(status));
+      stmt.executeNonQuery();
+    }
     return;
   };
 
@@ -167,11 +181,20 @@ namespace cta::schedulerdb::postgres {
     stmt.executeNonQuery();
     if (status == ArchiveJobStatus::ReadyForDeletion){
       ArchiveJobQueueRow::copyToFailedJobTable(txn);
+      std::string sql = R"SQL(
+      DELETE FROM ARCHIVE_JOB_QUEUE
+      WHERE
+        JOB_ID = :JOB_ID
+      )SQL";
+      auto stmt = txn.getConn()->createStmt(sql);
+      stmt.bindUint64(":JOB_ID", jobId);
+      stmt.executeNonQuery();
     }
     return;
   };
 
   rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t gc_delay, uint64_t limit) {
+    uint64_t gc_now_minus_delay = (uint64_t)cta::utils::getCurrentEpochTime()  - gc_delay;
     std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
@@ -193,7 +216,7 @@ namespace cta::schedulerdb::postgres {
     }
     sql += R"SQL(
         ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
-        OR (IS_REPORTING IS TRUE AND (EXTRACT(EPOCH FROM NOW()) - LAST_UPDATE_TIME) > :GC_DELAY)
+        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE)
       UPDATE ARCHIVE_JOB_QUEUE SET
@@ -209,7 +232,7 @@ namespace cta::schedulerdb::postgres {
       stmt.bindString(placeholderVec[i], statusVec[i]);
     }
     stmt.bindUint64(":LIMIT", limit);
-    stmt.bindUint64(":GC_DELAY", gc_delay);
+    stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
 
     return stmt.executeQuery();
   }
@@ -233,6 +256,16 @@ namespace cta::schedulerdb::postgres {
 
   uint64_t ArchiveJobQueueRow::cancelArchiveJob(Transaction &txn, const std::string& diskInstance, uint64_t archiveFileID) {
     std::string sqlpart;
+    /* flagging jobs ReadyForDeletion - alternative strategy
+     * for deletion by dropping partitions
+     std::string sql = R"SQL(
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        STATUS = :NEWSTATUS
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
+        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
+    )SQL";
     std::string sql = R"SQL(
       UPDATE ARCHIVE_JOB_QUEUE SET
         STATUS = :NEWSTATUS
@@ -241,10 +274,17 @@ namespace cta::schedulerdb::postgres {
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
         STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
     )SQL";
+     */
+    std::string sql = R"SQL(
+      DELETE FROM ARCHIVE_JOB_QUEUE
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
     auto stmt = txn.getConn()->createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
-    stmt.bindString(":NEWSTATUS",
+    /* stmt.bindString(":NEWSTATUS",
                     to_string(ArchiveJobStatus::ReadyForDeletion));
     stmt.bindString(":COMPLETE",
                     to_string(ArchiveJobStatus::AJS_Complete));
@@ -252,6 +292,7 @@ namespace cta::schedulerdb::postgres {
                     to_string(ArchiveJobStatus::ReadyForDeletion));
     stmt.bindString(":FAILED",
                     to_string(ArchiveJobStatus::AJS_Failed));
+    */
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
   }
