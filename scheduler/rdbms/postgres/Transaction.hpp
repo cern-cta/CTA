@@ -26,7 +26,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
   // Constructors
-  Transaction(std::shared_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
+  Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
   Transaction(cta::rdbms::ConnPool& connPool);
 
   // Move constructor
@@ -100,7 +100,7 @@ public:
   void resetConn(cta::rdbms::ConnPool& connPool);
 
 private:
-  std::shared_ptr<cta::rdbms::Conn> m_conn;
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
   bool m_ownConnection;
   bool m_begin = false;
 };

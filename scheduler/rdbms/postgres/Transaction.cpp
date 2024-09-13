@@ -19,7 +19,7 @@
 
 namespace cta::schedulerdb {
 
-Transaction::Transaction(std::shared_ptr<cta::rdbms::Conn> conn, bool ownConnection)
+Transaction::Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection)
         : m_conn(std::move(conn)), m_ownConnection(ownConnection) {
   start();
 }
@@ -85,7 +85,7 @@ void Transaction::resetConn(cta::rdbms::ConnPool& connPool) {
   m_ownConnection = true;
 }
 
-std::shared_ptr<cta::rdbms::Conn> Transaction::getConn() const {
+std::unique_ptr<cta::rdbms::Conn> Transaction::getConn() const {
   return m_conn;
 }
 
