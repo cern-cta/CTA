@@ -93,7 +93,7 @@ namespace cta::schedulerdb::postgres {
         JOB_ID IN ("
       )SQL";
       sql += sqlpart + std::string(")");
-      stmt = txn.getConn()->createStmt(sql);
+      auto stmt = txn.getConn()->createStmt(sql);
       stmt.bindString(":STATUS", to_string(status));
       stmt.executeNonQuery();
     }
