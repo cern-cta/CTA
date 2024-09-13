@@ -82,9 +82,9 @@ namespace cta::schedulerdb::postgres {
       ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
     } else {
       std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-      auto stmt = txn.getConn()->createStmt(sql);
-      stmt.bindString(":STATUS", to_string(status));
-      stmt.executeNonQuery();
+      auto stmt1 = txn.getConn()->createStmt(sql);
+      stmt1.bindString(":STATUS", to_string(status));
+      stmt1.executeNonQuery();
     }
     if (status == ArchiveJobStatus::ReadyForDeletion) {
       std::string sql = R"SQL(
@@ -93,9 +93,9 @@ namespace cta::schedulerdb::postgres {
         JOB_ID IN ("
       )SQL";
       sql += sqlpart + std::string(")");
-      auto stmt = txn.getConn()->createStmt(sql);
-      stmt.bindString(":STATUS", to_string(status));
-      stmt.executeNonQuery();
+      auto stmt2 = txn.getConn()->createStmt(sql);
+      stmt2.bindString(":STATUS", to_string(status));
+      stmt2.executeNonQuery();
     }
     return;
   };
