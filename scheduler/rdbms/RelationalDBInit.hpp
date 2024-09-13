@@ -39,8 +39,9 @@ public:
 
   RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) : m_conn(pgs.getConn()) { }
   void runOnePass(log::LogContext & lc) {
-    cta::utils::Timer timer;
+    /* cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
+
     std::string sql = "DELETE FROM ARCHIVE_JOB_QUEUE WHERE STATUS = :STATUS";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":STATUS", to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion));
@@ -58,6 +59,7 @@ public:
                       std::to_string(ndelrows) +
                       std::string(" rows from the ARCHIVE_JOB_QUEUE. Operation took ") +
                       std::to_string(tdelsec) + std::string(" seconds."));
+    */
     /* Autovacuum might be heavy and degrading performance
      * optionally we can partition the table and drop partitions,
      * this drop operation locks only the specific partition
