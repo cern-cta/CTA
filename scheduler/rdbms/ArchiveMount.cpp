@@ -90,8 +90,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
       if (totalBytes >= bytesRequested) break;
     }
+    selconn.commit();
   }
-  selconn.commit();
   logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
   return ret;
 }
