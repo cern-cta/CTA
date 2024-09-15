@@ -72,7 +72,6 @@ public:
    * Start new transaction unless it has started already
    */
   void start();
-  void start_insert();
 
   /**
    * Abort and roll back the transaction
@@ -90,7 +89,7 @@ public:
   /**
    * Provides access to the connection
    */
-  std::shared_ptr<cta::rdbms::Conn> getConn() const;
+  std::unique_ptr<cta::rdbms::Conn> getConn() const;
 
   /**
    * Allows to reset the transaction connection to a new one
