@@ -52,7 +52,7 @@ namespace cta::schedulerdb::postgres {
     RETURNING SET_SELECTION.JOB_ID
     )SQL";
 
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
@@ -82,7 +82,7 @@ namespace cta::schedulerdb::postgres {
       ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
     } else {
       std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-      auto stmt1 = txn.getConn()->createStmt(sql);
+      auto stmt1 = txn.getConn().createStmt(sql);
       stmt1.bindString(":STATUS", to_string(status));
       stmt1.executeNonQuery();
     }
@@ -93,7 +93,7 @@ namespace cta::schedulerdb::postgres {
         JOB_ID IN ("
       )SQL";
       sql += sqlpart + std::string(")");
-      auto stmt2 = txn.getConn()->createStmt(sql);
+      auto stmt2 = txn.getConn().createStmt(sql);
       stmt2.bindString(":STATUS", to_string(status));
       stmt2.executeNonQuery();
     }
@@ -118,7 +118,7 @@ namespace cta::schedulerdb::postgres {
     sql += R"SQL(
       WHERE JOB_ID = :JOB_ID
     )SQL";
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
     stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
@@ -136,7 +136,7 @@ namespace cta::schedulerdb::postgres {
     FROM ARCHIVE_JOB_QUEUE
     WHERE JOB_ID = :JOB_ID
     )SQL";
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
@@ -154,7 +154,7 @@ namespace cta::schedulerdb::postgres {
     WHERE JOB_ID IN (
     )SQL";
     sql += sqlpart + ")";
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
     stmt.executeNonQuery();
     return;
@@ -172,7 +172,7 @@ namespace cta::schedulerdb::postgres {
       WHERE JOB_ID = :JOB_ID
     )SQL";
 
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindBool(":IS_REPORTING", is_reporting);
@@ -186,7 +186,7 @@ namespace cta::schedulerdb::postgres {
       WHERE
         JOB_ID = :JOB_ID
       )SQL";
-      auto stmt = txn.getConn()->createStmt(sql);
+      auto stmt = txn.getConn().createStmt(sql);
       stmt.bindUint64(":JOB_ID", jobId);
       stmt.executeNonQuery();
     }
@@ -225,7 +225,7 @@ namespace cta::schedulerdb::postgres {
       WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
       RETURNING SET_SELECTION.JOB_ID
     )SQL";
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     // we can move the array binding to new bindArray method for STMT
     size_t sz = statusVec.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -281,7 +281,7 @@ namespace cta::schedulerdb::postgres {
         DISK_INSTANCE = :DISK_INSTANCE AND
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     )SQL";
-    auto stmt = txn.getConn()->createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
     /* stmt.bindString(":NEWSTATUS",
