@@ -85,8 +85,8 @@ void Transaction::resetConn(cta::rdbms::ConnPool& connPool) {
   m_ownConnection = true;
 }
 
-std::unique_ptr<cta::rdbms::Conn> Transaction::getConn() const {
-  return m_conn;
+cta::rdbms::Conn& Transaction::getConn() const {
+  return *m_conn;
 }
 
 void Transaction::start() {
