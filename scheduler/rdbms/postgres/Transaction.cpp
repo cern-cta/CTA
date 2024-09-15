@@ -25,7 +25,7 @@ Transaction::Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnect
 }
 
 Transaction::Transaction(cta::rdbms::ConnPool& connPool)
-        : m_conn(std::make_shared<cta::rdbms::Conn>(connPool.getConn())), m_ownConnection(true) {
+        : m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())), m_ownConnection(true) {
   start();
 }
 
@@ -81,7 +81,7 @@ void Transaction::resetConn(cta::rdbms::ConnPool& connPool) {
     m_conn.reset();
   }
   // Obtain a new connection from the pool
-  m_conn = std::make_shared<cta::rdbms::Conn>(connPool.getConn());
+  m_conn = std::make_unique<cta::rdbms::Conn>(connPool.getConn());
   m_ownConnection = true;
 }
 
@@ -92,12 +92,6 @@ std::unique_ptr<cta::rdbms::Conn> Transaction::getConn() const {
 void Transaction::start() {
   if (!m_begin) {
     m_conn->executeNonQuery(R"SQL(BEGIN)SQL");
-    m_begin = true;
-  }
-}
-
-void Transaction::start_insert() {
-  if (!m_begin) {
     m_begin = true;
   }
 }
