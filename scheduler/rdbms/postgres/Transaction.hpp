@@ -89,7 +89,7 @@ public:
   /**
    * Provides access to the connection
    */
-  std::unique_ptr<cta::rdbms::Conn> getConn() const;
+  cta::rdbms::Conn&  getConn() const;
 
   /**
    * Allows to reset the transaction connection to a new one
