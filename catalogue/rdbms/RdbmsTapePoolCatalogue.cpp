@@ -162,52 +162,61 @@ std::vector<std::string> RdbmsTapePoolCatalogue::verifyTapePoolSupply(rdbms::Con
   return verified_matches;
 }
 
-std::set<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const {
-  std::string sql =
-  "SELECT TP.TAPE_POOL_ID AS SUPPLY_DEST_TAPE_POOL_ID,"
-  "     TP.TAPE_POOL_NAME AS SUPPLY_DEST_TAPE_POOL_NAME,"
-  "     TP_SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
-  "     TP_SRC.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME "
-  "FROM TAPE_POOL TP "
-  "INNER JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_DESTINATION_TAPE_POOL_ID "
-  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-  "INNER JOIN TAPE_POOL TP_SRC ON SP.SUPPLY_SOURCE_TAPE_POOL_ID = TP_SRC.TAPE_POOL_ID "
-  "ORDER BY SUPPLY_SOURCE_TAPE_POOL_NAME";
+std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>> RdbmsTapePoolCatalogue::getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn) const {
+  std::string sql = R"SQL(
+    SELECT
+      TP_SRC.TAPE_POOL_NAME AS SUPPLY_SRC_TAPE_POOL_NAME,
+      TP_DST.TAPE_POOL_NAME AS SUPPLY_DST_TAPE_POOL_NAME
+    FROM TAPE_POOL TP_SRC
+    INNER JOIN TAPE_POOL_SUPPLY SP ON TP_SRC.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID
+    INNER JOIN TAPE_POOL TP_DST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DST.TAPE_POOL_ID
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> sources;
+  std::map<std::string, std::set<std::string>> sources_per_tape_pool;
+  std::map<std::string, std::set<std::string>> destinations_per_tape_pool;
+
   while (rset.next()) {
-    sources.insert(rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME"));
+    auto tape_pool_src = rset.columnString("SUPPLY_SRC_TAPE_POOL_NAME");
+    auto tape_pool_dst = rset.columnString("SUPPLY_DST_TAPE_POOL_NAME");
+    sources_per_tape_pool[tape_pool_dst].insert(tape_pool_src);
+    destinations_per_tape_pool[tape_pool_src].insert(tape_pool_dst);
   }
 
-  return sources;
+  return std::pair(std::move(sources_per_tape_pool), std::move(destinations_per_tape_pool));
 }
 
-std::set<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
-  std::string sql =
-  "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
-  "    TP.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME,"
-  "    TP_DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID,"
-  "    TP_DEST.TAPE_POOL_NAME AS SUPPLY_DESTINATION_TAPE_POOL_NAME "
-  "FROM TAPE_POOL TP "
-  "JOIN TAPE_POOL_SUPPLY SP ON TP.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID "
-  "AND TP.TAPE_POOL_NAME = :TAPE_POOL_NAME "
-  "INNER JOIN TAPE_POOL TP_DEST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DEST.TAPE_POOL_ID "
-  "ORDER BY SUPPLY_DESTINATION_TAPE_POOL_NAME";
+std::pair<std::set<std::string>, std::set<std::string>> RdbmsTapePoolCatalogue::getTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
+  std::string sql = R"SQL(
+    SELECT
+      TP_SRC.TAPE_POOL_NAME AS SUPPLY_SRC_TAPE_POOL_NAME,
+      TP_DST.TAPE_POOL_NAME AS SUPPLY_DST_TAPE_POOL_NAME
+    FROM TAPE_POOL TP_SRC
+    INNER JOIN TAPE_POOL_SUPPLY SP ON TP_SRC.TAPE_POOL_ID = SP.SUPPLY_SOURCE_TAPE_POOL_ID
+    INNER JOIN TAPE_POOL TP_DST ON SP.SUPPLY_DESTINATION_TAPE_POOL_ID = TP_DST.TAPE_POOL_ID
+    WHERE SUPPLY_SRC_TAPE_POOL_NAME = :SUPPLY_SRC_TAPE_POOL_NAME OR SUPPLY_DST_TAPE_POOL_NAME = :SUPPLY_DST_TAPE_POOL_NAME
+  )SQL";
 
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+  stmt.bindString(":SUPPLY_SRC_TAPE_POOL_NAME", tapePoolName);
+  stmt.bindString(":SUPPLY_DST_TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
 
-  std::set<std::string> destinations;
+  std::set<std::string> sources, destinations;
   while (rset.next()) {
-    destinations.insert(rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME"));
+    auto tape_pool_src = rset.columnString("SUPPLY_SRC_TAPE_POOL_NAME");
+    auto tape_pool_dst = rset.columnString("SUPPLY_DST_TAPE_POOL_NAME");
+    if (tape_pool_src == tapePoolName) {
+      destinations.insert(tape_pool_dst);
+    }
+    if (tape_pool_dst == tapePoolName) {
+      sources.insert(tape_pool_src);
+    }
   }
 
-  return destinations;
+  return std::pair(std::move(sources), std::move(destinations));
 }
 
 void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
@@ -395,11 +404,18 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pools.push_back(pool);
   }
 
+  // Get all supply source and destination tapepools, in a single go
+  auto [supply_src_per_tape_pool, supply_dst_per_tape_pool] = getAllTapePoolSupplySourcesAndDestinations(conn);
+
   for (auto &pool : pools) {
-    /* we have to set the fields supply_source and supply_destination after we're done processing this resultset,
-     or we'll get an SQL error */
-    pool.supply_source_set = getTapePoolSupplySources(conn, pool.name);
-    pool.supply_destination_set = getTapePoolSupplyDestinations(conn, pool.name);
+    auto src_set_node_handle = supply_src_per_tape_pool.extract(pool.name);
+    auto dst_set_node_handle = supply_dst_per_tape_pool.extract(pool.name);
+    if (src_set_node_handle) {
+      pool.supply_source_set = std::move(src_set_node_handle.mapped());
+    }
+    if (dst_set_node_handle) {
+      pool.supply_destination_set = std::move(dst_set_node_handle.mapped());
+    }
   }
 
   return pools;
@@ -492,8 +508,12 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  pool.supply_source_set = getTapePoolSupplySources(conn, tapePoolName);
-  pool.supply_destination_set = getTapePoolSupplyDestinations(conn, tapePoolName);
+
+  {
+    auto [supply_src_set, supply_dst_set] = getTapePoolSupplySourcesAndDestinations(conn, pool.name);
+    pool.supply_source_set = std::move(supply_src_set);
+    pool.supply_destination_set = std::move(supply_dst_set);
+  }
 
   return pool;
 }
