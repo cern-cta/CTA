@@ -94,7 +94,6 @@ namespace cta::schedulerdb::postgres {
       )SQL";
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
-      stmt2.bindString(":STATUS", to_string(status));
       stmt2.executeNonQuery();
     }
     return;
@@ -282,8 +281,8 @@ namespace cta::schedulerdb::postgres {
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     /* stmt.bindString(":NEWSTATUS",
                     to_string(ArchiveJobStatus::ReadyForDeletion));
     stmt.bindString(":COMPLETE",
