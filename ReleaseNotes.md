@@ -10,6 +10,7 @@
 - cta/CTA#782 - Added functionality to allow for the automatic generation of the CHANGELOG.md
 - cta/CTA#738 - Add new support for repack archive routes
 - cta/CTA#718 - Add the option to disable a physical library
+- cta/CTA#598 - Improve tapepool supply option
 
 ### Bug Fixes
 - cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions

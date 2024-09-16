@@ -96,21 +96,8 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->mutable_modified()->set_host(tp.lastModificationLog.host);
     tp_item->mutable_modified()->set_time(tp.lastModificationLog.time);
     tp_item->set_comment(tp.comment);
-
-    if (tp.supply_source){
-      std::stringstream ss(tp.supply_source.value());
-      std::string source_value;
-      while (std::getline(ss, source_value, ',')){
-        tp_item->add_supply_source(source_value);
-      }
-    }
-    if (tp.supply_destination){
-      std::stringstream ss(tp.supply_destination.value());
-      std::string destination_value;
-      while (std::getline(ss, destination_value, ',')){
-        tp_item->add_supply_destination(destination_value);
-      }
-    }
+    for (auto& source: tp.supply_source_set) tp_item->add_supply_source(source);
+    for (auto& destination: tp.supply_destination_set) tp_item->add_supply_destination(destination);
 
     is_buffer_full = streambuf->Push(record);
   }

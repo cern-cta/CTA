@@ -1087,7 +1087,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_TRUE((bool)pool.supply); // this is set because transaction for updating the supply field of the tapepool table succeeded
     ASSERT_EQ(modifiedSupply, pool.supply.value()); // succeeds because each statement is its own transaction
-    ASSERT_FALSE((bool)pool.supply_source); // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
+    ASSERT_TRUE(pool.supply_source_set.empty()); // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1566,8 +1566,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(firstTapePoolName, pool.name);
     ASSERT_FALSE((bool)pool.supply);
-    ASSERT_FALSE((bool)pool.supply_source);
-    ASSERT_EQ(secondTapePoolName, pool.supply_destination);
+    ASSERT_TRUE(pool.supply_source_set.empty());
+    ASSERT_TRUE(pool.supply_destination_set.count(secondTapePoolName));
   }
 
   {
@@ -1577,9 +1577,9 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_TRUE((bool)pool.supply);
-    ASSERT_TRUE((bool)pool.supply_source);
-    ASSERT_FALSE((bool)pool.supply_destination);
-    ASSERT_EQ(firstTapePoolName, pool.supply_source);
+    ASSERT_FALSE(pool.supply_source_set.empty());
+    ASSERT_TRUE(pool.supply_destination_set.empty());
+    ASSERT_TRUE(pool.supply_source_set.count(firstTapePoolName));
     ASSERT_EQ(firstTapePoolName, pool.supply);
   }
   // create a third tapepool to test multiple entries
@@ -1601,7 +1601,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
 
     const auto &pool = poolMaplet->second;
     ASSERT_EQ(thirdTapePoolName, pool.name);
-    ASSERT_EQ("tape_pool,tape_pool_2", pool.supply_source.value());
+    ASSERT_TRUE(pool.supply_source_set.count("tape_pool"));
+    ASSERT_TRUE(pool.supply_source_set.count("tape_pool_2"));
 
     // test that we are not allowed to remove a tapePool when it is the supply (supply_source) of another tapepool
     ASSERT_ANY_THROW(m_catalogue->TapePool()->deleteTapePool("tape_pool"));

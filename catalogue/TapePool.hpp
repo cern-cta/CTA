@@ -21,6 +21,7 @@
 #include <ostream>
 #include <stdint.h>
 #include <string>
+#include <set>
 
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
@@ -145,11 +146,15 @@ struct TapePool {
    */
   std::string comment;
 
-  /* Comma-separated list of values that this tapepool acts as supplier to
-   * These fields do not exist in the tape pool table, but they are added here for convenience:
-   * less intrusive changes to the TapePoolLs command implementation */
-  std::optional<std::string> supply_source;
-  std::optional<std::string> supply_destination;
+  /**
+   * Set of TapePools used as a supply for this TapePool.
+   */
+  std::set<std::string> supply_source_set;
+
+  /**
+   * Set of TapePools that use this TapePool as their supply.
+   */
+  std::set<std::string> supply_destination_set;
 
 }; // struct TapePool
 

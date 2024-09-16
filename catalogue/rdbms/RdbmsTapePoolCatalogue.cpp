@@ -162,7 +162,7 @@ std::vector<std::string> RdbmsTapePoolCatalogue::verifyTapePoolSupply(rdbms::Con
   return verified_matches;
 }
 
-std::optional<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const {
+std::set<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbms::Conn &conn, const std::string &tapePoolName) const {
   std::string sql =
   "SELECT TP.TAPE_POOL_ID AS SUPPLY_DEST_TAPE_POOL_ID,"
   "     TP.TAPE_POOL_NAME AS SUPPLY_DEST_TAPE_POOL_NAME,"
@@ -178,17 +178,15 @@ std::optional<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplySources(rdbm
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
 
-  std::string sources = "";
+  std::set<std::string> sources;
   while (rset.next()) {
-    if (!sources.empty()) {
-      sources += ",";
-    }
-    sources += rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME");
+    sources.insert(rset.columnString("SUPPLY_SOURCE_TAPE_POOL_NAME"));
   }
-  return (sources.empty() ? std::nullopt : std::optional<std::string>(sources));
+
+  return sources;
 }
 
-std::optional<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
+std::set<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
   std::string sql =
   "SELECT TP.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID,"
   "    TP.TAPE_POOL_NAME AS SUPPLY_SOURCE_TAPE_POOL_NAME,"
@@ -204,14 +202,12 @@ std::optional<std::string> RdbmsTapePoolCatalogue::getTapePoolSupplyDestinations
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
   auto rset = stmt.executeQuery();
 
-  std::string destinations = "";
+  std::set<std::string> destinations;
   while (rset.next()) {
-    if (!destinations.empty()) {
-      destinations += ",";
-    }
-    destinations += rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME");
+    destinations.insert(rset.columnString("SUPPLY_DESTINATION_TAPE_POOL_NAME"));
   }
-  return (destinations.empty() ? std::nullopt : std::optional<std::string>(destinations));
+
+  return destinations;
 }
 
 void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
@@ -402,8 +398,8 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   for (auto &pool : pools) {
     /* we have to set the fields supply_source and supply_destination after we're done processing this resultset,
      or we'll get an SQL error */
-    pool.supply_source = getTapePoolSupplySources(conn, pool.name);
-    pool.supply_destination = getTapePoolSupplyDestinations(conn, pool.name);
+    pool.supply_source_set = getTapePoolSupplySources(conn, pool.name);
+    pool.supply_destination_set = getTapePoolSupplyDestinations(conn, pool.name);
   }
 
   return pools;
@@ -496,8 +492,8 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
   pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
   pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  pool.supply_source = getTapePoolSupplySources(conn, tapePoolName);
-  pool.supply_destination = getTapePoolSupplyDestinations(conn, tapePoolName);
+  pool.supply_source_set = getTapePoolSupplySources(conn, tapePoolName);
+  pool.supply_destination_set = getTapePoolSupplyDestinations(conn, tapePoolName);
 
   return pool;
 }
