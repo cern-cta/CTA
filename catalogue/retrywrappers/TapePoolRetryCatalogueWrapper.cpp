@@ -30,10 +30,10 @@ TapePoolCatalogueRetryWrapper::TapePoolCatalogueRetryWrapper(const std::unique_p
 }
 
 void TapePoolCatalogueRetryWrapper::createTapePool(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-  const std::optional<std::string> &supply, const std::string &comment) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&vo,&nbPartialTapes,&encryptionValue,&supply,&comment] {
-    return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply, comment);
+                                                   const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
+                                                   const std::list<std::string> &supply_list, const std::string &comment) {
+  return retryOnLostConnection(m_log, [this,&admin,&name,&vo,&nbPartialTapes,&encryptionValue,&supply_list,&comment] {
+    return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply_list, comment);
   }, m_maxTriesToConnect);
 }
 
@@ -84,9 +84,9 @@ void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStru
 }
 
 void TapePoolCatalogueRetryWrapper::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &supply) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&supply] {
-    return m_catalogue->TapePool()->modifyTapePoolSupply(admin, name, supply);
+                                                         const std::string &name, const std::list<std::string> &supply_list) {
+  return retryOnLostConnection(m_log, [this,&admin,&name,&supply_list] {
+    return m_catalogue->TapePool()->modifyTapePoolSupply(admin, name, supply_list);
   }, m_maxTriesToConnect);
 }
 

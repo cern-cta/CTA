@@ -487,11 +487,18 @@ namespace cta::utils {
   std::string getEnv(const std::string & variableName);
 
    /**
-   * Transorms a comma separated list to a vector
-   * @param commaSeparated the string hat will be transformed to a vector
-   * @return the transformed vecor
+   * Transforms a comma separated list to a std::list
+   * @param commaSeparated the string that will be transformed to a list
+   * @return the transformed vector
    */
-  std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSeparated);
+   std::list<std::string> commaSeparatedStringToList(const std::string &commaSeparated);
+
+   /**
+   * Transforms a list to a comma separated string
+   * @param list the list that will be transformed to a comma separated string
+   * @return the transformed string
+   */
+  std::string listToCommaSeparatedString(const std::list<std::string> &list);
 
    /**
    * Converts a number from a decimal number to a hexidecimal number

@@ -42,8 +42,8 @@ public:
   ~RdbmsTapePoolCatalogue() override = default;
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::optional<std::string> &supply, const std::string &comment) override;
+                      const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
+                      const std::list<std::string> &supply_list, const std::string &comment) override;
 
   void deleteTapePool(const std::string &name) override;
 
@@ -64,7 +64,7 @@ public:
     const bool encryptionValue) override;
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &supply) override;
+    const std::list<std::string> &supply_list) override;
 
   void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
     const std::string &newName) override;
@@ -123,8 +123,7 @@ private:
   std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>> getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn) const;
   std::pair<std::set<std::string>, std::set<std::string>> getTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const;
 
-  std::vector<std::string> verifyTapePoolSupply(rdbms::Conn &conn, const std::string &supply);
-  void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::vector<std::string> verified_matches);
+  void populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::list<std::string> supply_list);
   void deleteAllTapePoolSupplyEntries(rdbms::Conn &conn);
 
 };

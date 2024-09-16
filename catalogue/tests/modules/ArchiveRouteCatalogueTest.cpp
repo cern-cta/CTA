@@ -55,7 +55,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -112,7 +112,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringStorageClas
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string storageClassName = "";
@@ -129,7 +129,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_zeroCopyNb) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 0;
@@ -157,7 +157,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -171,7 +171,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_storage_c
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -201,7 +201,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_same_twice) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -217,7 +217,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_two_routes_same_pool) 
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb1 = 1;
@@ -236,7 +236,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -276,7 +276,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_deleteStorageClass) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -311,7 +311,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
@@ -366,7 +366,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
@@ -405,7 +405,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -419,7 +419,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -472,7 +472,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment_nonExistentArch
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;

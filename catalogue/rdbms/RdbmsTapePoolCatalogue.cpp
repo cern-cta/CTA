@@ -32,6 +32,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
@@ -42,8 +43,8 @@ RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-  const std::optional<std::string> &supply, const std::string &comment) {
+                                            const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
+                                            const std::list<std::string> &supply_list, const std::string &comment) {
   if(name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape pool because the tape pool name is an empty string");
   }
@@ -56,6 +57,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
     throw UserSpecifiedAnEmptyStringComment("Cannot create tape pool because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+  std::optional<std::string> optionalSupplyString = supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
   auto conn = m_connPool->getConn();
 
@@ -116,7 +118,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   stmt.bindString(":VO", vo);
   stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
   stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
-  stmt.bindString(":SUPPLY", supply);
+  stmt.bindString(":SUPPLY", optionalSupplyString);
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -130,36 +132,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
 
   stmt.executeNonQuery();
 
-  std::vector<std::string> verified_matches = verifyTapePoolSupply(conn, supply.value_or(""));
-  populateSupplyTable(conn, name, verified_matches);
-}
-
-/**
- * Returns a vector of the extracted tape pool names from a comma-separated list
- */
-std::vector<std::string> RdbmsTapePoolCatalogue::verifyTapePoolSupply(rdbms::Conn &conn, const std::string &supply) {
-  const std::regex CTA_SUPPLY_OPTION_REGEX("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
-  std::vector<std::string> verified_matches;
-  bool valid = std::regex_match(supply, CTA_SUPPLY_OPTION_REGEX);
-  if (!valid && !supply.empty())
-  {
-    throw UserSpecifiedAnInvalidSupplyString("Cannot set tape pool supply because user specified an invalid supply string: \"" + supply +"\"");
-  }
-  // for every submatch, verify the tape pool exists
-  std::regex pattern_between_commas("\\s*([^,]+)\\s*,?");
-  auto it_begin = std::sregex_iterator(supply.begin(), supply.end(), pattern_between_commas);
-  auto it_end = std::sregex_iterator();
-
-  for (std::sregex_iterator it = it_begin; it != it_end; ++it){
-    std::smatch match = *it;
-    bool exists = RdbmsCatalogueUtils::tapePoolExists(conn, match[1]);
-    if (!exists)
-    {
-      throw UserSpecifiedAnInvalidSupplyString("Cannot set tape pool supply because tape pool \"" + std::string(match[1]) + "\" does not exist");
-    }
-    verified_matches.push_back(std::string(match[1]));
-  }
-  return verified_matches;
+  populateSupplyTable(conn, name, supply_list);
 }
 
 std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>> RdbmsTapePoolCatalogue::getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn) const {
@@ -653,7 +626,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   }
 }
 
-void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::vector<std::string> verified_matches) {
+void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::list<std::string> supply_list) {
   /* wipe the previous supply sources for this tapepool, as we are resetting them now */
   std::string sql_drop_old = 
   "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
@@ -662,7 +635,7 @@ void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string 
   stmt_delete.bindString(":TAPE_POOL_NAME", tapePoolName);
   stmt_delete.executeNonQuery();
 
-  for (auto match : verified_matches) {
+  for (auto match : supply_list) {
     std::string sql = 
     "INSERT INTO TAPE_POOL_SUPPLY (SUPPLY_SOURCE_TAPE_POOL_ID, SUPPLY_DESTINATION_TAPE_POOL_ID) "
     " SELECT SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID, DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID "
@@ -678,18 +651,14 @@ void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string 
 }
 
 void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &supply) {
+                                                  const std::string &name, const std::list<std::string> &supply_list) {
   if(name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
       " string");
   }
-  std::vector<std::string> verified_matches;
-  std::optional<std::string> optionalSupply;
+
   auto conn = m_connPool->getConn();
-  if(!supply.empty()) {
-    verified_matches = verifyTapePoolSupply(conn, supply);
-    optionalSupply = supply;
-  }
+  std::optional<std::string> optionalSupplyString = supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -702,7 +671,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":SUPPLY", optionalSupply);
+  stmt.bindString(":SUPPLY", optionalSupplyString);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -713,7 +682,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
     throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
   }
 
-  populateSupplyTable(conn, name, verified_matches);
+  populateSupplyTable(conn, name, supply_list);
 }
 
 void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin,

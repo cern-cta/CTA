@@ -995,9 +995,9 @@ std::string getEnv(const std::string& variableName){
   return std::string(envVarC);
 }
 
-std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSeparated) {
+std::list<std::string> commaSeparatedStringToList(const std::string &commaSeparated) {
   std::string str = commaSeparated;
-  std::vector<std::string> result;
+  std::list<std::string> result;
   // Remove white spaces
   str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
 
@@ -1009,6 +1009,20 @@ std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSe
       result.push_back( substr );
   }
   return result;
+}
+
+std::string listToCommaSeparatedString(const std::list<std::string> &list) {
+  std::ostringstream oss;
+  bool is_first_value = true;
+  for (const auto& value : list) {
+    if (!is_first_value) {
+      oss << ",";
+    }
+    oss << value;
+    is_first_value = false;
+  }
+
+  return oss.str();
 }
 
 std::string decimalToHexadecimal(const std::string &decimalNumber) {

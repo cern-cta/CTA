@@ -167,7 +167,7 @@ TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType_usedByTapes) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -761,7 +761,7 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply;
+  const std::list<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);

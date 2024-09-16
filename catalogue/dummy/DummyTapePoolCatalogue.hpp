@@ -27,8 +27,8 @@ public:
   ~DummyTapePoolCatalogue() override = default;
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::optional<std::string> &supply, const std::string &comment) override;
+                      const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
+                      const std::list<std::string> &supply_list, const std::string &comment) override;
 
   void deleteTapePool(const std::string &name) override;
 
@@ -49,7 +49,7 @@ public:
     const bool encryptionValue) override;
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &supply) override;
+                            const std::list<std::string> &supply_list) override;
 
   void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
     const std::string &newName) override;
