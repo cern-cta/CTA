@@ -90,7 +90,7 @@ namespace cta::schedulerdb::postgres {
       std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
-        JOB_ID IN ("
+        JOB_ID IN (
       )SQL";
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
