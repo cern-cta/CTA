@@ -351,7 +351,8 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   tapeDrive.host = rset->columnString("HOST");
   tapeDrive.logicalLibrary = rset->columnString("LOGICAL_LIBRARY");
   tapeDrive.sessionId = rset->columnOptionalUint64("SESSION_ID");
-  tapeDrive.logicalLibraryDisabled = rset->columnOptionalBool("IS_DISABLED") ? rset->columnOptionalBool("IS_DISABLED").value() : false;
+  tapeDrive.logicalLibraryDisabled = rset->columnOptionalBool("LOGICAL_IS_DISABLED");
+  tapeDrive.physicalLibraryDisabled = rset->columnOptionalBool("PHYSICAL_IS_DISABLED");
 
   tapeDrive.bytesTransferedInSession = rset->columnOptionalUint64("BYTES_TRANSFERED_IN_SESSION");
   tapeDrive.filesTransferedInSession = rset->columnOptionalUint64("FILES_TRANSFERED_IN_SESSION");
@@ -416,7 +417,7 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
     "LAST_UPDATE_TIME");
 
   // Log warning for operators that tape drive logical library does not exist (cta/CTA#1163)
-  if (!rset->columnOptionalBool("IS_DISABLED")) {
+  if (!rset->columnOptionalBool("LOGICAL_IS_DISABLED")) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("driveName", tapeDrive.driveName)
@@ -485,8 +486,9 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
       DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
       DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,
       DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,
-      LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED,
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME 
+      LOGICAL_LIBRARY.IS_DISABLED AS LOGICAL_IS_DISABLED,
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
+      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED 
     FROM 
       DRIVE_STATE 
     LEFT JOIN 
@@ -570,8 +572,9 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
       DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
       DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,
       DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,
-      LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED,
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME 
+      LOGICAL_LIBRARY.IS_DISABLED AS LOGICAL_IS_DISABLED,
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
+      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED 
     FROM 
       DRIVE_STATE 
     LEFT JOIN 

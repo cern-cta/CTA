@@ -1530,6 +1530,8 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
   pl.nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
   pl.comment                   = getOptional(OptionString::COMMENT);
+  pl.isDisabled                = getOptional(OptionBoolean::DISABLED);
+  pl.disabledReason            = getOptional(OptionString::DISABLED_REASON);
 
   m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 

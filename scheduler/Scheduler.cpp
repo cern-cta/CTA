@@ -37,6 +37,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
@@ -1411,6 +1412,56 @@ std::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibra
   return ret;
 }
 
+std::optional<common::dataStructures::PhysicalLibrary> Scheduler::getPhysicalLibrary(const std::string &libraryName, double& getPhysicalLibraryTime) {
+  utils::Timer timer;
+  auto physicalLibraries = m_catalogue.PhysicalLibrary()->getPhysicalLibraries();
+  std::optional<common::dataStructures::PhysicalLibrary> ret;
+  auto physicalLibraryItor = std::find_if(physicalLibraries.begin(),physicalLibraries.end(),[libraryName](const cta::common::dataStructures::PhysicalLibrary& pl){
+    return (pl.name == libraryName);
+  });
+  getPhysicalLibraryTime += timer.secs(utils::Timer::resetCounter);
+  if (physicalLibraryItor != physicalLibraries.end())
+    ret = *physicalLibraryItor;
+  return ret;
+}
+
+bool Scheduler::checkLogicalAndPhysicalLibraryValidForMount(const std::string& logicalLibraryName, double &checkLogicalAndPhysicalLibrariesTime, log::LogContext& lc){
+  double getLogicalLibraryTime = 0;
+  double getPhysicalLibraryTime = 0;
+  auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibraryTime);
+  checkLogicalAndPhysicalLibrariesTime += getLogicalLibraryTime;
+  std::optional<cta::common::dataStructures::PhysicalLibrary> physicalLibrary;
+  if(logicalLibrary){
+    if (logicalLibrary.value().physicalLibraryName) {
+      physicalLibrary = getPhysicalLibrary(logicalLibrary.value().physicalLibraryName.value(), getPhysicalLibraryTime);
+      checkLogicalAndPhysicalLibrariesTime += getPhysicalLibraryTime;
+    }
+
+    if(logicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibraryTime);
+      lc.log(log::INFO,"In Scheduler::checkLogicalAndPhysicalLibraryValidForMount(): logicalLibrary is disabled");
+      return false;
+    }
+    if(physicalLibrary && physicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibraryTime)
+            .add("physicalLibrary", logicalLibrary.value().physicalLibraryName.value());
+      lc.log(log::INFO,"In Scheduler::checkLogicalAndPhysicalLibraryValidForMount(): physicalLibrary is disabled");
+      return false;
+    }
+  } else {
+    log::ScopedParamContainer params(lc);
+    params.add("logicalLibrary",logicalLibraryName)
+          .add("catalogueTime",getLogicalLibraryTime);
+    lc.log(log::INFO,"In Scheduler::checkLogicalAndPhysicalLibraryValidForMount(): logicalLibrary does not exist");
+    return false;
+  }
+  return true;
+}
+
 void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc) {
   try{
     if(repackBuffer != nullptr && repackBuffer->exist()){
@@ -1465,24 +1516,11 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   double decisionTime = 0;
   double schedulerDbTime = 0;
   double catalogueTime = 0;
-  double getLogicalLibrariesTime = 0;
+  double checkLogicalAndPhysicalLibrariesTime = 0;
 
-  auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
-  if(logicalLibrary){
-    if(logicalLibrary.value().isDisabled){
-      log::ScopedParamContainer params(lc);
-      params.add("logicalLibrary",logicalLibraryName)
-            .add("catalogueTime",getLogicalLibrariesTime);
-      lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary is disabled");
-      return false;
-    }
-  } else {
-    log::ScopedParamContainer params(lc);
-    params.add("logicalLibrary",logicalLibraryName)
-          .add("catalogueTime",getLogicalLibrariesTime);
-    lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary does not exist");
+  bool validForMount = checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc);
+  if (!validForMount)
     return false;
-  }
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
@@ -1586,7 +1624,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
     }
   }
   schedulerDbTime = getMountInfoTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)
@@ -1628,25 +1666,12 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   double mountCreationTime = 0;
   double driveStatusSetTime = 0;
   double schedulerDbTime = 0;
-  double getLogicalLibrariesTime = 0;
+  double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
 
-auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
-  if(logicalLibrary){
-    if(logicalLibrary.value().isDisabled){
-      log::ScopedParamContainer params(lc);
-      params.add("logicalLibrary",logicalLibraryName)
-            .add("catalogueTime",getLogicalLibrariesTime);
-      lc.log(log::INFO,"In Scheduler::getNextMount(): logicalLibrary is disabled");
-      return std::unique_ptr<TapeMount>();
-    }
-  } else {
-    log::ScopedParamContainer params(lc);
-    params.add("logicalLibrary",logicalLibraryName)
-          .add("catalogueTime",getLogicalLibrariesTime);
-    lc.log(log::CRIT,"In Scheduler::getNextMount(): logicalLibrary does not exist");
+  bool validForMount = checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc);
+  if (!validForMount)
     return std::unique_ptr<TapeMount>();
-  }
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo(lc, timeout_us);
@@ -1807,7 +1832,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
     }
   }
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)

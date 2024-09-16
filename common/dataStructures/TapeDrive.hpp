@@ -64,7 +64,7 @@ struct TapeDrive {
   std::string driveName;
   std::string host;
   std::string logicalLibrary;
-  bool logicalLibraryDisabled;
+  std::optional<bool> logicalLibraryDisabled;
   std::optional<uint64_t> sessionId;
 
   std::optional<uint64_t> bytesTransferedInSession;
@@ -115,6 +115,7 @@ struct TapeDrive {
   std::optional<std::string> userComment;
   std::optional<EntryLog> creationLog;
   std::optional<EntryLog> lastModificationLog;
+  std::optional<bool> physicalLibraryDisabled;
 };  // struct TapeDrive
 
 std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);

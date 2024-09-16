@@ -86,6 +86,9 @@ int PhysicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     if (pl.location)                  { pl_item->set_location(pl.location.value()); }
     if (pl.nbAvailableCartridgeSlots) { pl_item->set_nb_available_cartridge_slots(pl.nbAvailableCartridgeSlots.value()); }
     if (pl.comment)                   { pl_item->set_comment(pl.comment.value()); }
+    if (pl.disabledReason) {
+      pl_item->set_disabled_reason(pl.disabledReason.value());
+    }
 
     pl_item->set_nb_physical_cartridge_slots(pl.nbPhysicalCartridgeSlots);
     pl_item->set_nb_physical_drive_slots(pl.nbPhysicalDriveSlots);
@@ -95,6 +98,7 @@ int PhysicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     pl_item->mutable_last_modification_log()->set_username(pl.lastModificationLog.username);
     pl_item->mutable_last_modification_log()->set_host(pl.lastModificationLog.host);
     pl_item->mutable_last_modification_log()->set_time(pl.lastModificationLog.time);
+    pl_item->set_is_disabled(pl.isDisabled);
 
     is_buffer_full = streambuf->Push(record);
   }

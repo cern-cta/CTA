@@ -189,7 +189,9 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
       LAST_UPDATE_TIME AS LAST_UPDATE_TIME, 
 
-      USER_COMMENT AS USER_COMMENT 
+      USER_COMMENT AS USER_COMMENT,
+      IS_DISABLED AS IS_DISABLED,
+      DISABLED_REASON AS DISABLED_REASON 
     FROM 
       PHYSICAL_LIBRARY 
     ORDER BY 
@@ -197,6 +199,7 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
+
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     common::dataStructures::PhysicalLibrary pl;
@@ -222,6 +225,9 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
     pl.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     pl.lastModificationLog.host     = rset.columnString("LAST_UPDATE_HOST_NAME");
     pl.lastModificationLog.time     = rset.columnUint64("LAST_UPDATE_TIME");
+
+    pl.isDisabled = rset.columnBool("IS_DISABLED");
+    pl.disabledReason = rset.columnOptionalString("DISABLED_REASON");
 
     libs.push_back(pl);
   }
@@ -301,6 +307,16 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
   if (pl.comment) {
     setClause += R"SQL(USER_COMMENT = :USER_COMMENT,)SQL";
   }
+  if (pl.isDisabled) {
+    setClause += R"SQL(IS_DISABLED = :IS_DISABLED,)SQL";
+  }
+  if (pl.disabledReason) {
+    setClause += R"SQL(DISABLED_REASON = :DISABLED_REASON,)SQL";
+  }
+
+  if (pl.isDisabled && pl.isDisabled.value() && !pl.disabledReason) {
+    throw exception::UserError(std::string("Cannot disable physical library ") + pl.name + " because the reason has not been provided"); 
+  }
 
   if(setClause.empty()) {
     throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
@@ -338,6 +354,11 @@ void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, con
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
   stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+  if(pl.isDisabled)               stmt.bindBool(":IS_DISABLED", pl.isDisabled.value());
+  if(pl.disabledReason) {
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.disabledReason, &m_log);
+    stmt.bindString(":DISABLED_REASON", trimmedReason);
+  }
 }
 
 } // namespace cta::catalogue

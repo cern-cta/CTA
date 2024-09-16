@@ -44,6 +44,8 @@ struct PhysicalLibrary {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::optional<std::string> comment;
+  bool isDisabled;
+  std::optional<std::string> disabledReason;
 
   PhysicalLibrary() = default;
 }; // struct PhysicalLibrary
@@ -57,6 +59,8 @@ struct UpdatePhysicalLibrary {
   std::optional<uint64_t> nbAvailableCartridgeSlots;
   std::optional<uint64_t> nbPhysicalDriveSlots;
   std::optional<std::string> comment;
+  std::optional<bool> isDisabled;
+  std::optional<std::string> disabledReason;
 }; // struct PhysicalLibrary
 
 } // namespace cta::common::dataStructures
