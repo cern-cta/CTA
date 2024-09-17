@@ -21,6 +21,7 @@
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
 
+#include <regex>
 #include <algorithm>
 #include <attr/xattr.h>
 #include <limits>
@@ -996,17 +997,16 @@ std::string getEnv(const std::string& variableName){
 }
 
 std::list<std::string> commaSeparatedStringToList(const std::string &commaSeparated) {
-  std::string str = commaSeparated;
-  std::list<std::string> result;
-  // Remove white spaces
-  str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
 
-  // Separate the string by ,
-  std::istringstream ss(str);
-  while(ss.good()) {
-      std::string substr;
-      std::getline(ss, substr, ',' );
-      result.push_back( substr );
+  // Parse the elements between commas, while trimming any whitespaces before and after each string
+  std::regex pattern_between_commas(R"rgx("\s*([^,]*[^\s,])\s*,?")rgx");
+  auto it_begin = std::sregex_iterator(commaSeparated.begin(), commaSeparated.end(), pattern_between_commas);
+  auto it_end = std::sregex_iterator();
+
+  std::list<std::string> result;
+  for (std::sregex_iterator it = it_begin; it != it_end; ++it){
+    std::smatch match = *it;
+    result.emplace_back(match[1]);
   }
   return result;
 }

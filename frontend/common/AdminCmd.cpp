@@ -15,8 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <regex>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -1231,7 +1229,7 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
 
   std::list<std::string> supply_list;
   if (supply) {
-    supply_list = parseCommaSeparatedValue(supply.value());
+    supply_list = cta::utils::commaSeparatedStringToList(supply.value());
   }
 
   m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply_list, comment);
@@ -1262,7 +1260,7 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
   }
   if(supply) {
-    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name, parseCommaSeparatedValue(supply.value()));
+    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name, cta::utils::commaSeparatedStringToList(supply.value()));
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1646,18 +1644,6 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
     response.set_message_txt(ue.getMessage().str());
     response.set_type(xrd::Response::RSP_ERR_USER);
   }
-}
-
-std::list<std::string> AdminCmd::parseCommaSeparatedValue(const std::string &raw_string) {
-
-  const std::regex comma_separated_option_regex("^\\s*([^,]+\\s*,\\s*)*[^,]+\\s*$");
-
-  if (!std::regex_match(raw_string, comma_separated_option_regex))
-  {
-    throw exception::UserError("Cannot parse comma-separated values because user specified an invalid string: \"" + raw_string +"\"");
-  }
-
-  return cta::utils::commaSeparatedStringToList(raw_string);
 }
 
 } // namespace cta::frontend

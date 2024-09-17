@@ -224,8 +224,6 @@ private:
   void processRecycleTapeFile_Restore (xrd::Response& response);
   void processModifyArchiveFile       (xrd::Response& response);
 
-  std::list<std::string> parseCommaSeparatedValue(const std::string &value);
-
   common::dataStructures::SecurityIdentity    m_cliIdentity;           //!< Client identity: username, host, authentication
   const uint64_t                              m_archiveFileMaxSize;    //!< Maximum allowed file size for archive requests
   const std::optional<std::string>            m_repackBufferURL;       //!< Repack buffer URL

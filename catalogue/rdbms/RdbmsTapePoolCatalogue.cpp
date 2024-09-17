@@ -454,33 +454,34 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
   stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
 
-  auto rset = stmt.executeQuery();
-
-  if (!rset.next()) {
-    return std::nullopt;
-  }
-
   TapePool pool;
-  pool.name = rset.columnString("TAPE_POOL_NAME");
-  pool.vo.name = rset.columnString("VO");
-  pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
-  pool.encryption = rset.columnBool("IS_ENCRYPTED");
-  pool.supply = rset.columnOptionalString("SUPPLY");
-  pool.nbTapes = rset.columnUint64("NB_TAPES");
-  pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
-  pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
-  pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
-  pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
-  pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-  pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
-  pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
-  pool.comment = rset.columnString("USER_COMMENT");
-  pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-  pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-  pool.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-  pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-  pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-  pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+  {
+    // Scoping `rset`: It needs be destructed before executing the supply logic query
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      return std::nullopt;
+    }
+    pool.name = rset.columnString("TAPE_POOL_NAME");
+    pool.vo.name = rset.columnString("VO");
+    pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
+    pool.encryption = rset.columnBool("IS_ENCRYPTED");
+    pool.supply = rset.columnOptionalString("SUPPLY");
+    pool.nbTapes = rset.columnUint64("NB_TAPES");
+    pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
+    pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
+    pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
+    pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
+    pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
+    pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
+    pool.comment = rset.columnString("USER_COMMENT");
+    pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    pool.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+  }
 
   {
     auto [supply_src_set, supply_dst_set] = getTapePoolSupplySourcesAndDestinations(conn, pool.name);
