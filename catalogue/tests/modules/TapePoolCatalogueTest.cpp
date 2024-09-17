@@ -1065,8 +1065,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::list<std::string> modifiedSupply = {
-    "tape_pool"};  // fails because we want to disallow specifying itself as its supply tapepool
+  // fails because we want to disallow specifying itself as its supply tapepool
+  const std::list<std::string> modifiedSupply = {"tape_pool"};
   ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply));
 
   {
@@ -1079,12 +1079,11 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE(
-      pool.supply);  // this is set because transaction for updating the supply field of the tapepool table succeeded
+    // this is set because transaction for updating the supply field of the tapepool table succeeded
+    ASSERT_TRUE(pool.supply);
     ASSERT_EQ(modifiedSupply.front(), pool.supply.value());  // succeeds because each statement is its own transaction
-    ASSERT_TRUE(
-      pool.supply_source_set
-        .empty());  // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
+    // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1579,8 +1578,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   }
   // create a third tapepool to test multiple entries
   std::string thirdTapePoolName("tape_pool_3");
-  std::list<std::string> thirdTapePoolSupply = {"tape_pool",
-                                                "tape_pool_2"};  // comma-separated with multiple whitespace
+  std::list<std::string> thirdTapePoolSupply = {"tape_pool", "tape_pool_2"};
   const uint64_t nbThirdPoolPartialTapes = 3;
   const bool thirdPoolIsEncrypted = false;
   const std::string thirdPoolComment = "Create third tape pool";

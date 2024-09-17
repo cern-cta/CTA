@@ -997,12 +997,26 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
     is_first_value = false;
   }
 
-  push_back(tpls_item.name(), tpls_item.vo(), tpls_item.num_tapes(), tpls_item.num_partial_tapes(),
-            tpls_item.num_physical_files(), dataSizeToStr(tpls_item.capacity_bytes()),
-            dataSizeToStr(tpls_item.data_bytes()), dataSizeToStr(avail), doubleToStr(use_percent, '%'),
-            tpls_item.encrypt(), supply_source_oss.str(), tpls_item.created().username(), tpls_item.created().host(),
-            timeToStr(tpls_item.created().time()), tpls_item.modified().username(), tpls_item.modified().host(),
-            timeToStr(tpls_item.modified().time()), tpls_item.comment());
+  push_back(
+          tpls_item.name(),
+          tpls_item.vo(),
+          tpls_item.num_tapes(),
+          tpls_item.num_partial_tapes(),
+          tpls_item.num_physical_files(),
+          dataSizeToStr(tpls_item.capacity_bytes()),
+          dataSizeToStr(tpls_item.data_bytes()),
+          dataSizeToStr(avail),
+          doubleToStr(use_percent, '%'),
+          tpls_item.encrypt(),
+          supply_source_oss.str(),
+          tpls_item.created().username(),
+          tpls_item.created().host(),
+          timeToStr(tpls_item.created().time()),
+          tpls_item.modified().username(),
+          tpls_item.modified().host(),
+          timeToStr(tpls_item.modified().time()),
+          tpls_item.comment()
+  );
 }
 
 void TextFormatter::printDiskSystemLsHeader() {
