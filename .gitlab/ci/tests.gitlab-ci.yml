@@ -101,13 +101,18 @@ system-test-dcache:
   # - *before-script-alma9
   script:
   #  - /usr/bin/cta-unitPlusSystemTests.sh
+    - |-
+      tag=$CI_COMMIT_SHORT_SHA
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        tag=$CI_COMMIT_TAG
+      fi
     - helm repo add bitnami https://charts.bitnami.com/bitnami
     - helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
     - helm repo update
-    - helm -n ${K8S_NAMESPACE} install ${HELM_OPTS} --wait --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
-    - helm -n ${K8S_NAMESPACE} install ${HELM_OPTS} --wait cells bitnami/zookeeper
-    - helm -n ${K8S_NAMESPACE} install ${HELM_OPTS} --wait --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
-    - helm -n ${K8S_NAMESPACE} install ${HELM_OPTS} --wait --set image.tag=${tag} --set dcache.hsm.enabled=true store dcache/dcache
+    - helm -n ${K8S_NAMESPACE} install --replace --timeout 10m0s --wait --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
+    - helm -n ${K8S_NAMESPACE} install --replace --timeout 10m0s --wait cells bitnami/zookeeper
+    - helm -n ${K8S_NAMESPACE} install --replace --timeout 10m0s --wait --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
+    - helm -n ${K8S_NAMESPACE} install --replace --timeout 10m0s --wait --set image.tag=${tag} --set dcache.hsm.enabled=true store dcache/dcache
 
 
 
