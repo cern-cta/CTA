@@ -29,12 +29,20 @@ TapePoolCatalogueRetryWrapper::TapePoolCatalogueRetryWrapper(const std::unique_p
   : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {
 }
 
-void TapePoolCatalogueRetryWrapper::createTapePool(const common::dataStructures::SecurityIdentity &admin,
-                                                   const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-                                                   const std::list<std::string> &supply_list, const std::string &comment) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&vo,&nbPartialTapes,&encryptionValue,&supply_list,&comment] {
-    return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply_list, comment);
-  }, m_maxTriesToConnect);
+void TapePoolCatalogueRetryWrapper::createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                                                   const std::string& name,
+                                                   const std::string& vo,
+                                                   const uint64_t nbPartialTapes,
+                                                   const bool encryptionValue,
+                                                   const std::list<std::string>& supply_list,
+                                                   const std::string& comment) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &admin, &name, &vo, &nbPartialTapes, &encryptionValue, &supply_list, &comment] {
+      return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply_list,
+                                                     comment);
+    },
+    m_maxTriesToConnect);
 }
 
 void TapePoolCatalogueRetryWrapper::deleteTapePool(const std::string &name) {
@@ -83,11 +91,15 @@ void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStru
   }, m_maxTriesToConnect);
 }
 
-void TapePoolCatalogueRetryWrapper::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
-                                                         const std::string &name, const std::list<std::string> &supply_list) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&supply_list] {
-    return m_catalogue->TapePool()->modifyTapePoolSupply(admin, name, supply_list);
-  }, m_maxTriesToConnect);
+void TapePoolCatalogueRetryWrapper::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                                                         const std::string& name,
+                                                         const std::list<std::string>& supply_list) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &admin, &name, &supply_list] {
+      return m_catalogue->TapePool()->modifyTapePoolSupply(admin, name, supply_list);
+    },
+    m_maxTriesToConnect);
 }
 
 void TapePoolCatalogueRetryWrapper::modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin,
@@ -104,9 +116,8 @@ bool TapePoolCatalogueRetryWrapper::tapePoolExists(const std::string &tapePoolNa
 }
 
 void TapePoolCatalogueRetryWrapper::deleteAllTapePoolSupplyEntries() {
-  return retryOnLostConnection(m_log, [this] {
-    return m_catalogue->TapePool()->deleteAllTapePoolSupplyEntries();
-  }, m_maxTriesToConnect);
+  return retryOnLostConnection(
+    m_log, [this] { return m_catalogue->TapePool()->deleteAllTapePoolSupplyEntries(); }, m_maxTriesToConnect);
 }
 
 } // namespace cta::catalogue

@@ -42,9 +42,13 @@ RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr
   RdbmsCatalogue *rdbmsCatalogue)
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
-                                            const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-                                            const std::list<std::string> &supply_list, const std::string &comment) {
+void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& name,
+                                            const std::string& vo,
+                                            const uint64_t nbPartialTapes,
+                                            const bool encryptionValue,
+                                            const std::list<std::string>& supply_list,
+                                            const std::string& comment) {
   if(name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape pool because the tape pool name is an empty string");
   }
@@ -57,7 +61,8 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
     throw UserSpecifiedAnEmptyStringComment("Cannot create tape pool because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  std::optional<std::string> optionalSupplyString = supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
+  std::optional<std::string> optionalSupplyString =
+    supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
   auto conn = m_connPool->getConn();
 
@@ -135,7 +140,8 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   populateSupplyTable(conn, name, supply_list);
 }
 
-std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>> RdbmsTapePoolCatalogue::getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn) const {
+std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>>
+RdbmsTapePoolCatalogue::getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn) const {
   std::string sql = R"SQL(
     SELECT
       TP_SRC.TAPE_POOL_NAME AS SUPPLY_SRC_TAPE_POOL_NAME,
@@ -161,7 +167,9 @@ std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, st
   return std::pair(std::move(sources_per_tape_pool), std::move(destinations_per_tape_pool));
 }
 
-std::pair<std::set<std::string>, std::set<std::string>> RdbmsTapePoolCatalogue::getTapePoolSupplySourcesAndDestinations(rdbms::Conn &conn, const std::string &tapePoolName) const {
+std::pair<std::set<std::string>, std::set<std::string>>
+RdbmsTapePoolCatalogue::getTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn,
+                                                                const std::string& tapePoolName) const {
   std::string sql = R"SQL(
     SELECT
       TP_SRC.TAPE_POOL_NAME AS SUPPLY_SRC_TAPE_POOL_NAME,
@@ -380,7 +388,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   // Get all supply source and destination tapepools, in a single go
   auto [supply_src_per_tape_pool, supply_dst_per_tape_pool] = getAllTapePoolSupplySourcesAndDestinations(conn);
 
-  for (auto &pool : pools) {
+  for (auto& pool : pools) {
     auto src_set_node_handle = supply_src_per_tape_pool.extract(pool.name);
     auto dst_set_node_handle = supply_dst_per_tape_pool.extract(pool.name);
     if (src_set_node_handle) {
@@ -627,22 +635,23 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   }
 }
 
-void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string tapePoolName, std::list<std::string> supply_list) {
+void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn& conn,
+                                                 std::string tapePoolName,
+                                                 std::list<std::string> supply_list) {
   /* wipe the previous supply sources for this tapepool, as we are resetting them now */
-  std::string sql_drop_old = 
-  "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
-  "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME)";
+  std::string sql_drop_old = "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
+                             "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME)";
   auto stmt_delete = conn.createStmt(sql_drop_old);
   stmt_delete.bindString(":TAPE_POOL_NAME", tapePoolName);
   stmt_delete.executeNonQuery();
 
   for (auto match : supply_list) {
-    std::string sql = 
-    "INSERT INTO TAPE_POOL_SUPPLY (SUPPLY_SOURCE_TAPE_POOL_ID, SUPPLY_DESTINATION_TAPE_POOL_ID) "
-    " SELECT SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID, DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID "
-    " FROM "
-    " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_SOURCE_NAME) SRC, "
-    " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_DESTINATION_NAME) DEST ";
+    std::string sql =
+      "INSERT INTO TAPE_POOL_SUPPLY (SUPPLY_SOURCE_TAPE_POOL_ID, SUPPLY_DESTINATION_TAPE_POOL_ID) "
+      " SELECT SRC.TAPE_POOL_ID AS SUPPLY_SOURCE_TAPE_POOL_ID, DEST.TAPE_POOL_ID AS SUPPLY_DESTINATION_TAPE_POOL_ID "
+      " FROM "
+      " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_SOURCE_NAME) SRC, "
+      " (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :SUPPLY_DESTINATION_NAME) DEST ";
 
     auto stmt_insert = conn.createStmt(sql);
     stmt_insert.bindString(":SUPPLY_SOURCE_NAME", match);
@@ -651,15 +660,17 @@ void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn &conn, std::string 
   }
 }
 
-void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
-                                                  const std::string &name, const std::list<std::string> &supply_list) {
+void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                                                  const std::string& name,
+                                                  const std::list<std::string>& supply_list) {
   if(name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
       " string");
   }
 
   auto conn = m_connPool->getConn();
-  std::optional<std::string> optionalSupplyString = supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
+  std::optional<std::string> optionalSupplyString =
+    supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -788,7 +799,7 @@ void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries() {
   deleteAllTapePoolSupplyEntries(conn);
 }
 
-void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn &conn) {
+void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn& conn) {
   std::string sql = "DELETE FROM TAPE_POOL_SUPPLY";
   auto stmt = conn.createStmt(sql);
   stmt.executeNonQuery();

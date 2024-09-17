@@ -39,18 +39,17 @@
 namespace unitTests {
 
 cta_catalogue_TapePoolTest::cta_catalogue_TapePoolTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_vo(CatalogueTestUtils::getVo()),
-    m_anotherVo(CatalogueTestUtils::getAnotherVo()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()),
-    m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
-    m_anotherStorageClass(CatalogueTestUtils::getAnotherStorageClass()),
-    m_mediaType(CatalogueTestUtils::getMediaType()),
-    m_tape1(CatalogueTestUtils::getTape1()),
-    m_tape2(CatalogueTestUtils::getTape2()),
-    m_tape3(CatalogueTestUtils::getTape3()) {
-}
+    : m_dummyLog("dummy", "dummy"),
+      m_admin(CatalogueTestUtils::getAdmin()),
+      m_vo(CatalogueTestUtils::getVo()),
+      m_anotherVo(CatalogueTestUtils::getAnotherVo()),
+      m_diskInstance(CatalogueTestUtils::getDiskInstance()),
+      m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
+      m_anotherStorageClass(CatalogueTestUtils::getAnotherStorageClass()),
+      m_mediaType(CatalogueTestUtils::getMediaType()),
+      m_tape1(CatalogueTestUtils::getTape1()),
+      m_tape2(CatalogueTestUtils::getTape2()),
+      m_tape3(CatalogueTestUtils::getTape3()) {}
 
 void cta_catalogue_TapePoolTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -1035,7 +1034,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::list<std::string> supply; // empty string is acceptable value
+  const std::list<std::string> supply;  // empty string is acceptable value
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1066,7 +1065,8 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::list<std::string> modifiedSupply = {"tape_pool"}; // fails because we want to disallow specifying itself as its supply tapepool
+  const std::list<std::string> modifiedSupply = {
+    "tape_pool"};  // fails because we want to disallow specifying itself as its supply tapepool
   ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply));
 
   {
@@ -1079,9 +1079,12 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_TRUE(pool.supply); // this is set because transaction for updating the supply field of the tapepool table succeeded
-    ASSERT_EQ(modifiedSupply.front(), pool.supply.value()); // succeeds because each statement is its own transaction
-    ASSERT_TRUE(pool.supply_source_set.empty()); // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
+    ASSERT_TRUE(
+      pool.supply);  // this is set because transaction for updating the supply field of the tapepool table succeeded
+    ASSERT_EQ(modifiedSupply.front(), pool.supply.value());  // succeeds because each statement is its own transaction
+    ASSERT_TRUE(
+      pool.supply_source_set
+        .empty());  // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1096,9 +1099,9 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringTapePoolName) {
     const std::string tapePoolName = "";
-  const std::list<std::string> modifiedSupply = {"Modified_supply"};
-  ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+    const std::list<std::string> modifiedSupply = {"Modified_supply"};
+    ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
+                 cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
@@ -1228,7 +1231,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_FALSE((bool)pool.supply);
+    ASSERT_FALSE((bool) pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1401,7 +1404,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
-    ASSERT_FALSE((bool)pool.supply);
+    ASSERT_FALSE((bool) pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1542,10 +1545,10 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
   m_catalogue->TapePool()->createTapePool(m_admin, firstTapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-  firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+                                          firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
 
   m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-  secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+                                          secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
 
   auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
   auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1555,7 +1558,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     const auto poolMaplet = pools_map.find(firstTapePoolName);
     ASSERT_NE(pools_map.end(), poolMaplet);
 
-    const auto &pool = poolMaplet->second;
+    const auto& pool = poolMaplet->second;
     ASSERT_EQ(firstTapePoolName, pool.name);
     ASSERT_EQ(std::nullopt, pool.supply);
     ASSERT_TRUE(pool.supply_source_set.empty());
@@ -1566,7 +1569,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     const auto poolMaplet = pools_map.find(secondTapePoolName);
     ASSERT_NE(pools_map.end(), poolMaplet);
 
-    const auto &pool = poolMaplet->second;
+    const auto& pool = poolMaplet->second;
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_EQ("tape_pool", pool.supply);
     ASSERT_FALSE(pool.supply_source_set.empty());
@@ -1576,13 +1579,14 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   }
   // create a third tapepool to test multiple entries
   std::string thirdTapePoolName("tape_pool_3");
-  std::list<std::string> thirdTapePoolSupply = {"tape_pool", "tape_pool_2"}; // comma-separated with multiple whitespace
+  std::list<std::string> thirdTapePoolSupply = {"tape_pool",
+                                                "tape_pool_2"};  // comma-separated with multiple whitespace
   const uint64_t nbThirdPoolPartialTapes = 3;
   const bool thirdPoolIsEncrypted = false;
   const std::string thirdPoolComment = "Create third tape pool";
   m_catalogue->TapePool()->createTapePool(m_admin, thirdTapePoolName, m_anotherVo.name, nbThirdPoolPartialTapes,
-  thirdPoolIsEncrypted, thirdTapePoolSupply, thirdPoolComment);
-  
+                                          thirdPoolIsEncrypted, thirdTapePoolSupply, thirdPoolComment);
+
   {
     const auto pools3_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
     const auto pools3 = m_catalogue->TapePool()->getTapePools();
@@ -1591,7 +1595,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     const auto poolMaplet = pools3_map.find(thirdTapePoolName);
     ASSERT_NE(pools3_map.end(), poolMaplet);
 
-    const auto &pool = poolMaplet->second;
+    const auto& pool = poolMaplet->second;
     ASSERT_EQ(thirdTapePoolName, pool.name);
     ASSERT_TRUE(pool.supply_source_set.count("tape_pool"));
     ASSERT_TRUE(pool.supply_source_set.count("tape_pool_2"));
@@ -1603,6 +1607,5 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
     m_catalogue->TapePool()->deleteTapePool("tape_pool_3");
   }
 }
-
 
 }  // namespace unitTests

@@ -327,7 +327,8 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->VO()->createVirtualOrganization(admin,vo);
 
     m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
-    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply_list, "Create tape pool");
+    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply_list,
+                                            "Create tape pool");
     createMediaType(mediaType);
 
     {

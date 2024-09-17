@@ -1260,7 +1260,8 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
   }
   if(supply) {
-    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name, cta::utils::commaSeparatedStringToList(supply.value()));
+    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
+                                                 cta::utils::commaSeparatedStringToList(supply.value()));
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);

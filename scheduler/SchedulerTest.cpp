@@ -1265,9 +1265,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const bool tapePoolEncryption = false;
     const std::list<std::string> tapePoolSupplyList;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
-      tapePoolSupplyList, tapePool1Comment);
+                                         tapePoolSupplyList, tapePool1Comment);
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,
-      tapePoolSupplyList, tapePool2Comment);
+                                         tapePoolSupplyList, tapePool2Comment);
 
     const std::string archiveRoute1Comment = "Archive-route for copy number 1";
     const std::string archiveRoute2Comment = "Archive-route for copy number 2";
@@ -4692,10 +4692,10 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::list<std::string> supplyList;
-  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supplyList,"comment");
+  catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, false, supplyList, "comment");
 
   std::string tapepool3Name = "tapepool3";
-  catalogue.TapePool()->createTapePool(admin,tapepool3Name,"vo",1,false,supplyList,"comment");
+  catalogue.TapePool()->createTapePool(admin, tapepool3Name, "vo", 1, false, supplyList, "comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -4945,7 +4945,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::list<std::string> supplyList;
-  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supplyList,"comment");
+  catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, false, supplyList, "comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -5128,10 +5128,10 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::list<std::string> supplyList;
-  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supplyList,"comment");
+  catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, false, supplyList, "comment");
 
   std::string tapepool3Name = "tapepool3";
-  catalogue.TapePool()->createTapePool(admin,tapepool3Name,"vo",1,false,supplyList,"comment");
+  catalogue.TapePool()->createTapePool(admin, tapepool3Name, "vo", 1, false, supplyList, "comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -6663,7 +6663,8 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   //Create a new tapepool on the same VO
   std::string newTapepool = "new_tapepool";
-  catalogue.TapePool()->createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,std::list<std::string>(),"Test");
+  catalogue.TapePool()->createTapePool(s_adminOnAdminHost, newTapepool, s_vo, 1, false, std::list<std::string>(),
+                                       "Test");
 
   //Create the third tape in the new tapepool
   std::string vid3 = "VID_3";

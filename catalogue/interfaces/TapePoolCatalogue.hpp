@@ -43,9 +43,13 @@ class TapePoolCatalogue {
 public:
   virtual ~TapePoolCatalogue() = default;
 
-  virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::list<std::string> &supply_list, const std::string &comment) = 0;
+  virtual void createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                              const std::string& name,
+                              const std::string& vo,
+                              const uint64_t nbPartialTapes,
+                              const bool encryptionValue,
+                              const std::list<std::string>& supply_list,
+                              const std::string& comment) = 0;
 
   virtual void deleteTapePool(const std::string &name) = 0;
 
@@ -66,8 +70,9 @@ public:
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool encryptionValue) = 0;
 
-  virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-                                    const std::list<std::string> &supply_list) = 0;
+  virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                                    const std::string& name,
+                                    const std::list<std::string>& supply_list) = 0;
 
   virtual void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
     const std::string &newName) = 0;
