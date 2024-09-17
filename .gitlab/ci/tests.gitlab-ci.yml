@@ -78,6 +78,8 @@ system-test-dcache:
   stage: test
   extends: .helm_image
   #needs: *rpm_needs
+  variables: 
+    NAMESPACE: "${JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -113,7 +115,6 @@ system-test-dcache:
     - helm -n ${NAMESPACE} install --replace --wait --timeout 600 cells bitnami/zookeeper
     - helm -n ${NAMESPACE} install --replace --wait --timeout 600 --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
     - helm -n ${NAMESPACE} install --replace --wait --timeout 600 --set image.tag=${tag} --set dcache.hsm.enabled=true store dcache/dcache
-
 
 
 
