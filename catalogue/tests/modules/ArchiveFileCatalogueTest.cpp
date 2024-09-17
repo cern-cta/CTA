@@ -4929,7 +4929,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
   const std::string tapePoolName_default_2 = "tape_pool_default_2";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_default_1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool for default 1");
   m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_repack_1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool for repack 1");
   m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_default_2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool for default 2");

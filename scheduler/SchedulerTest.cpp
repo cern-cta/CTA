@@ -281,8 +281,6 @@ public:
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
     const std::list<std::string> tapePoolSupply;
-    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName_default, vo.name, nbPartialTapes, tapePoolEncryption,
-      tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
 
     // Tape pool for default archive route
