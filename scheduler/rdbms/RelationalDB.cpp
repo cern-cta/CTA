@@ -401,11 +401,14 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc)
 {
+  log::ScopedParamContainer(lc)
+          .add("archiveFileID", request.archiveFileID)
+          .add("diskInstance", request.diskInstance)
+          .log(log::DEBUG,
+               "In RelationalDB::cancelArchive(): removing archive request from the queue");
   schedulerdb::Transaction txn(m_connPool);
-  uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
-
   try {
-    txn.commit();
+    uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
     log::ScopedParamContainer(lc)
             .add("archiveFileID", request.archiveFileID)
             .add("diskInstance", request.diskInstance)
@@ -415,6 +418,7 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
     if (nrows > 1){
       lc.log(cta::log::WARNING, "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, please check if that is expected.");
     }
+    txn.commit();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::ERR,
            "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction." +
