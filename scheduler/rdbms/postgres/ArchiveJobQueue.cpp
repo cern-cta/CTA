@@ -286,7 +286,17 @@ namespace cta::schedulerdb::postgres {
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
         STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
     )SQL";
+
+    stmt.bindString(":NEWSTATUS",
+                    to_string(ArchiveJobStatus::ReadyForDeletion));
+    stmt.bindString(":COMPLETE",
+                    to_string(ArchiveJobStatus::AJS_Complete));
+    stmt.bindString(":FORDELETION",
+                    to_string(ArchiveJobStatus::ReadyForDeletion));
+    stmt.bindString(":FAILED",
+                    to_string(ArchiveJobStatus::AJS_Failed));
      */
+    /* disabling cancelArchive to test retry workflows
     std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -296,16 +306,11 @@ namespace cta::schedulerdb::postgres {
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":DISK_INSTANCE", diskInstance);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-    /* stmt.bindString(":NEWSTATUS",
-                    to_string(ArchiveJobStatus::ReadyForDeletion));
-    stmt.bindString(":COMPLETE",
-                    to_string(ArchiveJobStatus::AJS_Complete));
-    stmt.bindString(":FORDELETION",
-                    to_string(ArchiveJobStatus::ReadyForDeletion));
-    stmt.bindString(":FAILED",
-                    to_string(ArchiveJobStatus::AJS_Failed));
-    */
+
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
+     */
+    return 0;
+
   }
 } // namespace cta::schedulerdb::postgres

@@ -131,6 +131,7 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
                   .log(log::DEBUG,
                        "In schedulerdb::ArchiveRdbJob::failTransfer(): requeueing to new mount.");
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
+          m_jobRow.retriesWithinMount = 0;
           m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, 0);
           txn.commit();
 
