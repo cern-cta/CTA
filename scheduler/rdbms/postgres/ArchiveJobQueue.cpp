@@ -75,6 +75,7 @@ namespace cta::schedulerdb::postgres {
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
+    /* DELETION OFF FOR DEBUGGING
     if (status == ArchiveJobStatus::AJS_Complete ||
         status == ArchiveJobStatus::AJS_Failed ||
         status == ArchiveJobStatus::ReadyForDeletion) {
@@ -91,6 +92,7 @@ namespace cta::schedulerdb::postgres {
       stmt2.executeNonQuery();
       return;
     }
+    */
     // the following is here for debugging purposes (row deletion gets disabled)
     if (status == ArchiveJobStatus::AJS_Complete) {
       status = ArchiveJobStatus::ReadyForDeletion;
@@ -170,6 +172,7 @@ namespace cta::schedulerdb::postgres {
     // move the row to failed jobs and delete the entry from the queue
     if (status == ArchiveJobStatus::ReadyForDeletion){
       ArchiveJobQueueRow::copyToFailedJobTable(txn);
+      /* DISABLE DELETION FOR DEBUGGING
       std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -179,6 +182,7 @@ namespace cta::schedulerdb::postgres {
       stmt.bindUint64(":JOB_ID", jobId);
       stmt.executeNonQuery();
       return;
+       */
     }
     // otherwise update the statistics and requeue the job
     std::string sql = R"SQL(
