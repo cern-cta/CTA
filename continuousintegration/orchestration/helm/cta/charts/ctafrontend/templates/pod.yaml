@@ -32,7 +32,7 @@ spec:
     {{include "ctafrontend.readinessProbe" .Values.readinessProbe | nindent 4}}
     {{- end}}
     securityContext:
-      privileged: {{.isPriviliged}}
+      privileged: {{ .Values.isPriviliged }}
     # tadamb
     {{- if (.Values.ports)}}
     ports:

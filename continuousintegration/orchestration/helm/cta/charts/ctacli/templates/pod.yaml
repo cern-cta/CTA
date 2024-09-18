@@ -32,7 +32,7 @@ spec:
     {{include "ctacli.readinessProbe" .Values.readinessProbe | nindent 4}}
     {{- end}}
     securityContext:
-      privileged: {{.isPriviliged}}
+      privileged: {{ .Values.isPriviliged }}
     {{ include "ctacli.volumeMounts" . | nindent 4 }}
   # Here are volumes added
   {{include "ctacli.volumes" . | nindent 2}}

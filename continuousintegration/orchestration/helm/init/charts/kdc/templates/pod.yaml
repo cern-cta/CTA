@@ -34,7 +34,7 @@ spec:
     {{include "kdc.readinessProbe" .Values.readinessProbe | nindent 4}}
     {{- end}}
     securityContext:
-      privileged: {{.isPriviliged}}
+      privileged: {{ .Values.isPriviliged }}
     {{ include "kdc.volumeMounts" . | nindent 4 }}
   # Here are volumes added
   {{include "kdc.volumes" . | nindent 2}}
