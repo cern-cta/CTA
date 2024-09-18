@@ -101,6 +101,14 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
              + std::string("Assuming ToTransfer."));
     }
     try {
+      log::ScopedParamContainer(lc)
+              .add("jobID", jobID)
+              .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+              .add("mountId", m_mountId)
+              .add("tapePool", m_tapePool)
+              .add("failureReason", m_jobRow.failureLogs.value_or(""))
+              .log(log::DEBUG,
+                   "In schedulerdb::ArchiveRdbJob::failTransfer(): all job retries failed.");
       m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
       txn.commit();
       reportType = ReportType::FailureReport;
@@ -114,9 +122,18 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
       // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
       if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount){
         try {
+          log::ScopedParamContainer(lc)
+                  .add("jobID", jobID)
+                  .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+                  .add("mountId", m_mountId)
+                  .add("tapePool", m_tapePool)
+                  .add("failureReason", m_jobRow.failureLogs.value_or(""))
+                  .log(log::DEBUG,
+                       "In schedulerdb::ArchiveRdbJob::failTransfer(): requeueing to new mount.");
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
           m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, 0);
           txn.commit();
+
           // since requeueing, we do not report and we do not
           // set reportType to a particular value here
         } catch (exception::Exception &ex) {
@@ -127,6 +144,14 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
         }
       } else {
         try {
+          log::ScopedParamContainer(lc)
+                  .add("jobID", jobID)
+                  .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+                  .add("mountId", m_mountId)
+                  .add("tapePool", m_tapePool)
+                  .add("failureReason", m_jobRow.failureLogs.value_or(""))
+                  .log(log::DEBUG,
+                       "In schedulerdb::ArchiveRdbJob::failTransfer(): requeue job on the same mount.");
           // requeue to the same mount simply by changing IN_DRIVE_QUEUE to False and updating all other stat fields
           m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser);
           txn.commit();
@@ -171,9 +196,25 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
 
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
+      log::ScopedParamContainer(lc)
+              .add("jobID", jobID)
+              .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+              .add("mountId", m_mountId)
+              .add("tapePool", m_tapePool)
+              .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+              .log(log::DEBUG,
+                   "In schedulerdb::ArchiveRdbJob::failReport()updateJobStatusForFailedReport(): reporting failed terminally.");
       m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
       // requeue job to failure table !
     } else {
+      log::ScopedParamContainer(lc)
+              .add("jobID", jobID)
+              .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+              .add("mountId", m_mountId)
+              .add("tapePool", m_tapePool)
+              .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+              .log(log::DEBUG,
+                   "In schedulerdb::ArchiveRdbJob::failReport()updateJobStatusForFailedReport(): requeue reporting.");
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.is_reporting = false;
       m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
