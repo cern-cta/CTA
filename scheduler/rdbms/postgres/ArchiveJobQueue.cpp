@@ -75,18 +75,9 @@ namespace cta::schedulerdb::postgres {
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
-    if (status == ArchiveJobStatus::AJS_Complete) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-    } else if (status == ArchiveJobStatus::AJS_Failed) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-      ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
-    } else {
-      std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-      auto stmt1 = txn.getConn().createStmt(sql);
-      stmt1.bindString(":STATUS", to_string(status));
-      stmt1.executeNonQuery();
-    }
-    if (status == ArchiveJobStatus::ReadyForDeletion) {
+    if (status == ArchiveJobStatus::AJS_Complete ||
+        status == ArchiveJobStatus::AJS_Failed ||
+        status == ArchiveJobStatus::ReadyForDeletion) {
       std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -95,7 +86,18 @@ namespace cta::schedulerdb::postgres {
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
       stmt2.executeNonQuery();
+      return;
     }
+    if (status == ArchiveJobStatus::AJS_Complete) {
+      status = ArchiveJobStatus::ReadyForDeletion;
+    } else if (status == ArchiveJobStatus::AJS_Failed) {
+      status = ArchiveJobStatus::ReadyForDeletion;
+      ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+    }
+    std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+    auto stmt1 = txn.getConn().createStmt(sql);
+    stmt1.bindString(":STATUS", to_string(status));
+    stmt1.executeNonQuery();
     return;
   };
 
