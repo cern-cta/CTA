@@ -998,7 +998,7 @@ std::string getEnv(const std::string& variableName){
 
 std::list<std::string> commaSeparatedStringToList(const std::string& commaSeparated) {
   // Parse the elements between commas, while trimming any whitespaces before and after each string
-  std::regex pattern_between_commas(R"rgx("\s*([^,]*[^\s,])\s*,?")rgx");
+  std::regex pattern_between_commas(R"rgx(\s*([^,]*[^\s,])\s*,?)rgx");
   auto it_begin = std::sregex_iterator(commaSeparated.begin(), commaSeparated.end(), pattern_between_commas);
   auto it_end = std::sregex_iterator();
 
