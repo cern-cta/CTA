@@ -78,6 +78,9 @@ namespace cta::schedulerdb::postgres {
     if (status == ArchiveJobStatus::AJS_Complete ||
         status == ArchiveJobStatus::AJS_Failed ||
         status == ArchiveJobStatus::ReadyForDeletion) {
+      if (status == ArchiveJobStatus::AJS_Failed){
+        ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+      }
       std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -88,6 +91,7 @@ namespace cta::schedulerdb::postgres {
       stmt2.executeNonQuery();
       return;
     }
+    // the following is here for debugging purposes (row deletion gets disabled)
     if (status == ArchiveJobStatus::AJS_Complete) {
       status = ArchiveJobStatus::ReadyForDeletion;
     } else if (status == ArchiveJobStatus::AJS_Failed) {
@@ -162,7 +166,21 @@ namespace cta::schedulerdb::postgres {
   }
 
   void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
-
+    // if this was the final reporting failure,
+    // move the row to failed jobs and delete the entry from the queue
+    if (status == ArchiveJobStatus::ReadyForDeletion){
+      ArchiveJobQueueRow::copyToFailedJobTable(txn);
+      std::string sql = R"SQL(
+      DELETE FROM ARCHIVE_JOB_QUEUE
+      WHERE
+        JOB_ID = :JOB_ID
+      )SQL";
+      auto stmt = txn.getConn().createStmt(sql);
+      stmt.bindUint64(":JOB_ID", jobId);
+      stmt.executeNonQuery();
+      return;
+    }
+    // otherwise update the statistics and requeue the job
     std::string sql = R"SQL(
       UPDATE ARCHIVE_JOB_QUEUE SET
         STATUS = :STATUS,
@@ -180,17 +198,6 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
-    if (status == ArchiveJobStatus::ReadyForDeletion){
-      ArchiveJobQueueRow::copyToFailedJobTable(txn);
-      std::string sql = R"SQL(
-      DELETE FROM ARCHIVE_JOB_QUEUE
-      WHERE
-        JOB_ID = :JOB_ID
-      )SQL";
-      auto stmt = txn.getConn().createStmt(sql);
-      stmt.bindUint64(":JOB_ID", jobId);
-      stmt.executeNonQuery();
-    }
     return;
   };
 
