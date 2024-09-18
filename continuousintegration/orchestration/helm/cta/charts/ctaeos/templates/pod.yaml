@@ -36,7 +36,7 @@ spec:
     {{include "ctaeos.readinessProbe" .Values.readinessProbe | nindent 4}}
     {{- end}}
     securityContext:
-      privileged: {{.isPriviliged}}
+      privileged: {{ .Values.isPriviliged }}
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
   # Here are volumes added
   {{include "ctaeos.volumes" . | nindent 2}}
