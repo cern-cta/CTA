@@ -73,7 +73,15 @@ class RelationalDB: public SchedulerDatabase {
 
   /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;
-
+  /**
+   * Sends all jobs of the archive request to the backend (relational DB)
+   *
+   * @param instanceName
+   * @param request
+   * @param criteria
+   * @param logContext
+   * @return "bogus" string just to stay compatible with OStoreDB implementatation of the Scheduler
+   */
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
 
@@ -86,8 +94,6 @@ class RelationalDB: public SchedulerDatabase {
 
   /** Get all archive queues with status:
    * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
-   * CHECK: how this reporting works for OStoreDB and make sure
-   * no selection criteria are missed (tapePool, hostname etc.)
    *
    * @param filesRequested  number of rows to be reported from the scheduler DB
    * @param logContext      logging context
