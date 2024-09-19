@@ -71,7 +71,7 @@ namespace cta::schedulerdb::postgres {
 
   uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs){
     if(jobIDs.empty()) {
-      return;
+      return 0;
     }
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
