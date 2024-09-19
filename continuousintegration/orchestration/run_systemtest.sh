@@ -183,11 +183,11 @@ if [ $SCHED_TYPE == "pgsched" ] ; then
 fi
 
 if [ $useceph == 1 ] ; then
-    objectstore_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep objectstore | head -1)
-    if [ "-${objectstore_configmap}-" == "--" ]; then
+    objectstore_credentials=$(find /opt/kubernetes/CTA/ | grep objectstore-file.yaml | head -1)
+    if [ "-${objectstore_credentials}-" == "--" ]; then
       die "Ceph objecstore requested but not objectstore configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"
+      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_credentials}"
     fi
 fi
 

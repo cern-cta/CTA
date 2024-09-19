@@ -19,7 +19,7 @@
 ctareg_secret='ctaregsecret'
 
 # defaults scheduler datastore to objectstore (using a file)
-config_schedstore="./objectstore-file.yaml"
+config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
 # defaults DB to sqlite
 config_database="./database-sqlite.yaml"
 # default library model
@@ -83,7 +83,7 @@ while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG}
-            test -f ${config_schedstore} || error="${error}Scheduler datastore configmap file ${config_schedstore} does not exist\n"
+            test -f ${config_schedstore} || error="${error}Scheduler database credentials file ${config_schedstore} does not exist\n"
             ;;
         d)
             config_database=${OPTARG}
