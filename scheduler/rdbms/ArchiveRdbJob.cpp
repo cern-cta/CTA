@@ -198,7 +198,6 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       log::ScopedParamContainer(lc)
               .add("jobID", jobID)
-              .add("reportType", norep)
               .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
               .add("mountId", m_mountId)
               .add("tapePool", m_tapePool)
