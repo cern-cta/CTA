@@ -66,8 +66,7 @@ system-test-cta:
   script:
     - /usr/bin/cta-systemTests
 
-# This test is disabled ("." prefix) for now as it has not yet been implemented
-.unit-test-oracle:
+unit-test-oracle:
   stage: test
   needs: *rpm_needs
   rules:
