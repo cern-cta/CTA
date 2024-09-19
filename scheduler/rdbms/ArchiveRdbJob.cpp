@@ -195,10 +195,6 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      std::string norep = "";
-      if (reportType == ReportType::NoReportRequired){
-        norep = "NoReportRequired";
-      }
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       log::ScopedParamContainer(lc)
               .add("jobID", jobID)

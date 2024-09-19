@@ -133,6 +133,7 @@ namespace cta::schedulerdb::postgres {
       retriesWithinMount = rset.columnUint16("RETRIES_WITHIN_MOUNT");
       maxRetriesWithinMount = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
       totalRetries = rset.columnUint16("TOTAL_RETRIES");
+      maxReportRetries = rset.columnUint16("MAX_REPORT_RETRIES");
       maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
       totalReportRetries = rset.columnUint16("TOTAL_REPORT_RETRIES");
       return *this;
@@ -275,6 +276,7 @@ namespace cta::schedulerdb::postgres {
       params.add("totalRetries", totalRetries);
       params.add("lastMountWithFailure", lastMountWithFailure);
       params.add("maxTotalRetries", maxTotalRetries);
+      params.add("maxReportRetries", maxReportRetries);
     }
 
     /**
@@ -329,6 +331,7 @@ namespace cta::schedulerdb::postgres {
         REPORT_FAILURE_LOG AS REPORT_FAILURE_LOG,
         LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
         MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
+        MAX_REPORT_RETRIES AS MAX_REPORT_RETRIES,
         IS_REPORTING AS IS_REPORTING,
         IN_DRIVE_QUEUE AS IN_DRIVE_QUEUE,
         DRIVE AS DRIVE,
