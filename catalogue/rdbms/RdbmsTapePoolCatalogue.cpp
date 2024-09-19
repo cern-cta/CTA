@@ -73,17 +73,21 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
 
   if(tapePoolToIdMap.count(name)) {
-    throw exception::UserError(std::string("Cannot create tape pool ") + name +
-      " because a tape pool with the same name already exists");
+    throw exception::UserError(std::string("Cannot create tape pool '") + name +
+      "' because a tape pool with the same name already exists");
   }
   if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot create tape pool ") + name +
-      " because vo " + vo + " does not exist.");
+    throw exception::UserError(std::string("Cannot create tape pool '") + name +
+      "' because vo '" + vo + "' does not exist.");
   }
   for (auto& supply_tp_name: supply_list) {
     if (!tapePoolToIdMap.count(supply_tp_name)) {
-      throw exception::UserError(std::string("Cannot create tape pool ") + name +
-                                 " because the supply tape pool " + supply_tp_name + " does not exist");
+      throw exception::UserError(std::string("Cannot create tape pool '") + name +
+                                 "' because the supply tape pool '" + supply_tp_name + "' does not exist");
+    }
+    if (supply_tp_name == name) {
+      throw exception::UserError(std::string("Cannot create tape pool '") + name +
+                                 "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
     }
   }
 
@@ -218,7 +222,7 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
 
   if(tapePoolUsedInAnArchiveRoute(conn, name)) {
     UserSpecifiedTapePoolUsedInAnArchiveRoute ex;
-    ex.getMessage() << "Cannot delete tape-pool " << name << " because it is used in an archive route";
+    ex.getMessage() << "Cannot delete tape-pool '" << name << "' because it is used in an archive route";
     throw ex;
   }
 
@@ -233,13 +237,13 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete tape-pool '") + name + "' because it does not exist");
     }
 
     m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 
   } else {
-    throw UserSpecifiedAnEmptyTapePool(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
+    throw UserSpecifiedAnEmptyTapePool(std::string("Cannot delete tape-pool '") + name + "' because it is not empty");
   }
 }
 
@@ -257,14 +261,14 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 
   if (searchCriteria.name && !RdbmsCatalogueUtils::tapePoolExists(conn, searchCriteria.name.value())) {
     UserSpecifiedANonExistentTapePool ex;
-    ex.getMessage() << "Cannot list tape pools because tape pool " + searchCriteria.name.value() + " does not exist";
+    ex.getMessage() << "Cannot list tape pools because tape pool '" + searchCriteria.name.value() + "' does not exist";
     throw ex;
   }
 
   if (searchCriteria.vo
     && !RdbmsCatalogueUtils::virtualOrganizationExists(conn, searchCriteria.vo.value())) {
     UserSpecifiedANonExistentVirtualOrganization ex;
-    ex.getMessage() << "Cannot list tape pools because virtual organization " + searchCriteria.vo.value() + " does not exist";
+    ex.getMessage() << "Cannot list tape pools because virtual organization '" + searchCriteria.vo.value() + "' does not exist";
     throw ex;
   }
 
@@ -537,7 +541,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
   auto conn = m_connPool->getConn();
 
   if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name +" because the vo " + vo + " does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because the vo '" + vo + "' does not exist");
   }
 
   auto stmt = conn.createStmt(sql);
@@ -549,7 +553,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
   //The VO of this tapepool has changed, invalidate the tapepool-VO cache
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
@@ -582,7 +586,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStru
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
 
@@ -618,7 +622,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
 
@@ -644,7 +648,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
 
@@ -687,8 +691,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
   for (auto& supply_tp_name: supply_list) {
     if (!tapePoolToIdMap.count(supply_tp_name)) {
-      throw exception::UserError(std::string("Cannot modify tape pool ") + name +
-                                 " because the supply tape pool " + supply_tp_name + " does not exist");
+      throw exception::UserError(std::string("Cannot modify tape pool '") + name +
+                                 "' because the supply tape pool '" + supply_tp_name + "' does not exist");
+    }
+    if (supply_tp_name == name) {
+      throw exception::UserError(std::string("Cannot modify tape pool '") + name +
+                                 "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
     }
   }
 
@@ -714,7 +722,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 
   populateSupplyTable(conn, name, supply_list);
@@ -751,7 +759,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
   stmt.executeNonQuery();
 
   if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool ") + currentName + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify tape pool '") + currentName + "' because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();

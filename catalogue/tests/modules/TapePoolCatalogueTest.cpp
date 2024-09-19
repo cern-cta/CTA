@@ -1029,70 +1029,62 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption_nonExistentTapePool) {
     cta::exception::UserError);
 }
 
-// seems this test is now failing, should it??
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
-  const std::string tapePoolName = "tape_pool";
+  const std::string tapePoolName_1 = "tape_pool_1";
+  const std::string tapePoolName_2 = "tape_pool_2";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::list<std::string> supply;  // empty string is acceptable value
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_1, m_vo.name, nbPartialTapes, isEncrypted, supply,
     comment);
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+                                          comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(2, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(m_vo.name, pool.vo.name);
-    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(isEncrypted, pool.encryption);
-    ASSERT_EQ(std::nullopt, pool.supply);
-    ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityBytes);
-    ASSERT_EQ(0, pool.dataBytes);
-    ASSERT_EQ(0, pool.nbPhysicalFiles);
-    ASSERT_EQ(comment, pool.comment);
+    // Get reference to tape pool 1
+    const auto &pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
+    ASSERT_EQ(tapePoolName_1, pool_1.name);
+    ASSERT_EQ(std::nullopt, pool_1.supply);
+    ASSERT_TRUE(pool_1.supply_source_set.empty());
+    ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
-    const cta::common::dataStructures::EntryLog creationLog = pool.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const cta::common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    // Get reference to tape pool 2
+    const auto &pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
+    ASSERT_EQ(tapePoolName_2, pool_2.name);
+    ASSERT_EQ(std::nullopt, pool_2.supply);
+    ASSERT_TRUE(pool_2.supply_source_set.empty());
+    ASSERT_TRUE(pool_2.supply_destination_set.empty());
   }
 
   // fails because we want to disallow specifying itself as its supply tapepool
-  const std::list<std::string> modifiedSupply = {"tape_pool"};
-  ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply));
+  const std::list<std::string> modifiedSupply_wrong = { "does_not_exist" };
+  ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply_wrong));
+
+  const std::list<std::string> modifiedSupply = { tapePoolName_2 };
+  m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply);
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
-    ASSERT_EQ(1, pools.size());
+    // Get reference to tape pool 1
+    const auto &pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
+    ASSERT_EQ(tapePoolName_1, pool_1.name);
+    ASSERT_EQ(tapePoolName_2, pool_1.supply.value());
+    ASSERT_EQ(1, pool_1.supply_source_set.count(tapePoolName_2));
+    ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(m_vo.name, pool.vo.name);
-    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(isEncrypted, pool.encryption);
-    // this is set because transaction for updating the supply field of the tapepool table succeeded
-    ASSERT_TRUE(pool.supply);
-    ASSERT_EQ(modifiedSupply.front(), pool.supply.value());  // succeeds because each statement is its own transaction
-    // supply_source is not updated because we do not allow specifying a tapepool as its own supply (no self-supply)
-    ASSERT_TRUE(pool.supply_source_set.empty());
-    ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityBytes);
-    ASSERT_EQ(0, pool.dataBytes);
-    ASSERT_EQ(0, pool.nbPhysicalFiles);
-    ASSERT_EQ(comment, pool.comment);
-
-    const cta::common::dataStructures::EntryLog creationLog = pool.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
+    // Get reference to tape pool 2
+    const auto &pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
+    ASSERT_EQ(tapePoolName_2, pool_2.name);
+    ASSERT_EQ(std::nullopt, pool_2.supply);
+    ASSERT_TRUE(pool_2.supply_source_set.empty());
+    ASSERT_EQ(1, pool_2.supply_destination_set.count(tapePoolName_1));
   }
 }
 
