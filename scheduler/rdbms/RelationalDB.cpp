@@ -293,10 +293,24 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   schedulerdb::Transaction txn(m_connPool);
   try {
     if (jobIDsList_success.size() > 0){
-      schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, jobIDsList_success);
+      uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, jobIDsList_success);
+      if (nrows != jobIDsList_success.size()){
+        log::ScopedParamContainer(lc)
+                .add("updatedRows", nrows)
+                .add("jobListSize", jobIDsList_success.size())
+                .log(log::ERR,
+                     "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() for entire job list provided.");
+      }
     }
     if (jobIDsList_failure.size() > 0) {
-      schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
+      uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn, cta::schedulerdb::ArchiveJobStatus::AJS_Failed, jobIDsList_failure);
+      if (nrows != jobIDsList_failure.size()){
+        log::ScopedParamContainer(lc)
+                .add("updatedRows", nrows)
+                .add("jobListSize", jobIDsList_failure.size())
+                .log(log::ERR,
+                     "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() for entire job list provided.");
+      }
     }
     txn.commit();
   } catch (exception::Exception &ex) {
@@ -415,8 +429,8 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
             .add("n_affectedJobs", nrows)
             .log(log::INFO,
                  "In RelationalDB::cancelArchive(): removed archive request from the queue");
-    if (nrows > 1){
-      lc.log(cta::log::WARNING, "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, please check if that is expected.");
+    if (nrows != 1){
+      lc.log(cta::log::WARNING, "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, check if that is expected !");
     }
     txn.commit();
   } catch (exception::Exception &ex) {

@@ -161,8 +161,15 @@ void ArchiveMount::setJobBatchTransferred(
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
-    postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
+    uint64_t nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
     txn.commit();
+    if (nrows != jobIDsList.size()){
+      log::ScopedParamContainer(lc)
+              .add("updatedRows", nrows)
+              .add("jobListSize", jobIDsList.size())
+              .log(log::ERR,
+                   "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for entire job list provided.");
+    }
   } catch (exception::Exception &ex) {
     lc.log(cta::log::DEBUG,
                    "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status for reporting. Aborting the transaction." +

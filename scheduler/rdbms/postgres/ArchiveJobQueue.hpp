@@ -381,12 +381,12 @@ namespace cta::schedulerdb::postgres {
      * @param limit      Maximum number of rows to return
      * @param gc_delay   delay for garbage collection of jobs which were not processed
      *                   untill a final state by the mount where they started processing
-     *                   defalut is 3 days
+     *                   defalut is 12 hours
      *
      * @return  result set containing job IDs of the rows which were updated
      */
     static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status,
-                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay = 259200);
+                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay = 43200);
 
     /**
      * Update job status
@@ -394,8 +394,9 @@ namespace cta::schedulerdb::postgres {
      * @param txn        Transaction to use for this query
      * @param status     Archive Job Status to select on
      * @param jobIDs     List of jobID strings to select
+     * @return           Number of updated rows
      */
-    static void updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector <std::string> &jobIDs);
+    static uint64_t updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector <std::string> &jobIDs);
 
     /**
      * Update failed job status
@@ -403,17 +404,18 @@ namespace cta::schedulerdb::postgres {
      * @param txn                  Transaction to use for this query
      * @param status               Archive Job Status to select on
      * @param jobID                jobID to select the job for update
+     * @return                     Number of updated rows
      */
-    void
-    updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional <uint64_t> mountId = std::nullopt);
+    uint64_t updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional <uint64_t> mountId = std::nullopt);
 
     /**
      * Update job status when job report failed
      *
      * @param txn                  Transaction to use for this query
      * @param status               Archive Job Status to select on
-     */
-    void updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
+     * @return                     Number of updated rows
+      */
+    uint64_t updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
 
     /**
      * Copy the job row to the ARCHIVE FAILED JOB TABLE
