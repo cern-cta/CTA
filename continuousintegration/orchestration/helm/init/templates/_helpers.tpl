@@ -59,30 +59,30 @@ volumeMounts:
 
 {{/* PostgreSQL Scheduler Template */}}
 {{- define "init.scheduler_postgres" -}}
-  objectstore.type: postgres
-  objectstore.postgres.username: {{ .database.username | quote }}
-  objectstore.postgres.password: {{ .database.password | quote }}
-  objectstore.postgres.database: {{ .database.database | quote }}
-  objectstore.postgres.server: {{ .Values.schedulerconfig.database.server | quote }}
+objectstore.type: postgres
+objectstore.postgres.username: {{ .database.username | quote }}
+objectstore.postgres.password: {{ .database.password | quote }}
+objectstore.postgres.database: {{ .database.database | quote }}
+objectstore.postgres.server: {{ .Values.schedulerconfig.database.server | quote }}
 {{- end -}}
 
 
 
 {{/* File based ObjectStore Scheduler Template */}}
 {{- define "init.scheduler_file" -}}
-  objectstore.type: file
-  objectstore.file.path: {{ .path | quote }}
+objectstore.type: file
+objectstore.file.path: {{ .path | quote }}
 {{- end -}}
 
 
 
 {{/* CEPH based ObjectStore Scheduler Template */}}
 {{- define "init.scheduler_ceph" -}}
-  objectstore.type: ceph
-  objectstore.ceph.mon: {{ .ceph.mon | quote }}
-  objectstore.ceph.monport: {{ .ceph.monport | quote }}
-  objectstore.ceph.pool: {{ .ceph.pool | quote }}
-  objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
-  objectstore.ceph.id: {{ .ceph.id | quote }}
-  objectstore.ceph.key: {{ .ceph.key | quote }}
+objectstore.type: ceph
+objectstore.ceph.mon: {{ .ceph.mon | quote }}
+objectstore.ceph.monport: {{ .ceph.monport | quote }}
+objectstore.ceph.pool: {{ .ceph.pool | quote }}
+objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
+objectstore.ceph.id: {{ .ceph.id | quote }}
+objectstore.ceph.key: {{ .ceph.key | quote }}
 {{- end -}}
