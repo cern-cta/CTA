@@ -91,7 +91,7 @@ namespace cta::schedulerdb::postgres {
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
       stmt2.executeNonQuery();
-      return stmt.getNbAffectedRows();
+      return stmt2.getNbAffectedRows();
     }
     // END OF DISABLE DELETION FOR DEBUGGING
     // the following is here for debugging purposes (row deletion gets disabled)
@@ -105,7 +105,7 @@ namespace cta::schedulerdb::postgres {
     auto stmt1 = txn.getConn().createStmt(sql);
     stmt1.bindString(":STATUS", to_string(status));
     stmt1.executeNonQuery();
-    return stmt.getNbAffectedRows();
+    return stmt1.getNbAffectedRows();
   };
 
   uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
@@ -182,7 +182,7 @@ namespace cta::schedulerdb::postgres {
       auto stmt = txn.getConn().createStmt(sql);
       stmt.bindUint64(":JOB_ID", jobId);
       stmt.executeNonQuery();
-      return;
+      return stmt.getNbAffectedRows();
       // END OF DISABLING DELETION FOR DEBUGGING
     }
     // otherwise update the statistics and requeue the job

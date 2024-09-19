@@ -57,6 +57,7 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
 
   // Abort if the schema is already dropped
   if(conn.getTableNames().empty() && conn.getSequenceNames().empty()) {
+    conn.commit();
     m_out << "Database contains no tables and no sequences." << std::endl <<
       "Assuming the schema has already been dropped." << std::endl;
     return 0;
@@ -72,7 +73,7 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
   } else {
     m_out << "Aborting" << std::endl;
   }
-
+  conn.commit();
   return 0;
 }
 
@@ -148,6 +149,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     if (!tables.empty()) {
       throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency.");
     }
+    conn.commit();
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
