@@ -134,7 +134,7 @@ k8s-test-regression-dCache:
     - !reference [.manual-rules, rules]
   variables:
     #TEST_SCRIPT: "tests/upgrade-eos.sh"
-    EXTENDED_OPTIONS: "-O -D -S" -C
+    EXTENDED_OPTIONS: "-O -D -S -C"
   tags:
     - kubernetes
     #- mhvtl
