@@ -1,15 +1,11 @@
-{{/*
-Expand the name of the chart.
-*/}}
+{{/* Expand the name of the chart. */}}
 {{- define "init.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 
 
-{{/*
-Sets pesistent volumes for the chart.
-*/}}
+{{/* Sets pesistent volumes for the chart. */}}
 {{- define "init.volumes" -}}
 {{- if (.Values.volumes) }}
 volumes:
@@ -30,8 +26,7 @@ volumeMounts:
 
 
 
-{{/*
-Pick container image. It may be from:
+{{/* Pick container image. It may be from:
     - `.Values.image` (Has the highest priority)
     - `.Values.global.image` (Has lower priority)
 */}}
@@ -58,4 +53,36 @@ Pick container image. It may be from:
 {{- else}}
 {{ fail "You must provide imagePullSecret value either in .Values.global.imagePullSecret or in .Values.imagePullSecret"}}
 {{- end }}
+{{- end -}}
+
+
+
+{{/* PostgreSQL Scheduler Template */}}
+{{- define "init.scheduler_postgres" -}}
+  objectstore.type: postgres
+  objectstore.postgres.username: {{ .database.username | quote }}
+  objectstore.postgres.password: {{ .database.password | quote }}
+  objectstore.postgres.database: {{ .database.database | quote }}
+  objectstore.postgres.server: {{ .Values.schedulerconfig.database.server | quote }}
+{{- end -}}
+
+
+
+{{/* File based ObjectStore Scheduler Template */}}
+{{- define "init.scheduler_file" -}}
+  objectstore.type: file
+  objectstore.file.path: {{ .path | quote }}
+{{- end -}}
+
+
+
+{{/* CEPH based ObjectStore Scheduler Template */}}
+{{- define "init.scheduler_ceph" -}}
+  objectstore.type: ceph
+  objectstore.ceph.mon: {{ .ceph.mon | quote }}
+  objectstore.ceph.monport: {{ .ceph.monport | quote }}
+  objectstore.ceph.pool: {{ .ceph.pool | quote }}
+  objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
+  objectstore.ceph.id: {{ .ceph.id | quote }}
+  objectstore.ceph.key: {{ .ceph.key | quote }}
 {{- end -}}

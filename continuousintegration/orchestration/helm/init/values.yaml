@@ -2,6 +2,25 @@
 nameOverride: init
 isPriviliged: true
 
+# By default we try to configure a Ceph objecstore scheduler
+# The connection parameters must be configured by the user of the Chart.
+schedulerBackend: ceph   # Options: file, ceph, postgres
+schedulerconfig:
+  ceph:
+    mon: ""
+    monport: ""
+    pool: ""
+    namespace: ""
+    id: ""
+    key: ""
+  postgres:
+    username: ""
+    password: ""
+    database: ""
+    sever: ""
+  file:
+    path: /shared/%NAMESPACE/objectstore
+
 # Changes the entrypoint of the image to the script and provide arguments if needed
 
 customEntrypoint:
@@ -69,9 +88,7 @@ volumes:
   persistentVolumeClaim:
     claimName: claimlogs
 
-
-
-
+# Catalogue
 postgres:
   name: postgres
   service:
