@@ -39,9 +39,9 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJ
     tapeFile.copyNb = jobQueueRow.copyNb;
     // Set other attributes or perform any necessary initialization
     // Setting the internal report type - in case is_reporting == false No Report type required
-    if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
+    if (jobQueueRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
       reportType = ReportType::CompletionReport;
-    } else if (jobQueueRow.status == schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure) {
+    } else if (jobQueueRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
       reportType = ReportType::FailureReport;
     } else {
       reportType = ReportType::NoReportRequired;
@@ -195,10 +195,14 @@ void ArchiveRdbJob::failReport(const std::string & failureReason, log::LogContex
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-
+      std::string norep = "";
+      if (reportType == ReportType::NoReportRequired){
+        norep = "NoReportRequired";
+      }
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       log::ScopedParamContainer(lc)
               .add("jobID", jobID)
+              .add("reportType", norep)
               .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
               .add("mountId", m_mountId)
               .add("tapePool", m_tapePool)
