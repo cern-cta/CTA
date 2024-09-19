@@ -6,6 +6,6 @@ metadata:
   name: objectstore-config
   namespace: {{ .Release.Namespace }}
   labels:
-    type: .Values.schedulerBackend
+    type: {{ .Values.schedulerBackend }}
 data:
   {{- include $schedulertemplate .Values.schedulerconfig | nindent 2 }}
