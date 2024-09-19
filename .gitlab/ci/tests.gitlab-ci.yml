@@ -96,7 +96,7 @@ system-test-dcache:
       allow_failure: false
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-  #image: $EL9_IMAGE
+  image: $EL9_IMAGE
   #variables:
   #  CTAREPODIR: /tmp/repo
   #before_script:
@@ -111,7 +111,7 @@ system-test-dcache:
     - helm repo add bitnami https://charts.bitnami.com/bitnami
     - helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
     - helm repo update
-    - helm -n ${NAMESPACE} install --replace --wait --timeout 10m0s --set service.ports.postgresql=8443 --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
+    - helm -n ${NAMESPACE} install --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
     - helm -n ${NAMESPACE} install --replace --wait --timeout 10m0s cells bitnami/zookeeper
     - helm -n ${NAMESPACE} install --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
     - helm -n ${NAMESPACE} install --replace --wait --timeout 10m0s --set image.tag=${tag} --set dcache.hsm.enabled=true store dcache/dcache
