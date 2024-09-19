@@ -135,10 +135,10 @@ k8s-test-regression-dCache:
   variables:
     #TEST_SCRIPT: "tests/upgrade-eos.sh"
     EXTENDED_OPTIONS: "-O -D -S"
-  tags:
-    - kubernetes
+  #tags:
+  #  - kubernetes
     #- mhvtl
-    - xlarge
+  #  - xlarge
   script:
   #  - /usr/bin/cta-unitPlusSystemTests.sh
     - helm repo add bitnami https://charts.bitnami.com/bitnami
