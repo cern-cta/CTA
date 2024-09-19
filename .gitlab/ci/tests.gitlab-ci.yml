@@ -96,7 +96,7 @@ system-test-dcache:
       allow_failure: false
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-  image: $EL9_IMAGE
+  #image: $EL9_IMAGE
   #variables:
   #  CTAREPODIR: /tmp/repo
   #before_script:
