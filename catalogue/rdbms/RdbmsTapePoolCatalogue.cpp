@@ -66,14 +66,27 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
 
   auto conn = m_connPool->getConn();
 
-  if(RdbmsCatalogueUtils::tapePoolExists(conn, name)) {
+  // Check the existence of both the tape pool name and all it's supply tape pools
+  std::vector<std::string> tp_check_list;
+  tp_check_list.push_back(name);
+  tp_check_list.insert(tp_check_list.end(), supply_list.begin(), supply_list.end());
+  auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
+
+  if(tapePoolToIdMap.count(name)) {
     throw exception::UserError(std::string("Cannot create tape pool ") + name +
       " because a tape pool with the same name already exists");
   }
   if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot create tape pool ") + name + \
-      " because vo : "+vo+" does not exist.");
+    throw exception::UserError(std::string("Cannot create tape pool ") + name +
+      " because vo " + vo + " does not exist.");
   }
+  for (auto& supply_tp_name: supply_list) {
+    if (!tapePoolToIdMap.count(supply_tp_name)) {
+      throw exception::UserError(std::string("Cannot create tape pool ") + name +
+                                 " because the supply tape pool " + supply_tp_name + " does not exist");
+    }
+  }
+
   const uint64_t tapePoolId = getNextTapePoolId(conn);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -669,6 +682,16 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   }
 
   auto conn = m_connPool->getConn();
+
+  std::vector<std::string> tp_check_list{supply_list.begin(), supply_list.end()};
+  auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
+  for (auto& supply_tp_name: supply_list) {
+    if (!tapePoolToIdMap.count(supply_tp_name)) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name +
+                                 " because the supply tape pool " + supply_tp_name + " does not exist");
+    }
+  }
+
   std::optional<std::string> optionalSupplyString =
     supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
@@ -771,22 +794,44 @@ uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::
   return rset.columnUint64("NB_TAPES");
 }
 
-std::optional<uint64_t> RdbmsTapePoolCatalogue::getTapePoolId(rdbms::Conn &conn, const std::string &name) const {
-  const char* const sql = R"SQL(
-    SELECT 
+std::map<std::string, uint64_t>
+RdbmsTapePoolCatalogue::getTapePoolIdMap(rdbms::Conn &conn, const std::vector<std::string> &names) const {
+
+  if (names.empty()) {
+    return std::map<std::string, uint64_t>();
+  }
+
+  std::ostringstream sql_oss;
+  sql_oss << R"SQL(
+    SELECT
+      TAPE_POOL_NAME AS TAPE_POOL_NAME,
       TAPE_POOL_ID AS TAPE_POOL_ID 
     FROM 
       TAPE_POOL 
     WHERE 
-      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+      TAPE_POOL.TAPE_POOL_NAME IN (
   )SQL";
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":TAPE_POOL_NAME", name);
-  auto rset = stmt.executeQuery();
-  if(!rset.next()) {
-    return std::nullopt;
+  bool is_first = true;
+  for (unsigned int i = 0; i < names.size(); ++i) {
+    if (!is_first) {
+      sql_oss << " , ";
+    }
+    sql_oss << ":TAPE_POOL_NAME_" << i;
+    is_first = false;
   }
-  return rset.columnUint64("TAPE_POOL_ID");
+  sql_oss << ")";
+
+  auto stmt = conn.createStmt(sql_oss.str());
+  for (unsigned int i = 0; i < names.size(); ++i) {
+    stmt.bindString(":TAPE_POOL_NAME_" + std::to_string(i), names[i]);
+  }
+  auto rset = stmt.executeQuery();
+
+  std::map<std::string, uint64_t> result;
+  while(rset.next()) {
+    result[rset.columnString("TAPE_POOL_NAME")] = rset.columnUint64("TAPE_POOL_ID");
+  }
+  return result;
 }
 
 bool RdbmsTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) const {

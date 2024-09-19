@@ -123,7 +123,7 @@ private:
   uint64_t getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const;
 
   friend class RdbmsTapeCatalogue;
-  std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+  std::map<std::string, uint64_t> getTapePoolIdMap(rdbms::Conn &conn, const std::vector<std::string> &names) const;
 
   std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>>
   getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn) const;
