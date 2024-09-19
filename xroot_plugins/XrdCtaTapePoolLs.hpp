@@ -20,6 +20,7 @@
 #include "catalogue/TapePool.hpp"
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "XrdCtaStream.hpp"
+#include <sstream>
 
 namespace cta::xrd {
 
@@ -95,6 +96,12 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->mutable_modified()->set_host(tp.lastModificationLog.host);
     tp_item->mutable_modified()->set_time(tp.lastModificationLog.time);
     tp_item->set_comment(tp.comment);
+    for (auto& source : tp.supply_source_set) {
+      tp_item->add_supply_source(source);
+    }
+    for (auto& destination : tp.supply_destination_set) {
+      tp_item->add_supply_destination(destination);
+    }
 
     is_buffer_full = streambuf->Push(record);
   }

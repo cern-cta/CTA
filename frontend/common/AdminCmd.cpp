@@ -1227,7 +1227,12 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
   auto& encrypted = getRequired(OptionBoolean::ENCRYPTED);
   auto  supply    = getOptional(OptionString::SUPPLY);
 
-  m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply, comment);
+  std::list<std::string> supply_list;
+  if (supply) {
+    supply_list = cta::utils::commaSeparatedStringToList(supply.value());
+  }
+
+  m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply_list, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1255,7 +1260,8 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
   }
   if(supply) {
-    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name, supply.value());
+    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
+                                                 cta::utils::commaSeparatedStringToList(supply.value()));
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);

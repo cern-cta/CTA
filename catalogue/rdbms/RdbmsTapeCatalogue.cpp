@@ -118,11 +118,12 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
       logicalLibraryName + " does not exist");
   }
   const auto tapePoolCatalogue = static_cast<RdbmsTapePoolCatalogue*>(m_rdbmsCatalogue->TapePool().get());
-  const auto tapePoolId = tapePoolCatalogue->getTapePoolId(conn, tapePoolName);
-  if(!tapePoolId) {
+  const auto tapePoolIdMap = tapePoolCatalogue->getTapePoolIdMap(conn, {tapePoolName});
+  if(!tapePoolIdMap.count(tapePoolName)) {
     throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
     tapePoolName + " does not exist");
   }
+  const auto tapePoolId = tapePoolIdMap.at(tapePoolName);
   const auto mediaTypeCatalogue = static_cast<RdbmsMediaTypeCatalogue*>(m_rdbmsCatalogue->MediaType().get());
   const auto mediaTypeId = mediaTypeCatalogue->getMediaTypeId(conn, mediaTypeName);
   if(!mediaTypeId) {
@@ -190,7 +191,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   stmt.bindUint64(":MEDIA_TYPE_ID", mediaTypeId.value());
   stmt.bindString(":VENDOR", vendor);
   stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId.value());
-  stmt.bindUint64(":TAPE_POOL_ID", tapePoolId.value());
+  stmt.bindUint64(":TAPE_POOL_ID", tapePoolId);
   stmt.bindUint64(":DATA_IN_BYTES", 0);
   stmt.bindUint64(":LAST_FSEQ", 0);
   stmt.bindBool(":IS_FULL", full);

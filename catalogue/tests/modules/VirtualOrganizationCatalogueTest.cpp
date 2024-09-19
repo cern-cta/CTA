@@ -117,7 +117,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, deleteVirtualOrganizationUsedByTap
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -317,7 +317,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationDiskInsta
 TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization vo = CatalogueTestUtils::getVo();
 
@@ -336,7 +336,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) 
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepacking) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization repackVo = CatalogueTestUtils::getDefaultRepackVo();
   cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
@@ -363,7 +363,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepackingNoValue) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
   cta::common::dataStructures::VirtualOrganization userVo2 = CatalogueTestUtils::getAnotherVo();

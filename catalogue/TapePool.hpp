@@ -21,6 +21,7 @@
 #include <ostream>
 #include <stdint.h>
 #include <string>
+#include <set>
 
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
@@ -126,6 +127,7 @@ struct TapePool {
 
   /**
    * Optional value used by the tape pool supply mechanism.
+   * TODO: deprecate this field, since it's replaced by the TAPE_POOL_SUPPLY catalogue table
    */
   std::optional<std::string> supply;
 
@@ -143,6 +145,16 @@ struct TapePool {
    * The comment.
    */
   std::string comment;
+
+  /**
+   * Set of TapePools used as a supply for this TapePool.
+   */
+  std::set<std::string> supply_source_set;
+
+  /**
+   * Set of TapePools that use this TapePool as their supply.
+   */
+  std::set<std::string> supply_destination_set;
 
 }; // struct TapePool
 

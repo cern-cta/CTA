@@ -290,7 +290,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   const bool libNotToDeleteIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
   std::optional<std::string> physicalLibraryName;
 
@@ -426,7 +426,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -817,7 +817,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::list<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 

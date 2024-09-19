@@ -18,6 +18,7 @@
 #pragma once
 
 #include <list>
+#include <set>
 #include <memory>
 #include <optional>
 #include <string>
@@ -40,9 +41,13 @@ class RdbmsTapePoolCatalogue : public TapePoolCatalogue {
 public:
   ~RdbmsTapePoolCatalogue() override = default;
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::optional<std::string> &supply, const std::string &comment) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                      const std::string& name,
+                      const std::string& vo,
+                      const uint64_t nbPartialTapes,
+                      const bool encryptionValue,
+                      const std::list<std::string>& supply_list,
+                      const std::string& comment) override;
 
   void deleteTapePool(const std::string &name) override;
 
@@ -62,13 +67,16 @@ public:
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool encryptionValue) override;
 
-  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &supply) override;
+  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                            const std::string& name,
+                            const std::list<std::string>& supply_list) override;
 
   void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
     const std::string &newName) override;
 
   bool tapePoolExists(const std::string &tapePoolName) const override;
+
+  void deleteAllTapePoolSupplyEntries() override;
 
 protected:
   RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
@@ -115,7 +123,15 @@ private:
   uint64_t getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const;
 
   friend class RdbmsTapeCatalogue;
-  std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+  std::map<std::string, uint64_t> getTapePoolIdMap(rdbms::Conn &conn, const std::vector<std::string> &names) const;
+
+  std::pair<std::map<std::string, std::set<std::string>>, std::map<std::string, std::set<std::string>>>
+  getAllTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn) const;
+  std::pair<std::set<std::string>, std::set<std::string>>
+  getTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn, const std::string& tapePoolName) const;
+
+  void populateSupplyTable(rdbms::Conn& conn, std::string tapePoolName, std::list<std::string> supply_list);
+  void deleteAllTapePoolSupplyEntries(rdbms::Conn& conn);
 };
 
 }} // namespace cta::catalogue

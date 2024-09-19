@@ -380,10 +380,10 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    const std::list<std::string> tapePoolSupplyList;
 
     ASSERT_NO_THROW(catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes,
-      tapePoolEncryption, tapePoolSupply, tapePoolComment));
+                                                         tapePoolEncryption, tapePoolSupplyList, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT,

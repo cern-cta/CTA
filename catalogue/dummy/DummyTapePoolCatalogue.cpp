@@ -25,9 +25,13 @@
 
 namespace cta::catalogue {
 
-void DummyTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-  const std::optional<std::string> &supply, const std::string &comment) {
+void DummyTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& name,
+                                            const std::string& vo,
+                                            const uint64_t nbPartialTapes,
+                                            const bool encryptionValue,
+                                            const std::list<std::string>& supply_list,
+                                            const std::string& comment) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
@@ -63,8 +67,9 @@ void DummyTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-void DummyTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &supply) {
+void DummyTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                                                  const std::string& name,
+                                                  const std::list<std::string>& supply_list) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
@@ -75,6 +80,10 @@ void DummyTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
 
 bool DummyTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) const {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+}
+
+void DummyTapePoolCatalogue::deleteAllTapePoolSupplyEntries() {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 } // namespace cta::catalogue

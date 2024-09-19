@@ -126,6 +126,8 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
   for(const auto &storageClass: storageClasses) {
     catalogue->StorageClass()->deleteStorageClass(storageClass.name);
   }
+  // before deleting the tapepools, wipe the supply table
+  catalogue->TapePool()->deleteAllTapePoolSupplyEntries();
   const auto tapePools = catalogue->TapePool()->getTapePools();
   for(const auto &tapePool: tapePools) {
     catalogue->TapePool()->deleteTapePool(tapePool.name);
