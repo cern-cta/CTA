@@ -147,7 +147,7 @@ k8s-test-regression-dCache:
     #- helm install --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
     #- helm install --replace --wait --timeout 10m0s cells bitnami/zookeeper
     #- helm install --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
-    - helm install --dry-run --debug --replace --wait --timeout 10m0s --set image.tag=9.2.22 --set dcache.hsm.enabled=true store dcache/dcache
+    - helm install --debug --replace --wait --timeout 10m0s --set image.tag=9.2.22 --set dcache.hsm.enabled=true store dcache/dcache
 
 
 
