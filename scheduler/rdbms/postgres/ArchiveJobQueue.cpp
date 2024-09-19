@@ -34,11 +34,12 @@ namespace cta::schedulerdb::postgres {
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
-    AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID OR
-          (MOUNT_ID != :DRIVE_MOUNT_ID AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY) )
-    AND IN_DRIVE_QUEUE IS FALSE
+    AND (
+         (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
+         OR (MOUNT_ID != :DRIVE_MOUNT_ID AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
+        )
     ORDER BY PRIORITY DESC, JOB_ID
-    LIMIT :LIMIT FOR UPDATE)
+    LIMIT :LIMIT FOR UPDATE )
     UPDATE ARCHIVE_JOB_QUEUE SET
       MOUNT_ID = :MOUNT_ID,
       VID = :VID,
@@ -68,14 +69,14 @@ namespace cta::schedulerdb::postgres {
     return stmt.executeQuery();
   }
 
-  void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs){
+  uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs){
     if(jobIDs.empty()) {
       return;
     }
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
     if (!sqlpart.empty()) { sqlpart.pop_back(); }
-    /* DELETION OFF FOR DEBUGGING
+    // DISABLE DELETION FOR DEBUGGING
     if (status == ArchiveJobStatus::AJS_Complete ||
         status == ArchiveJobStatus::AJS_Failed ||
         status == ArchiveJobStatus::ReadyForDeletion) {
@@ -90,24 +91,24 @@ namespace cta::schedulerdb::postgres {
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
       stmt2.executeNonQuery();
-      return;
+      return stmt.getNbAffectedRows();
     }
-    */
+    // END OF DISABLE DELETION FOR DEBUGGING
     // the following is here for debugging purposes (row deletion gets disabled)
-    if (status == ArchiveJobStatus::AJS_Complete) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-    } else if (status == ArchiveJobStatus::AJS_Failed) {
-      status = ArchiveJobStatus::ReadyForDeletion;
-      ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
-    }
+    // if (status == ArchiveJobStatus::AJS_Complete) {
+    //   status = ArchiveJobStatus::ReadyForDeletion;
+    // } else if (status == ArchiveJobStatus::AJS_Failed) {
+    //   status = ArchiveJobStatus::ReadyForDeletion;
+    //   ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+    // }
     std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
     auto stmt1 = txn.getConn().createStmt(sql);
     stmt1.bindString(":STATUS", to_string(status));
     stmt1.executeNonQuery();
-    return;
+    return stmt.getNbAffectedRows();
   };
 
-  void ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
+  uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional<uint64_t> mountId){
     std::string sql = R"SQL(
       UPDATE ARCHIVE_JOB_QUEUE SET
         STATUS = :STATUS,
@@ -133,7 +134,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
-    return;
+    return stmt.getNbAffectedRows();
   };
 
   void ArchiveJobQueueRow::copyToFailedJobTable(Transaction &txn){
@@ -167,12 +168,12 @@ namespace cta::schedulerdb::postgres {
     return;
   }
 
-  void ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
+  uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status){
     // if this was the final reporting failure,
     // move the row to failed jobs and delete the entry from the queue
     if (status == ArchiveJobStatus::ReadyForDeletion){
       ArchiveJobQueueRow::copyToFailedJobTable(txn);
-      /* DISABLE DELETION FOR DEBUGGING
+      // DISABLE DELETION FOR DEBUGGING
       std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -182,7 +183,7 @@ namespace cta::schedulerdb::postgres {
       stmt.bindUint64(":JOB_ID", jobId);
       stmt.executeNonQuery();
       return;
-       */
+      // END OF DISABLING DELETION FOR DEBUGGING
     }
     // otherwise update the statistics and requeue the job
     std::string sql = R"SQL(
@@ -202,7 +203,7 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
     stmt.bindUint64(":JOB_ID", jobId);
     stmt.executeNonQuery();
-    return;
+    return stmt.getNbAffectedRows();
   };
 
   rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t gc_delay, uint64_t limit) {
@@ -296,7 +297,9 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":FAILED",
                     to_string(ArchiveJobStatus::AJS_Failed));
      */
-    /* disabling cancelArchive to test retry workflows
+    // directly deleting the archive request irrespectively in which state it is
+    // this can result in attempts to update rows of the DB which will not exist anymore
+    // better strategy might be needed
     std::string sql = R"SQL(
       DELETE FROM ARCHIVE_JOB_QUEUE
       WHERE
@@ -309,8 +312,6 @@ namespace cta::schedulerdb::postgres {
 
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
-     */
-    return 0;
 
   }
 } // namespace cta::schedulerdb::postgres
