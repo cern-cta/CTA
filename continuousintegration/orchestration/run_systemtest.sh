@@ -167,18 +167,18 @@ fi
 #sfi
 
 if [ $useoracle == 1 ] ; then
-    database_configmap=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
-    if [ "-${database_configmap}-" == "--" ]; then
+    database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
+    if [ "-${database_credentials}-" == "--" ]; then
       die "Oracle database requested but not database configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+      CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
     fi
 fi
 
 # SCHED_TYPE is an external variable of the gitlab-ci to use postgres scheduler backend if CTA is compiled with it
 if [ $SCHED_TYPE == "pgsched" ] ; then
-  schedstore_configmap="internal_pgsched.yaml"
-  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_configmap}"
+  schedstore_creds=$(find /opt/kubernetes/CTA/ | grep pgsched-creds.yaml | head -1)
+  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_creds}"
   useceph=0
 fi
 
