@@ -76,8 +76,8 @@ compile_deploy() {
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
   local cta_version="5"
-  local catalogue_credentials="continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="conitnuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
 
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
@@ -143,14 +143,15 @@ compile_deploy() {
         fi
         ;;
       --catalogue-credentials)
-        test -f $2 || echo "Error: --catalogue-credentials file $2 does not exist." && exit 1
+        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist."; exit 1; }
         catalogue_credentials=$2
+        shift
         ;;
       --scheduler-credentials)
-        test -f $2 || echo "Error: --scheduler-credentials file $2 does not exist." && exit 1
+        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
         scheduler_credentials=$2
+        shift
         ;;
-
       *)
         usage
         ;;

@@ -41,8 +41,8 @@ redeploy() {
   local image_tag="dev"
   local operating_system="alma9"
   local rpm_src=""
-  local catalogue_credentials="continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="conitnuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -89,14 +89,18 @@ redeploy() {
         fi
         ;;
       --catalogue-credentials)
-        test -f $2 || echo "Error: --catalogue-credentials file $2 does not exist." && exit 1
+        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist.";  exit 1; }
         catalogue_credentials=$2
+        shift
         ;;
       --scheduler-credentials)
-        test -f $2 || echo "Error: --scheduler-credentials file $2 does not exist." && exit 1
+        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
         scheduler_credentials=$2
+        shift
         ;;
-      *) usage ;;
+      *)
+        usage
+        ;;
     esac
     shift
   done
