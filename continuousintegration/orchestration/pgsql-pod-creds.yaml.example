@@ -4,4 +4,4 @@ catalogueconfig:
     username: cta
     password: cta
     database: cta
-    server: postgres1234.cern.ch
+    server: postgres
