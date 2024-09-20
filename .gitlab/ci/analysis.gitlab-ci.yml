@@ -108,7 +108,7 @@ catalogue_schema_version_check:
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   stage: analysis
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
   before_script:
     - yum install -y git
     - git submodule update --init --recursive
