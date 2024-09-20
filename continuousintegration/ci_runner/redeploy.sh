@@ -148,7 +148,7 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${database_credentials} -o ${scheduler_credentials}
+  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${catalogue_credentials} -o ${scheduler_credentials}
 
   echo "Pods redeployed."
 }
