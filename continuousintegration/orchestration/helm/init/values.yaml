@@ -124,10 +124,7 @@ postgres:
           name: database-config
           key: database.postgres.password
     - name: PGDATA
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.path
+      value: /var/lib/postgresql/data/pgdata
     - name: POSTGRES_DB
       valueFrom:
         configMapKeyRef:
