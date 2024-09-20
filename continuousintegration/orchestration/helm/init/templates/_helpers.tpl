@@ -57,18 +57,18 @@ volumeMounts:
 
 
 
-{{/* PostgreSQL Scheduler Template */}}
+{{/* PostgreSQL Scheduler Template. Using .Values.schedulerconfig scope. */}}
 {{- define "init.scheduler_postgres" -}}
-objectstore.type: postgres
-objectstore.postgres.username: {{ .database.username | quote }}
-objectstore.postgres.password: {{ .database.password | quote }}
-objectstore.postgres.database: {{ .database.database | quote }}
-objectstore.postgres.server: {{ .Values.schedulerconfig.database.server | quote }}
+database.type: postgres
+database.postgres.username: {{ .postgres.username | quote }}
+database.postgres.password: {{ .postgres.password | quote }}
+database.postgres.database: {{ .postgres.database | quote }}
+database.postgres.server: {{ .postgres.server | quote }}
 {{- end -}}
 
 
 
-{{/* File based ObjectStore Scheduler Template */}}
+{{/* File based ObjectStore Scheduler Template. Using .Values.schedulerconfig scope. */}}
 {{- define "init.scheduler_file" -}}
 objectstore.type: file
 objectstore.file.path: {{ .path | quote }}
@@ -76,7 +76,7 @@ objectstore.file.path: {{ .path | quote }}
 
 
 
-{{/* CEPH based ObjectStore Scheduler Template */}}
+{{/* CEPH based ObjectStore Scheduler Template Using .Values.schedulerconfig scope. */}}
 {{- define "init.scheduler_ceph" -}}
 objectstore.type: ceph
 objectstore.ceph.mon: {{ .ceph.mon | quote }}
@@ -85,4 +85,33 @@ objectstore.ceph.pool: {{ .ceph.pool | quote }}
 objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
 objectstore.ceph.id: {{ .ceph.id | quote }}
 objectstore.ceph.key: {{ .ceph.key | quote }}
+{{- end -}}
+
+
+
+{{/* Oracle based Catalogue. Using .Values.catalogueconfig scope. */}}
+{{- define "init.catalogue_oracle" -}}
+database.type: oracle
+database.oracle.username: {{ .oracle.username | quote }}
+database.oracle.password: {{ .oracle.password | quote }}
+database.oracle.database: {{ .oracle.database | quote }}
+{{- end -}}
+
+
+
+{{/* PostgreSQL based Catalogue. Using .Values.catalogueconfig scope. */}}
+{{- define "init.catalogue_postgres" -}}
+database.type: postgres
+database.postgres.username: {{ .postgres.username | quote }}
+database.postgres.password: {{ .postgres.password | quote }}
+database.postgres.server: {{ .postgres.server | quote }}
+database.postgres.database: {{ .postgres.database | quote }}
+{{- end -}}
+
+
+
+{{/* Sqlite based Catalogue. Using .Values.catalogueconfig scope. */}}
+{{- define "init.catalogue_oracle" -}}
+database.type: sqlite
+database.file.path: {{ .sqlite.filepath | quote }}
 {{- end -}}

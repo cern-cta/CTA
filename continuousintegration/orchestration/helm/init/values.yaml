@@ -2,8 +2,8 @@
 nameOverride: init
 isPriviliged: true
 
-# By default we try to configure a Ceph objecstore scheduler
-# The connection parameters must be configured by the user of the Chart.
+# The connection parameters for the Scheduler and Catalogue
+# must be configured by the user of the Chart.
 schedulerBackend: ceph   # Options: file, ceph, postgres
 schedulerconfig:
   ceph:
@@ -21,8 +21,22 @@ schedulerconfig:
   file:
     path: /shared/%NAMESPACE/objectstore
 
-# Changes the entrypoint of the image to the script and provide arguments if needed
+catalogueBackend: postgres # Can be sqlite, orale or postgres.
+catalogueconfig:
+  oracle:
+    username: ""
+    database: ""
+    password: ""
+  postgres:
+    username: ""
+    password: ""
+    server: ""
+    database: ""
+  sqlite:
+    file-path: ""
 
+
+# Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
   command: ['/opt/run/bin/init.sh']
   args: ["none"]
