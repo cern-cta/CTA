@@ -21,7 +21,7 @@ ctareg_secret='ctaregsecret'
 # defaults scheduler datastore to objectstore (using a file)
 config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
 # defaults DB to sqlite
-config_database="./database-sqlite.yaml"
+config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
 # default library model
 model="mhvtl"
 # defaults MGM namespace to quarkdb with http

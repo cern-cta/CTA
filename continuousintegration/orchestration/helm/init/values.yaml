@@ -21,7 +21,7 @@ schedulerconfig:
   file:
     path: /shared/%NAMESPACE/objectstore
 
-catalogueBackend: postgres # Can be sqlite, orale or postgres.
+catalogueBackend: oracle # Can be sqlite, orale or postgres.
 catalogueconfig:
   oracle:
     username: ""

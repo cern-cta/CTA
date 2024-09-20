@@ -167,7 +167,7 @@ fi
 #sfi
 
 if [ $useoracle == 1 ] ; then
-    database_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep database | head -1)
+    database_configmap=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
     if [ "-${database_configmap}-" == "--" ]; then
       die "Oracle database requested but not database configuration was found."
     else

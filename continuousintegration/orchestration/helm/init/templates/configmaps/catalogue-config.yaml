@@ -1,4 +1,4 @@
-{{- cataloguetemplate := printf "init.catalogue_%s" .Values.schedulerBackend }}
+{{- $cataloguetemplate := printf "init.catalogue_%s" .Values.schedulerBackend }}
 
 apiVersion: v1
 kind: ConfigMap

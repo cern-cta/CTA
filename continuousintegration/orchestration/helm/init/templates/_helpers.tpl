@@ -111,7 +111,7 @@ database.postgres.database: {{ .postgres.database | quote }}
 
 
 {{/* Sqlite based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_oracle" -}}
+{{- define "init.catalogue_sqlite" -}}
 database.type: sqlite
 database.file.path: {{ .sqlite.filepath | quote }}
 {{- end -}}
