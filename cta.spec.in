@@ -625,6 +625,10 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 %changelog
 
+* Fri Sep 20 2024 Joao Afonso <joao.afonso@cern.ch> - 5.11.0.0-1
+- Catalogue schema version 15.0
+- Releases for CentOS 7 and XRootD 4 discontinued from this version onwards%changelog
+
 * Mon Jul 15 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.10.11.0-2
 - Fixing cta-release compatability with Alma9
 - See ReleaseNotes.md for details
