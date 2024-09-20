@@ -24,11 +24,13 @@
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/tests/CatalogueTestUtils.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -262,7 +264,7 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply;
+    const std::list<std::string> tapePoolSupply;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
@@ -928,7 +930,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string tapePool1Comment = "Tape-pool for copy number 1";
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     const bool tapePoolEncryption = false;
-    const std::optional<std::string> tapePoolSupply;
+    const std::list<std::string> tapePoolSupply;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePool1Comment);
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,
@@ -3117,7 +3119,6 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
 
 TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
   using namespace cta;
-
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
@@ -3148,8 +3149,8 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
   std::optional<std::string> physicalLibraryName;
   // create the physical library first
   const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary2();
-  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary);
-  const auto physLibs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+  catalogue.PhysicalLibrary()->createPhysicalLibrary(s_adminOnAdminHost, physicalLibrary);
+  const auto physLibs = catalogue.PhysicalLibrary()->getPhysicalLibraries();
   ASSERT_EQ(1, physLibs.size());
 
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -3193,7 +3194,7 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
     ASSERT_TRUE(nextMount);
     // setting the logicalLibrary to disabled should not give a new mount
-    catalogue.logicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, true);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, true);
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
     ASSERT_FALSE(nextMount);
     // now set physicalLibrary to disabled, and enable logical library, should still not be getting a mount
@@ -3208,17 +3209,17 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
     pl.comment                   = physicalLibrary.comment.value();
     pl.isDisabled                = true;
 
-    m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
+    catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
 
-    catalogue.logicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
 
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
     ASSERT_FALSE(nextMount);
 
     // now enable both physical and logical library, should be getting a next mount
     pl.isDisabled = false;
-    m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
-    nextMount = schedluer.getNextMountDryRun(s_libraryName, driveName, lc);
+    catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
+    nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     ASSERT_TRUE(nextMount);
   }
 }
