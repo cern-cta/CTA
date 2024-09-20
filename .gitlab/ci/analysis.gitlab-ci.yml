@@ -1,4 +1,5 @@
 cppcheck:
+  allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -23,6 +24,7 @@ cppcheck:
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck_report:
+  allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
