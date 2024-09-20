@@ -1,4 +1,4 @@
-{{- $cataloguetemplate := printf "init.catalogue_%s" .Values.schedulerBackend }}
+{{- $cataloguetemplate := printf "init.catalogue_%s" .Values.catalogueBackend }}
 
 apiVersion: v1
 kind: ConfigMap
@@ -6,6 +6,6 @@ metadata:
   name: database-config
   namespace: {{.Release.Namespace}}
   labels:
-    type: {{ .Values.schedulerBackend }}
+    type: {{ .Values.catalogueBackend }}
 data:
   {{- include $cataloguetemplate .Values.catalogueconfig | nindent 2 }}
