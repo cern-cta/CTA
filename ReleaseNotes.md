@@ -13,7 +13,6 @@
 - cta/CTA#598 - Improve tapepool supply option
 
 ### Bug Fixes
-- cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
 - cta/CTA#781 - Fixed security issues with build pods
@@ -47,7 +46,6 @@
 - cta/CTA#800 - Refactored the `deploy-eos.sh` script
 - cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
 - cta/CTA#822 - Patch `cpp-check` errors for version 2.15dev and add DMC repo
-- cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
 - cta/CTA#535 - Adding option to trigger CTA pipeline based on tagged EOS release
 - cta/CTA#827 - Install pandoc in GitHub runners
 - cta/CTA#828 - Fix SonarCloud warnings
@@ -59,12 +57,24 @@
 - cta/CTA#708 - Added a basic test for the archive metadata to the CI
 - cta/CTA#835 - Refactor scripts that made use of /etc/gitlab/gitlabregistry.txt to use kubernetes secret instead
 
-### Catalogue Schema
-- cta/CTA#801 - Update CTA catalogue schema to version 15.0
-
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 - cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
+
+# v5.11.0.0-1
+
+## Summary
+- This release can be used to upgrade the CTA catalogue from version 14.0 to 15.0.
+- From this version onwards CentOS-7 and XrootD-4 RPMs will no longer be released.
+
+### Catalogue Schema
+- cta/CTA#801 - Update CTA catalogue schema to version 15.0
+
+### Bug Fixes
+- cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
+
+### Continuous Integration
+- cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
 
 # v4.10.11.0-1 / v5.10.11.0-1
 
