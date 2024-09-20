@@ -37,6 +37,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
     log::ScopedParamContainer params(lc);
     params.add("roundCount", roundCount)
+            .add("BATCH_SIZE", BATCH_SIZE)
             .add("DBpassTime", tdb.secs());
     lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): got next archive jobs to report from Scheduler DB");
     if (archiveJobsToReport.size()) {
@@ -79,6 +80,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   log::ScopedParamContainer params(lc);  
   auto passTime = t.secs();
   params.add("roundCount", roundCount)
+        .add("BATCH_SIZE", BATCH_SIZE)
         .add("passTime", passTime);
   lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass.");
   if (passTime > 1)
