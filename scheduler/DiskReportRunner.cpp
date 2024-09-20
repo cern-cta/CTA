@@ -33,9 +33,12 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   size_t roundCount = 0;
   for(bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE; ) {
     log::TimingList timings;
-    utils::Timer t2, roundTime;
-    lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): getting next archive jobs to report from Scheduler DB");
+    utils::Timer tdb, t2, roundTime;
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
+    log::ScopedParamContainer params(lc);
+    params.add("roundCount", roundCount)
+            .add("DBpassTime", tdb.secs());
+    lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): got next archive jobs to report from Scheduler DB");
     if (archiveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", archiveJobsToReport.size());
@@ -77,10 +80,9 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   auto passTime = t.secs();
   params.add("roundCount", roundCount)
         .add("passTime", passTime);
-  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - before time check.");
+  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass.");
   if (passTime > 1)
     lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
-  lc.log(log::DEBUG, "In DiskReportRunner::runOnePass(): finished one pass - after time check.");
 }
 
 } // namespace cta
