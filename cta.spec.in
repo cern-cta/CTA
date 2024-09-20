@@ -636,6 +636,10 @@ echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_ver
 
 
 %changelog
+* Fri Sep 20 2024 Joao Afonso <joao.afonso@cern.ch> - 5.11.0.0-1
+- Catalogue schema version 15.0
+- Releases for CentOS 7 and XRootD 4 discontinued from this version onwards
+
 * Mon Jun 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.11.0-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
