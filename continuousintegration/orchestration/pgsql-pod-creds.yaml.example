@@ -1,0 +1,7 @@
+catalogueBackend: postgres
+catalogueconfig:
+  postgres:
+    username: cta
+    password: cta
+    database: cta
+    server: postgres1234.cern.ch

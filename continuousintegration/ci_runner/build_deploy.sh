@@ -44,6 +44,8 @@ usage() {
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
+  echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
   exit 1
 }
 
@@ -74,6 +76,9 @@ compile_deploy() {
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
   local cta_version="5"
+  local catalogue_credentials="continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  local scheduler_credentials="conitnuousintegration/orchestration/sched-vfs-creds.yaml.example"
+
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
   local xrootd_ssi_version="dev"
@@ -137,6 +142,15 @@ compile_deploy() {
           usage
         fi
         ;;
+      --catalogue-credentials)
+        test -f $2 || echo "Error: --catalogue-credentials file $2 does not exist." && exit 1
+        catalogue_credentials=$2
+        ;;
+      --scheduler-credentials)
+        test -f $2 || echo "Error: --scheduler-credentials file $2 does not exist." && exit 1
+        scheduler_credentials=$2
+        ;;
+
       *)
         usage
         ;;
@@ -253,7 +267,9 @@ compile_deploy() {
     bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
       -n ${deploy_namespace} \
       --operating-system "${operating_system}" \
-      --rpm-src build_rpm/RPM/RPMS/x86_64
+      --rpm-src build_rpm/RPM/RPMS/x86_64 \
+      --catalogue-credentials ${catalogue_credentials} \
+      --scheduler-credentials ${scheduler_credentials}
   fi
 }
 

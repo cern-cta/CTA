@@ -317,7 +317,7 @@ echo -n "Waiting for all the pods to be in the running state"
 for ((i=0; i<240; i++)); do
   echo -n "."
   # exit loop when all pods are in Running state
-  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running || break
+  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
   sleep 1
 done
 

@@ -30,7 +30,8 @@ usage() {
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
   echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
-  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs that should be deployed. Defaults to CTA/build_rpm/RPM/RPMS/x86_64 if not provided."
+  echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
   exit 1
 }
 
@@ -40,6 +41,8 @@ redeploy() {
   local image_tag="dev"
   local operating_system="alma9"
   local rpm_src=""
+  local catalogue_credentials="continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
+  local scheduler_credentials="conitnuousintegration/orchestration/sched-vfs-creds.yaml.example"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -84,6 +87,14 @@ redeploy() {
           echo "Error: -t|--tag requires an argument"
           exit 1
         fi
+        ;;
+      --catalogue-credentials)
+        test -f $2 || echo "Error: --catalogue-credentials file $2 does not exist." && exit 1
+        catalogue_credentials=$2
+        ;;
+      --scheduler-credentials)
+        test -f $2 || echo "Error: --scheduler-credentials file $2 does not exist." && exit 1
+        scheduler_credentials=$2
         ;;
       *) usage ;;
     esac
@@ -133,7 +144,7 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O
+  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${database_credentials} -o ${scheduler_credentials}
 
   echo "Pods redeployed."
 }

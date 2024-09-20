@@ -1,3 +1,4 @@
+{{- if }}
 {{$namespace := .Release.Namespace }}
 {{$name := .Values.postgres.name}}
 {{$secret := include "init.imageSecret" . }}
@@ -49,4 +50,5 @@ spec:
 
   imagePullSecrets:
   - name: {{$secret}}
+{{- end }}
 {{- end }}
