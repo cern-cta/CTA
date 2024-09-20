@@ -233,7 +233,10 @@ class OStoreDB: public SchedulerDatabase {
  public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) override;
-
+  // Only for RDBMS Scheduler backend
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
     log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
