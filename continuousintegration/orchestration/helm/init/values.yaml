@@ -114,19 +114,10 @@ postgres:
     image: docker.io/postgres:14.10
     env:
     - name: POSTGRES_USER
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.username
+      value: cta
     - name: POSTGRES_PASSWORD
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.password
+      value: cta
     - name: PGDATA
       value: /var/lib/postgresql/data/pgdata
     - name: POSTGRES_DB
-      valueFrom:
-        configMapKeyRef:
-          name: database-config
-          key: database.postgres.database
+      value: cta
