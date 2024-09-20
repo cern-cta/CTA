@@ -69,7 +69,7 @@ CTATAPEDSSS="cta-taped.sss.keytab"
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-CTA_TAPED_OPTIONS="--log-to-file=/var/log/cta/cta-taped-${DRIVENAMES[${driveslot}]}.log"
+CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVENAMES[${driveslot}]}.log"
 XrdSecPROTOCOL=sss
 XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
 EOF
