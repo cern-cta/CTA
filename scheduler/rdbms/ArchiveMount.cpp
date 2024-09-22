@@ -23,6 +23,7 @@
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "common/Timer.hpp"
 
 #include <unordered_map>
 
@@ -50,9 +51,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.tapePool);
   try {
+    cta::utils::Timer mountUpdateBatchTime;
+    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, filesRequested);
+    cta::log::ScopedParamContainer logParams(logContext);
+    logParams.add("mountUpdateBatchTime", mountUpdateBatchTime.secs());
     logContext.log(cta::log::DEBUG,
                    "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
-    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, filesRequested);
     // we need to extract the JOB_IDs which were updated before we release the lock
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
@@ -68,6 +72,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
                    ex.getMessageValue());
     txn.abort();
   }
+  cta::utils::Timer mountFetchBatchTime;
   std::list <std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
@@ -92,6 +97,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     }
     selconn.commit();
   }
+  cta::log::ScopedParamContainer logParams(logContext);
+  logParams.add("mountFetchBatchTime", mountFetchBatchTime.secs());
   logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
   return ret;
 }
