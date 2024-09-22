@@ -158,7 +158,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     cta::log::ScopedParamContainer logParamsThread01(m_lc);
     logParamsThread01.add("thread", "DiskRead")
                    .add("threadID", m_threadID)
-                   .add("popTime", popTime.sec());
+                   .add("popTime", popTime.secs());
     m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread waited for new task ended.");
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (nullptr != task.get()) {
@@ -167,7 +167,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
       cta::log::ScopedParamContainer logParamsThread02(m_lc);
       logParamsThread02.add("thread", "DiskRead")
               .add("threadID", m_threadID)
-              .add("diskReadTime", diskReadTime.sec());
+              .add("diskReadTime", diskReadTime.secs());
       m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread finished executing DiskRead.");
       m_threadStat += task->getTaskStats();
     }

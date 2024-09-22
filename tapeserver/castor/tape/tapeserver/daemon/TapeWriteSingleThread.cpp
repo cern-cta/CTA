@@ -411,7 +411,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         //get a task
         task.reset(m_tasks.pop());
         cta::log::ScopedParamContainer logParams01(m_logContext);
-        logParams01.add("tapePopTime", tapePopTime.sec());
+        logParams01.add("tapePopTime", tapePopTime.secs());
         m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread waiting for new task ended.");
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
@@ -426,7 +426,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         cta::utils::Timer tapeExecTime;
         task->execute(writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
         cta::log::ScopedParamContainer logParams02(m_logContext);
-        logParams02.add("tapeExecTime", tapeExecTime.sec());
+        logParams02.add("tapeExecTime", tapeExecTime.secs());
         m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread executed task.");
 
         // Add the tasks counts to the session's
