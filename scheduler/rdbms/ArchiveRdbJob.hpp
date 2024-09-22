@@ -44,7 +44,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
 
   ArchiveRdbJob(rdbms::ConnPool &pool, bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
-  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, std::unique_ptr<rdbms::Rset> rset);
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset);
 
   void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
 
@@ -52,7 +52,6 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
 
   void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
-  std::unique_ptr<rdbms::Rset> m_rset;
   postgres::ArchiveJobQueueRow m_jobRow; // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;

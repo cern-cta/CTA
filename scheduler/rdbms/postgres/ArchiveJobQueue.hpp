@@ -36,17 +36,17 @@ namespace cta::schedulerdb::postgres {
     uint32_t reqJobCount = 1;
     std::optional <std::uint64_t> mountId = std::nullopt;
     ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
-    std::string_view tapePool = "";
-    std::string_view mountPolicy = "";
+    std::string tapePool = "";
+    std::string mountPolicy = "";
     uint32_t priority = 0;
     uint64_t minArchiveRequestAge = 0;
     uint8_t copyNb = 0;
     time_t startTime = 0;                       //!< Time the job was inserted into the queue
-    std::string_view archiveReportUrl = "";
-    std::string_view archiveErrorReportUrl = "";
-    std::string_view requesterName = "";
-    std::string_view requesterGroup = "";
-    std::string_view srcUrl = "";
+    std::string archiveReportUrl = "";
+    std::string archiveErrorReportUrl = "";
+    std::string requesterName = "";
+    std::string requesterGroup = "";
+    std::string srcUrl = "";
     uint32_t retriesWithinMount = 0;
     uint32_t totalRetries = 0;
     uint64_t lastMountWithFailure = 0;
@@ -60,14 +60,14 @@ namespace cta::schedulerdb::postgres {
     bool is_reporting = false;
     bool in_drive_queue = false;
     uint64_t repackId = 0;
-    std::string_view repackFilebufUrl = "";
+    std::string repackFilebufUrl = "";
     uint64_t repackFseq = 0;
-    std::string_view repackDestVid = "";
-    std::string_view vid = "";
-    std::string_view drive = "";
-    std::string_view host = "";
-    std::string_view mount_type = "";
-    std::string_view logical_library = "";
+    std::string repackDestVid = "";
+    std::string vid = "";
+    std::string drive = "";
+    std::string host = "";
+    std::string mount_type = "";
+    std::string logical_library = "";
 
 
     common::dataStructures::ArchiveFile archiveFile;
@@ -212,8 +212,8 @@ namespace cta::schedulerdb::postgres {
       stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
       stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
       stmt.bindString(":STATUS", to_string(status));
-      stmt.bindString(":TAPE_POOL", std::string(tapePool));
-      stmt.bindString(":MOUNT_POLICY", std::string(mountPolicy));
+      stmt.bindString(":TAPE_POOL", tapePool);
+      stmt.bindString(":MOUNT_POLICY", mountPolicy);
       stmt.bindUint16(":PRIORITY", priority);
       stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
@@ -227,11 +227,11 @@ namespace cta::schedulerdb::postgres {
       stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
       stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
       stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
-      stmt.bindString(":ARCHIVE_REPORT_URL", std::string(archiveReportUrl));
-      stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", std::string(archiveErrorReportUrl));
-      stmt.bindString(":REQUESTER_NAME", std::string(requesterName));
-      stmt.bindString(":REQUESTER_GROUP", std::string(requesterGroup));
-      stmt.bindString(":SRC_URL", std::string(srcUrl));
+      stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportUrl);
+      stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportUrl);
+      stmt.bindString(":REQUESTER_NAME", requesterName);
+      stmt.bindString(":REQUESTER_GROUP", requesterGroup);
+      stmt.bindString(":SRC_URL", srcUrl);
       stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
       stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
       stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
@@ -251,8 +251,8 @@ namespace cta::schedulerdb::postgres {
       params.add("reqId",  std::to_string(reqId));
       params.add("reqJobCount",  std::to_string(reqJobCount));
       params.add("status", to_string(status));
-      params.add("tapePool", std::string(tapePool));
-      params.add("mountPolicy", std::string(mountPolicy));
+      params.add("tapePool", tapePool);
+      params.add("mountPolicy", mountPolicy);
       params.add("priority", priority);
       params.add("minArchiveRequestAge", minArchiveRequestAge);
       params.add("archiveFileId", archiveFile.archiveFileID);
