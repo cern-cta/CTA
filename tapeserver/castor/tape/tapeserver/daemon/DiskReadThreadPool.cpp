@@ -153,10 +153,22 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   cta::utils::Timer totalTime;
   
   while(1) {
+    cta::utils::Timer popTime;
     task.reset( m_parent.popAndRequestMore(m_lc));
+    cta::log::ScopedParamContainer logParamsThread01(m_lc);
+    logParamsThread01.add("thread", "DiskRead")
+                   .add("threadID", m_threadID)
+                   .add("popTime", popTime.sec());
+    m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread waited for new task ended.");
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (nullptr != task.get()) {
+      cta::utils::Timer diskReadTime;
       task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog, m_threadID);
+      cta::log::ScopedParamContainer logParamsThread02(m_lc);
+      logParamsThread02.add("thread", "DiskRead")
+              .add("threadID", m_threadID)
+              .add("diskReadTime", diskReadTime.sec());
+      m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread finished executing DiskRead.");
       m_threadStat += task->getTaskStats();
     }
     else {

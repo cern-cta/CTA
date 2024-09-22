@@ -25,6 +25,7 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -235,7 +236,8 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs,
         reportPacker.m_lc);
       params.add("reportJobsBatchTime", t.secs())
-            .add("failedToReportBatchSize", failedToReportArchiveJobs.size());
+            .add("failedToReportBatchSize", failedToReportArchiveJobs.size())
+            .add("skippedReportSize", reportPacker.m_skippedFiles.size());
       reportPacker.m_lc.log(cta::log::INFO,
                             "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
     } catch(const cta::ArchiveMount::FailedReportCatalogueUpdate &ex){

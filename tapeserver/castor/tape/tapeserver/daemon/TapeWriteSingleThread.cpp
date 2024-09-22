@@ -406,8 +406,12 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt, m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
       while (true) {
+        cta::utils::Timer tapePopTime;
         //get a task
         task.reset(m_tasks.pop());
+        cta::log::ScopedParamContainer logParams01(m_logContext);
+        logParams01.add("tapePopTime", tapePopTime.sec());
+        m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread waiting for new task ended.");
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
         if (nullptr == task) {
@@ -418,7 +422,12 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
           break;
         }
+        cta::utils::Timer tapeExecTime;
         task->execute(writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
+        cta::log::ScopedParamContainer logParams02(m_logContext);
+        logParams02.add("tapeExecTime", tapeExecTime.sec());
+        m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread executed task.");
+
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Transmit the statistics to the watchdog thread
