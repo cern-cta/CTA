@@ -37,16 +37,23 @@ namespace cta::schedulerdb::postgres {
     std::optional <std::uint64_t> mountId = std::nullopt;
     ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
     std::string tapePool = "";
+    tapePool.reserve(64);
     std::string mountPolicy = "";
+    mountPolicy.reserve(64);
     uint32_t priority = 0;
     uint64_t minArchiveRequestAge = 0;
     uint8_t copyNb = 0;
     time_t startTime = 0;                       //!< Time the job was inserted into the queue
     std::string archiveReportUrl = "";
+    archiveReportUrl.reserve(2048);
     std::string archiveErrorReportUrl = "";
+    archiveErrorReportUrl.reserve(2048);
     std::string requesterName = "";
     std::string requesterGroup = "";
     std::string srcUrl = "";
+    requesterName.reserve(64);
+    requesterGroup.reserve(64);
+    srcUrl.reserve(2048);
     uint32_t retriesWithinMount = 0;
     uint32_t totalRetries = 0;
     uint64_t lastMountWithFailure = 0;
@@ -61,6 +68,7 @@ namespace cta::schedulerdb::postgres {
     bool in_drive_queue = false;
     uint64_t repackId = 0;
     std::string repackFilebufUrl = "";
+    repackFilebufUrl.reserve(2048);
     uint64_t repackFseq = 0;
     std::string repackDestVid = "";
     std::string vid = "";
@@ -68,6 +76,13 @@ namespace cta::schedulerdb::postgres {
     std::string host = "";
     std::string mount_type = "";
     std::string logical_library = "";
+    repackDestVid.reserve(64);
+    vid.reserve(64);
+    drive.reserve(64);
+    host.reserve(64);
+    mount_type.reserve(64);
+    logical_library.reserve(64);
+
 
 
     common::dataStructures::ArchiveFile archiveFile;
