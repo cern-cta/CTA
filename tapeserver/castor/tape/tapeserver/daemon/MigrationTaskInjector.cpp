@@ -163,9 +163,16 @@ void MigrationTaskInjector::WorkerThread::run() {
       if (m_parent.m_errorFlag) {
         throw castor::tape::tapeserver::daemon::ErrorFlag();
       }
+      cta::utils::Timer timer;
       Request req = m_parent.m_queue.pop();
-      m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive Mount");
+      cta::log::ScopedParamContainer logParams01(m_parent.m_lc);
+      logParams01.add("migrationPopTime", timer.sec());
+      m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): finished waiting for signal, now getting jobsfrom ArchiveMount.");
+      cta::utils::Timer timer2;
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
+      cta::log::ScopedParamContainer logParams02(m_parent.m_lc);
+      logParams02.add("migrationGetNextJobBatchTime", timer2.sec());
+      m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): finished getting jobs from ArchiveMount.");
       uint64_t files = jobs.size();
       uint64_t bytes = 0;
       for (auto& j : jobs) bytes += j->archiveFile.fileSize;
@@ -184,7 +191,11 @@ void MigrationTaskInjector::WorkerThread::run() {
       else {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
+        cta::utils::Timer timer;
         m_parent.injectBulkMigrations(jobs);
+        cta::log::ScopedParamContainer logParams01(m_parent.m_lc);
+        logParams01.add("injectBulkMigrationsTime", timer.sec());
+        m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): Finished inserting tasks for execution to the disk and tape queues.");
         // Decide on continuation
         if (files < req.filesRequested / 2 && bytes < req.bytesRequested) {
           // The client starts to dribble files at a low rate. Better finish

@@ -160,6 +160,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, ckSum);
     m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
     m_archiveJob->tapeFile.blockId = output->getBlockId();
+
     reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.totalTime = localTime.secs();
