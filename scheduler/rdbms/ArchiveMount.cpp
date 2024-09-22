@@ -96,7 +96,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     uint64_t totalBytes = 0;
     while (resultSet.next()) {
       totalBytes += resultSet.columnUint64("SIZE_IN_BYTES");
-      auto rset = std::make_unique<rdbms::Rset>(resultSet);
+      auto rset = std::make_unique<rdbms::Rset>(std::move(resultSet));
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, std::move(rset));
       retVector.emplace_back(std::move(job));
       retVector.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
