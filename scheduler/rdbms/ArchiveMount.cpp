@@ -73,6 +73,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     txn.abort();
   }
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  std::vector <std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
+  retVector.reserve(jobIDsList.size());
   cta::utils::Timer mountFetchBatchTimeTotal;
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
@@ -91,11 +93,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     cta::utils::Timer mountTransformBatchTime;
 
     // Construct the return value
-    std::vector <std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
-    retVector.reserve(jobIDsList.size());
     uint64_t totalBytes = 0;
     while (resultSet.next()) {
-      totalBytes += rset.columnUint64("SIZE_IN_BYTES");
+      totalBytes += resultSet.columnUint64("SIZE_IN_BYTES");
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       retVector.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;

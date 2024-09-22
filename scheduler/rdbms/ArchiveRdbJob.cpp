@@ -23,25 +23,25 @@
 namespace cta::schedulerdb {
 
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset):
-          m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
-          m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
-          m_tapePool(jobQueueRow.tapePool),
-          m_connPool(connPool),
-          m_jobRow(rset)
+          m_jobRow(rset),
+          m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
+          m_mountId(m_jobRow.mountId.value_or(0)), // use mountId or 0 if not set
+          m_tapePool(m_jobRow.tapePool),
+          m_connPool(connPool)
   {
     // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
-    jobID = jobQueueRow.jobId;
-    srcURL = jobQueueRow.srcUrl;
-    archiveReportURL = jobQueueRow.archiveReportUrl;
-    errorReportURL = jobQueueRow.archiveErrorReportUrl;
-    archiveFile = jobQueueRow.archiveFile; // assuming ArchiveFile is copyable
-    tapeFile.vid = jobQueueRow.vid;
-    tapeFile.copyNb = jobQueueRow.copyNb;
+    jobID = m_jobRow.jobId;
+    srcURL = m_jobRow.srcUrl;
+    archiveReportURL = m_jobRow.archiveReportUrl;
+    errorReportURL = m_jobRow.archiveErrorReportUrl;
+    archiveFile = m_jobRow.archiveFile; // assuming ArchiveFile is copyable
+    tapeFile.vid = m_jobRow.vid;
+    tapeFile.copyNb = m_jobRow.copyNb;
     // Set other attributes or perform any necessary initialization
     // Setting the internal report type - in case is_reporting == false No Report type required
-    if (jobQueueRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
+    if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
       reportType = ReportType::CompletionReport;
-    } else if (jobQueueRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
+    } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
       reportType = ReportType::FailureReport;
     } else {
       reportType = ReportType::NoReportRequired;
