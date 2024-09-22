@@ -195,7 +195,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
       //schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       auto rset = std::make_unique<rdbms::Rset>(resultSet);
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, rset));
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, std::move(rset)));
     }
     // this is not query commit, but conn commit returning
     // the connection to the pool !
