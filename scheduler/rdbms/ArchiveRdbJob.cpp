@@ -22,12 +22,12 @@
 
 namespace cta::schedulerdb {
 
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const postgres::ArchiveJobQueueRow& jobQueueRow):
-  m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
-  m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
-  m_tapePool(jobQueueRow.tapePool),
-  m_connPool(connPool),
-  m_jobRow(jobQueueRow)
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset):
+          m_jobOwned((jobQueueRow.mountId.value_or(0) != 0)),
+          m_mountId(jobQueueRow.mountId.value_or(0)), // use mountId or 0 if not set
+          m_tapePool(jobQueueRow.tapePool),
+          m_connPool(connPool),
+          m_jobRow(rset)
   {
     // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
     jobID = jobQueueRow.jobId;

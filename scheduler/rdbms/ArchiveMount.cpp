@@ -73,7 +73,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     txn.abort();
   }
   cta::utils::Timer mountFetchBatchTimeTotal;
-  std::list <std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
     // fetch a non transactional connection from the PGSCHED connection pool
@@ -89,15 +88,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Returning fetch result of ArchiveJobQueueRow::selectJobsByJobID()");
 
     cta::utils::Timer mountTransformBatchTime;
-    std::list <postgres::ArchiveJobQueueRow> jobs;
+
     // Construct the return value
+    std::vector <std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
+    retVector.reserve(jobIDsList.size());
     uint64_t totalBytes = 0;
     while (resultSet.next()) {
       schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
       totalBytes += jobRow.archiveFile.fileSize;
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, jobRow));
-      ret.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
+      auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, jobRow);
+      retVector.emplace_back(std::move(job));
+      retVector.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      retVector.back()->tapeFile.blockId = std::numeric_limits<decltype(retVector.back()->tapeFile.blockId)>::max();
       if (totalBytes >= bytesRequested) break;
     }
     cta::log::ScopedParamContainer logParams02(logContext);
@@ -105,9 +107,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Sorting for execution fetched rows from ArchiveMount::getNextJobBatch()");
     selconn.commit();
   }
+  // Convert vector to list (which is expected)
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
+
   cta::log::ScopedParamContainer logParams(logContext);
   logParams.add("mountFetchBatchTimeTotal", mountFetchBatchTimeTotal.secs());
   logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
+
   return ret;
 }
 
