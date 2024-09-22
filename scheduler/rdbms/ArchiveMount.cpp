@@ -72,7 +72,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
                    ex.getMessageValue());
     txn.abort();
   }
-  cta::utils::Timer mountFetchBatchTime;
+  cta::utils::Timer mountFetchBatchTimeTotal;
   std::list <std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
@@ -82,8 +82,13 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     // retrieve more job information about the updated batch
     logContext.log(cta::log::DEBUG, "Query for job IDs " + jobIDsString + " ArchiveMount::getNextJobBatch()");
     auto selconn = m_connPool.getConn();
+    cta::utils::Timer mountFetchBatchTime;
     resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
-    logContext.log(cta::log::DEBUG, "Job info of the updated jobs has been queueried, passing it on for execution");
+    cta::log::ScopedParamContainer logParams01(logContext);
+    logParams01.add("mountFetchBatchTime", mountFetchBatchTime.secs());
+    logContext.log(cta::log::DEBUG, "Returning fetch result of ArchiveJobQueueRow::selectJobsByJobID()");
+
+    cta::utils::Timer mountTransformBatchTime;
     std::list <postgres::ArchiveJobQueueRow> jobs;
     // Construct the return value
     uint64_t totalBytes = 0;
@@ -95,10 +100,13 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       ret.back()->tapeFile.blockId = std::numeric_limits<decltype(ret.back()->tapeFile.blockId)>::max();
       if (totalBytes >= bytesRequested) break;
     }
+    cta::log::ScopedParamContainer logParams02(logContext);
+    logParams02.add("mountTransformBatchTime", mountTransformBatchTime.secs());
+    logContext.log(cta::log::DEBUG, "Sorting for execution fetched rows from ArchiveMount::getNextJobBatch()");
     selconn.commit();
   }
   cta::log::ScopedParamContainer logParams(logContext);
-  logParams.add("mountFetchBatchTime", mountFetchBatchTime.secs());
+  logParams.add("mountFetchBatchTimeTotal", mountFetchBatchTimeTotal.secs());
   logContext.log(cta::log::DEBUG, "Returning result of ArchiveMount::getNextJobBatch()");
   return ret;
 }
