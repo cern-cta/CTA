@@ -91,8 +91,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Returning fetch result of ArchiveJobQueueRow::selectJobsByJobID()");
 
     cta::utils::Timer mountTransformBatchTime;
-    auto start = std::chrono::high_resolution_clock::now(); // Start timer
-
     // Construct the return value
     uint64_t totalBytes = 0;
     while (true) {
