@@ -91,11 +91,24 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Returning fetch result of ArchiveJobQueueRow::selectJobsByJobID()");
 
     cta::utils::Timer mountTransformBatchTime;
+    auto start = std::chrono::high_resolution_clock::now(); // Start timer
 
+    cta::utils::Timer nextTimer;
     // Construct the return value
     uint64_t totalBytes = 0;
-    while (resultSet.next()) {
-      totalBytes += resultSet.columnUint64("SIZE_IN_BYTES");
+    while (true) {
+      nextTimer.start(); // Start timing
+      bool hasNext = resultSet.next(); // Call to next
+      nextTimer.stop(); // Stop timing
+      cta::log::ScopedParamContainer logParams03(logContext);
+      logParams03.add("nextTransformationTimer", nextTransformationTimer.secs());
+      logContext.log(cta::log::DEBUG, "Next Timer Measurement in ArchiveMount::getNextJobBatch()");
+
+      if (!hasNext) break; // Exit if no more rows
+
+
+      uint64_t sizeInBytes = resultSet.columnUint64("SIZE_IN_BYTES");
+      totalBytes += sizeInBytes;
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       auto& lastJob = retVector.back()->tapeFile;
