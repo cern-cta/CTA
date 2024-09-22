@@ -22,9 +22,8 @@
 
 namespace cta::schedulerdb {
 
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, std::unique_ptr<rdbms::Rset> rset):
-          m_rset(std::move(rset)),
-          m_jobRow(*rset),
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset):
+          m_jobRow(rset),
           m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
           m_mountId(m_jobRow.mountId.value_or(0)), // use mountId or 0 if not set
           m_tapePool(m_jobRow.tapePool),
