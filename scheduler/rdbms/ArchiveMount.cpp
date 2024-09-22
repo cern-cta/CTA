@@ -96,7 +96,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     // Construct the return value
     uint64_t totalBytes = 0;
     while (true) {
-      cta::utils::Timer nextTimer;
+      cta::utils::Timer nextTransformationTimer;
       bool hasNext = resultSet.next(); // Call to next
       cta::log::ScopedParamContainer logParams03(logContext);
       logParams03.add("nextTransformationTimer", nextTransformationTimer.secs());
