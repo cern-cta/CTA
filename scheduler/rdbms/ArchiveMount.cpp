@@ -93,19 +93,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     cta::utils::Timer mountTransformBatchTime;
     auto start = std::chrono::high_resolution_clock::now(); // Start timer
 
-    cta::utils::Timer nextTimer;
     // Construct the return value
     uint64_t totalBytes = 0;
     while (true) {
-      nextTimer.start(); // Start timing
+      cta::utils::Timer nextTimer;
       bool hasNext = resultSet.next(); // Call to next
-      nextTimer.stop(); // Stop timing
       cta::log::ScopedParamContainer logParams03(logContext);
       logParams03.add("nextTransformationTimer", nextTransformationTimer.secs());
       logContext.log(cta::log::DEBUG, "Next Timer Measurement in ArchiveMount::getNextJobBatch()");
 
       if (!hasNext) break; // Exit if no more rows
-
 
       uint64_t sizeInBytes = resultSet.columnUint64("SIZE_IN_BYTES");
       totalBytes += sizeInBytes;
