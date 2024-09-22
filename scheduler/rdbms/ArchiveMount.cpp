@@ -72,6 +72,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
                    ex.getMessageValue());
     txn.abort();
   }
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   cta::utils::Timer mountFetchBatchTimeTotal;
   // Fetch job info only in case there were jobs found and updated
   if (!jobIDsList.empty()) {
@@ -94,9 +95,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     retVector.reserve(jobIDsList.size());
     uint64_t totalBytes = 0;
     while (resultSet.next()) {
-      schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);
-      totalBytes += jobRow.archiveFile.fileSize;
-      auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, jobRow);
+      totalBytes += rset.columnUint64("SIZE_IN_BYTES");
+      auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       retVector.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       retVector.back()->tapeFile.blockId = std::numeric_limits<decltype(retVector.back()->tapeFile.blockId)>::max();
@@ -107,8 +107,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Sorting for execution fetched rows from ArchiveMount::getNextJobBatch()");
     selconn.commit();
   }
-  // Convert vector to list (which is expected)
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  // Convert vector to list (which is expected as retunr type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
 
   cta::log::ScopedParamContainer logParams(logContext);
