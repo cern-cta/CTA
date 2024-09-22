@@ -94,7 +94,6 @@ namespace cta::schedulerdb::postgres {
       logical_library.reserve(64);
     }
 
-
     /**
      * Constructor from row
      *

@@ -98,8 +98,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       totalBytes += resultSet.columnUint64("SIZE_IN_BYTES");
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
-      retVector.back()->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-      retVector.back()->tapeFile.blockId = std::numeric_limits<decltype(retVector.back()->tapeFile.blockId)>::max();
+      auto& lastJob = retVector.back()->tapeFile;
+      lastJob.fSeq = ++nbFilesCurrentlyOnTape;
+      lastJob.blockId = std::numeric_limits<decltype(lastJob.blockId)>::max();
       if (totalBytes >= bytesRequested) break;
     }
     cta::log::ScopedParamContainer logParams02(logContext);
