@@ -53,11 +53,11 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Check the most common patterns first
   if (path.compare(0, 7, "file://") == 0) {
     // Remove "file://"
-    return new LocalReadFile("file://");
+    return new LocalReadFile(path.substr(8));
   }
   else if (path.compare(0, 7, "root://") == 0) {
     // Remove "root://"
-    return new LocalReadFile("root://");
+    return new XrootReadFile(path.substr(8));
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
