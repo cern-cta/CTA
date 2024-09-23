@@ -24,6 +24,7 @@
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/Timer.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 
 #include <unordered_map>
 
@@ -93,6 +94,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     cta::utils::Timer mountTransformBatchTime;
     // Construct the return value
     uint64_t totalBytes = 0;
+    // Precompute the maximum value before the loop
+    common::dataStructures::TapeFile tpfile;
+    auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
     while (true) {
       cta::utils::Timer nextTransformationTimer;
       bool hasNext = resultSet.next(); // Call to next
@@ -106,9 +110,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       totalBytes += sizeInBytes;
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
-      auto& lastJob = retVector.back()->tapeFile;
-      lastJob.fSeq = ++nbFilesCurrentlyOnTape;
-      lastJob.blockId = std::numeric_limits<decltype(lastJob.blockId)>::max();
+      auto& tapeFile = retVector.back()->tapeFile;
+      tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      tapeFile.blockId = maxBlockId;
       if (totalBytes >= bytesRequested) break;
     }
     cta::log::ScopedParamContainer logParams02(logContext);
