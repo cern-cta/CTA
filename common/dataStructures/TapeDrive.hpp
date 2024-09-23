@@ -118,6 +118,4 @@ struct TapeDrive {
   std::optional<bool> physicalLibraryDisabled;
 };  // struct TapeDrive
 
-std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
-
 } // namespace cta::common::dataStructures

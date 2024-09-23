@@ -167,25 +167,4 @@ DriveStatus TapeDrive::stringToState(const std::string& state) {
   }
 }
 
-//------------------------------------------------------------------------------
-// operator<<
-//------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeDrive &obj) {
-  std::string stateStr = "UNKNOWN";
-  try {
-    stateStr = TapeDrive::stateToString(obj.driveStatus);
-  } catch(const cta::exception::Exception &ex){
-    //Do nothing
-  }
-  os << "(driveName=" << obj.driveName
-     << " host=" << obj.host
-     << " logicalLibrary=" << obj.logicalLibrary
-     << " mountType=" << obj.mountType
-     << " driveStatus=" << stateStr
-     << " desiredUp=" << obj.desiredUp
-     << " desiredForceDown=" << obj.desiredForceDown 
-     << ")";
-  return os;
-}
-
 } // namespace cta::common::dataStructures
