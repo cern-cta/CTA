@@ -85,7 +85,9 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
   //  m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
   //}
   // Construct the archive request object
+  utils::Timer timeTotal;
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest with RDB connection.");
+
   auto sqlconn = m_connPool.getConn();
   auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(sqlconn, logContext);
 
@@ -123,16 +125,21 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
     throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
   }
 
-  utils::Timer timerinsert;
+  utils::Timer timeInsert;
   // Insert the object into the DB
   logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest insert.");
 
   aReq->insert();
 
-  log::ScopedParamContainer params(logContext);
-  params.add("InsertCommitTimeSec", timerinsert.secs());
-  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): insert() and commit() done.");
-
+  log::ScopedParamContainer(logContext)
+          .add("fileId", archiveFile.archiveFileID)
+          .add("diskInstance", archiveFile.diskInstance)
+          .add("diskFilePath", archiveFile.diskFileInfo.path)
+          .add("diskFileId", archiveFile.diskFileId)
+          .add("insertTime", timeInsert.secs())
+          .add("totalTime", timeTotal.secs())
+          .log(log::INFO,
+               "In RelationalDB::queueArchive(): Finished enqueueing request.");
   return aReq->getIdStr();
 }
 
