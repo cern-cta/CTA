@@ -123,3 +123,17 @@ k8s-test-external-tape-formats:
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+k8s-test-regression-dCache:
+  stage: test
+  extends:
+    - .kubernetes-test
+  rules:
+    - !reference [.manual-rules, rules]
+  variables:
+    TEST_SCRIPT: "tests/test_regression_dCache.sh"
+    EXTENDED_OPTIONS: "-O -D -S -C"
+  tags:
+    - kubernetes
+    #- mhvtl
+    - xlarge
