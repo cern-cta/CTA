@@ -115,6 +115,9 @@ unit-test-oracle:
   except:
     - tags
   variables:
+    # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
+    # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
+    # pod's yaml file is `pod-oracleunittests.yaml`
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
 

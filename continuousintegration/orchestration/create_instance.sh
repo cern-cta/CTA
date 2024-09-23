@@ -313,8 +313,6 @@ helm install cta ${poddir}/cta -n ${instance}  --set global.image=${IMAGE}
 
 kubectl --namespace=${instance} get pods
 
-# kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Succeeded || die "TIMED OUT"
-# echo OK
 echo -n "Waiting for all the pods to be in the running state"
 for ((i=0; i<240; i++)); do
   echo -n "."
