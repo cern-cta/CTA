@@ -41,14 +41,23 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
-  regexResult = m_URLLocalFile.exec(path);
-  if (regexResult.size()) {
-    return new LocalReadFile(regexResult[1]);
+  // regexResult = m_URLLocalFile.exec(path);
+  // if (regexResult.size()) {
+  //   return new LocalReadFile(regexResult[1]);
+  // }
+  // // Xroot URL?
+  // regexResult = m_URLXrootFile.exec(path);
+  // if (regexResult.size()) {
+  //   return new XrootReadFile(regexResult[1], m_xrootTimeout);
+  // }
+  // Check the most common patterns first
+  if (path.starts_with("file://")) {
+    std::string localPath = path.substr(7); // Remove "file://"
+    return std::make_unique<LocalReadFile>(localPath);
   }
-  // Xroot URL?
-  regexResult = m_URLXrootFile.exec(path);
-  if (regexResult.size()) {
-    return new XrootReadFile(regexResult[1], m_xrootTimeout);
+  else if (path.starts_with("root://")) {
+    std::string xrootPath = path.substr(8); // Remove "root://"
+    return std::make_unique<XrootReadFile>(xrootPath, m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
