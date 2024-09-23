@@ -16,10 +16,11 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-usage() { cat <<EOF 1>&2
+usage() {
+  cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF
-exit 1
+  exit 1
 }
 
 NAMESPACE=""
@@ -27,15 +28,15 @@ tape_server='tpsrv01'
 
 while getopts "n:" o; do
   case "${o}" in
-    n)
-      NAMESPACE=${OPTARG}
-      ;;
-    *)
-      usage
-      ;;
+  n)
+    NAMESPACE=${OPTARG}
+    ;;
+  *)
+    usage
+    ;;
   esac
 done
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [ -z "${NAMESPACE}" ]; then
   usage
@@ -44,8 +45,9 @@ fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
 helm repo update
-helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera  chimera bitnami/postgresql --version=12.12.10
+helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera chimera bitnami/postgresql --version=12.12.10
 helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s cells bitnami/zookeeper
 helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
 helm install -n ${NAMESPACE} --debug --replace --wait --timeout 10m0s --set image.tag=9.2.22 --set dcache.hsm.enabled=true store dcache/dcache
 
+exit 0
