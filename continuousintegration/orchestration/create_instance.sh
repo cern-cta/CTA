@@ -276,17 +276,6 @@ for ((i=0; i<400; i++)); do
   kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
 done
-echo ""
-echo "Creating cta instance in ${instance} namespace"
-helm dependency build ${poddir}/cta
-helm dependency update ${poddir}/cta
-helm install cta ${poddir}/cta -n ${instance}  --set global.image=${IMAGE}
-
-
-kubectl --namespace=${instance} get pods
-
-# kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Succeeded || die "TIMED OUT"
-# echo OK
 
 if [ $runoracleunittests == 1 ] ; then
   echo "Running database unit-tests"
@@ -312,6 +301,17 @@ if [ $runoracleunittests == 1 ] ; then
   # database unit-tests were successful => exit now with success
   exit 0
 fi
+
+
+
+echo ""
+echo "Creating cta instance in ${instance} namespace"
+helm dependency build ${poddir}/cta
+helm dependency update ${poddir}/cta
+helm install cta ${poddir}/cta -n ${instance}  --set global.image=${IMAGE}
+
+
+kubectl --namespace=${instance} get pods
 
 echo -n "Waiting for all the pods to be in the running state"
 for ((i=0; i<240; i++)); do
