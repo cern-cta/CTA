@@ -237,31 +237,6 @@ echo -n "Creating ${instance} instance "
 
 kubectl create namespace ${instance} || die "FAILED"
 
-if [ $runoracleunittests == 1 ] ; then
-  echo "Running database unit-tests"
-  kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
-
-  echo -n "Waiting for oracleunittests"
-  for ((i=0; i<400; i++)); do
-    echo -n "."
-    kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
-    sleep 1
-  done
-  echo "\n"
-
-  kubectl --namespace=${instance} logs oracleunittests
-
-  # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Failed); then
-    echo "oracleunittests pod in Error status here are its last log lines:"
-    kubectl --namespace=${instance} logs oracleunittests --tail 10
-    die "ERROR: oracleunittests pod in Error state. Initialization failed."
-  fi
-
-  # database unit-tests were successful => exit now with success
-  exit 0
-fi
-
 # Does kubernetes version supports `get pod --show-all=true`?
 # use it for older versions and this is not needed for new versions of kubernetes
 KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
@@ -301,6 +276,34 @@ for ((i=0; i<400; i++)); do
   kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
 done
+
+if [ $runoracleunittests == 1 ] ; then
+  echo "Running database unit-tests"
+  kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
+
+  echo -n "Waiting for oracleunittests"
+  for ((i=0; i<400; i++)); do
+    echo -n "."
+    kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+    sleep 1
+  done
+  echo "\n"
+
+  kubectl --namespace=${instance} logs oracleunittests
+
+  # database unit-tests went wrong => exit now with error
+  if $(kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Failed); then
+    echo "oracleunittests pod in Error status here are its last log lines:"
+    kubectl --namespace=${instance} logs oracleunittests --tail 10
+    die "ERROR: oracleunittests pod in Error state. Initialization failed."
+  fi
+
+  # database unit-tests were successful => exit now with success
+  exit 0
+fi
+
+
+
 echo ""
 echo "Creating cta instance in ${instance} namespace"
 helm dependency build ${poddir}/cta
