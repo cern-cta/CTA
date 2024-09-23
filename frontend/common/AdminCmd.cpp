@@ -631,6 +631,10 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
 
   if(disabled) {
+    if (disabled.value() && !disabledReason) {
+      throw exception::UserError(std::string("Cannot disable logical library ") + name +
+                                 " because the reason has not been provided");
+    }
     m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
     if((!disabled.value()) && (!disabledReason)) {
       // if enabling the tape and the reason is not specified in the command, erase the reason
