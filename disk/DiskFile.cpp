@@ -57,7 +57,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   }
   else if (path.compare(0, 7, "root://") == 0) {
     // Remove "root://"
-    return new XrootReadFile(path.substr(7);
+    return new XrootReadFile(path.substr(7));
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
