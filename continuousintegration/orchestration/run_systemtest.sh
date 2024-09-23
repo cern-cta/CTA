@@ -167,27 +167,27 @@ fi
 #sfi
 
 if [ $useoracle == 1 ] ; then
-    database_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep database | head -1)
-    if [ "-${database_configmap}-" == "--" ]; then
+    database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
+    if [ "-${database_credentials}-" == "--" ]; then
       die "Oracle database requested but not database configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+      CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
     fi
 fi
 
 # SCHED_TYPE is an external variable of the gitlab-ci to use postgres scheduler backend if CTA is compiled with it
 if [ $SCHED_TYPE == "pgsched" ] ; then
-  schedstore_configmap="internal_pgsched.yaml"
-  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_configmap}"
+  schedstore_creds=$(find /opt/kubernetes/CTA/ | grep pgsched-creds.yaml | head -1)
+  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_creds}"
   useceph=0
 fi
 
 if [ $useceph == 1 ] ; then
-    objectstore_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep objectstore | head -1)
-    if [ "-${objectstore_configmap}-" == "--" ]; then
+    objectstore_credentials=$(find /opt/kubernetes/CTA/ | grep objectstore-file.yaml | head -1)
+    if [ "-${objectstore_credentials}-" == "--" ]; then
       die "Ceph objecstore requested but not objectstore configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"
+      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_credentials}"
     fi
 fi
 

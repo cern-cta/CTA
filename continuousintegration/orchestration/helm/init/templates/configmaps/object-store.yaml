@@ -1,11 +1,11 @@
+{{- $schedulertemplate := printf "init.scheduler_%s" .Values.schedulerBackend }}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: objectstore-config
   namespace: {{ .Release.Namespace }}
   labels:
-    config: objectstore
-    type: file
+    type: {{ .Values.schedulerBackend }}
 data:
-  objectstore.type: file
-  objectstore.file.path: /shared/%NAMESPACE/objectstore
+  {{- include $schedulertemplate .Values.schedulerconfig | nindent 2 }}

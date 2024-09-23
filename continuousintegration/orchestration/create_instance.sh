@@ -19,9 +19,9 @@
 ctareg_secret='ctaregsecret'
 
 # defaults scheduler datastore to objectstore (using a file)
-config_schedstore="./objectstore-file.yaml"
+config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
 # defaults DB to sqlite
-config_database="./database-sqlite.yaml"
+config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
 # default library model
 model="mhvtl"
 # defaults MGM namespace to quarkdb with http
@@ -83,7 +83,7 @@ while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG}
-            test -f ${config_schedstore} || error="${error}Scheduler datastore configmap file ${config_schedstore} does not exist\n"
+            test -f ${config_schedstore} || error="${error}Scheduler database credentials file ${config_schedstore} does not exist\n"
             ;;
         d)
             config_database=${OPTARG}
@@ -268,7 +268,7 @@ echo "Got library: ${LIBRARY_DEVICE}"
 IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
 
 echo  "Setting up init and db pods."
-helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --set catalogue.schemaVersion="${SCHEMA_VERSION}"
+helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --set catalogue.schemaVersion="${SCHEMA_VERSION}" -f ${config_schedstore} -f ${config_database}
 
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
@@ -317,7 +317,7 @@ echo -n "Waiting for all the pods to be in the running state"
 for ((i=0; i<240; i++)); do
   echo -n "."
   # exit loop when all pods are in Running state
-  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running || break
+  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
   sleep 1
 done
 
