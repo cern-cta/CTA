@@ -57,7 +57,7 @@ PostgresRset::~PostgresRset() {
 // getting column index using a local cache to avoid looking up index
 // for every column for each row of the Rset when we loop over the result
 //------------------------------------------------------------------------------
-const int PostgresRset::getColumnIndex(const std::string& colName) {
+int PostgresRset::getColumnIndex(const std::string& colName) {
 
     if (nullptr == m_resItr->get()) {
       throw exception::Exception(std::string(__FUNCTION__) + " no row available");
@@ -66,7 +66,7 @@ const int PostgresRset::getColumnIndex(const std::string& colName) {
     if (it != m_columnIndexCache.end()) {
       return it->second;
     }
-    uint64_t idx = PQfnumber(m_resItr->get(), colName.c_str());
+    int idx = PQfnumber(m_resItr->get(), colName.c_str());
     if (idx < 0) {
       throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
     }
