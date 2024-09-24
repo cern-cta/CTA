@@ -52,8 +52,10 @@ helm install -n ${NAMESPACE} --debug --replace --wait --timeout 10m0s --set imag
 echo
 echo "DEBUG INFO... statefulsets"
 kubectl -n "${NAMESPACE}" get statefulsets
-echo "DEBUG INFO... descibe"
+echo "DEBUG INFO... descibe statefulset"
 kubectl -n "${NAMESPACE}" describe statefulset
+echo "DEBUG INFO... descibe pod"
+kubectl -n "${NAMESPACE}" describe pod store-dcache-door
 
 
 exit 0
