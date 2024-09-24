@@ -55,7 +55,7 @@ PostgresRset::~PostgresRset() {
 
 //------------------------------------------------------------------------------
 // getting column index using a local cache to avoid looking up index
-// for every column for each row of the Rset when we loop over the result
+// for every column for each row of the Rset whenever we loop over the result
 //------------------------------------------------------------------------------
 int PostgresRset::getColumnIndex(const std::string& colName) const {
 
