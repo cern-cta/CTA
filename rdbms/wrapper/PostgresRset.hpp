@@ -56,7 +56,7 @@ public:
     * @param colName
     * @return index of the column
     */
-  int PostgresRset::getColumnIndex(const std::string& colName);
+  int getColumnIndex(const std::string& colName);
 
   /**
    * Returns true if the specified column contains a null value.
