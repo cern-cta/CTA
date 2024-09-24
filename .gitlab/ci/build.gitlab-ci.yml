@@ -97,6 +97,14 @@ build-cta-srpm-pgsched:
     - !reference [.build-cta, rules]
     - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
+build-cta-srpm-pgsched:
+  stage: build
+  extends:
+    - .build-cta-srpm
+  rules:
+    - !reference [.build-cta, rules]
+    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "ON"
+
 build-cta-rpm-pgsched:
   stage: build
   extends:
@@ -110,6 +118,18 @@ build-cta-rpm-pgsched:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+
+build-cta-rpm-pgsched:
+  stage: build
+  extends:
+    - .build-cta-rpm
+  needs:
+    - build-cta-srpm-pgsched
+  rules:
+    - !reference [.build-cta, rules]
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "ON"
 
 # No-oracle build
 
