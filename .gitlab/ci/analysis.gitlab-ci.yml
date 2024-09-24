@@ -15,6 +15,7 @@ cppcheck-run:
     - when: always
   dependencies: [] # Ensure no artifacts are downloaded
   script:
+    - exit 1
     - cppcheck --xml
                --force
                --enable=warning,performance
