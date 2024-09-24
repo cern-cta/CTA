@@ -132,10 +132,10 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
   aReq->insert();
 
   log::ScopedParamContainer(logContext)
-          .add("fileId", archiveFile.archiveFileID)
-          .add("diskInstance", archiveFile.diskInstance)
-          .add("diskFilePath", archiveFile.diskFileInfo.path)
-          .add("diskFileId", archiveFile.diskFileId)
+          .add("fileId", aFile.archiveFileID)
+          .add("diskInstance", aFile.diskInstance)
+          .add("diskFilePath", aFile.diskFileInfo.path)
+          .add("diskFileId", aFile.diskFileId)
           .add("insertTime", timeInsert.secs())
           .add("totalTime", timeTotal.secs())
           .log(log::INFO,
