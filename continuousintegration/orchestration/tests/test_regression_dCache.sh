@@ -49,5 +49,11 @@ helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s --set auth.usernam
 helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s cells bitnami/zookeeper
 helm install -n ${NAMESPACE} --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
 helm install -n ${NAMESPACE} --debug --replace --wait --timeout 10m0s --set image.tag=9.2.22 --set dcache.hsm.enabled=true store dcache/dcache
+echo
+echo "DEBUG INFO... statefulsets"
+kubectl -n "${NAMESPACE}" get statefulsets
+echo "DEBUG INFO... descibe"
+kubectl -n "${NAMESPACE}" describe statefulset
+
 
 exit 0
