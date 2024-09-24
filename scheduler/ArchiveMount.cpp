@@ -154,6 +154,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
   if (!m_sessionRunning)
     throw SessionNotRunning("In ArchiveMount::getNextJobBatch(): trying to get job from complete/not started session");
   // try and get a new job from the DB side
+  utils::Timer t;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
                                                                                                        bytesRequested, logContext));
   std::list<std::unique_ptr<ArchiveJob>> ret;
@@ -163,6 +164,13 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
                                     sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
     ret.back()->m_dbJob.reset(sdaj.release());
   }
+  log::ScopedParamContainer(logContext)
+          .add("filesRequested", filesRequested)
+          .add("bytesRequested", bytesRequested)
+          .add("getNextJobBatchTime", t.secs())
+          .log(log::INFO,
+               "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
+
   return ret;
 }
 
