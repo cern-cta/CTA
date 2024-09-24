@@ -160,7 +160,7 @@ private:
   /**
    * column index cache
    */
-  std::unordered_map<std::string, uint64_t> m_columnIndexCache;
+  mutable std::unordered_map<std::string, uint64_t> m_columnIndexCache;
   /**
    * The SQL connection.
    */
