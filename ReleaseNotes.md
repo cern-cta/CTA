@@ -60,9 +60,6 @@
 - cta/CTA#864 - Re-enable Oracle unit tests
 - cta/CTA#852 - Auto cancel pipeline on job failures
 
-### Catalogue Schema
-- cta/CTA#801 - Update CTA catalogue schema to version 15.0
-
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 - cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
