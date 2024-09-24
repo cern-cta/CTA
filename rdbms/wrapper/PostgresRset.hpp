@@ -49,6 +49,15 @@ public:
    */
   ~PostgresRset() override;
 
+   /**
+    * Getting index of a column by using the columnIndexCache
+    * in order to avoid looking them up every time we fetch columns of
+    * each row of a result
+    * @param colName
+    * @return index of the column
+    */
+  const int PostgresRset::getColumnIndex(const std::string& colName);
+
   /**
    * Returns true if the specified column contains a null value.
    *
@@ -148,6 +157,10 @@ private:
    */
   void doClearAsync();
 
+  /**
+   * column index cache
+   */
+  std::unordered_map<std::string, uint64_t> m_columnIndexCache;
   /**
    * The SQL connection.
    */
