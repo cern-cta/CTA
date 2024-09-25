@@ -59,6 +59,7 @@
 - cta/CTA#859 - Fix CI only running on file object store and postgres catalogue
 - cta/CTA#864 - Re-enable Oracle unit tests
 - cta/CTA#852 - Auto cancel pipeline on job failures
+- cta/CTA#874 - Remove outdated eos regression test
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files

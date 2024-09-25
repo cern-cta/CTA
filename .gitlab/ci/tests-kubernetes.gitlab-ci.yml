@@ -120,21 +120,3 @@ unit-test-oracle:
     # pod's yaml file is `pod-oracleunittests.yaml`
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
-
-# Regression tests
-
-k8s-test-regression-eos:
-  stage: test
-  extends:
-    - .kubernetes-test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-      allow_failure: true
-  variables:
-    TEST_SCRIPT: "tests/upgrade-eos.sh"
-    EXTENDED_OPTIONS: "-O -D -S"
-  tags:
-    - kubernetes
-    - mhvtl
-    - xlarge
