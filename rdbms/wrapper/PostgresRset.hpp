@@ -49,14 +49,10 @@ public:
    */
   ~PostgresRset() override;
 
-   /**
-    * Getting index of a column by using the columnIndexCache
-    * in order to avoid looking them up every time we fetch columns of
-    * each row of a result
-    * @param colName
-    * @return index of the column
-    */
-  int getColumnIndex(const std::string& colName) const;
+  /**
+   * Fetching all columns in a cache as std::optional<std::string>
+   */
+  void fetchAllColumnsToCache() const override;
 
   /**
    * Returns true if the specified column contains a null value.
@@ -152,15 +148,66 @@ public:
 private:
 
   /**
+   * Getting index of a column by using the columnIndexCache
+   * in order to avoid looking them up every time we fetch columns of
+   * each row of a result
+   * @param colName
+   * @return index of the column
+   */
+  int getColumnIndex(const std::string& colName) const;
+
+  /**
+   * Gets a value from m_columnKeyStringValueCache if it exists
+   * @param key
+   * @return
+   */
+  std::optional<std::string> getColumnValueFromCache(const std::string& key) const;
+
+  /**
+   * Template method that converts a tring to a required numeric type
+   * using our numeric converters from utils, example of a call could be
+   * getNumberFromString(colName, colValAsString, utils::toUint8, utils::isValidUInt);
+   * and returns the required NumericType, here e.g. uint8_t
+   *
+   * @tparam NumericType
+   * @param colName
+   * @param stringValue
+   * @param toNumberFunc
+   * @param isValidNumber
+   * @return
+   */
+  template<typename NumericType>
+  NumericType PostgresRset::getNumberFromString(const std::string& colName,
+                                                const std::string& stringValue,
+                                                NumericType(*toNumberFunc)(const std::string&),
+                                                bool(*isValidNumber)(const std::string&)) const {
+
+    if(!isValidNumber(stringValue)) {
+      throw exception::Exception(std::string("Column ") + colName +
+                                 std::string(" contains the value ") +
+                                 stringValue +
+                                 std::string(" which is not a valid since it does not match required numeric type"));
+    }
+    return toNumberFunc(stringValue);
+  }
+
+  /**
    * Clears the async command in process indicator on our conneciton,
    * if we haven't done so already.
    */
   void doClearAsync();
-
   /**
    * column index cache
    */
-  mutable std::unordered_map<std::string, uint64_t> m_columnIndexCache;
+  mutable std::unordered_map<std::string, uint64_t> m_columnPQindexCache;
+  /**
+   * column index cache
+   */
+  mutable std::unordered_map<std::string, std::optional<std::string>> m_columnKeyStringValueCache;
+  /**
+   * flag if all columns were fetched already
+   */
+  bool m_allColumnsFetched = false;
   /**
    * The SQL connection.
    */

@@ -100,7 +100,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     while (true) {
       bool hasNext = resultSet.next(); // Call to next
       if (!hasNext) break; // Exit if no more rows
-
+      resultSet.fetchAllColumnsToCache();
       //cta::utils::Timer nextTransformationTimer;
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       //cta::log::ScopedParamContainer logParams03(logContext);
@@ -119,7 +119,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     logContext.log(cta::log::DEBUG, "Sorting for execution fetched rows from ArchiveMount::getNextJobBatch()");
     selconn.commit();
   }
-  // Convert vector to list (which is expected as retunr type)
+  // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
 
   cta::log::ScopedParamContainer logParams(logContext);
