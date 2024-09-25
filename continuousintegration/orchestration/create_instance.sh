@@ -149,6 +149,11 @@ if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" ]; then
     usage
 fi
 
+if ! command -v helm >/dev/null 2>&1; then
+    echo "ERROR: Helm does not seem to be installed. You can install Helm using the script: continuousintegration/ci_helpers/install_helm.sh"
+    exit 1
+fi
+
 # everyone needs poddir temporary directory to generate pod yamls
 poddir=$(mktemp -d)
 

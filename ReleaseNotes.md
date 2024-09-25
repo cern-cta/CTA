@@ -31,6 +31,7 @@
 - cta/CTA#823 - Fix returnByReference errors from cpp-check
 - cta/CTA#763 - Removed the installOracle21.sh script
 - cta/CTA#875 - Removed duplication of the versionlock file in the Helm setup
+- cta/CTA#870 - Add check to see if Helm is installed in create_instance script
 
 ### Continuous Integration
 - cta/CTA#699 - Fix external tape format CI tests
