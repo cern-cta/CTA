@@ -52,7 +52,7 @@ public:
   /**
    * Fetching all columns in a cache as std::optional<std::string>
    */
-  void fetchAllColumnsToCache() const override;
+  void fetchAllColumnsToCache() override;
 
   /**
    * Returns true if the specified column contains a null value.

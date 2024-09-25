@@ -89,7 +89,7 @@ public:
    * Fetching all columns in a cache as std::optional<std::string>
    * currently available only for PostgreSQL implementation
    */
-  void fetchAllColumnsToCache() const;
+  void fetchAllColumnsToCache();
 
   /**
    * Returns the SQL statement.

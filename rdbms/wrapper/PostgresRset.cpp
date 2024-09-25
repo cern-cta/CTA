@@ -78,7 +78,7 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 // Method to batch-fetch all column values
 // to avoid looking up the DB result using postgres lib in each column* call
 //------------------------------------------------------------------------------
-void PostgresRset::fetchAllColumnsToCache() const {
+void PostgresRset::fetchAllColumnsToCache() {
   if (m_allColumnsFetched) return;
 
   int numColumns = PQnfields(m_resItr->get());
