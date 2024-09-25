@@ -90,6 +90,7 @@ void PostgresRset::fetchAllColumnsToCache() {
       } else {
         m_columnKeyStringValueCache[colName] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
       }
+      std::cout << "WARNING COLUMN: " << colName << " fetched value: " << m_columnKeyStringValueCache[colName].value_or("") << std::endl;
     }
     m_allColumnsFetched = true;
   } catch(exception::Exception &ex) {
@@ -271,10 +272,8 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &colName) const {
 
   if (m_allColumnsFetched) {
-    std::cout << "Fetching column: " << colName << std::endl;
     auto cval = getColumnValueFromCache(colName);
     if (cval == std::nullopt) {
-      std::cout << "ERROR No column: " << colName << std::endl;
       return std::nullopt;
     }
     std::cout << "GETTING A NUMBER FOR column: " << colName << std::endl;
