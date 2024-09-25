@@ -19,10 +19,10 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
-#include "frontend/common/WorkflowEvent.hpp"
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "frontend/common/FrontendService.hpp"
+#include "frontend/common/WorkflowEvent.hpp"
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
@@ -31,8 +31,6 @@ Status
 CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc = m_frontendService->getLogContext();
   cta::log::ScopedParamContainer sp(lc);
-
-  lc.log(cta::log::INFO, "Create");
 
   try {
     cta::eos::Client client = request->notification().cli();
@@ -183,7 +181,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
                                                                  client.sec().host(), client.sec().prot());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
-    lc.log(cta::log::INFO, "archive file deleted.");
   }
   catch (cta::exception::Exception& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
@@ -319,8 +316,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
     lc.log(cta::log::CRIT, ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
   }
-  return Status::OK;
-
   return Status::OK;
 }
 
