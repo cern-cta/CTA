@@ -51,6 +51,12 @@ public:
   virtual bool next() = 0;
 
   /**
+   * Fetching all columns in a cache as std::optional<std::string>
+   * currently available only for PostgreSQL implementation
+   */
+  virtual void fetchAllColumnsToCache() const = 0; // Add this to the interface
+
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
