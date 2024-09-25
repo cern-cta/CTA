@@ -161,7 +161,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
   retVector.reserve(dbJobBatch.size());
   // We prepare the response
   for (auto& sdaj: dbJobBatch) {
-    retVector.emplace_back(std::make_unique<ArchiveJob>(
+    retVector.emplace_back(std::make_unique<cta::ArchiveJob>(
             this,
             m_catalogue,
             sdaj->archiveFile,
@@ -178,7 +178,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
           .log(log::INFO,
                "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
   // Convert vector to list (which is expected as return type, to be revised in the future)
-  std::list<std::unique_ptr<ArchiveJob>> ret;
+  std::list<std::unique_ptr<cta::ArchiveJob>> ret;
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   return ret;
 }
