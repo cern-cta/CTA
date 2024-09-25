@@ -80,8 +80,6 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 //------------------------------------------------------------------------------
 void PostgresRset::fetchAllColumnsToCache() {
   if (m_allColumnsFetched) return;
-  m_columnKeyStringValueCache.clear();
-  m_columnPQindexCache.clear();
   int numColumns = PQnfields(m_resItr->get());
   for (int i = 0; i < numColumns; ++i) {
     const char* colName = PQfname(m_resItr->get(), i);
@@ -347,6 +345,11 @@ bool PostgresRset::next() {
   // always locks in order statement and then connection
   threading::RWLockWrLocker locker2(m_stmt.m_lock);
   threading::RWLockWrLocker locker(m_conn.m_lock);
+  if(m_allColumnsFetched){
+    m_allColumnsFetched = false;
+    m_columnKeyStringValueCache.clear();
+    m_columnPQindexCache.clear();
+  }
 
   if (m_resItr->next()) {
 
