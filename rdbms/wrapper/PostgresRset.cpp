@@ -79,19 +79,24 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 // to avoid looking up the DB result using postgres lib in each column* call
 //------------------------------------------------------------------------------
 void PostgresRset::fetchAllColumnsToCache() {
-  if (m_allColumnsFetched) return;
-  int numColumns = PQnfields(m_resItr->get());
-  for (int i = 0; i < numColumns; ++i) {
-    const char* colName = PQfname(m_resItr->get(), i);
-    m_columnPQindexCache[colName] = i;
-    if (PQgetisnull(m_resItr->get(), 0, i)) {
-      m_columnKeyStringValueCache[colName] = std::nullopt;
-    } else {
-      m_columnKeyStringValueCache[colName] = std::move(std::string(std::move(PQgetvalue(m_resItr->get(), 0, i))));
+  try {
+    if (m_allColumnsFetched) return;
+    int numColumns = PQnfields(m_resItr->get());
+    for (int i = 0; i < numColumns; ++i) {
+      const char* colName = PQfname(m_resItr->get(), i);
+      m_columnPQindexCache[colName] = i;
+      if (PQgetisnull(m_resItr->get(), 0, i)) {
+        m_columnKeyStringValueCache[colName] = std::nullopt;
+      } else {
+        m_columnKeyStringValueCache[colName] = std::move(std::string(std::move(PQgetvalue(m_resItr->get(), 0, i)));
+      }
     }
+    m_allColumnsFetched = true;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
-  m_allColumnsFetched = true;
-}
+};
 
 //------------------------------------------------------------------------------
 // Private method to retrieve a value from cache
@@ -266,10 +271,13 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &colName) const {
 
   if (m_allColumnsFetched) {
+    std::cout << "Fetching column: " << colName << std::endl;
     auto cval = getColumnValueFromCache(colName);
     if (cval == std::nullopt) {
+      std::cout << "ERROR No column: " << colName << std::endl;
       return std::nullopt;
     }
+    std::cout << "GETTING A NUMBER FOR column: " << colName << std::endl;
     return getNumberFromString(colName,
                                *cval,
                                utils::toUint64,
