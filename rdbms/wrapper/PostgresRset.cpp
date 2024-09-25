@@ -85,11 +85,11 @@ void PostgresRset::fetchAllColumnsToCache() {
     int numColumns = PQnfields(m_resItr->get());
     for (int i = 0; i < numColumns; ++i) {
       const char* colName = PQfname(m_resItr->get(), i);
-      m_columnPQindexCache[toUpper(colName)] = i;
+      m_columnPQindexCache[cta::utils::toUpper(colName)] = i;
       if (PQgetisnull(m_resItr->get(), 0, i)) {
-        m_columnKeyStringValueCache[toUpper(colName)] = std::nullopt;
+        m_columnKeyStringValueCache[cta::utils::toUpper(colName)] = std::nullopt;
       } else {
-        m_columnKeyStringValueCache[toUpper(colName)] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
+        m_columnKeyStringValueCache[cta::utils::toUpper(colName)] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
       }
     }
     m_allColumnsFetched = true;
