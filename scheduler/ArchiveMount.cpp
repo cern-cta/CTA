@@ -157,11 +157,11 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
   utils::Timer t;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
                                                                                                        bytesRequested, logContext));
-  std::vector<std::unique_ptr<cta::ArchiveJob>> retVector;
+  std::vector<std::unique_ptr<ArchiveJob>> retVector;
   retVector.reserve(dbJobBatch.size());
   // We prepare the response
   for (auto& sdaj: dbJobBatch) {
-    retVector.emplace_back(std::make_unique<cta::ArchiveJob>(
+    retVector.emplace_back(std::unique_ptr<ArchiveJob>(new ArchiveJob(
             this,
             m_catalogue,
             sdaj->archiveFile,

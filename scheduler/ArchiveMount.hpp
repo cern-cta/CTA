@@ -37,7 +37,7 @@ class Catalogue;
 class TapeItemWritten;
 class TapeItemWrittenPointer;
 }
-class ArchiveJob;
+
 /**
   * The class driving an archive mount.
   * The class only has private constructors as it is instantiated by
@@ -140,7 +140,7 @@ public:
     * when no more jobs can be found. Will return jobs (if available) until one
     * of the 2 criteria is fulfilled.
     */
-  std::list<std::unique_ptr<cta::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
+  std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext &logContext);
 
   /**
