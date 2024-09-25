@@ -177,10 +177,10 @@ private:
    * @return
    */
   template<typename NumericType>
-  NumericType PostgresRset::getNumberFromString(const std::string& colName,
-                                                const std::string& stringValue,
-                                                NumericType(*toNumberFunc)(const std::string&),
-                                                bool(*isValidNumber)(const std::string&)) const {
+  NumericType getNumberFromString(const std::string& colName,
+                                  const std::string& stringValue,
+                                  NumericType(*toNumberFunc)(const std::string&),
+                                  bool(*isValidNumber)(const std::string&)) const {
 
     if(!isValidNumber(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName +

@@ -91,7 +91,7 @@ void PostgresRset::fetchAllColumnsToCache() const {
       m_columnKeyStringValueCache[colName] = std::move(std::string(std::move(PQgetvalue(m_resItr->get(), 0, i))));
     }
   }
-  m_columnsFetched = true;
+  m_allColumnsFetched = true;
 }
 
 //------------------------------------------------------------------------------
@@ -164,8 +164,8 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
 
   if (m_allColumnsFetched) {
     auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullptr) {
-      return std::nullptr;
+    if (cval == std::nullopt) {
+      return std::nullopt;
     }
     return getNumberFromString(colName,
                                *cval,
@@ -198,8 +198,8 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
   if (m_allColumnsFetched) {
     auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullptr) {
-      return std::nullptr;
+    if (cval == std::nullopt) {
+      return std::nullopt;
     }
     return getNumberFromString(colName,
                                *cval,
@@ -233,8 +233,8 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 
   if (m_allColumnsFetched) {
     auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullptr) {
-      return std::nullptr;
+    if (cval == std::nullopt) {
+      return std::nullopt;
     }
     return getNumberFromString(colName,
                                *cval,
@@ -268,8 +268,8 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &co
 
   if (m_allColumnsFetched) {
     auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullptr) {
-      return std::nullptr;
+    if (cval == std::nullopt) {
+      return std::nullopt;
     }
     return getNumberFromString(colName,
                                *cval,
@@ -303,8 +303,8 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string &colN
 
   if (m_allColumnsFetched) {
     auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullptr) {
-      return std::nullptr;
+    if (cval == std::nullopt) {
+      return std::nullopt;
     }
     return getNumberFromString(colName,
                                *cval,
