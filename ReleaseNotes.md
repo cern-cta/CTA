@@ -65,6 +65,7 @@
 - cta/CTA#852 - Auto cancel pipeline on job failures
 - cta/CTA#874 - Remove outdated eos regression test
 - cta/CTA#879 - Fix CI for development setup and no oracle pipeline
+- cta/CTA#872 - Fix pipeline docker build for tagged builds
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
