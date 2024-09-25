@@ -65,6 +65,14 @@ public:
   bool next() override;
 
   /**
+   * fetchAllColumnsToCache now exists only for PostgresRset,
+   * custom SQLite logic can be added later
+   */
+  void fetchAllColumnsToCache() {
+    // now only for PostgresRset, custom SQLite logic can be added later
+  };
+
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
