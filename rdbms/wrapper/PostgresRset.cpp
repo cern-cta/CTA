@@ -109,7 +109,7 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string 
     return std::nullopt;
   }
 
-  return std::optional<std::string>(PQgetvalue(m_resItr->get(), 0, ifield));
+  return std::optional<std::string>(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------

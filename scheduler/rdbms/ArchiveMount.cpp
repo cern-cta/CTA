@@ -101,14 +101,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       bool hasNext = resultSet.next(); // Call to next
       if (!hasNext) break; // Exit if no more rows
 
-      uint64_t sizeInBytes = resultSet.columnUint64("SIZE_IN_BYTES");
-      totalBytes += sizeInBytes;
       cta::utils::Timer nextTransformationTimer;
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       cta::log::ScopedParamContainer logParams03(logContext);
       logParams03.add("nextTransformationTimer", nextTransformationTimer.secs());
       logContext.log(cta::log::DEBUG, "Next Timer Measurement in ArchiveMount::getNextJobBatch()");
       retVector.emplace_back(std::move(job));
+      uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
+      totalBytes += sizeInBytes;
       auto& tapeFile = retVector.back()->tapeFile;
       tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       tapeFile.blockId = maxBlockId;

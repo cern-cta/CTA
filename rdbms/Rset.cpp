@@ -96,7 +96,7 @@ std::string Rset::columnString(const std::string &colName) const {
 
     const std::optional<std::string> col = columnOptionalString(colName);
     if(col) {
-      return col.value();
+      return std::move(col.value());
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -319,7 +319,7 @@ std::optional<std::string> Rset::columnOptionalString(const std::string &colName
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
-    return m_impl->columnOptionalString(colName);
+    return std::move(m_impl->columnOptionalString(colName));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
