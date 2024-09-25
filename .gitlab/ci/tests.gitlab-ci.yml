@@ -140,7 +140,7 @@ test-cta-release:
     - yum install --nogpgcheck -y eos-server
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
-    - cta-versionlock check-installed --json > checkpkg-output.json
+    - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:
     when: always
     paths:
