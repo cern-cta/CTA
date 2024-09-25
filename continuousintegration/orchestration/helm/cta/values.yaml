@@ -10,3 +10,5 @@ global:
   - mountPath: /etc/dnf/plugins/versionlock.list
     name: versionlock-list
     subPath: versionlock.list
+
+versionlockFile: ""

@@ -7,36 +7,4 @@ metadata:
   namespace: {{.Release.Namespace}}
 data:
   versionlock.list: |
-    eos-archive-5.2.24-1.el9.x86_64
-    eos-cleanup-5.2.24-1.el9.x86_64
-    eos-client-5.2.24-1.el9.x86_64
-    eos-fuse-5.2.24-1.el9.x86_64
-    eos-fuse-core-5.2.24-1.el9.x86_64
-    eos-fuse-sysv-5.2.24-1.el9.x86_64
-    eos-fusex-5.2.24-1.el9.x86_64
-    eos-fusex-core-5.2.24-1.el9.x86_64
-    eos-fusex-selinux-5.2.24-1.el9.x86_64
-    eos-ns-inspect-5.2.24-1.el9.x86_64
-    eos-server-5.2.24-1.el9.x86_64
-    eos-srm-5.2.24-1.el9.x86_64
-    eos-test-5.2.24-1.el9.x86_64
-    eos-testkeytab-5.2.24-1.el9.x86_64
-    eos-quarkdb-5.2.24-1.el9.x86_64
-    eos-folly-2019.11.11.00-1.el9.*
-    eos-folly-deps-2019.11.11.00-1.el9.*
-    python3-xrootd-1:5.6.1-1.el9.*
-    xrootd-1:5.6.1-1.el9.*
-    xrootd-client-1:5.6.1-1.el9.*
-    xrootd-client-devel-1:5.6.1-1.el9.*
-    xrootd-client-libs-1:5.6.1-1.el9.*
-    xrootd-debuginfo-1:5.6.1-1.el9.*
-    xrootd-devel-1:5.6.1-1.el9.*
-    xrootd-doc-1:5.6.1-1.el9.*
-    xrootd-fuse-1:5.6.1-1.el9.*
-    xrootd-libs-1:5.6.1-1.el9.*
-    xrootd-private-devel-1:5.6.1-1.el9.*
-    xrootd-selinux-1:5.6.1-1.el9.*
-    xrootd-server-1:5.6.1-1.el9.*
-    xrootd-server-devel-1:5.6.1-1.el9.*
-    xrootd-server-libs-1:5.6.1-1.el9.*
-    xrootd-tests-1:5.6.1-1.el9.*
+    {{-  required "A valid .Values.versionlockFile needs to be provided" .Values.versionlockFile | nindent 4 }}
