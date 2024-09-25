@@ -191,7 +191,7 @@ def check_installed(options: dict) -> dict[str, list[str]]:
         mi = installed_packages.dbMatch("name", package)
         epoch, version, release, _ = required_version
         if len(mi) == 0:
-            result["error"].append(f"Package {get_package_str(package, required_version)} is not installed")
+            result["warning"].append(f"Package {get_package_str(package, required_version)} is in versionlock file, but not installed")
         for item in mi:
             installed_epoch = "0" if item["epoch"] is None else str(item["epoch"])
             if (epoch, version, release) == (installed_epoch, item["version"], item["release"]):
