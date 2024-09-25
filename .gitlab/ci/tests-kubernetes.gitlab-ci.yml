@@ -108,7 +108,7 @@ k8s-test-external-tape-formats:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-unit-test-oracle:
+k8s-unit-test-oracle:
   stage: test
   extends:
     - .kubernetes-test
