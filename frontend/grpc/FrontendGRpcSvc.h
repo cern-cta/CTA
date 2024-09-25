@@ -15,6 +15,7 @@
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
 using cta::xrd::CtaRpc;
+using cta::log::LogContext;
 
 using grpc::ResourceQuota;
 using grpc::Server;
@@ -26,11 +27,13 @@ class CtaRpcImpl : public CtaRpc::Service {
 
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
+  cta::log::LogContext m_lc;
 
 public:
   CtaRpcImpl(const std::string& config);
 
   cta::frontend::FrontendService& getFrontendService() const { return *m_frontendService; }
+  cta::log::LogContext getLogContext() const { return m_lc; }
 
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
