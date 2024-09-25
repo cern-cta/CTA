@@ -309,8 +309,7 @@ echo "Creating cta instance in ${instance} namespace"
 helm dependency build ${poddir}/cta
 helm dependency update ${poddir}/cta
 helm install cta ${poddir}/cta -n ${instance} \
-                               --set global.image=${IMAGE} \
-                               --set-file versionlockFile=../docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+                               --set global.image=${IMAGE}
 
 
 kubectl --namespace=${instance} get pods

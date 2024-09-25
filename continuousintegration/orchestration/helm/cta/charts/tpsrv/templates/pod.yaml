@@ -54,7 +54,7 @@ spec:
     {{- if (.volumeMounts)}}
     volumeMounts:
     {{- .volumeMounts | toYaml | nindent 4}}
-    {{- if ($.Values.global) }}
+    {{- if ($.Values.global.volumes) }}
       {{- $.Values.global.volumeMounts | toYaml | nindent 4}}
     {{- end}}
     {{- end}}
@@ -62,7 +62,7 @@ spec:
   {{- if ($value.volumes)}}
   volumes:
     {{- $value.volumes | toYaml | nindent 2}}
-    {{- if ($.Values.global) }}
+    {{- if ($.Values.global.volumes) }}
       {{- $.Values.global.volumes | toYaml | nindent 2}}
     {{- end}}
   {{- end}}

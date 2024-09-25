@@ -351,14 +351,6 @@ Here will be focused the recommended way to do it. If you would like for example
 global:
   imagePullSecret: "ctaregsecret"
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
-  volumes:
-  - name: versionlock-list
-    configMap:
-      name: versionlock-conf
-  volumeMounts:
-  - mountPath: /etc/dnf/plugins/versionlock.list
-    name: versionlock-list
-    subPath: versionlock.list
 
 # Here begins section for subchart
 ctafrontend:
