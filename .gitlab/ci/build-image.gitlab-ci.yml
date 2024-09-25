@@ -13,8 +13,6 @@ docker-build-ctageneric:
       when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
-    - if: $CI_COMMIT_TAG
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - when: on_success
