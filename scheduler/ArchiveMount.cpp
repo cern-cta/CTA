@@ -167,7 +167,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
             sdaj->archiveFile,
             sdaj->srcURL,
             sdaj->tapeFile
-    ));
+    )));
     retVector.back()->m_dbJob.reset(sdaj.release());
   }
   log::ScopedParamContainer(logContext)
