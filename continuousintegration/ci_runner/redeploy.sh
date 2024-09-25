@@ -41,8 +41,8 @@ redeploy() {
   local image_tag="dev"
   local operating_system="alma9"
   local rpm_src=""
-  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_credentials="helm/cta/values-dev-pgsql-pod-creds.yaml"
+  local scheduler_credentials="helm/cta/values-dev-sched-vfs-creds.yaml"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -89,14 +89,22 @@ redeploy() {
         fi
         ;;
       --catalogue-credentials)
-        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist.";  exit 1; }
-        catalogue_credentials=$2
-        shift
+        if [[ $# -gt 1 ]]; then
+          catalogue_credentials="$2"
+          shift
+        else
+          echo "Error: --catalogue-credentials requires an argument"
+          exit 1
+        fi
         ;;
       --scheduler-credentials)
-        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
-        scheduler_credentials=$2
-        shift
+        if [[ $# -gt 1 ]]; then
+          scheduler_credentials="$2"
+          shift
+        else
+          echo "Error: --scheduler-credentials requires an argument"
+          exit 1
+        fi
         ;;
       *)
         usage
