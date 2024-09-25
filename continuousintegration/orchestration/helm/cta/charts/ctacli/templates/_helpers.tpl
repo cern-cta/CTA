@@ -54,7 +54,7 @@ it will load additionally all of the global configs as well
 {{- define "ctacli.volumes" -}}
 {{ if or (.Values.global) (.Values.volumes) }}
 volumes:
-    {{- if (.Values.global)}}
+    {{- if (.Values.global.volumes)}}
     {{- .Values.global.volumes | toYaml | nindent 2}}
     {{- end }}
     {{- if (.Values.volumes)}}
@@ -66,7 +66,7 @@ volumes:
 {{- define "ctacli.volumeMounts" -}}
 {{ if or (.Values.global) (.Values.volumeMounts) }}
 volumeMounts:
-  {{- if .Values.global}}
+  {{- if .Values.global.volumeMounts}}
     {{- .Values.global.volumeMounts | toYaml | nindent 1 }}
   {{- end }}
   {{- if (.Values.volumeMounts)}}

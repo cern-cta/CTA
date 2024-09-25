@@ -308,7 +308,8 @@ echo ""
 echo "Creating cta instance in ${instance} namespace"
 helm dependency build ${poddir}/cta
 helm dependency update ${poddir}/cta
-helm install cta ${poddir}/cta -n ${instance}  --set global.image=${IMAGE}
+helm install cta ${poddir}/cta -n ${instance} \
+                               --set global.image=${IMAGE}
 
 
 kubectl --namespace=${instance} get pods
