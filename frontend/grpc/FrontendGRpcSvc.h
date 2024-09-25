@@ -34,6 +34,7 @@ public:
 
   cta::frontend::FrontendService& getFrontendService() const { return *m_frontendService; }
   cta::log::LogContext getLogContext() const { return m_lc; }
+  Status createAndProcessWorkflowEvent(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
