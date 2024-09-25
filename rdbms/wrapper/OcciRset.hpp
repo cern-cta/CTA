@@ -73,7 +73,7 @@ public:
    * fetchAllColumnsToCache now exists only for PostgresRset,
    * custom SQLite logic can be added later
    */
-  void fetchAllColumnsToCache() {
+  void fetchAllColumnsToCache() override {
     // now only for PostgresRset, custom SQLite logic can be added later
   }
 
