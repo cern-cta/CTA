@@ -621,7 +621,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/yum.repos.d/*
 %attr(0644,root,root) %{_sysconfdir}/pki/rpm-gpg/*
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
-%attr(0755,root,root) %{_bindir}/cta-checkpkg
+%attr(0755,root,root) %{_bindir}/cta-versionlock
 
 %changelog
 
@@ -975,4 +975,3 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 * Mon Dec 09 2019 Cedric CAFFY <cedric.caffy@cern.ch> - 1.0-1
 - Release 1.0-1
-

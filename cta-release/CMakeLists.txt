@@ -98,5 +98,5 @@ install (FILES ${KEY_FILES}
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/pki/rpm-gpg)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
-install (FILES ${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/opt/run/bin/cta-checkpkg
+install (FILES ${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock
   DESTINATION usr/${CMAKE_INSTALL_BINDIR})

@@ -109,13 +109,11 @@ test-cta-release:
   stage: test
   needs: *rpm_needs
   rules:
-    # Commenting until https://gitlab.cern.ch/cta/CTA/-/issues/771 is fixed, to avoid blocking the CI
-    # - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    #   when: never
-    # - if: $CI_COMMIT_TAG
-    #   when: never
-    # - when: on_success
-    - when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
   image: $EL9_IMAGE
   variables:
     CTAREPODIR: /tmp/repo
@@ -134,6 +132,7 @@ test-cta-release:
     - createrepo ${CTAREPODIR}
     - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum install --nogpgcheck -y cta-release
+    - cta-versionlock apply
     - yum install --nogpgcheck -y cta-frontend
     - yum install --nogpgcheck -y cta-taped
     - yum install --nogpgcheck -y cta-rmcd
@@ -141,7 +140,7 @@ test-cta-release:
     - yum install --nogpgcheck -y eos-server
     - yum install --nogpgcheck -y eos-client
     # Check that everything was installed properly
-    - cta-checkpkg --json > checkpkg-output.json
+    - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:
     when: always
     paths:
