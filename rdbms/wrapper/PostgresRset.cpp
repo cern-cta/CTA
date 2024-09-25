@@ -80,7 +80,8 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 //------------------------------------------------------------------------------
 void PostgresRset::fetchAllColumnsToCache() {
   if (m_allColumnsFetched) return;
-
+  m_columnKeyStringValueCache.clear();
+  m_columnPQindexCache.clear();
   int numColumns = PQnfields(m_resItr->get());
   for (int i = 0; i < numColumns; ++i) {
     const char* colName = PQfname(m_resItr->get(), i);
