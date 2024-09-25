@@ -70,7 +70,7 @@ public:
    */
   void fetchAllColumnsToCache() {
     // now only for PostgresRset, custom SQLite logic can be added later
-  };
+  }
 
   /**
    * Returns true if the specified column contains a null value.
