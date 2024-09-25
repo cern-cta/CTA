@@ -207,7 +207,7 @@ private:
   /**
    * flag if all columns were fetched already
    */
-  bool m_allColumnsFetched = false;
+  mutable bool m_allColumnsFetched = false;
   /**
    * The SQL connection.
    */
