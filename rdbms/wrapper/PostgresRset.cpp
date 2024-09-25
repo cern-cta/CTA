@@ -21,6 +21,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "common/threading/RWLockWrLocker.hpp"
+#include <cctype>
 
 #include <utility>
 
@@ -84,13 +85,12 @@ void PostgresRset::fetchAllColumnsToCache() {
     int numColumns = PQnfields(m_resItr->get());
     for (int i = 0; i < numColumns; ++i) {
       const char* colName = PQfname(m_resItr->get(), i);
-      m_columnPQindexCache[colName] = i;
+      m_columnPQindexCache[toUpperCase(colName)] = i;
       if (PQgetisnull(m_resItr->get(), 0, i)) {
-        m_columnKeyStringValueCache[colName] = std::nullopt;
+        m_columnKeyStringValueCache[toUpperCase(colName)] = std::nullopt;
       } else {
-        m_columnKeyStringValueCache[colName] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
+        m_columnKeyStringValueCache[toUpperCase(colName)] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
       }
-      std::cout << "WARNING COLUMN: " << colName << " fetched value: " << m_columnKeyStringValueCache[colName].value_or("") << std::endl;
     }
     m_allColumnsFetched = true;
   } catch(exception::Exception &ex) {
@@ -276,7 +276,6 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &co
     if (cval == std::nullopt) {
       return std::nullopt;
     }
-    std::cout << "GETTING A NUMBER FOR column: " << colName << std::endl;
     return getNumberFromString(colName,
                                *cval,
                                utils::toUint64,
