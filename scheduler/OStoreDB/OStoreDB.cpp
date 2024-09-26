@@ -987,9 +987,9 @@ std::string OStoreDB::queueArchive(const std::string& instanceName, const cta::c
     // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
     std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
     log::LogContext logContext(m_logger);
-    utils::Timer timer;
+    utils::Timer localtimer;
     ScopedExclusiveLock arl(*aReq);
-    double arRelockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double arRelockTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
     double arTotalQueueingTime = 0;
     double arTotalCommitTime = 0;
     double arTotalQueueUnlockTime = 0;
@@ -1004,14 +1004,14 @@ std::string OStoreDB::queueArchive(const std::string& instanceName, const cta::c
         // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
         // stale and the job would be dereferenced from the queue.
         auto shareLock = ostoredb::MemArchiveQueue::sharedAddToQueue(j, j.tapePool, *aReq, *this, logContext);
-        double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        double qTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
         arTotalQueueingTime += qTime;
         aReq->commit();
-        double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        double cTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
         arTotalCommitTime += cTime;
         // Now we can let go off the queue.
         shareLock.reset();
-        double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        double qUnlockTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
         arTotalQueueUnlockTime += qUnlockTime;
         linkedTapePools.push_back(j.owner);
         log::ScopedParamContainer(logContext)
@@ -1044,12 +1044,12 @@ std::string OStoreDB::queueArchive(const std::string& instanceName, const cta::c
     }
     // The request is now fully set.
     auto archiveFile = aReq->getArchiveFile();
-    double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double arOwnerResetTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
     arl.release();
-    double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double arLockRelease = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
     // And remove reference from the agent
     m_agentReference->removeFromOwnership(aReq->getAddressIfSet(), m_objectStore);
-    double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double agOwnershipResetTime = localtimer.secs(cta::utils::Timer::reset_t::resetCounter);
     log::ScopedParamContainer(logContext)
       .add("jobObject", aReq->getAddressIfSet())
       .add("fileId", archiveFile.archiveFileID)
