@@ -159,7 +159,7 @@ fi
 
 # ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
 if [ $ORACLE_SUPPORT == "OFF" ] ; then
-  database_configmap="pgsql-pod-creds.yaml.example"
+  database_configmap="helm/cta/values-dev-pgsql-pod-creds.yaml"
   CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
   useoracle=0
 fi
