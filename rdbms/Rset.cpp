@@ -71,17 +71,6 @@ Rset &Rset::operator=(Rset &&rhs) {
 }
 
 //------------------------------------------------------------------------------
-//  Fetching all columns in a cache as std::optional<std::string>
-//  currently available only for PostgreSQL implementation
-//------------------------------------------------------------------------------
-void Rset::fetchAllColumnsToCache() {
-  if (!m_impl) {
-    throw InvalidResultSet("This result set is invalid");
-  }
-  m_impl->fetchAllColumnsToCache();
-}
-
-//------------------------------------------------------------------------------
 // columnString
 //------------------------------------------------------------------------------
 std::string Rset::columnBlob(const std::string &colName) const {

@@ -26,6 +26,10 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <sstream>
+#include <stdexcept>
+#include <type_traits>
+
 
 namespace cta::rdbms::wrapper {
 
@@ -48,11 +52,6 @@ public:
    * Destructor.
    */
   ~PostgresRset() override;
-
-  /**
-   * Fetching all columns in a cache as std::optional<std::string>
-   */
-  void fetchAllColumnsToCache() override;
 
   /**
    * Returns true if the specified column contains a null value.
@@ -164,31 +163,31 @@ private:
   std::optional<std::string> getColumnValueFromCache(const std::string& key) const;
 
   /**
-   * Template method that converts a tring to a required numeric type
-   * using our numeric converters from utils, example of a call could be
-   * getNumberFromString(colName, colValAsString, utils::toUint8, utils::isValidUInt);
-   * and returns the required NumericType, here e.g. uint8_t
-   *
+   * Template method that converts a string to a required numeric type
+   * not used at the moment - might be good replacement in the future
    * @tparam NumericType
    * @param colName
    * @param stringValue
-   * @param toNumberFunc
-   * @param isValidNumber
    * @return
    */
   template<typename NumericType>
-  NumericType getNumberFromString(const std::string& colName,
-                                  const std::string& stringValue,
-                                  NumericType(*toNumberFunc)(const std::string&),
-                                  bool(*isValidNumber)(const std::string&)) const {
+  NumericType getNumberFromString(const std::string& colName, const std::string& stringValue) const {
+    // At compile time ensure the type is numeric (e.g., int, double, uint64_t, etc.)
+    static_assert(std::is_arithmetic<NumericType>::value, "NumericType must be a numeric type.");
 
-    if(!isValidNumber(stringValue)) {
+    // Create a stringstream for converting the string to the target type
+    std::istringstream iss(stringValue);
+    NumericType result;
+    // Try to parse the string as the appropriate numeric type
+    iss >> result;
+    // If conversion failed or if there are extra characters, throw an error
+    if (iss.fail() || !iss.eof()) {
       throw exception::Exception(std::string("Column ") + colName +
                                  std::string(" contains the value ") +
                                  stringValue +
                                  std::string(" which is not a valid since it does not match required numeric type"));
     }
-    return toNumberFunc(stringValue);
+    return result;
   }
 
   /**
@@ -200,14 +199,6 @@ private:
    * column index cache
    */
   mutable std::unordered_map<std::string, uint64_t> m_columnPQindexCache;
-  /**
-   * column index cache
-   */
-  mutable std::unordered_map<std::string, std::optional<std::string>> m_columnKeyStringValueCache;
-  /**
-   * flag if all columns were fetched already
-   */
-  mutable bool m_allColumnsFetched = false;
   /**
    * The SQL connection.
    */

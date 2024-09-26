@@ -76,31 +76,6 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 }
 
 //------------------------------------------------------------------------------
-// Method to batch-fetch all column values
-// to avoid looking up the DB result using postgres lib in each column* call
-//------------------------------------------------------------------------------
-void PostgresRset::fetchAllColumnsToCache() {
-  try {
-    if (m_allColumnsFetched) return;
-    int numColumns = PQnfields(m_resItr->get());
-    for (int i = 0; i < numColumns; ++i) {
-      std::string colName = PQfname(m_resItr->get(), i);
-      cta::utils::toUpper(colName);
-      m_columnPQindexCache[colName] = i;
-      if (PQgetisnull(m_resItr->get(), 0, i)) {
-        m_columnKeyStringValueCache[colName] = std::nullopt;
-      } else {
-        m_columnKeyStringValueCache[colName] = std::move(std::string(PQgetvalue(m_resItr->get(), 0, i)));
-      }
-    }
-    m_allColumnsFetched = true;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-};
-
-//------------------------------------------------------------------------------
 // Private method to retrieve a value from cache
 //------------------------------------------------------------------------------
 std::optional<std::string> PostgresRset::getColumnValueFromCache(const std::string& key) const {
@@ -123,14 +98,8 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
 }
 
 std::string PostgresRset::columnBlob(const std::string &colName) const {
-  std::optional<std::string> blob;
-  if (m_allColumnsFetched) {
-    blob = getColumnValueFromCache(colName);
-  } else {
-    blob = columnOptionalString(colName);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
+  std::optional<std::string> blob = columnOptionalString(colName);
+
   if(blob) {
     size_t blob_len;
     unsigned char *blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
@@ -148,11 +117,6 @@ std::string PostgresRset::columnBlob(const std::string &colName) const {
 //------------------------------------------------------------------------------
 std::optional<std::string> PostgresRset::columnOptionalString(const std::string &colName) const {
 
-  if (m_allColumnsFetched) {
-    return getColumnValueFromCache(colName);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
   const int ifield = getColumnIndex(colName);
 
   // the value can be null
@@ -168,18 +132,6 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string 
 //------------------------------------------------------------------------------
 std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colName) const {
 
-  if (m_allColumnsFetched) {
-    auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullopt) {
-      return std::nullopt;
-    }
-    return getNumberFromString(colName,
-                               *cval,
-                               utils::toUint8,
-                               utils::isValidUInt);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
   const int ifield = getColumnIndex(colName);
 
     // the value can be null
@@ -201,19 +153,6 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
 // columnOptionalUint16
 //------------------------------------------------------------------------------
 std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &colName) const {
-
-  if (m_allColumnsFetched) {
-    auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullopt) {
-      return std::nullopt;
-    }
-    return getNumberFromString(colName,
-                               *cval,
-                               utils::toUint16,
-                               utils::isValidUInt);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
 
   const int ifield = getColumnIndex(colName);
 
@@ -237,19 +176,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 //------------------------------------------------------------------------------
 std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &colName) const {
 
-  if (m_allColumnsFetched) {
-    auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullopt) {
-      return std::nullopt;
-    }
-    return getNumberFromString(colName,
-                               *cval,
-                               utils::toUint32,
-                               utils::isValidUInt);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
-
   const int ifield = getColumnIndex(colName);
 
   // the value can be null
@@ -272,19 +198,6 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 //------------------------------------------------------------------------------
 std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &colName) const {
 
-  if (m_allColumnsFetched) {
-    auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullopt) {
-      return std::nullopt;
-    }
-    return getNumberFromString(colName,
-                               *cval,
-                               utils::toUint64,
-                               utils::isValidUInt);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
-
   const int ifield = getColumnIndex(colName);
 
   // the value can be null
@@ -306,19 +219,6 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &co
 // columnOptionalDouble
 //------------------------------------------------------------------------------
 std::optional<double> PostgresRset::columnOptionalDouble(const std::string &colName) const {
-
-  if (m_allColumnsFetched) {
-    auto cval = getColumnValueFromCache(colName);
-    if (cval == std::nullopt) {
-      return std::nullopt;
-    }
-    return getNumberFromString(colName,
-                               *cval,
-                               utils::toDouble,
-                               utils::isValidDecimal);
-  }
-  // if the columns were not all fetched in advance
-  // fall back to the PQ lib methods per call while caching the indices
 
   const int ifield = getColumnIndex(colName);
 
@@ -352,11 +252,7 @@ bool PostgresRset::next() {
   // always locks in order statement and then connection
   threading::RWLockWrLocker locker2(m_stmt.m_lock);
   threading::RWLockWrLocker locker(m_conn.m_lock);
-  if(m_allColumnsFetched){
-    m_allColumnsFetched = false;
-    m_columnKeyStringValueCache.clear();
-    m_columnPQindexCache.clear();
-  }
+  m_columnPQindexCache.clear();
 
   if (m_resItr->next()) {
 
