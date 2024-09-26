@@ -100,7 +100,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     while (true) {
       bool hasNext = resultSet.next(); // Call to next
       if (!hasNext) break; // Exit if no more rows
-      resultSet.fetchAllColumnsToCache();
+      //resultSet.fetchAllColumnsToCache();
       //cta::utils::Timer nextTransformationTimer;
       auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       //cta::log::ScopedParamContainer logParams03(logContext);
