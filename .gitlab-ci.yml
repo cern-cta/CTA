@@ -38,7 +38,7 @@ workflow:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       auto_cancel:
         on_job_failure: none
-    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
