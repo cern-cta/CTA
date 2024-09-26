@@ -76,23 +76,10 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 }
 
 //------------------------------------------------------------------------------
-// Private method to retrieve a value from cache
-//------------------------------------------------------------------------------
-std::optional<std::string> PostgresRset::getColumnValueFromCache(const std::string& key) const {
-  auto it = m_columnKeyStringValueCache.find(key);
-  if (it != m_columnKeyStringValueCache.end()) {
-    return it->second;
-  }
-  return std::nullopt;
-}
-
-//------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
 bool PostgresRset::columnIsNull(const std::string &colName) const {
-  if (m_allColumnsFetched){
-    return (getColumnValueFromCache(colName) == std::nullopt);
-  }
+  
   const int ifield = getColumnIndex(colName);
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }

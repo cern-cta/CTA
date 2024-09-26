@@ -156,13 +156,6 @@ private:
   int getColumnIndex(const std::string& colName) const;
 
   /**
-   * Gets a value from m_columnKeyStringValueCache if it exists
-   * @param key
-   * @return
-   */
-  std::optional<std::string> getColumnValueFromCache(const std::string& key) const;
-
-  /**
    * Template method that converts a string to a required numeric type
    * not used at the moment - might be good replacement in the future
    * @tparam NumericType
