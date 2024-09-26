@@ -86,7 +86,6 @@ int main(const int argc, char *const *const argv) {
     std::string port = "17017";
 
     char c;
-    // bool shortHeader = false;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
     bool useTLS = false;
@@ -98,12 +97,6 @@ int main(const int argc, char *const *const argv) {
             case 'p':
                 port = std::string(optarg);
                 break;
-            case 'n':
-              // shortHeader = false;
-              break;
-            case 's':
-              // shortHeader = true;
-              break;
             case 'h':
                 printHelpAndExit(0);
                 break;
