@@ -31,7 +31,7 @@
 namespace cta::frontend::grpc {
 
 Status
-CtaRpcImpl::createAndProcessWorkflowEvent(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   try {
     cta::eos::Client client = request->notification().cli();
     cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
@@ -49,7 +49,7 @@ CtaRpcImpl::createAndProcessWorkflowEvent(::grpc::ServerContext* context, const 
 
 Status
 CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  return createAndProcessWorkflowEvent(context, request, response);
+  return GenericRequest(context, request, response);
 }
 
 Status
@@ -111,7 +111,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   sp.add("storageClass", storageClass);
   sp.add("fileID", request->notification().file().disk_file_id());
 
- return createAndProcessWorkflowEvent(context, request, response);
+ return GenericRequest(context, request, response);
 }
 
 Status
@@ -167,7 +167,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   sp.add("fileID", request->notification().file().disk_file_id());
 
   // done with validation, now do the workflow processing
-  return createAndProcessWorkflowEvent(context, request, response);
+  return GenericRequest(context, request, response);
 }
 
 Status
@@ -229,7 +229,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  return createAndProcessWorkflowEvent(context, request, response);
+  return GenericRequest(context, request, response);
 }
 
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
@@ -272,7 +272,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("schedulerJobID", request->notification().file().archive_file_id());
 
   // field verification done, now try to call the process method
-  return createAndProcessWorkflowEvent(context, request, response);
+  return GenericRequest(context, request, response);
 }
 
 /* initialize the frontend service
