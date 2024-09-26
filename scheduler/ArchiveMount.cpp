@@ -174,6 +174,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
           .add("filesRequested", filesRequested)
           .add("filesFetched", dbJobBatch.size())
           .add("bytesRequested", bytesRequested)
+          .add("fetchedJobs", dbJobBatch)
           .add("getNextJobBatchTime", t.secs())
           .log(log::INFO,
                "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");

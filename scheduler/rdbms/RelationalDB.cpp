@@ -198,6 +198,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   logContext.log(log::DEBUG, "In RelationalDB::getNextArchiveJobsToReportBatch(): Before Next Result is fetched.");
   try {
     while(resultSet.next()) {
+      resultSet.fetchAllColumnsToCache();
       logContext.log(log::DEBUG,
                      "In RelationalDB::getNextArchiveJobsToReportBatch(): After Next resultSet_ForTransfer is fetched.");
       //schedulerdb::postgres::ArchiveJobQueueRow jobRow(resultSet);

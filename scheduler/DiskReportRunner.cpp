@@ -77,7 +77,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): retrieveJobsToReport is empty.");
     }
   }
-  log::ScopedParamContainer params(lc);  
+  log::ScopedParamContainer params(lc);
   auto passTime = t.secs();
   params.add("roundCount", roundCount)
         .add("BATCH_SIZE", BATCH_SIZE)
