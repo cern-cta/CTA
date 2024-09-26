@@ -158,13 +158,11 @@ if [ ! -z "${error}" ]; then
 fi
 
 # ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
-# After the HELM rewrite, the database_configmap is not actually being used. As such, the only thing this produces is an error
-# Disabling for now
-#if [ $ORACLE_SUPPORT == "OFF" ] ; then
-#  database_configmap="internal_postgres.yaml"
-#  CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
-#  useoracle=0
-#sfi
+if [ $ORACLE_SUPPORT == "OFF" ] ; then
+  database_configmap="pgsql-pod-creds.yaml.example"
+  CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+  useoracle=0
+fi
 
 if [ $useoracle == 1 ] ; then
     database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
