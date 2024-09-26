@@ -35,7 +35,6 @@ public:
 
   cta::frontend::FrontendService& getFrontendService() const { return *m_frontendService; }
   cta::log::LogContext getLogContext() const { return m_lc; }
-  Status createAndProcessWorkflowEvent(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
@@ -43,5 +42,6 @@ public:
   Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 };
 } // namespace cta::frontend::grpc
