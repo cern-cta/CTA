@@ -28,6 +28,8 @@
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
+namespace cta::frontend::grpc {
+
 Status
 CtaRpcImpl::createAndProcessWorkflowEvent(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   try {
@@ -280,3 +282,5 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config))
     , m_lc(m_frontendService->getLogContext()) {}
+
+} // namespace cta::frontend::grpc

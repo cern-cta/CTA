@@ -38,6 +38,7 @@
 
 using namespace cta;
 using namespace cta::common;
+using namespace cta::frontend::grpc;
 
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"

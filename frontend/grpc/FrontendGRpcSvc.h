@@ -23,6 +23,7 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
+namespace cta::frontend::grpc {
 class CtaRpcImpl : public CtaRpc::Service {
 
 private:
@@ -43,3 +44,4 @@ public:
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 };
+} // namespace cta::frontend::grpc
