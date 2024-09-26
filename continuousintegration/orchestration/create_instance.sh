@@ -150,7 +150,7 @@ if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" ]; then
 fi
 
 if ! command -v helm >/dev/null 2>&1; then
-    echo "ERROR: Helm does not seem to be installed. You can install Helm using the script: continuousintegration/ci_helpers/install_helm.sh"
+    echo "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
     exit 1
 fi
 
@@ -206,9 +206,9 @@ cp ./pod-oracleunittests.yaml ${poddir}
 
 echo "Creating instance using docker image with tag: ${imagetag}"
 
-# For now we do a search replace of the image tag for this pod. 
+# For now we do a search replace of the image tag for this pod.
 # Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
-# Eventually this should also be integrated into helm and be overriden using the --set flag. 
+# Eventually this should also be integrated into helm and be overriden using the --set flag.
 # Then the tmp dir is also no longer necessary
 sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
 
