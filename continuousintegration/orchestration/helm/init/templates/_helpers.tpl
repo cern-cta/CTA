@@ -71,7 +71,7 @@ database.postgres.server: {{ .postgres.server | quote }}
 {{/* File based ObjectStore Scheduler Template. Using .Values.schedulerconfig scope. */}}
 {{- define "init.scheduler_file" -}}
 objectstore.type: file
-objectstore.file.path: {{ .path | quote }}
+objectstore.file.path: {{ .file.path | quote }}
 {{- end -}}
 
 
