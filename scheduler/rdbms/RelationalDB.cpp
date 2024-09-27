@@ -174,7 +174,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
     timings.insertAndReset("fetchedArchiveJobs", t);
     txn.commit();
   } catch (exception::Exception &ex) {
-    timings.addToLog(params);
+    timings.addToLog(logParams);
     logContext.log(cta::log::ERR,
          "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
          ex.getMessageValue());
@@ -182,7 +182,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
     return ret;
   }
   if (jobIDsList.empty()){
-    timings.addToLog(params);
+    timings.addToLog(logParams);
     logContext.log(cta::log::ERR,
                    "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
     return ret;
@@ -198,11 +198,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
     // the connection to the pool !
     sqlconn.commit();
   } catch (cta::exception::Exception & e) {
-    timings.addToLog(params);
+    timings.addToLog(logParams);
     std::string bt = e.backtrace();
     logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
   }
-  timings.addToLog(params);
+  timings.addToLog(logParams);
   logContext.log(log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
   return ret;
 }
