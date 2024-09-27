@@ -132,62 +132,55 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
   driveState.host = driveInfo.host;
   driveState.logicalLibrary = driveInfo.logicalLibrary;
 
-  log::ScopedParamContainer params(lc);
-  params.add("driveName", driveState.driveName)
-          .add("logicalLibrary", driveState.logicalLibrary)
-          .add("newStatus", common::dataStructures::TapeDrive::stateToString(inputs.status))
-          .add("mountType", common::dataStructures::toString(inputs.mountType))
-          .add("mountSessionId", inputs.mountSessionId)
-          .add("vid", inputs.vid)
-          .add("tapepool", inputs.tapepool)
-          .add("vo", inputs.vo);
-
-  lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
-
   // Set the status
   switch (inputs.status) {
     case common::dataStructures::DriveStatus::Down:
-      setDriveDown(driveState, inputs, lc);
+      setDriveDown(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Up:
-      setDriveUpOrMaybeDown(driveState, inputs, lc);
+      setDriveUpOrMaybeDown(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Probing:
-      setDriveProbing(driveState, inputs, lc);
+      setDriveProbing(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Starting:
-      setDriveStarting(driveState, inputs, lc);
+      setDriveStarting(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Mounting:
-      setDriveMounting(driveState, inputs, lc);
+      setDriveMounting(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Transferring:
-      setDriveTransfering(driveState, inputs, lc);
+      setDriveTransfering(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Unloading:
-      setDriveUnloading(driveState, inputs, lc);
+      setDriveUnloading(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Unmounting:
-      setDriveUnmounting(driveState, inputs, lc);
+      setDriveUnmounting(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::DrainingToDisk:
-      setDriveDrainingToDisk(driveState, inputs, lc);
+      setDriveDrainingToDisk(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::CleaningUp:
-      setDriveCleaningUp(driveState, inputs, lc);
+      setDriveCleaningUp(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Shutdown:
-      setDriveShutdown(driveState, inputs, lc);
+      setDriveShutdown(driveState, inputs);
       break;
     default:
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
 
+  log::ScopedParamContainer params(lc);
+  params.add("input_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
+  driveState.convertToLogParams(params, "update_");
+  lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
+
   m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
 }
 
 void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset.
   driveState.sessionId = std::nullopt;
   driveState.bytesTransferedInSession = std::nullopt;
@@ -214,14 +207,10 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.currentVo = "";
   driveState.currentActivity = "";
   if (inputs.reason) driveState.reasonUpDown = inputs.reason;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // Decide whether we should be up or down
   auto targetStatus = common::dataStructures::DriveStatus::Up;
   // If we are changing state, then all should be reset.
@@ -248,14 +237,10 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.currentVo = "";
   driveState.currentActivity = "";
   if (inputs.reason) driveState.reasonUpDown = inputs.reason;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   using common::dataStructures::DriveStatus;
   // If we are changing state, then all should be reset.
   driveState.sessionId = std::nullopt;
@@ -280,14 +265,10 @@ void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = "";
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset.
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = std::nullopt;
@@ -312,14 +293,10 @@ void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDriv
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
   driveState.currentActivity = inputs.activity;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -341,14 +318,10 @@ void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDriv
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = inputs.byteTransferred;
   driveState.filesTransferedInSession = inputs.filesTransferred;
@@ -367,14 +340,10 @@ void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeD
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -398,14 +367,10 @@ void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDri
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -429,14 +394,10 @@ void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDr
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -460,14 +421,10 @@ void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::Ta
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -492,14 +449,10 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentActivity = "";
   driveState.currentVo = inputs.vo.empty() ? std::nullopt : std::optional<std::string>(inputs.vo);
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDrive & driveState,
-  const ReportDriveStatusInputs & inputs, log::LogContext& lc) const {
+  const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = std::nullopt;
@@ -524,10 +477,6 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentActivity = "";
   driveState.currentVo = inputs.vo.empty() ? std::nullopt : std::optional<std::string>(inputs.vo);
-
-  log::ScopedParamContainer params(lc);
-  convertNotNulloptFieldsToParams(driveState, params);
-  lc.log(log::INFO, "In " + std::string(__FUNCTION__) + ": Setting drive status parameters.");
 }
 
 common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
@@ -561,108 +510,6 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
       reportTime);
   }
   return tapeDriveStatus;
-}
-
-void TapeDrivesCatalogueState::convertNotNulloptFieldsToParams(common::dataStructures::TapeDrive& driveState, log::ScopedParamContainer& params) const {
-
-  params.add("update_driveName", driveState.driveName);
-  params.add("update_host", driveState.host);
-  params.add("update_logicalLibrary", driveState.logicalLibrary);
-
-  if (driveState.logicalLibraryDisabled)
-    params.add("update_logicalLibraryDisabled", driveState.logicalLibraryDisabled.value());
-  if (driveState.sessionId)
-    params.add("update_sessionId", driveState.sessionId.value());
-  if (driveState.bytesTransferedInSession)
-    params.add("update_bytesTransferedInSession", driveState.bytesTransferedInSession.value());
-  if (driveState.filesTransferedInSession)
-    params.add("update_filesTransferedInSession", driveState.filesTransferedInSession.value());
-  if (driveState.sessionStartTime)
-    params.add("update_sessionStartTime", driveState.sessionStartTime.value());
-  if (driveState.sessionElapsedTime)
-    params.add("update_sessionElapsedTime", driveState.sessionElapsedTime.value());
-  if (driveState.mountStartTime)
-    params.add("update_mountStartTime", driveState.mountStartTime.value());
-  if (driveState.transferStartTime)
-    params.add("update_transferStartTime", driveState.transferStartTime.value());
-  if (driveState.unloadStartTime)
-    params.add("update_unloadStartTime", driveState.unloadStartTime.value());
-  if (driveState.unmountStartTime)
-    params.add("update_unmountStartTime", driveState.unmountStartTime.value());
-  if (driveState.drainingStartTime)
-    params.add("update_drainingStartTime", driveState.drainingStartTime.value());
-  if (driveState.downOrUpStartTime)
-    params.add("update_downOrUpStartTime", driveState.downOrUpStartTime.value());
-  if (driveState.probeStartTime)
-    params.add("update_probeStartTime", driveState.probeStartTime.value());
-  if (driveState.cleanupStartTime)
-    params.add("update_cleanupStartTime", driveState.cleanupStartTime.value());
-  if (driveState.startStartTime)
-    params.add("update_startStartTime", driveState.startStartTime.value());
-  if (driveState.shutdownTime)
-    params.add("update_shutdownTime", driveState.shutdownTime.value());
-
-  params.add("update_mountType", common::dataStructures::toString(driveState.mountType));
-  params.add("update_driveStatus", common::dataStructures::toString(driveState.driveStatus));
-  params.add("update_desiredUp", driveState.desiredUp);
-  params.add("update_desiredForceDown", driveState.desiredForceDown);
-
-  if (driveState.reasonUpDown)
-    params.add("update_reasonUpDown", driveState.reasonUpDown.value());
-  if (driveState.currentVid)
-    params.add("update_currentVid", driveState.currentVid.value());
-  if (driveState.currentPriority)
-    params.add("update_currentPriority", driveState.currentPriority.value());
-  if (driveState.currentActivity)
-    params.add("update_currentActivity", driveState.currentActivity.value());
-  if (driveState.currentTapePool)
-    params.add("update_currentTapePool", driveState.currentTapePool.value());
-
-  params.add("update_nextMountType", common::dataStructures::toString(driveState.nextMountType));
-
-  if (driveState.nextVid)
-    params.add("update_nextVid", driveState.nextVid.value());
-  if (driveState.nextTapePool)
-    params.add("update_nextTapePool", driveState.nextTapePool.value());
-  if (driveState.nextPriority)
-    params.add("update_nextPriority", driveState.nextPriority.value());
-  if (driveState.nextActivity)
-    params.add("update_nextActivity", driveState.nextActivity.value());
-
-  if (driveState.devFileName)
-    params.add("update_devFileName", driveState.devFileName.value());
-  if (driveState.rawLibrarySlot)
-    params.add("update_rawLibrarySlot", driveState.rawLibrarySlot.value());
-
-  if (driveState.currentVo)
-    params.add("update_currentVo", driveState.currentVo.value());
-  if (driveState.nextVo)
-    params.add("update_nextVo", driveState.nextVo.value());
-
-  if (driveState.diskSystemName)
-    params.add("update_diskSystemName", driveState.diskSystemName.value());
-  if (driveState.reservedBytes)
-    params.add("update_reservedBytes", driveState.reservedBytes.value());
-  if (driveState.reservationSessionId)
-    params.add("update_reservationSessionId", driveState.reservationSessionId.value());
-
-  if (driveState.physicalLibraryName)
-    params.add("update_physicalLibraryName", driveState.physicalLibraryName.value());
-
-  if (driveState.userComment)
-    params.add("update_userComment", driveState.userComment.value());
-  if (driveState.creationLog) {
-    std::ostringstream oss;
-    oss << driveState.creationLog.value();
-    params.add("update_creationLog", oss.str());
-  }
-  if (driveState.lastModificationLog) {
-    std::ostringstream oss;
-    oss << driveState.lastModificationLog.value();
-    params.add("update_lastModificationLog", oss.str());
-  }
-  if (driveState.physicalLibraryDisabled)
-    params.add("update_physicalLibraryDisabled", driveState.physicalLibraryDisabled.value());
 }
 
 }  // namespace cta

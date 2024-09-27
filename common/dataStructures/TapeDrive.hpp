@@ -24,6 +24,7 @@
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -60,6 +61,13 @@ struct TapeDrive {
    * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
    */
   static DriveStatus stringToState(const std::string & state);
+
+  /**
+   * Fills a ScopedParamContainer with all the DriveStatus field values, including the optional ones.
+   * @param params the ScopedParamContainer, passed by reference
+   * @param prefix an optional string to be used as a prefix for the log parameters
+   */
+  void convertToLogParams(log::ScopedParamContainer& params, const std::string& prefix = "") const;
 
   std::string driveName;
   std::string host;
