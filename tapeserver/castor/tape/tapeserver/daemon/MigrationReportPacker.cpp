@@ -230,12 +230,12 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     try{
       cta::utils::Timer t;
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("successfulBatchSize", reportPacker.m_successfulArchiveJobs.size());
       reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs,
         reportPacker.m_lc);
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("reportJobsBatchTime", t.secs())
-              .add("successfulBatchSize", reportPacker.m_successfulArchiveJobs.size())
-              .add("failedToReportBatchSize", failedToReportArchiveJobs.size());
+            .add("failedToReportBatchSize", failedToReportArchiveJobs.size());
       reportPacker.m_lc.log(cta::log::INFO,
                             "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
     } catch(const cta::ArchiveMount::FailedReportCatalogueUpdate &ex){

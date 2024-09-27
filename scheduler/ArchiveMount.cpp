@@ -166,6 +166,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
   }
   log::ScopedParamContainer(logContext)
           .add("filesRequested", filesRequested)
+          .add("filesFetched", dbJobBatch.size())
           .add("bytesRequested", bytesRequested)
           .add("getNextJobBatchTime", t.secs())
           .log(log::INFO,
