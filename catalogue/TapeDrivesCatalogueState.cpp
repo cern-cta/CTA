@@ -25,7 +25,6 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
-#include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "version.h"

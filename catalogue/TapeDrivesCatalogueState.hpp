@@ -24,7 +24,6 @@
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/log/LogContext.hpp"
 
 namespace cta {
 
