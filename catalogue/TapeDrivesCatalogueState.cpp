@@ -172,7 +172,7 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
   }
 
   log::ScopedParamContainer params(lc);
-  params.add("input_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
+  params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
   driveState.convertToLogParams(params, "update_");
   lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
 
