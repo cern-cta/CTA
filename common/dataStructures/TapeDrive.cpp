@@ -167,25 +167,63 @@ DriveStatus TapeDrive::stringToState(const std::string& state) {
   }
 }
 
-//------------------------------------------------------------------------------
-// operator<<
-//------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeDrive &obj) {
-  std::string stateStr = "UNKNOWN";
-  try {
-    stateStr = TapeDrive::stateToString(obj.driveStatus);
-  } catch(const cta::exception::Exception &ex){
-    //Do nothing
-  }
-  os << "(driveName=" << obj.driveName
-     << " host=" << obj.host
-     << " logicalLibrary=" << obj.logicalLibrary
-     << " mountType=" << obj.mountType
-     << " driveStatus=" << stateStr
-     << " desiredUp=" << obj.desiredUp
-     << " desiredForceDown=" << obj.desiredForceDown 
-     << ")";
-  return os;
+void TapeDrive::convertToLogParams(log::ScopedParamContainer& params, const std::string& prefix) const {
+
+  params.add(prefix + "driveName", driveName);
+  params.add(prefix + "host", host);
+  params.add(prefix + "logicalLibrary", logicalLibrary);
+  params.add(prefix + "logicalLibraryDisabled", logicalLibraryDisabled);
+  params.add(prefix + "sessionId", sessionId);
+
+  params.add(prefix + "bytesTransferedInSession", bytesTransferedInSession);
+  params.add(prefix + "filesTransferedInSession", filesTransferedInSession);
+
+  params.add(prefix + "sessionStartTime", sessionStartTime);
+  params.add(prefix + "sessionElapsedTime", sessionElapsedTime);
+  params.add(prefix + "mountStartTime", mountStartTime);
+  params.add(prefix + "transferStartTime", transferStartTime);
+  params.add(prefix + "unloadStartTime", unloadStartTime);
+  params.add(prefix + "unmountStartTime", unmountStartTime);
+  params.add(prefix + "drainingStartTime", drainingStartTime);
+  params.add(prefix + "downOrUpStartTime", downOrUpStartTime);
+  params.add(prefix + "probeStartTime", probeStartTime);
+  params.add(prefix + "cleanupStartTime", cleanupStartTime);
+  params.add(prefix + "startStartTime", startStartTime);
+  params.add(prefix + "shutdownTime", shutdownTime);
+
+  params.add(prefix + "mountType", mountType);
+  params.add(prefix + "driveStatus", driveStatus);
+  params.add(prefix + "desiredUp", desiredUp);
+  params.add(prefix + "desiredForceDown", desiredForceDown);
+  params.add(prefix + "reasonUpDown", reasonUpDown);
+
+  params.add(prefix + "currentVid", currentVid);
+  params.add(prefix + "ctaVersion", ctaVersion);
+  params.add(prefix + "currentPriority", currentPriority);
+  params.add(prefix + "currentActivity", currentActivity);
+  params.add(prefix + "currentTapePool", currentTapePool);
+  params.add(prefix + "nextMountType", nextMountType);
+  params.add(prefix + "nextVid", nextVid);
+  params.add(prefix + "nextTapePool", nextTapePool);
+  params.add(prefix + "nextPriority", nextPriority);
+  params.add(prefix + "nextActivity", nextActivity);
+
+  params.add(prefix + "devFileName", devFileName);
+  params.add(prefix + "rawLibrarySlot", rawLibrarySlot);
+
+  params.add(prefix + "currentVo", currentVo);
+  params.add(prefix + "nextVo", nextVo);
+
+  params.add(prefix + "diskSystemName", diskSystemName);
+  params.add(prefix + "reservedBytes", reservedBytes);
+  params.add(prefix + "reservationSessionId", reservationSessionId);
+
+  params.add(prefix + "physicalLibraryName", physicalLibraryName);
+
+  params.add(prefix + "userComment", userComment);
+  params.add(prefix + "creationLog", creationLog);
+  params.add(prefix + "lastModificationLog", lastModificationLog);
+  params.add(prefix + "physicalLibraryDisabled", physicalLibraryDisabled);
 }
 
 } // namespace cta::common::dataStructures

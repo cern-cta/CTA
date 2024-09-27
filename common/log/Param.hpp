@@ -95,10 +95,12 @@ public:
       m_value = static_cast<double>(value);
     } else if constexpr (std::is_same_v<T, std::nullopt_t>) {
       m_value = std::nullopt;
-    } else {
+    } else if constexpr (has_ostream_operator<T>::value) {
       std::ostringstream oss;
       oss << value;
       m_value = oss.str();
+    } else {
+      static_assert(always_false<T>::value, "Type not supported");
     }
   }
 
@@ -138,6 +140,12 @@ protected:
   // A helper template that is always false
   template<typename T>
   struct always_false : std::false_type {};
+
+  // A helper trait to check for operator<<
+  template <typename, typename = void>
+  struct has_ostream_operator : std::false_type {};
+  template <typename T>
+  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type {};
 
   /**
    * Name of the parameter

@@ -11,6 +11,7 @@
 - cta/CTA#738 - Add new support for repack archive routes
 - cta/CTA#718 - Add the option to disable a physical library
 - cta/CTA#598 - Improve tapepool supply option
+- cta/CTA#819 - Log drive state updates
 
 ### Bug Fixes
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block

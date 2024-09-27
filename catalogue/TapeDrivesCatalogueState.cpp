@@ -125,7 +125,7 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
-                                                 [[maybe_unused]] log::LogContext& lc) {
+                                                 log::LogContext& lc) {
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;
@@ -170,6 +170,11 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
     default:
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
+
+  log::ScopedParamContainer params(lc);
+  params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
+  driveState.convertToLogParams(params, "update_");
+  lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
 
   m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
 }
