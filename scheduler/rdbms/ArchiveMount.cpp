@@ -50,7 +50,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   cta::schedulerdb::Transaction txn(m_connPool);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.tapePool);
-  log::TimingList timings;
+  cta::log::TimingList timings;
   cta::utils::Timer t;
   try {
     updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, filesRequested);
@@ -106,7 +106,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   cta::log::ScopedParamContainer logParams(logContext);
   timings.insertAndReset("mountTransformBatchTime", t);
-  timings.addToLog(params);
+  timings.addToLog(logParams);
   logContext.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
 
   return ret;
