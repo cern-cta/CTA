@@ -19,6 +19,7 @@
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
