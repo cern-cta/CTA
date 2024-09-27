@@ -20,6 +20,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
@@ -77,16 +78,8 @@ void RelationalDB::ping()
 std::string RelationalDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext)
 {
-  // serialise access to queueArchive using a lock
-  //threading::MutexLocker locker(m_mutex);
-  //if(m_connForInsert == nullptr || !m_connForInsert->isOpen()){
-  //  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): resetting connection.");
-  //  m_connForInsert.reset();
-  //  m_connForInsert = std::make_shared<rdbms::Conn>(m_connPool.getConn());
-  //}
   // Construct the archive request object
   utils::Timer timeTotal;
-  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest with RDB connection.");
 
   auto sqlconn = m_connPool.getConn();
   auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(sqlconn, logContext);
@@ -126,8 +119,6 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
   }
 
   utils::Timer timeInsert;
-  // Insert the object into the DB
-  logContext.log(log::DEBUG, "In RelationalDB::queueArchive(): calling ArchiveRequest insert.");
 
   aReq->insert();
 
@@ -317,7 +308,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     }
     txn.commit();
   } catch (exception::Exception &ex) {
-    lc.log(cta::log::DEBUG,
+    lc.log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status. Aborting the transaction." +
            ex.getMessageValue());
     txn.abort();
@@ -418,11 +409,6 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc)
 {
-  log::ScopedParamContainer(lc)
-          .add("archiveFileID", request.archiveFileID)
-          .add("diskInstance", request.diskInstance)
-          .log(log::DEBUG,
-               "In RelationalDB::cancelArchive(): removing archive request from the queue");
   schedulerdb::Transaction txn(m_connPool);
   try {
     uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
@@ -652,7 +638,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us)
 {
   utils::Timer t;
-  logContext.log(log::DEBUG, "In RelationalDB::getMountInfo():STARTING");
   // Allocate the getMountInfostructure to return.
   auto privateRet = std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
   TapeMountDecisionInfo& tmdi = *privateRet;
@@ -704,10 +689,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
 void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc)
 {
   utils::Timer t;
-  utils::Timer t2;
-  lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): starting to fetch mount info.");
+  utils::Timer ttotal;
+  log::TimingList timings;
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
-
   auto &txn = static_cast<schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
   // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
@@ -718,7 +702,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 
   // Map of (mount type, tapepool/vid) -> PotentialMount to aggregate queue info
   std::map<std::pair<common::dataStructures::MountType, std::string>,SchedulerDatabase::PotentialMount> potentialMounts;
-
+  timings.insertAndReset("fetchMountPolicyCatalogueTime", t);
   // Iterate over all archive queues
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue(*txn);
   while(rset.next()) {
@@ -755,27 +739,17 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
-  // release the named lock on the DB,
-  // so that other tape servers can query the job summary
-  //try{
-  //  txn->commit();
-  //} catch (exception::Exception &ex) {
-  //  lc.log(cta::log::WARNING,
-  //         "In RelationalDB::fetchMountInfo: failed to commit and release the DB lock" +
-  //         ex.getMessageValue());
-  //  txn->abort();
-  //}
+  timings.insertAndReset("getScheduledJobSummariesTime", t);
+
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for(const auto &[mt, pm] : potentialMounts) {
-    lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): pushing back potential mount to the vector.");
     tmdi.potentialMounts.push_back(pm);
   }
 
-  lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): getting drive state.");
   // Collect information about existing and next mounts. If a next mount exists the drive "counts double",
   // but the corresponding drive is either about to mount, or about to replace its current mount.
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
-  auto registerFetchTime = t.secs(utils::Timer::resetCounter);
+  timings.insertAndReset("fetchDriveStateTime", t);
 
   for(const auto& driveState : driveStates) {
     switch(driveState.driveStatus) {
@@ -828,11 +802,11 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
       default: break;
     }
   }
-  auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
+  timings.insertAndReset("getDriveStatesTime", t);
   log::ScopedParamContainer params(lc);
-  params.add("queueFetchTime", registerFetchTime)
-        .add("processingTime", registerProcessingTime);
-  lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): fetched the drive register.");
+  params.add("totalTime", ttotal.secs());
+  timings.addToLog(params);
+  lc.log(log::INFO, "In RelationalDB::fetchMountInfo(): populated TapeMountDecisionInfo with potential mounts.");
 }
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext)
