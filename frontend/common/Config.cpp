@@ -20,6 +20,7 @@
 #include <vector>
 #include <map>
 #include <limits>
+#include <algorithm>
 
 #include "common/exception/UserError.hpp"
 #include "Config.hpp"
@@ -66,6 +67,21 @@ std::optional<uint32_t> Config::getOptionValueUInt(const std::string &key) const
 
   return optionlist.empty() ? std::nullopt : std::optional<uint32_t>(stou<uint32_t>(optionlist.at(0)));
 
+}
+
+std::pair<bool, bool> Config::getOptionValueBool(const std::string &key) const {
+  auto optionlist = getOptionList(key);
+
+  if(optionlist.empty()) return std::make_pair(false, false);
+
+  std::string strval = optionlist.at(0);
+  std::transform(strval.begin(), strval.end(), strval.begin(), ::tolower);
+
+  if(strval == "true")  return std::make_pair(true, true);
+  else if(strval == "false") return std::make_pair(true, false);
+  else {
+    throw std::invalid_argument("\"" + optionlist.at(0) + "\" cannot be converted to Boolean type");
+  }
 }
 
 void Config::parse(std::ifstream &file) {

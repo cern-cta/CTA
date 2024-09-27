@@ -50,9 +50,15 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     auto loggerLevelStr = config.getOptionValueStr("cta.log.level");
     auto loggerLevel = loggerLevelStr.has_value() ? log::toLogLevel(loggerLevelStr.value()) : log::INFO;
 
+    // log header, or not
+    auto log_header = config.getOptionValueBool("cta.log.log_header");
+    bool shortHeader = false;
+    if (log_header.first)
+      shortHeader = !log_header.second;
+
     // Set the log context
     if(loggerURL.value() == "stdout:") {
-      m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend");
+      m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend", shortHeader);
       logToStdout = 1;
     } else if(loggerURL.value().substr(0, 5) == "file:") {
       logtoFile = 1;

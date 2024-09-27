@@ -56,8 +56,6 @@ std::string help =
 static struct option long_options[] = {
   { "threads",       required_argument, nullptr, 'c' },
   { "port",          required_argument, nullptr, 'p' },
-  { "log-header",    no_argument,       nullptr, 'n' },
-  { "no-log-header", no_argument,       nullptr, 's' },
   { "help",          no_argument,       nullptr, 'h' },
   { "version",       no_argument,       nullptr, 'v' },
   { "tls",           no_argument,       nullptr, 't' },
