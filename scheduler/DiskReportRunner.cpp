@@ -31,7 +31,6 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
 
   utils::Timer t;
   size_t roundCount = 0;
-  uint64_t reportedFiles = 0;
   for(bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE; ) {
     roundCount+=1;
     log::TimingList timings;
