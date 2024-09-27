@@ -49,6 +49,10 @@ CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Reque
 
 Status
 CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  // check that the workflow is set appropriately for the create event
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::CREATE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
   return GenericRequest(context, request, response);
 }
 
@@ -111,7 +115,11 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   sp.add("storageClass", storageClass);
   sp.add("fileID", request->notification().file().disk_file_id());
 
- return GenericRequest(context, request, response);
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::CLOSEW)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
+
+  return GenericRequest(context, request, response);
 }
 
 Status
@@ -124,6 +132,10 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   sp.add("request", "delete");
 
   // check validate request args
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::DELETE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
+
   if (request->notification().wf().instance().name().empty()) {
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
@@ -176,6 +188,10 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
+
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::PREPARE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
 
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
@@ -243,6 +259,10 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("request", "cancel");
 
   // check validate request args
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::ABORT_PREPARE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+
   if (request->notification().wf().instance().name().empty()) {
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
