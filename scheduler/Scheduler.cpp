@@ -245,7 +245,7 @@ std::string Scheduler::queueRetrieve(
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
      .add("storageClass", queueCriteria.archiveFile.storageClass);
   queueCriteria.archiveFile.checksumBlob.addFirstChecksumToLog(spc);
-  
+
   const auto &tapeFile = queueCriteria.archiveFile.tapeFiles.front();
   spc.add("fSeq", tapeFile.fSeq)
      .add("vid", tapeFile.vid)
@@ -253,7 +253,7 @@ std::string Scheduler::queueRetrieve(
      .add("fileSize", tapeFile.fileSize)
      .add("copyNb", tapeFile.copyNb)
      .add("creationTime", tapeFile.creationTime);
-  
+
   spc.add("selectedVid", requestInfo.selectedVid)
      .add("verifyOnly", request.isVerifyOnly)
      .add("catalogueTime", catalogueTime)
@@ -1170,7 +1170,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (isRepackingMount && !defaultRepackVo.has_value()) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", em.vid)
-              .add("mountType", common::dataStructures::toString(em.type))
+              .add("mountType", common::dataStructures::toCamelCaseString(em.type))
               .add("drive", em.driveName);
         lc.log(log::ERR,"In Scheduler::sortAndGetTapesForMountInfo(): existingOrNextMounts found a repack mount while there is no default repack VO defined.");
         continue;
@@ -1185,7 +1185,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", em.vid)
-              .add("mountType", common::dataStructures::toString(em.type))
+              .add("mountType", common::dataStructures::toCamelCaseString(em.type))
               .add("drive", em.driveName);
         lc.log(log::DEBUG,"In Scheduler::sortAndGetTapesForMountInfo(): tapeAlreadyInUse found.");
       }
@@ -1214,7 +1214,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         if (m->type == common::dataStructures::MountType::Retrieve) {
           params.add("tapeVid", m->vid);
         }
-        params.add("mountType", common::dataStructures::toString(m->type))
+        params.add("mountType", common::dataStructures::toCamelCaseString(m->type))
                 .add("bytesQueued", m->bytesQueued)
                 .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
                 .add("filesQueued", m->filesQueued)
@@ -1301,7 +1301,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         params.add("tapeVid", m->vid);
         params.add("tapeRepacking", repackingTapeVids.find(m->vid) != repackingTapeVids.end());
       }
-      params.add("mountType", common::dataStructures::toString(m->type))
+      params.add("mountType", common::dataStructures::toCamelCaseString(m->type))
             .add("existingMountsDistinctTypesForThisTapepool", existingMountsDistinctTypesForThisTapepool)
             .add("existingMountsBasicTypeForThisVo",existingMountsBasicTypeForThisVo)
             .add("bytesQueued", m->bytesQueued)
@@ -1334,7 +1334,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if ( m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
       }
-      params.add("mountType", common::dataStructures::toString(m->type))
+      params.add("mountType", common::dataStructures::toCamelCaseString(m->type))
             .add("existingMountsDistinctTypesForThisTapepool", existingMountsDistinctTypesForThisTapepool)
             .add("existingMountsBasicTypeForThisVo",existingMountsBasicTypeForThisVo)
             .add("bytesQueued", m->bytesQueued)
@@ -1559,7 +1559,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
           log::ScopedParamContainer params(lc);
           params.add("tapePool", m->tapePool)
                 .add("tapeVid", t.vid)
-                .add("mountType", common::dataStructures::toString(m->type))
+                .add("mountType", common::dataStructures::toCamelCaseString(m->type))
                 .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
                 .add("existingMountsBasicTypeForThisVo", existingMountsBasicTypeForThisVo)
                 .add("bytesQueued", m->bytesQueued)
@@ -1599,7 +1599,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
       catalogueTime = getTapeInfoTime + getTapeForWriteTime;
       params.add("tapePool", m->tapePool)
             .add("tapeVid", m->vid)
-            .add("mountType", common::dataStructures::toString(m->type))
+            .add("mountType", common::dataStructures::toCamelCaseString(m->type))
             .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
             .add("existingMountsBasicTypeForThisVo", existingMountsBasicTypeForThisVo);
       if (m->activity) {
@@ -1730,7 +1730,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
                   .add("vo",t.vo)
                   .add("mediaType",t.mediaType)
                   .add("vendor",t.vendor)
-                  .add("mountType", common::dataStructures::toString(m->type))
+                  .add("mountType", common::dataStructures::toCamelCaseString(m->type))
                   .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
                   .add("existingMountsBasicTypeForThisVo",existingMountsBasicTypeForThisVo)
                   .add("bytesQueued", m->bytesQueued)
@@ -1795,7 +1795,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
               .add("mediaType",m->mediaType)
               .add("labelFormat",ossLabelFormat.str())
               .add("vendor",m->vendor)
-              .add("mountType", common::dataStructures::toString(m->type))
+              .add("mountType", common::dataStructures::toCamelCaseString(m->type))
               .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
               .add("existingMountsBasicTypeForThisVo",existingMountsBasicTypeForThisVo);
         if (m->activity) {

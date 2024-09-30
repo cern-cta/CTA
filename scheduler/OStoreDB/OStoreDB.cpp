@@ -563,7 +563,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
         log::ScopedParamContainer(logContext)
           .add("driveName", driveState.driveName)
-          .add("mountType", common::dataStructures::toString(driveState.mountType))
+          .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
           .add("driveStatus", common::dataStructures::toString(driveState.driveStatus))
           .log(log::WARNING,
               "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
@@ -3114,7 +3114,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             std::string storageClass;
             storageClass = sc.first;
             storageClassList << (first?"":" ") << " sc=" << storageClass << " rc=" << sc.second.size();
-          } 
+          }
           log::ScopedParamContainer(lc)
             .add("fileID", rsr.archiveFile.archiveFileID)
             .add("diskInstance", rsr.archiveFile.diskInstance)
@@ -3843,7 +3843,7 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
   const std::string& externalFreeDiskSpaceScript, log::LogContext& logContext) {
-  
+
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -3872,7 +3872,7 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
             "for disk system, putting queue to sleep");
       auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
-    } 
+    }
     return false;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
@@ -3883,8 +3883,8 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
           "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
     throw;
   }
-    
-  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and 
+
+  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
   // the retrieve mount will immediately stop
   for (auto const& ds : diskSystemNames) {
     uint64_t previousDrivesReservationTotal = 0;
@@ -3892,7 +3892,7 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
     // Compute previous drives reservation for the physical space of the current disk system.
     for (auto previousDriveReservation : previousDrivesReservations) {
       //avoid empty string when no disk space reservation exists for drive
-      if (previousDriveReservation.second != 0) { 
+      if (previousDriveReservation.second != 0) {
         auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
         if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
           previousDrivesReservationTotal += previousDriveReservation.second;
@@ -3910,7 +3910,7 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
         .log(cta::log::WARNING,
             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): could not allocate disk space for job, "
             "applying backpressure");
-      
+
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
       return false;
@@ -4270,7 +4270,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     }
   }
 
-  // 3) Queue the retrieve requests for report to user 
+  // 3) Queue the retrieve requests for report to user
   for (auto& reportRequestQueue : jobsToRequeueForReportToUser) {
     using RQTRFUAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
     RQTRFUAlgo::InsertedElement::list insertedRequests;
@@ -4284,7 +4284,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     }
     RQTRFUAlgo rQTRFUAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
-      rQTRFUAlgo.referenceAndSwitchOwnership(getMountInfo().vid, insertedRequests, lc); 
+      rQTRFUAlgo.referenceAndSwitchOwnership(getMountInfo().vid, insertedRequests, lc);
       // In case all goes well, we can remove ownership of all requests.
       for (auto& req : reportRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }
     } catch (RQTRFUAlgo::OwnershipSwitchFailure& failure) {
@@ -4818,7 +4818,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, std::nullopt, std::nullopt });
       caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
-      
+
       std::string strMsg {"In ArchiveJob::failReport(): stored job in failed container for operator handling."};
       int iLogLevel = log::INFO;
       if (enQueueingNextStep.nextStep != NextStep::StoreInFailedJobsContainer) {
@@ -4833,7 +4833,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
         .add("reportRetries", retryStatus.reportRetries)
         .add("maxReportRetries", retryStatus.maxReportRetries)
         .log(iLogLevel, strMsg);
-      
+
       return;
     }
   }
