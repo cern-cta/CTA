@@ -38,11 +38,22 @@ CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Reque
                                                                   client.sec().host(), client.sec().prot());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
-  }
-  catch (cta::exception::Exception& ex) {
+  } catch (cta::exception::PbException &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  } catch (cta::exception::UserError &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  } catch (cta::exception::Exception &ex) {
     m_lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  } catch (std::runtime_error &ex) {
+    m_lc.log(cta::log::ERR, ex.what());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
   }
   return Status::OK;
 }
