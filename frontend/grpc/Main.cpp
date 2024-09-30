@@ -38,7 +38,7 @@
 
 using namespace cta;
 using namespace cta::common;
-using namespace cta::frontend::grpc;
+// using namespace cta::frontend::grpc;
 
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"
@@ -114,7 +114,7 @@ int main(const int argc, char *const *const argv) {
 
     std::string config_file("/etc/cta/cta.conf");
     // Initialize catalogue, scheduler, logContext
-    CtaRpcImpl svc(config_file);
+    frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
 
