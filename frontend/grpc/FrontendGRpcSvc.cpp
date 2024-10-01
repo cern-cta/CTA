@@ -59,7 +59,7 @@ CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Reque
 }
 
 Status
-CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
   // check that the workflow is set appropriately for the create event
   auto event = request->notification().wf().event();
   if (event != cta::eos::Workflow::CREATE)
@@ -68,7 +68,7 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 }
 
 Status
-CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
   cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
@@ -123,7 +123,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 }
 
 Status
-CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
   cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
@@ -166,7 +166,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 }
 
 Status
-CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
   cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
@@ -216,7 +216,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
-                                  cta::xrd::Response* response) {
+                                  cta::xrd::Response* response) noexcept {
   cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
