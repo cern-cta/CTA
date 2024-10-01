@@ -71,8 +71,6 @@ Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::ScopedParamContainer sp(m_lc);
 
-  m_lc.log(cta::log::INFO, "Archive request");
-
   sp.add("remoteHost", context->peer());
   sp.add("request", "archive");
 
@@ -92,16 +90,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
   }
-
-  if (request->notification().cli().user().username().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
-  }
+  // checked inside the common code
 
   if (!request->notification().file().owner().uid()) {
     m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
@@ -138,8 +127,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
-
-  m_lc.log(cta::log::DEBUG, "Delete request");
   sp.add("request", "delete");
 
   // check validate request args
@@ -150,16 +137,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   if (request->notification().wf().instance().name().empty()) {
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
   }
 
   if (request->notification().file().archive_file_id() == 0) {
@@ -175,11 +152,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   if (!request->notification().file().owner().gid()) {
     m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
-  if (request->notification().file().lpath().empty()) {
-    m_lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
   }
 
   auto instance = request->notification().wf().instance().name();
@@ -209,22 +181,10 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  m_lc.log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
-
   // check validate request args
   if (request->notification().wf().instance().name().empty()) {
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
   }
 
   if (request->notification().file().archive_file_id() == 0) {
@@ -240,11 +200,6 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   if (!request->notification().file().owner().gid()) {
     m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
-  if (request->notification().file().lpath().empty()) {
-    m_lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
   }
 
   auto instance = request->notification().wf().instance().name();
@@ -277,16 +232,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   if (request->notification().wf().instance().name().empty()) {
     m_lc.log(cta::log::WARNING, "CTA instance is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
   }
 
   if (!request->notification().file().archive_file_id()) {
