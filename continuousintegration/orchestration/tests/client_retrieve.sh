@@ -82,7 +82,7 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    RETRIEVED=$(( ${RETRIEVED} + $( eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+    RETRIEVED=$(( ${RETRIEVED} + $( eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
 
     sleep 1 # do not hammer eos too hard
   done

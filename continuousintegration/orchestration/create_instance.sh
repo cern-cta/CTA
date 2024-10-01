@@ -273,7 +273,7 @@ helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --se
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl --namespace=${instance} get pod init -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+  kubectl --namespace=${instance} get pod init -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
   sleep 1
 done
 
@@ -284,7 +284,7 @@ if [ $runoracleunittests == 1 ] ; then
   echo -n "Waiting for oracleunittests"
   for ((i=0; i<400; i++)); do
     echo -n "."
-    kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+    kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
     sleep 1
   done
   echo ""

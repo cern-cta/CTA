@@ -220,7 +220,7 @@ for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; ex
 
   rm -f ${FAILED_LIST}
   touch ${FAILED_LIST}
-  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} ls -y FILE_PATH | egrep -v '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
+  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} ls -y FILE_PATH | grep -E -v '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
     echo "ERROR: Attr ${EVICT_COUNTER_ATTR} is higher than 0. Files should have not been evicted."
     cat ${FAILED_LIST}
     exit 1
@@ -240,7 +240,7 @@ done
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} ls -y FILE_PATH | egrep '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
+if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} ls -y FILE_PATH | grep -E '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
   echo "ERROR: Files should have been evicted when attr ${EVICT_COUNTER_ATTR} is zero."
   cat ${FAILED_LIST}
   exit 1
