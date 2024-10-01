@@ -124,24 +124,24 @@ put_all_drives () {
   prev_state=$(echo $PREV_STATE | awk '{print tolower($0)}')
 
   # Put all tape drives up/down
-  INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
+  INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
   echo INITIAL_DRIVES_STATE:
   echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
   echo -n "Will put $next_state those drives : "
-  drivesToModify=`echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName"`
+  drivesToModify=$(echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName")
   echo $drivesToModify
-  for d in `echo $drivesToModify`; do
+  for d in $(echo $drivesToModify); do
     admin_cta drive $next_state $d --reason "PUTTING DRIVE $NEXT_STATE FOR TESTS"
   done
 
   echo "$(date +%s): Waiting for the drives to be $next_state"
   SECONDS_PASSED=0
   WAIT_FOR_DRIVES_TIMEOUT=$((10))
-  while [[ $SECONDS_PASSED < $WAIT_FOR_DRIVES_TIMEOUT ]]; do
+  while [[ $SECONDS_PASSED -lt $WAIT_FOR_DRIVES_TIMEOUT ]]; do
     sleep 1
     oneStatusRemaining=0
-    for d in `echo $drivesToModify`; do
-      status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
+    for d in $(echo $drivesToModify); do
+      status=$(admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus")
       if [[ $NEXT_STATE == "DOWN" ]]; then
         # Anything except DOWN is not acceptable
         if [[ $status != "DOWN" ]]; then

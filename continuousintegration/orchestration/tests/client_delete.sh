@@ -50,7 +50,7 @@ while test 0 != ${FILESONTAPE}; do
 
   FILESONTAPE=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-      FILESONTAPE=$((${FILESONTAPE} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9]+::t1' | wc -l)))
+      FILESONTAPE=$((${FILESONTAPE} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[0-9]+::t1' | wc -l)))
   done
 
   DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))

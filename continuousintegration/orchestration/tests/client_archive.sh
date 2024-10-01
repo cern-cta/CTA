@@ -98,7 +98,7 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   duration=$((end_check - start_check))
   echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived checked within ${duration} seconds, current timestamp ${end_check}"
 
-  NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
+  NB_TAPE_NOT_FULL=$(admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length")
   if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
   then
     echo "$(date +%s): All tapes are full, exiting archiving loop"

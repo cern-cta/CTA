@@ -119,7 +119,7 @@ kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCN
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while kubectl -n ${NAMESPACE} exec client -- test `false = xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'`; do
+while kubectl -n ${NAMESPACE} exec client -- test $(false = xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file with name:${TEST_FILE_NAME} to be restored on EOS side: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1

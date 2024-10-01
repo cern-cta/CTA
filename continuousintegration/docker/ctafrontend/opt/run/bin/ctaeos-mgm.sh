@@ -49,7 +49,7 @@ useradd --uid 14002 --gid 1400 eosadmin2
 # copy needed template configuration files (nice to get all lines for logs)
 yes | cp -r /opt/ci/ctaeos/etc /
 
-eoshost=`hostname -f`
+eoshost=$(hostname -f)
 
 # All our scripts are set to exclusively use ctaeos instance name:
 # notably the following directory: `/eos/ctaeos` is hardcoded almost everywhere
@@ -138,7 +138,7 @@ sudo -u daemon bash -c 'ulimit -a'
 
 NB_STARTED_CTA_FST_GCD=0
 if test -f /var/log/eos/fst/cta-fst-gcd.log; then
-  NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
+  NB_STARTED_CTA_FST_GCD=$(grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l)
 fi
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
@@ -212,7 +212,7 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   fi
   echo eos fileinfo ${CID_TEST_DIR}
   eos fileinfo ${CID_TEST_DIR}
-  CID_TEST_DIR_CID=`eos fileinfo ${CID_TEST_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  CID_TEST_DIR_CID=$(eos fileinfo ${CID_TEST_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://')
   if test x = "x${CID_TEST_DIR_CID}"; then
     echo "Failed to determine the EOS container ID of ${CID_TEST_DIR}"
     exit 1
@@ -281,7 +281,7 @@ fi
 
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  CTA_PROC_DIR_CID=`eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  CTA_PROC_DIR_CID=$(eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://')
   if test x = "x${CTA_PROC_DIR_CID}"; then
     echo "Failed to determine the EOS container ID of ${CTA_PROC_DIR}"
     exit 1
@@ -319,7 +319,7 @@ fi
   eos chmod 777 ${EOS_TMP_DIR}
 
   echo "Waiting for the EOS disk filesystem using /fst to boot and come on-line"
-  while test 1 != `eos fs ls /fst | egrep 'booted.*online' | wc -l`; do
+  while test 1 != $(eos fs ls /fst | grep -E 'booted.*online' | wc -l); do
     echo "Sleeping 1 second"
     sleep 1
   done
@@ -332,7 +332,7 @@ fi
   fi
   echo "Giving cta-fst-gcd 1 second to start"
   sleep 1
-  FST_GCD_PID=`ps -ef | egrep '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}'`
+  FST_GCD_PID=$(ps -ef | grep -E '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}')
   if test "x${FST_GCD_PID}" = x; then
     echo "cta-fst-gcd is not running"
     exit 1
@@ -382,7 +382,7 @@ fi
 # configure grpc for cta-admin tf dsk file resolution
 if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
   MIGRATION_UID=2
-  MIGRATION_TOKEN=$(cat /etc/config/eoscta/eos.grpc.keytab | egrep ^$(hostname) | awk '{print $3}')
+  MIGRATION_TOKEN=$(cat /etc/config/eoscta/eos.grpc.keytab | grep -E ^$(hostname) | awk '{print $3}')
 
   eos vid add gateway [:1] grpc
   eos vid set membership ${MIGRATION_UID} +sudo

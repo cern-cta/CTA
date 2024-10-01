@@ -32,13 +32,13 @@ echo "$(date +%s): Sleeping 3 seconds to let previous sessions finish."
 sleep 3
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
-INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
+INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
 echo INITIAL_DRIVES_STATE:
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
 echo -n "$(date +%s): Will put down those drives : "
-drivesToSetDown=`echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`
+drivesToSetDown=$(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName')
 echo $drivesToSetDown
-for d in `echo $drivesToSetDown`; do
+for d in $(echo $drivesToSetDown); do
   admin_cta drive down $d --reason "PUTTING DRIVE DOWN FOR TESTS"
 done
 
@@ -46,11 +46,11 @@ done
 echo "$(date +%s): Waiting for the drives to be down"
 SECONDS_PASSED=0
 WAIT_FOR_DRIVES_DOWN_TIMEOUT=$((10))
-while [[ $SECONDS_PASSED < WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
+while [[ $SECONDS_PASSED -lt WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
   sleep 1
   oneStatusUpRemaining=0
-  for d in `echo $drivesToSetDown`; do
-    status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
+  for d in $(echo $drivesToSetDown); do
+    status=$(admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus")
     if [[ $status == "UP" ]]; then
       oneStatusUpRemaining=1
     fi;
@@ -83,7 +83,7 @@ done
 sleep 1
 
 # Ensure all requests files are queued
-requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+requestsTotal=$(admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=${NB_FILES}
 if [ ${requestsTotal} -ne ${filesCount} ]; then
@@ -100,7 +100,7 @@ done
 rm -f reqid_*
 
 
-REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "${REMAINING_REQUESTS} requests remaining."
 
 if [[ ${REMAINING_REQUESTS} -ne $((NB_FILES * NB_DIRS)) ]]; then
@@ -111,7 +111,7 @@ fi
 # Put drive(s) back up to clear the queue
 echo -n "Will put back up those drives : "
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
+for d in $(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'); do
   admin_cta dr up $d
 done
 
@@ -121,7 +121,7 @@ sleep 10
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 # Wait for Requests to be removed.
-while [[ ${REMAINING_REQUESTS} > 0 ]]; do
+while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -131,7 +131,7 @@ while [[ ${REMAINING_REQUESTS} > 0 ]]; do
     break
   fi
 
-  REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`;
+  REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add');
   # Prevent the result from being empty
   if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
   echo "${REMAINING_REQUESTS} requests remaining."
@@ -141,7 +141,7 @@ done
 echo "Checking restaged files..."
 RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  RF=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l)
+  RF=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l)
   echo "Restaged files in directory ${subdir}: ${RF}"
   (( RESTAGEDFILES += ${RF} ))
 done
@@ -158,4 +158,3 @@ if [ ${RESTAGEDFILES} -ne "0" ]; then
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
   exit 1
 fi
-

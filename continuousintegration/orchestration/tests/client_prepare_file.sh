@@ -72,7 +72,7 @@ do
   nbFilesRetrieved=0
   for directory in ${!directoriesNbFiles[@]}
   do
-    nbFilesRetrieved=$((nbFilesRetrieved + `eos root://${EOSINSTANCE} ls -y ${directory} | egrep '^d[1-9][0-9]*::t1' | wc -l`))
+    nbFilesRetrieved=$((nbFilesRetrieved + $(eos root://${EOSINSTANCE} ls -y ${directory} | grep -E '^d[1-9][0-9]*::t1' | wc -l)))
   done
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
