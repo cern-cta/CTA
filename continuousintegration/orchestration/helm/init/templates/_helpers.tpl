@@ -86,32 +86,3 @@ objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
 objectstore.ceph.id: {{ .ceph.id | quote }}
 objectstore.ceph.key: {{ .ceph.key | quote }}
 {{- end -}}
-
-
-
-{{/* Oracle based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_oracle" -}}
-database.type: oracle
-database.oracle.username: {{ .oracle.username | quote }}
-database.oracle.password: {{ .oracle.password | quote }}
-database.oracle.database: {{ .oracle.database | quote }}
-{{- end -}}
-
-
-
-{{/* PostgreSQL based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_postgres" -}}
-database.type: postgres
-database.postgres.username: {{ .postgres.username | quote }}
-database.postgres.password: {{ .postgres.password | quote }}
-database.postgres.server: {{ .postgres.server | quote }}
-database.postgres.database: {{ .postgres.database | quote }}
-{{- end -}}
-
-
-
-{{/* Sqlite based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_sqlite" -}}
-database.type: sqlite
-database.file.path: {{ .sqlite.filepath | quote }}
-{{- end -}}

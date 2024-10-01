@@ -1,0 +1,11 @@
+{{- $cataloguetemplate := printf "cataloguedb.%s" .Values.catalogue.backend }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  namespace: {{.Release.Namespace}}
+  labels:
+    type: {{ .Values.catalogue.backend }}
+data:
+  {{- include $cataloguetemplate .Values.catalogue.config | nindent 2 }}

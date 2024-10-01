@@ -1,0 +1,7 @@
+apiVersion: v2
+name: cataloguedb
+version: 0.1.0
+description: An chart that spawns the catalogue database for the cta project. Can be spawned as either Oracle or Postgres.
+type: application
+
+appVersion: "1.16.0"

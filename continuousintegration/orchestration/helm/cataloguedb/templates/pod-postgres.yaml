@@ -1,6 +1,5 @@
 {{$namespace := .Release.Namespace }}
 {{$name := .Values.postgres.name}}
-{{$secret := include "init.imageSecret" . }}
 {{- with .Values.postgres.service}}
 apiVersion: v1
 kind: Service
@@ -18,7 +17,6 @@ spec:
 
 ---
 
-{{- with .Values.postgres.pod}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -30,7 +28,8 @@ spec:
   restartPolicy: Never
   containers:
   - name: {{$name}}
-    image: {{ .image | quote }}
+    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    imagePullPolicy: "{{ .Values.image.pullPolicy }}"
     stdin: true
     env:
     - name: MY_NAME
@@ -41,12 +40,15 @@ spec:
       value: {{ $namespace | quote}}
     - name: SCHEMA_VERSION
       value: {{ $.Values.catalogue.schemaVersion | quote}}
-    {{- if (.env) }}
-        {{- .env | toYaml | nindent 4}}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
     command: {{.command}}
     args: {{.args}}
 
   imagePullSecrets:
-  - name: {{$secret}}
-{{- end }}
+    {{- if .Values.image.pullSecrets }}
+    {{- range .Values.image.pullSecrets }}
+    - name: {{ . }}
+    {{- end }}
+    {{- end }}

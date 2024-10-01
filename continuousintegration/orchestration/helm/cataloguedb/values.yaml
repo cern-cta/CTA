@@ -1,0 +1,70 @@
+
+nameOverride: cataloguedb
+isPriviliged: false
+
+image:
+  registry: docker.io
+  repository: postgres
+  tag: 14.10
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Changes the entrypoint of the image to the script and provide arguments if needed
+customEntrypoint:
+  command: ['/opt/run/bin/init.sh']
+  args: ["none"]
+
+env:
+  - name: KEEP_DATABASE # TODO: just set this as argument
+    value: "0"
+  - name: POSTGRES_USER
+    value: cta
+  - name: POSTGRES_PASSWORD
+    value: cta
+  - name: PGDATA
+    value: /var/lib/postgresql/data/pgdata
+  - name: POSTGRES_DB
+    value: cta
+
+catalogue:
+  schemaVersion: "15.0"
+  backend: postgres
+  config:
+    postgres:
+      username: ""
+      password: ""
+      server: ""
+      database: ""
+
+pvcs:
+  claimlogs:
+    selectors:
+      type: logs
+    storage: 2Gi
+    accessModes:
+      - ReadWriteMany
+
+
+volumeMounts:
+- mountPath: /etc/config/database
+  name: mydatabase
+- mountPath: /mnt/logs
+  name: logstorage
+
+
+volumes:
+- name: mydatabase
+  configMap:
+    name: database-config
+- name: logstorage
+  persistentVolumeClaim:
+    claimName: claimlogs
+
+# Catalogue
+postgres:
+  name: postgres
+  service:
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP

@@ -4,22 +4,21 @@ isPriviliged: true
 
 # The connection parameters for the Scheduler and Catalogue
 # must be configured by the user of the Chart.
-schedulerBackend: ceph   # Options: file, ceph, postgres
-schedulerconfig:
-  ceph:
-    mon: ""
-    monport: ""
-    pool: ""
-    namespace: ""
-    id: ""
-    key: ""
+
+catalogueBackend: oracle # Can be sqlite, orale or postgres.
+catalogueconfig:
+  oracle:
+    username: ""
+    database: ""
+    password: ""
   postgres:
     username: ""
     password: ""
+    server: ""
     database: ""
-    sever: ""
-  file:
-    path: /shared/%NAMESPACE/objectstore
+  sqlite:
+    file-path: ""
+
 
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
@@ -32,6 +31,9 @@ global:
   # The tag should then always be empty and need to be set by the user
   # That prevents any confusing situations with existing nonsense tags
   image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+
+catalogue:
+  schemaVersion: "15.0"
 
 pvcs:
   claimstg:
@@ -48,6 +50,8 @@ pvcs:
       - ReadWriteMany
 
 env:
+- name: KEEP_DATABASE
+  value: "0"
 - name: KEEP_OBJECTSTORE
   value: "0"
 
@@ -57,6 +61,8 @@ volumeMounts:
   name: shared
 - mountPath: /etc/config/objectstore
   name: myobjectstore
+- mountPath: /etc/config/database
+  name: mydatabase
 - mountPath: /etc/config/library
   name: mylibrary
 - mountPath: /mnt/logs
@@ -70,9 +76,32 @@ volumes:
 - name: myobjectstore
   configMap:
     name: objectstore-config
+- name: mydatabase
+  configMap:
+    name: database-config
 - name: mylibrary
   configMap:
     name: library-config
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs
+
+# Catalogue
+postgres:
+  name: postgres
+  service:
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+  pod:
+    image: docker.io/postgres:14.10
+    env:
+    - name: POSTGRES_USER
+      value: cta
+    - name: POSTGRES_PASSWORD
+      value: cta
+    - name: PGDATA
+      value: /var/lib/postgresql/data/pgdata
+    - name: POSTGRES_DB
+      value: cta
