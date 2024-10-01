@@ -178,14 +178,14 @@ if [ ! -z $MAX_FILES_TO_SELECT ]; then
 fi
 
 # Record number of files already in the recycle table
-amountRecyleTapeFilesPrev=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+amountRecyleTapeFilesPrev=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
 
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
   SECONDS_PASSED=0
-  while test 0 = `admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l`; do
+  while test 0 = $(admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l); do
     echo "Waiting for retrieve queue for tape ${VID_TO_REPACK} to be sleeping: Seconds passed = $SECONDS_PASSED"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -203,7 +203,7 @@ fi
 
 echo "Now waiting for repack to proceed."
 SECONDS_PASSED=0
-while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l`; do
+while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l); do
   echo "Waiting for repack request on tape ${VID_TO_REPACK} to be complete: Seconds passed = $SECONDS_PASSED"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -212,8 +212,8 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
     echo "Result of Repack ls"
     admin_cta repack ls --vid ${VID_TO_REPACK}
-    destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
-    if [[ `echo $destinationInfos | jq length` != 0 ]]
+    destinationInfos=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos")
+    if [[ $(echo $destinationInfos | jq length) != 0 ]]
     then
       header="DestinationVID\tNbFiles\ttotalSize\n"
       { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
@@ -221,11 +221,11 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
     exit 1
   fi
 done
-if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'`; then
+if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'); then
     echo "Repack failed for tape ${VID_TO_REPACK}."
     admin_cta repack ls --vid ${VID_TO_REPACK}
-    destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
-    if [[ `echo $destinationInfos | jq length` != 0 ]]
+    destinationInfos=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos")
+    if [[ $(echo $destinationInfos | jq length) != 0 ]]
     then
       header="DestinationVID\tNbFiles\ttotalSize\n"
       { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
@@ -237,14 +237,14 @@ fi
 if [ ! -z $MAX_FILES_TO_SELECT ]; then
   TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
   if [ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]; then
-    if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length'` && test 0 != `admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'`; then
+    if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length') && test 0 != $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'); then
       echo "Partial repack selected a subset of files, as expected"
     else
       echo "Partial repack failed to select a subset files"
       exit 1
     fi
   else
-    if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == true)] | length'` && test 0 = `admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'`; then
+    if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == true)] | length') && test 0 = $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'); then
       echo "Partial repack selected the full subset of files, as expected"
     else
       echo "Partial repack failed to select the full subset files"
@@ -254,19 +254,19 @@ if [ ! -z $MAX_FILES_TO_SELECT ]; then
 fi
 
 echo
-destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
-if [[ `echo $destinationInfos | jq length` != 0 ]]
+destinationInfos=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos")
+if [[ $(echo $destinationInfos | jq length) != 0 ]]
 then
   header="DestinationVID\tNbFiles\ttotalSize\n"
   { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
 fi
 
-amountArchivedFiles=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles"`
-amountRecyleTapeFilesNew=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+amountArchivedFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles")
+amountRecyleTapeFilesNew=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
 amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
-filesLeftToRetrieve=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve"`
-filesLeftToArchive=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive"`
-nbDestinationVids=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos | length"`
+filesLeftToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve")
+filesLeftToArchive=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive")
+nbDestinationVids=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos | length")
 
 echo "Amount of archived files = $amountArchivedFiles (${nbDestinationVids}x$((amountArchivedFiles/nbDestinationVids))"
 echo "Amount of new recycled tape files = $amountRecyleTapeFiles"

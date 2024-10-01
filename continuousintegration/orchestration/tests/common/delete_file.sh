@@ -46,7 +46,7 @@ eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while test true = `xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'`; do
+while test true = $(xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1

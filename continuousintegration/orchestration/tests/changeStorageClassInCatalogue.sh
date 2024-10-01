@@ -22,7 +22,7 @@ if [ -z "${NAMESPACE}" ]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [ -n "${error}" ]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -30,8 +30,8 @@ fi
 EOSINSTANCE=ctaeos
 NEW_STORAGE_CLASS_NAME=newStorageClassName
 
-FILE_1=`uuidgen`
-FILE_2=`uuidgen`
+FILE_1=$(uuidgen)
+FILE_2=$(uuidgen)
 echo
 echo "Creating files: ${FILE_1} ${FILE_2}"
 

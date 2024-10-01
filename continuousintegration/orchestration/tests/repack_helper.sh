@@ -76,7 +76,7 @@ executeRepack() {
     echo "Launching the repack request on tape $1"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re add -v $1 -m -b root://ctaeos//eos/ctaeos/repack
     SECONDS_PASSED=0
-    while test 0 = `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l`; do
+    while test 0 = $(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l); do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"
       sleep 1
       let SECONDS_PASSED=SECONDS_PASSED+1
@@ -86,7 +86,7 @@ executeRepack() {
         exit 1
       fi
     done
-    if test 1 = `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l`; then
+    if test 1 = $(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l); then
         echo "Repack failed for tape $1"
         exit 1
     fi

@@ -49,7 +49,7 @@ rm -f /tmp/${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.zero
 
 # Report results
 msgNum=$(grep "\"File suc" /mnt/logs/tpsrv*/taped/cta/cta-taped.log | grep ${TEST_FILE_NAME} | tail -n 4 | wc -l)
-if [ "$msgNum" = "4" -a $zeroLengthTests -eq 1 ]; then
+if [ "$msgNum" = "4" ] && [ $zeroLengthTests -eq 1 ]; then
   echo "OK: all tests passed"
   #rc=0
   exit 0
