@@ -145,7 +145,7 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
-if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" ]; then
+if [ -n "${pipelineid}" ] && [ -n "${dockerimage}" ]; then
     usage
 fi
 
@@ -173,7 +173,7 @@ else
 fi
 
 # We are going to run with repository based images (they have rpms embedded)
-../ci_helpers/get_registry_credentials.sh --check || { echo "Error: Credential check failed"; exit 1; }
+../ci_helpers/get_registry_credentials.sh --check > /dev/null || { echo "Error: Credential check failed"; exit 1; }
 if [[ ${systest_only} -eq 1 ]]; then
   COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
 else
@@ -242,11 +242,6 @@ echo -n "Creating ${instance} instance "
 
 kubectl create namespace ${instance} || die "FAILED"
 
-# Does kubernetes version supports `get pod --show-all=true`?
-# use it for older versions and this is not needed for new versions of kubernetes
-KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
-test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
-
 # The CTA registry secret must be copied in the instance namespace to be usable
 kubectl get secret ${ctareg_secret} &> /dev/null
 if [ $? -eq 0 ]; then
@@ -278,7 +273,7 @@ helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --se
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+  kubectl --namespace=${instance} get pod init -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
 done
 
@@ -289,15 +284,15 @@ if [ $runoracleunittests == 1 ] ; then
   echo -n "Waiting for oracleunittests"
   for ((i=0; i<400; i++)); do
     echo -n "."
-    kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
+    kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
     sleep 1
   done
-  echo "\n"
+  echo ""
 
   kubectl --namespace=${instance} logs oracleunittests
 
   # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Failed); then
+  if $(kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -q Failed); then
     echo "oracleunittests pod in Error status here are its last log lines:"
     kubectl --namespace=${instance} logs oracleunittests --tail 10
     die "ERROR: oracleunittests pod in Error state. Initialization failed."
@@ -323,16 +318,16 @@ echo -n "Waiting for all the pods to be in the running state"
 for ((i=0; i<240; i++)); do
   echo -n "."
   # exit loop when all pods are in Running state
-  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
+  kubectl -n ${instance} get pod -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
   sleep 1
 done
 
 kubectl get pods -n ${instance}
 
-if [[ $(kubectl -n toto get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running) ]]; then
+if [[ $(kubectl -n toto get pod -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running) ]]; then
   echo "TIMED OUT"
   echo "Some pods have not been initialized properly:"
-  kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
+  kubectl --namespace=${instance} get pod
   exit 1
 fi
 echo OK
@@ -342,10 +337,10 @@ kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
 echo -n "Waiting for EOS to be configured"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
+  [ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+[ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] || die "TIMED OUT"
 echo OK
 
 
@@ -376,12 +371,6 @@ kubectl --namespace=${instance} exec ctacli -- klist
 
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
-#
-# The FQDN can be set as follows:
-# CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
-#
-# however the simple hostname should be sufficient:
-CTA_ENDPOINT=ctafrontend:10955
 
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
@@ -392,7 +381,7 @@ do
 done
 
 echo "Instance ${instance} successfully created:"
-kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
+kubectl --namespace=${instance} get pod
 
 if [ $runexternaltapetests == 1 ] ; then
   echo "Running database unit-tests"
@@ -401,7 +390,7 @@ if [ $runexternaltapetests == 1 ] ; then
   kubectl --namespace=${instance} logs externaltapetests
 
   # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod externaltapetests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Failed'); then
+  if $(kubectl --namespace=${instance} get pod externaltapetests -o json | jq -r .status.phase | grep -E -q 'Failed'); then
     echo "externaltapetests pod in Failed status here are its last log lines:"
     kubectl --namespace=${instance} logs externaltapetests --tail 10
     die "ERROR: externaltapetests pod in Error state. Initialization failed."

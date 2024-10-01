@@ -17,6 +17,8 @@
 
 # Note that this tests relies on the cta-catalogue schema being set to the previous version using the -u flag in create_instance
 
+set -e
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF
@@ -48,18 +50,19 @@ create_dbupdatetest_pod() {
   echo -n "Waiting for dbupdatetest pod to be created"
   for ((i=0; i<240; i++)); do
     echo -n "."
-    kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json \
+    kubectl --namespace=${instance} get pod -o json 2>/dev/null \
       | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
     sleep 1
   done
+  echo ""
 
   echo -n "Waiting for dbupdatetest to be ready"
   for ((i=0; i<400; i++)); do
     echo -n "."
-    kubectl -n ${NAMESPACE} logs dbupdatetest | egrep -q "dbupdatetest pod is ready" && break
+    kubectl -n ${NAMESPACE} logs dbupdatetest 2>/dev/null |   grep -E -q "dbupdatetest pod is ready" && break
     sleep 1
   done
-  echo "\n"
+  echo ""
 }
 
 CTA_VERSION=""
@@ -90,11 +93,6 @@ fi
 
 # create tmp dir for all temporary files
 tempdir=$(mktemp -d)
-
-# Does kubernetes version supports `get pod --show-all=true`?
-# use it for older versions and this is not needed for new versions of kubernetes
-KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
-test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
 
 # Get Catalogue Schema version
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
