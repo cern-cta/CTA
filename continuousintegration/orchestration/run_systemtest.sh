@@ -52,36 +52,38 @@ test -z ${SCHED_TYPE+x} && SCHED_TYPE="objectstore"
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -i <docker image tag>] \
-      [-t <systemtest timeout in seconds>] [-e <eos_configmap>] \
-      [-a <additional_k8_resources>] [-k] [-O] \
-      [-D | -d <database_configmap>] [-S] [-U] \
-      [-Q]
-
-Options:
-  -k    keep namespace after systemtest_script run if successful
-  -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
-  -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
-  -S    Use systemd to manage services inside containers
-  -a    additional kubernetes resources added to the kubernetes namespace
-  -U    Run database unit test only
-  -C    Cleanup leftover kubernetes namespaces
-  -u    Prepare the pods to run the liquibase test
-  -T    Execute tests for external tape formats
-  -Q    Create the cluster using the last ctageneric image from main
-Create a kubernetes instance and launch the system test script specified.
-Makes sure the created instance is cleaned up at the end and return the status of the system test.
-EOF
-
-exit 1
+usage() {
+  echo "Script to create a Kubernetes instance and run a system test script."
+  echo ""
+  echo "Usage: $0 -n <namespace> -s <systemtest_script> [options]"
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                     Shows help output."
+  echo "  -n <namespace>:                 Specify the Kubernetes namespace."
+  echo "  -s <systemtest_script>:         Path to the system test script."
+  echo "  -p <gitlab pipeline ID>:        GitLab pipeline ID."
+  echo "  -i <docker image tag>:          Docker image tag for the deployment."
+  echo "  -t <timeout>:                   Timeout for the system test in seconds."
+  echo "  -e <eos_configmap>:             Path to the EOS configmap file."
+  echo "  -a <additional_k8_resources>:   Path to additional Kubernetes resources."
+  echo "  -c <tpsrv count>:               Set the number of tape servers to spawn."
+  echo "  -k:                             Keep the namespace after system test script run if successful."
+  echo "  -O:                             Use Ceph account associated with this node (wipe content before tests); by default, use local VFS."
+  echo "  -D:                             Use Oracle account associated with this node (wipe content before tests); by default, use local SQLite DB."
+  echo "  -S:                             Use systemd to manage services inside containers."
+  echo "  -U:                             Run database unit test only."
+  echo "  -C:                             Cleanup leftover Kubernetes namespaces."
+  echo "  -u:                             Prepare the pods to run the Liquibase test."
+  echo "  -T:                             Execute tests for external tape formats."
+  echo "  -Q:                             Create the cluster using the last ctageneric image from main."
+  exit 1
 }
 
 # options that must be passed to create_instance
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCTQ" o; do
+while getopts "n:d:s:p:b:e:a:t:c:ukDOSUCTQ" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -105,6 +107,9 @@ while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCTQ" o; do
             ;;
         t)
             SYSTEMTEST_TIMEOUT=${OPTARG}
+            ;;
+        c)
+            tpsrv_count=${OPTARG}
             ;;
         k)
             keepnamespace=1
@@ -189,8 +194,12 @@ if [ $useceph == 1 ] ; then
     fi
 fi
 
-if [ ! -z "${config_eos}" ]; then
+if [ -n "${config_eos}" ]; then
     CREATE_OPTS="${CREATE_OPTS} -e ${config_eos}"
+fi
+
+if [ -n "${tpsrv_count}" ]; then
+    CREATE_OPTS="${CREATE_OPTS} -c ${tpsrv_count}"
 fi
 
 if [ $usesystemd == 1 ] ; then
@@ -212,7 +221,9 @@ function execute_log {
   logfile=$2
   timeout=$3
   echo "$(date): Launching ${mycmd}"
+  echo "================================================================================"
   eval "(${mycmd} | tee -a ${logfile}) &"
+  echo "================================================================================"
   execute_log_pid=$!
   execute_log_rc=''
 

@@ -30,6 +30,7 @@ usage() {
   echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
   echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
+  echo "      --skip-image-reload:      Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
   echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
   echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
   exit 1
@@ -41,6 +42,7 @@ redeploy() {
   local image_tag="dev"
   local operating_system="alma9"
   local rpm_src=""
+  local skip_image_reload=false
   local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
   local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
 
@@ -88,6 +90,7 @@ redeploy() {
           exit 1
         fi
         ;;
+      --skip-image-reload) skip_image_reload=true ;;
       --catalogue-credentials)
         test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist.";  exit 1; }
         catalogue_credentials=$2
@@ -129,21 +132,23 @@ redeploy() {
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace}
   fi
 
-  # Clear the old image and namespace
-  if podman inspect ctageneric:${image_tag} &>/dev/null; then
-    echo "Deleting old image and removing it from minikube"
-    podman rmi ctageneric:${image_tag}
-    minikube image rm localhost/ctageneric:${image_tag}
-  fi
+  if [ ${skip_image_reload} = false ]; then
+    # Clear the old image and namespace
+    if podman inspect ctageneric:${image_tag} &>/dev/null; then
+      echo "Deleting old image and removing it from minikube"
+      podman rmi ctageneric:${image_tag}
+      minikube image rm localhost/ctageneric:${image_tag}
+    fi
 
-  ## Create and load the new image
-  echo "Building image based on ${rpm_src}"
-  ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}" --operating-system "${operating_system}"
-  # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
-  podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
-  echo "Loading new image into minikube"
-  minikube image load ctageneric_${image_tag}.tar
-  rm ctageneric_${image_tag}.tar
+    ## Create and load the new image
+    echo "Building image based on ${rpm_src}"
+    ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}" --operating-system "${operating_system}"
+    # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
+    podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
+    echo "Loading new image into minikube"
+    minikube image load ctageneric_${image_tag}.tar
+    rm ctageneric_${image_tag}.tar
+  fi
 
   # Redeploy containers
   echo "Redeploying containers"
