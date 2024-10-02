@@ -49,8 +49,6 @@ k8s-test-client:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -59,8 +57,6 @@ k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -69,8 +65,6 @@ k8s-test-repack:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -79,8 +73,6 @@ k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -89,8 +81,6 @@ k8s-unit-test-oracle:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
     # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
