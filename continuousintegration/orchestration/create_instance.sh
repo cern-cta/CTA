@@ -268,7 +268,7 @@ echo "Got library: ${LIBRARY_DEVICE}"
 IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
 
 echo  "Setting up init and db pods."
-helm install cataloguedb helm/cataloguedb -n ${instance} --set image.tag=${imagetag} --set catalogue.schemaVersion="${SCHEMA_VERSION}"
+helm install cataloguedb helm/cataloguedb -n ${instance} --set catalogue.schemaVersion="${SCHEMA_VERSION}"
 helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} -f ${config_schedstore} #-f ${config_database}
 
 echo -n "Waiting for init"

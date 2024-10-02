@@ -36,29 +36,16 @@ catalogue:
       server: ""
       database: ""
 
-pvcs:
-  claimlogs:
-    selectors:
-      type: logs
-    storage: 2Gi
-    accessModes:
-      - ReadWriteMany
-
 
 volumeMounts:
 - mountPath: /etc/config/database
   name: mydatabase
-- mountPath: /mnt/logs
-  name: logstorage
 
 
 volumes:
 - name: mydatabase
   configMap:
     name: database-config
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
 
 # Catalogue
 postgres:
