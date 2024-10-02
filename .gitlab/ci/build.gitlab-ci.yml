@@ -18,7 +18,9 @@
 .build-cta-srpm:
   extends:
     - .build-cta
-  needs: [] # Allows this job at the same time as analysis stage
+  needs: 
+    - job: modify-versionlock
+      optional: true
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
   script:

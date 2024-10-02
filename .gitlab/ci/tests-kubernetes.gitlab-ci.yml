@@ -4,9 +4,6 @@
 .kubernetes-test:
   needs:
     - job: docker-build-ctageneric
-      optional: true
-    - job: docker-build-ctageneric-triggered
-      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never

@@ -1,5 +1,5 @@
 # Job to modify the file for external triggers
-modify_versionlock:
+modify-versionlock:
   stage: prepare
   script:
     - |
