@@ -4,6 +4,7 @@ imagePullSecret:
 
 tpsrv:
   replicaCount: 2
+  numDrivesAvailable: 2
   labels:
     k8s-app: ctataped
   containers:
