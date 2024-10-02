@@ -2,24 +2,27 @@
 {{$namespace := .Release.Namespace }}
 {{$imageVersion := include "tpsrv.image" . }}
 {{$imageSecret := include "tpsrv.imageSecret" . }}
-{{- range $key, $value := .Values.tpsrv}}
+
+# Spawn replicaCount pods
+{{- range $i := until (int .Values.tpsrv.replicaCount) }}
+{{- $podName := printf "tpsrv%02d" (add $i 1) }} # server names start from 1
 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{$key | quote}}
+  name: {{$podName | quote}}
   namespace: {{ $namespace | quote}}
   labels:
-  {{- if ($value.labels)}}
-    {{$value.labels | toYaml  | nindent 4}}
+  {{- if ($.Values.tpsrv.labels)}}
+    {{$.Values.tpsrv.labels | toYaml  | nindent 4}}
   {{- else}}
-    k8s-app: {{$key | quote}}
+    k8s-app: {{$podName | quote}}
   {{- end}}
 spec:
   restartPolicy: Never
   containers:
-  {{- range $value.containers}}
-    {{$containerName := .name | default $key | quote }}
+  {{- range $.Values.tpsrv.containers}}
+  {{$containerName := .name | default $podName | quote }}
   - name: {{ $containerName }}
     image: {{ $imageVersion }}
     {{- if (.commandsAtRuntime)}}
@@ -33,11 +36,13 @@ spec:
     stdin: true
     env:
     - name: MY_NAME
-      value: {{ $key | quote}}
+      value: {{ $podName | quote}}
     - name: MY_NAMESPACE
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: driveslot
+      value: {{ $i | quote }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}
@@ -59,9 +64,9 @@ spec:
     {{- end}}
     {{- end}}
   {{- end}}
-  {{- if ($value.volumes)}}
+  {{- if ($.Values.tpsrv.volumes)}}
   volumes:
-    {{- $value.volumes | toYaml | nindent 2}}
+    {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
     {{- if ($.Values.global.volumes) }}
       {{- $.Values.global.volumes | toYaml | nindent 2}}
     {{- end}}
