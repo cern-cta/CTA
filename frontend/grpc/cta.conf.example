@@ -33,6 +33,8 @@ ObjectStore BackendPath /path/to/local/objectstore
 ####################################
 #  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
 ####################################
+# Use TLS
+#gRPC TLS true/false
 #  TLS service key file
 #gRPC TlsKey /path/to/key
 #
@@ -43,6 +45,8 @@ ObjectStore BackendPath /path/to/local/objectstore
 #gRPC TlsChain /path/to/CA/chain
 #
 
+# gRPC number of threads
+#gRPC threads nthreads
 
 ####################################
 # CTA Scheduler DB cache timeout options

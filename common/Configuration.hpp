@@ -208,6 +208,41 @@ namespace cta::common {
         return value;
       }
 
+      /**
+       * Retrieves a configuration entry as a boolean.
+       *
+       * @param category category of the configuration parameter
+       * @param name category of the configuration parameter
+       * @param defaultValue the value to be returned if the configuration entry
+       * is not in the configuration file
+       * @return the bool value
+       */
+      bool getConfEntBool(const std::string &category,
+        const std::string &key, bool defaultValue)  {
+        std::string strValue;
+        try {
+          strValue = getConfEntString(category, key);
+        } catch(cta::exception::Exception &ex) {
+          return defaultValue;
+        }
+
+        // check if it's true/false
+        if (strValue != "true" && strValue != "false") {
+          InvalidConfigEntry ex;
+          ex.getMessage() << "Failed to get configuration entry " << category <<
+            ":" << key << ": Value is not a valid bool (\"true\" or \"false\"): value=" <<
+            strValue;
+          throw ex;
+        }
+
+        bool value;
+        std::istringstream iss(strValue);
+        iss >> std::boolalpha >> value;
+
+        return value;
+      }
+
+
     private:
 
       /**

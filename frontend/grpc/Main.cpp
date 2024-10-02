@@ -45,20 +45,14 @@ std::string help =
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--threads <N>, -c <N>    \tnumber of threads to process concurrent requests, defaults to 8x#CPUs\n"
-    "\t--port <port>, -p <port> \tTCP port number to use, defaults to 17017\n"
-    "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
-    "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
-    "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
-    "\t--version, -v            \tprint version and exit\n"
-    "\t--help, -h               \tprint this help and exit\n";
+    "\t--config <config-file>, -c   \tConfiguration file\n"
+    "\t--version, -v                \tprint version and exit\n"
+    "\t--help, -h                   \tprint this help and exit\n";
 
 static struct option long_options[] = {
-  { "threads",       required_argument, nullptr, 'c' },
-  { "port",          required_argument, nullptr, 'p' },
+  { "config",        required_argument, nullptr, 'c' },
   { "help",          no_argument,       nullptr, 'h' },
   { "version",       no_argument,       nullptr, 'v' },
-  { "tls",           no_argument,       nullptr, 't' },
   { nullptr,         0,                 nullptr, 0   }
 };
 
@@ -81,38 +75,31 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
-    std::string port = "17017";
+    std::string config_file("/etc/cta/cta.conf");
 
     char c;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
     bool useTLS = false;
-    int threads = 8 * std::thread::hardware_concurrency();
+    std::string port;
 
-    while( (c = getopt_long(argc, argv, "c:p:nshv", long_options, &option_index)) != EOF) {
+    while( (c = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != EOF) {
 
         switch(c) {
-            case 'p':
-                port = std::string(optarg);
-                break;
             case 'h':
                 printHelpAndExit(0);
                 break;
             case 'v':
                 printVersionAndExit();
                 break;
-            case 't':
-                useTLS = true;
-                break;
             case 'c':
-                threads = std::atoi(optarg);
+                config_file = optarg;
                 break;
             default:
                 printHelpAndExit(1);
         }
     }
 
-    std::string config_file("/etc/cta/cta.conf");
     // Initialize catalogue, scheduler, logContext
     frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
@@ -123,6 +110,14 @@ int main(const int argc, char *const *const argv) {
 
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
+    // try to update port from config
+    try {
+        port = config.getConfEntString("gprc", "port");
+    }
+    catch (...) {
+        port = "17017";
+    }
+
     std::string server_address("0.0.0.0:" + port);
 
     // start gRPC service
@@ -130,6 +125,12 @@ int main(const int argc, char *const *const argv) {
     ServerBuilder builder;
 
     std::shared_ptr<grpc::ServerCredentials> creds;
+
+    // read TLS value from config
+    useTLS = config.getConfEntBool("gRPC", "TLS", false);
+
+    // get number of threads
+    int threads = config.getConfEntInt("gRPC", "threads", 8 * std::thread::hardware_concurrency());
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
