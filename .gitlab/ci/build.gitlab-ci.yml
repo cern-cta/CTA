@@ -18,7 +18,9 @@
 .build-cta-srpm:
   extends:
     - .build-cta
-  needs: [] # Allows this job at the same time as analysis stage
+  needs: 
+    - job: modify-versionlock
+      optional: true
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
   script:
@@ -76,7 +78,9 @@ build-cta-rpm:
   extends:
     - .build-cta-rpm
   needs:
-    - build-cta-srpm
+    - job: build-cta-srpm
+    - job: modify-versionlock
+      optional: true
   rules:
     - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
@@ -98,7 +102,9 @@ build-cta-rpm-pgsched:
   extends:
     - .build-cta-rpm
   needs:
-    - build-cta-srpm-pgsched
+    - job: build-cta-srpm-pgsched
+    - job: modify-versionlock
+      optional: true
   rules:
     - !reference [.build-cta, rules]
     - if: $CI_COMMIT_TAG
@@ -118,7 +124,9 @@ build-cta-srpm-no-oracle:
 build-cta-rpm-no-oracle:
   stage: build
   needs:
-    - build-cta-srpm-no-oracle
+    - job: build-cta-srpm-no-oracle
+    - job: modify-versionlock
+      optional: true
   extends:
     - .build-cta-rpm
   rules:

@@ -1,6 +1,8 @@
 docker-build-ctageneric:
   stage: build:image
   needs: # Needs one of these RPM artifacts to build the image
+    - job: modify-versionlock
+      optional: true
     - job: build-cta-rpm
       optional: true
     - job: build-cta-rpm-pgsched
@@ -10,8 +12,6 @@ docker-build-ctageneric:
   retry: 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -31,33 +31,3 @@ docker-build-ctageneric:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-
-# This job is the same as the one above, except that it builds the Docker image
-# depending on modify_versionlock when triggered by EOS project (tagged release trigger).
-docker-build-ctageneric-triggered:
-  stage: build:image
-  dependencies:
-    - modify_versionlock
-    - build-cta-srpm
-    - build-cta-rpm
-    - build-cta-srpm-pgsched
-    - build-cta-rpm-pgsched
-    - build-cta-srpm-no-oracle
-    - build-cta-rpm-no-oracle
-  retry: 1
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "trigger"'
-  image:
-    name: $DOCKER_IMAGE_BUILDER_IMAGE
-    entrypoint: [""]
-  before_script:
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-  script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
-    # The dockerfile wants the rpms in the image_rpms directory. The build step generated the rpms in build_rpm/RPM/RPMS/x86_64
-    - mkdir -p image_rpms
-    - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
-    - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
-                       --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-    - cat continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list

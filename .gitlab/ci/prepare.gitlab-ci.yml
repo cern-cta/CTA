@@ -1,5 +1,5 @@
 # Job to modify the file for external triggers
-modify_versionlock:
+modify-versionlock:
   stage: prepare
   script:
     - |
@@ -27,6 +27,8 @@ modify_versionlock:
         else
           echo "XRootD version not found in the file."
         fi
+        # Replace xrootd version in spec file
+        sed -i "s/^%define xrootdVersion $current_xrootd_version/%define xrootdVersion $XROOTD_VERSION/" cta.spec.in
       else
         echo "XROOTD_VERSION is not provided. Skipping XRootD version replacement."
       fi
@@ -36,6 +38,7 @@ modify_versionlock:
   artifacts:
     paths:
       - continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+      - cta.spec.in
   rules:
     - if: '$CI_PIPELINE_SOURCE == "trigger"'
   when: on_success

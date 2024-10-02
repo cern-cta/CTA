@@ -1,21 +1,17 @@
 # All of the below tests use only the docker image generated in the build:image stage
 # These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
-.manual-rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-      allow_failure: false
-
 .kubernetes-test:
   needs:
-    - docker-build-ctageneric
+    - job: docker-build-ctageneric
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - when: on_success
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
@@ -50,8 +46,6 @@ k8s-test-client:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -60,8 +54,6 @@ k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -70,8 +62,6 @@ k8s-test-repack:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -80,13 +70,34 @@ k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
+k8s-unit-test-oracle:
+  stage: test
+  extends:
+    - .kubernetes-test
+  variables:
+    # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
+    # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
+    # pod's yaml file is `pod-oracleunittests.yaml`
+    TEST_SCRIPT: "/usr/bin/true"
+    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
+
 # Manually triggered
+
+.manual-rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
 
 k8s-test-liquibase-update:
   stage: test
@@ -107,16 +118,3 @@ k8s-test-external-tape-formats:
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
-
-k8s-unit-test-oracle:
-  stage: test
-  extends:
-    - .kubernetes-test
-  except:
-    - tags
-  variables:
-    # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
-    # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
-    # pod's yaml file is `pod-oracleunittests.yaml`
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
