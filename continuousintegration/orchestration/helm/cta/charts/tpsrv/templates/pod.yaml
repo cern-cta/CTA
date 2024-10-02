@@ -42,7 +42,7 @@ spec:
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
     - name: driveslot
-      value: {{ $i | quote }}
+      value: {{ mod $i (index $.Values.tpsrv.numDrivesAvailable) | quote }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}
