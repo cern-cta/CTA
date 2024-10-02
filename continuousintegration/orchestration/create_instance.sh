@@ -310,7 +310,9 @@ if [ $runoracleunittests == 1 ] ; then
   exit 0
 fi
 
-
+# This simply counts the number of drives in the mhvtl config
+# If their slots do not start from 0 (which they should), this will not produce the expected results
+num_drives_available=$(grep Drive -c /etc/mhvtl/device.conf)
 
 echo ""
 echo "Creating cta instance in ${instance} namespace"
@@ -318,7 +320,8 @@ helm dependency build ${poddir}/cta
 helm dependency update ${poddir}/cta
 helm install cta ${poddir}/cta -n ${instance} \
                                --set global.image=${IMAGE} \
-                               --set tpsrv.tpsrv.replicaCount=${tpsrv_count}
+                               --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
+                               --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available}
 
 
 kubectl --namespace=${instance} get pods
