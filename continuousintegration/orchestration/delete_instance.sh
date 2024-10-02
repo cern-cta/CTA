@@ -83,9 +83,18 @@ if [ $collectlogs == 1 ] ; then
   # indeed if the system test fails, artifacts are not collected for the build
   tmpdir=$(mktemp --tmpdir=${LOG_DIR} -d -t ${instance}_delete_XXXX)
   echo "Collecting stdout logs of pods to ${tmpdir}"
-  for podcontainer in "init -c init" "client -c client" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv01 -c taped" "tpsrv01 -c rmcd" "tpsrv02 -c taped" "tpsrv02 -c rmcd"; do
-    kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
+
+  # Collect logs for each pod
+  pods=$(kubectl --namespace ${instance} get pods -o jsonpath='{.items[*].metadata.name}')
+  for podName in $pods; do
+    containers=$(kubectl --namespace ${instance} get pod ${podName} -o jsonpath='{.spec.containers[*].name}')
+    # Loop through each container of said pod
+    for containerName in $containers; do
+      # Fetch logs and redirect to the appropriate log file
+      kubectl --namespace ${instance} logs ${podName} -c ${containerName} > ${tmpdir}/${podName}-${containerName}.log
+    done
   done
+  # Collect ctacli logs
   kubectl --namespace ${instance} exec ctacli -- bash -c "XZ_OPT='-0 -T0' tar -C /mnt/logs -Jcf - ." > ${tmpdir}/varlog.tar.xz
 
   if [ ! -z "${CI_PIPELINE_ID}" ]; then

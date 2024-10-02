@@ -42,6 +42,7 @@ usage() {
   echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
   echo "      --skip-debug-packages                 Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --skip-image-reload:                  Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
   echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
   echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
@@ -61,6 +62,7 @@ compile_deploy() {
   local skip_cmake=false
   local skip_unit_tests=false
   local skip_debug_packages=false
+  local skip_image_reload=false
   local build_generator="Ninja"
   local cmake_build_type=""
   local operating_system="alma9"
@@ -97,6 +99,7 @@ compile_deploy() {
       --skip-cmake) skip_cmake=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
+      --skip-image-reload) skip_image_reload=true ;;
       --force-install) force_install=true ;;
       --build-generator) 
         if [[ $# -gt 1 ]]; then
@@ -264,13 +267,20 @@ compile_deploy() {
   fi
 
   if [ ${skip_deploy} = false ]; then
+
+
+    local redeploy_flags=""
+    if [ ${skip_image_reload} = true ]; then
+      redeploy_flags+=" --skip-image-reload"
+    fi
     echo "Redeploying CTA pods..."
     bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
       -n ${deploy_namespace} \
       --operating-system "${operating_system}" \
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
       --catalogue-credentials ${catalogue_credentials} \
-      --scheduler-credentials ${scheduler_credentials}
+      --scheduler-credentials ${scheduler_credentials} \
+      ${redeploy_flags}
   fi
 }
 
