@@ -26,11 +26,6 @@ config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
 model="mhvtl"
 # defaults MGM namespace to quarkdb with http
 config_eos="./eos5-config-quarkdb-https.yaml"
-# shared configmap for eoscta instance
-config_eoscta="./eoscta-config.yaml"
-config_script="./sandbox-script.yaml"
-keypass_names="./keypass-names-configmap.yaml"
-config_kdc="./kdc-krb5.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -55,31 +50,41 @@ runexternaltapetests=0
 # Create an instance for
 systest_only=0
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
-      [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID>] [-i <docker image tag>] [-r <docker registry>] \
-      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q]
+# Number of tape servers to spawn
+tpsrv_count=2
 
-Options:
-  -S    Use systemd to manage services inside containers
-  -D	wipe database content during initialization phase (database content is kept by default)
-  -O	wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)
-  -a    additional kubernetes resources added to the kubernetes namespace
-  -U    Run database unit test only
-  -u    Prepare the pods to run the liquibase test
-  -T    Execute tests for external tape formats
-  -Q    Create the cluster using the last ctageneric image from main
-  -r    Provide the docker registry. Defaults to gitlab-registry.cern.ch/cta"
-EOF
-exit 1
+usage() {
+  echo "Script for managing Kubernetes resources."
+  echo ""
+  echo "Usage: $0 -n <namespace> [options]"
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                     Shows help output."
+  echo "  -n <namespace>:                 Specify the Kubernetes namespace."
+  echo "  -o <schedstore_configmap>:      Path to the scheduler configmap file."
+  echo "  -d <database_configmap>:        Path to the database configmap file."
+  echo "  -e <eos_configmap>:             Path to the EOS configmap file."
+  echo "  -a <additional_k8_resources>:   Path to additional Kubernetes resources."
+  echo "  -p <gitlab pipeline ID>:        GitLab pipeline ID."
+  echo "  -i <docker image tag>:          Docker image tag for the deployment."
+  echo "  -r <docker registry>:           Provide the Docker registry. Defaults to \"gitlab-registry.cern.ch/cta\"."
+  echo "  -c <tpsrv count>:               Set the number of tape servers to spawn. Defaults to 2."
+  echo "  -S:                             Use systemd to manage services inside containers."
+  echo "  -D:                             Wipe database content during initialization phase (content is kept by default)."
+  echo "  -O:                             Wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)."
+  echo "  -U:                             Run database unit tests only."
+  echo "  -u:                             Prepare the pods to run the Liquibase test."
+  echo "  -T:                             Execute tests for external tape formats."
+  echo "  -Q:                             Create the cluster using the last ctageneric image from main."
+  exit 1
 }
+
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
 REGISTRY_HOST="gitlab-registry.cern.ch/cta"
 
-while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
+while getopts "n:o:d:e:a:p:b:i:r:c:SDOUumTQ" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG}
@@ -112,6 +117,9 @@ while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
             ;;
         r)
             REGISTRY_HOST=${OPTARG}
+            ;;
+        c)
+            tpsrv_count=${OPTARG}
             ;;
         S)
             usesystemd=1
@@ -182,12 +190,12 @@ fi
 if [[ "${systest_only}" -eq 1 ]]; then
   echo "Creating instance from image build for lastest commit on main ${COMMITID}"
   imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | tail -n1)
-elif [ ! -z "${pipelineid}" ]; then
+elif [ -n "${pipelineid}" ]; then
   echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
   imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
   # just a shortcut to avoid time lost checking against the docker registry...
   #imagetag=${pipelineid}git${COMMITID}
-elif [ ! -z "${dockerimage}" ]; then
+elif [ -n "${dockerimage}" ]; then
   echo "Creating instance for image ${dockerimage}"
   imagetag=${dockerimage}
 else
@@ -309,7 +317,8 @@ echo "Creating cta instance in ${instance} namespace"
 helm dependency build ${poddir}/cta
 helm dependency update ${poddir}/cta
 helm install cta ${poddir}/cta -n ${instance} \
-                               --set global.image=${IMAGE}
+                               --set global.image=${IMAGE} \
+                               --set tpsrv.tpsrv.replicaCount=${tpsrv_count}
 
 
 kubectl --namespace=${instance} get pods
@@ -342,9 +351,6 @@ for ((i=0; i<300; i++)); do
 done
 [ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] || die "TIMED OUT"
 echo OK
-
-
-
 
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 
