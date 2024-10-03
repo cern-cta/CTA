@@ -13,6 +13,7 @@ spec:
   containers:
   - name: {{$name}}
     image: {{ include "init.image" . }}
+    imagePullPolicy: {{ include "init.imagePullPolicy" . }}
     stdin: true
     env:
     - name: MY_NAME
@@ -37,4 +38,4 @@ spec:
   {{include "init.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ include "init.imageSecret" . }}
+  {{ include "init.imagePullSecrets" . | nindent 4 }}

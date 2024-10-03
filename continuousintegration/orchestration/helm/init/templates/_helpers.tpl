@@ -31,29 +31,52 @@ volumeMounts:
     - `.Values.global.image` (Has lower priority)
 */}}
 {{- define "init.image" -}}
-{{- if .Values.global }}
-{{- .Values.global.image | quote -}}
-{{- else if .Values.image  }}
-{{- .Values.image | quote -}}
+{{- if and .Values.global.image.registry .Values.global.image.repository .Values.global.image.tag -}}
+  {{- $registry := .Values.global.image.registry -}}
+  {{- $repository := .Values.global.image.repository -}}
+  {{- $tag := .Values.global.image.tag -}}
+  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
+{{- else if and .Values.image.registry .Values.image.repository .Values.image.tag -}}
+  {{- $registry := .Values.image.registry -}}
+  {{- $repository := .Values.image.repository -}}
+  {{- $tag := .Values.image.tag -}}
+  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
 {{- else }}
-{{- fail "You must either provide .Values.image or .Values.global.image value."}}
+{{- fail "You must either provide .Values.global.image or .Values.image with registry, repository, and tag values." -}}
 {{- end }}
-{{- end -}}
+{{- end }}
 
-
-{{/* Pick image pull secret. It might be from:
-    - .Values.global.imagePullSecret (Takes priority)
-    - .Values.imagePullSecret
+{{/* Pick image pull policy. It might be from:
+    - .Values.global.image.pullPolicy (Takes priority)
+    - .Values.image.pullPolicy
 */}}
-{{- define "init.imageSecret" -}}
-{{- if (.Values.global ) }}
-{{- .Values.global.imagePullSecret | quote -}}
-{{- else if (.Values.imagePullSecret) }}
-{{- .Values.imagePullSecret | quote -}}
-{{- else}}
-{{ fail "You must provide imagePullSecret value either in .Values.global.imagePullSecret or in .Values.imagePullSecret"}}
+{{- define "init.imagePullPolicy" -}}
+{{- if and .Values.global.image.pullPolicy (not (empty .Values.global.image.pullPolicy)) -}}
+{{- .Values.global.image.pullPolicy | quote -}}
+{{- else if and .Values.image.pullPolicy (not (empty .Values.image.pullPolicy)) -}}
+{{- .Values.image.pullPolicy | quote -}}
+{{- else }}
+"Always"
 {{- end }}
-{{- end -}}
+{{- end }}
+
+{{/* Pick image pull secrets. It might be from:
+    - .Values.global.image.pullSecrets (Takes priority)
+    - .Values.image.pullSecrets
+*/}}
+{{- define "init.imagePullSecrets" -}}
+{{- if and .Values.global.image.pullSecrets -}}
+  {{- range .Values.global.image.pullSecrets }}
+    - name: {{ . | quote }}
+  {{- end }}
+{{- else if and .Values.image.pullSecrets -}}
+  {{- range .Values.image.pullSecrets }}
+    - name: {{ . | quote }}
+  {{- end }}
+{{- else }}
+{{- fail "You must provide imagePullSecrets value either in .Values.global.image.pullSecrets or .Values.image.pullSecrets" -}}
+{{- end }}
+{{- end }}
 
 
 

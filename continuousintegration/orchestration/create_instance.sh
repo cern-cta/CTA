@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
@@ -44,14 +46,15 @@ runoracleunittests=0
 # By default doesn't prepare the images with the previous schema version
 updatedatabasetest=0
 
-# By default doesn't run the tests for external tape formats
-runexternaltapetests=0
-
 # Create an instance for
 systest_only=0
 
 # Number of tape servers to spawn
 tpsrv_count=2
+# for the pod images
+REGISTRY_HOST="gitlab-registry.cern.ch/cta"
+
+die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() {
   echo "Script for managing Kubernetes resources."
@@ -74,77 +77,44 @@ usage() {
   echo "  -O:                             Wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)."
   echo "  -U:                             Run database unit tests only."
   echo "  -u:                             Prepare the pods to run the Liquibase test."
-  echo "  -T:                             Execute tests for external tape formats."
   echo "  -Q:                             Create the cluster using the last ctageneric image from main."
   exit 1
 }
 
-
-die() { echo "$@" 1>&2 ; exit 1; }
-
-REGISTRY_HOST="gitlab-registry.cern.ch/cta"
-
-while getopts "n:o:d:e:a:p:b:i:r:c:SDOUumTQ" o; do
+while getopts "n:o:d:e:p:b:i:r:c:SDOUumQ" o; do
     case "${o}" in
         o)
-            config_schedstore=${OPTARG}
-            test -f ${config_schedstore} || error="${error}Scheduler database credentials file ${config_schedstore} does not exist\n"
-            ;;
+            config_schedstore=${OPTARG} ;;
         d)
-            config_database=${OPTARG}
-            test -f ${config_database} || error="${error}Database configmap file ${config_database} does not exist\n"
-            ;;
+            config_database=${OPTARG} ;;
         e)
-            config_eos=${OPTARG}
-            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
-            ;;
-        a)
-            additional_resources=${OPTARG}
-            test -f ${additional_resources} || error="${error}File ${additional_resources} does not exist\n"
-            ;;
+            config_eos=${OPTARG} ;;
         m)
-            model=${OPTARG}
-            if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then error="${error}Library model ${model} does not exist\n"; fi
-            ;;
+            model=${OPTARG} ;;
         n)
-            instance=${OPTARG}
-            ;;
+            instance=${OPTARG} ;;
         p)
-            pipelineid=${OPTARG}
-            ;;
+            pipelineid=${OPTARG} ;;
         i)
-            dockerimage=${OPTARG}
-            ;;
+            dockerimage=${OPTARG} ;;
         r)
-            REGISTRY_HOST=${OPTARG}
-            ;;
+            REGISTRY_HOST=${OPTARG} ;;
         c)
-            tpsrv_count=${OPTARG}
-            ;;
+            tpsrv_count=${OPTARG} ;;
         S)
-            usesystemd=1
-            ;;
+            usesystemd=1 ;;
         O)
-            keepobjectstore=0
-            ;;
+            keepobjectstore=0 ;;
         D)
-            keepdatabase=0
-            ;;
+            keepdatabase=0 ;;
         U)
-            runoracleunittests=1
-            ;;
-        T)
-            runexternaltapetests=1
-            ;;
+            runoracleunittests=1 ;;
         u)
-            updatedatabasetest=1
-            ;;
+            updatedatabasetest=1 ;;
         Q)
-            systest_only=1
-            ;;
+            systest_only=1 ;;
         *)
-            usage
-            ;;
+            usage ;;
     esac
 done
 shift $((OPTIND-1))
@@ -157,13 +127,15 @@ if [ -n "${pipelineid}" ] && [ -n "${dockerimage}" ]; then
     usage
 fi
 
+test -f ${config_schedstore} || die "Scheduler database credentials file ${config_schedstore} does not exist\n"
+test -f ${config_database} || die "Database configmap file ${config_database} does not exist\n"
+test -f ${config_eos} || die "$EOS configmap file ${config_eos} does not exist\n"
+if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then die "Library model ${model} does not exist\n"; fi
+
 if ! command -v helm >/dev/null 2>&1; then
     echo "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
     exit 1
 fi
-
-# everyone needs poddir temporary directory to generate pod yamls
-poddir=$(mktemp -d)
 
 # Get Catalogue Schema version
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -207,56 +179,43 @@ if [ "${imagetag}" == "" ]; then
   exit 1
 fi
 
-echo 'copying files to tmpdir'
-cp -R ./helm/init ${poddir}
-cp -R ./helm/cta ${poddir}
-cp ./pod-oracleunittests.yaml ${poddir}
-
-echo "Creating instance using docker image with tag: ${imagetag}"
-
-# For now we do a search replace of the image tag for this pod.
-# Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
-# Eventually this should also be integrated into helm and be overriden using the --set flag.
-# Then the tmp dir is also no longer necessary
-sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
-
 if [ $usesystemd == 1 ] ; then
     echo "Using systemd to start services on some pods"
     # TODO: this shouldn't be happening by a find-replace, but rather by updating the values.yml
     # E.g. either setting an option or using a different values.yml
-    for podname in ctafrontend tpsrv ctaeos; do
-        sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
-    done
+    # Additionally, this doesn't even work in the first place as these files don't exist anymore
+    # for podname in ctafrontend tpsrv ctaeos; do
+    #     sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
+    # done
+    die "systemd support has not yet been implement in the Helm setup"
 fi
 
 if [ $keepdatabase == 1 ] ; then
+    # TODO: this does not seem to be implemented yet
     echo "DB content will be kept"
 else
     echo "DB content will be wiped"
 fi
 
 if [ $keepobjectstore == 1 ] ; then
+    # TODO: this does not seem to be implemented yet
     echo "scheduler data store content will be kept"
 else
     echo "schedule data store content will be wiped"
 fi
 
-echo -n "Creating ${instance} instance "
+echo "Creating ${instance} namespace"
+kubectl create namespace ${instance}
 
-kubectl create namespace ${instance} || die "FAILED"
-
-# The CTA registry secret must be copied in the instance namespace to be usable
+# The registry secret(s) must be copied in the instance namespace to be usable
 kubectl get secret ${ctareg_secret} &> /dev/null
 if [ $? -eq 0 ]; then
   echo "Copying ${ctareg_secret} secret in ${instance} namespace"
   kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${instance} create -f -
 fi
 
+# TODO: how can this be done in the init chart?
+# Setting up library
 echo "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
 for ((i=0; i<120; i++)); do
@@ -268,24 +227,30 @@ kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q
 echo "OK"
 LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
 echo "Get library device: ${LIBRARY_DEVICE}"
-
 kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
-
 echo "Got library: ${LIBRARY_DEVICE}"
 
-IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
+echo  "Installing init chart..."
+helm install init helm/init -n ${instance} \
+                            --set global.image.registry=${REGISTRY_HOST} \
+                            --set global.image.tag=${imagetag} \
+                            --set catalogue.schemaVersion="${SCHEMA_VERSION}" \
+                            -f ${config_schedstore} \
+                            -f ${config_database} \
+                            --wait --timeout 5m
 
-echo  "Setting up init and db pods."
-helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --set catalogue.schemaVersion="${SCHEMA_VERSION}" -f ${config_schedstore} -f ${config_database}
-
-echo -n "Waiting for init"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl --namespace=${instance} get pod init -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
-  sleep 1
-done
-
+# TODO: move this outside of this script
 if [ $runoracleunittests == 1 ] ; then
+  # everyone needs poddir temporary directory to generate pod yamls
+  poddir=$(mktemp -d)
+  echo 'copying files to tmpdir'
+  cp ./pod-oracleunittests.yaml ${poddir}
+  # For now we do a search replace of the image tag for this pod.
+  # Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
+  # Eventually this should also be integrated into helm and be overriden using the --set flag.
+  # Then the tmp dir is also no longer necessary
+  # e.g. helm install oracleunittest --wait --timeout 5m --set global.image=${IMAGE} \
+  sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
   echo "Running database unit-tests"
   kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
 
@@ -305,7 +270,6 @@ if [ $runoracleunittests == 1 ] ; then
     kubectl --namespace=${instance} logs oracleunittests --tail 10
     die "ERROR: oracleunittests pod in Error state. Initialization failed."
   fi
-
   # database unit-tests were successful => exit now with success
   exit 0
 fi
@@ -315,72 +279,35 @@ fi
 num_drives_available=$(grep Drive -c /etc/mhvtl/device.conf)
 
 echo ""
-echo "Creating cta instance in ${instance} namespace"
-helm dependency build ${poddir}/cta
-helm dependency update ${poddir}/cta
-helm install cta ${poddir}/cta -n ${instance} \
-                               --set global.image=${IMAGE} \
-                               --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
-                               --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available}
-
-
-kubectl --namespace=${instance} get pods
-
-echo -n "Waiting for all the pods to be in the running state"
-for ((i=0; i<240; i++)); do
-  echo -n "."
-  # exit loop when all pods are in Running state
-  kubectl -n ${instance} get pod -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
-  sleep 1
-done
+echo "Processing dependencies of cta chart..."
+helm dependency update helm/cta
+echo "Installing cta chart..."
+helm install cta helm/cta -n ${instance} \
+                          --set global.image.registry=${REGISTRY_HOST} \
+                          --set global.image.tag=${imagetag} \
+                          --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
+                          --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available} \
+                          --wait --timeout 5m
 
 kubectl get pods -n ${instance}
 
-if [[ $(kubectl -n toto get pod -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running) ]]; then
-  echo "TIMED OUT"
-  echo "Some pods have not been initialized properly:"
-  kubectl --namespace=${instance} get pod
-  exit 1
-fi
-echo OK
-
-kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
-
-echo -n "Waiting for EOS to be configured"
-for ((i=0; i<300; i++)); do
-  echo -n "."
-  [ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] && break
-  sleep 1
-done
-[ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] || die "TIMED OUT"
-echo OK
-
+# Set up kerberos: TODO can this be done in helm cta chart setup script
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-
 echo -n "Using kinit for ctacli and client"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
-
-
-
 # space=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 # May be needed for the client to make sure that SSS is not used by default but krb5...
 #echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-echo OK
-
 echo "klist for client:"
 kubectl --namespace=${instance} exec client -- klist
-
-
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist
 
 
-
-
+# TODO: why is this not done in the ctaoes sartup script?
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
-
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
 for WORKFLOW in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default
@@ -390,23 +317,4 @@ do
 done
 
 echo "Instance ${instance} successfully created:"
-kubectl --namespace=${instance} get pod
-
-if [ $runexternaltapetests == 1 ] ; then
-  echo "Running database unit-tests"
-  ./tests/external_tapes_test.sh -n ${instance} -P ${poddir}
-
-  kubectl --namespace=${instance} logs externaltapetests
-
-  # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod externaltapetests -o json | jq -r .status.phase | grep -E -q 'Failed'); then
-    echo "externaltapetests pod in Failed status here are its last log lines:"
-    kubectl --namespace=${instance} logs externaltapetests --tail 10
-    die "ERROR: externaltapetests pod in Error state. Initialization failed."
-  fi
-
-  # database unit-tests were successful => exit now with success
-  exit 0
-fi
-
-exit 0
+kubectl --namespace=${instance} get pods
