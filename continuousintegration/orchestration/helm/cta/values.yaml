@@ -1,4 +1,10 @@
 # Here are stored global settings for all the project pods
 global:
-  imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - ctaregsecret
+  useSystemd: false

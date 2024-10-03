@@ -30,28 +30,19 @@ exit 1
 while getopts "n:d:D" o; do
     case "${o}" in
         n)
-            instance=${OPTARG}
-            ;;
+            instance=${OPTARG} ;;
         d)
-            LOG_DIR=${OPTARG}
-            ;;
+            LOG_DIR=${OPTARG} ;;
         D)
-            collectlogs=0
-            ;;
+            collectlogs=0 ;;
         *)
-            usage
-            ;;
+            usage ;;
     esac
 done
 shift $((OPTIND-1))
 
 if [ -z "${instance}" ]; then
     usage
-fi
-
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
 fi
 
 if [ ! -d ${LOG_DIR} ]; then
@@ -68,12 +59,13 @@ fi
 # Display all backtraces if any
 ###
 
-for backtracefile in $(kubectl --namespace ${instance} exec ctacli -- bash -c 'find /mnt/logs | grep core | grep bt$'); do
-  pod=$(echo ${backtracefile} | cut -d/ -f4)
-  echo "Found backtrace in pod ${pod}:"
-  kubectl --namespace ${instance} exec ctacli -- cat ${backtracefile}
-done
-
+if kubectl get pod ctacli --namespace "$instance" >/dev/null 2>&1; then
+  for backtracefile in $(kubectl --namespace ${instance} exec ctacli -- bash -c 'find /mnt/logs | grep core | grep bt$' 2>/dev/null); do
+    pod=$(echo ${backtracefile} | cut -d/ -f4)
+    echo "Found backtrace in pod ${pod}:"
+    kubectl --namespace ${instance} exec ctacli -- cat ${backtracefile}
+  done
+fi
 
 ###
 # Collect the logs?
@@ -94,10 +86,12 @@ if [ $collectlogs == 1 ] ; then
       kubectl --namespace ${instance} logs ${podName} -c ${containerName} > ${tmpdir}/${podName}-${containerName}.log
     done
   done
-  # Collect ctacli logs
-  kubectl --namespace ${instance} exec ctacli -- bash -c "XZ_OPT='-0 -T0' tar -C /mnt/logs -Jcf - ." > ${tmpdir}/varlog.tar.xz
+  if kubectl get pod ctacli --namespace "$instance" >/dev/null 2>&1; then
+    # Collect ctacli logs
+    kubectl --namespace ${instance} exec ctacli -- bash -c "XZ_OPT='-0 -T0' tar -C /mnt/logs -Jcf - ." > ${tmpdir}/varlog.tar.xz
+  fi
 
-  if [ ! -z "${CI_PIPELINE_ID}" ]; then
+  if [ -n "${CI_PIPELINE_ID}" ]; then
     # we are in the context of a CI run => save artifacts in the directory structure of the build
     echo "Saving logs as artifacts"
     mkdir -p ../../pod_logs/${instance}
@@ -109,21 +103,7 @@ else
   echo "Discarding logs for the current run"
 fi
 
-
 echo "Deleting ${instance} instance"
-
 kubectl delete namespace ${instance}
-for ((i=0; i<120; i++)); do
-  echo -n "."
-  kubectl get namespace | grep -q "^${instance} " || break
-  sleep 1
-done
-
-echo OK
-
-# this now useless as dummy NFS PV were replaced by local volumes
-# those are recycled automatically
-# ./recycle_librarydevice_PV.sh
-
 echo "Status of library pool after test:"
 kubectl get pv

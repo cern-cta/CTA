@@ -1,7 +1,6 @@
 {{$namespace := .Release.Namespace }}
 {{$accountName := .Values.serviceAccount.name }}
 {{$name := include "kdc.name" . }}
-{{$secret := include "kdc.imageSecret" .}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -15,6 +14,7 @@ spec:
   containers:
   - name: {{$name}}
     image: {{ include "kdc.image" . }}
+    imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
     stdin: true
     env:
     - name: MY_NAME
@@ -40,4 +40,4 @@ spec:
   {{include "kdc.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{$secret}}
+  {{ include "kdc.imagePullSecrets" . | nindent 4 }}
