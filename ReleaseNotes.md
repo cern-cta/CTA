@@ -74,6 +74,7 @@
 - cta/CTA#918 - Improve RPM job organization and introduced additional information in pipeline names
 - cta/CTA#924 - Run postgresql unit tests with valgrind only in nightly builds
 - cta/CTA#890 - Allow Helm to easily spawn multiple tape servers
+- cta/CTA#872 - Fix pipeline docker build for tagged builds
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
