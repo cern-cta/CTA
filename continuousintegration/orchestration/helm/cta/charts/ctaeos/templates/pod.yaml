@@ -17,6 +17,7 @@ spec:
   containers:
   - name: "mgm"
     image: {{ include "ctaeos.image" . }}
+    imagePullPolicy: {{ include "ctaeos.imagePullPolicy" . }}
     stdin: true
     env:
     - name: MY_NAME
@@ -37,9 +38,15 @@ spec:
     {{- end}}
     securityContext:
       privileged: {{ .Values.isPriviliged }}
+    volumeMounts:
+    - name: eos-status
+      mountPath: /eos-status
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
+  volumes:
+  - name: eos-status
+    persistentVolumeClaim:
+      claimName: eos-status-pvc
   {{include "ctaeos.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ include "ctaeos.imageSecret" . }}
+  {{ include "ctaeos.imagePullSecrets" . | nindent 4 }}

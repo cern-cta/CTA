@@ -13,6 +13,7 @@ spec:
   containers:
   - name: {{$name}}
     image: {{ include "ctacli.image" . }}
+    imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
     stdin: true
     env:
     - name: MY_NAME
@@ -38,4 +39,4 @@ spec:
   {{include "ctacli.volumes" . | nindent 2}}
 
   imagePullSecrets:
-  - name: {{ include "ctacli.imageSecret" . }}
+  {{ include "ctacli.imagePullSecrets" . | nindent 4 }}

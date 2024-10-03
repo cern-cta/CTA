@@ -3,7 +3,6 @@ nameOverride: "ctaeos"
 image:
 imagePullSecrets:
 isPriviliged: true
-# readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
 readinessProbe:
 
 service:
@@ -23,7 +22,7 @@ customEntrypoint:
   - |
     cat /tmp/eos.keytab > /etc/eos.keytab;
     chmod 400 /etc/eos.keytab;
-    /opt/run/bin/ctaeos-mgm-log-wrapper.sh
+    /opt/run/bin/ctaeos-mgm-log-wrapper.sh;
 
 env:
 - name: frontend

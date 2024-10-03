@@ -15,3 +15,6 @@ pod_logs/
 # helm files
 Chart.lock
 **/get_helm.sh
+
+# Archive files
+**/*.tgz

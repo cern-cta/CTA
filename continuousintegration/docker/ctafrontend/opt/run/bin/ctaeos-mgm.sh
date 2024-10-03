@@ -112,11 +112,12 @@ cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /o
 # Waiting for /CANSTART file before starting eos
 echo -n "Waiting for /CANSTART before going further"
 for ((i=0;i<600;i++)); do
-  test -f /CANSTART && break
+  test -f /eos-status/CANSTART && break
   sleep 1
   echo -n .
 done
-test -f /CANSTART && echo OK || exit 1
+test -f /eos-status/CANSTART && echo OK || exit 1
+
 
 # setting higher OS limits for EOS processes
 maxproc=$(ulimit -u)
@@ -390,7 +391,7 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
 fi
 
 
-touch /EOSOK
+touch /eos-status/EOSOK
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /bin/bash

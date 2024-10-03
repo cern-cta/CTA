@@ -42,11 +42,13 @@ customEntrypoint:
   args: ["none"]
 
 global:
-  imagePullSecret: "ctaregsecret"
-  # TODO: this should at some point be split into registry, image, and tag.
-  # The tag should then always be empty and need to be set by the user
-  # That prevents any confusing situations with existing nonsense tags
-  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - ctaregsecret
 
 catalogue:
   schemaVersion: "15.0"
@@ -65,6 +67,7 @@ pvcs:
     accessModes:
       - ReadWriteMany
 
+# TODO: for now this always wipes everything
 env:
 - name: KEEP_DATABASE
   value: "0"

@@ -1,0 +1,35 @@
+{{- $namespace := .Release.Namespace -}}
+{{- $name := include "ctaeos.name" . -}}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}-post-install
+  namespace: {{ $namespace | quote }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  restartPolicy: Never
+  containers:
+  - name: wait-for-eos
+    image: busybox
+    command:
+      - /bin/sh
+      - -c
+      - |
+        touch /eos-status/CANSTART
+        echo -n "Waiting for EOS to be initialised"
+        while [ ! -f /eos-status/EOSOK ]; do
+          echo -n "."
+          sleep 2
+        done
+        echo "EOS initialised"
+    volumeMounts:
+      - name: eos-status
+        mountPath: /eos-status
+  volumes:
+    - name: eos-status
+      persistentVolumeClaim:
+        claimName: eos-status-pvc

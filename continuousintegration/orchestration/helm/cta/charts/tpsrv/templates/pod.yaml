@@ -1,7 +1,8 @@
 
 {{$namespace := .Release.Namespace }}
 {{$imageVersion := include "tpsrv.image" . }}
-{{$imageSecret := include "tpsrv.imageSecret" . }}
+{{$imagePullPolicy := include "tpsrv.imagePullPolicy" . }}
+{{$imagePullSecrets := include "tpsrv.imagePullSecrets" . }}
 
 # Spawn replicaCount pods
 {{- range $i := until (int .Values.tpsrv.replicaCount) }}
@@ -25,6 +26,7 @@ spec:
   {{$containerName := .name | default $podName | quote }}
   - name: {{ $containerName }}
     image: {{ $imageVersion }}
+    imagePullPolicy: {{ $imagePullPolicy }}
     {{- if (.commandsAtRuntime)}}
     readinessProbe:
       exec:
@@ -72,6 +74,6 @@ spec:
     {{- end}}
   {{- end}}
   imagePullSecrets:
-  - name: {{$imageSecret}}
+  {{ $imagePullSecrets | nindent 4 }}
 ---
 {{- end}}
