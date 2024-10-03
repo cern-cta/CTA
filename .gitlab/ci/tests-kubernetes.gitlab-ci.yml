@@ -89,6 +89,12 @@ k8s-unit-test-oracle:
 
 .manual-rules:
   rules:
+    # For pivot CTA releases: vX.Y.0
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: on_success
+    # For non-pivot CTA releases
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: manual
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
       allow_failure: true
@@ -97,7 +103,6 @@ k8s-unit-test-oracle:
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
-      allow_failure: false
 
 k8s-test-liquibase-update:
   stage: test
