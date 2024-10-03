@@ -13,10 +13,14 @@ docker-build-ctageneric:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_COMMIT_TAG
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
+    # For pivot CTA releases: vX.Y.0
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: on_success
+    # For non-pivot CTA releases
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: manual
     - when: on_success
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
