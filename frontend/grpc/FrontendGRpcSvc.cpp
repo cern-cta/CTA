@@ -93,26 +93,6 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   requester.group = request->notification().cli().user().groupname();
 
   // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-  // checked inside the common code
-
-  if (!request->notification().file().owner().uid()) {
-    m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
-  }
-
-  if (!request->notification().file().owner().gid()) {
-    m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
-  if (request->notification().file().lpath().empty()) {
-    m_lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
-  }
 
   auto instance = request->notification().wf().instance().name();
   sp.add("instance", instance);
@@ -140,11 +120,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   auto event = request->notification().wf().event();
   if (event != cta::eos::Workflow::DELETE)
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
-
-  if (request->notification().wf().instance().name().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
 
   if (request->notification().file().archive_file_id() == 0) {
     m_lc.log(cta::log::WARNING, "Invalid archive file id");
@@ -189,11 +164,6 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   }
 
   // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
   if (request->notification().file().archive_file_id() == 0) {
     m_lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
@@ -235,11 +205,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   auto event = request->notification().wf().event();
   if (event != cta::eos::Workflow::ABORT_PREPARE)
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
-
-  if (request->notification().wf().instance().name().empty()) {
-    m_lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
 
   if (!request->notification().file().archive_file_id()) {
     m_lc.log(cta::log::WARNING, "Invalid archive file id");

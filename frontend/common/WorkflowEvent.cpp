@@ -205,6 +205,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
   checkIsNotEmptyString(m_event.wf().instance().url(),      "m_event.wf.instance.url");
   checkIsNotEmptyString(m_event.transport().report_url(),   "m_event.transport.report_url");
+  checkIsNotEmptyString(m_event.wf().instance().name(),     "m_event.wf.instance.name");
 
   // check storage class attribute in the first-class attributes, then fall back to checking the xattrs
   // if it is not set
