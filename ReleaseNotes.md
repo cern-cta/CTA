@@ -67,6 +67,7 @@
 - cta/CTA#879 - Fix CI for development setup and no oracle pipeline
 - cta/CTA#872 - Fix pipeline docker build for tagged builds
 - cta/CTA#890 - Allow Helm to easily spawn multiple tape servers
+- cta/CTA#872 - Fix pipeline docker build for tagged builds
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
