@@ -60,6 +60,14 @@ spec:
     {{- end}}
     {{- if (.volumeMounts)}}
     volumeMounts:
+    - name: cta-conf-volume
+      mountPath: /etc/cta
+    - name: cta-sysconfig-volume
+      mountPath: /etc/sysconfig
+    {{- if .Values.objectstore.ceph }}
+    - name: cta-ceph-volume
+      mountPath: /etc/ceph
+    {{- end }}
     {{- .volumeMounts | toYaml | nindent 4}}
     {{- if ($.Values.global.volumes) }}
       {{- $.Values.global.volumeMounts | toYaml | nindent 4}}
@@ -68,6 +76,18 @@ spec:
   {{- end}}
   {{- if ($.Values.tpsrv.volumes)}}
   volumes:
+  - name: cta-conf-volume
+    configMap:
+      name: etc-cta
+  - name: cta-sysconfig-volume
+    configMap:
+      name: etc-sysconfig
+  {{- end}}
+  {{- if .Values.objectstore.ceph }}
+  - name: cta-ceph-volume
+    configMap:
+      name: etc-ceph
+  {{- end}}
     {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
     {{- if ($.Values.global.volumes) }}
       {{- $.Values.global.volumes | toYaml | nindent 2}}

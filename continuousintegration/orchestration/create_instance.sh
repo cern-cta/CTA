@@ -222,15 +222,17 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 echo "Got library: ${LIBRARY_DEVICE}"
 
 echo  "Installing init chart..."
+set -x
 helm install init helm/init -n ${instance} \
                             --set global.image.registry=${REGISTRY_HOST} \
                             --set global.image.tag=${imagetag} \
                             --set catalogue.schemaVersion="${SCHEMA_VERSION}" \
                             -f ${config_schedstore} \
                             -f ${config_database} \
-                            --wait --timeout 5m
+                            --wait --wait-for-jobs --timeout 5m
+return
 
-# TODO: move this outside of this script
+# TODO: move this outside of this script (to the helm chart of the catalogue?)
 if [ $runoracleunittests == 1 ] ; then
   # everyone needs poddir temporary directory to generate pod yamls
   poddir=$(mktemp -d)
@@ -282,7 +284,13 @@ helm install cta helm/cta -n ${instance} \
 
 kubectl get pods -n ${instance}
 
-# Set up kerberos: TODO can this be done in helm cta chart setup script
+
+
+# TODO: the following part is configuration that is not (and should not) be part of the Helm setup.
+# Eventually, the user should be able to provide a setup script that will be executed here.
+
+
+# Set up kerberos
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 echo -n "Using kinit for ctacli and client"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
@@ -296,7 +304,6 @@ echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist
 
 
-# TODO: why is this not done in the ctaoes sartup script?
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
 echo "Setting workflows in namespace ${instance} pod ctaeos:"

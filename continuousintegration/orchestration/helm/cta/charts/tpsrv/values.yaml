@@ -2,9 +2,39 @@
 image:
 imagePullSecret:
 
+conf:
+  drive:
+    slot: 0  # Default slot index # TODO: make this different for every pod
+    names:  # List of drive names indexed by slot
+      - drive1
+      - drive2
+      - drive3
+    devices:  # List of drive devices indexed by slot
+      - device1
+      - device2
+      - device3
+  rmcd:
+    coreFileLimit: "unlimited"
+    options: "/dev/smc"
+  taped:
+    bufferSizeBytes: 262144
+    bufferCount: 200
+    mountCriteria: "2000000, 100"
+    watchdogIdleSessionTimer: 2 # Make tape servers more responsive, thus improving CI test speed
+    useEncryption: "no"
+    tapeCacheMaxAgeSecs: 1
+    retrieveQueueCacheMaxAgeSecs: 1
+    options: "--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVENAMES[${driveslot}]}.log"
+    secProtocol: "sss"
+    secSssktPath: "/etc/cta"
+    ctaTapedSss: "cta-taped.sss.keytab"
+  general:
+    instanceName: "CI"
+    schedulerBackendName: "VFS"
+
 tpsrv:
-  replicaCount: 2
-  numDrivesAvailable: 2
+  replicaCount: 1
+  numDrivesAvailable: 1
   labels:
     k8s-app: ctataped
   containers:
@@ -44,10 +74,10 @@ tpsrv:
     volumeMounts:
     - mountPath: /shared
       name: shared
-    - mountPath: /etc/config/objectstore
-      name: myobjectstore
-    - mountPath: /etc/config/database
-      name: mydatabase
+    # - mountPath: /etc/config/objectstore
+    #   name: myobjectstore
+    # - mountPath: /etc/config/database
+    #   name: mydatabase
     - mountPath: /etc/config/library
       name: mylibrary
     - mountPath: /etc/config/eos
@@ -61,12 +91,12 @@ tpsrv:
   - name: shared
     hostPath:
       path: /opt/cta
-  - name: myobjectstore
-    configMap:
-      name: objectstore-config
-  - name: mydatabase
-    configMap:
-      name: database-config
+  # - name: myobjectstore
+  #   configMap:
+  #     name: objectstore-config
+  # - name: mydatabase
+  #   configMap:
+  #     name: database-config
   - name: mylibrary
     configMap:
       name: library-config

@@ -5,6 +5,9 @@ imagePullSecret:
 nameOverride: client
 isPriviliged: true
 
+conf:
+  cta:
+    endpoint: ctafrontend:10955
 
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:

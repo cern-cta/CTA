@@ -5,6 +5,14 @@ imagePullSecrets:
 nameOverride: ctacli
 isPriviliged: true
 
+conf:
+  cta:
+    endpoint: ctafrontend:10955
+  eos:
+    instance: ctaeos
+    requester:
+      user: adm
+      group: powerusers
 
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
@@ -19,7 +27,6 @@ customEntrypoint:
 env:
 - name: TERM
   value: "xterm"
-
 
 service:
   ports:
@@ -63,5 +70,3 @@ volumeMounts:
 
 
 readinessProbe:
-
-

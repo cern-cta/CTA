@@ -34,8 +34,14 @@ spec:
     {{- end}}
     securityContext:
       privileged: {{ .Values.isPriviliged }}
+    volumeMounts:
+    - name: cta-conf-volume
+      mountPath: /etc/cta
     {{ include "ctacli.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
+  volumes:
+  - name: cta-conf-volume
+    configMap:
+      name: etc-cta
   {{include "ctacli.volumes" . | nindent 2}}
 
   imagePullSecrets:
