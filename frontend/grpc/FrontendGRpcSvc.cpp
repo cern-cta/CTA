@@ -86,10 +86,6 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = request->notification().cli().user().username();
-  requester.group = request->notification().cli().user().groupname();
-
   // check validate request args
 
   auto instance = request->notification().wf().instance().name();
