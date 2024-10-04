@@ -75,7 +75,7 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
-    std::string config_file("/etc/cta/cta.conf");
+    std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
     char c;
     int option_index = 0;
