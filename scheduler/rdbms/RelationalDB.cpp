@@ -183,7 +183,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > RelationalDB::getNext
   }
   if (jobIDsList.empty()){
     timings.addToLog(logParams);
-    logContext.log(cta::log::ERR,
+    logContext.log(cta::log::INFO,
                    "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
     return ret;
   }
