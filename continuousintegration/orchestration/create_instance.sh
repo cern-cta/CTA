@@ -26,8 +26,6 @@ config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
 config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
 # default library model
 model="mhvtl"
-# defaults MGM namespace to quarkdb with http
-config_eos="./eos5-config-quarkdb-https.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -66,8 +64,6 @@ usage() {
   echo "  -n <namespace>:                 Specify the Kubernetes namespace."
   echo "  -o <schedstore_configmap>:      Path to the scheduler configmap file."
   echo "  -d <database_configmap>:        Path to the database configmap file."
-  echo "  -e <eos_configmap>:             Path to the EOS configmap file."
-  echo "  -a <additional_k8_resources>:   Path to additional Kubernetes resources."
   echo "  -p <gitlab pipeline ID>:        GitLab pipeline ID."
   echo "  -i <docker image tag>:          Docker image tag for the deployment."
   echo "  -r <docker registry>:           Provide the Docker registry. Defaults to \"gitlab-registry.cern.ch/cta\"."
@@ -81,14 +77,12 @@ usage() {
   exit 1
 }
 
-while getopts "n:o:d:e:p:b:i:r:c:SDOUumQ" o; do
+while getopts "n:o:d:p:b:i:r:c:SDOUumQ" o; do
     case "${o}" in
         o)
             config_schedstore=${OPTARG} ;;
         d)
             config_database=${OPTARG} ;;
-        e)
-            config_eos=${OPTARG} ;;
         m)
             model=${OPTARG} ;;
         n)
@@ -127,14 +121,12 @@ if [ -n "${pipelineid}" ] && [ -n "${dockerimage}" ]; then
     usage
 fi
 
-test -f ${config_schedstore} || die "Scheduler database credentials file ${config_schedstore} does not exist\n"
-test -f ${config_database} || die "Database configmap file ${config_database} does not exist\n"
-test -f ${config_eos} || die "$EOS configmap file ${config_eos} does not exist\n"
-if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then die "Library model ${model} does not exist\n"; fi
+test -f ${config_schedstore} || die "ERROR: Scheduler database credentials file ${config_schedstore} does not exist\n"
+test -f ${config_database} || die "ERROR: Database configmap file ${config_database} does not exist\n"
+if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then die "ERROR: Library model ${model} does not exist\n"; fi
 
 if ! command -v helm >/dev/null 2>&1; then
-    echo "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-    exit 1
+    die "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
 fi
 
 # Get Catalogue Schema version
@@ -175,8 +167,7 @@ else
   imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
 fi
 if [ "${imagetag}" == "" ]; then
-  echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
-  exit 1
+  die "ERROR: commit ${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
 fi
 
 if [ $usesystemd == 1 ] ; then
@@ -187,7 +178,7 @@ if [ $usesystemd == 1 ] ; then
     # for podname in ctafrontend tpsrv ctaeos; do
     #     sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
     # done
-    die "systemd support has not yet been implement in the Helm setup"
+    die "ERROR: systemd support has not yet been implement in the Helm setup"
 fi
 
 if [ $keepdatabase == 1 ] ; then

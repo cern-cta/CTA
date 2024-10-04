@@ -31,8 +31,6 @@ keepnamespace=0
 useoracle=0
 # by default use VFS objectstore
 useceph=0
-# by default do not use systemd to manage services in containers
-usesystemd=0
 # time out for the kubernetes eoscta instance creation
 CREATEINSTANCE_TIMEOUT=1400
 # preflight test script
@@ -60,12 +58,11 @@ usage() {
   echo "options:"
   echo "  -h, --help:                     Shows help output."
   echo "  -n <namespace>:                 Specify the Kubernetes namespace."
+  echo "  -d <database_configmap>:        Path to the database configmap file."
   echo "  -s <systemtest_script>:         Path to the system test script."
   echo "  -p <gitlab pipeline ID>:        GitLab pipeline ID."
   echo "  -i <docker image tag>:          Docker image tag for the deployment."
   echo "  -t <timeout>:                   Timeout for the system test in seconds."
-  echo "  -e <eos_configmap>:             Path to the EOS configmap file."
-  echo "  -a <additional_k8_resources>:   Path to additional Kubernetes resources."
   echo "  -c <tpsrv count>:               Set the number of tape servers to spawn."
   echo "  -k:                             Keep the namespace after system test script run if successful."
   echo "  -O:                             Use Ceph account associated with this node (wipe content before tests); by default, use local VFS."
@@ -83,11 +80,11 @@ usage() {
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:s:p:b:e:a:t:c:ukDOSUCTQ" o; do
+while getopts "n:d:o:s:p:b:t:c:ukDOSUCTQ" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
-            test -f ${systemtest_script} || error="${error}systemtest script file ${systemtest_script} does not exist\n"
+            test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
             ;;
         n)
             namespace=${OPTARG}
@@ -98,18 +95,11 @@ while getopts "n:d:s:p:b:e:a:t:c:ukDOSUCTQ" o; do
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
             ;;
-        e)
-            config_eos=${OPTARG}
-            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
-            ;;
-        a)
-            CREATE_OPTS="${CREATE_OPTS} -a ${OPTARG}"
-            ;;
         t)
             SYSTEMTEST_TIMEOUT=${OPTARG}
             ;;
         c)
-            tpsrv_count=${OPTARG}
+            CREATE_OPTS="${CREATE_OPTS} -c ${OPTARG}"
             ;;
         k)
             keepnamespace=1
@@ -121,7 +111,7 @@ while getopts "n:d:s:p:b:e:a:t:c:ukDOSUCTQ" o; do
             useceph=1
             ;;
         S)
-            usesystemd=1
+            CREATE_OPTS="${CREATE_OPTS} -S"
             ;;
         U)
             CREATE_OPTS="${CREATE_OPTS} -U"
@@ -148,18 +138,11 @@ shift $((OPTIND-1))
 
 
 if [ -z "${namespace}" ]; then
-    echo "a namespace is mandatory" 1>&2
     usage
 fi
 
 if [ -z "${systemtest_script}" ]; then
-    echo "a systemtest script is mandatory" 1>&2
     usage
-fi
-
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
 fi
 
 # ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
@@ -172,7 +155,7 @@ fi
 if [ $useoracle == 1 ] ; then
     database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
     if [ "-${database_credentials}-" == "--" ]; then
-      die "Oracle database requested but not database configuration was found."
+      die "ERROR: Oracle database requested but not database configuration was found."
     else
       CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
     fi
@@ -188,22 +171,10 @@ fi
 if [ $useceph == 1 ] ; then
     objectstore_credentials=$(find /opt/kubernetes/CTA/ | grep objectstore-file.yaml | head -1)
     if [ "-${objectstore_credentials}-" == "--" ]; then
-      die "Ceph objecstore requested but not objectstore configuration was found."
+      die "ERROR: Ceph objectstore requested but not objectstore configuration was found."
     else
       CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_credentials}"
     fi
-fi
-
-if [ -n "${config_eos}" ]; then
-    CREATE_OPTS="${CREATE_OPTS} -e ${config_eos}"
-fi
-
-if [ -n "${tpsrv_count}" ]; then
-    CREATE_OPTS="${CREATE_OPTS} -c ${tpsrv_count}"
-fi
-
-if [ $usesystemd == 1 ] ; then
-    CREATE_OPTS="${CREATE_OPTS} -S"
 fi
 
 log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
@@ -213,7 +184,7 @@ if [ $cleanup_namespaces == 1 ]; then
     echo "Cleaning up old namespaces:"
     kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git'
     kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git' | xargs -itoto ./delete_instance.sh -n toto -D
-    echo DONE
+    echo "DONE"
 fi
 
 function execute_log {
@@ -223,7 +194,6 @@ function execute_log {
   echo "$(date): Launching ${mycmd}"
   echo "================================================================================"
   eval "(${mycmd} | tee -a ${logfile}) &"
-  echo "================================================================================"
   execute_log_pid=$!
   execute_log_rc=''
 
@@ -235,7 +205,8 @@ function execute_log {
       break
     fi
   done
-  echo $i
+  echo "================================================================================"
+  echo "Waiting for process took: $i iterations"
 
   if [ "${execute_log_rc}" == "" ]; then
     echo "TIMEOUTING COMMAND, setting exit status to 1"
@@ -249,8 +220,7 @@ function execute_log {
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
     fi
-    echo "FAILURE: environment will not be cleaned up"
-    exit 1
+    die "FAILURE: environment will not be cleaned up"
   fi
 }
 
@@ -265,7 +235,7 @@ if [ -x ${PREFLIGHTTEST_SCRIPT} ]; then
   execute_log "./$(basename ${PREFLIGHTTEST_SCRIPT}) -n ${namespace} 2>&1" "${log_dir}/$(basename ${PREFLIGHTTEST_SCRIPT}).log" ${PREFLIGHTTEST_TIMEOUT}
   cd ${orchestration_dir}
 else
-  echo "SKIPPING preflight test: ${PREFLIGHTTEST_SCRIPT} not available"
+  echo "Skipping preflight test: ${PREFLIGHTTEST_SCRIPT} not available"
 fi
 
 # launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds

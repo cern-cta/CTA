@@ -23,8 +23,9 @@ spec:
         echo -n "Waiting for EOS to be initialised"
         while [ ! -f /eos-status/EOSOK ]; do
           echo -n "."
-          sleep 2
+          sleep 1
         done
+        echo ""
         echo "EOS initialised"
     volumeMounts:
       - name: eos-status
