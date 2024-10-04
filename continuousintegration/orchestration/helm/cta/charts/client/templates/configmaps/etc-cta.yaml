@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-config-map
+data:
+  cta-cli.conf: |-
+    cta.endpoint {{ .Values.conf.cta.endpoint }}

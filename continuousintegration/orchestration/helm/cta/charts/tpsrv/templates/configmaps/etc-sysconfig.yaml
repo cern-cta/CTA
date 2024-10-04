@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-sysconfig
+data:
+{{- if (include "tpsrv.useSystemd" .) }}
+  cta-rmcd: |-
+    DAEMON_COREFILE_LIMIT={{ .Values.conf.rmcd.coreFileLimit }}
+    CTA_RMCD_OPTIONS={{ .Values.conf.rmcd.options }}
+{{- end }}
+  cta-taped: |-
+    CTA_TAPED_OPTIONS={{ .Values.conf.taped.options }}
+    XrdSecPROTOCOL={{ .Values.conf.taped.secProtocol }}
+    XrdSecSSSKT={{ .Values.conf.taped.secSssktPath }}/{{ .Values.conf.taped.ctaTapedSss }}

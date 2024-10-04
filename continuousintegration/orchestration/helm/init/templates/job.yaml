@@ -1,0 +1,68 @@
+{{$namespace := .Release.Namespace }}
+{{$name := include "init.name" . }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{$name}}
+  namespace: {{ $namespace | quote}}
+  labels:
+    k8s-app: {{$name}}
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{$name}}
+          image: {{ include "init.image" . }}
+          imagePullPolicy: {{ include "init.imagePullPolicy" . }}
+          {{- if .Values.customEntrypoint }}
+          command: {{ .Values.customEntrypoint.command }}
+          args: {{ .Values.customEntrypoint.args }}
+          {{- end }}
+          securityContext:
+            privileged: {{ .Values.isPriviliged }}
+          stdin: true
+          env:
+            - name: MY_NAME
+              value: {{$name}}
+            - name: MY_NAMESPACE
+              value: {{ $namespace | quote}}
+            - name: INSTANCE_NAME
+              value: {{ $namespace | quote}}
+            - name: SCHEMA_VERSION
+              value: {{ .Values.catalogue.schemaVersion | quote}}
+            - name: CATALOGUE_BACKEND
+              value: {{ .Values.global.catalogue.backend | quote}}
+            - name: CATALOGUE_URL
+              value: {{ include "init.catalogue.url" . | quote}}
+            - name: SCHEDULER_BACKEND
+              value: {{ .Values.global.scheduler.backend | quote}}
+            - name: SCHEDULER_URL
+              value: {{ include "init.scheduler.url" . | quote}}
+            {{- if eq .Values.global.scheduler.backend "ceph" }}
+            - name: SCHEDULER_CEPH_NAMESPACE
+              value: {{ .Values.global.scheduler.config.ceph.namespace | quote}}
+            - name: SCHEDULER_CEPH_ID
+              value: {{ .Values.global.scheduler.config.ceph.id | quote}}
+            - name: SCHEDULER_CEPH_POOL
+              value: {{ .Values.global.scheduler.config.ceph.pool | quote}}
+            {{- end }}
+            {{- if .Values.env }}
+            {{ .Values.env | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: cta-conf-volume
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+            - name: cta-conf-volume
+              mountPath: /etc/cta/cta-objectstore-tools.conf
+              subPath: cta-objectstore-tools.conf
+            {{- include "init.volumeMounts" . | nindent 12 }}
+      volumes:
+        - name: cta-conf-volume
+          configMap:
+            name: etc-cta
+        {{- include "init.volumes" . | nindent 8 }}
+      imagePullSecrets:
+      {{- include "init.imagePullSecrets" . | nindent 8 }}
