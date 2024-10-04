@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-cta
+data:
+  cta-catalogue.conf: |-
+    {{ include "global.catalogue.url" . }}
+  cta-objectstore-tools.conf: |-
+    ObjectStore BackendPath {{ include "global.scheduler.url" . }}
+  cta-frontend-xrootd.conf: |-
+    #
+    # CTA options
+    #
+
+    cta.instance_name {{ .Values.conf.frontend.instanceName }}
+    cta.schedulerdb.scheduler_backend_name {{ .Values.conf.frontend.schedulerBackendName }}
+
+    # CTA ObjectStore options
+    cta.objectstore.backendpath {{ (include "global.scheduler.url" .) | replace "/" "\\/" }}
+
+    # CTA Scheduler DB options
+    cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
+    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
+    cta.schedulerdb.enable_repack_requests {{ .Values.conf.schedulerdb.enableRepackRequests }}
+    cta.schedulerdb.enable_user_requests {{ .Values.conf.schedulerdb.enableUserRequests }}
+
+    # CTA Scheduler DB options - Cache timeout options (decreased for tests)
+    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+
+    # CTA Catalogue options
+    cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
+
+    # Maximum file size (in GB) that the CTA Frontend will accept for archiving
+    cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
+
+    # CTA Frontend log URL
+    cta.log.url {{ .Values.conf.frontend.logUrl }}
+
+    # CTA Logger log level
+    # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
+    cta.log.level {{ .Values.conf.logger.logLevel }}
+
+    # CTA Logger log format
+    # Valid formats are default, json
+    cta.log.format {{ .Values.conf.logger.logFormat }}
+
+    # CTA XRootD SSI Protobuf log level
+    # cta.log.ssi debug protobuf # TODO: check what to do here
+    cta.log.ssi {{ .Values.conf.logger.ssiLogLevel }}
+
+    # CTA Repack buffer URL
+    # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
+
+    # CTA Verification Mount Policy
+    cta.verification.mount_policy {{ .Values.conf.verification.mountPolicy }}
+
+    # Keytab containing gRPC endpoints and tokens for each disk instance
+    cta.ns.config {{ .Values.conf.ns.config }}
+
+    #
+    # XRootD/SSI options
+    #
+
+    # Enable SSI debug logging
+    #ssi.trace {{ .Values.conf.xrootd.trace }}
+
+    # Load the CTA SSI plugin
+    xrootd.fslib -2 libXrdSsi.so
+
+    # Load the SSI module
+    ssi.svclib libXrdSsiCta.so
+
+    # Use the security module
+    xrootd.seclib libXrdSec.so
+
+    # Security protocol specification
+    #
+    # Note: the XRootD process needs to be able to read the keytab file
+    sec.protocol krb5 {{ .Values.conf.security.krb5 }}
+    sec.protocol sss -s {{ .Values.conf.security.sss }}
+
+    # Only Kerberos 5 and sss are allowed
+    sec.protbind * only {{ .Values.conf.security.allowedProtocols }}
+
+    # Turn off asynchronous I/O
+    xrootd.async {{ .Values.conf.xrootd.async }}
+
+    # Use a port other than 1094, already used by EOS xroot server
+    xrd.port {{ .Values.conf.xrootd.port }}
+
+    # Export the SSI resource
+    all.export /ctafrontend nolock r/w
+
+    # This does not always need to be added
+    cta.ns.config {{ .Values.conf.ns.config }}

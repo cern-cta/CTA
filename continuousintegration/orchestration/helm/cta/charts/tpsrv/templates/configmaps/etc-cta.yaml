@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-cta
+data:
+  cta-taped-{{ .Values.conf.drive.names[.Values.conf.drive.slot] }}.conf: |-
+    # cta-taped setup
+    taped BufferSizeBytes {{ .Values.conf.taped.bufferSizeBytes }}
+    taped BufferCount {{ .Values.conf.taped.bufferCount }}
+    taped MountCriteria {{ .Values.conf.taped.mountCriteria }}
+    taped WatchdogIdleSessionTimer {{ .Values.conf.taped.watchdogIdleSessionTimer }}
+    taped UseEncryption {{ .Values.conf.taped.useEncryption }}
+    taped DriveName {{ .Values.conf.drive.names[.Values.conf.drive.slot] }}
+    taped DriveLogicalLibrary {{ .Values.conf.drive.names[.Values.conf.drive.slot] }}
+    taped DriveDevice /dev/{{ .Values.conf.drive.devices[.Values.conf.drive.slot] }}
+    taped DriveControlPath smc{{ .Values.conf.drive.slot }}
+    # Decrease schedulerDB cache timeout for tests
+    taped TapeCacheMaxAgeSecs {{ .Values.conf.taped.tapeCacheMaxAgeSecs }}
+    taped RetrieveQueueCacheMaxAgeSecs {{ .Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
+    # Objectstore
+    ObjectStore BackendPath {{ include "global.scheduler.url" . }}
+    # General
+    general InstanceName {{ .Values.conf.general.instanceName }}
+    general SchedulerBackendName {{ .Values.conf.general.schedulerBackendName }}
