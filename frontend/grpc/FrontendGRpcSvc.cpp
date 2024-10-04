@@ -76,25 +76,11 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
-  cta::log::ScopedParamContainer sp(m_lc);
-
-  sp.add("remoteHost", context->peer());
-  sp.add("request", "archive");
-
+  // check validate request args
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
-
-  // check validate request args
-
-  auto instance = request->notification().wf().instance().name();
-  sp.add("instance", instance);
-  sp.add("username", request->notification().cli().user().username());
-  sp.add("groupname", request->notification().cli().user().groupname());
-
-  sp.add("storageClass", storageClass);
-  sp.add("fileID", request->notification().file().disk_file_id());
 
   auto event = request->notification().wf().event();
   if (event != cta::eos::Workflow::CLOSEW)
@@ -129,13 +115,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
     m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
   }
-
-  auto instance = request->notification().wf().instance().name();
-
-  sp.add("instance", instance);
-  sp.add("username", request->notification().cli().user().username());
-  sp.add("groupname", request->notification().cli().user().groupname());
-  sp.add("fileID", request->notification().file().disk_file_id());
 
   // done with validation, now do the workflow processing
   return GenericRequest(context, request, response);
