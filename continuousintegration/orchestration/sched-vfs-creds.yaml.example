@@ -1,4 +1,6 @@
-schedulerBackend: file
-schedulerconfig:
-  file:
-    path: /shared/%NAMESPACE/objectstore
+global:
+  scheduler:
+    backend: file
+    config:
+      file:
+        path: /shared/%NAMESPACE/objectstore

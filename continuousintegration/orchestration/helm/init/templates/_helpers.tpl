@@ -8,8 +8,7 @@
 {{/* Sets pesistent volumes for the chart. */}}
 {{- define "init.volumes" -}}
 {{- if (.Values.volumes) }}
-volumes:
-    {{- .Values.volumes | toYaml | nindent 2}}
+    {{- .Values.volumes | toYaml}}
 {{- else}}
 {{- fail "You must provide volumes via .Values.volumes"}}
 {{- end}}
@@ -17,8 +16,7 @@ volumes:
 
 {{- define "init.volumeMounts" -}}
 {{ if (.Values.volumeMounts) }}
-volumeMounts:
-  {{- .Values.volumeMounts | toYaml | nindent 1 -}}
+  {{- .Values.volumeMounts | toYaml -}}
 {{- else}}
 {{- fail "You must provide .Values.volumeMounts value so the init pod have something to work on."}}
 {{- end}}
@@ -78,63 +76,30 @@ volumeMounts:
 {{- end }}
 {{- end }}
 
+{{/* Define a helper function to generate the catalogue URL based on backend type */}}
+{{- define "init.catalogue.url" -}}
+{{- $backend := .Values.global.catalogue.backend -}}
+{{- if eq $backend "oracle" -}}
+oracle://{{ .Values.global.catalogue.config.oracle.username }}:{{ .Values.global.catalogue.config.oracle.password }}@{{ .Values.global.catalogue.config.oracle.database }}
+{{- else if eq $backend "postgres" -}}
+postgresql:postgresql://{{ .Values.global.catalogue.config.postgres.username }}:{{ .Values.global.catalogue.config.postgres.password }}@{{ .Values.global.catalogue.config.postgres.server }}/{{ .Values.global.catalogue.config.postgres.database }}
+{{- else if eq $backend "sqlite" -}}
+sqlite://{{ .Values.global.catalogue.config.sqlite.filepath | replace "%NAMESPACE" .Release.Namespace }}
+{{- else }}
+{{- fail "Unsupported catalogue backend type. Please use 'oracle', 'postgres', or 'sqlite'." -}}
+{{- end }}
+{{- end }}
 
-
-{{/* PostgreSQL Scheduler Template. Using .Values.schedulerconfig scope. */}}
-{{- define "init.scheduler_postgres" -}}
-database.type: postgres
-database.postgres.username: {{ .postgres.username | quote }}
-database.postgres.password: {{ .postgres.password | quote }}
-database.postgres.database: {{ .postgres.database | quote }}
-database.postgres.server: {{ .postgres.server | quote }}
-{{- end -}}
-
-
-
-{{/* File based ObjectStore Scheduler Template. Using .Values.schedulerconfig scope. */}}
-{{- define "init.scheduler_file" -}}
-objectstore.type: file
-objectstore.file.path: {{ .file.path | quote }}
-{{- end -}}
-
-
-
-{{/* CEPH based ObjectStore Scheduler Template Using .Values.schedulerconfig scope. */}}
-{{- define "init.scheduler_ceph" -}}
-objectstore.type: ceph
-objectstore.ceph.mon: {{ .ceph.mon | quote }}
-objectstore.ceph.monport: {{ .ceph.monport | quote }}
-objectstore.ceph.pool: {{ .ceph.pool | quote }}
-objectstore.ceph.namespace: {{ .ceph.namespace | quote }}
-objectstore.ceph.id: {{ .ceph.id | quote }}
-objectstore.ceph.key: {{ .ceph.key | quote }}
-{{- end -}}
-
-
-
-{{/* Oracle based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_oracle" -}}
-database.type: oracle
-database.oracle.username: {{ .oracle.username | quote }}
-database.oracle.password: {{ .oracle.password | quote }}
-database.oracle.database: {{ .oracle.database | quote }}
-{{- end -}}
-
-
-
-{{/* PostgreSQL based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_postgres" -}}
-database.type: postgres
-database.postgres.username: {{ .postgres.username | quote }}
-database.postgres.password: {{ .postgres.password | quote }}
-database.postgres.server: {{ .postgres.server | quote }}
-database.postgres.database: {{ .postgres.database | quote }}
-{{- end -}}
-
-
-
-{{/* Sqlite based Catalogue. Using .Values.catalogueconfig scope. */}}
-{{- define "init.catalogue_sqlite" -}}
-database.type: sqlite
-database.file.path: {{ .sqlite.filepath | quote }}
-{{- end -}}
+{{/* Define a helper function to generate the scheduler URL based on backend type */}}
+{{- define "init.scheduler.url" -}}
+{{- $backend := .Values.global.scheduler.backend -}}
+{{- if eq $backend "ceph" -}}
+rados://{{ .Values.global.scheduler.config.ceph.id }}@{{ .Values.global.scheduler.config.ceph.pool }}:{{ .Values.global.scheduler.config.ceph.namespace }}
+{{- else if eq $backend "postgres" -}}
+postgresql:postgresql://{{ .Values.global.scheduler.config.postgres.username }}:{{ .Values.global.scheduler.config.postgres.password }}@{{ .Values.global.scheduler.config.postgres.server }}/{{ .Values.global.scheduler.config.postgres.database }}
+{{- else if eq $backend "file" -}}
+{{ .Values.global.scheduler.config.file.path | replace "%NAMESPACE" .Release.Namespace }}
+{{- else }}
+{{- fail "Unsupported scheduler backend type. Please use 'ceph', 'postgres', or 'file'." -}}
+{{- end }}
+{{- end }}
