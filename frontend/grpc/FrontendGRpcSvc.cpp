@@ -86,8 +86,6 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  m_lc.log(cta::log::DEBUG, "Archive request for storageClass: " + storageClass);
-
   cta::common::dataStructures::RequesterIdentity requester;
   requester.name = request->notification().cli().user().username();
   requester.group = request->notification().cli().user().groupname();
