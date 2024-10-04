@@ -45,6 +45,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
 
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
+  /* DISABLE FOR NULL MEDIA TYPE TEST
   {
     VOL1 vol1;
     m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
@@ -73,9 +74,11 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
         throw cta::exception::Exception("In WriteSession::WriteSession(): unknown LBP method");
     }
   }
+  END DISABLE FOR NULL MEDIA TYPE TEST */
 
   // from this point the right LBP mode should be set or not set
   m_drive.rewind();
+  /* DISABLE FOR NULL MEDIA TYPE TEST
   {
     VOL1 vol1;
     m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
@@ -87,6 +90,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
     }
     HeaderChecker::checkVOL1(vol1, m_vid);  // now we know that we are going to write on the correct tape
   }
+  END DISABLE FOR NULL MEDIA TYPE TEST */
   // if the tape is not empty let's move to the last trailer
   if (last_fSeq > 0) {
     // 3 file marks per file but we want to read the last trailer (hence the -1)
