@@ -1,0 +1,15 @@
+{{- if .Values.objectstore.ceph }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-ceph
+data:
+  ceph.conf: |-
+    [global]
+      mon host = {{ .Values.objectstore.ceph.mon }}:{{ .Values.objectstore.ceph.monport }}
+  ceph.client.{{ .Values.objectstore.ceph.id }}.keyring: |-
+    [client.{{ .Values.objectstore.ceph.id }}]
+      key = {{ .Values.objectstore.ceph.key }}
+      caps mon = "allow r"
+      caps osd = "allow rwx pool={{ .Values.objectstore.ceph.pool }} namespace={{ .Values.objectstore.ceph.namespace }}"
+{{- end }}
