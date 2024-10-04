@@ -88,24 +88,22 @@ it will load additionally all of the global configs as well
 */}}
 {{- define "client.volumes" -}}
 {{ if or (.Values.global) (.Values.volumes) }}
-volumes:
     {{- if (.Values.global.volumes)}}
-    {{- .Values.global.volumes | toYaml | nindent 2}}
+    {{- .Values.global.volumes | toYaml }}
     {{- end }}
     {{- if (.Values.volumes)}}
-    {{- .Values.volumes | toYaml | nindent 2}}
+    {{- .Values.volumes | toYaml }}
     {{- end }}
 {{- end}}
 {{- end -}}
 
 {{- define "client.volumeMounts" -}}
 {{ if or (.Values.global) (.Values.volumeMounts) }}
-volumeMounts:
   {{- if .Values.global.volumeMounts}}
-    {{- .Values.global.volumeMounts | toYaml | nindent 1 }}
+    {{- .Values.global.volumeMounts | toYaml }}
   {{- end }}
   {{- if (.Values.volumeMounts)}}
-    {{- .Values.volumeMounts | toYaml | nindent 1 -}}
+    {{- .Values.volumeMounts | toYaml -}}
   {{- end }}
 {{- end}}
 {{- end -}}

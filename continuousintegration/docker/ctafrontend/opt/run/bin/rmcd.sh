@@ -32,10 +32,10 @@ ln -s /dev/${LIBRARYDEVICE} /dev/smc
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available
 
-cat <<EOF >/etc/sysconfig/cta-rmcd
-DAEMON_COREFILE_LIMIT=unlimited
-CTA_RMCD_OPTIONS=/dev/smc
-EOF
+# cat <<EOF >/etc/sysconfig/cta-rmcd
+# DAEMON_COREFILE_LIMIT=unlimited
+# CTA_RMCD_OPTIONS=/dev/smc
+# EOF
 
   # install RPMs
   yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc

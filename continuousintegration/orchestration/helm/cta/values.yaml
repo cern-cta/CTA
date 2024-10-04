@@ -8,3 +8,36 @@ global:
     pullSecrets: 
       - ctaregsecret
   useSystemd: false
+
+  scheduler:
+    backend: ceph  # Options: file, ceph, postgres
+    config:
+      ceph:
+        mon: ""
+        monport: ""
+        pool: ""
+        namespace: ""
+        id: ""
+        key: ""
+      postgres:
+        username: ""
+        password: ""
+        database: ""
+        sever: ""
+      file:
+        path: /shared/%NAMESPACE/objectstore
+
+  catalogue:
+    backend: oracle # Can be sqlite, orale or postgres.
+    config:
+      oracle:
+        username: ""
+        database: ""
+        password: ""
+      postgres:
+        username: ""
+        password: ""
+        server: ""
+        database: ""
+      sqlite:
+        file-path: ""

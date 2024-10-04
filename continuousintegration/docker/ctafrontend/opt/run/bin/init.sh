@@ -40,12 +40,15 @@ echo "Using this configuration for library:"
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
-echo "Configuring Scheduler store:"
-/opt/run/bin/init_objectstore.sh
-. /tmp/objectstore-rc.sh
-echo ${OBJECTSTOREURL} >/etc/cta/cta-scheduler.conf
+# echo "Configuring Scheduler store:"
+# /opt/run/bin/init_objectstore.sh
+# . /tmp/objectstore-rc.sh
+# echo ${SCHEDULER_URL} >/etc/cta/cta-scheduler.conf
 
-if [ "$OBJECTSTORETYPE" == "postgres" ]; then
+echo "Using scheduler backend: $SCHEDULER_BACKEND"
+echo "Using catalogue backend: $CATALOGUE_BACKEND"
+
+if [ "$SCHEDULER_BACKEND" == "postgres" ]; then
     echo "Installing the cta-scheduler-utils"
     yum -y install cta-scheduler-utils
 else
@@ -54,13 +57,13 @@ else
 fi
 
 if [ "$KEEP_OBJECTSTORE" == "0" ]; then
-  if [ "$OBJECTSTORETYPE" == "file" ]; then
+  if [ "$SCHEDULER_BACKEND" == "file" ]; then
     echo "Wiping objectstore"
-    rm -fr $OBJECTSTOREURL
-    mkdir -p $OBJECTSTOREURL
-    cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
-    chmod -R 777 $OBJECTSTOREURL
-  elif [ "$OBJECTSTORETYPE" == "postgres" ]; then
+    rm -fr $SCHEDULER_URL
+    mkdir -p $SCHEDULER_URL
+    cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
+    chmod -R 777 $SCHEDULER_URL
+  elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
     echo "Postgres scheduler config file content: "
     cat /etc/cta/cta-scheduler.conf
     echo "Droping the scheduler DB schema"
@@ -70,11 +73,11 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   else
     echo "Wiping objectstore"
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
-      echo "Rados objectstore ${OBJECTSTOREURL} is not empty: deleting content"
+      echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"
       rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -L 100 -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm
     fi
-    cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
-    echo "Rados objectstore ${OBJECTSTOREURL} content:"
+    cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
+    echo "Rados objectstore ${SCHEDULER_URL} content:"
     rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls
   fi
 else
@@ -82,13 +85,13 @@ else
 fi
 
 echo "Configuring database:"
-/opt/run/bin/init_database.sh
-. /tmp/database-rc.sh
-echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
+# /opt/run/bin/init_database.sh
+# . /tmp/database-rc.sh
+# echo ${CATALOGUE_URL} >/etc/cta/cta-catalogue.conf
 
 if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
-  if [ "$DATABASETYPE" != "sqlite" ]; then
+  if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
     if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
       # pause to let db come up
       echo "Database connection failed, pausing before a retry"
@@ -97,24 +100,24 @@ if [ "$KEEP_DATABASE" == "0" ]; then
       echo "Database wiped"
     fi
   else
-    rm -fr $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
+    rm -fr $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
   fi
 
-  if [ "$DATABASETYPE" == "sqlite" ]; then
-    mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
+  if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
+    mkdir -p $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
     cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
-    chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
-  elif [ "$DATABASETYPE" == "oracle" ]; then
+    chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
+  elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
-    LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
-    LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
+    LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
+    LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
     cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
-  elif [ "$DATABASETYPE" == "postgres" ]; then
+  elif [ "$CATALOGUE_BACKEND" == "postgres" ]; then
     echo "Creating Postgres Catalogue schema"
     cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create Postgres database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   else
-    die "ERROR: Unsupported database type: ${DATABASETYPE}"
+    die "ERROR: Unsupported database type: ${CATALOGUE_BACKEND}"
   fi
 else
   echo "Reusing database (no check)"
@@ -151,3 +154,4 @@ else
 fi
 
 echo "### INIT COMPLETED ###"
+touch /tmp/INIT_COMPLETE

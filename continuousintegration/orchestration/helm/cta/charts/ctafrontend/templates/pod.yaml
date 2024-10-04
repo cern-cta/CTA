@@ -39,8 +39,23 @@ spec:
     ports:
         {{- .Values.ports | toYaml | nindent 4}}
     {{- end}}
+    volumeMounts:
+    - name: cta-conf-volume
+      mountPath: /etc/cta
+    {{- if .Values.objectstore.ceph }}
+    - name: cta-ceph-volume
+      mountPath: /etc/ceph
+    {{- end }}
     {{ include "ctafrontend.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
+  volumes:
+  - name: cta-conf-volume
+    configMap:
+      name: etc-cta
+  {{- if .Values.objectstore.ceph }}
+  - name: cta-ceph-volume
+    configMap:
+      name: etc-ceph
+  {{- end}}
   {{include "ctafrontend.volumes" . | nindent 2}}
 
   imagePullSecrets:

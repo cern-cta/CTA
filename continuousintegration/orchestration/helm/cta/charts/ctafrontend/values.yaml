@@ -4,6 +4,47 @@ imagePullSecret:
 nameOverride: ctafrontend
 isPriviliged: true
 
+conf:
+  # TODO: should this be here?
+  catalogue:
+    numberOfConnections: 10
+
+  frontend:
+    instanceName: "CI"
+    schedulerBackendName: "VFS_Sched"
+    archiveFileMaxSizeGb: 1000
+    logUrl: "file:/var/log/cta/cta-frontend.log"
+    # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
+
+  schedulerdb:
+    numberOfThreads: 500
+    threadStackSizeMb: 1
+    enableRepackRequests: "on"
+    enableUserRequests: "on"
+    tapeCacheMaxAgeSecs: 1
+    retrieveQueueCacheMaxAgeSecs: 1
+
+  logger:
+    # logLevel: "DEBUG"
+    logFormat: "json"
+    ssiLogLevel: "warning"
+
+  verification:
+    mountPolicy: "verification"
+
+  ns:
+    config: "/etc/cta/eos.grpc.keytab"
+
+  xrootd:
+    # trace: "debug"
+    async: "off"
+    port: 10955
+
+  security:
+    krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"
+    sss: "/etc/cta/eos.sss.keytab"
+    allowedProtocols: "sss krb5"
+
 
 # Changes the entrypoint of the container's image to the script and provide arguments if needed
 customEntrypoint:
@@ -30,12 +71,12 @@ volumes:
 - name: shared
   hostPath:
     path: /opt/cta
-- name: myobjectstore
-  configMap:
-    name: objectstore-config
-- name: mydatabase
-  configMap:
-    name: database-config
+# - name: myobjectstore
+#   configMap:
+#     name: objectstore-config
+# - name: mydatabase
+#   configMap:
+#     name: database-config
 - name: mylibrary
   configMap:
     name: library-config
@@ -58,10 +99,10 @@ volumes:
 volumeMounts:
 - mountPath: /shared
   name: shared
-- mountPath: /etc/config/objectstore
-  name: myobjectstore
-- mountPath: /etc/config/database
-  name: mydatabase
+# - mountPath: /etc/config/objectstore
+#   name: myobjectstore
+# - mountPath: /etc/config/database
+#   name: mydatabase
 - mountPath: /etc/config/library
   name: mylibrary
 - mountPath: /mnt/logs

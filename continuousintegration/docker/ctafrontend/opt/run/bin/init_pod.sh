@@ -1,3 +1,4 @@
+#!/bin/bash
 # This file must be sourced from another shell script
 # . /opt/run/bin/init_pod.sh
 

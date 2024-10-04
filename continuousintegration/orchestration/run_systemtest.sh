@@ -191,6 +191,7 @@ function execute_log {
   mycmd=$1
   logfile=$2
   timeout=$3
+  echo "================================================================================"
   echo "$(date): Launching ${mycmd}"
   echo "================================================================================"
   eval "(${mycmd} | tee -a ${logfile}) &"
@@ -206,7 +207,7 @@ function execute_log {
     fi
   done
   echo "================================================================================"
-  echo "Waiting for process took: $i iterations"
+  echo "Waiting for process took $i iterations"
 
   if [ "${execute_log_rc}" == "" ]; then
     echo "TIMEOUTING COMMAND, setting exit status to 1"

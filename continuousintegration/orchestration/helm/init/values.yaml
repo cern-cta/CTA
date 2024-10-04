@@ -2,39 +2,6 @@
 nameOverride: init
 isPriviliged: true
 
-# The connection parameters for the Scheduler and Catalogue
-# must be configured by the user of the Chart.
-schedulerBackend: ceph   # Options: file, ceph, postgres
-schedulerconfig:
-  ceph:
-    mon: ""
-    monport: ""
-    pool: ""
-    namespace: ""
-    id: ""
-    key: ""
-  postgres:
-    username: ""
-    password: ""
-    database: ""
-    sever: ""
-  file:
-    path: /shared/%NAMESPACE/objectstore
-
-catalogueBackend: oracle # Can be sqlite, orale or postgres.
-catalogueconfig:
-  oracle:
-    username: ""
-    database: ""
-    password: ""
-  postgres:
-    username: ""
-    password: ""
-    server: ""
-    database: ""
-  sqlite:
-    file-path: ""
-
 
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
@@ -49,9 +16,41 @@ global:
     pullPolicy: IfNotPresent
     pullSecrets: 
       - ctaregsecret
+  # The connection parameters for the Scheduler and Catalogue
+  # must be configured by the user of the Chart.
+  scheduler:
+    backend: ceph  # Options: file, ceph, postgres
+    config:
+      ceph:
+        mon: ""
+        monport: ""
+        pool: ""
+        namespace: ""
+        id: ""
+        key: ""
+      postgres:
+        username: ""
+        password: ""
+        database: ""
+        server: ""
+      file:
+        path: ""
 
-catalogue:
-  schemaVersion: "15.0"
+  catalogue:
+    schemaVersion: "15.0"
+    backend: oracle # Can be sqlite, orale or postgres.
+    config:
+      oracle:
+        username: ""
+        database: ""
+        password: ""
+      postgres:
+        username: ""
+        password: ""
+        server: ""
+        database: ""
+      sqlite:
+        filepath: ""
 
 pvcs:
   claimstg:
@@ -74,14 +73,13 @@ env:
 - name: KEEP_OBJECTSTORE
   value: "0"
 
-
 volumeMounts:
 - mountPath: /shared
   name: shared
-- mountPath: /etc/config/objectstore
-  name: myobjectstore
-- mountPath: /etc/config/database
-  name: mydatabase
+# - mountPath: /etc/config/objectstore
+#   name: myobjectstore
+# - mountPath: /etc/config/database
+#   name: mydatabase
 - mountPath: /etc/config/library
   name: mylibrary
 - mountPath: /mnt/logs
@@ -92,12 +90,12 @@ volumes:
 - name: shared
   hostPath:
     path: /opt/cta
-- name: myobjectstore
-  configMap:
-    name: objectstore-config
-- name: mydatabase
-  configMap:
-    name: database-config
+# - name: myobjectstore
+#   configMap:
+#     name: objectstore-config
+# - name: mydatabase
+#   configMap:
+#     name: database-config
 - name: mylibrary
   configMap:
     name: library-config

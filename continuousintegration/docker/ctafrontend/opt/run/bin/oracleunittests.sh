@@ -25,11 +25,11 @@ yum-config-manager --enable ceph
 # Install missing RPMs
 yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
 
-echo "Configuring database"
-/opt/run/bin/init_database.sh
-. /tmp/database-rc.sh
+# echo "Configuring database"
+# /opt/run/bin/init_database.sh
+# . /tmp/database-rc.sh
 
-echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
+# echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 
 yum -y install cta-catalogueutils cta-systemtests
 
