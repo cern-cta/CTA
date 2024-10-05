@@ -41,6 +41,8 @@ volumeMounts:
   name: shared
 - mountPath: /fstdisk
   name: fstdisk
+- mountPath: /qdbdisk
+  name: quarkdbdisk
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /fst
@@ -78,6 +80,9 @@ volumes:
 - name: fstdisk
   hostPath:
     path: /home/cirunner/data/STG01
+- name: quarkdbdisk
+  hostPath:
+    path: /home/cirunner/data/QDB01
 - name: shared
   hostPath:
     path: /opt/cta
