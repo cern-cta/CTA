@@ -103,8 +103,8 @@ cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /o
 
   source /etc/sysconfig/eos
 
-  mkdir -p /fst
-  chown daemon:daemon /fst/
+  mkdir -p /fstdisk/fst
+  chown daemon:daemon /fstdisk/fst/
 
 ## Configuring host certificate
 /opt/run/bin/ctaeos_https.sh
@@ -238,7 +238,7 @@ fi
   # define space default before adding first fs
   eos space define default
 
-  EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
+  EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fstdisk/fst default:1
 
   # Add user daemon to sudoers this is to allow recalls for the moment using this command
   #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
@@ -319,7 +319,7 @@ fi
   eos chmod 777 ${EOS_TMP_DIR}
 
   echo "Waiting for the EOS disk filesystem using /fst to boot and come on-line"
-  while test 1 != $(eos fs ls /fst | grep -E 'booted.*online' | wc -l); do
+  while test 1 != $(eos fs ls /fstdisk/fst | grep -E 'booted.*online' | wc -l); do
     echo "Sleeping 1 second"
     sleep 1
   done

@@ -39,6 +39,8 @@ labels:
 volumeMounts:
 - mountPath: /shared
   name: shared
+- mountPath: /fstdisk
+  name: fstdisk
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /fst
@@ -73,6 +75,9 @@ volumeMounts:
   subPath: eos
 
 volumes:
+- name: fstdisk
+  hostPath:
+    path: /home/cirunner/data/STG01
 - name: shared
   hostPath:
     path: /opt/cta
