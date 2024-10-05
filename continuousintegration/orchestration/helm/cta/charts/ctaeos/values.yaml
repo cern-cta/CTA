@@ -41,8 +41,10 @@ volumeMounts:
   name: shared
 - mountPath: /fstdisk
   name: fstdisk
+  type: Directory
 - mountPath: /qdbdisk
   name: quarkdbdisk
+  type: Directory
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /fst
