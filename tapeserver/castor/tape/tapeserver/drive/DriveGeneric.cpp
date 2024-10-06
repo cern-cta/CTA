@@ -1322,14 +1322,12 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::s
         if (-1 == res && ENOMEM == errno)
           throw cta::exception::Errnum(errno, context +
                                               ": Failed ST read in DriveGeneric::readExactBlock. Tape volume label size not be in the CTA/CASTOR format.");
-        /* REMOVING FOR DEBUG PURPOSES
         // Generic handling of other errors
         cta::exception::Errnum::throwOnMinusOne(res,
             context+": Failed ST read in DriveGeneric::readExactBlock");
         // Handle block too small
         if ((size_t) res != count)
           throw UnexpectedSize(context);
-        */
         break;
       }
     default:
