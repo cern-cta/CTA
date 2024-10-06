@@ -79,11 +79,11 @@ volumeMounts:
 volumes:
 - name: fstdisk
   hostPath:
-    path: /data/STG01
+    path: /data01
     type: Directory
 - name: quarkdbdisk
   hostPath:
-    path: /metadata/QDB01
+    path: /quarkdb
     type: Directory
 - name: shared
   hostPath:
