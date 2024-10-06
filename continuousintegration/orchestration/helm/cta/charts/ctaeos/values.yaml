@@ -41,8 +41,6 @@ volumeMounts:
   name: shared
 - mountPath: /fstdisk
   name: fstdisk
-- mountPath: /qdbdisk
-  name: quarkdbdisk
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /fst
@@ -80,10 +78,6 @@ volumes:
 - name: fstdisk
   hostPath:
     path: /data01
-    type: Directory
-- name: quarkdbdisk
-  hostPath:
-    path: /quarkdb
     type: Directory
 - name: shared
   hostPath:
