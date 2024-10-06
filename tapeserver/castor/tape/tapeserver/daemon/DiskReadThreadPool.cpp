@@ -154,7 +154,6 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   
   while(1) {
     task.reset( m_parent.popAndRequestMore(m_lc));
-    cta::log::ScopedParamContainer logParamsThread01(m_lc);
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (nullptr != task.get()) {
       task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog, m_threadID);

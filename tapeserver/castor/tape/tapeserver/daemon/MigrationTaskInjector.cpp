@@ -183,11 +183,7 @@ void MigrationTaskInjector::WorkerThread::run() {
       else {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
-        cta::utils::Timer timer;
         m_parent.injectBulkMigrations(jobs);
-        cta::log::ScopedParamContainer logParams01(m_parent.m_lc);
-        logParams01.add("injectBulkMigrationsTime", timer.secs());
-        m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): Finished inserting tasks for execution to the disk and tape queues.");
         // Decide on continuation
         if (files < req.filesRequested / 2 && bytes < req.bytesRequested) {
           // The client starts to dribble files at a low rate. Better finish
