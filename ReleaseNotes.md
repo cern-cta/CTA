@@ -33,6 +33,7 @@
 - cta/CTA#763 - Removed the installOracle21.sh script
 - cta/CTA#875 - Removed duplication of the versionlock file in the Helm setup
 - cta/CTA#870 - Add check to see if Helm is installed in create_instance script
+- cta/CTA#882 - Remove cta-fst-gcd deprecation Warning in Alma9
 - cta/CTA#887 - Replaced several deprecated bash features
 
 ### Continuous Integration
