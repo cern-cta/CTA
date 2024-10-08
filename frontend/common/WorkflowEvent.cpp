@@ -142,31 +142,36 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   uint64_t archiveFileId;
   // check also the standalone storage class attribute, if not set, fallback to xattr
   std::string storageClassStr = m_event.file().storage_class();
-  if (!storageClassStr.empty())
-  {
-    if (storageClassStr == "fail_on_closew_test")
+  if (!storageClassStr.empty()) {
+    if (storageClassStr == "fail_on_closew_test") {
       archiveFileId = std::numeric_limits<uint64_t>::max();
-    else
-      archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
+    }
+    else {
+      archiveFileId =
+        m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
+    }
   }
   else {
     // fallback to xattr
     auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
-    if(m_event.file().xattr().end() == storageClassItor) {
+    if (m_event.file().xattr().end() == storageClassItor) {
       // Fall back to old xattr format
       storageClassItor = m_event.file().xattr().find("CTA_StorageClass");
-      if(m_event.file().xattr().end() == storageClassItor) {
-        throw exception::PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is not set");
+      if (m_event.file().xattr().end() == storageClassItor) {
+        throw exception::PbException(std::string(__FUNCTION__) +
+                                     ": sys.archive.storage_class extended attribute is not set");
       }
     }
     const std::string storageClass = storageClassItor->second;
-    if(storageClass.empty()) {
-      throw exception::PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is set to an empty string");
+    if (storageClass.empty()) {
+      throw exception::PbException(std::string(__FUNCTION__) +
+                                   ": sys.archive.storage_class extended attribute is set to an empty string");
     }
     // For testing, this storage class will always fail on CLOSEW. Allow it to pass CREATE and don't allocate an archive Id from the pool.
-    if(storageClassItor->second == "fail_on_closew_test") {
+    if (storageClassItor->second == "fail_on_closew_test") {
       archiveFileId = std::numeric_limits<uint64_t>::max();
-    } else {
+    }
+    else {
       archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
     }
     storageClassStr = storageClass;
@@ -185,9 +190,10 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
   response.set_archive_file_id(std::to_string(archiveFileId));
   // Set the storage class
-  response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", storageClassStr));
+  response.mutable_xattr()->insert(
+    google::protobuf::MapPair<std::string, std::string>("sys.archive.storage_class", storageClassStr));
   response.set_storage_class(storageClassStr);
-  
+
   // Set response type
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -209,21 +215,22 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   if (storageClassStr.empty()) {
     // Unpack message
     const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
-    if(m_event.file().xattr().end() == storageClassItor) {
-      throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
+    if (m_event.file().xattr().end() == storageClassItor) {
+      throw exception::PbException(std::string(__FUNCTION__) +
+                                   ": Failed to find the extended attribute named sys.archive.storage_class");
     }
 
     // For testing: this storage class will always fail
-    if(storageClassItor->second == "fail_on_closew_test") {
+    if (storageClassItor->second == "fail_on_closew_test") {
       throw exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
     }
 
     // Disallow archival of files above the specified limit
-    if(auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
-      storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
-        throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
-                                  " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) +
-                                  " bytes)");
+    if (auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
+        storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
+      throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
+                                 " bytes) exceeds maximum allowed size (" +
+                                 std::to_string(storageClass.vo.maxFileSize) + " bytes)");
     }
     storageClassStr = storageClassItor->second;
   }
@@ -239,7 +246,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   request.requester.name         = m_event.cli().user().username();
   request.requester.group        = m_event.cli().user().groupname();
   request.srcURL                 = m_event.wf().instance().url();
-  request.storageClass           = storageClassStr;
+  request.storageClass = storageClassStr;
   request.archiveReportURL       = m_event.transport().report_url();
   request.archiveErrorReportURL  = m_event.transport().error_report_url();
   request.creationLog.host       = m_cliIdentity.host;
@@ -254,19 +261,18 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   // (For dCache, the first-class attribute is expected to be set)
   uint64_t archiveFileId = 0;
   archiveFileId = m_event.file().archive_file_id();
-  if (archiveFileId == 0)
-  {
+  if (archiveFileId == 0) {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
     // must be converted to a valid uint64_t
     const auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
-    if(m_event.file().xattr().end() == archiveFileIdItor) {
+    if (m_event.file().xattr().end() == archiveFileIdItor) {
       logMessage += "sys.archive.file_id is not present in extended attributes";
       m_lc.log(log::INFO, logMessage);
-      throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+      throw exception::PbException(std::string(__FUNCTION__) +
+                                   ": Failed to find the extended attribute named sys.archive.file_id");
     }
     const std::string archiveFileIdStr = archiveFileIdItor->second;
-    if((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
-    {
+    if ((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
       params.add("sys.archive.file_id", archiveFileIdStr);
       logMessage += "sys.archive.file_id is not a positive integer";
       m_lc.log(log::INFO, logMessage);
@@ -330,24 +336,24 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   }
 
   auto archiveFileId = m_event.file().archive_file_id();
-  if (archiveFileId)
+  if (archiveFileId) {
     request.archiveFileID = archiveFileId;
-  else
-  {
+  }
+  else {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
     // converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
     if(m_event.file().xattr().end() == archiveFileIdItor) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
-      if(m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+      if (m_event.file().xattr().end() == archiveFileIdItor) {
+        throw exception::PbException(std::string(__FUNCTION__) +
+                                     ": Failed to find the extended attribute named sys.archive.file_id");
       }
     }
 
-    if(const std::string archiveFileIdStr = archiveFileIdItor->second;
-      (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
-    {
+    if (const std::string archiveFileIdStr = archiveFileIdItor->second;
+        (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
       throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
     }
   }
@@ -391,37 +397,38 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   request.requester.group  = m_event.cli().user().groupname();
 
   auto archiveFileId = m_event.file().archive_file_id();
-  if (archiveFileId)
+  if (archiveFileId) {
     request.archiveFileID = archiveFileId;
-  else
-  {
+  }
+  else {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
     // converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
     if(m_event.file().xattr().end() == archiveFileIdItor) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
-      if(m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+      if (m_event.file().xattr().end() == archiveFileIdItor) {
+        throw exception::PbException(std::string(__FUNCTION__) +
+                                     ": Failed to find the extended attribute named sys.archive.file_id");
       }
     }
-    if(const std::string archiveFileIdStr = archiveFileIdItor->second;
-      (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
-    {
+    if (const std::string archiveFileIdStr = archiveFileIdItor->second;
+        (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
       throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
     }
   }
 
   // first check if there is a first-class request Id set, if not, fallback to checking xattrs
   std::string retrieveRequestId = m_event.file().request_objectstore_id();
-  if (!retrieveRequestId.empty())
+  if (!retrieveRequestId.empty()) {
     request.retrieveRequestId = retrieveRequestId;
-  else
-  {
+  }
+  else {
     // The request Id should be stored as an extended attribute
     const auto retrieveRequestIdItor = m_event.file().xattr().find("sys.cta.objectstore.id");
-    if(m_event.file().xattr().end() == retrieveRequestIdItor) {
-      throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.cta.objectstore.id");
+    if (m_event.file().xattr().end() == retrieveRequestIdItor) {
+      throw exception::PbException(std::string(__FUNCTION__) +
+                                   ": Failed to find the extended attribute named sys.cta.objectstore.id");
     }
     retrieveRequestId = retrieveRequestIdItor->second;
     request.retrieveRequestId = retrieveRequestId;
@@ -478,35 +485,34 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   // If not, fall back to the xattrs
   auto archiveFileIdInt = m_event.file().archive_file_id();
   // not set or invalid (default for numerical unset protobuf fields is 0)
-  if (archiveFileIdInt)
+  if (archiveFileIdInt) {
     request.archiveFileID = archiveFileIdInt;
-  else
-  {
+  }
+  else {
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
     if(m_event.file().xattr().end() == archiveFileIdItor) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
-      if(m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+      if (m_event.file().xattr().end() == archiveFileIdItor) {
+        throw exception::PbException(std::string(__FUNCTION__) +
+                                     ": Failed to find the extended attribute named sys.archive.file_id");
       }
     }
-    if(const std::string archiveFileIdStr = archiveFileIdItor->second;
-      (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
-    {
+    if (const std::string archiveFileIdStr = archiveFileIdItor->second;
+        (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
       throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
     }
   }
   // also get the objectstore_id, either from the standalone attribute or the xattrs
   std::string objectstoreAddress = m_event.file().request_objectstore_id();
   request.address = objectstoreAddress;
-  if (objectstoreAddress.empty())
-  {
+  if (objectstoreAddress.empty()) {
     // fallback to xattrs
-    if(auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
-      archiveRequestAddrItor != m_event.file().xattr().end()){
+    if (auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
+        archiveRequestAddrItor != m_event.file().xattr().end()) {
       //We have the ArchiveRequest's objectstore address.
-      if(objectstoreAddress = archiveRequestAddrItor->second; !objectstoreAddress.empty()){
-      request.address = archiveRequestAddrItor->second;
+      if (objectstoreAddress = archiveRequestAddrItor->second; !objectstoreAddress.empty()) {
+        request.address = archiveRequestAddrItor->second;
       }
     }
   }
