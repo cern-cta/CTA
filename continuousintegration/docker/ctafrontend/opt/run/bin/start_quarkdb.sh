@@ -28,6 +28,7 @@ QUARKDB_CONFIG=/etc/config/eos/xrootd-quarkdb.cfg
 
 # QUARKDB_DIRECTORY=$(cat ${QUARKDB_CONFIG} | grep redis.database | sed -e 's/.*redis.database\ \+//;s%/\ *$%%')
 QUARKDB_DIRECTORY=/qdbdisk/quarkdb1
+
 QUARKDB_SUBDIRECTORY=$(echo ${QUARKDB_DIRECTORY} | sed -e 's%/[^/]\+/*\ *$%%')
 
 # make sure the first level of directory exists if there is no mounted PV
@@ -42,6 +43,7 @@ quarkdb-create --path ${QUARKDB_DIRECTORY}
 chown -R xrootd:xrootd ${QUARKDB_DIRECTORY}
 
 cp -f ${QUARKDB_CONFIG} /etc/xrootd/xrootd-quarkdb.cfg
+sed -i 's|redis.database /var/lib/quarkdb/quarkdb1|redis.database /qdbdisk/quarkdb1|' /etc/xrootd/xrootd-quarkdb.cfg
 
 # quarkdb is starting as xrootd user and mgm as daemon
 # the password file must be 400 for each service...
