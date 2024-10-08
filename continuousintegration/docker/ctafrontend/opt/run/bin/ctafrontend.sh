@@ -43,7 +43,7 @@ yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 # echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 # EOS INSTANCE NAME used as username for SSS key
-export EOSINSTANCE=ctaeos
+# export EOSINSTANCE=ctaeos
 
 # Wait for the keytab files to be pushed in by the creation script
 echo -n "Waiting for /etc/cta/eos.sss.keytab."
