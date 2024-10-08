@@ -21,7 +21,8 @@ tpsrv:
       - "V00107"
       - "V00108"
 
-
+# TODO: generate this from the machine
+# TODO2: make sure each machine get's its own
     # library.type: mhvtl
     # library.name: VLSTK10
     # library.device: sg0

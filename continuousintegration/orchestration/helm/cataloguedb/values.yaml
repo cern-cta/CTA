@@ -1,0 +1,49 @@
+
+nameOverride: cataloguedb
+isPriviliged: false
+
+oracleUnitTests:
+  enabled: false
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - ctaregsecret
+
+updateDBTests:
+  enabled: false
+  catalogueSourceVersion: ""
+  catalogueDestinationVersion: ""
+  ctaVersion: ""
+  commitId: ""
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
+    tag: "@sha256:12ae741513784eb206b0a2b3447008a9be4a95623f4da195b58de2669357dee6"
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - ctaregsecret
+
+
+# TODO: is this the best place to put this?
+servicePort: 5432
+
+# This is global so that the same config can be used for all charts
+global:
+  catalogue:
+    schemaVersion: ""
+    backend: "" # Can be sqlite, orale or postgres.
+    config:
+      oracle:
+        username: ""
+        database: ""
+        password: ""
+      postgres:
+        username: ""
+        password: ""
+        server: ""
+        database: ""
+      sqlite:
+        filepath: ""

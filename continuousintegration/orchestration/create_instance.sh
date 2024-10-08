@@ -20,10 +20,10 @@ set -e
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
-# defaults scheduler datastore to objectstore (using a file)
-config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
-# defaults DB to sqlite
-config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
+catalogue_config=presets/dev-catalogue-postgres-values.yaml
+scheduler_config=presets/dev-scheduler-file-values.yaml
+library_config=presets/dev-library-values.yaml
+
 # default library model
 model="mhvtl"
 
@@ -62,8 +62,8 @@ usage() {
   echo "options:"
   echo "  -h, --help:                     Shows help output."
   echo "  -n <namespace>:                 Specify the Kubernetes namespace."
-  echo "  -o <schedstore_configmap>:      Path to the scheduler configmap file."
-  echo "  -d <database_configmap>:        Path to the database configmap file."
+  echo "  -o <schedstore_configmap>:      Path to the scheduler configuration values file."
+  echo "  -d <database_configmap>:        Path to the catalogue configuration values file."
   echo "  -p <gitlab pipeline ID>:        GitLab pipeline ID."
   echo "  -i <docker image tag>:          Docker image tag for the deployment."
   echo "  -r <docker registry>:           Provide the Docker registry. Defaults to \"gitlab-registry.cern.ch/cta\"."
@@ -80,9 +80,9 @@ usage() {
 while getopts "n:o:d:p:b:i:r:c:SDOUumQ" o; do
     case "${o}" in
         o)
-            config_schedstore=${OPTARG} ;;
+            scheduler_config=${OPTARG} ;;
         d)
-            config_database=${OPTARG} ;;
+            catalogue_config=${OPTARG} ;;
         m)
             model=${OPTARG} ;;
         n)
@@ -121,29 +121,15 @@ if [ -n "${pipelineid}" ] && [ -n "${dockerimage}" ]; then
     usage
 fi
 
-test -f ${config_schedstore} || die "ERROR: Scheduler database credentials file ${config_schedstore} does not exist\n"
-test -f ${config_database} || die "ERROR: Database configmap file ${config_database} does not exist\n"
+test -f ${scheduler_config} || die "ERROR: Scheduler config file ${scheduler_config} does not exist\n"
+test -f ${catalogue_config} || die "ERROR: Catalgue config file ${catalogue_config} does not exist\n"
 if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then die "ERROR: Library model ${model} does not exist\n"; fi
 
 if ! command -v helm >/dev/null 2>&1; then
     die "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
 fi
 
-# Get Catalogue Schema version
-MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-SCHEMA_VERSION="$MAJOR.$MINOR"
-
-# It sets as schema version the previous to the current one to create a database with that schema version
-if [[ "$updatedatabasetest" == "1" ]] ; then
-  MIGRATION_FILE=$(find ../../catalogue/cta-catalogue-schema -name "*to${SCHEMA_VERSION}.sql")
-  PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
-  SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
-  echo "Deploying with previous catalogue schema version: ${SCHEMA_VERSION}"
-else
-  echo "Deploying with current catalogue schema version: ${SCHEMA_VERSION}"
-fi
-
+# TODO: the user should just provide the image details and this logic should be elsewhere; makes the whole thing very confusing initially
 # We are going to run with repository based images (they have rpms embedded)
 ../ci_helpers/get_registry_credentials.sh --check > /dev/null || { echo "Error: Credential check failed"; exit 1; }
 if [[ ${systest_only} -eq 1 ]]; then
@@ -204,21 +190,32 @@ if [ $? -eq 0 ]; then
   kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${instance} create -f -
 fi
 
-# TODO: how can this be done in the init chart?
-# Setting up library
-# echo "Requesting an unused ${model} library"
-# kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
-# for ((i=0; i<120; i++)); do
-#   echo -n "."
-#   kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
-#   sleep 1
-# done
-# kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
-# echo "OK"
-# LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
-# echo "Get library device: ${LIBRARY_DEVICE}"
-# kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
-# echo "Got library: ${LIBRARY_DEVICE}"
+catalogue_opts=""
+if [ $runoracleunittests == 1 ] ; then
+  catalogue_opts+=" --set oracleUnitTests.enabled=true"
+fi
+# Get Catalogue Schema version
+MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+SCHEMA_VERSION="$MAJOR.$MINOR"
+if [[ "$updatedatabasetest" == "1" ]] ; then
+  MIGRATION_FILE=$(find ../../catalogue/cta-catalogue-schema -name "*to${SCHEMA_VERSION}.sql")
+  PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
+  # TODO: fill in the catalogue-opts in here with the correct prev version and everything
+  SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
+  echo "Deploying with previous catalogue schema version: ${SCHEMA_VERSION}"
+else
+  echo "Deploying with current catalogue schema version: ${SCHEMA_VERSION}"
+fi
+
+echo  "Installing cataloguedb chart..."
+set -x
+helm install cataloguedb helm/cataloguedb -n ${instance} \
+                                          --set catalogue.schemaVersion="${SCHEMA_VERSION}" \
+                                          --values ${catalogue_config} \
+                                          --wait --timeout 5m \
+                                          ${catalogue_opts}
+set +x
 
 echo  "Installing init chart..."
 set -x
@@ -228,63 +225,17 @@ helm install init helm/init -n ${instance} \
                             --set catalogue.schemaVersion="${SCHEMA_VERSION}" \
                             --set wipeCatalogue=${wipe_catalogue} \
                             --set wipeScheduler=${wipe_scheduler} \
-                            --values helm/cta/library-values.yaml \
-                            --values helm/cta/scheduler-file-values.yaml \
-                            --values helm/cta/catalogue-postgres-values.yaml \
+                            --values ${library_config} \
+                            --values ${scheduler_config} \
+                            --values ${catalogue_config} \
                             --wait --wait-for-jobs --timeout 5m
 set +x
-
-# TODO: move this outside of this script (to the helm chart of the catalogue?)
-if [ $runoracleunittests == 1 ] ; then
-  # everyone needs poddir temporary directory to generate pod yamls
-  poddir=$(mktemp -d)
-  echo 'copying files to tmpdir'
-  cp ./pod-oracleunittests.yaml ${poddir}
-  # For now we do a search replace of the image tag for this pod.
-  # Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
-  # Eventually this should also be integrated into helm and be overriden using the --set flag.
-  # Then the tmp dir is also no longer necessary
-  # e.g. helm install oracleunittest --wait --timeout 5m --set global.image=${IMAGE} \
-  sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-  echo "Running database unit-tests"
-  kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
-
-  echo -n "Waiting for oracleunittests"
-  for ((i=0; i<400; i++)); do
-    echo -n "."
-    kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
-    sleep 1
-  done
-  echo ""
-
-  kubectl --namespace=${instance} logs oracleunittests
-
-  # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -q Failed); then
-    echo "oracleunittests pod in Error status here are its last log lines:"
-    kubectl --namespace=${instance} logs oracleunittests --tail 10
-    die "ERROR: oracleunittests pod in Error state. Initialization failed."
-  fi
-  # database unit-tests were successful => exit now with success
-  exit 0
 fi
-fi
-# This simply counts the number of drives in the mhvtl config
-# If their slots do not start from 0 (which they should), this will not produce the expected results
-# num_drives_available=$(grep Drive -c /etc/mhvtl/device.conf)
-                          # --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available} \
 
 echo ""
 echo "Processing dependencies of cta chart..."
 helm dependency update helm/cta
 echo "Installing cta chart..."
-
-# The user can provide a number offiles:
-# - base values yaml
-# - library config
-# - scheduler config
-# - catalogue config
-# - additional options/values files
 
 # TODO: this actually doesn't work; each pod needs to figure out which drives/library is available
 # I'll leave it like this for now for easy testing though
@@ -295,9 +246,9 @@ helm install cta helm/cta -n ${instance} \
                           --set global.image.registry=${REGISTRY_HOST} \
                           --set global.image.tag=${imagetag} \
                           --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
-                          --values helm/cta/library-values.yaml \
-                          --values helm/cta/scheduler-file-values.yaml \
-                          --values helm/cta/catalogue-postgres-values.yaml \
+                          --values ${library_config} \
+                          --values ${scheduler_config} \
+                          --values ${catalogue_config} \
                           --wait --timeout 5m
 set +x
 # exit
