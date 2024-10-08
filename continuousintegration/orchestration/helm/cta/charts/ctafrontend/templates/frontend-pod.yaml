@@ -41,8 +41,15 @@ spec:
     {{- end}}
     volumeMounts:
     - name: cta-conf-volume
-      mountPath: /etc/cta
-    {{- if .Values.objectstore.ceph }}
+      mountPath: /etc/cta/cta-catalogue.conf
+      subPath: cta-catalogue.conf
+    - name: cta-conf-volume
+      mountPath: /etc/cta/cta-objectstore-tools.conf
+      subPath: cta-objectstore-tools.conf
+    - name: cta-conf-volume
+      mountPath: /etc/cta/cta-frontend-xrootd.conf
+      subPath: cta-frontend-xrootd.conf
+    {{- if eq $.Values.global.scheduler.backend "ceph" }}
     - name: cta-ceph-volume
       mountPath: /etc/ceph
     {{- end }}
@@ -50,8 +57,8 @@ spec:
   volumes:
   - name: cta-conf-volume
     configMap:
-      name: etc-cta
-  {{- if .Values.objectstore.ceph }}
+      name: etc-cta-ctafrontend
+  {{- if eq $.Values.global.scheduler.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
       name: etc-ceph

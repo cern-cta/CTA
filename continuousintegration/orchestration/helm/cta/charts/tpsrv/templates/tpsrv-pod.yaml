@@ -7,6 +7,7 @@
 # Spawn replicaCount pods
 {{- range $i := until (int .Values.tpsrv.replicaCount) }}
 {{- $podName := printf "tpsrv%02d" (add $i 1) }} # server names start from 1
+{{- $driveName := index $.Values.library.drivenames $i }}
 
 apiVersion: v1
 kind: Pod
@@ -22,9 +23,8 @@ metadata:
 spec:
   restartPolicy: Never
   containers:
-  {{- range $.Values.tpsrv.containers}}
-  {{$containerName := .name | default $podName | quote }}
-  - name: {{ $containerName }}
+  {{- range $.Values.tpsrv.containers }}
+  - name: {{ .name | default $podName | quote }}
     image: {{ $imageVersion }}
     imagePullPolicy: {{ $imagePullPolicy }}
     {{- if (.commandsAtRuntime)}}
@@ -43,8 +43,24 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
-    - name: driveslot
-      value: {{ mod $i (index $.Values.tpsrv.numDrivesAvailable) | quote }}
+    - name: LIBRARYTYPE
+      value: {{ $.Values.library.type | quote }}
+    - name: LIBRARYNAME
+      value: {{ $.Values.library.name | quote }}
+    - name: LIBRARYDEVICE
+      value: {{ $.Values.library.device | quote }}
+    - name: DRIVENAME
+      value: {{ $driveName }}
+    - name: DRIVENAMES
+      value: {{ $.Values.library.drivenames | join "," | quote }}
+    - name: DRIVEDEVICES
+      value: {{ $.Values.library.drivedevices | join "," | quote }}
+    {{- if $.Values.library.driveserials }}
+    - name: DRIVESERIALS
+      value: {{ $.Values.library.driveserials | join "," | quote }}
+    {{- end }}
+    - name: TAPES
+      value: {{ $.Values.library.tapes | join "," | quote }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}
@@ -61,10 +77,17 @@ spec:
     {{- if (.volumeMounts)}}
     volumeMounts:
     - name: cta-conf-volume
-      mountPath: /etc/cta
+      mountPath: /etc/cta/cta-taped-{{ $driveName }}.conf
+      subPath: cta-taped-{{ $driveName }}.conf
+    {{- if ($.Values.global.useSystemd) }}
     - name: cta-sysconfig-volume
-      mountPath: /etc/sysconfig
-    {{- if .Values.objectstore.ceph }}
+      mountPath: /etc/sysconfig/cta-rmcd
+      subPath: cta-rmcd
+    {{- end }}
+    - name: cta-sysconfig-volume
+      mountPath: /etc/sysconfig/cta-taped
+      subPath: cta-taped
+    {{- if eq $.Values.global.scheduler.backend "ceph" }}
     - name: cta-ceph-volume
       mountPath: /etc/ceph
     {{- end }}
@@ -73,27 +96,24 @@ spec:
       {{- $.Values.global.volumeMounts | toYaml | nindent 4}}
     {{- end}}
     {{- end}}
-  {{- end}}
-  {{- if ($.Values.tpsrv.volumes)}}
+  {{- end}} # End of container loop
   volumes:
   - name: cta-conf-volume
     configMap:
-      name: etc-cta
+      name: etc-cta-tpsrv-{{ $i }}
   - name: cta-sysconfig-volume
     configMap:
-      name: etc-sysconfig
-  {{- end}}
-  {{- if .Values.objectstore.ceph }}
+      name: etc-sysconfig-tpsrv
+  {{- if eq $.Values.global.scheduler.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
       name: etc-ceph
   {{- end}}
-    {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
-    {{- if ($.Values.global.volumes) }}
-      {{- $.Values.global.volumes | toYaml | nindent 2}}
-    {{- end}}
+  {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
+  {{- if ($.Values.global.volumes) }}
+    {{- $.Values.global.volumes | toYaml | nindent 2}}
   {{- end}}
   imagePullSecrets:
   {{ $imagePullSecrets | nindent 4 }}
 ---
-{{- end}}
+{{- end}} # End of tape server count range loop

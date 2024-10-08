@@ -30,6 +30,10 @@ spec:
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
+            - name: WIPE_CATALOGUE
+              value: "{{ .Values.wipeCatalogue }}"
+            - name: WIPE_SCHEDULER
+              value: "{{ .Values.wipeScheduler }}"
             - name: SCHEMA_VERSION
               value: {{ .Values.catalogue.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND
@@ -40,6 +44,10 @@ spec:
               value: {{ .Values.global.scheduler.backend | quote}}
             - name: SCHEDULER_URL
               value: {{ include "init.scheduler.url" . | quote}}
+            - name: LIBRARYTYPE
+              value: {{ .Values.tpsrv.library.type | quote }}
+            - name: LIBRARYDEVICE
+              value: {{ .Values.tpsrv.library.device | quote }}
             {{- if eq .Values.global.scheduler.backend "ceph" }}
             - name: SCHEDULER_CEPH_NAMESPACE
               value: {{ .Values.global.scheduler.config.ceph.namespace | quote}}

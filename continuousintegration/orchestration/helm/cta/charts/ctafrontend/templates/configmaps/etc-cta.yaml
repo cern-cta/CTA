@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-cta
+  name: etc-cta-ctafrontend
 data:
   cta-catalogue.conf: |-
     {{ include "global.catalogue.url" . }}
@@ -16,7 +16,7 @@ data:
     cta.schedulerdb.scheduler_backend_name {{ .Values.conf.frontend.schedulerBackendName }}
 
     # CTA ObjectStore options
-    cta.objectstore.backendpath {{ (include "global.scheduler.url" .) | replace "/" "\\/" }}
+    cta.objectstore.backendpath {{ (include "global.scheduler.url" .)  }}
 
     # CTA Scheduler DB options
     cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}

@@ -1,0 +1,11 @@
+global:
+  scheduler:
+    backend: "ceph"
+    config:
+      ceph:
+        mon: "cephmond.cern.ch"
+        monport: "6790"
+        pool: "tapetest"
+        namespace: "cta-dev"
+        id: "cta-dev"
+        key: "KEY"
