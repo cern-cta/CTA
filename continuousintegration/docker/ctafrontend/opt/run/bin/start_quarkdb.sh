@@ -26,8 +26,8 @@ CI_CONTEXT=$1
 
 QUARKDB_CONFIG=/etc/config/eos/xrootd-quarkdb.cfg
 
-QUARKDB_DIRECTORY=$(cat ${QUARKDB_CONFIG} | grep redis.database | sed -e 's/.*redis.database\ \+//;s%/\ *$%%')
-
+# QUARKDB_DIRECTORY=$(cat ${QUARKDB_CONFIG} | grep redis.database | sed -e 's/.*redis.database\ \+//;s%/\ *$%%')
+QUARKDB_DIRECTORY=/qdbdisk/quarkdb1
 QUARKDB_SUBDIRECTORY=$(echo ${QUARKDB_DIRECTORY} | sed -e 's%/[^/]\+/*\ *$%%')
 
 # make sure the first level of directory exists if there is no mounted PV
