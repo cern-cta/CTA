@@ -1,6 +1,7 @@
 [cta-eos-diopside]
 name=EOS diopside releases from EOS project
-baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-$releasever/$basearch/
+#baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-$releasever/$basearch/
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/eos/el9/x86_64/
 enabled=1
 gpgcheck=0
 priority=4
