@@ -1,14 +1,17 @@
+{{- if .Values.updateDBTests.enabled }}
 apiVersion: v1
 kind: Pod
 metadata:
   name: dbupdatetest
   labels:
     k8s-app: dbupdatetest
+    # TODO: post hook?
 spec:
   restartPolicy: Never
   containers:
   - name: dbupdatetest
-    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater@sha256:12ae741513784eb206b0a2b3447008a9be4a95623f4da195b58de2669357dee6
+    image: "{{ .Values.updateDBTests.image.registry }}/{{ .Values.updateDBTests.image.repository }}:{{ .Values.updateDBTests.image.tag }}"
+    imagePullPolicy: {{ .Values.updateDBTests.image.pullPolicy }}
     stdin: true
     env:
     - name: MY_NAME
@@ -22,13 +25,13 @@ spec:
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
     - name: CATALOGUE_SOURCE_VERSION
-      value: "CATALOGUE_SOURCE_VERSION_VALUE"
+      value: "{{ .Values.updateDBTests.catalogueSourceVersion }}"
     - name: CATALOGUE_DESTINATION_VERSION
-      value: "CATALOGUE_DESTINATION_VERSION_VALUE"
+      value: "{{ .Values.updateDBTests.catalogueDestinationVersion }}"
     - name: CTA_VERSION
-      value: "CTA_VERSION_VALUE"
+      value: "{{ .Values.updateDBTests.ctaVersion }}"
     - name: COMMIT_ID
-      value: "COMMIT_ID_VALUE"
+      value: "{{ .Values.updateDBTests.commitId }}"
     - name: TERM
       value: "xterm"
     command: ["/usr/bin/bash"]
@@ -44,7 +47,7 @@ spec:
       name: logstorage
     securityContext:
       privileged: true
-
+# TODO: this does not yet have the correct catalogue-config
   volumes:
   - name: repos
     configMap:
@@ -60,4 +63,5 @@ spec:
       claimName: claimlogs
 
   imagePullSecrets:
-  - name: ctaregsecret
+  - name: ctaregsecret #TODO
+{{- end }}

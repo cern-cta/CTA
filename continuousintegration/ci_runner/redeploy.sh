@@ -26,13 +26,13 @@ usage() {
   echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo ""
   echo "options:"
-  echo "  -h, --help:                   Shows help output."
-  echo "  -n, --namespace <namespace>:  Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
-  echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
-  echo "  -t, --tag <tag>:              Image tag to use. Defaults to \"dev\" if not provided."
-  echo "      --skip-image-reload:      Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
-  echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
+  echo "  -h, --help:                           Shows help output."
+  echo "  -n, --namespace <namespace>:          Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
+  echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
+  echo "  -t, --tag <tag>:                      Image tag to use. Defaults to \"dev\" if not provided."
+  echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
+  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-catalogue-postgres-values.yaml"
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-scheduler-file-values.yaml"
   exit 1
 }
 
@@ -43,8 +43,8 @@ redeploy() {
   local operating_system="alma9"
   local rpm_src=""
   local skip_image_reload=false
-  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config="presets/dev-scheduler-file-values.yaml"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -91,17 +91,26 @@ redeploy() {
         fi
         ;;
       --skip-image-reload) skip_image_reload=true ;;
-      --catalogue-credentials)
-        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist.";  exit 1; }
-        catalogue_credentials=$2
-        shift
+      --catalogue-config)
+        if [[ $# -gt 1 ]]; then
+          catalogue_config="$2"
+          shift
+        else
+          echo "Error: --catalogue-config requires an argument"
+          exit 1
+        fi
         ;;
-      --scheduler-credentials)
-        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
-        scheduler_credentials=$2
-        shift
+      --scheduler-config)
+        if [[ $# -gt 1 ]]; then
+          scheduler_config="$2"
+          shift
+        else
+          echo "Error: --scheduler-config requires an argument"
+          exit 1
+        fi
         ;;
       *)
+        echo "Unsupported argument: $1"
         usage
         ;;
     esac
@@ -153,7 +162,7 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${catalogue_credentials} -o ${scheduler_credentials}
+  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${catalogue_config} -o ${scheduler_config}
 
   echo "Pods redeployed."
 }

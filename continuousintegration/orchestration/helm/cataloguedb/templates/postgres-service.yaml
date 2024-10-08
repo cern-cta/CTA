@@ -1,0 +1,18 @@
+{{- if eq .Values.global.catalogue.backend "postgres" -}}
+{{$namespace := .Release.Namespace }}
+{{$name := "postgres" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    k8s-app: {{ $name }}
+spec:
+  selector:
+    k8s-app: {{ $name }}
+  clusterIP: None
+  ports:
+    - name: {{ $name }}
+      port: 5432
+      protocol: TCP
+{{- end }}

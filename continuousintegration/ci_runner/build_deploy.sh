@@ -45,8 +45,8 @@ usage() {
   echo "      --skip-image-reload:                  Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
   echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
-  echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
+  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-catalogue-postgres-values.yaml"
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-scheduler-file-values.yaml"
   exit 1
 }
 
@@ -78,8 +78,8 @@ compile_deploy() {
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
   local cta_version="5"
-  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config="presets/dev-scheduler-file-values.yaml"
 
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
@@ -145,15 +145,24 @@ compile_deploy() {
           usage
         fi
         ;;
-      --catalogue-credentials)
-        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist."; exit 1; }
-        catalogue_credentials=$2
+      --catalogue-config)
+        if [[ $# -gt 1 ]]; then
+          catalogue_config="$2"
+          shift
+        else
+          echo "Error: --catalogue-config requires an argument"
+          exit 1
+        fi
         shift
         ;;
-      --scheduler-credentials)
-        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
-        scheduler_credentials=$2
-        shift
+      --scheduler-config)
+        if [[ $# -gt 1 ]]; then
+          scheduler_config="$2"
+          shift
+        else
+          echo "Error: --scheduler-config requires an argument"
+          exit 1
+        fi
         ;;
       *)
         usage
@@ -278,8 +287,8 @@ compile_deploy() {
       -n ${deploy_namespace} \
       --operating-system "${operating_system}" \
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
-      --catalogue-credentials ${catalogue_credentials} \
-      --scheduler-credentials ${scheduler_credentials} \
+      --catalogue-config "${catalogue_config}" \
+      --scheduler-config "${scheduler_config}" \
       ${redeploy_flags}
   fi
 }
