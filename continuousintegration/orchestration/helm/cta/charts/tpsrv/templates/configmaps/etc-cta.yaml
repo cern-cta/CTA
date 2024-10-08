@@ -1,24 +1,40 @@
+{{- $replicaCount := int .Values.tpsrv.replicaCount }}
+{{- $drivenamesCount := len .Values.library.drivenames }}
+
+{{- if gt $replicaCount $drivenamesCount }}
+  {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
+{{- end }}
+
+
+{{- range $i := until ($replicaCount) }}
+{{- $driveSlot := int $i }}
+{{- $driveName := index $.Values.library.drivenames $i }}
+
+# Generate unique config map for each tape server pod
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-cta
+  # The name cannot use the drivename as this contains uppercase letters
+  name: etc-cta-tpsrv-{{ $i }}
 data:
-  cta-taped-{{ .Values.conf.drive.names[.Values.conf.drive.slot] }}.conf: |-
+  cta-taped-{{ $driveName }}.conf: |-
     # cta-taped setup
-    taped BufferSizeBytes {{ .Values.conf.taped.bufferSizeBytes }}
-    taped BufferCount {{ .Values.conf.taped.bufferCount }}
-    taped MountCriteria {{ .Values.conf.taped.mountCriteria }}
-    taped WatchdogIdleSessionTimer {{ .Values.conf.taped.watchdogIdleSessionTimer }}
-    taped UseEncryption {{ .Values.conf.taped.useEncryption }}
-    taped DriveName {{ .Values.conf.drive.names[.Values.conf.drive.slot] }}
-    taped DriveLogicalLibrary {{ .Values.conf.drive.names[.Values.conf.drive.slot] }}
-    taped DriveDevice /dev/{{ .Values.conf.drive.devices[.Values.conf.drive.slot] }}
-    taped DriveControlPath smc{{ .Values.conf.drive.slot }}
+    taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
+    taped BufferCount {{ $.Values.conf.taped.bufferCount }}
+    taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
+    taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
+    taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
+    taped DriveName {{ $driveName }}
+    taped DriveLogicalLibrary {{ $driveName }}
+    taped DriveDevice /dev/{{ index $.Values.library.drivedevices $driveSlot }}
+    taped DriveControlPath smc{{ $driveSlot }}
     # Decrease schedulerDB cache timeout for tests
-    taped TapeCacheMaxAgeSecs {{ .Values.conf.taped.tapeCacheMaxAgeSecs }}
-    taped RetrieveQueueCacheMaxAgeSecs {{ .Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
+    taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
+    taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
     # Objectstore
-    ObjectStore BackendPath {{ include "global.scheduler.url" . }}
+    ObjectStore BackendPath {{ include "global.scheduler.url" $ }}
     # General
-    general InstanceName {{ .Values.conf.general.instanceName }}
-    general SchedulerBackendName {{ .Values.conf.general.schedulerBackendName }}
+    general InstanceName {{ $.Values.conf.general.instanceName }}
+    general SchedulerBackendName {{ $.Values.conf.general.schedulerBackendName }}
+---
+{{- end }}

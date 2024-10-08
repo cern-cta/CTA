@@ -2,6 +2,8 @@
 nameOverride: init
 isPriviliged: true
 
+wipeCatalogue: true
+wipeScheduler: true
 
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
@@ -66,13 +68,6 @@ pvcs:
     accessModes:
       - ReadWriteMany
 
-# TODO: for now this always wipes everything
-env:
-- name: KEEP_DATABASE
-  value: "0"
-- name: KEEP_OBJECTSTORE
-  value: "0"
-
 volumeMounts:
 - mountPath: /shared
   name: shared
@@ -80,8 +75,8 @@ volumeMounts:
 #   name: myobjectstore
 # - mountPath: /etc/config/database
 #   name: mydatabase
-- mountPath: /etc/config/library
-  name: mylibrary
+# - mountPath: /etc/config/library
+#   name: mylibrary
 - mountPath: /mnt/logs
   name: logstorage
 
@@ -96,9 +91,9 @@ volumes:
 # - name: mydatabase
 #   configMap:
 #     name: database-config
-- name: mylibrary
-  configMap:
-    name: library-config
+# - name: mylibrary
+#   configMap:
+#     name: library-config
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs

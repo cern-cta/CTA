@@ -21,10 +21,10 @@ yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # source library configuration file
-echo "Using this configuration for library:"
-/opt/run/bin/init_library.sh
-cat /tmp/library-rc.sh
-. /tmp/library-rc.sh
+# echo "Using this configuration for library:"
+# /opt/run/bin/init_library.sh
+# cat /tmp/library-rc.sh
+# . /tmp/library-rc.sh
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 

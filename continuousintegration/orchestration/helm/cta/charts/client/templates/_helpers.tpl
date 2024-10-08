@@ -89,10 +89,10 @@ it will load additionally all of the global configs as well
 {{- define "client.volumes" -}}
 {{ if or (.Values.global) (.Values.volumes) }}
     {{- if (.Values.global.volumes)}}
-    {{- .Values.global.volumes | toYaml }}
+      {{- .Values.global.volumes | toYaml }}
     {{- end }}
     {{- if (.Values.volumes)}}
-    {{- .Values.volumes | toYaml }}
+      {{- .Values.volumes | toYaml }}
     {{- end }}
 {{- end}}
 {{- end -}}

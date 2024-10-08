@@ -77,9 +77,9 @@ volumes:
 # - name: mydatabase
 #   configMap:
 #     name: database-config
-- name: mylibrary
-  configMap:
-    name: library-config
+# - name: mylibrary
+#   configMap:
+#     name: library-config
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs
@@ -103,8 +103,8 @@ volumeMounts:
 #   name: myobjectstore
 # - mountPath: /etc/config/database
 #   name: mydatabase
-- mountPath: /etc/config/library
-  name: mylibrary
+# - mountPath: /etc/config/library
+#   name: mylibrary
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /etc/cta/eos.grpc.keytab

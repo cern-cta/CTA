@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-ceph
+  name: etc-ceph-tpsrv
 data:
   ceph.conf: |-
     [global]
