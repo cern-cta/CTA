@@ -35,8 +35,8 @@ usesystemd=0
 
 # By default keep Database and keep Scheduler datastore data
 # default should not make user loose data if he forgot the option
-keepdatabase=1
-keepobjectstore=1
+wipe_catalogue=false
+wipe_scheduler=false
 
 # By default run the standard test no oracle dbunittests
 runoracleunittests=0
@@ -98,9 +98,9 @@ while getopts "n:o:d:p:b:i:r:c:SDOUumQ" o; do
         S)
             usesystemd=1 ;;
         O)
-            keepobjectstore=0 ;;
+            wipe_scheduler=true ;;
         D)
-            keepdatabase=0 ;;
+            wipe_catalogue=true ;;
         U)
             runoracleunittests=1 ;;
         u)
@@ -181,20 +181,19 @@ if [ $usesystemd == 1 ] ; then
     die "ERROR: systemd support has not yet been implement in the Helm setup"
 fi
 
-if [ $keepdatabase == 1 ] ; then
-    # TODO: this does not seem to be implemented yet
-    echo "DB content will be kept"
+if [ "$wipe_catalogue" == "true" ] ; then
+    echo "Catalogue content will be wiped"
 else
-    echo "DB content will be wiped"
+    echo "Catalogue content will be kept"
 fi
 
-if [ $keepobjectstore == 1 ] ; then
-    # TODO: this does not seem to be implemented yet
+if [ "$wipe_scheduler" == "true" ]; then
+    echo "scheduler data store content will be wiped"
+else
     echo "scheduler data store content will be kept"
-else
-    echo "schedule data store content will be wiped"
 fi
 
+if  true ; then
 echo "Creating ${instance} namespace"
 kubectl create namespace ${instance}
 
@@ -207,19 +206,19 @@ fi
 
 # TODO: how can this be done in the init chart?
 # Setting up library
-echo "Requesting an unused ${model} library"
-kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
-for ((i=0; i<120; i++)); do
-  echo -n "."
-  kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
-  sleep 1
-done
-kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
-echo "OK"
-LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
-echo "Get library device: ${LIBRARY_DEVICE}"
-kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
-echo "Got library: ${LIBRARY_DEVICE}"
+# echo "Requesting an unused ${model} library"
+# kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
+# for ((i=0; i<120; i++)); do
+#   echo -n "."
+#   kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
+#   sleep 1
+# done
+# kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
+# echo "OK"
+# LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
+# echo "Get library device: ${LIBRARY_DEVICE}"
+# kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
+# echo "Got library: ${LIBRARY_DEVICE}"
 
 echo  "Installing init chart..."
 set -x
@@ -227,10 +226,13 @@ helm install init helm/init -n ${instance} \
                             --set global.image.registry=${REGISTRY_HOST} \
                             --set global.image.tag=${imagetag} \
                             --set catalogue.schemaVersion="${SCHEMA_VERSION}" \
-                            -f ${config_schedstore} \
-                            -f ${config_database} \
+                            --set wipeCatalogue=${wipe_catalogue} \
+                            --set wipeScheduler=${wipe_scheduler} \
+                            --values helm/cta/library-values.yaml \
+                            --values helm/cta/scheduler-file-values.yaml \
+                            --values helm/cta/catalogue-postgres-values.yaml \
                             --wait --wait-for-jobs --timeout 5m
-return
+set +x
 
 # TODO: move this outside of this script (to the helm chart of the catalogue?)
 if [ $runoracleunittests == 1 ] ; then
@@ -266,26 +268,39 @@ if [ $runoracleunittests == 1 ] ; then
   # database unit-tests were successful => exit now with success
   exit 0
 fi
-
+fi
 # This simply counts the number of drives in the mhvtl config
 # If their slots do not start from 0 (which they should), this will not produce the expected results
-num_drives_available=$(grep Drive -c /etc/mhvtl/device.conf)
+# num_drives_available=$(grep Drive -c /etc/mhvtl/device.conf)
+                          # --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available} \
 
 echo ""
 echo "Processing dependencies of cta chart..."
 helm dependency update helm/cta
 echo "Installing cta chart..."
+
+# The user can provide a number offiles:
+# - base values yaml
+# - library config
+# - scheduler config
+# - catalogue config
+# - additional options/values files
+
+# TODO: this actually doesn't work; each pod needs to figure out which drives/library is available
+# I'll leave it like this for now for easy testing though
+
+# TODO: let the user specify or automatically find the library-values.yaml
+set -x
 helm install cta helm/cta -n ${instance} \
                           --set global.image.registry=${REGISTRY_HOST} \
                           --set global.image.tag=${imagetag} \
                           --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
-                          --set tpsrv.tpsrv.numDrivesAvailable=${num_drives_available} \
+                          --values helm/cta/library-values.yaml \
+                          --values helm/cta/scheduler-file-values.yaml \
+                          --values helm/cta/catalogue-postgres-values.yaml \
                           --wait --timeout 5m
-
-kubectl get pods -n ${instance}
-
-
-
+set +x
+# exit
 # TODO: the following part is configuration that is not (and should not) be part of the Helm setup.
 # Eventually, the user should be able to provide a setup script that will be executed here.
 

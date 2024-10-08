@@ -49,3 +49,12 @@
 {{- fail "You must provide imagePullSecrets value either in .Values.global.image.pullSecrets or .Values.image.pullSecrets" -}}
 {{- end }}
 {{- end }}
+
+{{/* Check if systemd is enabled. Use global if available, otherwise fallback to local value. */}}
+{{- define "tpsrv.useSystemd" -}}
+{{- if .Values.global.useSystemd }}
+  {{- .Values.global.useSystemd }}
+{{- else }}
+  {{- .Values.useSystemd }}
+{{- end }}
+{{- end }}

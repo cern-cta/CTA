@@ -17,9 +17,6 @@
 
 . /opt/run/bin/init_pod.sh
 
-# oracle sqlplus client binary path
-ORACLE_SQLPLUS="/usr/bin/sqlplus64"
-
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
   sleep 1
@@ -35,10 +32,10 @@ yum-config-manager --enable ceph
 yum -y install mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
 yum clean packages
 
-echo "Using this configuration for library:"
-/opt/run/bin/init_library.sh
-cat /tmp/library-rc.sh
-. /tmp/library-rc.sh
+# echo "Using this configuration for library:"
+# /opt/run/bin/init_library.sh
+# cat /tmp/library-rc.sh
+# . /tmp/library-rc.sh
 
 # echo "Configuring Scheduler store:"
 # /opt/run/bin/init_objectstore.sh
@@ -56,7 +53,7 @@ else
     yum -y install cta-objectstore-tools
 fi
 
-if [ "$KEEP_OBJECTSTORE" == "0" ]; then
+if [ "$WIPE_SCHEDULER" == "true" ]; then
   if [ "$SCHEDULER_BACKEND" == "file" ]; then
     echo "Wiping objectstore"
     rm -fr $SCHEDULER_URL
@@ -84,12 +81,11 @@ else
   echo "Reusing the existing scheduling backend (no check)"
 fi
 
-echo "Configuring database:"
 # /opt/run/bin/init_database.sh
 # . /tmp/database-rc.sh
 # echo ${CATALOGUE_URL} >/etc/cta/cta-catalogue.conf
 
-if [ "$KEEP_DATABASE" == "0" ]; then
+if [ "$WIPE_CATALOGUE" == "true" ]; then
   echo "Wiping database"
   if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
     if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
@@ -109,6 +105,8 @@ if [ "$KEEP_DATABASE" == "0" ]; then
     chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
   elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
     echo "Purging Oracle recycle bin"
+    # oracle sqlplus client binary path
+    ORACLE_SQLPLUS="/usr/bin/sqlplus64"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
