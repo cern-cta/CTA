@@ -39,8 +39,8 @@ global:
         path: ""
 
   catalogue:
-    schemaVersion: "15.0"
-    backend: oracle # Can be sqlite, orale or postgres.
+    schemaVersion: ""
+    backend: "" # Can be sqlite, orale or postgres.
     config:
       oracle:
         username: ""
@@ -97,23 +97,3 @@ volumes:
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs
-
-# Catalogue
-postgres:
-  name: postgres
-  service:
-    ports:
-    - name: postgres
-      port: 5432
-      protocol: TCP
-  pod:
-    image: docker.io/postgres:14.10
-    env:
-    - name: POSTGRES_USER
-      value: cta
-    - name: POSTGRES_PASSWORD
-      value: cta
-    - name: PGDATA
-      value: /var/lib/postgresql/data/pgdata
-    - name: POSTGRES_DB
-      value: cta

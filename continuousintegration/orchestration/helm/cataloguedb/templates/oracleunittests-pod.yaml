@@ -1,3 +1,4 @@
+{{- if .Values.oracleUnitTests.enabled }}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -6,7 +7,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: oracleunittests
-    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300 # TODO
     stdin: true
     env:
     - name: MY_CONTAINER
@@ -23,19 +24,11 @@ spec:
       value: "$(MY_NAMESPACE)"
     - name: TERM
       value: "xterm"
-    - name: driveslot
-      value: "0"
     command: ['/opt/run/bin/oracleunittests.sh']
     args: ["none"]
     volumeMounts:
     - mountPath: /shared
       name: shared
-    - mountPath: /etc/config/objectstore
-      name: myobjectstore
-    - mountPath: /etc/config/database
-      name: mydatabase
-    - mountPath: /etc/config/library
-      name: mylibrary
     - mountPath: /mnt/logs
       name: logstorage
     securityContext:
@@ -45,18 +38,10 @@ spec:
   - name: shared
     hostPath:
       path: /opt/cta
-  - name: myobjectstore
-    configMap:
-      name: objectstore-config
-  - name: mydatabase
-    configMap:
-      name: database-config
-  - name: mylibrary
-    configMap:
-      name: library-config
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
 
   imagePullSecrets:
-  - name: ctaregsecret
+  - name: ctaregsecret # TODO
+{{- end }}

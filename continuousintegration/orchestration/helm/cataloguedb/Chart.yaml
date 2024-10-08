@@ -1,0 +1,7 @@
+apiVersion: v2
+name: init
+version: 0.1.0
+description: A catalogue chart for cta project.
+type: application
+
+appVersion: "1.16.0"
