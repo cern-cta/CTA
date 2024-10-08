@@ -90,6 +90,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
     }
     HeaderChecker::checkVOL1(vol1, m_vid);  // now we know that we are going to write on the correct tape
   }
+  END DISABLE FOR NULL MEDIA TYPE TEST */
   // if the tape is not empty let's move to the last trailer
   if (last_fSeq > 0) {
     // 3 file marks per file but we want to read the last trailer (hence the -1)
@@ -127,11 +128,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
     // all ready to write the headers of the first file
     m_lastWrittenFSeq = 0;
   }
-  END DISABLE FOR NULL MEDIA TYPE TEST */
-  //adding the following line to be alway at the start of the tape since it is media type NULL
-  m_lastWrittenFSeq = 0;
-
-          // now we need to get two pieces of information that will end up in the headers and trailers
+  // now we need to get two pieces of information that will end up in the headers and trailers
   // that we will write (siteName, hostName)
   setSiteName();
   setHostName();
