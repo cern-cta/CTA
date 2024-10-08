@@ -246,7 +246,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   request.requester.name         = m_event.cli().user().username();
   request.requester.group        = m_event.cli().user().groupname();
   request.srcURL                 = m_event.wf().instance().url();
-  request.storageClass = storageClassStr;
+  request.storageClass           = storageClassStr;
   request.archiveReportURL       = m_event.transport().report_url();
   request.archiveErrorReportURL  = m_event.transport().error_report_url();
   request.creationLog.host       = m_cliIdentity.host;
@@ -449,7 +449,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
 
   // Set response type and remove reference to retrieve request in EOS extended attributes.
   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", ""));
-  // the dCache code does not reset the objectstore_id, unclear whether this should be done
+  // reset request_objectstore_id for consistency with xattrs
   response.set_request_objectstore_id("");
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
