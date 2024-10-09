@@ -6,7 +6,7 @@
 
 This release should be based on `<commit_id>` from branch [`main`](https://gitlab.cern.ch/cta/CTA/-/tree/main).
 
-This release will be tagged as version `v4.Y.Z-R`/`v5.Y.Z-R`.
+This release will be tagged as version `v5.X.Y.Z-R`.
 
 ### Additional details
 
