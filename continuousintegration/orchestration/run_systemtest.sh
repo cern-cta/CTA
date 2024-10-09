@@ -145,35 +145,37 @@ if [ -z "${systemtest_script}" ]; then
     usage
 fi
 
+# TODO: improve this as well
 # ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
 if [ $ORACLE_SUPPORT == "OFF" ] ; then
-  database_configmap="pgsql-pod-creds.yaml.example"
+  database_configmap="presets/dev-catalogue-postgres-values.yaml"
   CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
   useoracle=0
 fi
 
 if [ $useoracle == 1 ] ; then
-    database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
+    database_credentials=$(find /opt/kubernetes/CTA/catalogue | grep oracle-values.yaml | head -1)
     if [ "-${database_credentials}-" == "--" ]; then
       die "ERROR: Oracle database requested but not database configuration was found."
-    else
-      CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
     fi
+    CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
 fi
 
+# TODO: improve this if statement
 # SCHED_TYPE is an external variable of the gitlab-ci to use postgres scheduler backend if CTA is compiled with it
 if [ $SCHED_TYPE == "pgsched" ] ; then
-  schedstore_creds=$(find /opt/kubernetes/CTA/ | grep pgsched-creds.yaml | head -1)
-  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_creds}"
+  scheduler_config=$(find /opt/kubernetes/CTA/scheduler | grep postgres-values.yaml | head -1)
+  if [ "-${scheduler_config}-" == "--" ]; then
+    die "ERROR: Postgres scheduler requested but no scheduler configuration was found."
+  fi
+  CREATE_OPTS="${CREATE_OPTS} -o ${scheduler_config}"
   useceph=0
-fi
-
-if [ $useceph == 1 ] ; then
-    objectstore_credentials=$(find /opt/kubernetes/CTA/ | grep objectstore-file.yaml | head -1)
-    if [ "-${objectstore_credentials}-" == "--" ]; then
-      die "ERROR: Ceph objectstore requested but not objectstore configuration was found."
+elif [ $useceph == 1 ] ; then
+    scheduler_config=$(find /opt/kubernetes/CTA/scheduler | grep ceph-values.yaml | head -1)
+    if [ "-${scheduler_config}-" == "--" ]; then
+      die "ERROR: Ceph scheduler requested but no scheduler configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_credentials}"
+      CREATE_OPTS="${CREATE_OPTS} -o ${scheduler_config}"
     fi
 fi
 
