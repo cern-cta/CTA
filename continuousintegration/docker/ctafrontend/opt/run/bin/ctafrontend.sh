@@ -24,27 +24,6 @@ yum-config-manager --enable ceph
 # cta-catalogueutils is needed to delete the db at the end of instance
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 
-# /etc/cta/cta-frontend-xrootd.conf is now provided by ctafrontend rpm. It comes with CI-ready content,
-# except the objectstore backend path, which we add here:
-
-# /opt/run/bin/init_objectstore.sh
-# . /tmp/objectstore-rc.sh
-
-# ESCAPEDURL=$(echo ${OBJECTSTOREURL} | sed 's/\//\\\//g')
-# sed -i "s/^.*cta.objectstore.backendpath.*$/cta.objectstore.backendpath ${ESCAPEDURL}/" /etc/cta/cta-frontend-xrootd.conf
-
-# Set the ObjectStore URL in the ObjectStore Tools configuration
-
-# echo "ObjectStore BackendPath $OBJECTSTOREURL" >/etc/cta/cta-objectstore-tools.conf
-
-# /opt/run/bin/init_database.sh
-# . /tmp/database-rc.sh
-
-# echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
-
-# EOS INSTANCE NAME used as username for SSS key
-# export EOSINSTANCE=ctaeos
-
 # Wait for the keytab files to be pushed in by the creation script
 echo -n "Waiting for /etc/cta/eos.sss.keytab."
 for ((;;)); do test -e /etc/cta/eos.sss.keytab && break; sleep 1; echo -n .; done

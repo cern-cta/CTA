@@ -20,22 +20,11 @@
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
-# source library configuration file
-# echo "Using this configuration for library:"
-# /opt/run/bin/init_library.sh
-# cat /tmp/library-rc.sh
-# . /tmp/library-rc.sh
-
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available
-
-# cat <<EOF >/etc/sysconfig/cta-rmcd
-# DAEMON_COREFILE_LIMIT=unlimited
-# CTA_RMCD_OPTIONS=/dev/smc
-# EOF
 
   # install RPMs
   yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
