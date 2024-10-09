@@ -54,7 +54,7 @@ data:
     cta.log.format {{ .Values.conf.logger.logFormat }}
 
     # CTA XRootD SSI Protobuf log level
-    # cta.log.ssi debug protobuf # TODO: check what to do here
+    # cta.log.ssi debug protobuf # TODO: which of these options do we want to make configurable?
     cta.log.ssi {{ .Values.conf.logger.ssiLogLevel }}
 
     # CTA Repack buffer URL
