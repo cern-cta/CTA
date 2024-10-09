@@ -32,19 +32,6 @@ yum-config-manager --enable ceph
 yum -y install mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
 yum clean packages
 
-# echo "Using this configuration for library:"
-# /opt/run/bin/init_library.sh
-# cat /tmp/library-rc.sh
-# . /tmp/library-rc.sh
-
-# echo "Configuring Scheduler store:"
-# /opt/run/bin/init_objectstore.sh
-# . /tmp/objectstore-rc.sh
-# echo ${SCHEDULER_URL} >/etc/cta/cta-scheduler.conf
-
-echo "Using scheduler backend: $SCHEDULER_BACKEND"
-echo "Using catalogue backend: $CATALOGUE_BACKEND"
-
 if [ "$SCHEDULER_BACKEND" == "postgres" ]; then
     echo "Installing the cta-scheduler-utils"
     yum -y install cta-scheduler-utils
@@ -53,6 +40,10 @@ else
     yum -y install cta-objectstore-tools
 fi
 
+echo "Using scheduler backend: $SCHEDULER_BACKEND"
+echo "Using catalogue backend: $CATALOGUE_BACKEND"
+
+# Clean up scheduler
 if [ "$WIPE_SCHEDULER" == "true" ]; then
   if [ "$SCHEDULER_BACKEND" == "file" ]; then
     echo "Wiping objectstore"
@@ -81,10 +72,7 @@ else
   echo "Reusing the existing scheduling backend (no check)"
 fi
 
-# /opt/run/bin/init_database.sh
-# . /tmp/database-rc.sh
-# echo ${CATALOGUE_URL} >/etc/cta/cta-catalogue.conf
-
+# Clean up catalogue
 if [ "$WIPE_CATALOGUE" == "true" ]; then
   echo "Wiping database"
   if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
@@ -121,7 +109,7 @@ else
   echo "Reusing database (no check)"
 fi
 
-
+# Clean up tapes
 if [ ! $LIBRARYTYPE == "mhvtl" ]; then
   echo "Real tapes - do nothing";
 else
