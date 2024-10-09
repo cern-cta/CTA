@@ -1,0 +1,23 @@
+{{- if .Values.global.scheduler.ceph }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-ceph-cta
+  labels:
+    app.kubernetes.io/name: cta
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: scheduler
+    app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+data:
+  ceph.conf: |-
+    [global]
+      mon host = {{ .Values.global.scheduler.ceph.mon }}:{{ .Values.global.scheduler.ceph.monport }}
+  ceph.client.{{ .Values.global.scheduler.ceph.id }}.keyring: |-
+    [client.{{ .Values.global.scheduler.ceph.id }}]
+      key = {{ .Values.global.scheduler.ceph.key }}
+      caps mon = "allow r"
+      caps osd = "allow rwx pool={{ .Values.global.scheduler.ceph.pool }} namespace={{ .Values.global.scheduler.ceph.namespace }}"
+{{- end }}
