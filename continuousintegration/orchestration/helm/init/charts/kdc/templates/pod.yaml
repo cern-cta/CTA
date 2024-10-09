@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
     app.kubernetes.io/name: {{ $name }}
@@ -18,13 +18,13 @@ spec:
   serviceAccountName: {{$accountName}}
   restartPolicy: Never
   containers:
-  - name: {{$name}}
+  - name: {{ $name }}
     image: {{ include "kdc.image" . }}
     imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
     stdin: true
     env:
     - name: MY_NAME
-      value: {{$name}}
+      value: {{ $name }}
     - name: MY_NAMESPACE
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
