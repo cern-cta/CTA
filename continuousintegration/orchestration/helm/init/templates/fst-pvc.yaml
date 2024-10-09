@@ -1,0 +1,15 @@
+{{$namespace := .Release.Namespace }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: claimfst
+  namespace: {{ $namespace | quote }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.fstStorage  }}
+  selector:
+    matchLabels:
+      type: stg

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-cta
+  name: etc-cta-init
 data:
   cta-catalogue.conf: |-
     {{ include "init.catalogue.url" . }}

@@ -1,9 +1,0 @@
-global:
-  catalogue:
-    backend: postgres
-    config:
-      postgres:
-        username: cta
-        password: cta
-        database: cta
-        server: postgres
