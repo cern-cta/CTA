@@ -365,7 +365,7 @@ class Gc:
   def parse_conf(conf_fp):
     try:
       parser = configparser.ConfigParser(inline_comment_prefixes=";")
-      parser.readfp(conf_fp)
+      parser.read_file(conf_fp)
       config = GcConfig()
       config.log_file = parser.get('main', 'log_file')
       config.mgm_host = parser.get('main', 'mgm_host')
