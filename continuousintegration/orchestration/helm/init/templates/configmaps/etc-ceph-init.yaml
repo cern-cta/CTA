@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-ceph-tpsrv
+  name: etc-ceph-init
   labels:
-    app.kubernetes.io/name: cta
+    app.kubernetes.io/name: init
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
     app.kubernetes.io/component: scheduler

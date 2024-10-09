@@ -145,7 +145,7 @@ if [ -z "${systemtest_script}" ]; then
     usage
 fi
 
-# TODO: improve this as well
+# TODO: improve this if statement (i.e. these two consecutive statements are confusing)
 # ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
 if [ $ORACLE_SUPPORT == "OFF" ] ; then
   database_configmap="presets/dev-catalogue-postgres-values.yaml"
