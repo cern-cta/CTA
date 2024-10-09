@@ -41,7 +41,7 @@ volumeMounts:
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /fst
-  name: stgstorage
+  name: fststorage
 - mountPath: /etc/config/eos
   name: eosconfig
 - mountPath: /etc/config/eoscta
@@ -78,9 +78,9 @@ volumes:
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs
-- name: stgstorage
+- name: fststorage
   persistentVolumeClaim:
-    claimName: claimstg
+    claimName: claimfst
 - name: eosconfig
   configMap:
     name: eos-config-base
@@ -98,7 +98,7 @@ volumes:
     secretName: eos-sss-keytab
 - name: migration-conf
   configMap:
-    name: castor-migration-conf
+    name: castor-migration
 - name: xrd-mgm-config
   configMap:
     name: eos-config-mgm

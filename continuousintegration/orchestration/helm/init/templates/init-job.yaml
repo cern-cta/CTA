@@ -64,11 +64,19 @@ spec:
             - name: cta-conf-volume
               mountPath: /etc/cta/cta-objectstore-tools.conf
               subPath: cta-objectstore-tools.conf
-            {{- include "init.volumeMounts" . | nindent 12 }}
+            - mountPath: /mnt/logs
+              name: logstorage
+            - mountPath: /shared
+              name: shared
       volumes:
         - name: cta-conf-volume
           configMap:
-            name: etc-cta
-        {{- include "init.volumes" . | nindent 8 }}
+            name: etc-cta-init
+        - name: shared
+          hostPath:
+            path: /opt/cta
+        - name: logstorage
+          persistentVolumeClaim:
+            claimName: claimlogs
       imagePullSecrets:
       {{- include "init.imagePullSecrets" . | nindent 8 }}
