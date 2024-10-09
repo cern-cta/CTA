@@ -108,6 +108,7 @@ compile_deploy() {
         fi
         ;;
       *)
+        echo "Unsupported argument: $1"
         usage
         ;;
     esac

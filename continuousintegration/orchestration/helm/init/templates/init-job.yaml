@@ -6,8 +6,6 @@ kind: Job
 metadata:
   name: {{$name}}
   namespace: {{ $namespace | quote}}
-  labels:
-    k8s-app: {{$name}}
 spec:
   template:
     spec:
