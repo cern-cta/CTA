@@ -2,6 +2,8 @@
 nameOverride: init
 isPriviliged: true
 
+runOracleUnitTests: false
+
 wipeCatalogue: true
 wipeScheduler: true
 
