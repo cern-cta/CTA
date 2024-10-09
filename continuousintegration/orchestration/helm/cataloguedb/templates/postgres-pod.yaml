@@ -7,7 +7,7 @@ metadata:
   name: postgres
   namespace: {{ $namespace | quote}}
   labels:
-    k8s-app: postgres
+    app.kubernetes.io/name: postgres
 spec:
   restartPolicy: Never
   containers:

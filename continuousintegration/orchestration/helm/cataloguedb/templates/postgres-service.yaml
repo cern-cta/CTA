@@ -6,10 +6,10 @@ kind: Service
 metadata:
   name: {{ $name }}
   labels:
-    k8s-app: {{ $name }}
+    app.kubernetes.io/name: {{ $name }}
 spec:
   selector:
-    k8s-app: {{ $name }}
+    app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
     - name: {{ $name }}

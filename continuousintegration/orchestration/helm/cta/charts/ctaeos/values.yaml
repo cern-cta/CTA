@@ -7,9 +7,9 @@ readinessProbe:
 
 service:
   selectors:
-    k8s-app: ctaeos-mgm
+    app.kubernetes.io/name: ctaeos-mgm
   labels:
-    k8s-app: ctaeos-mgm
+    app.kubernetes.io/name: ctaeos-mgm
   ports:
   - name: ctaeos-mgm
     port: 1094
@@ -31,7 +31,7 @@ env:
   value: "xterm"
 
 labels:
-  k8s-app: ctaeos-mgm
+  app.kubernetes.io/name: ctaeos-mgm
 
 # defines all of the volumes consumed by pod
 

@@ -6,11 +6,9 @@ kind: Service
 metadata:
   name: {{$name}}
   namespace: {{$namespace}}
-  labels:
-    k8s-app: {{$name}}
 spec:
   selector:
-    k8s-app: {{$name}}
+    app.kubernetes.io/name: {{$name}}
   clusterIP: None
   ports:
   {{- .ports | toYaml | nindent 4}}

@@ -70,7 +70,9 @@ prepareImage() {
           exit 1
         fi
         ;;
-      *) usage ;;
+      *)
+        echo "Unsupported argument: $1" 
+        usage ;;
     esac
     shift
   done

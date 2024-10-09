@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  labels:
-    config: keypass-names
   name: keypass-names-config
   namespace: {{.Release.Namespace}}
+  labels:
+    config: keypass-names
 data:
   keypass-names.txt: |
     user1 user1.keytab

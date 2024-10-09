@@ -37,11 +37,6 @@ if [ -z "${NAMESPACE}" ]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
-
 # eos instance identified by SSS username
 # EOSINSTANCE=cta-mgm-0
 EOSINSTANCE=ctaeos
@@ -74,7 +69,11 @@ MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 #  echo "Clean the library /dev/${LIBRARYDEVICE} if needed"
 #    mtx -f /dev/${LIBRARYDEVICE} status | sed -e "s/:/ /g"| grep "Full" | awk '{if ($1=="Data" ) { rewind="mt -f /dev/${DRIVEDEVICES["$4"]} rewind"; print rewind; print "Rewind drive "$4>"/dev/stderr"; unload="mtx -f /dev/${LIBRARYDEVICE} unload "$8" "$4; print unload; print "Unloading to storage slot "$8" from data slot "$4"" >"/dev/stderr";}}' |  source /dev/stdin
 
-ctacliIP=$(kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//')
+# ctacliIP=$(kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//')
+
+# Set the TAPES and DRIVENAME based on the config in tpsrv01
+DRIVENAME=$(kubectl exec -n dev tpsrv01 -c taped -- printenv DRIVENAME)
+IFS=',' read -r -a TAPES <<< "$(kubectl exec -n dev tpsrv01 -c taped -- printenv TAPES)"
 
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()
@@ -84,13 +83,13 @@ done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
 echo "Preparing CTA configuration for tests"
-  # verify the catalogue DB schema
-    kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-    if [ $? -ne 0 ]; then
-      echo "ERROR: failed to verify the catalogue DB schema"
-      exit 1
-    fi
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
+# verify the catalogue DB schema
+kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
+if [ $? -ne 0 ]; then
+  echo "ERROR: failed to verify the catalogue DB schema"
+  exit 1
+fi
+kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
 
 echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq'
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
@@ -301,16 +300,16 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add
 
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-     --instance ${EOSINSTANCE}                                        \
-     --name eosusers                                                  \
-     --mountpolicy ctasystest --comment "ctasystest"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
+    --instance ${EOSINSTANCE}                                        \
+    --name eosusers                                                  \
+    --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-     --instance ${EOSINSTANCE}                                        \
-     --name powerusers                                                  \
-     --mountpolicy ctasystest --comment "ctasystest"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
+    --instance ${EOSINSTANCE}                                        \
+    --name powerusers                                                  \
+    --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
@@ -323,11 +322,11 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
 
 ###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
-     --instance ${EOSINSTANCE}                                        \
-     --name powerusers                                                \
-     --activityregex ^T0Reprocess$                                    \
-     --mountpolicy ctasystest --comment "ctasystest"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
+    --instance ${EOSINSTANCE}                                        \
+    --name powerusers                                                \
+    --activityregex ^T0Reprocess$                                    \
+    --mountpolicy ctasystest --comment "ctasystest"
 
 # Clear power on sense generate during boot.
 for SG_DEVICE in $(lsscsi -g | grep tape | awk '{print $7}'); do
@@ -336,28 +335,27 @@ done
 
 
 echo "Labeling tapes:"
-  # add all tapes
-  for ((i=0; i<${#TAPES[@]}; i++)); do
-    VID=${TAPES[${i}]}
-    echo "  cta-tape-label --vid ${VID} --force"
-    # for debug use
-      # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
-    # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
-    # tests. That's why we need to force cta-tape-label, but only for CI testing.
-    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --force
-    if [ $? -ne 0 ]; then
-      echo "ERROR: failed to label the tape ${VID}"
-      exit 1
-    fi
-  done
+# add all tapes
+for VID in "${TAPES[@]}"; do
+  echo "  cta-tape-label --vid ${VID} --force"
+  # for debug use
+  # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
+  # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
+  # tests. That's why we need to force cta-tape-label, but only for CI testing.
+  kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --force
+  if [ $? -ne 0 ]; then
+    echo "ERROR: failed to label the tape ${VID}"
+    exit 1
+  fi
+done
 
 echo "Setting drive up: ${DRIVENAME}"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAME}
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAME}
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting
 echo "EOS server version is used:"
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- rpm -qa|grep eos-server
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- rpm -qa|grep eos-server
 
 
 # Super client capabilities

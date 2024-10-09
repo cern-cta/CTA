@@ -152,4 +152,3 @@ else
 fi
 
 echo "### INIT COMPLETED ###"
-touch /tmp/INIT_COMPLETE

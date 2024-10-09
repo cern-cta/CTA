@@ -32,8 +32,6 @@ conf:
 
 tpsrv:
   replicaCount: 1
-  labels:
-    k8s-app: ctataped
   containers:
   - name: rmcd
     isPriviliged: true
@@ -47,8 +45,6 @@ tpsrv:
     volumeMounts:
     - mountPath: /shared
       name: shared
-    # - mountPath: /etc/config/library
-    #   name: mylibrary
     - mountPath: /mnt/logs
       name: logstorage
 
@@ -71,12 +67,6 @@ tpsrv:
     volumeMounts:
     - mountPath: /shared
       name: shared
-    # - mountPath: /etc/config/objectstore
-    #   name: myobjectstore
-    # - mountPath: /etc/config/database
-    #   name: mydatabase
-    # - mountPath: /etc/config/library
-    #   name: mylibrary
     - mountPath: /etc/config/eos
       name: eosconfig
     - mountPath: /mnt/logs
@@ -88,15 +78,6 @@ tpsrv:
   - name: shared
     hostPath:
       path: /opt/cta
-  # - name: myobjectstore
-  #   configMap:
-  #     name: objectstore-config
-  # - name: mydatabase
-  #   configMap:
-  #     name: database-config
-  # - name: mylibrary
-  #   configMap:
-  #     name: library-config
   - name: eosconfig
     configMap:
       name: eos-config-base

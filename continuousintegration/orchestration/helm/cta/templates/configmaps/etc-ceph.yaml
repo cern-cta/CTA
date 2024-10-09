@@ -3,6 +3,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: etc-ceph-tpsrv
+  labels:
+    app.kubernetes.io/name: cta
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: scheduler
+    app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 data:
   ceph.conf: |-
     [global]

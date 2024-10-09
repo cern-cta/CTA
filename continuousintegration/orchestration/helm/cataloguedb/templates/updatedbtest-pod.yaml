@@ -4,7 +4,7 @@ kind: Pod
 metadata:
   name: dbupdatetest
   labels:
-    k8s-app: dbupdatetest
+    app.kubernetes.io/name: dbupdatetest
     # TODO: post hook?
 spec:
   restartPolicy: Never
