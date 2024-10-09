@@ -1,0 +1,56 @@
+{{- if .Values.oracleUnitTests.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: oracleunittests
+spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: oracleunittests
+        image: "{{ .Values.global.image.registry }}/{{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        stdin: true
+        env:
+        - name: MY_CONTAINER
+          value: "oracleunittests"
+        - name: MY_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: INSTANCE_NAME
+          value: "$(MY_NAMESPACE)"
+        - name: TERM
+          value: "xterm"
+        command: ['/opt/run/bin/oracleunittests.sh']
+        args: ["none"]
+        volumeMounts:
+        - mountPath: /shared
+          name: shared
+        - mountPath: /mnt/logs
+          name: logstorage
+        securityContext:
+          privileged: true
+
+      volumes:
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: claimlogs
+
+      {{- if .Values.global.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.global.image.pullSecrets }}
+      - name: {{ .name }}
+      {{- end }}
+      {{- end }}
+{{- end }}

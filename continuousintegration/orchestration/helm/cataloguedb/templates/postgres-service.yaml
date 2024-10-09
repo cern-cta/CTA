@@ -13,6 +13,6 @@ spec:
   clusterIP: None
   ports:
     - name: {{ $name }}
-      port: 5432
+      port: {{ .Values.servicePort }}
       protocol: TCP
 {{- end }}
