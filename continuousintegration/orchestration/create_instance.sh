@@ -225,6 +225,7 @@ if [ -z "$unused_devices" ]; then
   die "ERROR: No unused library devices available. All the following libraries are in use: $devices_in_use"
 fi
 
+# Determine the library config to use
 if [ -z "${library_config}" ]; then
   echo "Library configuration not provided. Auto-generating..."
   # Ensure the temporary file is deleted on script exit or interruption
@@ -237,15 +238,13 @@ if [ -z "${library_config}" ]; then
   cat $library_config
   echo "---"
 else
-  # See what device was provided in the values and check that it is not in use
+  # See what device was provided in the config and check that it is not in use
   library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
   if ! echo "$unused_devices" | grep -qw "$library_device"; then
     die "ERROR: provided library config specifies a device that is already in use: $library_device"
   fi
 fi
 echo "Using library device: ${library_device}"
-
-# Determine the library config to use
 
 echo "Creating ${namespace} namespace"
 kubectl create namespace ${namespace}
@@ -258,9 +257,12 @@ if [ $? -eq 0 ]; then
   kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
 fi
 
-catalogue_opts=""
+# Not all of these are used atm, but will be in the future
+helm_catalogue_opts=""
+helm_init_opts=""
+helm_cta_opts=""
 if [ $runoracleunittests == 1 ] ; then
-  catalogue_opts+=" --set oracleUnitTests.enabled=true"
+  helm_init_opts+=" --set runOracleUnitTests=true"
 fi
 # Get Catalogue Schema version
 catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -279,10 +281,12 @@ fi
 echo  "Installing cataloguedb chart..."
 set -x
 helm install cataloguedb helm/cataloguedb --namespace ${namespace} \
+                                          --set global.image.registry="${registry_host}" \
+                                          --set global.image.tag="${imagetag}" \
                                           --set catalogue.schemaVersion="${catalogue_schema_version}" \
                                           --values "${catalogue_config}" \
                                           --wait --timeout 5m \
-                                          ${catalogue_opts}
+                                          ${helm_catalogue_opts}
 set +x
 
 echo  "Installing init chart..."
@@ -296,7 +300,8 @@ helm install init helm/init --namespace ${namespace} \
                             --values "${library_config}" \
                             --values "${scheduler_config}" \
                             --values "${catalogue_config}" \
-                            --wait --wait-for-jobs --timeout 5m
+                            --wait --wait-for-jobs --timeout 5m \
+                            ${helm_init_opts}
 set +x
 
 echo ""
@@ -311,7 +316,8 @@ helm install cta helm/cta --namespace ${namespace} \
                           --values "${library_config}" \
                           --values "${scheduler_config}" \
                           --values "${catalogue_config}" \
-                          --wait --timeout 5m
+                          --wait --timeout 5m \
+                          ${helm_cta_opts}
 set +x
 
 # TODO: the following part is configuration that is not (and should not) be part of the Helm setup.

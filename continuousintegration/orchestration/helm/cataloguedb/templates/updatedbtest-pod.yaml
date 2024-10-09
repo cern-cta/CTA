@@ -58,7 +58,7 @@ spec:
   - name: scripts
     configMap:
       name: dbupdatetestscript-config
-  - name: logstorage
+  - name: logstorage # TODO: this is only done in the init chart
     persistentVolumeClaim:
       claimName: claimlogs
 

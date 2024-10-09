@@ -2,16 +2,6 @@
 nameOverride: cataloguedb
 isPriviliged: false
 
-oracleUnitTests:
-  enabled: false
-  image:
-    registry: gitlab-registry.cern.ch/cta
-    repository: ctageneric
-    tag: ""
-    pullPolicy: IfNotPresent
-    pullSecrets: 
-      - ctaregsecret
-
 updateDBTests:
   enabled: false
   catalogueSourceVersion: ""
