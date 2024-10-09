@@ -4,14 +4,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
 spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 1
   template:
     spec:
       restartPolicy: Never
       containers:
-        - name: {{$name}}
+        - name: {{ $name }}
           image: {{ include "init.image" . }}
           imagePullPolicy: {{ include "init.imagePullPolicy" . }}
           {{- if .Values.customEntrypoint }}
@@ -23,7 +25,7 @@ spec:
           stdin: true
           env:
             - name: MY_NAME
-              value: {{$name}}
+              value: {{ $name }}
             - name: MY_NAMESPACE
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
