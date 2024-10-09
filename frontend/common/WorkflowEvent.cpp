@@ -505,14 +505,15 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   }
   // also get the objectstore_id, either from the standalone attribute or the xattrs
   std::string objectstoreAddress = m_event.file().request_objectstore_id();
-  request.address = objectstoreAddress;
+  if (!objectstoreAddress.empty())
+    request.address = objectstoreAddress;
   if (objectstoreAddress.empty()) {
     // fallback to xattrs
     if (auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
         archiveRequestAddrItor != m_event.file().xattr().end()) {
       //We have the ArchiveRequest's objectstore address.
       if (objectstoreAddress = archiveRequestAddrItor->second; !objectstoreAddress.empty()) {
-        request.address = archiveRequestAddrItor->second;
+        request.address = objectstoreAddress;
       }
     }
   }
