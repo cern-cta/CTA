@@ -1,3 +1,10 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "tpsrv.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{/* Pick container image. It may be from:
     - `.Values.image` (Has the highest priority)
     - `.Values.global.image` (Has lower priority)

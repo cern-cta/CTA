@@ -15,11 +15,14 @@ metadata:
   name: {{$podName | quote}}
   namespace: {{ $namespace | quote}}
   labels:
-  {{- if ($.Values.tpsrv.labels)}}
-    {{$.Values.tpsrv.labels | toYaml  | nindent 4}}
-  {{- else}}
-    k8s-app: {{$podName | quote}}
-  {{- end}}
+    app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    app.kubernetes.io/component: tape
+    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    cta/library-device: {{ $.Values.library.device }}
 spec:
   restartPolicy: Never
   containers:
@@ -79,6 +82,9 @@ spec:
     - name: cta-conf-volume
       mountPath: /etc/cta/cta-taped-{{ $driveName }}.conf
       subPath: cta-taped-{{ $driveName }}.conf
+    - name: cta-conf-volume
+      mountPath: /etc/cta/cta-catalogue.conf
+      subPath: cta-catalogue.conf
     {{- if ($.Values.global.useSystemd) }}
     - name: cta-sysconfig-volume
       mountPath: /etc/sysconfig/cta-rmcd
@@ -103,7 +109,7 @@ spec:
       name: etc-cta-tpsrv-{{ $i }}
   - name: cta-sysconfig-volume
     configMap:
-      name: etc-sysconfig-tpsrv
+      name: etc-sysconfig-tpsrv-{{ $i }}
   {{- if eq $.Values.global.scheduler.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:

@@ -100,8 +100,6 @@ else
   # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
   # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
   # working correctly
-  # TODO: set this with Helm
-  CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVENAME}.log"
   CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVENAME}.conf"
   runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 

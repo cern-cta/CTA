@@ -1,13 +1,37 @@
+{{- $replicaCount := int .Values.tpsrv.replicaCount }}
+{{- $drivenamesCount := len .Values.library.drivenames }}
+
+{{- if gt $replicaCount $drivenamesCount }}
+  {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
+{{- end }}
+
+
+{{- range $i := until ($replicaCount) }}
+{{- $driveSlot := int $i }}
+{{- $driveName := index $.Values.library.drivenames $i }}
+
+# Generate unique config map for each tape server pod as each gets its own log file
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-sysconfig-tpsrv
+  name: etc-sysconfig-tpsrv-{{ $i }}
+  labels:
+    app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    app.kubernetes.io/component: tape
+    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
 data:
-{{- if (include "tpsrv.useSystemd" .) }}
+{{- if (include "tpsrv.useSystemd" $) }}
   cta-rmcd: |-
-    DAEMON_COREFILE_LIMIT={{ .Values.conf.rmcd.coreFileLimit }}
-    CTA_RMCD_OPTIONS={{ .Values.conf.rmcd.options }}
+    DAEMON_COREFILE_LIMIT={{ $.Values.conf.rmcd.coreFileLimit }}
+    CTA_RMCD_OPTIONS={{ $.Values.conf.rmcd.options }}
 {{- end }}
   cta-taped: |-
-    XrdSecPROTOCOL={{ .Values.conf.taped.secProtocol }}
-    XrdSecSSSKT={{ .Values.conf.taped.secSssktPath }}/{{ .Values.conf.taped.ctaTapedSss }}
+    CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-{{ $driveName }}.log"
+    XrdSecPROTOCOL={{ $.Values.conf.taped.secProtocol }}
+    XrdSecSSSKT={{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+---
+{{- end }}
