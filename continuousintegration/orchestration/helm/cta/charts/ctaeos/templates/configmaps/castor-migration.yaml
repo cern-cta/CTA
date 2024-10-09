@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   labels:
     config: eoscta
-  name: castor-migration-conf
+  name: castor-migration
   namespace: {{.Release.Namespace}}
 data:
   #eos.token must be the same as in client.sh

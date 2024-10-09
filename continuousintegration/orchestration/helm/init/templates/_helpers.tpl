@@ -3,27 +3,6 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-
-
-{{/* Sets pesistent volumes for the chart. */}}
-{{- define "init.volumes" -}}
-{{- if (.Values.volumes) }}
-    {{- .Values.volumes | toYaml}}
-{{- else}}
-{{- fail "You must provide volumes via .Values.volumes"}}
-{{- end}}
-{{- end -}}
-
-{{- define "init.volumeMounts" -}}
-{{ if (.Values.volumeMounts) }}
-  {{- .Values.volumeMounts | toYaml -}}
-{{- else}}
-{{- fail "You must provide .Values.volumeMounts value so the init pod have something to work on."}}
-{{- end}}
-{{- end -}}
-
-
-
 {{/* Pick container image. It may be from:
     - `.Values.image` (Has the highest priority)
     - `.Values.global.image` (Has lower priority)

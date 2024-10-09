@@ -1,6 +1,0 @@
-global:
-  scheduler:
-    backend: file
-    config:
-      file:
-        path: /shared/%NAMESPACE/objectstore

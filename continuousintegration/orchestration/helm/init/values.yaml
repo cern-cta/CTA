@@ -5,6 +5,9 @@ isPriviliged: true
 wipeCatalogue: true
 wipeScheduler: true
 
+logStorage: "2Gi"
+fstStorage: "3Gi"
+
 # Changes the entrypoint of the image to the script and provide arguments if needed
 customEntrypoint:
   command: ['/opt/run/bin/init.sh']
@@ -53,47 +56,3 @@ global:
         database: ""
       sqlite:
         filepath: ""
-
-pvcs:
-  claimstg:
-    selectors:
-      type: stg
-    storage: 3Gi
-    accessModes:
-      - ReadWriteMany
-  claimlogs:
-    selectors:
-      type: logs
-    storage: 2Gi
-    accessModes:
-      - ReadWriteMany
-
-volumeMounts:
-- mountPath: /shared
-  name: shared
-# - mountPath: /etc/config/objectstore
-#   name: myobjectstore
-# - mountPath: /etc/config/database
-#   name: mydatabase
-# - mountPath: /etc/config/library
-#   name: mylibrary
-- mountPath: /mnt/logs
-  name: logstorage
-
-
-volumes:
-- name: shared
-  hostPath:
-    path: /opt/cta
-# - name: myobjectstore
-#   configMap:
-#     name: objectstore-config
-# - name: mydatabase
-#   configMap:
-#     name: database-config
-# - name: mylibrary
-#   configMap:
-#     name: library-config
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
