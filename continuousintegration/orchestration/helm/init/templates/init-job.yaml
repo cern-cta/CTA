@@ -72,7 +72,11 @@ spec:
               name: shared
             {{- if eq $.Values.global.scheduler.backend "ceph" }}
             - name: cta-ceph-volume
-              mountPath: /etc/ceph
+              mountPath: /etc/ceph/ceph.conf
+              subPath: ceph.conf
+            - name: cta-ceph-volume
+              mountPath: /etc/ceph/ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
+              subPath: ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
             {{- end }}
       volumes:
         - name: cta-conf-volume
