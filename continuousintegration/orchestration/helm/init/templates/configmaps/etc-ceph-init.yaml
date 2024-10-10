@@ -14,10 +14,10 @@ metadata:
 data:
   ceph.conf: |-
     [global]
-      mon host = {{ .Values.global.scheduler.ceph.mon }}:{{ .Values.global.scheduler.ceph.monport }}
-  ceph.client.{{ .Values.global.scheduler.ceph.id }}.keyring: |-
-    [client.{{ .Values.global.scheduler.ceph.id }}]
-      key = {{ .Values.global.scheduler.ceph.key }}
+      mon host = {{ .Values.global.scheduler.config.ceph.mon }}:{{ .Values.global.scheduler.config.ceph.monport }}
+  ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring: |-
+    [client.{{ .Values.global.scheduler.config.ceph.id }}]
+      key = {{ .Values.global.scheduler.config.ceph.key }}
       caps mon = "allow r"
-      caps osd = "allow rwx pool={{ .Values.global.scheduler.ceph.pool }} namespace={{ .Values.global.scheduler.ceph.namespace }}"
+      caps osd = "allow rwx pool={{ .Values.global.scheduler.config.ceph.pool }} namespace={{ .Values.global.scheduler.config.ceph.namespace }}"
 {{- end }}
