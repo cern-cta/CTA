@@ -620,6 +620,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
+    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape1.vid, false);
+    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape2.vid, false);
+
     // new FID does not matter because archive file still exists in catalogue
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, "0");
 
@@ -632,6 +635,10 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
 
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
 
+    //assert that tape 1 is dirty and tape 2 is not
+    auto tapeMap = m_catalogue->Tape()->getTapesByVid({tape1.vid, tape2.vid});
+    ASSERT_TRUE(tapeMap.at(tape1.vid).dirty);
+    ASSERT_FALSE(tapeMap.at(tape2.vid).dirty);
   }
 }
 
@@ -1109,6 +1116,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
+    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape1.vid, false);
+    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape2.vid, false);
+
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(12345678)); //previous fid + 1
 
     //assert archive file has been restored in the catalogue
@@ -1123,6 +1133,11 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
     auto fileRecycleLog = fileRecycleLogItor.next();
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
+
+    //assert that tape 1 is dirty and tape 2 is not
+    auto tapeMap = m_catalogue->Tape()->getTapesByVid({tape1.vid, tape2.vid});
+    ASSERT_TRUE(tapeMap.at(tape1.vid).dirty);
+    ASSERT_FALSE(tapeMap.at(tape2.vid).dirty);
   }
 }
 
