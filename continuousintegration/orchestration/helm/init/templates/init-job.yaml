@@ -8,7 +8,7 @@ metadata:
   namespace: {{ $namespace | quote}}
 spec:
   ttlSecondsAfterFinished: 120
-  backoffLimit: 1
+  backoffLimit: 0
   template:
     spec:
       restartPolicy: Never
