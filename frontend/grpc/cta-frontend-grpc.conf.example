@@ -31,9 +31,9 @@ ObjectStore BackendPath /path/to/local/objectstore
 
 
 ####################################
-#  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
+#  TLS related variables. Only used when TLS is true
 ####################################
-# Use TLS
+# Use TLS (previously the command-line option --tls)
 #gRPC TLS true/false
 #  TLS service key file
 #gRPC TlsKey /path/to/key
