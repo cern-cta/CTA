@@ -72,6 +72,7 @@ void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   }
 
   RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+  RdbmsCatalogueUtils::setTapeDirty(conn, fileRecycleLog.vid);
 
   conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
   conn.commit();

@@ -14,6 +14,7 @@
 - cta/CTA#819 - Log drive state updates
 
 ### Bug Fixes
+- cta/CTA#475 - Update dirty bit of a tape after undelete
 - cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
 - cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
 - cta/CTA#781 - Fixed security issues with build pods
