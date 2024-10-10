@@ -70,6 +70,10 @@ spec:
               name: logstorage
             - mountPath: /shared
               name: shared
+            {{- if eq $.Values.global.scheduler.backend "ceph" }}
+            - name: cta-ceph-volume
+              mountPath: /etc/ceph
+            {{- end }}
       volumes:
         - name: cta-conf-volume
           configMap:
@@ -80,5 +84,10 @@ spec:
         - name: logstorage
           persistentVolumeClaim:
             claimName: claimlogs
+        {{- if eq $.Values.global.scheduler.backend "ceph" }}
+        - name: cta-ceph-volume
+          configMap:
+            name: etc-ceph-init
+        {{- end}}
       imagePullSecrets:
       {{- include "init.imagePullSecrets" . | nindent 8 }}
