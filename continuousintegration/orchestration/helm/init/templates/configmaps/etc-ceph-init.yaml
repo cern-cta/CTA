@@ -1,4 +1,4 @@
-{{- if .Values.global.scheduler.ceph }}
+{{- if eq $.Values.global.scheduler.backend "ceph" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
