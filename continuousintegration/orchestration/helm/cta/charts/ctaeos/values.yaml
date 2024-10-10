@@ -56,13 +56,13 @@ volumeMounts:
   name: sss-keytab
   subPath: eos.keytab
 - mountPath: /etc/cta/castor-migration.conf
-  name: migration-conf
+  name: castor-migration-conf
   subPath: castor-migration.conf
 - mountPath: /etc/xrd.cf.mgm
-  name: xrd-mgm-config
+  name: eos-config-mgm
   subPath: xrd.cf.mgm
 - mountPath: /etc/xrd.cf.fst
-  name: xrd-fst-config
+  name: eos-config-fst
   subPath: xrd.cf.fst
 - mountPath: /etc/xrootd-quarkdb.cfg
   name: eos-config-quarkdb
@@ -96,13 +96,13 @@ volumes:
 - name: sss-keytab
   secret:
     secretName: eos-sss-keytab
-- name: migration-conf
+- name: castor-migration-conf
   configMap:
     name: castor-migration
-- name: xrd-mgm-config
+- name: eos-config-mgm
   configMap:
     name: eos-config-mgm
-- name: xrd-fst-config
+- name: eos-config-fst
   configMap:
     name: eos-config-fst
 - name: eos-config-quarkdb
