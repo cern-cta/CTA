@@ -1,4 +1,4 @@
-{{- if .Values.oracleUnitTests.enabled }}
+{{- if .Values.runOracleUnitTests }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -46,11 +46,6 @@ spec:
       - name: logstorage
         persistentVolumeClaim:
           claimName: claimlogs
-
-      {{- if .Values.global.image.pullSecrets }}
       imagePullSecrets:
-      {{- range .Values.global.image.pullSecrets }}
-      - name: {{ .name }}
-      {{- end }}
-      {{- end }}
+      {{- include "init.imagePullSecrets" . | nindent 8 }}
 {{- end }}
