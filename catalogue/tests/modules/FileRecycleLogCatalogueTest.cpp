@@ -620,8 +620,8 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
-    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape1.vid, false);
-    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape2.vid, false);
+    m_catalogue->Tape()->setTapeDirty(m_admin, tape1.vid, false);
+    m_catalogue->Tape()->setTapeDirty(m_admin, tape2.vid, false);
 
     // new FID does not matter because archive file still exists in catalogue
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, "0");
@@ -1116,8 +1116,8 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
-    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape1.vid, false);
-    m_catalogue->Tape()->setTapeDirty(common::dataStructures::SecurityIdentity(), tape2.vid, false);
+    m_catalogue->Tape()->setTapeDirty(m_admin, tape1.vid, false);
+    m_catalogue->Tape()->setTapeDirty(m_admin, tape2.vid, false);
 
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(12345678)); //previous fid + 1
 
