@@ -70,6 +70,7 @@ void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   }
 
   RdbmsFileRecycleLogCatalogue::restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+  RdbmsCatalogueUtils::setTapeDirty(conn, fileRecycleLog.vid);
   conn.commit();
 
   log::ScopedParamContainer spc(lc);
