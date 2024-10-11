@@ -51,6 +51,7 @@ tpsrv_count=2
 # for the pod images
 registry_host="gitlab-registry.cern.ch/cta"
 
+# TODO: worth putting in another script?
 generate_library_config() {
   local target_file="$1"
   local library_device="$2"
@@ -109,6 +110,7 @@ usage() {
   exit 1
 }
 
+# TODO: replace these options with something that is actually readable
 while getopts "n:o:d:p:b:i:r:c:l:SDOUumQ" o; do
   case "${o}" in
     o)

@@ -2,7 +2,7 @@
 {{- define "global.catalogue.url" -}}
 {{- $backend := .Values.global.catalogue.backend -}}
 {{- if eq $backend "oracle" -}}
-oracle:{{ .Values.global.catalogue.config.oracle.username }}:{{ .Values.global.catalogue.config.oracle.password }}@{{ .Values.global.catalogue.config.oracle.database }}
+oracle:{{ .Values.global.catalogue.config.oracle.username }}/{{ .Values.global.catalogue.config.oracle.password }}@{{ .Values.global.catalogue.config.oracle.database }}
 {{- else if eq $backend "postgres" -}}
 postgresql:postgresql://{{ .Values.global.catalogue.config.postgres.username }}:{{ .Values.global.catalogue.config.postgres.password }}@{{ .Values.global.catalogue.config.postgres.server }}/{{ .Values.global.catalogue.config.postgres.database }}
 {{- else if eq $backend "sqlite" -}}
