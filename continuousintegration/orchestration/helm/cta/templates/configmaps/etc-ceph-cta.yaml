@@ -1,4 +1,5 @@
 {{- if eq $.Values.global.scheduler.backend "ceph" }}
+# Note that this uses $.Values instead of .Values to ensure other charts in unique contexts can use this as well
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,18 +9,18 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
     app.kubernetes.io/component: scheduler
-    app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" }}
+    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 data:
   ceph.conf: |
     [global]
-      mon host = {{ .Values.global.scheduler.config.ceph.mon }}:{{ .Values.global.scheduler.config.ceph.monport }}
+      mon host = {{ $.Values.global.scheduler.config.ceph.mon }}:{{ $.Values.global.scheduler.config.ceph.monport }}
     
   ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring: |
-    [client.{{ .Values.global.scheduler.config.ceph.id }}]
-      key = {{ .Values.global.scheduler.config.ceph.key }}
+    [client.{{ $.Values.global.scheduler.config.ceph.id }}]
+      key = {{ $.Values.global.scheduler.config.ceph.key }}
       caps mon = "allow r"
-      caps osd = "allow rwx pool={{ .Values.global.scheduler.config.ceph.pool }} namespace={{ .Values.global.scheduler.config.ceph.namespace }}"
+      caps osd = "allow rwx pool={{ $.Values.global.scheduler.config.ceph.pool }} namespace={{ $.Values.global.scheduler.config.ceph.namespace }}"
     
 {{- end }}
