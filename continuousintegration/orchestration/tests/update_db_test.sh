@@ -43,37 +43,10 @@ check_schema_version() {
   fi
 }
 
-# Create k8 pod for db update test
-create_dbupdatetest_pod() {
-  kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
-
-  echo -n "Waiting for dbupdatetest pod to be created"
-  for ((i=0; i<240; i++)); do
-    echo -n "."
-    kubectl --namespace=${instance} get pod -o json 2>/dev/null \
-      | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
-    sleep 1
-  done
-  echo ""
-
-  echo -n "Waiting for dbupdatetest to be ready"
-  for ((i=0; i<400; i++)); do
-    echo -n "."
-    kubectl -n ${NAMESPACE} logs dbupdatetest 2>/dev/null |   grep -E -q "dbupdatetest pod is ready" && break
-    sleep 1
-  done
-  echo ""
-}
-
-CTA_VERSION=""
-
 while getopts "n:v:" o; do
   case "${o}" in
     n)
       NAMESPACE=${OPTARG}
-      ;;
-    v)
-      CTA_VERSION=${OPTARG}
       ;;
     *)
       usage
@@ -91,9 +64,6 @@ if [ ! -z "${error}" ]; then
   exit 1
 fi
 
-# create tmp dir for all temporary files
-tempdir=$(mktemp -d)
-
 # Get Catalogue Schema version
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -101,39 +71,17 @@ NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
 MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
-# Get yum repositories from current commit (will go to standard /shared/yum.repos.d directory in cta-catalogue-updater container)
-YUM_REPOS="$(realpath "$(dirname "$0")/../../docker/ctafrontend/alma9/etc/yum.repos.d")"
-kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
-# Add our intermediate script (do we really need it?)
-SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh" | head -n 1)")"
-kubectl -n ${NAMESPACE} create configmap dbupdatetestscript-config --from-file=${SCRIPT_FILE}
-# Add configmap taken from ctafrontend pod (will go to standard /shared/etc_cta/cta-catalogue.conf file in cta-catalogue-updater container)
-kubectl cp -n ${NAMESPACE} ctafrontend:/etc/cta/cta-catalogue.conf ${tempdir}/cta-catalogue.conf
-kubectl -n ${NAMESPACE} create configmap cta-catalogue-config --from-file=${tempdir}/cta-catalogue.conf
-
-# Modify fields of pod yaml with the current data
-cp ../pod-dbupdatetest.yaml ${tempdir}
-sed -i "s/CATALOGUE_SOURCE_VERSION_VALUE/${PREVIOUS_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
-sed -i "s/CATALOGUE_DESTINATION_VERSION_VALUE/${NEW_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
-
-COMMITID=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
-sed -i "s/COMMIT_ID_VALUE/${COMMITID}/g" ${tempdir}/pod-dbupdatetest.yaml
-sed -i "s/CTA_VERSION_VALUE/${CTA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
-
-# Check if the current schema version is the same as the previous one
 echo "Checking if the current schema version is the same as the previous one"
 check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
-create_dbupdatetest_pod
-
-kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
-kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh update"
+kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
+kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh update"
 
 # Check if the current schema version is the same as the new one. If it is, the update was successful
 echo "Checking if liquibase update was successful"
 check_schema_version ${NEW_SCHEMA_VERSION}
 
-kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
+kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
 
 # Check if the current schema version is the same as the previous one. Rollback should be successful.
 echo "Checking if liquibase rollback was successful"
