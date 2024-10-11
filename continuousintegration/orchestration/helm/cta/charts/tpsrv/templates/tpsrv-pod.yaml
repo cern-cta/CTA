@@ -117,7 +117,7 @@ spec:
   {{- if eq $.Values.global.scheduler.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
-      name: etc-ceph
+      name: etc-ceph-cta
   {{- end}}
   {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
   {{- if ($.Values.global.volumes) }}

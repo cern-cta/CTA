@@ -71,7 +71,7 @@ spec:
   {{- if eq $.Values.global.scheduler.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
-      name: etc-ceph
+      name: etc-ceph-cta
   {{- end}}
   {{include "ctafrontend.volumes" . | nindent 2}}
 

@@ -22,15 +22,15 @@ mkdir ~/bin
 USE_SUDO=false HELM_INSTALL_DIR=${HOME}/bin ./get_helm.sh
 ```
 
-CTA Runner is using two helmcharts: `cta` which contains all of the project pods, including `EOS` pod and `init` chart, which sets up PVCs, keypass'es and postgresql database.
+CTA Runner is using two helmcharts: `cta` which contains all of the project pods, including `EOS` pod and `init` chart, which sets up PVCs, keypasses and postgresql database.
 
 ## Helm chart organisation
 
 CTA CI is organised into two main charts:
-- **CTA** chart, which is organised into smaller charts containing each of the project pods.
 - **Init** chart, which job is to prepare the environment (Setup the postgresql database, prepare keytabs for the CTA to use)
+- **CTA** chart, which is organised into smaller charts containing each of the project pods.
 
-
+TODO: almost all of the below stuff should be documented in the values.yaml files instead
 
 ## CTA
 
