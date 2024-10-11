@@ -98,8 +98,8 @@ spec:
       mountPath: /etc/ceph/ceph.conf
       subPath: ceph.conf
     - name: cta-ceph-volume
-      mountPath: /etc/ceph/ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
-      subPath: ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
+      mountPath: /etc/ceph/ceph.client.{{ $.Values.global.scheduler.config.ceph.id }}.keyring
+      subPath: ceph.client.{{ $.Values.global.scheduler.config.ceph.id }}.keyring
     {{- end }}
     {{- .volumeMounts | toYaml | nindent 4}}
     {{- if ($.Values.global.volumes) }}
