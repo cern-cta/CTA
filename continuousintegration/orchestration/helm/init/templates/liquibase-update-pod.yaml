@@ -12,7 +12,8 @@ spec:
   restartPolicy: Never
   containers:
   - name: {{ $name }}
-    image: "{{ .Values.updateDBTests.image.registry }}/{{ .Values.updateDBTests.image.repository }}{{ .Values.updateDBTests.image.tag }}" # TODO: this image name only works with sha for now
+    # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
+    image: "{{ .Values.updateDBTests.image.registry }}/{{ .Values.updateDBTests.image.repository }}{{ .Values.updateDBTests.image.tag }}"
     imagePullPolicy: {{ .Values.updateDBTests.image.pullPolicy }}
     stdin: true
     env:
@@ -37,7 +38,8 @@ spec:
     - name: yum-repos
       mountPath: /shared/etc_yum.repos.d
     - name: cta-conf-volume
-      mountPath: /shared/etc_cta/cta-catalogue.conf # TODO: this should eventually just go into /etc/cta
+      # TODO: this should eventually just go into /etc/cta; requires an update in the cta-catalogue-update container
+      mountPath: /shared/etc_cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
     - name: logstorage
       mountPath: /mnt/logs
