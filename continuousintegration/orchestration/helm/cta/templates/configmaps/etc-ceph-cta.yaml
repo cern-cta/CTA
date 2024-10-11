@@ -12,12 +12,14 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 data:
-  ceph.conf: |-
+  ceph.conf: |
     [global]
       mon host = {{ .Values.global.scheduler.config.ceph.mon }}:{{ .Values.global.scheduler.config.ceph.monport }}
-  ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring: |-
+    
+  ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring: |
     [client.{{ .Values.global.scheduler.config.ceph.id }}]
       key = {{ .Values.global.scheduler.config.ceph.key }}
       caps mon = "allow r"
       caps osd = "allow rwx pool={{ .Values.global.scheduler.config.ceph.pool }} namespace={{ .Values.global.scheduler.config.ceph.namespace }}"
+    
 {{- end }}
