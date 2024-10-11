@@ -60,13 +60,13 @@ if [ "$WIPE_SCHEDULER" == "true" ]; then
     cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
   else
     echo "Wiping objectstore"
-    if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
+    if [[ $(rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | wc -l) -gt 0 ]]; then
       echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"
-      rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -L 100 -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm
+      rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | xargs -L 100 -P 100 rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE rm
     fi
     cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
     echo "Rados objectstore ${SCHEDULER_URL} content:"
-    rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls
+    rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls
   fi
 else
   echo "Reusing the existing scheduling backend (no check)"

@@ -13,6 +13,6 @@ spec:
   clusterIP: None
   ports:
     - name: {{ $name }}
-      port: {{ .Values.servicePort }}
+      port: {{ .Values.cataloguePostgresServicePort }}
       protocol: TCP
 {{- end }}
