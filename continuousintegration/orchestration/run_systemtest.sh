@@ -219,11 +219,12 @@ function execute_log {
 
   if [ "${execute_log_rc}" != "0" ]; then
     if [ $keepnamespace == 0 ] ; then
-      echo "FAILURE: cleaning up environment"
+      echo "FAILURE: process exited with exit code: ${execute_log_rc}. Cleaning up environment"
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
+    else
+      echo "FAILURE: process exited with exit code: ${execute_log_rc}. Skipping environment clean up"
     fi
-    die "FAILURE: environment will not be cleaned up"
   fi
 }
 
