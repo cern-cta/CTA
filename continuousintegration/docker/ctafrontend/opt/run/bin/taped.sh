@@ -25,6 +25,8 @@ yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cep
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
+chown cta /etc/cta/${CTATAPEDSSS}
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available
   echo "Launching rmcd with systemd:"
@@ -43,6 +45,8 @@ else
   . /etc/sysconfig/cta-taped
   export XrdSecPROTOCOL
   export XrdSecSSSKT
+
+  chown cta ${XrdSecSSSKT}
 
   tail -F "/var/log/cta/cta-taped-${DRIVENAME}.log" &
 
