@@ -222,8 +222,9 @@ function execute_log {
       echo "FAILURE: process exited with exit code: ${execute_log_rc}. Cleaning up environment"
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
+      die "Cleanup completed"
     else
-      echo "FAILURE: process exited with exit code: ${execute_log_rc}. Skipping environment clean up"
+      die "FAILURE: process exited with exit code: ${execute_log_rc}. Skipping environment clean up"
     fi
   fi
 }
