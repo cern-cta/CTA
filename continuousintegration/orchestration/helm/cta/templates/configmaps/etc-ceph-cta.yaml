@@ -17,7 +17,7 @@ data:
     [global]
       mon host = {{ $.Values.global.scheduler.config.ceph.mon }}:{{ $.Values.global.scheduler.config.ceph.monport }}
     
-  ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring: |
+  ceph.client.{{ $.Values.global.scheduler.config.ceph.id }}.keyring: |
     [client.{{ $.Values.global.scheduler.config.ceph.id }}]
       key = {{ $.Values.global.scheduler.config.ceph.key }}
       caps mon = "allow r"
