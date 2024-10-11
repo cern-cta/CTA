@@ -82,9 +82,9 @@ $(for tape in ${tapes}; do echo "      - \"${tape}\""; done)
 EOF
 }
 
-
 die() { echo "$@" 1>&2 ; exit 1; }
 
+# TODO: add init only flag to allow this script to stop after the init chart
 usage() {
   echo "Script for managing Kubernetes resources."
   echo ""
@@ -258,10 +258,11 @@ if [ $? -eq 0 ]; then
 fi
 
 # Not all of these are used atm, but will be in the future
-helm_catalogue_opts=""
+# helm_catalogue_opts=""
 helm_init_opts=""
 helm_cta_opts=""
 if [ $runoracleunittests == 1 ] ; then
+  # Eventually this should also not be part of create_instance
   helm_init_opts+=" --set runOracleUnitTests=true"
 fi
 # Get Catalogue Schema version
@@ -269,25 +270,25 @@ catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/ct
 catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
 if [[ "$updatedatabasetest" == "1" ]] ; then
+  # This being part of the create_instance script is not ideal. 
+  # In the future, all the create_instance script should know is the schema version
+  # Another script should then take care of spawning the upgrade pod
+  catalogue_commitid=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
   migration_files=$(find ../../catalogue/cta-catalogue-schema -name "*to${catalogue_schema_version}.sql")
   prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
-  # TODO: fill in the catalogue-opts in here with the correct prev version and everything
+  helm_init_opts+=" --set updateDBTests.enabled=true"
+  helm_init_opts+=" --set updateDBTests.catalogueSourceVersion=$prev_catalogue_schema_version"
+  helm_init_opts+=" --set updateDBTests.catalogueDestinationVersion=$catalogue_schema_version"
+  helm_init_opts+=" --set updateDBTests.commitId=$catalogue_commitid"
   catalogue_schema_version=$prev_catalogue_schema_version
   echo "Deploying with previous catalogue schema version: ${catalogue_schema_version}"
+  # This is pretty disgusting but for now this will do
+  # If the configmap generation would be done through Helm the file in question needs to be within the chart
+  YUM_REPOS="$(realpath "$(dirname "$0")/../docker/ctafrontend/alma9/etc/yum.repos.d")"
+  kubectl -n ${namespace} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 else
   echo "Deploying with current catalogue schema version: ${catalogue_schema_version}"
 fi
-
-echo  "Installing cataloguedb chart..."
-set -x
-helm install cataloguedb helm/cataloguedb --namespace ${namespace} \
-                                          --set global.image.registry="${registry_host}" \
-                                          --set global.image.tag="${imagetag}" \
-                                          --set catalogue.schemaVersion="${catalogue_schema_version}" \
-                                          --values "${catalogue_config}" \
-                                          --wait --timeout 5m \
-                                          ${helm_catalogue_opts}
-set +x
 
 echo  "Installing init chart..."
 set -x
