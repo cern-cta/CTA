@@ -326,6 +326,25 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Get the mount policy name for verification requests
 
+  // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
+  std::pair<bool, bool> TLS = config.getOptionValueBool("TLS");
+  m_Tls = TLS.second; // default value is false
+  auto TlsKey = config.getOptionValueStr("TlsKey");
+  if (TlsKey.has_value())
+    m_TlsKey = TlsKey.value();
+  auto TlsCert = config.getOptionValueStr("TlsCert");
+  if (TlsCert.has_value())
+    m_TlsCert = TlsCert.value();
+  auto TlsChain = config.getOptionValueStr("TlsChain");
+  if (TlsChain.has_value())
+    m_TlsChain = TlsChain.value();
+  auto port = config.getOptionValueStr("port");
+  if (port.has_value())
+    m_port = port.value();
+  auto threads = config.getOptionValueInt("threads");
+  if (threads.has_value())
+    m_threads = threads.value();
+
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }

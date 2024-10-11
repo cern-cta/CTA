@@ -22,7 +22,6 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
-#include "common/Configuration.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -106,16 +105,17 @@ int main(const int argc, char *const *const argv) {
     log::LogContext lc = svc.getFrontendService().getLogContext();
 
     // use castor config to avoid dependency on xroot-ssi
-    Configuration config(config_file);
+    // Configuration config(config_file);
 
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     // try to update port from config
-    try {
-        port = config.getConfEntString("gprc", "port");
-    }
-    catch (...) {
+    if (svc.getFrontendService().getPort().has_value())
+        port = svc.getFrontendService().getPort().value();
+    else
+    {
         port = "17017";
+        // also set the member value
     }
 
     std::string server_address("0.0.0.0:" + port);
@@ -127,35 +127,46 @@ int main(const int argc, char *const *const argv) {
     std::shared_ptr<grpc::ServerCredentials> creds;
 
     // read TLS value from config
-    useTLS = config.getConfEntBool("gRPC", "TLS", false);
+    useTLS = svc.getFrontendService().getTls();
 
-    // get number of threads
-    int threads = config.getConfEntInt("gRPC", "threads", 8 * std::thread::hardware_concurrency());
+    // get number of threads, maybe consider setting it too if unset?
+    int threads = 8 * std::thread::hardware_concurrency();
+    
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
         grpc::SslServerCredentialsOptions tls_options;
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
-        auto key_file = config.getConfEntString("gRPC", "TlsKey");
-        lc.log(log::INFO, "TLS service key file: " + key_file);
-        cert.private_key = file2string(key_file);
-
-        auto cert_file = config.getConfEntString("gRPC", "TlsCert");
-        lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-        cert.cert_chain = file2string(cert_file);
-
-        auto ca_chain = config.getConfEntString("gRPC", "TlsChain", "");
-        if (!ca_chain.empty()) {
-            lc.log(log::INFO, "TLS CA chain file: " + ca_chain);
-            tls_options.pem_root_certs = file2string(ca_chain);
-        } else {
-            lc.log(log::INFO, "TLS CA chain file not defined ...");
-            tls_options.pem_root_certs = "";
+        if (!svc.getFrontendService().getTlsKey().has_value()) {
+            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+            creds = grpc::InsecureServerCredentials();
         }
-        tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+        else if (!svc.getFrontendService().getTlsCert().has_value()) {
+            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+            creds = grpc::InsecureServerCredentials();
+        }
+        else {
+            auto key_file = svc.getFrontendService().getTlsKey().value();
+            lc.log(log::INFO, "TLS service key file: " + key_file);
+            cert.private_key = file2string(key_file);
 
-        creds = grpc::SslServerCredentials(tls_options);
+            auto cert_file = svc.getFrontendService().getTlsCert().value();
+            lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+            cert.cert_chain = file2string(cert_file);
+
+            auto ca_chain = svc.getFrontendService().getTlsChain();
+            if (ca_chain.has_value()) {
+                lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
+                tls_options.pem_root_certs = file2string(ca_chain.value());
+            } else {
+                lc.log(log::INFO, "TLS CA chain file not defined ...");
+                tls_options.pem_root_certs = "";
+            }
+            tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+
+            creds = grpc::SslServerCredentials(tls_options);
+        }
     } else {
         lc.log(log::INFO, "Using gRPC over plaintext socket");
         creds = grpc::InsecureServerCredentials();

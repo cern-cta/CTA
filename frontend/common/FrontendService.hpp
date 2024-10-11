@@ -95,6 +95,42 @@ public:
    */
   const cta::NamespaceMap_t& getNamespaceMap() const { return m_namespaceMap; }
 
+  /*
+   * Get the TLS value
+   */
+  bool getTls() const { return m_Tls; }
+
+  /*
+   * Get the TlsKey
+   */
+  const std::optional<std::string> getTlsKey() const { return m_TlsKey; }
+
+
+  /*
+   * Get the TlsCert
+   */
+  const std::optional<std::string> getTlsCert() const { return m_TlsCert; }
+
+
+  /*
+   * Get the TlsChain
+   */
+  const std::optional<std::string> getTlsChain() const { return m_TlsChain; }
+
+
+  /*
+   * Get the gRPC server port
+   */
+  const std::optional<std::string> getPort() const { return m_port; }
+
+
+  /*
+   * Get the number of threads
+   */
+  const std::optional<int> getThreads() const { return m_threads; }
+
+
+
 private:
   /*!
    * Set the verification mount policy
@@ -125,6 +161,13 @@ private:
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;  //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests
   cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
+  // gRPC-frontend specific variables
+  std::optional<std::string>                    m_port;                    //!< The port for the gRPC server
+  std::optional<int>                            m_threads;                 //!< The number of threads used by the gRPC server
+  bool                                          m_Tls;                     //!< Use TLS encryption for gRPC
+  std::optional<std::string>                    m_TlsKey;                  //!< The TLS service key file
+  std::optional<std::string>                    m_TlsCert;                 //!< The TLS service certificate file
+  std::optional<std::string>                    m_TlsChain;                //!< The TLS CA chain file
 };
 
 } // namespace cta::frontend
