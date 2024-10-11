@@ -51,7 +51,7 @@ runexternaltapetests=0
 systest_only=0
 
 # Number of tape servers to spawn
-tpsrv_count=2
+tpsrv_count=5
 
 usage() {
   echo "Script for managing Kubernetes resources."
