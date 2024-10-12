@@ -385,7 +385,10 @@ const TapeSessionStats TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
 
-std::unique_ptr<cta::ArchiveJob> getArchiveJob() const {
+//------------------------------------------------------------------------------
+//   getArchiveJob
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::ArchiveJob> TapeWriteTask::getArchiveJob() const {
   return m_archiveJob;
 }
 
