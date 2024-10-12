@@ -124,7 +124,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
-
     // We know we are the last thread, just report the drive Up
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt, m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
@@ -278,6 +277,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeMountForWrite";
+  #ifdef CTA_PGSCHED
+    std::unique_ptr<TapeWriteTask> task;
+  #endif
   try {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
@@ -402,7 +404,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       uint64_t files = 0;
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
-      std::unique_ptr<TapeWriteTask> task;
+      #ifndef CTA_PGSCHED
+        std::unique_ptr<TapeWriteTask> task;
+      #endif
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt, m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
       while (true) {
@@ -494,14 +498,20 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         m_watchdog.addToErrorCount(currentErrorToCount);
       }
     }
-
     //first empty all the tasks and circulate mem blocks
+    #ifdef CTA_PGSCHED
+      // fail the job of the last task which threw exception
+      task.getArchiveJob()->reportFailed();
+    #endif
     while (true) {
-      std::unique_ptr<TapeWriteTask> task(m_tasks.pop());
-      if (task == nullptr) {
+      std::unique_ptr<TapeWriteTask> remaining_task(m_tasks.pop());
+      if (remaining_task == nullptr) {
         break;
       }
-      task->circulateMemBlocks();
+      #ifdef CTA_PGSCHED
+        remaining_task.getArchiveJob()->reportFailed();
+      #endif
+      remaining_task->circulateMemBlocks();
     }
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());

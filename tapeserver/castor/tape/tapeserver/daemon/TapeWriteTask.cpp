@@ -385,4 +385,8 @@ const TapeSessionStats TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
 
+std::unique_ptr<cta::ArchiveJob> getArchiveJob() const {
+  return m_archiveJob;
+}
+
 } // namespace castor::tape::tapeserver::daemon

@@ -23,21 +23,17 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay){
+  rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit){
     /* using write row lock FOR UPDATE for the select statement
      * since it is the same lock used for UPDATE
      */
     /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
-    uint64_t gc_now_minus_delay = (uint64_t)cta::utils::getCurrentEpochTime()  - gc_delay;
     const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
     WHERE TAPE_POOL = :TAPE_POOL
     AND STATUS = :STATUS
-    AND (
-         (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
-         OR (MOUNT_ID != :DRIVE_MOUNT_ID AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
-        )
+    AND (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
     ORDER BY PRIORITY DESC, JOB_ID
     LIMIT :LIMIT FOR UPDATE )
     UPDATE ARCHIVE_JOB_QUEUE SET
@@ -57,10 +53,8 @@ namespace cta::schedulerdb::postgres {
     stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
-    stmt.bindUint64(":DRIVE_MOUNT_ID", mountInfo.mountId);
     stmt.bindUint32(":LIMIT", limit);
     stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
-    stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
     stmt.bindString(":VID", mountInfo.vid);
     stmt.bindString(":DRIVE", mountInfo.drive);
     stmt.bindString(":HOST", mountInfo.host);

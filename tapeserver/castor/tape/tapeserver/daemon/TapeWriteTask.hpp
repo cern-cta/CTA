@@ -114,6 +114,15 @@ public:
    */
   const TapeSessionStats getTaskStats() const;
 
+   /**
+    * Return ArchiveJob, this is important to report failure in case of failed session
+    * for all jobs which were not processed in the queued task pipeline.
+    * (Used only by PGSCHED implementation)
+    *
+    * @return
+    */
+  std::unique_ptr<cta::ArchiveJob> getArchiveJob() const;
+
 private:
   /**
    * Log  all localStats' stats +  m_fileToMigrate's parameters
