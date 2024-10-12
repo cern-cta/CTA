@@ -405,14 +405,11 @@ namespace cta::schedulerdb::postgres {
      * @param status     Archive Job Status to select on
      * @param mountInfo  mountInfo object
      * @param limit      Maximum number of rows to return
-     * @param gc_delay   delay for garbage collection of jobs which were not processed
-     *                   untill a final state by the mount where they started processing
-     *                   defalut is 12 hours
      *
      * @return  result set containing job IDs of the rows which were updated
      */
     static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status,
-                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit, uint64_t gc_delay = 43200);
+                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit);
 
     /**
      * Update job status
