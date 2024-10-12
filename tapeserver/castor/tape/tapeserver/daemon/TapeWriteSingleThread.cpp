@@ -492,7 +492,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     //first empty all the tasks and circulate mem blocks
     #ifdef CTA_PGSCHED
       // fail the job of the last task which threw exception
-      task.getArchiveJob()->reportFailed();
+      task->getArchiveJob()->reportFailed();
     #endif
     while (true) {
       std::unique_ptr<TapeWriteTask> remaining_task(m_tasks.pop());
@@ -500,7 +500,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         break;
       }
       #ifdef CTA_PGSCHED
-        remaining_task.getArchiveJob()->reportFailed();
+        remaining_task->getArchiveJob()->reportFailed();
       #endif
       remaining_task->circulateMemBlocks();
     }
