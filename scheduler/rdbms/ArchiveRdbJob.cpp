@@ -121,8 +121,16 @@ void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogCont
       txn.abort();
     }
   } else {
+
+      // decide if the failure comes from full tape or failed task queue - then avoid re-queueing to the same mount
+      // for the moment this is driven by failureReason - needs more robust design in the future !
+      std::string substring = "In TapeWriteSingleThread::run(): cleaning failed task queue";
+      bool failedtaskqueuejob = false;
+      if (failureReason.find(substring) != std::string::npos) {
+        failedtaskqueuejob = true;
+      }
       // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
-      if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount){
+      if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedtaskqueuejob){
         try {
           // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
           m_jobRow.retriesWithinMount = 0;
