@@ -223,7 +223,7 @@ class SchedulerDatabase {
      * @param jobIDsList
      * @return number of jobs re-queued in the DB
      */
-    virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList) = 0;
+    virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext & logContext) = 0;
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };

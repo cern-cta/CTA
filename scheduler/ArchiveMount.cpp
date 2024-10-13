@@ -193,16 +193,8 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
     return 0;
   }
   // Forward the job IDs to the database handler's requeueJobBatch method.
-  try {
-    uint64_t njobs = m_dbMount->requeueJobBatch(jobIDsList);
-    return njobs;
-  }
-  catch (const cta::exception::Exception& e) {
-    cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionMessageValue", e.getMessageValue());
-    logContext.log(cta::log::ERR, "In cta::ArchiveMount::requeueJobBatch(): exception thrown.");
-    return 0;
-  }
+  uint64_t njobs = m_dbMount->requeueJobBatch(jobIDsList, logContext);
+  return njobs;
 }
 
 //------------------------------------------------------------------------------
