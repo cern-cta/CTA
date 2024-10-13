@@ -217,13 +217,13 @@ class SchedulerDatabase {
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
 
     /**
-     * Fail batch of jobs
+     * Re-queue batch of jobs
      * Serves PGSCHED purpose only
      *
      * @param jobIDsList
-     * @return number of jobs updated as failed in the DB
+     * @return number of jobs re-queued in the DB
      */
-    virtual uint64_t failJobBatch(const std::list<std::string>& jobIDsList) = 0;
+    virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList) = 0;
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
