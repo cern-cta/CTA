@@ -215,6 +215,15 @@ class SchedulerDatabase {
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
+
+    /**
+     * Fail batch of jobs
+     * Serves PGSCHED purpose only
+     *
+     * @param jobIDsList
+     * @return number of jobs updated as failed in the DB
+     */
+    virtual uint64_t failJobBatch(const std::list<std::string>& jobIDsList) = 0;
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };

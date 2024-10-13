@@ -46,7 +46,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
   // mark the next job batch as owned by a specific mountId
   // and return the list of JOB_IDs which we have modified
   std::list <std::string> jobIDsList;
-  std::string jobIDsString;
+  //std::string jobIDsString;
   // start a new transaction
   cta::schedulerdb::Transaction txn(m_connPool);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
@@ -63,7 +63,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
     }
     txn.commit();
-    for (const auto &piece: jobIDsList) jobIDsString += piece;
+    //for (const auto &piece: jobIDsList) jobIDsString += piece;
     //logContext.log(cta::log::DEBUG,
     //               "Successfully finished to update Mount ID: " + std::to_string(mountInfo.mountId) + " for JOB IDs: " +
     //               jobIDsString);
@@ -154,6 +154,23 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
 
   log::LogContext lc(m_RelationalDB.m_logger);
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
+}
+
+uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList){
+  // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
+  cta::schedulerdb::Transaction txn(m_connPool);
+  uint64_t nrows = 0;
+  try {
+    nrows = postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::ERR,
+           "In schedulerdb::ArchiveMount::failJobBatch(): failed to update job status for failed task queue." +
+           ex.getMessageValue());
+    txn.abort();
+    return 0;
+  }
+  return nrows;
 }
 
 void ArchiveMount::setJobBatchTransferred(

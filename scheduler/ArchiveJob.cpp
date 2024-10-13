@@ -143,6 +143,13 @@ std::string cta::ArchiveJob::reportType() {
 }
 
 //------------------------------------------------------------------------------
+// ArchiveJob::getJobID
+//------------------------------------------------------------------------------
+std::string cta::ArchiveJob::getJobID() {
+  return std::to_string(m_dbJob->jobID);
+}
+
+//------------------------------------------------------------------------------
 // ArchiveJob::reportFailed
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::reportFailed(const std::string& failureReason, log::LogContext& lc) {
