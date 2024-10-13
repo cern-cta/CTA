@@ -260,7 +260,7 @@ class OStoreDB: public SchedulerDatabase {
                    time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
    public:
-    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList) override {
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext & logContext) override {
       // Do nothing in this implementation, serves only PGSCHED implementation
       return 0;
     }
