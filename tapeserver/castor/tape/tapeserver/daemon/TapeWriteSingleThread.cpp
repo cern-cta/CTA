@@ -529,7 +529,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         // handle the case of failed bunch update of the jobs !
         std::string jobIDsString;
         for (const auto &piece: jobIDsList) jobIDsString += piece;
-        m_logContext.log(cta::log::ERR, std::string("In TapeWriteSingleThread::run(): Did not fail all task jobs of the failed queue, job IDs attempting to update were: ") + jobIDsString);
+        m_logContext.log(cta::log::ERR, std::string("In TapeWriteSingleThread::run(): Did not requeue all task jobs of the failed queue, job IDs attempting to update were: ") + jobIDsString);
       }
     #endif
     // Prepare the standard error codes for the session
