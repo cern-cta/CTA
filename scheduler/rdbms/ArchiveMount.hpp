@@ -54,6 +54,14 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
 
    void setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) override;
+   /**
+    * Re-queue batch of jobs
+    * Serves PGSCHED purpose only
+    *
+    * @param jobIDsList
+    * @return number of jobs re-queued in the DB
+    */
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList) override;
 
 private:
 

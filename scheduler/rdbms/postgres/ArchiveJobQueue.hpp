@@ -432,6 +432,16 @@ namespace cta::schedulerdb::postgres {
     uint64_t updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional <uint64_t> mountId = std::nullopt);
 
     /**
+     * Update job status for a batch of failed jobs (task queue failure use-case, e.g. tape full)
+     *
+     * @param txn        Transaction to use for this query
+     * @param status     Archive Job Status to select on
+     * @param jobIDs     List of jobID strings to select
+     * @return           Number of updated rows
+     */
+    static uint64_t updateFailedTaskQueueJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list <std::string> &jobIDs);
+
+    /**
      * Update job status when job report failed
      *
      * @param txn                  Transaction to use for this query

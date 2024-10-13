@@ -131,6 +131,27 @@ namespace cta::schedulerdb::postgres {
     return stmt.getNbAffectedRows();
   };
 
+  uint64_t ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list <std::string> &jobIDs){
+    std::string sqlpart;
+    for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    std::string sql = R"SQL(
+      UPDATE ARCHIVE_JOB_QUEUE SET
+        STATUS = :STATUS,
+        IN_DRIVE_QUEUE = FALSE,
+        MOUNT_ID = NULL,
+        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
+      WHERE
+        JOB_ID IN (
+      )SQL";
+    sql += sqlpart + std::string(")");
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
+    stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
+  }
+
+
   void ArchiveJobQueueRow::copyToFailedJobTable(Transaction &txn){
     std::string sql = R"SQL(
     INSERT INTO ARCHIVE_FAILED_JOB_QUEUE

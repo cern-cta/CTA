@@ -185,6 +185,27 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 }
 
 //------------------------------------------------------------------------------
+// requeueJobBatch
+//------------------------------------------------------------------------------
+uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) {
+  if (jobIDsList.empty()) {
+    logContext.log(cta::log::INFO, "In cta::ArchiveMount::failJobBatch(): no job IDs provided to fail.");
+    return 0;
+  }
+  // Forward the job IDs to the database handler's failJobBatch method.
+  try {
+    uint64_t njobs = m_dbMount->failJobBatch(jobIDsList);
+    return njobs;
+  }
+  catch (const cta::exception::Exception& e) {
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionMessageValue", e.getMessageValue());
+    logContext.log(cta::log::ERROR, "In cta::ArchiveMount::failJobBatch(): exception thrown.");
+    return 0;
+  }
+}
+
+//------------------------------------------------------------------------------
 // reportJobsBatchTransferred
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
