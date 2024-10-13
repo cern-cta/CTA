@@ -501,9 +501,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     //first empty all the tasks and circulate mem blocks
     #ifdef CTA_PGSCHED
       // fail the job of the last task which threw exception
-      std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
+      //std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
+      std::list <std::string> jobIDsList; // !!! serves for BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
       if(nullptr != task){
-        task->getArchiveJob().reportFailed(failureReason, m_logContext);
+        jobIDsList.emplace_back(task->getArchiveJob().getJobID());
+        //task->getArchiveJob().reportFailed(failureReason, m_logContext); // !!! will be decomissioned
       }
     #endif
     while (true) {
@@ -512,10 +514,24 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         break;
       }
       #ifdef CTA_PGSCHED
-        remaining_task->getArchiveJob().reportFailed(failureReason, m_logContext);
+        jobIDsList.emplace_back(remaining_task->getArchiveJob().getJobID());
+        //remaining_task->getArchiveJob().reportFailed(failureReason, m_logContext);
       #endif
       remaining_task->circulateMemBlocks();
     }
+    #ifdef CTA_PGSCHED
+      uint64_t njobs = m_archiveMount.requeueJobBatch(jobIdList, m_logContext);  // BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
+      cta::log::ScopedParamContainer requeueparam(m_logContext);
+      requeueparam.add("requeuedTaskQueueJobs", njobs);
+      m_logContext.log(cta::log::INFO, std::string("In TapeWriteSingleThread::run(): Requeued all remaining unprocessed task jobs of the failed queue."));
+
+      if (njobs != jobIdList.size()){
+        // handle the case of failed bunch update of the jobs !
+        std::string jobIDsString;
+        for (const auto &piece: jobIDsList) jobIDsString += piece;
+        m_logContext.log(cta::log::ERR, std::string("In TapeWriteSingleThread::run(): Did not fail all task jobs of the failed queue, job IDs attempting to update were: ") + jobIDsString);
+      }
+    #endif
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;
