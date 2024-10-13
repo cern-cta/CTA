@@ -520,12 +520,12 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       remaining_task->circulateMemBlocks();
     }
     #ifdef CTA_PGSCHED
-      uint64_t njobs = m_archiveMount.requeueJobBatch(jobIdList, m_logContext);  // BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
+      uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, m_logContext);  // BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
       cta::log::ScopedParamContainer requeueparam(m_logContext);
       requeueparam.add("requeuedTaskQueueJobs", njobs);
       m_logContext.log(cta::log::INFO, std::string("In TapeWriteSingleThread::run(): Requeued all remaining unprocessed task jobs of the failed queue."));
 
-      if (njobs != jobIdList.size()){
+      if (njobs != jobIDsList.size()){
         // handle the case of failed bunch update of the jobs !
         std::string jobIDsString;
         for (const auto &piece: jobIDsList) jobIDsString += piece;
