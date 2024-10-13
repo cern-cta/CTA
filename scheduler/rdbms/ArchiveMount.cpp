@@ -156,7 +156,7 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext){
+uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const {
   // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;

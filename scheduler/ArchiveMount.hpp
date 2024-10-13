@@ -159,7 +159,7 @@ public:
   * @param jobIDsList
   * @return number of jobs re-queued in the DB
   */
-  virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext);
+  virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const;
   /**
     * Returns the tape pool of the tape to be mounted.
     *
