@@ -187,7 +187,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 //------------------------------------------------------------------------------
 // requeueJobBatch
 //------------------------------------------------------------------------------
-uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) {
+uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const {
   if (jobIDsList.empty()) {
     logContext.log(cta::log::INFO, "In cta::ArchiveMount::requeueJobBatch(): no job IDs provided to fail.");
     return 0;
