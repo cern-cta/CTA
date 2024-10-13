@@ -105,7 +105,7 @@ std::string RelationalDB::queueArchive(const std::string &instanceName, const ct
 
   std::list<schedulerdb::ArchiveRequest::JobDump> jl;
   for(auto & [key, value]:criteria.copyToPoolMap) {
-    const uint32_t hardcodedRetriesWithinMount = 2;
+    const uint32_t hardcodedRetriesWithinMount = 1;
     const uint32_t hardcodedTotalRetries = 2;
     const uint32_t hardcodedReportRetries = 2;
     aReq->addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
