@@ -501,7 +501,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     //first empty all the tasks and circulate mem blocks
     #ifdef CTA_PGSCHED
       // fail the job of the last task which threw exception
-      std::string failureReason = "In TapeWriteSingleThread::run(): cleaning task queue after failure or end of tape; failing job";
+      std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
       if(nullptr != task){
         task->getArchiveJob().reportFailed(failureReason, m_logContext);
       }
