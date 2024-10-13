@@ -156,7 +156,7 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList){
+uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext){
   // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
@@ -164,7 +164,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList)
     nrows = postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
     txn.commit();
   } catch (exception::Exception &ex) {
-    lc.log(cta::log::ERR,
+    logContext.log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::failJobBatch(): failed to update job status for failed task queue." +
            ex.getMessageValue());
     txn.abort();
