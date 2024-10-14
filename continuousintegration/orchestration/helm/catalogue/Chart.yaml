@@ -1,0 +1,6 @@
+apiVersion: v2
+name: catalogue
+version: 0.1.0
+description: A chart that sets up a configmap for the catalogue, a job to initialise/wipe the catalogue and (if the backend allows) spawns a catalogue database. Must be launched after the init chart.
+type: application
+appVersion: "1.16.0"

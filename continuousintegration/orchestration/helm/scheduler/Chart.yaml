@@ -1,0 +1,6 @@
+apiVersion: v2
+name: scheduler
+version: 0.1.0
+description: A chart that sets up a configmap for the scheduler. Due to the nature of the scheduler, there are no pods to spawn; only a job that sets up/wipes the scheduler. Requires the init chart to have been installed.
+type: application
+appVersion: "1.16.0"

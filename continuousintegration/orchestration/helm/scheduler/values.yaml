@@ -1,0 +1,33 @@
+
+nameOverride: scheduler
+isPriviliged: true
+wipeScheduler: true
+
+initImage:
+  registry: gitlab-registry.cern.ch/cta
+  repository: ctageneric
+  tag: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: 
+    - ctaregsecret
+
+
+scheduler:
+  backend: ceph  # Options: file, ceph, postgres
+  config:
+    ceph:
+      mon: ""
+      monport: ""
+      pool: ""
+      namespace: ""
+      id: ""
+      key: ""
+    postgres:
+      username: ""
+      password: ""
+      database: ""
+      server: ""
+    file:
+      path: ""
+
+env:

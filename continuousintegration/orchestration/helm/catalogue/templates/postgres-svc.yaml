@@ -1,4 +1,4 @@
-{{- if eq .Values.global.catalogue.backend "postgres" -}}
+{{- if eq .Values.catalogue.backend "postgres" -}}
 {{$namespace := .Release.Namespace }}
 {{$name := "postgres" }}
 apiVersion: v1
@@ -13,6 +13,6 @@ spec:
   clusterIP: None
   ports:
     - name: {{ $name }}
-      port: {{ .Values.cataloguePostgresServicePort }}
+      port: {{ .Values.catalogueServicePort }}
       protocol: TCP
 {{- end }}
