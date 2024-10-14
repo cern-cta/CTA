@@ -304,12 +304,13 @@ if [ $runoracleunittests == 1 ] ; then
   helm install oracle-unit-tests helm/oracle-unit-tests --namespace ${namespace} \
                                                          --set image.registry="${registry_host}" \
                                                          --set image.tag="${imagetag}" \
-                                                         --wait --wait-for-jobs --timeout 30m --debug
+                                                         --wait --wait-for-jobs --timeout 30m
 fi
 
 if [ $init_only == 1 ] ; then
   echo "Init chart ${namespace} successfully installed:"
   kubectl --namespace=${namespace} get pods
+  exit 0
 fi
 
 echo ""
