@@ -1,0 +1,33 @@
+
+nameOverride: catalogue
+isPriviliged: true
+wipeCatalogue: true
+
+initImage:
+  registry: gitlab-registry.cern.ch/cta
+  repository: ctageneric
+  tag: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: 
+    - ctaregsecret
+
+# TODO: is this the best place to put/name this?
+catalogueServicePort: 5432
+
+catalogue:
+  schemaVersion: ""
+  backend: "" # Can be sqlite, orale or postgres.
+  config:
+    oracle:
+      username: ""
+      database: ""
+      password: ""
+    postgres:
+      username: ""
+      password: ""
+      server: ""
+      database: ""
+    sqlite:
+      filepath: ""
+
+env:

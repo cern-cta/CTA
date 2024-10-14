@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalogue-configmap
+data:
+  cta-catalogue.conf: |-
+    {{ include "catalogue.url" . }}

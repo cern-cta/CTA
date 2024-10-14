@@ -1,10 +1,10 @@
-{{- if eq .Values.global.catalogue.backend "postgres" -}}
+{{- if eq .Values.catalogue.backend "postgres" -}}
 {{$namespace := .Release.Namespace }}
 {{$name := "postgres" }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: postgres
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
     app.kubernetes.io/name: postgres
@@ -26,11 +26,11 @@ spec:
     - name: PGDATA
       value: /var/lib/postgresql/data/pgdata
     - name: POSTGRES_USER
-      value: {{ .Values.global.catalogue.config.postgres.username }}
+      value: {{ .Values.catalogue.config.postgres.username }}
     - name: POSTGRES_PASSWORD
-      value: {{ .Values.global.catalogue.config.postgres.password }}
+      value: {{ .Values.catalogue.config.postgres.password }}
     - name: POSTGRES_DB
-      value: {{ .Values.global.catalogue.config.postgres.database }}
+      value: {{ .Values.catalogue.config.postgres.database }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}

@@ -1,0 +1,81 @@
+{{$namespace := .Release.Namespace }}
+{{$name := "scheduler" }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-job
+  namespace: {{ $namespace | quote}}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ $name }}
+          image: {{ include "initImage.url" . }}
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['/opt/run/bin/setup_scheduler.sh']
+          args: []
+          securityContext:
+            privileged: {{ .Values.isPriviliged }}
+          stdin: true
+          env:
+            - name: MY_NAME
+              value: {{ $name }}
+            - name: MY_NAMESPACE
+              value: {{ $namespace | quote}}
+            - name: INSTANCE_NAME
+              value: {{ $namespace | quote}}
+            - name: WIPE_SCHEDULER
+              value: "{{ .Values.wipeScheduler }}"
+            - name: SCHEDULER_BACKEND
+              value: {{ .Values.scheduler.backend | quote}}
+            - name: SCHEDULER_URL
+              value: {{ include "scheduler.url" . | quote}}
+            {{- if eq .Values.scheduler.backend "ceph" }}
+            - name: SCHEDULER_CEPH_NAMESPACE
+              value: {{ .Values.scheduler.config.ceph.namespace | quote}}
+            - name: SCHEDULER_CEPH_ID
+              value: {{ .Values.scheduler.config.ceph.id | quote}}
+            - name: SCHEDULER_CEPH_POOL
+              value: {{ .Values.scheduler.config.ceph.pool | quote}}
+            {{- end }}
+            {{- if .Values.env }}
+            {{ .Values.env | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: scheduler-config
+              mountPath: /etc/cta/cta-objectstore-tools.conf
+              subPath: cta-objectstore-tools.conf
+            - mountPath: /mnt/logs
+              name: logstorage
+            - mountPath: /shared
+              name: shared
+            {{- if eq $.Values.scheduler.backend "ceph" }}
+            - name: ceph-config
+              mountPath: /etc/ceph/ceph.conf
+              subPath: ceph.conf
+            - name: ceph-config
+              mountPath: /etc/ceph/ceph.client.{{ .Values.scheduler.config.ceph.id }}.keyring
+              subPath: ceph.client.{{ .Values.scheduler.config.ceph.id }}.keyring
+            {{- end }}
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: scheduler-configmap
+        - name: shared
+          hostPath:
+            path: /opt/cta
+        - name: logstorage
+          persistentVolumeClaim:
+            claimName: claimlogs
+        {{- if eq $.Values.scheduler.backend "ceph" }}
+        - name: ceph-config
+          configMap:
+            name: ceph-configmap
+        {{- end}}
+      imagePullSecrets:
+      {{- range .Values.initImage.pullSecrets }}
+      - name: {{ . | quote }}
+      {{- end }}

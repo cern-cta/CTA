@@ -1,0 +1,62 @@
+{{$namespace := .Release.Namespace }}
+{{$name := "init-catalogue" }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-job
+  namespace: {{ $namespace | quote}}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ $name }}
+          image: {{ include "initImage.url" . }}
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['/opt/run/bin/setup_catalogue.sh']
+          args: []
+          securityContext:
+            privileged: {{ .Values.isPriviliged }}
+          stdin: true
+          env:
+            - name: MY_NAME
+              value: {{ $name }}
+            - name: MY_NAMESPACE
+              value: {{ $namespace | quote}}
+            - name: INSTANCE_NAME
+              value: {{ $namespace | quote}}
+            - name: WIPE_CATALOGUE
+              value: "{{ .Values.wipeCatalogue }}"
+            - name: SCHEMA_VERSION
+              value: {{ .Values.catalogue.schemaVersion | quote}}
+            - name: CATALOGUE_BACKEND
+              value: {{ .Values.catalogue.backend | quote}}
+            - name: CATALOGUE_URL
+              value: {{ include "catalogue.url" . | quote}}
+            {{- if .Values.env }}
+            {{ .Values.env | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: catalogue-config
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+            - mountPath: /mnt/logs
+              name: logstorage
+            - mountPath: /shared
+              name: shared
+      volumes:
+        - name: catalogue-config
+          configMap:
+            name: catalogue-configmap
+        - name: shared
+          hostPath:
+            path: /opt/cta
+        - name: logstorage
+          persistentVolumeClaim:
+            claimName: claimlogs
+      imagePullSecrets:
+      {{- range .Values.initImage.pullSecrets }}
+      - name: {{ . | quote }}
+      {{- end }}

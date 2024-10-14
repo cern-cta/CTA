@@ -1,0 +1,55 @@
+# TODO: does this even need to happen in a pod at all?
+{{- print "The value of .Values.tpsrv.library.type is: " .Values.tpsrv.library.type }}
+
+{{- if eq .Values.tpsrv.library.type "mhvtl" }}
+{{$namespace := .Release.Namespace }}
+{{$name := "cleanup-mhvtl" }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-job
+  namespace: {{ $namespace | quote}}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ $name }}
+          image: {{ include "init.image" . }}
+          imagePullPolicy: {{ include "init.imagePullPolicy" . }}
+          command: ['/opt/run/bin/cleanup_mhvtl.sh']
+          args: []
+          securityContext:
+            privileged: {{ .Values.isPriviliged }}
+          stdin: true
+          env:
+            - name: MY_NAME
+              value: {{ $name }}
+            - name: MY_NAMESPACE
+              value: {{ $namespace | quote}}
+            - name: INSTANCE_NAME
+              value: {{ $namespace | quote}}
+            - name: LIBRARYTYPE
+              value: {{ .Values.tpsrv.library.type | quote }}
+            - name: LIBRARYDEVICE
+              value: {{ .Values.tpsrv.library.device | quote }}
+            {{- if .Values.env }}
+            {{ .Values.env | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /mnt/logs
+              name: logstorage
+            - mountPath: /shared
+              name: shared
+      volumes:
+        - name: shared
+          hostPath:
+            path: /opt/cta
+        - name: logstorage
+          persistentVolumeClaim:
+            claimName: claimlogs
+      imagePullSecrets:
+      {{ include "init.imagePullSecrets" . | nindent 6 }}
+{{- end }}

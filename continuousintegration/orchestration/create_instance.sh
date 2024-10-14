@@ -17,9 +17,6 @@
 
 set -e
 
-init_chart_timeout="5m"
-cta_chart_timeout="5m"
-
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
@@ -48,9 +45,6 @@ updatedatabasetest=0
 
 # Create an instance for
 systest_only=0
-
-# Only install the init chart
-init_only=0
 
 # Number of tape servers to spawn by default
 tpsrv_count=2
@@ -91,9 +85,8 @@ EOF
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-# TODO: add init only flag to allow this script to stop after the init chart
 usage() {
-  echo "Script for managing Kubernetes resources."
+  echo "Spawns a CTA system using Helm and Kubernetes. Requires a setup according to the Minikube CTA CI repository."
   echo ""
   echo "Usage: $0 -n <namespace> [options]"
   echo ""
@@ -107,7 +100,6 @@ usage() {
   echo "  -i <docker image tag>:          Docker image tag for the deployment."
   echo "  -r <docker registry>:           Provide the Docker registry. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c <tpsrv count>:               Set the number of tape servers to spawn. Defaults to 2."
-  echo "  -w:                             Only install the init chart."
   echo "  -S:                             Use systemd to manage services inside containers."
   echo "  -D:                             Wipe database content during initialization phase (content is kept by default)."
   echo "  -O:                             Wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)."
@@ -118,7 +110,7 @@ usage() {
 }
 
 # TODO: replace these options with something that is actually readable instead of random letters
-while getopts "n:o:d:p:b:i:r:c:l:wSDOUumQ" o; do
+while getopts "n:o:d:p:b:i:r:c:l:SDOUumQ" o; do
   case "${o}" in
     o)
       scheduler_config=${OPTARG} ;;
@@ -138,8 +130,6 @@ while getopts "n:o:d:p:b:i:r:c:l:wSDOUumQ" o; do
       registry_host=${OPTARG} ;;
     c)
       tpsrv_count=${OPTARG} ;;
-    w)
-      init_only=1 ;;
     S)
       usesystemd=1 ;;
     O)
@@ -284,18 +274,35 @@ else
   echo "Deploying with current catalogue schema version: ${catalogue_schema_version}"
 fi
 
+# TODO: at some point should the kdc be separated from the init chart?
 echo  "Installing init chart..."
 set -x
 helm install init helm/init --namespace ${namespace} \
-                            --set global.image.registry="${registry_host}" \
-                            --set global.image.tag="${imagetag}" \
-                            --set catalogue.schemaVersion="${catalogue_schema_version}" \
-                            --set wipeCatalogue=${wipe_catalogue} \
-                            --set wipeScheduler=${wipe_scheduler} \
-                            --values "${library_config}" \
-                            --values "${scheduler_config}" \
-                            --values "${catalogue_config}" \
-                            --wait --wait-for-jobs --timeout ${init_chart_timeout} 
+                             --set global.image.registry="${registry_host}" \
+                             --set global.image.tag="${imagetag}" \
+                             --values "${library_config}" \
+                             --wait --wait-for-jobs --timeout 2m
+
+# Technically the catalogue and scheduler charts can be installed in parallel, but let's keep things simpler for now
+echo  "Installing catalogue chart..."
+helm install catalogue helm/catalogue --namespace ${namespace} \
+                                       --set initImage.registry="${registry_host}" \
+                                       --set initImage.tag="${imagetag}" \
+                                       --set catalogue.schemaVersion="${catalogue_schema_version}" \
+                                       --set wipeCatalogue=${wipe_catalogue} \
+                                       --values "${catalogue_config}" \
+                                       --wait --wait-for-jobs --timeout 2m
+
+echo  "Installing scheduler chart..."
+helm install scheduler helm/scheduler --namespace ${namespace} \
+                                       --set initImage.registry="${registry_host}" \
+                                       --set initImage.tag="${imagetag}" \
+                                       --values "${scheduler_config}" \
+                                       --set wipeScheduler=${wipe_scheduler} \
+                                       --wait --wait-for-jobs --timeout 2m
+
+
+
 set +x
 
 if [ $runoracleunittests == 1 ] ; then
@@ -307,12 +314,7 @@ if [ $runoracleunittests == 1 ] ; then
                                                          --wait --wait-for-jobs --timeout 30m
 fi
 
-if [ $init_only == 1 ] ; then
-  echo "Init chart ${namespace} successfully installed:"
-  kubectl --namespace=${namespace} get pods
-  exit 0
-fi
-
+# TODO: fix the configmaps in the cta charts
 echo ""
 echo "Processing dependencies of cta chart..."
 helm dependency update helm/cta
@@ -325,7 +327,7 @@ helm install cta helm/cta --namespace ${namespace} \
                           --values "${library_config}" \
                           --values "${scheduler_config}" \
                           --values "${catalogue_config}" \
-                          --wait --timeout ${cta_chart_timeout}
+                          --wait --timeout 5m
 set +x
 
 # TODO: the following part is configuration that is not (and should not) be part of the Helm setup.

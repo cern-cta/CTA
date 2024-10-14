@@ -80,7 +80,7 @@ usage() {
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:o:s:p:b:t:c:wukDOSUCTQ" o; do
+while getopts "n:d:o:s:p:b:t:c:ukDOSUCTQ" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -119,9 +119,6 @@ while getopts "n:d:o:s:p:b:t:c:wukDOSUCTQ" o; do
             ;;
         C)
             cleanup_namespaces=1
-            ;;
-        w)
-            CREATE_OPTS="${CREATE_OPTS} -w" # TODO: Just allow passing spawn options as a single argument here instead of repeating everything
             ;;
         u)
             CREATE_OPTS="${CREATE_OPTS} -u"
