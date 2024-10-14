@@ -1,7 +1,3 @@
-{{- if not (eq .Values.global.catalogue.backend "oracle") }}
-  {{- fail "ERROR: configuration has enabled runOracleUnitTests, but the catalogue backend is not Oracle" }}
-{{- end }}
-
 {{ $name := "oracle-unit-tests" }}
 {{ $namespace := .Release.Namespace }}
 
@@ -22,8 +18,8 @@ spec:
       restartPolicy: Never
       containers:
       - name: {{ $name }}
-          image: {{ include "oracle-unit-tests.image" . }}
-          imagePullPolicy: {{ include "oracle-unit-tests.imagePullPolicy" . }}
+        image: {{ include "oracle-unit-tests.image" . }}
+        imagePullPolicy: {{ include "oracle-unit-tests.imagePullPolicy" . }}
         stdin: true
         env:
         - name: MY_NAME

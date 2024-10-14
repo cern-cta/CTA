@@ -286,7 +286,7 @@ fi
 
 echo  "Installing init chart..."
 set -x
-helm template init helm/init --namespace ${namespace} \
+helm install init helm/init --namespace ${namespace} \
                             --set global.image.registry="${registry_host}" \
                             --set global.image.tag="${imagetag}" \
                             --set catalogue.schemaVersion="${catalogue_schema_version}" \
@@ -301,10 +301,10 @@ set +x
 if [ $runoracleunittests == 1 ] ; then
   # Note that there is also a unit_test_oracle.sh script that does this. 
   # However, until the above way of obtaining the image tag is cleaned up, we do it here instead
-  helm template oracle-unit-tests ../helm/oracle-unit-tests --namespace ${namespace} \
-                                                          --set global.image.registry="${registry_host}" \
-                                                          --set global.image.tag="${imagetag}" \
-                                                          --wait --wait-for-jobs --timeout 30m
+  helm install oracle-unit-tests helm/oracle-unit-tests --namespace ${namespace} \
+                                                         --set image.registry="${registry_host}" \
+                                                         --set image.tag="${imagetag}" \
+                                                         --wait --wait-for-jobs --timeout 30m --debug
 fi
 
 if [ $init_only == 1 ] ; then
