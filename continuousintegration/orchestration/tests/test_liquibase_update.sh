@@ -74,8 +74,8 @@ check_schema_version ${prev_catalogue_schema_version}
 
 # This is pretty disgusting but for now this will do
 # If the configmap generation would be done through Helm the file in question needs to be within the chart
-YUM_REPOS="$(realpath "$(dirname "$0")/../docker/ctafrontend/alma9/etc/yum.repos.d")"
-kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
+YUM_REPOS="$(realpath "$(dirname "$0")/../../docker/ctafrontend/alma9/etc/yum.repos.d")"
+# kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 
 # Set up the catalogue updater pod
 helm install catalogue-updater ../helm/catalogue-updater --namespace ${NAMESPACE} \
