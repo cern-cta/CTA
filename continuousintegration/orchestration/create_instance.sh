@@ -107,6 +107,7 @@ usage() {
   echo "  -i <docker image tag>:          Docker image tag for the deployment."
   echo "  -r <docker registry>:           Provide the Docker registry. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c <tpsrv count>:               Set the number of tape servers to spawn. Defaults to 2."
+  echo "  -w:                             Only install the init chart."
   echo "  -S:                             Use systemd to manage services inside containers."
   echo "  -D:                             Wipe database content during initialization phase (content is kept by default)."
   echo "  -O:                             Wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)."
@@ -117,7 +118,7 @@ usage() {
 }
 
 # TODO: replace these options with something that is actually readable instead of random letters
-while getopts "n:o:d:p:b:i:r:c:l:s:SDOUumQ" o; do
+while getopts "n:o:d:p:b:i:r:c:l:w:SDOUumQ" o; do
   case "${o}" in
     o)
       scheduler_config=${OPTARG} ;;
@@ -137,7 +138,7 @@ while getopts "n:o:d:p:b:i:r:c:l:s:SDOUumQ" o; do
       registry_host=${OPTARG} ;;
     c)
       tpsrv_count=${OPTARG} ;;
-    s)
+    w)
       init_only=1 ;;
     S)
       usesystemd=1 ;;
@@ -259,6 +260,7 @@ echo "Using library device: ${library_device}"
 echo "Creating ${namespace} namespace"
 kubectl create namespace ${namespace}
 # TODO: eventually we will need to copy multiple secrets as there are multiple registries
+# (although with the oracle unit tests in a separate script, this might not be necessary)
 # This works fine if the secret contains a service account, but will not work with access tokens.
 # The registry secret(s) must be copied in the namespace to be usable
 kubectl get secret ${ctareg_secret} &> /dev/null
@@ -284,7 +286,7 @@ fi
 
 echo  "Installing init chart..."
 set -x
-helm install init helm/init --namespace ${namespace} \
+helm template init helm/init --namespace ${namespace} \
                             --set global.image.registry="${registry_host}" \
                             --set global.image.tag="${imagetag}" \
                             --set catalogue.schemaVersion="${catalogue_schema_version}" \
@@ -299,7 +301,7 @@ set +x
 if [ $runoracleunittests == 1 ] ; then
   # Note that there is also a unit_test_oracle.sh script that does this. 
   # However, until the above way of obtaining the image tag is cleaned up, we do it here instead
-  helm install oracle-unit-tests ../helm/oracle-unit-tests --namespace ${namespace} \
+  helm template oracle-unit-tests ../helm/oracle-unit-tests --namespace ${namespace} \
                                                           --set global.image.registry="${registry_host}" \
                                                           --set global.image.tag="${imagetag}" \
                                                           --wait --wait-for-jobs --timeout 30m
