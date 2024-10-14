@@ -118,7 +118,7 @@ usage() {
 }
 
 # TODO: replace these options with something that is actually readable instead of random letters
-while getopts "n:o:d:p:b:i:r:c:l:w:SDOUumQ" o; do
+while getopts "n:o:d:p:b:i:r:c:l:wSDOUumQ" o; do
   case "${o}" in
     o)
       scheduler_config=${OPTARG} ;;

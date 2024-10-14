@@ -80,7 +80,7 @@ usage() {
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:o:s:p:b:t:c:w:ukDOSUCTQ" o; do
+while getopts "n:d:o:s:p:b:t:c:wukDOSUCTQ" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
