@@ -1,0 +1,6 @@
+apiVersion: v2
+name: catalogue-updater
+version: 0.1.0
+description: A chart for spawning a catalogue updater. Requires the init chart to have been installed.
+type: application
+appVersion: "1.16.0"

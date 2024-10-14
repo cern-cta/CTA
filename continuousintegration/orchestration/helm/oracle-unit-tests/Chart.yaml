@@ -1,0 +1,6 @@
+apiVersion: v2
+name: oracle-unit-tests
+version: 0.1.0
+description: A chart for spawning a job that performs the RDBMS unit tests on an oracle database. Requires the init chart to have been installed.
+type: application
+appVersion: "1.16.0"
