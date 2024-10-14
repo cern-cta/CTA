@@ -3,7 +3,7 @@
     - `.Values.global.image` (Has lower priority)
 */}}
 {{- define "oracle-unit-tests.image" -}}
-{{- if and .Values.global.image.registry .Values.global.image.repository .Values.global.image.tag -}}
+{{- if and .Values.global .Values.global.image.registry .Values.global.image.repository .Values.global.image.tag -}}
   {{- $registry := .Values.global.image.registry -}}
   {{- $repository := .Values.global.image.repository -}}
   {{- $tag := .Values.global.image.tag -}}
@@ -23,7 +23,7 @@
     - .Values.image.pullPolicy
 */}}
 {{- define "oracle-unit-tests.imagePullPolicy" -}}
-{{- if and .Values.global.image.pullPolicy (not (empty .Values.global.image.pullPolicy)) -}}
+{{- if and .Values.global .Values.global.image.pullPolicy (not (empty .Values.global.image.pullPolicy)) -}}
 {{- .Values.global.image.pullPolicy | quote -}}
 {{- else if and .Values.image.pullPolicy (not (empty .Values.image.pullPolicy)) -}}
 {{- .Values.image.pullPolicy | quote -}}
@@ -37,7 +37,7 @@
     - .Values.image.pullSecrets
 */}}
 {{- define "oracle-unit-tests.imagePullSecrets" -}}
-{{- if and .Values.global.image.pullSecrets -}}
+{{- if and .Values.global .Values.global.image.pullSecrets -}}
   {{- range .Values.global.image.pullSecrets }}
     - name: {{ . | quote }}
   {{- end }}
