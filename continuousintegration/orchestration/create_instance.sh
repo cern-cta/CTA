@@ -17,6 +17,9 @@
 
 set -e
 
+init_chart_timeout="5m"
+cta_chart_timeout="5m"
+
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
@@ -45,6 +48,9 @@ updatedatabasetest=0
 
 # Create an instance for
 systest_only=0
+
+# Only install the init chart
+init_only=0
 
 # Number of tape servers to spawn by default
 tpsrv_count=2
@@ -110,8 +116,8 @@ usage() {
   exit 1
 }
 
-# TODO: replace these options with something that is actually readable
-while getopts "n:o:d:p:b:i:r:c:l:SDOUumQ" o; do
+# TODO: replace these options with something that is actually readable instead of random letters
+while getopts "n:o:d:p:b:i:r:c:l:s:SDOUumQ" o; do
   case "${o}" in
     o)
       scheduler_config=${OPTARG} ;;
@@ -131,6 +137,8 @@ while getopts "n:o:d:p:b:i:r:c:l:SDOUumQ" o; do
       registry_host=${OPTARG} ;;
     c)
       tpsrv_count=${OPTARG} ;;
+    s)
+      init_only=1 ;;
     S)
       usesystemd=1 ;;
     O)
@@ -259,35 +267,17 @@ if [ $? -eq 0 ]; then
   kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
 fi
 
-# Not all of these are used atm, but will be in the future
-# helm_catalogue_opts=""
-helm_init_opts=""
-helm_cta_opts=""
-if [ $runoracleunittests == 1 ] ; then
-  # Eventually this should also not be part of create_instance
-  helm_init_opts+=" --set runOracleUnitTests=true"
-fi
 # Get Catalogue Schema version
 catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
 if [[ "$updatedatabasetest" == "1" ]] ; then
   # This being part of the create_instance script is not ideal. 
-  # In the future, all the create_instance script should know is the schema version
-  # Another script should then take care of spawning the upgrade pod
-  catalogue_commitid=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
+  # In the future, the catalogue schema version should be an argument (and default to the latest version)
   migration_files=$(find ../../catalogue/cta-catalogue-schema -name "*to${catalogue_schema_version}.sql")
   prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
-  helm_init_opts+=" --set updateDBTests.enabled=true"
-  helm_init_opts+=" --set updateDBTests.catalogueSourceVersion=$prev_catalogue_schema_version"
-  helm_init_opts+=" --set updateDBTests.catalogueDestinationVersion=$catalogue_schema_version"
-  helm_init_opts+=" --set updateDBTests.commitId=$catalogue_commitid"
   catalogue_schema_version=$prev_catalogue_schema_version
   echo "Deploying with previous catalogue schema version: ${catalogue_schema_version}"
-  # This is pretty disgusting but for now this will do
-  # If the configmap generation would be done through Helm the file in question needs to be within the chart
-  YUM_REPOS="$(realpath "$(dirname "$0")/../docker/ctafrontend/alma9/etc/yum.repos.d")"
-  kubectl -n ${namespace} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 else
   echo "Deploying with current catalogue schema version: ${catalogue_schema_version}"
 fi
@@ -303,9 +293,22 @@ helm install init helm/init --namespace ${namespace} \
                             --values "${library_config}" \
                             --values "${scheduler_config}" \
                             --values "${catalogue_config}" \
-                            --wait --wait-for-jobs --timeout 5m \
-                            ${helm_init_opts}
+                            --wait --wait-for-jobs --timeout ${init_chart_timeout} 
 set +x
+
+if [ $runoracleunittests == 1 ] ; then
+  # Note that there is also a unit_test_oracle.sh script that does this. 
+  # However, until the above way of obtaining the image tag is cleaned up, we do it here instead
+  helm install oracle-unit-tests ../helm/oracle-unit-tests --namespace ${namespace} \
+                                                          --set global.image.registry="${registry_host}" \
+                                                          --set global.image.tag="${imagetag}" \
+                                                          --wait --wait-for-jobs --timeout 30m
+fi
+
+if [ $init_only == 1 ] ; then
+  echo "Init chart ${namespace} successfully installed:"
+  kubectl --namespace=${namespace} get pods
+fi
 
 echo ""
 echo "Processing dependencies of cta chart..."
@@ -319,8 +322,7 @@ helm install cta helm/cta --namespace ${namespace} \
                           --values "${library_config}" \
                           --values "${scheduler_config}" \
                           --values "${catalogue_config}" \
-                          --wait --timeout 5m \
-                          ${helm_cta_opts}
+                          --wait --timeout ${cta_chart_timeout}
 set +x
 
 # TODO: the following part is configuration that is not (and should not) be part of the Helm setup.

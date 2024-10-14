@@ -77,10 +77,9 @@ k8s-unit-test-oracle:
     - .kubernetes-test
   variables:
     # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
-    # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
-    # pod's yaml file is `pod-oracleunittests.yaml`
+    # that runs the oracle unit tests.
     TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
+    EXTENDED_OPTIONS: "-O -D -U -t 600 -C -s"
 
 # Manually triggered
 
@@ -109,7 +108,7 @@ k8s-test-liquibase-update:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_liquibase_update.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u -s" # -u spawns previous cat version, -s spawns only the init chart 
 
 k8s-test-external-tape-formats:
   stage: test

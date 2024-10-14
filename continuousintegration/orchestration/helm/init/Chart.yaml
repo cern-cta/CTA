@@ -1,6 +1,6 @@
 apiVersion: v2
 name: init
-version: 0.1.0
+version: 0.2.0
 description: An init chart for cta project. It configures persistent volumes and prepares that resources for the CTA pods. Must be launched BEFORE the rest
 type: application
 

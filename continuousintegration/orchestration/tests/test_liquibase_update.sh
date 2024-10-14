@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -43,7 +43,7 @@ check_schema_version() {
   fi
 }
 
-while getopts "n:v:" o; do
+while getopts "n:" o; do
   case "${o}" in
     n)
       NAMESPACE=${OPTARG}
@@ -59,33 +59,43 @@ if [ -z "${NAMESPACE}" ]; then
   usage
 fi
 
-if [ ! -z "${error}" ]; then
-  echo -e "ERROR:\n${error}"
-  exit 1
-fi
+# Note that this assumes the setup was spawned with the previous catalogue version
 
 # Get Catalogue Schema version
-MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
-MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
-PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
+catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
+catalogue_commitid=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
+migration_files=$(find ../../../catalogue/cta-catalogue-schema -name "*to${catalogue_schema_version}.sql")
+prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
 echo "Checking if the current schema version is the same as the previous one"
-check_schema_version ${PREVIOUS_SCHEMA_VERSION}
+check_schema_version ${prev_catalogue_schema_version}
+
+# This is pretty disgusting but for now this will do
+# If the configmap generation would be done through Helm the file in question needs to be within the chart
+YUM_REPOS="$(realpath "$(dirname "$0")/../docker/ctafrontend/alma9/etc/yum.repos.d")"
+kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
+
+# Set up the catalogue updater pod
+helm install catalogue-updater ../helm/catalogue-updater --namespace ${NAMESPACE} \
+                                                         --set catalogueSourceVersion=$prev_catalogue_schema_version \
+                                                         --set catalogueDestinationVersion=$catalogue_schema_version \
+                                                         --set catalogueCommitId=$catalogue_commitid \
+                                                         --wait --timeout 2m
 
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh update"
 
 # Check if the current schema version is the same as the new one. If it is, the update was successful
 echo "Checking if liquibase update was successful"
-check_schema_version ${NEW_SCHEMA_VERSION}
+check_schema_version ${catalogue_schema_version}
 
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
 
 # Check if the current schema version is the same as the previous one. Rollback should be successful.
 echo "Checking if liquibase rollback was successful"
-check_schema_version ${PREVIOUS_SCHEMA_VERSION}
+check_schema_version ${prev_catalogue_schema_version}
 
 echo "Liquibase update and rollback were successful"
 exit 0
