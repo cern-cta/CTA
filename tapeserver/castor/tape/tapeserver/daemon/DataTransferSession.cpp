@@ -359,7 +359,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       logContext.log(priority, "Aborting recall mount startup: empty mount");
 
       std::string mountId = retrieveMount->getMountTransactionId();
-      std::string mountType = cta::common::dataStructures::toString(retrieveMount->getMountType());
+      std::string mountType = cta::common::dataStructures::toCamelCaseString(retrieveMount->getMountType());
 
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty recall mount");
       cta::log::Param mountIdParam("mountId", mountId);
@@ -491,7 +491,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
       std::string mountId = archiveMount->getMountTransactionId();
-      std::string mountType = cta::common::dataStructures::toString(archiveMount->getMountType());
+      std::string mountType = cta::common::dataStructures::toCamelCaseString(archiveMount->getMountType());
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty migration mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
