@@ -72,8 +72,14 @@ MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 # ctacliIP=$(kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//')
 
 # Set the TAPES and DRIVENAME based on the config in tpsrv01
+echo "Reading library configuration from tpsrv01"
 DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01 -c taped -- printenv DRIVENAME)
 IFS=',' read -r -a TAPES <<< "$(kubectl exec -n ${NAMESPACE} tpsrv01 -c taped -- printenv TAPES)"
+echo "Using drive: $DRIVENAME"
+echo "Using tapes:"
+for VID in "${TAPES[@]}"; do
+  echo "- $VID"
+done
 
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()

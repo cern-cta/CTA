@@ -8,7 +8,10 @@ wipeScheduler: true
 logStorage: "2Gi"
 fstStorage: "3Gi"
 
-# Changes the entrypoint of the image to the script and provide arguments if needed
+# TODO: is this the best place to put this?
+cataloguePostgresServicePort: 5432
+
+# Changes the entrypoint of the init job
 customEntrypoint:
   command: ['/opt/run/bin/init.sh']
   args: ["none"]
@@ -56,22 +59,3 @@ global:
         database: ""
       sqlite:
         filepath: ""
-
-
-# TODO: is this the best place to put this?
-cataloguePostgresServicePort: 5432
-
-runOracleUnitTests: false
-
-updateDBTests:
-  enabled: false
-  catalogueSourceVersion: ""
-  catalogueDestinationVersion: ""
-  commitId: ""
-  image:
-    registry: gitlab-registry.cern.ch/cta
-    repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
-    tag: "@sha256:12ae741513784eb206b0a2b3447008a9be4a95623f4da195b58de2669357dee6"
-    pullPolicy: IfNotPresent
-    pullSecrets: 
-      - ctaregsecret

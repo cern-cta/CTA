@@ -1,4 +1,3 @@
-{{- if .Values.updateDBTests.enabled }}
 {{ $name := "liquibase-update" }}
 {{ $namespace := .Release.Namespace }}
 
@@ -13,8 +12,8 @@ spec:
   containers:
   - name: {{ $name }}
     # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
-    image: "{{ .Values.updateDBTests.image.registry }}/{{ .Values.updateDBTests.image.repository }}{{ .Values.updateDBTests.image.tag }}"
-    imagePullPolicy: {{ .Values.updateDBTests.image.pullPolicy }}
+    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
     env:
     - name: MY_NAME
@@ -31,7 +30,7 @@ spec:
       - |
         echo "#!/bin/bash" > /launch_liquibase.sh && \
         echo "COMMAND=\$1" >> /launch_liquibase.sh && \
-        echo "/entrypoint.sh -d -f '{{ .Values.updateDBTests.catalogueSourceVersion }}' -t '{{ .Values.updateDBTests.catalogueDestinationVersion }}' -i '{{ .Values.updateDBTests.commitId }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh && \
+        echo "/entrypoint.sh -d -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -i '{{ .Values.catalogueCommitId }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh && \
         chmod +x /launch_liquibase.sh
         sleep infinity
     volumeMounts:
@@ -70,7 +69,6 @@ spec:
       claimName: claimlogs
 
   imagePullSecrets:
-  {{- range .Values.updateDBTests.image.pullSecrets }}
+  {{- range .Values.image.pullSecrets }}
   - name: {{ . }}
   {{- end }}
-{{- end }}
