@@ -13,7 +13,9 @@
     - when: on_success
   variables:
     TEST_SCRIPT:
-    EXTENDED_OPTIONS:
+    # Passed to the run_systemtest.sh script verbatim
+    # You can for example use this to pass --spawn-options "..." which will pass additional arguments to the create_instance script
+    EXTRA_OPTIONS:
   before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
@@ -49,7 +51,6 @@
                           --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
-                          --spawn-options ${EXTRA_SPAWN_OPTIONS}
                           ${EXTRA_OPTIONS}
   artifacts:
     when: always
