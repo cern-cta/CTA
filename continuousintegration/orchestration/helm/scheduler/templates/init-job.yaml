@@ -1,6 +1,11 @@
 {{$namespace := .Release.Namespace }}
 {{$name := "scheduler" }}
-
+# This allows the user to set the configuration using either --set-file or using --values
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- if eq $config.backend "ceph" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -30,16 +35,16 @@ spec:
             - name: WIPE_SCHEDULER
               value: "{{ .Values.wipeScheduler }}"
             - name: SCHEDULER_BACKEND
-              value: {{ .Values.scheduler.backend | quote}}
+              value: {{ $config.backend | quote}}
             - name: SCHEDULER_URL
               value: {{ include "scheduler.url" . | quote}}
-            {{- if eq .Values.scheduler.backend "ceph" }}
+            {{- if eq $config.backend "ceph" }}
             - name: SCHEDULER_CEPH_NAMESPACE
-              value: {{ .Values.scheduler.config.ceph.namespace | quote}}
+              value: {{ $config.cephConfig.namespace | quote}}
             - name: SCHEDULER_CEPH_ID
-              value: {{ .Values.scheduler.config.ceph.id | quote}}
+              value: {{ $config.cephConfig.id | quote}}
             - name: SCHEDULER_CEPH_POOL
-              value: {{ .Values.scheduler.config.ceph.pool | quote}}
+              value: {{ $config.cephConfig.pool | quote}}
             {{- end }}
             {{- if .Values.env }}
             {{ .Values.env | toYaml | nindent 12 }}
@@ -52,13 +57,13 @@ spec:
               name: logstorage
             - mountPath: /shared
               name: shared
-            {{- if eq $.Values.scheduler.backend "ceph" }}
+            {{- if eq $config.backend "ceph" }}
             - name: ceph-config
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
             - name: ceph-config
-              mountPath: /etc/ceph/ceph.client.{{ .Values.scheduler.config.ceph.id }}.keyring
-              subPath: ceph.client.{{ .Values.scheduler.config.ceph.id }}.keyring
+              mountPath: /etc/ceph/ceph.client.{{ $config.cephConfig.id }}.keyring
+              subPath: ceph.client.{{ $config.cephConfig.id }}.keyring
             {{- end }}
       volumes:
         - name: scheduler-config
@@ -70,7 +75,7 @@ spec:
         - name: logstorage
           persistentVolumeClaim:
             claimName: claimlogs
-        {{- if eq $.Values.scheduler.backend "ceph" }}
+        {{- if eq $config.backend "ceph" }}
         - name: ceph-config
           configMap:
             name: ceph-configmap
@@ -79,3 +84,4 @@ spec:
       {{- range .Values.initImage.pullSecrets }}
       - name: {{ . | quote }}
       {{- end }}
+{{- end }}

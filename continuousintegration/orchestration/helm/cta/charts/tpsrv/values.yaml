@@ -28,7 +28,7 @@ conf:
     ctaTapedSss: "cta-taped.sss.keytab"
   general:
     instanceName: "CI"
-    schedulerBackendName: "VFS"
+    scheduler.backendName: "VFS"
 
 tpsrv:
   replicaCount: 1

@@ -12,22 +12,21 @@ initImage:
     - ctaregsecret
 
 
-scheduler:
+configuration:
   backend: ceph  # Options: file, ceph, postgres
-  config:
-    ceph:
-      mon: ""
-      monport: ""
-      pool: ""
-      namespace: ""
-      id: ""
-      key: ""
-    postgres:
-      username: ""
-      password: ""
-      database: ""
-      server: ""
-    file:
-      path: ""
+  cephConfig:
+    mon: ""
+    monport: ""
+    pool: ""
+    namespace: ""
+    id: ""
+    key: ""
+  postgresConfig:
+    username: ""
+    password: ""
+    database: ""
+    server: ""
+  fileConfig:
+    path: ""
 
-env:
+env: []

@@ -13,21 +13,20 @@ initImage:
 
 # TODO: is this the best place to put/name this?
 catalogueServicePort: 5432
+schemaVersion: ""
 
-catalogue:
-  schemaVersion: ""
+configuration:
   backend: "" # Can be sqlite, orale or postgres.
-  config:
-    oracle:
-      username: ""
-      database: ""
-      password: ""
-    postgres:
-      username: ""
-      password: ""
-      server: ""
-      database: ""
-    sqlite:
-      filepath: ""
+  oracleConfig:
+    username: ""
+    database: ""
+    password: ""
+  postgresConfig:
+    username: ""
+    password: ""
+    server: ""
+    database: ""
+  sqliteConfig:
+    filepath: ""
 
-env:
+env: []
