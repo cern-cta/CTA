@@ -2,6 +2,8 @@ changelog-preview:
   stage: release:changelog
   needs: [] # Ensure this job can be triggered at the beginning if necessary
   rules:
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
       allow_failure: true
@@ -48,6 +50,8 @@ changelog-update:
   needs:
     - changelog-preview
   rules:
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
       allow_failure: true
