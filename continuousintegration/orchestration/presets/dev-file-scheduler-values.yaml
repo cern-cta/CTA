@@ -1,0 +1,3 @@
+backend: "file"
+fileConfig:
+  path: /shared/%NAMESPACE/objectstore

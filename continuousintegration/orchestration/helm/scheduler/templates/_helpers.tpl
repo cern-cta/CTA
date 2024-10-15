@@ -1,14 +1,18 @@
 {{/* Define a helper function to generate the scheduler URL based on backend type */}}
 {{- define "scheduler.url" -}}
-{{- $backend := .Values.scheduler.backend -}}
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- $backend := $config.backend -}}
 {{- if eq $backend "ceph" -}}
-rados://{{ .Values.scheduler.config.ceph.id }}@{{ .Values.scheduler.config.ceph.pool }}:{{ .Values.scheduler.config.ceph.namespace }}
+rados://{{ $config.cephConfig.id }}@{{ $config.cephConfig.pool }}:{{ $config.cephConfig.namespace }}
 {{- else if eq $backend "postgres" -}}
-postgresql:postgresql://{{ .Values.scheduler.config.postgres.username }}:{{ .Values.scheduler.config.postgres.password }}@{{ .Values.scheduler.config.postgres.server }}/{{ .Values.scheduler.config.postgres.database }}
+postgresql:postgresql://{{ $config.postgresConfig.username }}:{{ $config.postgresConfig.password }}@{{ $config.postgresConfig.server }}/{{ $config.postgresConfig.database }}
 {{- else if eq $backend "file" -}}
-{{ .Values.scheduler.config.file.path | replace "%NAMESPACE" .Release.Namespace }}
+{{ $config.fileConfig.path | replace "%NAMESPACE" .Release.Namespace }}
 {{- else }}
-{{- fail "Unsupported scheduler backend type. Please use 'ceph', 'postgres', or 'file'." -}}
+{{- fail (printf "Unsupported scheduler backend type: %s. Please use 'ceph', 'postgres', or 'file'." $config.backend) -}}
 {{- end }}
 {{- end }}
 

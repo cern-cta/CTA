@@ -1,4 +1,9 @@
-{{- if eq .Values.catalogue.backend "postgres" -}}
+# This allows the user to set the configuration using either --set-file or using --values
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- if eq $config.backend "postgres" -}}
 {{$namespace := .Release.Namespace }}
 {{$name := "postgres" }}
 apiVersion: v1
@@ -22,15 +27,15 @@ spec:
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
     - name: SCHEMA_VERSION
-      value: {{ $.Values.catalogue.schemaVersion | quote}}
+      value: {{ $.Values.schemaVersion | quote}}
     - name: PGDATA
       value: /var/lib/postgresql/data/pgdata
     - name: POSTGRES_USER
-      value: {{ .Values.catalogue.config.postgres.username }}
+      value: {{ $config.postgresConfig.username }}
     - name: POSTGRES_PASSWORD
-      value: {{ .Values.catalogue.config.postgres.password }}
+      value: {{ $config.postgresConfig.password }}
     - name: POSTGRES_DB
-      value: {{ .Values.catalogue.config.postgres.database }}
+      value: {{ $config.postgresConfig.database }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}

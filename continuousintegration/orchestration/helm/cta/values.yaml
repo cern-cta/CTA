@@ -1,4 +1,4 @@
-# Here are stored global settings for all the project pods
+# These settings are available to all the subcharts
 global:
   image:
     registry: gitlab-registry.cern.ch/cta
@@ -8,37 +8,21 @@ global:
     pullSecrets: 
       - ctaregsecret
   useSystemd: false
- 
- # backend Options: file, ceph, postgres
-  scheduler:
-    backend: "" 
-    config:
-      ceph:
+
+  configuration:
+    scheduler:
+      backend: "" # Options: file, ceph, postgres
+      cephConfig:
         mon: ""
         monport: ""
         pool: ""
         namespace: ""
         id: ""
         key: ""
-      postgres:
+      postgresConfig:
         username: ""
         password: ""
         database: ""
         server: ""
-      file:
+      fileConfig:
         path: ""
-  # catalogue Options: sqlite, orale or postgres.
-  catalogue:
-    backend: ""
-    config:
-      oracle:
-        username: ""
-        database: ""
-        password: ""
-      postgres:
-        username: ""
-        password: ""
-        server: ""
-        database: ""
-      sqlite:
-        filepath: ""

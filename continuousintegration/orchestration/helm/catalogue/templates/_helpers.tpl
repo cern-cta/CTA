@@ -1,14 +1,18 @@
-{{/* Define a helper function to generate the catalogue URL based on backend type */}}
+{{/* Generate the catalogue URL based on backend type */}}
 {{- define "catalogue.url" -}}
-{{- $backend := .Values.catalogue.backend -}}
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- $backend := $config.backend }}
 {{- if eq $backend "oracle" -}}
-oracle:{{ .Values.catalogue.config.oracle.username }}/{{ .Values.catalogue.config.oracle.password }}@{{ .Values.catalogue.config.oracle.database }}
+oracle:{{ $config.oracleConfig.username }}/{{ $config.oracleConfig.password }}@{{ $config.oracleConfig.database }}
 {{- else if eq $backend "postgres" -}}
-postgresql:postgresql://{{ .Values.catalogue.config.postgres.username }}:{{ .Values.catalogue.config.postgres.password }}@{{ .Values.catalogue.config.postgres.server }}/{{ .Values.catalogue.config.postgres.database }}
+postgresql:postgresql://{{ $config.postgresConfig.username }}:{{ $config.postgresConfig.password }}@{{ $config.postgresConfig.server }}/{{ $config.postgresConfig.database }}
 {{- else if eq $backend "sqlite" -}}
-sqlite:{{ .Values.catalogue.config.sqlite.filepath | replace "%NAMESPACE" .Release.Namespace }}
+sqlite:{{ $config.sqliteConfig.filepath | replace "%NAMESPACE" .Release.Namespace }}
 {{- else }}
-{{- fail "Unsupported catalogue backend type. Please use 'oracle', 'postgres', or 'sqlite'." -}}
+{{- fail (printf "Unsupported catalogue backend type: %s. Please use 'oracle', 'postgres', or 'sqlite'." $backend) -}}
 {{- end }}
 {{- end }}
 

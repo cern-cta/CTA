@@ -21,13 +21,29 @@
     # Keep the namespace name under 64 characters;
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
     - git submodule update --init --recursive
+    - if [ $SCHED_TYPE == "objectstore" ]; then
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+      else
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-postgres-values.yaml
+      fi
+    - if [ $ORACLE_SUPPORT == "ON" ]; then
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+      else
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-values.yaml
+      fi
+    - if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
+        GET_IMAGE_TAG_OPTS=" --systemtest-only"
+      fi
+    - IMAGE_TAG=$(./continuousintegration/ci_helpers/get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
     - cd continuousintegration/orchestration/
-    - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
-    - ./run_systemtest.sh -n ${NAMESPACE}
-                          -p ${CI_PIPELINE_ID}
-                          -s ${TEST_SCRIPT}
-                          ${EXTENDED_OPTIONS}
-                          ${ONLY_SYSTEST_OPT}
+    - ./run_systemtest.sh --namespace ${NAMESPACE}
+                          --image-tag ${CI_PIPELINE_ID}
+                          --test-script ${TEST_SCRIPT}
+                          --clean-all-namespaces
+                          --catalogue-config ${CATALOGUE_CONFIG}
+                          --scheduler-config ${SCHEDULER_CONFIG}
+                          --spawn-options ${EXTRA_SPAWN_OPTIONS}
+                          ${EXTRA_OPTIONS}
   artifacts:
     when: always
     expire_in: 30 days
@@ -45,7 +61,7 @@ k8s-test-client:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-client-gfal2:
   stage: test
@@ -53,7 +69,7 @@ k8s-test-client-gfal2:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-repack:
   stage: test
@@ -61,7 +77,7 @@ k8s-test-repack:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-cta-admin:
   stage: test
@@ -69,17 +85,15 @@ k8s-test-cta-admin:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-unit-test-oracle:
   stage: test
   extends:
     - .kubernetes-test
   variables:
-    # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
-    # that runs the oracle unit tests.
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C -w"
+    TEST_SCRIPT: "tests/unit_test_oracle.sh"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 # Manually triggered
 
@@ -108,7 +122,8 @@ k8s-test-liquibase-update:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_liquibase_update.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u -w" # -u spawns previous cat version, -w spawns only the init chart 
+    EXTRA_OPTIONS: "--test-timeout 2400"
+    EXTRA_SPAWN_OPTIONS: "--catalogue-version 14.0" # TODO: pass in a previous catalogue version (not hardcoded)
 
 k8s-test-external-tape-formats:
   stage: test
@@ -118,7 +133,7 @@ k8s-test-external-tape-formats:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-regression-dCache:
   stage: test
@@ -128,8 +143,7 @@ k8s-test-regression-dCache:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
-    EXTENDED_OPTIONS: "-O -D -S -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
   tags:
     - kubernetes
-    #- mhvtl
     - xlarge

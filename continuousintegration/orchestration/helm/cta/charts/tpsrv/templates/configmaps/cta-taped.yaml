@@ -1,5 +1,9 @@
 {{- $replicaCount := int .Values.tpsrv.replicaCount }}
 {{- $drivenamesCount := len .Values.library.drivenames }}
+{{- $schedulerConfig := .Values.global.configuration.scheduler }}
+{{- if eq (typeOf $schedulerConfig) "string" -}}
+  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
+{{- end }}
 
 {{- if gt $replicaCount $drivenamesCount }}
   {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
@@ -15,7 +19,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   # The name cannot use the drivename as this contains uppercase letters
-  name: etc-cta-tpsrv-{{ $i }}
+  name: cta-taped-tpsrv-{{ $i }}-configmap
   labels:
     app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
     app.kubernetes.io/instance: {{ $.Release.Name }}
@@ -25,8 +29,6 @@ metadata:
     app.kubernetes.io/managed-by: {{ $.Release.Service }}
     helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
 data:
-  cta-catalogue.conf: |-
-    {{ include "global.catalogue.url" $ }}
   cta-taped-{{ $driveName }}.conf: |-
     # cta-taped setup
     taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
@@ -42,9 +44,9 @@ data:
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
     # Objectstore
-    ObjectStore BackendPath {{ include "global.scheduler.url" $ }}
+    ObjectStore BackendPath {{ include "global.configuration.scheduler.url" $ }}
     # General
     general InstanceName {{ $.Values.conf.general.instanceName }}
-    general SchedulerBackendName {{ $.Values.conf.general.schedulerBackendName }}
+    general SchedulerBackendName {{ $schedulerConfig.backendName }}
 ---
 {{- end }}

@@ -17,33 +17,55 @@
 
 set -e
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
-EOF
-exit 1
-}
-
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:" o; do
-  case "${o}" in
-    n)
-      NAMESPACE=${OPTARG}
-      ;;
+usage() {
+  echo "Spawns a pod that performs the Oracle unit tests on the catalogue."
+  echo ""
+  echo "Usage: $0 -n <namespace> -i <image tag> [options]"
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                     Shows help output."
+  echo "  -n, --namespace <namespace>:    Specify the Kubernetes namespace."
+  echo "  -r, --registry-host <host>:     Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
+  echo "  -i, --image-tag <tag>:          Docker image tag for the deployment."
+  exit 1
+}
+
+registry_host="gitlab-registry.cern.ch/cta"
+
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -h | --help) usage ;;
+    -n|--namespace) 
+      namespace="$2"
+      shift ;;
+    -r|--registry-host) 
+      registry_host="$2"
+      shift ;;
+    -i|--image-tag) 
+      image_tag="$2"
+      shift ;;
     *)
+      echo "Unsupported argument: $1"
       usage
       ;;
   esac
+  shift
 done
-shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [ -z "${namespace}" ]; then
+  echo "Missing mandatory argument: -n | --namespace"
   usage
 fi
 
-# TODO: for now this won't work as the user has to provide a registry and tag
-# However, until this has been cleanly implemented in the create_instance script, this script will remain unused
+if [ -z "${image_tag}" ]; then
+  echo "Missing mandatory argument: -i | --image-tag"
+  usage
+fi
+
 helm install oracle-unit-tests ../helm/oracle-unit-tests --namespace ${NAMESPACE} \
                                                          --set global.image.registry="${registry_host}" \
-                                                         --set global.image.tag="${imagetag}" \
+                                                         --set global.image.tag="${image_tag}" \
                                                          --wait --wait-for-jobs --timeout 30m
