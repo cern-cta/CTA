@@ -175,7 +175,7 @@ run_systemtest() {
   fi
 
   # create instance timeout after 10 minutes
-  execute_cmd_with_log "./create_instance.sh -n ${namespace} ${extra_spawn_options} 2>&1" "${log_dir}/create_instance.log" ${create_instance_timeout}
+  execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options} 2>&1" "${log_dir}/create_instance.log" ${create_instance_timeout}
 
   # Launch preflighttest and timeout after ${preflighttest_timeout} seconds
   if [ -x ${preflighttest_script} ]; then
