@@ -9,8 +9,6 @@
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
     - when: on_success
   variables:
     TEST_SCRIPT:
