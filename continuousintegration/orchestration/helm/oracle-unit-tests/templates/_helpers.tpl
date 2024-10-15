@@ -6,12 +6,12 @@
 {{- if and .Values.global .Values.global.image.registry .Values.global.image.repository .Values.global.image.tag -}}
   {{- $registry := .Values.global.image.registry -}}
   {{- $repository := .Values.global.image.repository -}}
-  {{- $tag := .Values.global.image.tag -}}
+  {{- $tag := .Values.global.image.tag | toString -}}
   {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
 {{- else if and .Values.image.registry .Values.image.repository .Values.image.tag -}}
   {{- $registry := .Values.image.registry -}}
   {{- $repository := .Values.image.repository -}}
-  {{- $tag := .Values.image.tag -}}
+  {{- $tag := .Values.image.tag | toString -}}
   {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
 {{- else }}
 {{- fail "You must either provide .Values.global.image or .Values.image with registry, repository, and tag values." -}}
