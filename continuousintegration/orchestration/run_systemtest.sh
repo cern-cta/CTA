@@ -39,7 +39,7 @@ usage() {
   echo "  -t, --test-timeout <seconds>:   Timeout for the system test in seconds."
   echo "  -c, --spawn-options <options>:  Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   echo "  -K, --keep-namespace:           Keep the namespace after the system test script run if successful."
-  echo "  -C, --clean-all-namespace:      Clean up leftover Kubernetes namespaces."
+  echo "  -C, --cleanup-namespaces:      Clean up leftover Kubernetes namespaces."
   exit 1
 }
 
@@ -133,7 +133,7 @@ run_systemtest() {
         extra_spawn_options="$2"
         shift ;;
       -K|--keep-namespace) keepnamespace=1 ;;
-      -C|--clean-all-namespace) cleanup_namespaces=1 ;;
+      -C|--cleanup-namespaces) cleanup_namespaces=1 ;;
       *)
         echo "Unsupported argument: $1"
         usage

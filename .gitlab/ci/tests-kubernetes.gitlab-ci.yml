@@ -46,7 +46,7 @@
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --image-tag ${CI_PIPELINE_ID}
                           --test-script ${TEST_SCRIPT}
-                          --clean-all-namespaces
+                          --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
                           --spawn-options ${EXTRA_SPAWN_OPTIONS}
