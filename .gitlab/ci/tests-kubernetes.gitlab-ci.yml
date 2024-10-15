@@ -30,9 +30,9 @@
     # Which catalogue to use
     - |
       if [ $ORACLE_SUPPORT == "ON" ]; then
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
-        SCHEDULER_CONFIG=presets/dev-postgres-catalogue-values.yaml
+        CATALOGUE_CONFIG=presets/dev-postgres-catalogue-values.yaml
       fi
     # Which image tag to use
     - |
