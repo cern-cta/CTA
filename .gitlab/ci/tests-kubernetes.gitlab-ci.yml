@@ -21,20 +21,24 @@
     # Keep the namespace name under 64 characters;
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
     - git submodule update --init --recursive
+    # Which scheduler to use
     - if [ $SCHED_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-postgres-values.yaml
       fi
+    # Which catalogue to use
     - if [ $ORACLE_SUPPORT == "ON" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-values.yaml
+        SCHEDULER_CONFIG=presets/dev-postgres-catalogue-values.yaml
       fi
+    # Which image tag to use
     - if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         GET_IMAGE_TAG_OPTS=" --systemtest-only"
       fi
     - IMAGE_TAG=$(./continuousintegration/ci_helpers/get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+    # Run test
     - cd continuousintegration/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --image-tag ${CI_PIPELINE_ID}
@@ -49,7 +53,7 @@
     expire_in: 30 days
     paths:
       - pod_logs
-  tags:
+  tags: # Used to indicate that these jobs should run on our own cirunner machines
     - kubernetes
     - mhvtl
 
