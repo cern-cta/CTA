@@ -39,9 +39,10 @@
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         GET_IMAGE_TAG_OPTS=" --systemtest-only"
       fi
-    - IMAGE_TAG=$(./continuousintegration/ci_helpers/get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+    - cd continuousintegration/ci_helpers/
+    - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
     # Run test
-    - cd continuousintegration/orchestration/
+    - cd ../orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --image-tag ${CI_PIPELINE_ID}
                           --test-script ${TEST_SCRIPT}
