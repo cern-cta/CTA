@@ -3,6 +3,10 @@
 {{$imageVersion := include "tpsrv.image" . }}
 {{$imagePullPolicy := include "tpsrv.imagePullPolicy" . }}
 {{$imagePullSecrets := include "tpsrv.imagePullSecrets" . }}
+{{- $schedulerConfig := .Values.global.configuration.scheduler }}
+{{- if eq (typeOf $schedulerConfig) "string" -}}
+  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
+{{- end }}
 
 # Spawn replicaCount pods
 {{- range $i := until (int .Values.tpsrv.replicaCount) }}
@@ -79,27 +83,30 @@ spec:
     {{- end}}
     {{- if (.volumeMounts)}}
     volumeMounts:
-    - name: cta-conf-volume
+    - name: cta-taped-config
       mountPath: /etc/cta/cta-taped-{{ $driveName }}.conf
       subPath: cta-taped-{{ $driveName }}.conf
-    - name: cta-conf-volume
+    - name: catalogue-config
       mountPath: /etc/cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
+    - name: scheduler-config
+      mountPath: /etc/cta/cta-objectstore-tools.conf
+      subPath: cta-objectstore-tools.conf
     {{- if ($.Values.global.useSystemd) }}
-    - name: cta-sysconfig-volume
+    - name: sysconfig-tpsrv-config
       mountPath: /etc/sysconfig/cta-rmcd
       subPath: cta-rmcd
     {{- end }}
-    - name: cta-sysconfig-volume
+    - name: sysconfig-tpsrv-config
       mountPath: /etc/sysconfig/cta-taped
       subPath: cta-taped
-    {{- if eq $.Values.global.scheduler.backend "ceph" }}
+    {{- if eq $schedulerConfig.backend "ceph" }}
     - name: cta-ceph-volume
       mountPath: /etc/ceph/ceph.conf
       subPath: ceph.conf
     - name: cta-ceph-volume
-      mountPath: /etc/ceph/ceph.client.{{ $.Values.global.scheduler.config.ceph.id }}.keyring
-      subPath: ceph.client.{{ $.Values.global.scheduler.config.ceph.id }}.keyring
+      mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+      subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
     {{- end }}
     {{- .volumeMounts | toYaml | nindent 4}}
     {{- if ($.Values.global.volumes) }}
@@ -108,16 +115,22 @@ spec:
     {{- end}}
   {{- end}} # End of container loop
   volumes:
-  - name: cta-conf-volume
+  - name: catalogue-config
     configMap:
-      name: etc-cta-tpsrv-{{ $i }}
-  - name: cta-sysconfig-volume
+      name: catalogue-configmap
+  - name: scheduler-config
     configMap:
-      name: etc-sysconfig-tpsrv-{{ $i }}
-  {{- if eq $.Values.global.scheduler.backend "ceph" }}
+      name: scheduler-configmap
+  - name: cta-taped-config
+    configMap:
+      name: cta-taped-tpsrv-{{ $i }}-configmap
+  - name: sysconfig-tpsrv-config
+    configMap:
+      name: sysconfig-tpsrv-{{ $i }}-configmap
+  {{- if eq $schedulerConfig.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
-      name: etc-ceph-cta
+      name: ceph-configmap
   {{- end}}
   {{- $.Values.tpsrv.volumes | toYaml | nindent 2}}
   {{- if ($.Values.global.volumes) }}

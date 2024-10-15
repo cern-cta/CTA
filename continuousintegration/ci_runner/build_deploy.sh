@@ -45,8 +45,8 @@ usage() {
   echo "      --skip-image-reload:                  Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
   echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
   echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
-  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-catalogue-postgres-values.yaml"
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-scheduler-file-values.yaml"
+  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-postgres-catalogue-values.yaml"
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-file-scheduler-values.yaml"
   exit 1
 }
 
@@ -78,8 +78,8 @@ compile_deploy() {
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
   local cta_version="5"
-  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local scheduler_config="presets/dev-scheduler-file-values.yaml"
+  local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
+  local scheduler_config="presets/dev-file-scheduler-values.yaml"
 
   # These versions don't affect anything functionality wise
   local vcs_version="dev"

@@ -31,8 +31,8 @@ usage() {
   echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:                      Image tag to use. Defaults to \"dev\" if not provided."
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
-  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-catalogue-postgres-values.yaml"
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-scheduler-file-values.yaml"
+  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-postgres-catalogue-values.yaml"
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-file-scheduler-values.yaml"
   exit 1
 }
 
@@ -43,8 +43,8 @@ redeploy() {
   local operating_system="alma9"
   local rpm_src=""
   local skip_image_reload=false
-  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local scheduler_config="presets/dev-scheduler-file-values.yaml"
+  local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
+  local scheduler_config="presets/dev-file-scheduler-values.yaml"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -135,6 +135,7 @@ redeploy() {
   cd "$(dirname "$0")"
   cd ../../
 
+  # TODO: the following logic will need to be re-evaluated for upgrades
   # Delete previous instance, if it exists
   if kubectl get namespace ${kube_namespace} &>/dev/null; then
     echo "Found existing namespace \"${kube_namespace}\""
@@ -162,8 +163,15 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  ./create_instance.sh -n ${kube_namespace} -r localhost -i ${image_tag} -D -O -d ${catalogue_config} -o ${scheduler_config}
-
+  set -x
+  ./create_instance.sh --namespace ${kube_namespace} \
+                       --registry-host localhost \
+                       --image-tag ${image_tag} \
+                       --wipe-catalogue \
+                       --wipe-scheduler \
+                       --catalogue-config ${catalogue_config} \
+                       --scheduler-config ${scheduler_config}
+  set +x
   echo "Pods redeployed."
 }
 

@@ -1,5 +1,9 @@
 {{$namespace := .Release.Namespace }}
 {{$name := include "ctafrontend.name" . }}
+{{- $schedulerConfig := .Values.global.configuration.scheduler }}
+{{- if eq (typeOf $schedulerConfig) "string" -}}
+  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
+{{- end }}
 
 apiVersion: v1
 kind: Pod
@@ -40,38 +44,43 @@ spec:
     {{- end}}
     securityContext:
       privileged: {{ .Values.isPriviliged }}
-    # tadamb
     {{- if (.Values.ports)}}
     ports:
         {{- .Values.ports | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
-    - name: cta-conf-volume
+    - name: catalogue-config
       mountPath: /etc/cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
-    - name: cta-conf-volume
+    - name: scheduler-config
       mountPath: /etc/cta/cta-objectstore-tools.conf
       subPath: cta-objectstore-tools.conf
-    - name: cta-conf-volume
+    - name: xrootd-config
       mountPath: /etc/cta/cta-frontend-xrootd.conf
       subPath: cta-frontend-xrootd.conf
-    {{- if eq $.Values.global.scheduler.backend "ceph" }}
+    {{- if eq $schedulerConfig.backend "ceph" }}
     - name: cta-ceph-volume
       mountPath: /etc/ceph/ceph.conf
       subPath: ceph.conf
     - name: cta-ceph-volume
-      mountPath: /etc/ceph/ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
-      subPath: ceph.client.{{ .Values.global.scheduler.config.ceph.id }}.keyring
+      mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+      subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
     {{- end }}
     {{ include "ctafrontend.volumeMounts" . | nindent 4 }}
   volumes:
-  - name: cta-conf-volume
+  - name: xrootd-config
     configMap:
-      name: etc-cta-ctafrontend
-  {{- if eq $.Values.global.scheduler.backend "ceph" }}
+      name: cta-frontend-xrootd-configmap
+  - name: catalogue-config
+    configMap:
+      name: catalogue-configmap
+  - name: scheduler-config
+    configMap:
+      name: scheduler-configmap
+  {{- if eq $schedulerConfig.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
-      name: etc-ceph-cta
+      name: ceph-configmap
   {{- end}}
   {{include "ctafrontend.volumes" . | nindent 2}}
 

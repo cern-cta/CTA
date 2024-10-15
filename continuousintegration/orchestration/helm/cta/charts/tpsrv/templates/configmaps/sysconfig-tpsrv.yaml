@@ -14,7 +14,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-sysconfig-tpsrv-{{ $i }}
+  name: sysconfig-tpsrv-{{ $i }}-configmap
   labels:
     app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
     app.kubernetes.io/instance: {{ $.Release.Name }}

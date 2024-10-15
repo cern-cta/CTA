@@ -1,0 +1,8 @@
+backend: "ceph"
+cephConfig:
+  mon: "cephmond.cern.ch"
+  monport: "6790"
+  pool: "tapetest"
+  namespace: "cta-dev"
+  id: "cta-dev"
+  key: "KEY"

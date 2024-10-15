@@ -1,7 +1,12 @@
+{{- $schedulerConfig := .Values.global.configuration.scheduler }}
+{{- if eq (typeOf $schedulerConfig) "string" -}}
+  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
+{{- end }}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-cta-ctafrontend
+  name: cta-frontend-xrootd-configmap
   labels:
     app.kubernetes.io/name: {{ include "ctafrontend.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
@@ -11,20 +16,16 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 data:
-  cta-catalogue.conf: |-
-    {{ include "global.catalogue.url" . }}
-  cta-objectstore-tools.conf: |-
-    ObjectStore BackendPath {{ include "global.scheduler.url" . }}
   cta-frontend-xrootd.conf: |-
     #
     # CTA options
     #
 
     cta.instance_name {{ .Values.conf.frontend.instanceName }}
-    cta.schedulerdb.scheduler_backend_name {{ .Values.conf.frontend.schedulerBackendName }}
+    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options
-    cta.objectstore.backendpath {{ (include "global.scheduler.url" .)  }}
+    cta.objectstore.backendpath {{ include "global.configuration.scheduler.url" . }}
 
     # CTA Scheduler DB options
     cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}

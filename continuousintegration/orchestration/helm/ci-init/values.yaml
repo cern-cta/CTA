@@ -1,5 +1,5 @@
 
-nameOverride: init
+nameOverride: ci-init
 isPriviliged: true
 
 logStorage: "2Gi"

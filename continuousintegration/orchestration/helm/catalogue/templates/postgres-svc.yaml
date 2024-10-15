@@ -1,4 +1,9 @@
-{{- if eq .Values.catalogue.backend "postgres" -}}
+# This allows the user to set the configuration using either --set-file or using --values
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- if eq $config.backend "postgres" -}}
 {{$namespace := .Release.Namespace }}
 {{$name := "postgres" }}
 apiVersion: v1

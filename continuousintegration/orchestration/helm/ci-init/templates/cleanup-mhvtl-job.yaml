@@ -1,6 +1,4 @@
 # TODO: does this even need to happen in a pod at all?
-{{- print "The value of .Values.tpsrv.library.type is: " .Values.tpsrv.library.type }}
-
 {{- if eq .Values.tpsrv.library.type "mhvtl" }}
 {{$namespace := .Release.Namespace }}
 {{$name := "cleanup-mhvtl" }}

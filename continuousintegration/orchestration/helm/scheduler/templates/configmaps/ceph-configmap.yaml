@@ -1,4 +1,9 @@
-{{- if eq $.Values.scheduler.backend "ceph" }}
+# This allows the user to set the configuration using either --set-file or using --values
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
+{{- if eq $config.backend "ceph" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,12 +19,12 @@ metadata:
 data:
   ceph.conf: |
     [global]
-      mon host = {{ .Values.scheduler.config.ceph.mon }}:{{ .Values.scheduler.config.ceph.monport }}
+      mon host = {{ $config.cephConfig.mon }}:{{ $config.cephConfig.monport }}
     
-  ceph.client.{{ .Values.scheduler.config.ceph.id }}.keyring: |
-    [client.{{ .Values.scheduler.config.ceph.id }}]
-      key = {{ .Values.scheduler.config.ceph.key }}
+  ceph.client.{{ $config.cephConfig.id }}.keyring: |
+    [client.{{ $config.cephConfig.id }}]
+      key = {{ $config.cephConfig.key }}
       caps mon = "allow r"
-      caps osd = "allow rwx pool={{ .Values.scheduler.config.ceph.pool }} namespace={{ .Values.scheduler.config.ceph.namespace }}"
+      caps osd = "allow rwx pool={{ $config.cephConfig.pool }} namespace={{ $config.cephConfig.namespace }}"
 
 {{- end }}

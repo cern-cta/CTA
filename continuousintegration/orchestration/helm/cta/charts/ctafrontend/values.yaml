@@ -11,7 +11,7 @@ conf:
 
   frontend:
     instanceName: "CI"
-    schedulerBackendName: "VFS_Sched"
+    scheduler.backendName: "VFS_Sched"
     archiveFileMaxSizeGb: 1000
     logUrl: "file:/var/log/cta/cta-frontend.log"
     # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
@@ -71,15 +71,6 @@ volumes:
 - name: shared
   hostPath:
     path: /opt/cta
-# - name: myobjectstore
-#   configMap:
-#     name: objectstore-config
-# - name: mydatabase
-#   configMap:
-#     name: database-config
-# - name: mylibrary
-#   configMap:
-#     name: library-config
 - name: logstorage
   persistentVolumeClaim:
     claimName: claimlogs
@@ -99,12 +90,6 @@ volumes:
 volumeMounts:
 - mountPath: /shared
   name: shared
-# - mountPath: /etc/config/objectstore
-#   name: myobjectstore
-# - mountPath: /etc/config/database
-#   name: mydatabase
-# - mountPath: /etc/config/library
-#   name: mylibrary
 - mountPath: /mnt/logs
   name: logstorage
 - mountPath: /etc/cta/eos.grpc.keytab

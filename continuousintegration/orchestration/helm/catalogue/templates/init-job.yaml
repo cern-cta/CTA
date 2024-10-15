@@ -1,5 +1,10 @@
 {{$namespace := .Release.Namespace }}
 {{$name := "init-catalogue" }}
+# This allows the user to set the configuration using either --set-file or using --values
+{{- $config := .Values.configuration }}
+{{- if eq (typeOf $config) "string" -}}
+  {{- $config = $config | fromYaml }}
+{{- end }}
 
 apiVersion: batch/v1
 kind: Job
@@ -30,9 +35,9 @@ spec:
             - name: WIPE_CATALOGUE
               value: "{{ .Values.wipeCatalogue }}"
             - name: SCHEMA_VERSION
-              value: {{ .Values.catalogue.schemaVersion | quote}}
+              value: {{ .Values.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND
-              value: {{ .Values.catalogue.backend | quote}}
+              value: {{ $config.backend | quote}}
             - name: CATALOGUE_URL
               value: {{ include "catalogue.url" . | quote}}
             {{- if .Values.env }}
