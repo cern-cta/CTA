@@ -127,7 +127,7 @@ run_systemtest() {
       -d|--catalogue-config) 
         catalogue_config="$2" 
         test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
-        spawn_options+=" --catalogue-config ${scheduler_config}"
+        spawn_options+=" --catalogue-config ${catalogue_config}"
         shift ;;
       -c|--spawn-options) 
         extra_spawn_options="$2"
