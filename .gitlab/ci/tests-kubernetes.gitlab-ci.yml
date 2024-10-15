@@ -14,9 +14,8 @@
   variables:
     TEST_SCRIPT:
     # Passed to the run_systemtest.sh script verbatim
+    # You can for example use this to pass --spawn-options "..." which will pass additional arguments to the create_instance script
     EXTRA_OPTIONS:
-    # Passed to the create_instance.sh script verbatim
-    EXTRA_SPAWN_OPTIONS:
     JOB_NAME: ${CI_JOB_NAME}
   before_script:
     - echo "Invalidating default common before_script for kubernetes-test"
@@ -56,7 +55,6 @@
                           --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
-                          --spawn-options ${EXTRA_SPAWN_OPTIONS}
                           ${EXTRA_OPTIONS}
   artifacts:
     when: always
