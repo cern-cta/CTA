@@ -60,7 +60,7 @@ spec:
   volumes:
   - name: yum-repos
     configMap:
-      name: yum.repos.d-config
+      name: yum-repos-config
   - name: cta-conf-volume
     configMap:
       name: etc-cta-init
