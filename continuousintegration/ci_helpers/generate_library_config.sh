@@ -91,6 +91,7 @@ generate_library_config() {
                 grep "Full" | \
                 grep -o 'VolumeTag *= *[^ ]*' | \
                 grep -o '[^= ]*$' | \
+                cut -c 1-6 | \
                 paste -sd' ' -)
 
   # Generate the values.yaml configuration
