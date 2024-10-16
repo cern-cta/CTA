@@ -45,32 +45,6 @@ MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-# tempdir=$(mktemp -d) # temporary directory for system test related config
-# echo -n "Reading library configuration from tpsrv01"
-# SECONDS_PASSED=0
-# while test 0 = $(kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' | tee ${tempdir}/library-rc.sh | wc -l); do
-#   sleep 1
-#   echo -n .
-#   let SECONDS_PASSED=SECONDS_PASSED+1
-
-#   if test ${SECONDS_PASSED} == 30; then
-#     echo "FAILED"
-#     echo "Timed out after ${SECONDS_PASSED} seconds waiting for tape library configuration."
-#     exit 1
-#   fi
-# done
-# echo "OK"
-
-# echo "Using this configuration for library:"
-# cat ${tempdir}/library-rc.sh
-# . ${tempdir}/library-rc.sh
-
-#clean the  library
-#  echo "Clean the library /dev/${LIBRARYDEVICE} if needed"
-#    mtx -f /dev/${LIBRARYDEVICE} status | sed -e "s/:/ /g"| grep "Full" | awk '{if ($1=="Data" ) { rewind="mt -f /dev/${DRIVEDEVICES["$4"]} rewind"; print rewind; print "Rewind drive "$4>"/dev/stderr"; unload="mtx -f /dev/${LIBRARYDEVICE} unload "$8" "$4; print unload; print "Unloading to storage slot "$8" from data slot "$4"" >"/dev/stderr";}}' |  source /dev/stdin
-
-# ctacliIP=$(kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//')
-
 # Set the TAPES and DRIVENAME based on the config in tpsrv01
 echo "Reading library configuration from tpsrv01"
 DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01 -c taped -- printenv DRIVENAME)
