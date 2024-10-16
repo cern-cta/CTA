@@ -47,7 +47,7 @@
     # Run test
     - cd ../orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
-                          --image-tag ${CI_PIPELINE_ID}
+                          --image-tag ${IMAGE_TAG}
                           --test-script ${TEST_SCRIPT}
                           --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
