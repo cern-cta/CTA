@@ -19,36 +19,5 @@
 #include "ArchiveRdbJob.hpp"
 
 namespace cta::schedulerdb {
-
-// Constructor to initialize the job pool
-  template<typename T>
-  JobPool<T>::JobPool(size_t initialPoolSize) : m_poolSize(initialPoolSize) {
-    // Optionally, pre-fill the pool with some job objects
-    for (size_t i = 0; i < m_poolSize; ++i) {
-      m_pool.push(std::make_unique<T>());
-    }
-  }
-
-// Acquire a job from the pool
-  template<typename T>
-  std::unique_ptr<T> JobPool<T>::acquireJob() {
-    if (!m_pool.empty()) {
-      // Get a job from the pool if available
-      auto job = std::move(m_pool.top());
-      m_pool.pop();
-      return job;
-    }
-
-    // If the pool is empty, create a new job
-    return std::make_unique<T>();
-  }
-
-// Release a job back into the pool
-  template<typename T>
-  void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
-    // Reset the job's state as needed before reusing
-    job->reset();
-    m_pool.push(std::move(job));
-  }
-
+  template class JobPool<ArchiveRdbJob>;  // Explicit instantiation
 }  // namespace cta::schedulerdb
