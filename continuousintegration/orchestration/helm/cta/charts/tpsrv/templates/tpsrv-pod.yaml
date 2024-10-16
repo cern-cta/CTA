@@ -7,11 +7,15 @@
 {{- if eq (typeOf $schedulerConfig) "string" -}}
   {{- $schedulerConfig = $schedulerConfig | fromYaml }}
 {{- end }}
+{{- $tapeConfig := .Values.tpsrv.tapeConfig }}
+{{- if eq (typeOf $tapeConfig) "string" -}}
+  {{- $tapeConfig = $tapeConfig | fromYaml }}
+{{- end }}
 
 # Spawn replicaCount pods
 {{- range $i := until (int .Values.tpsrv.replicaCount) }}
 {{- $podName := printf "tpsrv%02d" (add $i 1) }} # server names start from 1
-{{- $driveName := index $.Values.library.drivenames $i }}
+{{- $driveName := index $tapeConfig.library.drivenames $i }}
 
 apiVersion: v1
 kind: Pod
@@ -26,7 +30,7 @@ metadata:
     app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
     app.kubernetes.io/managed-by: {{ $.Release.Service }}
     helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
-    cta/library-device: {{ $.Values.library.device }}
+    cta/library-device: {{ $tapeConfig.library.device }}
 spec:
   restartPolicy: Never
   containers:
@@ -51,23 +55,23 @@ spec:
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
     - name: LIBRARYTYPE
-      value: {{ $.Values.library.type | quote }}
+      value: {{ $tapeConfig.library.type | quote }}
     - name: LIBRARYNAME
-      value: {{ $.Values.library.name | quote }}
+      value: {{ $tapeConfig.library.name | quote }}
     - name: LIBRARYDEVICE
-      value: {{ $.Values.library.device | quote }}
+      value: {{ $tapeConfig.library.device | quote }}
     - name: DRIVENAME
       value: {{ $driveName }}
     - name: DRIVENAMES
-      value: {{ $.Values.library.drivenames | join "," | quote }}
+      value: {{ $tapeConfig.library.drivenames | join "," | quote }}
     - name: DRIVEDEVICES
-      value: {{ $.Values.library.drivedevices | join "," | quote }}
-    {{- if $.Values.library.driveserials }}
+      value: {{ $tapeConfig.library.drivedevices | join "," | quote }}
+    {{- if $tapeConfig.library.driveserials }}
     - name: DRIVESERIALS
-      value: {{ $.Values.library.driveserials | join "," | quote }}
+      value: {{ $tapeConfig.library.driveserials | join "," | quote }}
     {{- end }}
     - name: TAPES
-      value: {{ $.Values.library.tapes | join "," | quote }}
+      value: {{ $tapeConfig.library.tapes | join "," | quote }}
     {{- if (.env) }}
         {{- .env | toYaml | nindent 4}}
     {{- end}}
