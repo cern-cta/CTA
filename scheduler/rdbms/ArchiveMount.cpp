@@ -207,9 +207,9 @@ void ArchiveMount::setJobBatchTransferred(
     }
     // After processing, return the job object to the job pool for re-use
     for (auto& job : jobsBatch) {
-      // Downcast to ArchiveRdbJob before returning it to the pool
-      if (auto rdbJob = dynamic_cast<ArchiveRdbJob*>(job.get())) {
-        // Move the unique_ptr to rdbJob
+      // check we can downcast (runtime check)
+      if (auto *rdbJob = dynamic_cast<ArchiveRdbJob*>(job.get())) {
+        // Downcast to ArchiveRdbJob before returning it to the pool
         std::unique_ptr<ArchiveRdbJob> castedJob(static_cast<ArchiveRdbJob*>(job.release()));
         // Return the casted job to the pool
         m_jobPool.releaseJob(std::move(castedJob));

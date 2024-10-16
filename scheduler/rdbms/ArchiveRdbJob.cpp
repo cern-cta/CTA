@@ -49,7 +49,7 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset)
   };
 
 void ArchiveRdbJob::initialize(rdbms::ConnPool& connPool, const rdbms::Rset &rset) {
-    m_connPool = connPool;
+    m_connPool(connPool);
     m_jobRow = rset;
     // Reset or update other member variables as necessary
     m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
@@ -77,11 +77,11 @@ void ArchiveRdbJob::reset() {
   // Reset job row state
   m_jobRow.reset(); // Reset the entire job row
   // Reset the core job-specific fields
-  jobID.clear();                     // Resetting the job identifier
+  jobID = 0;                     // Resetting the job identifier
   srcURL.clear();                    // Clearing source URL
   archiveReportURL.clear();          // Clearing the archive report URL
   errorReportURL.clear();            // Clearing the error report URL
-  archiveFile = m_jobRow.m_jobRow.archiveFile;
+  archiveFile = m_jobRow.archiveFile;
   tapeFile = common::dataStructures::TapeFile();
   m_mountId = 0;                     // Resetting mount ID to default
   m_tapePool.clear();                // Clearing the tape pool name
