@@ -251,7 +251,7 @@ create_instance() {
                                     --wait --timeout 5m
   set +x
 
-  if [ $dry_run == 1 ]; then
+  if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
     exit 0  
   fi
 }
