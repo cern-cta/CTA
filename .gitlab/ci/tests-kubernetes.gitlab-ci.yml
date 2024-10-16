@@ -46,17 +46,7 @@
     - IMAGE_TAG=8325945git52652e71 # Hardcode the tag for now so that I can test this properly
     # Run test
     - cd ../orchestration/
-    - |
-      echo "
-        ./run_systemtest.sh --namespace ${NAMESPACE}
-                            --image-tag ${IMAGE_TAG}
-                            --test-script ${TEST_SCRIPT}
-                            --cleanup-namespaces
-                            --catalogue-config ${CATALOGUE_CONFIG}
-                            --scheduler-config ${SCHEDULER_CONFIG}
-                            $(eval echo ${EXTRA_OPTIONS}) # Use eval here to ensure we don't loose double quotes
-      "
-    - ./run_systemtest.sh --namespace ${NAMESPACE}
+    - bash -x run_systemtest.sh --namespace ${NAMESPACE}
                           --image-tag ${IMAGE_TAG}
                           --test-script ${TEST_SCRIPT}
                           --cleanup-namespaces
