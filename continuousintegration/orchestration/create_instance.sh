@@ -137,7 +137,6 @@ create_instance() {
     catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
     catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
   fi
-
   if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then 
     die "ERROR: Library model ${library_model} does not exist\n"
   fi
