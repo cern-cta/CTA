@@ -55,9 +55,9 @@
                           --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
-                          $( [[ -n "${EXTRA_SPAWN_ARGS}" ]] && echo "--spawn-options \"${EXTRA_SPAWN_ARGS}\"" ) \
-                          $( [[ -n "${EXTRA_TEST_ARGS}" ]] && echo "--test-options \"${EXTRA_TEST_ARGS}\"" ) \
                           ${EXTRA_ARGS}
+                          $( [[ -n "${EXTRA_SPAWN_ARGS}" ]] && echo "--spawn-options \"${EXTRA_SPAWN_ARGS}\"" )
+                          $( [[ -n "${EXTRA_TEST_ARGS}" ]] && echo "--test-options \"${EXTRA_TEST_ARGS}\"" )
   artifacts:
     when: always
     expire_in: 30 days
