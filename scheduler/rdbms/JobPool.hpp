@@ -41,7 +41,6 @@ namespace cta::schedulerdb {
     std::stack<std::unique_ptr<T>> m_pool;  // Stack to store reusable jobs
     size_t m_poolSize;  // Initial pool size
     rdbms::ConnPool& m_connPool;
-    const rdbms::Rset& m_rset;
   };
 
   // Constructor to initialize the job pool
