@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yum-repos-config
+data:
+  myconfig: |
+    {{ .Values.yumRepos }}

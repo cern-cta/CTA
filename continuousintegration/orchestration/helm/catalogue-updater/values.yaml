@@ -11,3 +11,5 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: 
     - ctaregsecret
+
+yumRepos: ""
