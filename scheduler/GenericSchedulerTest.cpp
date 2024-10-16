@@ -340,6 +340,25 @@ public:
     return request;
   }
 
+  cta::common::dataStructures::RetrieveRequest createRetrieveRequest(uint64_t archiveFileId) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    return request;
+  }
+
   void common_setup() {
     using namespace cta;
 
@@ -563,21 +582,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
 
   {
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::RetrieveRequest request;
-    request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
-    request.diskFileInfo = diskFileInfo;
-    request.dstURL = "dstURL";
-    request.requester.name = s_userName;
-    request.requester.group = "userGroup";
+    
+    cta::common::dataStructures::RetrieveRequest request = createRetrieveRequest(archiveFileId);
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -667,21 +673,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
 
   {
     //queue retrieve
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::RetrieveRequest request;
-    request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
-    request.diskFileInfo = diskFileInfo;
-    request.dstURL = "dstURL";
-    request.requester.name = s_userName;
-    request.requester.group = "userGroup";
+    cta::common::dataStructures::RetrieveRequest request = createRetrieveRequest(archiveFileId);
     request.mountPolicy = "custom_mount_policy";
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1089,21 +1081,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
   // Queue the retrieve request
   {
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::RetrieveRequest request;
-    request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
-    request.diskFileInfo = diskFileInfo;
-    request.dstURL = "dstURL";
-    request.requester.name = s_userName;
-    request.requester.group = "userGroup";
+    cta::common::dataStructures::RetrieveRequest request = createRetrieveRequest(archiveFileId);
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -1174,22 +1152,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   }
 
   {
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::RetrieveRequest request;
-    request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
-    request.diskFileInfo = diskFileInfo;
-    request.dstURL = "dstURL";
+    cta::common::dataStructures::RetrieveRequest request = createRetrieveRequest(archiveFileId);
     request.errorReportURL="null:";
-    request.requester.name = s_userName;
-    request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -1295,19 +1259,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   }
 
   {
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::RetrieveRequest request;
-    request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
-    request.diskFileInfo = diskFileInfo;
-    request.dstURL = "dstURL";
+    cta::common::dataStructures::RetrieveRequest request = createRetrieveRequest(archiveFileId);
     request.errorReportURL="null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
