@@ -175,13 +175,13 @@ create_instance() {
   # Determine the library config to use
   if [ -z "${library_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
+    library_config=$(mktemp --tempdir=/tmp library-XXXXXX-values.yaml)
     # Ensure the temporary file is deleted on script exit or interruption
-    library_config=$(mktemp library-XXXXXX-values.yaml)
     trap 'rm -f "$library_config"' EXIT
     library_device=$(echo "$unused_devices" | head -n 1)
     ./../ci_helpers/generate_library_config.sh --target-file $library_config  \
-                                              --library-device $library_device \
-                                              --library-type $library_model
+                                               --library-device $library_device \
+                                               --library-type $library_model
   else
     # See what device was provided in the config and check that it is not in use
     library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
