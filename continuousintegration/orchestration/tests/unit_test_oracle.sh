@@ -65,6 +65,7 @@ if [ -z "${image_tag}" ]; then
   usage
 fi
 
+# TODO: should we be streaming the logs to stdout as well here? (makes it more complex)
 helm install oracle-unit-tests ../helm/oracle-unit-tests --namespace ${NAMESPACE} \
                                                          --set image.registry="${registry_host}" \
                                                          --set image.tag="${image_tag}" \

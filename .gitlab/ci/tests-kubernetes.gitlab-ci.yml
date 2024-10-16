@@ -45,8 +45,11 @@
         GET_IMAGE_TAG_OPTS=" --systemtest-only"
       fi
     - cd continuousintegration/ci_helpers/
-    # - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
-    - IMAGE_TAG=8325945git52652e71 # Hardcode the tag for now so that I can test this properly
+    - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+    # Hardcode the tag for now so that I can test this properly
+    # The problem is that SYSTEMTESTS_ONLY grabs the latest image from the main branch, but I need the latest one from my branch
+    # Not sure if that is worth programming into the get_image_tag.sh script, as it would require more complex logic
+    # - IMAGE_TAG=8325945git52652e71
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - args_array=($EXTRA_ARGS)
     - |
@@ -114,6 +117,8 @@ k8s-unit-test-oracle:
   extends:
     - .kubernetes-test
   variables:
+    # Note that for now, this is still deploying the entirety of CTA before doing the unit tests
+    # We need to think about a clean option to tell create_instance what to deploy (or where to stop)
     TEST_SCRIPT: "tests/unit_test_oracle.sh"
     # The oracle pod needs the image tag as well
     EXTRA_ARGS: "--test-timeout 2400"
