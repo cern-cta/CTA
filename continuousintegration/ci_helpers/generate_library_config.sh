@@ -15,8 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-#!/bin/bash
-
 set -e
 
 # Function to show usage information

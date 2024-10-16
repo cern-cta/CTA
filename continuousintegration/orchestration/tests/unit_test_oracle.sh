@@ -66,6 +66,6 @@ if [ -z "${image_tag}" ]; then
 fi
 
 helm install oracle-unit-tests ../helm/oracle-unit-tests --namespace ${NAMESPACE} \
-                                                         --set global.image.registry="${registry_host}" \
-                                                         --set global.image.tag="${image_tag}" \
+                                                         --set image.registry="${registry_host}" \
+                                                         --set image.tag="${image_tag}" \
                                                          --wait --wait-for-jobs --timeout 30m
