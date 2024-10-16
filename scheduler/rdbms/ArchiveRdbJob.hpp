@@ -45,6 +45,9 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset);
 
+  // Constructor to create empty ArchiveJob object with a reference to the connection pool
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
+
   void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
 
   void failReport(const std::string & failureReason, log::LogContext & lc) override;
