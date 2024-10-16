@@ -1,19 +1,20 @@
 {{/* Define a helper function to generate the scheduler URL based on backend type */}}
-{{- define "global.configuration.scheduler.url" -}}
-{{- $config := .Values.global.configuration.scheduler }}
-{{- if eq (typeOf $config) "string" -}}
-  {{- $config = $config | fromYaml }}
+{{- define "global.schedulerUrl" -}}
+{{- $schedulerConfig := .Values.global.configuration.scheduler }}
+{{- if eq (typeOf $schedulerConfig) "string" }}
+  {{- $schedulerConfig = fromYaml $schedulerConfig }}
 {{- end }}
-{{- if eq $config.backend "ceph" }}
-{{- $backend := $config.backend -}}
-{{- if eq $backend "ceph" -}}
-rados://{{ $config.cephConfig.id }}@{{ $config.cephConfig.pool }}:{{ $config.cephConfig.namespace }}
-{{- else if eq $backend "postgres" -}}
-postgresql:postgresql://{{ $config.postgresConfig.username }}:{{ $config.postgresConfig.password }}@{{ $config.postgresConfig.server }}/{{ $config.postgresConfig.database }}
-{{- else if eq $backend "file" -}}
-{{ $config.fileConfig.path | replace "%NAMESPACE" .Release.Namespace }}
-{{- else }}
-{{- fail (printf "Unsupported scheduler backend type: %s. Please use 'ceph', 'postgres', or 'file'." $config.backend) -}}
-{{- end }}
+{{- if $schedulerConfig.backend }}
+  {{- if eq $schedulerConfig.backend "ceph" -}}
+    rados://{{ $schedulerConfig.cephConfig.id }}@{{ $schedulerConfig.cephConfig.pool }}:{{ $schedulerConfig.cephConfig.namespace }}
+  {{- else if eq $schedulerConfig.backend "postgres" -}}
+    postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $schedulerConfig.postgresConfig.password }}@{{ $schedulerConfig.postgresConfig.server }}/{{ $schedulerConfig.postgresConfig.database }}
+  {{- else if eq $schedulerConfig.backend "file" -}}
+    {{ $schedulerConfig.fileConfig.path | replace "%NAMESPACE" .Release.Namespace }}
+  {{- else -}}
+    {{- fail (printf "Unsupported scheduler backend type: %s. Please use 'ceph', 'postgres', or 'file'." $schedulerConfig.backend) -}}
+  {{- end }}
+{{- else -}}
+  {{- fail "No 'backend' key found in global.configuration.scheduler. Please specify a valid backend." -}}
 {{- end }}
 {{- end }}

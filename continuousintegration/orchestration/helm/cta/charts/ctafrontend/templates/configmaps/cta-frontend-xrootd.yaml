@@ -25,7 +25,7 @@ data:
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options
-    cta.objectstore.backendpath {{ include "global.configuration.scheduler.url" . }}
+    cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
 
     # CTA Scheduler DB options
     cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
