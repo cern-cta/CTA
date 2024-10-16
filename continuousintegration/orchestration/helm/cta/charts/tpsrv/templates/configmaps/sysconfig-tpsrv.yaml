@@ -1,5 +1,9 @@
 {{- $replicaCount := int .Values.tpsrv.replicaCount }}
-{{- $drivenamesCount := len .Values.library.drivenames }}
+{{- $drivenamesCount := len .Values.tapeConfig.library.drivenames }}
+{{- $tapeConfig := .Values.tpsrv.tapeConfig }}
+{{- if eq (typeOf $tapeConfig) "string" -}}
+  {{- $tapeConfig = $tapeConfig | fromYaml }}
+{{- end }}
 
 {{- if gt $replicaCount $drivenamesCount }}
   {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
@@ -8,7 +12,7 @@
 
 {{- range $i := until ($replicaCount) }}
 {{- $driveSlot := int $i }}
-{{- $driveName := index $.Values.library.drivenames $i }}
+{{- $driveName := index $tapeConfig.library.drivenames $i }}
 
 # Generate unique config map for each tape server pod as each gets its own log file
 apiVersion: v1
