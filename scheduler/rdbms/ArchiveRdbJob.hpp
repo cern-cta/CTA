@@ -51,6 +51,19 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
 
   void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
+  /**
+   * Reinitialise the job object data members with
+   * new values after it has been poped from the pool
+   *
+   * @param connPool
+   * @param rset
+   */
+  void initialize(rdbms::ConnPool& connPool, const rdbms::Rset &rset);
+  /**
+   * Reset all data members to return the job object to the pool
+   */
+  void reset();
+
   postgres::ArchiveJobQueueRow m_jobRow; // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;

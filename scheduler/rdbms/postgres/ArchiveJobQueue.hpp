@@ -100,7 +100,6 @@ namespace cta::schedulerdb::postgres {
      * @param row  A single row from the current row of the rset
      */
     explicit ArchiveJobQueueRow(const rdbms::Rset &rset) {
-      *this = rset;
       tapePool.reserve(64);
       mountPolicy.reserve(64);
       archiveReportUrl.reserve(2048);
@@ -115,6 +114,51 @@ namespace cta::schedulerdb::postgres {
       host.reserve(64);
       mount_type.reserve(64);
       logical_library.reserve(64);
+      *this = rset;
+    }
+
+    // Reset function
+    void reset() {
+      jobId = 0;
+      reqId = 0;
+      reqJobCount = 1;
+      mountId.reset(); // Resetting optional value
+      status = ArchiveJobStatus::AJS_ToTransferForUser;
+      tapePool.clear();
+      mountPolicy.clear();
+      priority = 0;
+      minArchiveRequestAge = 0;
+      copyNb = 0;
+      startTime = 0;
+      archiveReportUrl.clear();
+      archiveErrorReportUrl.clear();
+      requesterName.clear();
+      requesterGroup.clear();
+      srcUrl.clear();
+      retriesWithinMount = 0;
+      totalRetries = 0;
+      lastMountWithFailure = 0;
+      maxTotalRetries = 0;
+      maxRetriesWithinMount = 0;
+      maxReportRetries = 0;
+      totalReportRetries = 0;
+      failureLogs.reset(); // Resetting optional value
+      reportFailureLogs.reset(); // Resetting optional value
+      is_repack = false;
+      is_reporting = false;
+      in_drive_queue = false;
+      repackId = 0;
+      repackFilebufUrl.clear();
+      repackFseq = 0;
+      repackDestVid.clear();
+      vid.clear();
+      drive.clear();
+      host.clear();
+      mount_type.clear();
+      logical_library.clear();
+
+      // Reset archiveFile struct
+      archiveFile = common::dataStructures::ArchiveFile();
     }
 
     ArchiveJobQueueRow &operator=(const rdbms::Rset &rset) {

@@ -16,7 +16,6 @@
  */
 
 #include "scheduler/rdbms/ArchiveMount.hpp"
-#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
@@ -92,7 +91,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     while (true) {
       bool hasNext = resultSet.next(); // Call to next
       if (!hasNext) break; // Exit if no more rows
-      auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
+      auto job = m_jobPool.acquireJob();
+      job->initialize(m_RelationalDB.m_connPool, resultSet);
+      //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
       totalBytes += sizeInBytes;
@@ -204,9 +205,23 @@ void ArchiveMount::setJobBatchTransferred(
               .log(log::ERR,
                    "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for entire job list provided.");
     }
+    // After processing, return the job object to the job pool for re-use
+    for (auto& job : jobsBatch) {
+      // Downcast to ArchiveRdbJob before returning it to the pool
+      if (auto rdbJob = dynamic_cast<ArchiveRdbJob*>(job.get())) {
+        // Move the unique_ptr to rdbJob
+        std::unique_ptr<ArchiveRdbJob> castedJob(static_cast<ArchiveRdbJob*>(job.release()));
+        // Return the casted job to the pool
+        m_jobPool.releaseJob(std::move(castedJob));
+      } else {
+        lc.log(cta::log::ERR,
+               "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to cast ArchiveJob to ArchiveRdbJob and return the object to the pool for reuse.");
+      }
+    }
+    jobsBatch.clear();
   } catch (exception::Exception &ex) {
     lc.log(cta::log::ERR,
-                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): failed to update job status for reporting. Aborting the transaction." +
+                   "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for reporting. Aborting the transaction." +
                    ex.getMessageValue());
     txn.abort();
   }

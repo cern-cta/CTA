@@ -20,8 +20,10 @@
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/JobPool.hpp"
 
 #include <list>
 #include <memory>
@@ -40,7 +42,7 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
  public:
 
    ArchiveMount(RelationalDB &pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType) :
-                m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_ownerId(ownerId), m_queueType(queueType) { }
+                m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_ownerId(ownerId), m_queueType(queueType), m_jobPool() { }
 
    const MountInfo & getMountInfo() override;
 
@@ -69,6 +71,7 @@ private:
    cta::rdbms::ConnPool& m_connPool;
    const std::string& m_ownerId;
    common::dataStructures::JobQueueType m_queueType;
+   schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
 };
 
 } // namespace cta::schedulerdb
