@@ -48,8 +48,7 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset)
     }
   };
 
-void ArchiveRdbJob::initialize(rdbms::ConnPool& connPool, const rdbms::Rset &rset) {
-    m_connPool(connPool);
+void ArchiveRdbJob::initialize(const rdbms::Rset &rset) {
     m_jobRow = rset;
     // Reset or update other member variables as necessary
     m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
