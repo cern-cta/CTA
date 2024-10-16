@@ -89,7 +89,8 @@ generate_library_config() {
   local tapes=$(mtx -f "/dev/${library_device}" status | \
                 grep "Storage Element" | \
                 grep "Full" | \
-                sed -e 's/.*VolumeTag=//;s/ //g;s/\(......\).*/\1/' | \
+                grep -o 'VolumeTag *= *[^ ]*' | \
+                grep -o '[^= ]*$' | \
                 paste -sd' ' -)
 
   # Generate the values.yaml configuration
