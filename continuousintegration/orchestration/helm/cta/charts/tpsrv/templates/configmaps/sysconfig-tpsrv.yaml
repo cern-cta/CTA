@@ -1,10 +1,10 @@
-{{- $replicaCount := int .Values.tpsrv.replicaCount }}
-{{- $drivenamesCount := len .Values.tapeConfig.library.drivenames }}
-{{- $tapeConfig := .Values.tpsrv.tapeConfig }}
+{{- $tapeConfig := .Values.tapeConfig }}
 {{- if eq (typeOf $tapeConfig) "string" -}}
   {{- $tapeConfig = $tapeConfig | fromYaml }}
 {{- end }}
 
+{{- $replicaCount := int .Values.tpsrv.replicaCount }}
+{{- $drivenamesCount := len $tapeConfig.library.drivenames }}
 {{- if gt $replicaCount $drivenamesCount }}
   {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
 {{- end }}

@@ -1,13 +1,14 @@
+{{- $tapeConfig := .Values.tapeConfig }}
+{{- if eq (typeOf $tapeConfig) "string" -}}
+  {{- $tapeConfig = $tapeConfig | fromYaml }}
+{{- end }}
 {{- $replicaCount := int .Values.tpsrv.replicaCount }}
-{{- $drivenamesCount := len .Values.tapeConfig.library.drivenames }}
+{{- $drivenamesCount := len $tapeConfig.library.drivenames }}
 {{- $schedulerConfig := .Values.global.configuration.scheduler }}
 {{- if eq (typeOf $schedulerConfig) "string" -}}
   {{- $schedulerConfig = $schedulerConfig | fromYaml }}
 {{- end }}
-{{- $tapeConfig := .Values.tpsrv.tapeConfig }}
-{{- if eq (typeOf $tapeConfig) "string" -}}
-  {{- $tapeConfig = $tapeConfig | fromYaml }}
-{{- end }}
+
 
 {{- if gt $replicaCount $drivenamesCount }}
   {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}

@@ -174,7 +174,7 @@ create_instance() {
   # Determine the library config to use
   if [ -z "${library_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
-    library_config=$(mktemp --tempdir=/tmp library-XXXXXX-values.yaml)
+    library_config=$(mktemp /tmp/library-XXXXXX-values.yaml)
     # Ensure the temporary file is deleted on script exit or interruption
     trap 'rm -f "$library_config"' EXIT
     library_device=$(echo "$unused_devices" | head -n 1)
