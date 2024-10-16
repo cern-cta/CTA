@@ -49,7 +49,7 @@ data:
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
     # Objectstore
-    ObjectStore BackendPath {{ include "global.configuration.scheduler.url" $ }}
+    ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
     general InstanceName {{ $.Values.conf.general.instanceName }}
     general SchedulerBackendName {{ $schedulerConfig.backendName }}
