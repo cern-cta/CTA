@@ -52,7 +52,7 @@
                           --cleanup-namespaces
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
-                          ${EXTRA_OPTIONS}
+                          $(eval echo ${EXTRA_OPTIONS}) # Use eval here to ensure we don't loose double quotes
   artifacts:
     when: always
     expire_in: 30 days
@@ -103,7 +103,7 @@ k8s-unit-test-oracle:
   variables:
     TEST_SCRIPT: "tests/unit_test_oracle.sh"
     # The oracle pod needs the image tag as well
-    EXTRA_OPTIONS: "--test-timeout 2400 --test-options \"--image-tag ${IMAGE_TAG}\""
+    EXTRA_OPTIONS: "--test-timeout 2400 --test-options '--image-tag ${IMAGE_TAG}'"
 
 # Manually triggered
 
@@ -133,7 +133,7 @@ k8s-test-liquibase-update:
   variables:
     TEST_SCRIPT: "tests/test_liquibase_update.sh"
     # TODO: pass in a previous catalogue version (not hardcoded)
-    EXTRA_OPTIONS: "--test-timeout 2400 --spawn-options \"--catalogue-version 14.0\""
+    EXTRA_OPTIONS: "--test-timeout 2400 --spawn-options '--catalogue-version 14.0'"
 
 k8s-test-external-tape-formats:
   stage: test
