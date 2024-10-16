@@ -34,7 +34,7 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset)
     srcURL = m_jobRow.srcUrl;
     archiveReportURL = m_jobRow.archiveReportUrl;
     errorReportURL = m_jobRow.archiveErrorReportUrl;
-    archiveFile = m_jobRow.archiveFile; // assuming ArchiveFile is copyable
+    archiveFile = m_jobRow.archiveFile;
     tapeFile.vid = m_jobRow.vid;
     tapeFile.copyNb = m_jobRow.copyNb;
     // Set other attributes or perform any necessary initialization
@@ -47,6 +47,50 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset)
       reportType = ReportType::NoReportRequired;
     }
   };
+
+void ArchiveRdbJob::initialize(rdbms::ConnPool& connPool, const rdbms::Rset &rset) {
+    m_connPool = connPool;
+    m_jobRow = rset;
+    // Reset or update other member variables as necessary
+    m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
+    m_mountId = m_jobRow.mountId.value_or(0); // use mountId or 0 if not set
+    m_tapePool = m_jobRow.tapePool;
+    // Reset copied attributes
+    jobID = m_jobRow.jobId;
+    srcURL = m_jobRow.srcUrl;
+    archiveReportURL = m_jobRow.archiveReportUrl;
+    errorReportURL = m_jobRow.archiveErrorReportUrl;
+    archiveFile = m_jobRow.archiveFile;
+    tapeFile.vid = m_jobRow.vid;
+    tapeFile.copyNb = m_jobRow.copyNb;
+    // Re-initialize report type
+    if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
+      reportType = ReportType::CompletionReport;
+    } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
+      reportType = ReportType::FailureReport;
+    } else {
+      reportType = ReportType::NoReportRequired;
+    }
+}
+
+void ArchiveRdbJob::reset() {
+  // Reset job row state
+  m_jobRow.reset(); // Reset the entire job row
+  // Reset the core job-specific fields
+  jobID.clear();                     // Resetting the job identifier
+  srcURL.clear();                    // Clearing source URL
+  archiveReportURL.clear();          // Clearing the archive report URL
+  errorReportURL.clear();            // Clearing the error report URL
+  archiveFile = m_jobRow.m_jobRow.archiveFile;
+  tapeFile = common::dataStructures::TapeFile();
+  m_mountId = 0;                     // Resetting mount ID to default
+  m_tapePool.clear();                // Clearing the tape pool name
+  m_jobOwned = false;                // Resetting ownership flag
+  reportType = ReportType::NoReportRequired; // Resetting report type
+
+  // No need to reset the connection pool (m_connPool) as it's shared and passed by reference
+}
+
 
 void ArchiveRdbJob::failTransfer(const std::string & failureReason, log::LogContext & lc) {
 
