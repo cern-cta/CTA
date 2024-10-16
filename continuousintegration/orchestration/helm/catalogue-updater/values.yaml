@@ -11,5 +11,6 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: 
     - ctaregsecret
+    - reg-eoscta-operations
 
 yumRepos: ""
