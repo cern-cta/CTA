@@ -42,7 +42,7 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
  public:
 
    ArchiveMount(RelationalDB &pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType) :
-                m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_ownerId(ownerId), m_queueType(queueType), m_jobPool() { }
+                m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_ownerId(ownerId), m_queueType(queueType), m_jobPool(pdb.m_connPool) { }
 
    const MountInfo & getMountInfo() override;
 

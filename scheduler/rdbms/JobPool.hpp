@@ -29,7 +29,7 @@ namespace cta::schedulerdb {
   class JobPool {
   public:
     // Constructor initializes the pool with a connection pool reference or other parameters
-    explicit JobPool(size_t initialPoolSize = 4000);
+    explicit JobPool(rdbms::ConnPool& connPool, size_t initialPoolSize = 4000);
 
     // Acquire a job from the pool (or create a new one if the pool is empty)
     std::unique_ptr<T> acquireJob();
@@ -40,14 +40,17 @@ namespace cta::schedulerdb {
   private:
     std::stack<std::unique_ptr<T>> m_pool;  // Stack to store reusable jobs
     size_t m_poolSize;  // Initial pool size
+    rdbms::ConnPool& m_connPool;
+    const rdbms::Rset& m_rset;
   };
 
   // Constructor to initialize the job pool
   template<typename T>
-  JobPool<T>::JobPool(size_t initialPoolSize) : m_poolSize(initialPoolSize) {
+  JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t initialPoolSize)
+    : m_poolSize(initialPoolSize), m_connPool(connPool) {
     // Optionally, pre-fill the pool with some job objects
     for (size_t i = 0; i < m_poolSize; ++i) {
-      m_pool.push(std::make_unique<T>());
+      m_pool.push(std::make_unique<T>(m_connPool));
     }
   }
 
@@ -62,7 +65,7 @@ namespace cta::schedulerdb {
     }
 
     // If the pool is empty, create a new job
-    return std::make_unique<T>();
+    return std::make_unique<T>(m_connPool);
   }
 
 // Release a job back into the pool
