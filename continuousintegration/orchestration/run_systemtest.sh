@@ -97,11 +97,11 @@ run_systemtest() {
   systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
   cleanup_namespaces=0 # by default do not cleanup leftover namespaces
   spawn_options=" --wipe-catalogue --wipe-scheduler"
-  extra_test_option=""
+  extra_test_options=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help) usage ;;
       -s|--test-script) 
         systemtest_script="$2" 
