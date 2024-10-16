@@ -58,7 +58,8 @@ create_instance() {
 
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  registry_secrets="ctaregsecret" # Secrets to be copied to the namespace (space separated)
+  # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
+  registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-postgres-catalogue-values.yaml
   scheduler_config=presets/dev-file-scheduler-values.yaml
   library_model="mhvtl"
@@ -204,7 +205,7 @@ create_instance() {
         echo "Copying ${secret_name} secret into ${namespace} namespace"
         kubectl get secret ${secret_name} -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
       else
-        echo "Secret ${secret_name} not found"
+        echo "Secret ${secret_name} not found. Skipping..."
       fi
     done
   fi
