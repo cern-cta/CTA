@@ -42,7 +42,8 @@
         GET_IMAGE_TAG_OPTS=" --systemtest-only"
       fi
     - cd continuousintegration/ci_helpers/
-    - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+    # - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+    - IMAGE_TAG=8325945git52652e71 # Hardcode the tag for now so that I can test this properly
     # Run test
     - cd ../orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
