@@ -92,7 +92,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       bool hasNext = resultSet.next(); // Call to next
       if (!hasNext) break; // Exit if no more rows
       auto job = m_jobPool.acquireJob();
-      job->initialize(m_RelationalDB.m_connPool, resultSet);
+      job->initialize(resultSet);
       //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
@@ -208,7 +208,7 @@ void ArchiveMount::setJobBatchTransferred(
     // After processing, return the job object to the job pool for re-use
     for (auto& job : jobsBatch) {
       // check we can downcast (runtime check)
-      if (auto *rdbJob = dynamic_cast<ArchiveRdbJob*>(job.get())) {
+      if (dynamic_cast<ArchiveRdbJob*>(job.get())) {
         // Downcast to ArchiveRdbJob before returning it to the pool
         std::unique_ptr<ArchiveRdbJob> castedJob(static_cast<ArchiveRdbJob*>(job.release()));
         // Return the casted job to the pool
