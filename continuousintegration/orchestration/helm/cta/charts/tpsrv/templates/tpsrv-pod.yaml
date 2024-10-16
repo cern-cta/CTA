@@ -7,7 +7,7 @@
 {{- if eq (typeOf $schedulerConfig) "string" -}}
   {{- $schedulerConfig = $schedulerConfig | fromYaml }}
 {{- end }}
-{{- $tapeConfig := .Values.tpsrv.tapeConfig }}
+{{- $tapeConfig := .Values.tapeConfig }}
 {{- if eq (typeOf $tapeConfig) "string" -}}
   {{- $tapeConfig = $tapeConfig | fromYaml }}
 {{- end }}

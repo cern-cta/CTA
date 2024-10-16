@@ -11,6 +11,9 @@ kind: Job
 metadata:
   name: {{ $name }}-job
   namespace: {{ $namespace | quote}}
+  annotations:
+    "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
+    "helm.sh/hook-delete-policy": keep
 spec:
   backoffLimit: 0
   template:
