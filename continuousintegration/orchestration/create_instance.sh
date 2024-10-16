@@ -215,7 +215,7 @@ create_instance() {
   helm ${helm_command} ci-init helm/ci-init --namespace ${namespace} \
                                             --set global.image.registry="${registry_host}" \
                                             --set global.image.tag="${image_tag}" \
-                                            --values "${library_config}" \
+                                            --set-file tapeConfig=${library_config} \
                                             --wait --wait-for-jobs --timeout 2m
 
   # Technically the catalogue and scheduler charts can be installed in parallel, but let's keep things simple for now
@@ -248,7 +248,7 @@ create_instance() {
                                     --set global.useSystemd=${use_systemd} \
                                     --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
                                     --set-file global.configuration.scheduler=${scheduler_config} \
-                                    --values "${library_config}" \
+                                    --set-file tpsrv.tapeConfig="${library_config}" \
                                     --wait --timeout 5m
   set +x
 

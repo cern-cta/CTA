@@ -1,5 +1,9 @@
+{{- $tapeConfig := .Values.tapeConfig }}
+{{- if eq (typeOf $tapeConfig) "string" -}}
+  {{- $tapeConfig = $tapeConfig | fromYaml }}
+{{- end }}
 # TODO: does this even need to happen in a pod at all?
-{{- if eq .Values.tpsrv.library.type "mhvtl" }}
+{{- if eq $tapeConfig.library.type "mhvtl" }}
 {{$namespace := .Release.Namespace }}
 {{$name := "cleanup-mhvtl" }}
 
@@ -30,9 +34,9 @@ spec:
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
             - name: LIBRARYTYPE
-              value: {{ .Values.tpsrv.library.type | quote }}
+              value: {{ $tapeConfig.library.type | quote }}
             - name: LIBRARYDEVICE
-              value: {{ .Values.tpsrv.library.device | quote }}
+              value: {{ $tapeConfig.library.device | quote }}
             {{- if .Values.env }}
             {{ .Values.env | toYaml | nindent 12 }}
             {{- end }}

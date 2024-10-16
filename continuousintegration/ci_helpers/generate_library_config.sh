@@ -71,26 +71,42 @@ generate_library_config() {
   local scsi_host="$(echo "$line" | sed -e 's/^.//' | cut -d\: -f1)"
   local scsi_channel="$(echo "$line" | cut -d\: -f2)"
   
-  # Get drive names and drive devices
-  local drivenames=$(echo "$lsscsi_g" | grep "^.${scsi_host}:${scsi_channel}:" | grep tape | sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/' | xargs -itoto echo -n " toto")
-  local drivedevices=$(echo "$lsscsi_g" | grep "^.${scsi_host}:${scsi_channel}:" | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")  
+  # Get drive names
+  local drivenames=$(echo "$lsscsi_g" | \
+                    grep "^.${scsi_host}:${scsi_channel}:" | \
+                    grep tape | \
+                    sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/' | \
+                    paste -sd' ' -)
+
+  # Get drive devices
+  local drivedevices=$(echo "$lsscsi_g" | \
+                      grep "^.${scsi_host}:${scsi_channel}:" | \
+                      grep tape | \
+                      awk '{print $6}' | \
+                      sed -e 's%/dev/%n%' | \
+                      paste -sd' ' -)
+
   
   # Get the tapes currently in the library
-  local tapes=$(mtx -f "/dev/${library_device}" status | grep "Storage Element" | grep "Full" | sed -e 's/.*VolumeTag=//;s/ //g;s/\(......\).*/\1/' | xargs -itoto echo -n " toto" | sed -e 's/^ //')
-  
+  local tapes=$(mtx -f "/dev/${library_device}" status | \
+                grep "Storage Element" | \
+                grep "Full" | \
+                grep -v "DataTrack" | \
+                sed -e 's/.*VolumeTag=//;s/ //g;s/\(......\).*/\1/' | \
+                paste -sd' ' -)
+
   # Generate the values.yaml configuration
   cat <<EOF > "$target_file"
-tpsrv:
-  library:
-    type: "${library_type}"
-    name: "$(echo ${line} | awk '{print $4}')"
-    device: "${library_device}"
-    drivenames:
-$(for name in ${drivenames}; do echo "      - \"${name}\""; done)
-    drivedevices:
-$(for device in ${drivedevices}; do echo "      - \"${device}\""; done)
-    tapes:
-$(for tape in ${tapes}; do echo "      - \"${tape}\""; done)
+library:
+  type: "${library_type}"
+  name: "$(echo ${line} | awk '{print $4}')"
+  device: "${library_device}"
+  drivenames:
+$(for name in ${drivenames}; do echo "    - \"${name}\""; done)
+  drivedevices:
+$(for device in ${drivedevices}; do echo "    - \"${device}\""; done)
+  tapes:
+$(for tape in ${tapes}; do echo "    - \"${tape}\""; done)
 EOF
 }
 
