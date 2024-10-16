@@ -43,6 +43,8 @@
     - |
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         GET_IMAGE_TAG_OPTS=" --systemtest-only"
+      else
+        GET_IMAGE_TAG_OPTS=" --pipeline-id ${CI_PIPELINE_ID}"
       fi
     - cd continuousintegration/ci_helpers/
     - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})

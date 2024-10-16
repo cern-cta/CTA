@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 die() {
-  echo "$@" 1>&2 
+  echo "$@" 1>&2
   exit 1
 }
 
@@ -37,8 +37,8 @@ while [[ "$#" -gt 0 ]]; do
   case $1 in
     -h | --help) usage ;;
     -S|--systemtest-only) systest_only=1 ;;
-    -p|--pipeline-id) 
-      pipeline_id="$2" 
+    -p|--pipeline-id)
+      pipeline_id="$2"
       shift ;;
     *)
       echo "Unsupported argument: $1"
@@ -54,10 +54,9 @@ done
 # Get commit ID
 if [[ ${systest_only} -eq 1 ]]; then
   # In this case, grab the latest commit that is online on the main branch as this will already have an image associated with it
-  commit_id=$(git rev-parse origin/main | cut -c 1-8)
+  commit_id=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
 else
-  # grab the latest commit in the current (remote) branch
-  commit_id=$(git rev-parse origin/$(git symbolic-ref --short HEAD) | cut -c 1-8)
+  commit_id=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
 fi
 
 # Determine the image tag
