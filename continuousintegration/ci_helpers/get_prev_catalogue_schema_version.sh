@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,20 +15,13 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-set -e
+# Paths relative to the script's location
+catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR "$SCRIPT_DIR/../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake" | sed 's/[^0-9]*//g')
+catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR "$SCRIPT_DIR/../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake" | sed 's/[^0-9]*//g')
+catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
+migration_files=$(find "$SCRIPT_DIR/../../catalogue/cta-catalogue-schema" -name "*to${catalogue_schema_version}.sql")
+prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-
-# Install missing RPMs
-yum -y install cta-catalogueutils cta-systemtests
-
-2>&1 /usr/bin/cta-rdbmsUnitTests /etc/cta/cta-catalogue.conf | awk '{print "oracle " $0;}'
-
-# Disabled/commented out the valgrind tests of Oracle until they work better with CI
-#2>&1 /usr/bin/cta-rdbmsUnitTests-oracle.sh /etc/cta/cta-catalogue.conf | awk '{print "valgrind oracle " $0;}'
-
-echo 'yes' | /usr/bin/cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
-/usr/bin/cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+echo "$prev_catalogue_schema_version"
