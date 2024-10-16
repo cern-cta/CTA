@@ -102,7 +102,8 @@ k8s-unit-test-oracle:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/unit_test_oracle.sh"
-    EXTRA_OPTIONS: "--test-timeout 2400"
+    # The oracle pod needs the image tag as well
+    EXTRA_OPTIONS: "--test-timeout 2400 --test-options \"--image-tag ${IMAGE_TAG}\""
 
 # Manually triggered
 
@@ -131,8 +132,8 @@ k8s-test-liquibase-update:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_liquibase_update.sh"
-    EXTRA_OPTIONS: "--test-timeout 2400"
-    EXTRA_SPAWN_OPTIONS: "--catalogue-version 14.0" # TODO: pass in a previous catalogue version (not hardcoded)
+    # TODO: pass in a previous catalogue version (not hardcoded)
+    EXTRA_OPTIONS: "--test-timeout 2400 --spawn-options \"--catalogue-version 14.0\""
 
 k8s-test-external-tape-formats:
   stage: test

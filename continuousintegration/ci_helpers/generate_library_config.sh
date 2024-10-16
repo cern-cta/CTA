@@ -64,7 +64,7 @@ fi
 generate_library_config() {
   local target_file="$1"
   local library_device="$2"
-  local library_type="$2"
+  local library_type="$3"
   local lsscsi_g="$(lsscsi -g)"
   
   local line=$(echo "$lsscsi_g" | grep "${library_device}")
@@ -91,7 +91,6 @@ generate_library_config() {
   local tapes=$(mtx -f "/dev/${library_device}" status | \
                 grep "Storage Element" | \
                 grep "Full" | \
-                grep -v "DataTrack" | \
                 sed -e 's/.*VolumeTag=//;s/ //g;s/\(......\).*/\1/' | \
                 paste -sd' ' -)
 

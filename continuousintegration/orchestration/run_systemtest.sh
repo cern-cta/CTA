@@ -37,9 +37,10 @@ usage() {
   echo "  -i, --image-tag <tag>:          Docker image tag for the deployment (mandatory)."
   echo "  -r, --registry-host <host>:     Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -t, --test-timeout <seconds>:   Timeout for the system test in seconds."
-  echo "  -c, --spawn-options <options>:  Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --spawn-options <options>:  Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --test-options <options>:   Additional options to pass verbatim to the test script."
   echo "  -K, --keep-namespace:           Keep the namespace after the system test script run if successful."
-  echo "  -C, --cleanup-namespaces:      Clean up leftover Kubernetes namespaces."
+  echo "  -C, --cleanup-namespaces:       Clean up leftover Kubernetes namespaces."
   exit 1
 }
 
@@ -96,6 +97,7 @@ run_systemtest() {
   systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
   cleanup_namespaces=0 # by default do not cleanup leftover namespaces
   spawn_options=" --wipe-catalogue --wipe-scheduler"
+  extra_test_option=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -129,8 +131,11 @@ run_systemtest() {
         test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
         spawn_options+=" --catalogue-config ${catalogue_config}"
         shift ;;
-      -c|--spawn-options) 
+      --spawn-options) 
         extra_spawn_options="$2"
+        shift ;;
+      --test-options) 
+        extra_test_options="$2"
         shift ;;
       -K|--keep-namespace) keepnamespace=1 ;;
       -C|--cleanup-namespaces) cleanup_namespaces=1 ;;
@@ -189,7 +194,7 @@ run_systemtest() {
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
   cd $(dirname ${systemtest_script})
-  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" ${systemtestscript_timeout}
+  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options} 2>&1" "${log_dir}/systests.sh.log" ${systemtestscript_timeout}
   cd ${orchestration_dir}
 
   # delete instance?
