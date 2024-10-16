@@ -59,7 +59,7 @@
       fi
     # Run test
     - cd ../orchestration/
-    - bash -x run_systemtest.sh --namespace ${NAMESPACE}
+    - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --image-tag ${IMAGE_TAG}
                           --test-script ${TEST_SCRIPT}
                           --cleanup-namespaces
@@ -117,7 +117,7 @@ k8s-unit-test-oracle:
     TEST_SCRIPT: "tests/unit_test_oracle.sh"
     # The oracle pod needs the image tag as well
     EXTRA_ARGS: "--test-timeout 2400"
-    EXTRA_TEST_ARGS: "--image-tag ${IMAGE_TAG}"
+    EXTRA_TEST_ARGS: "--image-tag 8325945git52652e71" # TODO: replace this eventually; hardcoded for now as IMAGE_TAG is instantiated after this
 
 # Manually triggered
 
