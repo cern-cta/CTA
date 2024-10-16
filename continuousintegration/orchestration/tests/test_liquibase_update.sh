@@ -74,16 +74,14 @@ check_schema_version ${prev_catalogue_schema_version}
 
 # This is pretty disgusting but for now this will do
 # If the configmap generation would be done through Helm the file in question needs to be within the chart
-# TODO: we should just be able to use something like $(cat) in combination with set
 yum_repos_file="$(realpath "$(dirname "$0")/../../docker/ctafrontend/alma9/etc/yum.repos.d")"
-# kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
+kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${yum_repos_file}
 
 # Set up the catalogue updater pod
 helm install catalogue-updater ../helm/catalogue-updater --namespace ${NAMESPACE} \
                                                          --set catalogueSourceVersion=$prev_catalogue_schema_version \
                                                          --set catalogueDestinationVersion=$catalogue_schema_version \
                                                          --set catalogueCommitId=$catalogue_commitid \
-                                                         --set-file yumRepos=${yum_repos_file} \
                                                          --wait --timeout 2m
 
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
