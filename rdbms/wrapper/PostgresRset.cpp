@@ -136,7 +136,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
   }
   return utils::toUint8(stringValue);
   */
-  return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
+  return utils::toUint8(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
     return utils::toUint16(stringValue);
      */
-    return utils::toUint16(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint16(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
     }
 
     return utils::toUint32(stringValue);*/
-    return utils::toUint32(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint32(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
     return utils::toUint64(stringValue);
     */
-    return utils::toUint64(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint64(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
@@ -239,7 +239,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
     return utils::toDouble(stringValue);
      */
-    return utils::toDouble(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toDouble(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
