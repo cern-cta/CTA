@@ -3052,6 +3052,7 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
     pl.nbPhysicalDriveSlots      = physicalLibrary.nbPhysicalDriveSlots;
     pl.comment                   = physicalLibrary.comment.value();
     pl.isDisabled                = true;
+    pl.disabledReason            = "reason";
 
     catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
 
