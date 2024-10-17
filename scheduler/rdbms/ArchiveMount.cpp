@@ -98,7 +98,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
       auto job = m_jobPool.acquireJob();
       timings.insOrIncAndReset("mountFetchBatchAquireJobTime", t2);
 
-      job->initialize(resultSet);
+      job->initialize(resultSet, logContext);
       timings.insOrIncAndReset("mountFetchBatchinitializeJobTime", t2);
       //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
