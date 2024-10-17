@@ -14,40 +14,43 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
+
 #include "Timer.hpp"
+
+namespace cta::utils {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::utils::Timer::Timer() {
+Timer::Timer() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // usecs
 //------------------------------------------------------------------------------
-int64_t cta::utils::Timer::usecs(reset_t reset) {
-  timeval now;
-  gettimeofday(&now, nullptr);
-  int64_t ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
-                 ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
+int64_t Timer::usecs(reset_t reset) {
+  auto now = std::chrono::steady_clock::now();
+  int64_t elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - m_reference).count();
   if (reset == resetCounter) {
     m_reference = now;
   }
-  return ret;
+  return elapsed;
 }
 
 //------------------------------------------------------------------------------
 // secs
 //------------------------------------------------------------------------------
-double cta::utils::Timer::secs(reset_t reset) {
-  return usecs(reset) * 0.000001;
+double Timer::secs(reset_t reset) {
+  return usecs(reset) * 1.0e-6;  // Convert microseconds to seconds
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void cta::utils::Timer::reset() {
-  gettimeofday(&m_reference, nullptr);
+void Timer::reset() {
+  m_reference = std::chrono::steady_clock::now();
 }
 
+} // namespace cta::utils

@@ -14,22 +14,19 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-
 #pragma once
 
-#include <sys/time.h>
-#include <sys/types.h>
+#include <chrono>
 
 namespace cta::utils {
 
 /**
- * A small timing class.
- * It basically remembers a reference time (by default the time of
- * its construction) and gives the elapsed time since then.
- * The reset method allows to reset the reference time to the current time
+ * A small timing class using std::chrono for high-resolution monotonic timing.
+ * It remembers a reference time (by default the time of construction)
+ * and gives the elapsed time since then.
+ * The reset method allows resetting the reference time to the current time.
  */
 class Timer {
-
 public:
   enum reset_t {
     keepRunning,
@@ -47,30 +44,26 @@ public:
   virtual ~Timer() = default;
 
   /**
-   * Gives elapsed time in microseconds with respect to the reference time
-   * optionally resets the counter.
+   * Returns the elapsed time in microseconds since the reference time.
+   * Optionally resets the reference time.
    */
   int64_t usecs(reset_t reset = keepRunning);
 
   /**
-   * Gives elapsed time in seconds (with microsecond precision)
-   * with respect to the reference time. Optionally resets the counter.
+   * Returns the elapsed time in seconds (with microsecond precision).
+   * Optionally resets the reference time.
    */
   double secs(reset_t reset = keepRunning);
 
   /**
-   * Resets the Timer reference's time to the current time.
+   * Resets the Timer's reference time to the current time.
    */
   void reset();
 
 private:
-
-  /**
-   * Reference time for this timeri
-   */
-  timeval m_reference;
+  // High-resolution, monotonic time point
+  std::chrono::steady_clock::time_point m_reference;
 
 }; // class Timer
 
 } // namespace cta::utils
-
