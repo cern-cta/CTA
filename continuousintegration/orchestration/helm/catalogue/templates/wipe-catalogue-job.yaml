@@ -1,5 +1,6 @@
+{{- if .Values.wipeCatalogue -}}
 {{$namespace := .Release.Namespace }}
-{{$name := "init-catalogue" }}
+{{$name := "wipe-catalogue" }}
 # This allows the user to set the configuration using either --set-file or using --values
 {{- $config := .Values.configuration }}
 {{- if eq (typeOf $config) "string" -}}
@@ -23,7 +24,7 @@ spec:
         - name: {{ $name }}
           image: {{ include "initImage.url" . }}
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
-          command: ['/opt/run/bin/setup_catalogue.sh']
+          command: ['/opt/run/bin/wipe_catalogue.sh']
           args: []
           securityContext:
             privileged: {{ .Values.isPriviliged }}
@@ -68,3 +69,4 @@ spec:
       {{- range .Values.initImage.pullSecrets }}
       - name: {{ . | quote }}
       {{- end }}
+{{- end }}
