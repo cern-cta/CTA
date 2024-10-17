@@ -54,6 +54,10 @@ public:
    */
   std::optional<uint32_t> getOptionValueUInt(const std::string &key) const;
 
+  /*!
+  * Get a single option bool value from config
+  */
+  std::optional<bool> getOptionValueBool(const std::string &key) const;
 
 private:
   //! Configuration option list type

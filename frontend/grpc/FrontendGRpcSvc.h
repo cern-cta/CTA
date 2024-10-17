@@ -10,10 +10,12 @@
 #include "common/log/Logger.hpp"
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
+#include "frontend/common/FrontendService.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
 using cta::xrd::CtaRpc;
+using cta::log::LogContext;
 
 using grpc::ResourceQuota;
 using grpc::Server;
@@ -21,21 +23,25 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
+namespace cta::frontend::grpc {
 class CtaRpcImpl : public CtaRpc::Service {
 
 private:
-    std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
-    std::unique_ptr <cta::Scheduler> m_scheduler;
-    cta::log::Logger  *m_log;
+  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
+  log::LogContext m_lc;
 
 public:
-    CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
+  CtaRpcImpl(const std::string& config);
 
-    // Archive/Retrieve interface
-    Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-    Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-    Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-    Status
-    CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-    Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  FrontendService& getFrontendService() const { return *m_frontendService; }
+  log::LogContext getLogContext() const { return m_lc; }
+
+  // Archive/Retrieve interface
+  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
+  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
+  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
+  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
+  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
+  Status GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 };
+} // namespace cta::frontend::grpc

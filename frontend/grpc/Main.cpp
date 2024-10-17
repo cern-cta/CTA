@@ -22,7 +22,6 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
-#include "common/Configuration.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -38,28 +37,21 @@
 
 using namespace cta;
 using namespace cta::common;
+// using namespace cta::frontend::grpc;
 
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--threads <N>, -c <N>    \tnumber of threads to process concurrent requests, defaults to 8x#CPUs\n"
-    "\t--port <port>, -p <port> \tTCP port number to use, defaults to 17017\n"
-    "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
-    "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
-    "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
-    "\t--version, -v            \tprint version and exit\n"
-    "\t--help, -h               \tprint this help and exit\n";
+    "\t--config <config-file>, -c   \tConfiguration file\n"
+    "\t--version, -v                \tprint version and exit\n"
+    "\t--help, -h                   \tprint this help and exit\n";
 
 static struct option long_options[] = {
-  { "threads",       required_argument, nullptr, 'c' },
-  { "port",          required_argument, nullptr, 'p' },
-  { "log-header",    no_argument,       nullptr, 'n' },
-  { "no-log-header", no_argument,       nullptr, 's' },
+  { "config",        required_argument, nullptr, 'c' },
   { "help",          no_argument,       nullptr, 'h' },
   { "version",       no_argument,       nullptr, 'v' },
-  { "tls",           no_argument,       nullptr, 't' },
   { nullptr,         0,                 nullptr, 0   }
 };
 
@@ -82,118 +74,51 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
-    std::string port = "17017";
+    std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
     char c;
-    bool shortHeader = false;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
     bool useTLS = false;
-    int threads = 8 * std::thread::hardware_concurrency();
+    std::string port;
 
-    while( (c = getopt_long(argc, argv, "c:p:nshv", long_options, &option_index)) != EOF) {
+    while( (c = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != EOF) {
 
         switch(c) {
-            case 'p':
-                port = std::string(optarg);
-                break;
-            case 'n':
-                shortHeader = false;
-                break;
-            case 's':
-                shortHeader = true;
-                break;
             case 'h':
                 printHelpAndExit(0);
                 break;
             case 'v':
                 printVersionAndExit();
                 break;
-            case 't':
-                useTLS = true;
-                break;
             case 'c':
-                threads = std::atoi(optarg);
+                config_file = optarg;
                 break;
             default:
                 printHelpAndExit(1);
         }
     }
 
-    log::StdoutLogger logger(shortHostName, "cta-frontend-grpc", shortHeader);
-    log::LogContext lc(logger);
+    // Initialize catalogue, scheduler, logContext
+    frontend::grpc::CtaRpcImpl svc(config_file);
+    // get the log context
+    log::LogContext lc = svc.getFrontendService().getLogContext();
 
     // use castor config to avoid dependency on xroot-ssi
-    Configuration config("/etc/cta/cta.conf");
-
-    {
-      std::map<std::string, std::string> staticParamMap;
-      try {
-        staticParamMap["instance"] = config.getConfEntString("general", "InstanceName");
-      } catch (cta::exception::Exception &) {
-        // Instance name was not set, log this as info.
-        lc.log(log::ERR, "Instance name was not specified in the configuration file.");
-        exit(1);
-      }
-      try {
-            staticParamMap["sched_backend"] = config.getConfEntString("general", "SchedulerBackendName") ;
-        } catch (cta::exception::Exception &) {
-            // Scheduler backend name was not set, log this as info.
-            lc.log(log::ERR, "Scheduler backend name was not specified in the configuration file.");
-        exit(1);
-      }
-
-      if(!staticParamMap.empty()) {
-        logger.setStaticParams(staticParamMap);
-      }
-    }
+    // Configuration config(config_file);
 
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
-    std::string server_address("0.0.0.0:" + port);
-
-    // Initialise the Catalogue
-    std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
-    const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);
-
-    const uint64_t nbArchiveFileListingConns = 2;
-    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(logger, catalogueLogin,
-                                                                       10,
-                                                                       nbArchiveFileListingConns);
-    auto catalogue = catalogueFactory->create();
-    try {
-        catalogue->Schema()->ping();
-        lc.log(log::INFO, "Connected to catalog " + catalogue->Schema()->getSchemaVersion().
-            getSchemaVersion<std::string>());
-    } catch (cta::exception::Exception &ex) {
-        lc.log(cta::log::CRIT, ex.getMessageValue());
-        exit(1);
+    // try to update port from config
+    if (svc.getFrontendService().getPort().has_value())
+        port = svc.getFrontendService().getPort().value();
+    else
+    {
+        port = "17017";
+        // also set the member value
     }
 
-    // Initialise the Scheduler
-    auto backed = config.getConfEntString("ObjectStore", "BackendPath");
-    lc.log(log::INFO, "Using scheduler backend: " + backed);
-
-    // Check the scheduler DB cache timeout values
-    try {
-      auto tapeCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "TapeCacheMaxAgeSecs");
-      log::ScopedParamContainer params(lc);
-      params.add("tapeCacheMaxAgeSecs", tapeCacheMaxAgeSecs);
-      lc.log(log::INFO, "Using custom tape cache timout value");
-    } catch(Configuration::NoEntry &ex) {}
-    try {
-      auto retrieveQueueCacheMaxAgeSecs = config.getConfEntString("SchedulerDB", "RetrieveQueueCacheMaxAgeSecs");
-      log::ScopedParamContainer params(lc);
-      params.add("retrieveQueueCacheMaxAgeSecs", retrieveQueueCacheMaxAgeSecs);
-      lc.log(log::INFO, "Using custom retrieve queue cache timout value");
-    } catch(Configuration::NoEntry &ex) {}
-
-    auto sInit = std::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
-    auto scheddb = sInit->getSchedDB(*catalogue, logger);
-    scheddb->initConfig(std::nullopt, std::nullopt);
-    auto scheduler = std::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
-
-    CtaRpcImpl svc(&logger, catalogue, scheduler);
+    std::string server_address("0.0.0.0:" + port);
 
     // start gRPC service
 
@@ -201,30 +126,47 @@ int main(const int argc, char *const *const argv) {
 
     std::shared_ptr<grpc::ServerCredentials> creds;
 
+    // read TLS value from config
+    useTLS = svc.getFrontendService().getTls();
+
+    // get number of threads, maybe consider setting it too if unset?
+    int threads = 8 * std::thread::hardware_concurrency();
+    
+
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
         grpc::SslServerCredentialsOptions tls_options;
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
-        auto key_file = config.getConfEntString("gRPC", "TlsKey");
-        lc.log(log::INFO, "TLS service key file: " + key_file);
-        cert.private_key = file2string(key_file);
-
-        auto cert_file = config.getConfEntString("gRPC", "TlsCert");
-        lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-        cert.cert_chain = file2string(cert_file);
-
-        auto ca_chain = config.getConfEntString("gRPC", "TlsChain", "");
-        if (!ca_chain.empty()) {
-            lc.log(log::INFO, "TLS CA chain file: " + ca_chain);
-            tls_options.pem_root_certs = file2string(ca_chain);
-        } else {
-            lc.log(log::INFO, "TLS CA chain file not defined ...");
-            tls_options.pem_root_certs = "";
+        if (!svc.getFrontendService().getTlsKey().has_value()) {
+            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+            creds = grpc::InsecureServerCredentials();
         }
-        tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+        else if (!svc.getFrontendService().getTlsCert().has_value()) {
+            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+            creds = grpc::InsecureServerCredentials();
+        }
+        else {
+            auto key_file = svc.getFrontendService().getTlsKey().value();
+            lc.log(log::INFO, "TLS service key file: " + key_file);
+            cert.private_key = file2string(key_file);
 
-        creds = grpc::SslServerCredentials(tls_options);
+            auto cert_file = svc.getFrontendService().getTlsCert().value();
+            lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+            cert.cert_chain = file2string(cert_file);
+
+            auto ca_chain = svc.getFrontendService().getTlsChain();
+            if (ca_chain.has_value()) {
+                lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
+                tls_options.pem_root_certs = file2string(ca_chain.value());
+            } else {
+                lc.log(log::INFO, "TLS CA chain file not defined ...");
+                tls_options.pem_root_certs = "";
+            }
+            tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+
+            creds = grpc::SslServerCredentials(tls_options);
+        }
     } else {
         lc.log(log::INFO, "Using gRPC over plaintext socket");
         creds = grpc::InsecureServerCredentials();

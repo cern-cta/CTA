@@ -19,262 +19,137 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "frontend/common/FrontendService.hpp"
+#include "frontend/common/WorkflowEvent.hpp"
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
+
+namespace cta::frontend::grpc {
+
 Status
-CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
-  cta::log::ScopedParamContainer sp(lc);
-
-  lc.log(cta::log::INFO, "Create");
-
+CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   try {
-    auto& instance = request->notification().wf().instance().name();
-    auto& storageClass = request->notification().file().storage_class();
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = request->notification().cli().user().username();
-    requester.group = request->notification().cli().user().groupname();
-    uint64_t archiveFileId = m_scheduler->checkAndGetNextArchiveFileId(instance, storageClass, requester, lc);
-    response->set_archive_file_id(std::to_string(archiveFileId));  // need to update this
-  } catch (cta::exception::Exception &ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    cta::eos::Client client = request->notification().cli();
+    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
+                                                                  client.sec().host(), client.sec().prot());
+    cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
+    *response = wfe.process();
+  } catch (cta::exception::PbException &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+    response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  } catch (cta::exception::UserError &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+  } catch (cta::exception::Exception &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.getMessageValue());
+  } catch (std::runtime_error &ex) {
+    m_lc.log(cta::log::ERR, ex.what());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.what());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what());
+  } catch (...) {
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, "Error processing gRPC GenericRequest");
   }
-
   return Status::OK;
 }
 
 Status
-CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
-  cta::log::ScopedParamContainer sp(lc);
+CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
+  // check that the workflow is set appropriately for the create event
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::CREATE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
+  return GenericRequest(context, request, response);
+}
 
-  lc.log(cta::log::INFO, "Archive request");
-
-  sp.add("remoteHost", context->peer());
-  sp.add("request", "archive");
-
+Status
+CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
+  // check validate request args
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  lc.log(cta::log::DEBUG, "Archive request for storageClass: " + storageClass);
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::CLOSEW)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
 
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = request->notification().cli().user().username();
-  requester.group = request->notification().cli().user().groupname();
-
-  // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
-  }
-
-  if (!request->notification().file().owner().uid()) {
-    lc.log(cta::log::WARNING, "File's owner uid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
-  }
-
-  if (!request->notification().file().owner().gid()) {
-    lc.log(cta::log::WARNING, "File's owner gid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
-  if (request->notification().file().lpath().empty()) {
-    lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
-  }
-
-  auto instance = request->notification().wf().instance().name();
-  sp.add("instance", instance);
-  sp.add("username", request->notification().cli().user().username());
-  sp.add("groupname", request->notification().cli().user().groupname());
-
-  sp.add("storageClass", storageClass);
-  sp.add("fileID", request->notification().file().disk_file_id());
-
-  try {
-    auto archiveFileId = request->notification().file().archive_file_id();
-    sp.add("archiveID", archiveFileId);
-
-    cta::common::dataStructures::ArchiveRequest archiveRequest;
-    cta::checksum::ProtobufToChecksumBlob(request->notification().file().csb(), archiveRequest.checksumBlob);
-    archiveRequest.diskFileInfo.owner_uid = request->notification().file().owner().uid();
-    archiveRequest.diskFileInfo.gid = request->notification().file().owner().gid();
-    archiveRequest.diskFileInfo.path = request->notification().file().lpath();
-    archiveRequest.diskFileID = request->notification().file().disk_file_id();
-    archiveRequest.fileSize = request->notification().file().size();
-    archiveRequest.requester.name = request->notification().cli().user().username();
-    archiveRequest.requester.group = request->notification().cli().user().groupname();
-    archiveRequest.storageClass = storageClass;
-    archiveRequest.srcURL = request->notification().transport().dst_url();
-    archiveRequest.archiveReportURL = request->notification().transport().report_url();
-    archiveRequest.archiveErrorReportURL = request->notification().transport().error_report_url();
-    archiveRequest.creationLog.host = context->peer();
-    archiveRequest.creationLog.username = instance;
-    archiveRequest.creationLog.time = time(nullptr);
-
-    std::string reqId = m_scheduler->queueArchiveWithGivenId(archiveFileId, instance, archiveRequest, lc);
-    sp.add("reqId", reqId);
-
-    lc.log(cta::log::INFO, "Archive request for storageClass: " + storageClass +
-                             " archiveFileId: " + std::to_string(archiveFileId) + " RequestID: " + reqId);
-
-    response->set_request_objectstore_id(reqId);
-  }
-  catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
-  }
-
-  return Status::OK;
+  return GenericRequest(context, request, response);
 }
 
 Status
-CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
-  cta::log::ScopedParamContainer sp(lc);
+CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
+  cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
-
-  lc.log(cta::log::DEBUG, "Delete request");
   sp.add("request", "delete");
 
   // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
-  }
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::DELETE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
 
   if (request->notification().file().archive_file_id() == 0) {
-    lc.log(cta::log::WARNING, "Invalid archive file id");
+    m_lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
   if (!request->notification().file().owner().uid()) {
-    lc.log(cta::log::WARNING, "File's owner uid can't be zero");
+    m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
   }
 
   if (!request->notification().file().owner().gid()) {
-    lc.log(cta::log::WARNING, "File's owner gid can't be zero");
+    m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
   }
 
-  if (request->notification().file().lpath().empty()) {
-    lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
-  }
-
-  auto instance = request->notification().wf().instance().name();
-  // Unpack message
-  cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
-  deleteRequest.requester.name = request->notification().cli().user().username();
-  deleteRequest.requester.group = request->notification().cli().user().groupname();
-
-  sp.add("instance", instance);
-  sp.add("username", request->notification().cli().user().username());
-  sp.add("groupname", request->notification().cli().user().groupname());
-  sp.add("fileID", request->notification().file().disk_file_id());
-
-  deleteRequest.diskFilePath = request->notification().file().lpath();
-  deleteRequest.diskFileId = request->notification().file().disk_file_id();
-  deleteRequest.diskInstance = instance;
-
-  // remove pending scheduler entry, if any
-  deleteRequest.archiveFileID = request->notification().file().archive_file_id();
-  if (!request->notification().file().request_objectstore_id().empty()) {
-    deleteRequest.address = request->notification().file().request_objectstore_id();
-  }
-
-  // Delete the file from the catalogue or from the objectstore if archive request is created
-  cta::utils::Timer t;
-  try {
-    deleteRequest.archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(deleteRequest.archiveFileID);
-  }
-  catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::WARNING, "Deleted file is not in catalog.");
-  }
-  m_scheduler->deleteArchive(instance, deleteRequest, lc);
-
-  lc.log(cta::log::INFO, "archive file deleted.");
-
-  return Status::OK;
+  // done with validation, now do the workflow processing
+  return GenericRequest(context, request, response);
 }
 
 Status
-CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
-  cta::log::ScopedParamContainer sp(lc);
+CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
+  cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
 
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::PREPARE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  lc.log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
-
   // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
-  }
-
   if (request->notification().file().archive_file_id() == 0) {
-    lc.log(cta::log::WARNING, "Invalid archive file id");
+    m_lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
   if (!request->notification().file().owner().uid()) {
-    lc.log(cta::log::WARNING, "File's owner uid can't be zero");
+    m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
   }
 
   if (!request->notification().file().owner().gid()) {
-    lc.log(cta::log::WARNING, "File's owner gid can't be zero");
+    m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
-  if (request->notification().file().lpath().empty()) {
-    lc.log(cta::log::WARNING, "File's path can't be empty");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
   }
 
   auto instance = request->notification().wf().instance().name();
@@ -286,82 +161,30 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  // Unpack message
-  cta::common::dataStructures::RetrieveRequest retrieveRequest;
-  retrieveRequest.requester.name = request->notification().cli().user().username();
-  retrieveRequest.requester.group = request->notification().cli().user().groupname();
-  retrieveRequest.dstURL = request->notification().transport().dst_url();
-  retrieveRequest.retrieveReportURL = request->notification().transport().report_url();
-  retrieveRequest.errorReportURL = request->notification().transport().error_report_url();
-  retrieveRequest.diskFileInfo.owner_uid = request->notification().file().owner().uid();
-  retrieveRequest.diskFileInfo.gid = request->notification().file().owner().gid();
-  retrieveRequest.diskFileInfo.path = request->notification().file().lpath();
-  retrieveRequest.creationLog.host = context->peer();
-  retrieveRequest.creationLog.username = instance;
-  retrieveRequest.creationLog.time = time(nullptr);
-  retrieveRequest.isVerifyOnly = false;
-
-  retrieveRequest.archiveFileID = request->notification().file().archive_file_id();
-  sp.add("archiveID", request->notification().file().archive_file_id());
-  sp.add("fileID", request->notification().file().disk_file_id());
-
-  cta::utils::Timer t;
-
-  // Queue the request
-  try {
-    std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, lc);
-    sp.add("reqId", reqId);
-    lc.log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass + " archiveFileId: " +
-                             std::to_string(retrieveRequest.archiveFileID) + " RequestID: " + reqId);
-
-    response->set_request_objectstore_id(reqId);
-  }
-  catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::CRIT, ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
-  }
-  return Status::OK;
+  return GenericRequest(context, request, response);
 }
 
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
-                                  cta::xrd::Response* response) {
-  cta::log::LogContext lc(*m_log);
-  cta::log::ScopedParamContainer sp(lc);
+                                  cta::xrd::Response* response) noexcept {
+  cta::log::ScopedParamContainer sp(m_lc);
 
   sp.add("remoteHost", context->peer());
 
-  lc.log(cta::log::DEBUG, "CancelRetrieve request");
+  m_lc.log(cta::log::DEBUG, "CancelRetrieve request");
   sp.add("request", "cancel");
 
   // check validate request args
-  if (request->notification().wf().instance().name().empty()) {
-    lc.log(cta::log::WARNING, "CTA instance is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
-  }
-
-  if (request->notification().cli().user().username().empty()) {
-    lc.log(cta::log::WARNING, "CTA username is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
-  }
-
-  if (request->notification().cli().user().groupname().empty()) {
-    lc.log(cta::log::WARNING, "CTA groupname is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
-  }
+  auto event = request->notification().wf().event();
+  if (event != cta::eos::Workflow::ABORT_PREPARE)
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
 
   if (!request->notification().file().archive_file_id()) {
-    lc.log(cta::log::WARNING, "Invalid archive file id");
+    m_lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
   auto instance = request->notification().wf().instance().name();
-  // Unpack message
-  cta::common::dataStructures::CancelRetrieveRequest cancelRequest;
-  cancelRequest.requester.name = request->notification().cli().user().username();
-  cancelRequest.requester.group = request->notification().cli().user().groupname();
-  cancelRequest.archiveFileID = request->notification().file().archive_file_id();
-  cancelRequest.retrieveRequestId = request->notification().file().request_objectstore_id();
 
   sp.add("instance", instance);
   sp.add("username", request->notification().cli().user().username());
@@ -369,14 +192,16 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("fileID", request->notification().file().archive_file_id());
   sp.add("schedulerJobID", request->notification().file().archive_file_id());
 
-  m_scheduler->abortRetrieve(instance, cancelRequest, lc);
-
-  lc.log(cta::log::INFO, "retrieve request canceled.");
-
-  return Status::OK;
+  // field verification done, now try to call the process method
+  return GenericRequest(context, request, response);
 }
 
-CtaRpcImpl::CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr <cta::Scheduler> &scheduler):
-    m_catalogue(std::move(catalogue)), m_scheduler(std::move(scheduler)) {
-    m_log = logger;
-}
+/* initialize the frontend service
+ * this iniitalizes the catalogue, scheduler, logger
+ * and makes the rpc calls available through this class
+ */
+CtaRpcImpl::CtaRpcImpl(const std::string& config)
+    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config))
+    , m_lc(m_frontendService->getLogContext()) {}
+
+} // namespace cta::frontend::grpc

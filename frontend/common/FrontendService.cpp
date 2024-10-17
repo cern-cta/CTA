@@ -50,9 +50,15 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     auto loggerLevelStr = config.getOptionValueStr("cta.log.level");
     auto loggerLevel = loggerLevelStr.has_value() ? log::toLogLevel(loggerLevelStr.value()) : log::INFO;
 
+    // log header, or not
+    auto log_header = config.getOptionValueBool("cta.log.log_header");
+    bool shortHeader = false;
+    if (log_header.has_value())
+      shortHeader = !log_header.value();
+
     // Set the log context
     if(loggerURL.value() == "stdout:") {
-      m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend");
+      m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend", shortHeader);
       logToStdout = 1;
     } else if(loggerURL.value().substr(0, 5) == "file:") {
       logtoFile = 1;
@@ -319,6 +325,25 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
 
   // Get the mount policy name for verification requests
+
+  // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
+  std::optional<bool> TLS = config.getOptionValueBool("TLS");
+  m_Tls = TLS.has_value() ? TLS.value() : false; // default value is false
+  auto TlsKey = config.getOptionValueStr("TlsKey");
+  if (TlsKey.has_value())
+    m_TlsKey = TlsKey.value();
+  auto TlsCert = config.getOptionValueStr("TlsCert");
+  if (TlsCert.has_value())
+    m_TlsCert = TlsCert.value();
+  auto TlsChain = config.getOptionValueStr("TlsChain");
+  if (TlsChain.has_value())
+    m_TlsChain = TlsChain.value();
+  auto port = config.getOptionValueStr("port");
+  if (port.has_value())
+    m_port = port.value();
+  auto threads = config.getOptionValueInt("threads");
+  if (threads.has_value())
+    m_threads = threads.value();
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});

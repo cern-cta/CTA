@@ -31,18 +31,22 @@ ObjectStore BackendPath /path/to/local/objectstore
 
 
 ####################################
-#  TLS related variables. Only used when frontend is run with TLS (-t/--tls flag).
+#  TLS related variables. Only used when TLS is true
 ####################################
+# Use TLS (previously the command-line option --tls)
+#TLS true/false
 #  TLS service key file
-#gRPC TlsKey /path/to/key
+#TlsKey /path/to/key
 #
 #  TLS service certificate file
-#gRPC TlsCert /path/to/cert
+#TlsCert /path/to/cert
 #
 #  TLS CA chain file
-#gRPC TlsChain /path/to/CA/chain
+#TlsChain /path/to/CA/chain
 #
 
+# gRPC number of threads
+#threads nthreads
 
 ####################################
 # CTA Scheduler DB cache timeout options
@@ -55,7 +59,7 @@ ObjectStore BackendPath /path/to/local/objectstore
 # Variables used by cta-frontend-async-grpc
 ####################################
 # The port the gRPC frotnend is listening to
-#gRPC port 17017
+#port 17017
 
 # The ca-cert file path
 #gRPC SslRoot /path/to/ca/cert
