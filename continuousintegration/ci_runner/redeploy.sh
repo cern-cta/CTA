@@ -37,6 +37,7 @@ usage() {
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-file-scheduler-values.yaml"
   echo "      --library-config <path>:          Path to the yaml file containing the library configuration. If not provided, the create_instance.sh script will autogenerate one."
   echo "      --spawn-options <options>:        Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image script."
   exit 1
 }
 
@@ -51,6 +52,7 @@ redeploy() {
   local scheduler_config="presets/dev-file-scheduler-values.yaml"
   local library_config=""
   local extra_spawn_options=""
+  local extra_build_options=""
   local upgrade=false
 
   # Parse command line arguments
@@ -130,6 +132,9 @@ redeploy() {
       --spawn-options) 
         extra_spawn_options+=" $2"
         shift ;;
+      --build-options) 
+        extra_build_options="$2"
+        shift ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -149,10 +154,10 @@ redeploy() {
 
   if [ -n "${library_config}" ]; then
   # If provided
-    extra_spawn_options+=" --library_config ${library_config}"
+    extra_spawn_options+=" --library-config ${library_config}"
   elif [ "$upgrade" == "true" ]; then
     latest_config_for_namespace=$(ls -t /tmp/${kube_namespace}-library-* | head -n 1)
-    extra_spawn_options+=" --library_config ${latest_config_for_namespace}"
+    extra_spawn_options+=" --library-config ${latest_config_for_namespace}"
   fi # else by not providing, create_instance will auto-generate
 
   # Script should be run as cirunner
@@ -184,7 +189,11 @@ redeploy() {
 
     ## Create and load the new image
     echo "Building image based on ${rpm_src}"
-    ./continuousintegration/ci_runner/prepare_image.sh --tag ${image_tag} --rpm-src "${rpm_src}" --operating-system "${operating_system}"
+    set -x
+    ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
+                                                     --rpm-src "${rpm_src}" \
+                                                     --operating-system "${operating_system}" \
+                                                     ${extra_build_options}
     # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
     podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
     echo "Loading new image into minikube"
@@ -199,8 +208,6 @@ redeploy() {
   ./create_instance.sh --namespace ${kube_namespace} \
                        --registry-host localhost \
                        --image-tag ${image_tag} \
-                       --wipe-catalogue \
-                       --wipe-scheduler \
                        --catalogue-config ${catalogue_config} \
                        --scheduler-config ${scheduler_config} \
                        ${extra_spawn_options}

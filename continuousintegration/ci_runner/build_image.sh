@@ -19,22 +19,28 @@ usage() {
   echo "Usage: $0 [options] -t|--tag <image_tag> -o|--operating-system <os> -s|--rpm-src <rpm source>"
   echo ""
   echo "Builds an image based on the CTA rpms"
-  echo "  -t, --tag <image_tag>:        Docker image tag. For example \"-t dev\""
-  echo "  -o, --operating-system <os>:  Specifies for which operating system to build the rpms. Supported operating systems: [alma9]."
-  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
+  echo "  -t, --tag <image_tag>:          Docker image tag. For example \"-t dev\""
+  echo "  -o, --operating-system <os>:    Specifies for which operating system to build the rpms. Supported operating systems: [alma9]."
+  echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo ""
-  echo "options:"
-  echo "  -h, --help:                   Shows help output."
+  echo "Optional arguments:"
+  echo "  --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
+  echo "  --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
+  echo "  --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
+  echo "  -h, --help:                     Shows help output."
   exit 1
 }
 
-prepareImage() {
+buildImage() {
 
   # Default values
   local rpm_src=""
   local image_tag=""
   local operating_system=""
   local rpm_default_src="image_rpms"
+  local yum_repos_dir="continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/"
+  local yum_versionlock_file="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list"
+  local dockerfile="continuousintegration/docker/ctafrontend/alma9/Dockerfile"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -67,6 +73,33 @@ prepareImage() {
           shift
         else
           echo "Error: -t|--tag requires an argument"
+          exit 1
+        fi
+        ;;
+      --dockerfile)
+        if [[ $# -gt 1 ]]; then
+          dockerfile="$2"
+          shift
+        else
+          echo "Error: --dockerfile requires an argument"
+          exit 1
+        fi
+        ;;
+      --yum-repos-dir)
+        if [[ $# -gt 1 ]]; then
+          yum_repos_dir="$2"
+          shift
+        else
+          echo "Error: --yum-repos-dir requires an argument"
+          exit 1
+        fi
+        ;;
+      --yum-versionlock-file)
+        if [[ $# -gt 1 ]]; then
+          yum_versionlock_file="$2"
+          shift
+        else
+          echo "Error: --yum-versionlock-file requires an argument"
           exit 1
         fi
         ;;
@@ -104,7 +137,11 @@ prepareImage() {
   case "${operating_system}" in
     alma9)
       echo "Running on AlmaLinux 9"
-      (set -x; podman build . -f continuousintegration/docker/ctafrontend/alma9/Dockerfile -t ctageneric:${image_tag} --network host)
+      (set -x; podman build . -f ${dockerfile} \
+                              -t ctageneric:${image_tag} \
+                              --network host \
+                              --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
+                              --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file})
       ;;
     *)
       echo "Invalid operating system provided: ${operating_system}"
@@ -113,4 +150,4 @@ prepareImage() {
   esac
 }
 
-prepareImage "$@"
+buildImage "$@"
