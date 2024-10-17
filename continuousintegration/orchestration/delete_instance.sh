@@ -104,8 +104,8 @@ else
 fi
 
 # Remove old library values files:
-echo "Removing leftover auto-generated library-*-values.yaml files"
-rm /tmp/library-*-values.yaml
+echo "Removing auto-generated library-*-values.yaml files"
+rm -f /tmp/${instance}-library-*-values.yaml
 
 echo "Deleting ${instance} instance"
 kubectl delete namespace ${instance}

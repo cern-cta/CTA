@@ -279,7 +279,7 @@ compile_deploy() {
   if [ ${skip_deploy} = false ]; then
 
 
-    local redeploy_flags=""
+    local redeploy_flags="--wipe-catalogue --wipe-scheduler"
     if [ ${skip_image_reload} = true ]; then
       redeploy_flags+=" --skip-image-reload"
     fi
