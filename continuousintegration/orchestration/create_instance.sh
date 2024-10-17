@@ -145,7 +145,7 @@ create_instance() {
   if [ $dry_run == 1 ]; then
     helm_command="template --debug"
   elif [ $upgrade == 1 ]; then
-    helm_command="install --upgrade"
+    helm_command="upgrade --install"
   else
     helm_command="install"
   fi
@@ -175,12 +175,12 @@ create_instance() {
   # Determine the library config to use
   if [ -z "${library_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
-    library_config=$(mktemp /tmp/library-XXXXXX-values.yaml)
+    library_config=$(mktemp /tmp/${namespace}-library-XXXXXX-values.yaml)
     library_device=$(echo "$unused_devices" | head -n 1)
     ./../ci_helpers/generate_library_config.sh --target-file $library_config  \
                                                --library-device $library_device \
                                                --library-type $library_model
-  else
+  elif [ $upgrade == 0 ]; then
     # See what device was provided in the config and check that it is not in use
     library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
     if ! echo "$unused_devices" | grep -qw "$library_device"; then
@@ -220,8 +220,8 @@ create_instance() {
   echo "Installing catalogue chart..."
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   helm ${helm_command} catalogue helm/catalogue --namespace ${namespace} \
-                                                --set initImage.registry="${registry_host}" \
-                                                --set initImage.tag="${image_tag}" \
+                                                --set wipeImage.registry="${registry_host}" \
+                                                --set wipeImage.tag="${image_tag}" \
                                                 --set schemaVersion="${catalogue_schema_version}" \
                                                 --set wipeCatalogue=${wipe_catalogue} \
                                                 --set-file configuration=${catalogue_config} \
@@ -229,8 +229,8 @@ create_instance() {
 
   echo "Installing scheduler chart..."
   helm ${helm_command} scheduler helm/scheduler --namespace ${namespace} \
-                                                --set initImage.registry="${registry_host}" \
-                                                --set initImage.tag="${image_tag}" \
+                                                --set wipeImage.registry="${registry_host}" \
+                                                --set wipeImage.tag="${image_tag}" \
                                                 --set wipeScheduler=${wipe_scheduler} \
                                                 --set-file configuration=${scheduler_config} \
                                                 --wait --wait-for-jobs --timeout 2m

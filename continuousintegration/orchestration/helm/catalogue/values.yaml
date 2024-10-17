@@ -3,7 +3,7 @@ nameOverride: catalogue
 isPriviliged: true
 wipeCatalogue: true
 
-initImage:
+wipeImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""
