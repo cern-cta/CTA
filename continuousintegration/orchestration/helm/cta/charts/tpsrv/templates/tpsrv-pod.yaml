@@ -12,8 +12,8 @@
   {{- $tapeConfig = $tapeConfig | fromYaml }}
 {{- end }}
 
-# Spawn replicaCount pods
-{{- range $i := until (int .Values.tpsrv.replicaCount) }}
+# Spawn numTapeServers pods
+{{- range $i := until (int .Values.tpsrv.numTapeServers) }}
 {{- $podName := printf "tpsrv%02d" (add $i 1) }} # server names start from 1
 {{- $driveName := index $tapeConfig.library.drivenames $i }}
 
@@ -22,6 +22,8 @@ kind: Pod
 metadata:
   name: {{$podName | quote}}
   namespace: {{ $namespace | quote}}
+  annotations:
+    catalogue-schema-version: "{{ $.Values.global.catalogueSchemaVersion }}"
   labels:
     app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
     app.kubernetes.io/instance: {{ $.Release.Name }}
@@ -32,7 +34,7 @@ metadata:
     helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     cta/library-device: {{ $tapeConfig.library.device }}
 spec:
-  restartPolicy: Never
+  restartPolicy: Always
   containers:
   {{- range $.Values.tpsrv.containers }}
   - name: {{ .name | default $podName | quote }}

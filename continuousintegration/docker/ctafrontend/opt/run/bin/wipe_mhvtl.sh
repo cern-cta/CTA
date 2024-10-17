@@ -53,4 +53,4 @@ done
 #    echo "OK"
 #  done
 
-echo "### Cleanup COMPLETED ###"
+echo "### WIPE COMPLETED ###"

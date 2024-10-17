@@ -3,14 +3,14 @@
   {{- $tapeConfig = $tapeConfig | fromYaml }}
 {{- end }}
 
-{{- $replicaCount := int .Values.tpsrv.replicaCount }}
+{{- $numTapeServers := int .Values.tpsrv.numTapeServers }}
 {{- $drivenamesCount := len $tapeConfig.library.drivenames }}
-{{- if gt $replicaCount $drivenamesCount }}
-  {{- fail (printf "Error: replicaCount (%d) is larger than the number of available drives (%d)" $replicaCount $drivenamesCount) }}
+{{- if gt $numTapeServers $drivenamesCount }}
+  {{- fail (printf "Error: numTapeServers (%d) is larger than the number of available drives (%d)" $numTapeServers $drivenamesCount) }}
 {{- end }}
 
 
-{{- range $i := until ($replicaCount) }}
+{{- range $i := until ($numTapeServers) }}
 {{- $driveSlot := int $i }}
 {{- $driveName := index $tapeConfig.library.drivenames $i }}
 

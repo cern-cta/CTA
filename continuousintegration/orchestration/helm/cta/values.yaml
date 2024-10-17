@@ -9,6 +9,8 @@ global:
       - ctaregsecret
   useSystemd: false
 
+  catalogueSchemaVersion: ""
+
   configuration:
     scheduler:
       backend: "" # Options: file, ceph, postgres

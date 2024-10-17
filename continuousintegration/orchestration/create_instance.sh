@@ -176,8 +176,6 @@ create_instance() {
   if [ -z "${library_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
     library_config=$(mktemp /tmp/library-XXXXXX-values.yaml)
-    # Ensure the temporary file is deleted on script exit or interruption
-    trap 'rm -f "$library_config"' EXIT
     library_device=$(echo "$unused_devices" | head -n 1)
     ./../ci_helpers/generate_library_config.sh --target-file $library_config  \
                                                --library-device $library_device \
@@ -246,7 +244,8 @@ create_instance() {
                                     --set global.image.registry="${registry_host}" \
                                     --set global.image.tag="${image_tag}" \
                                     --set global.useSystemd=${use_systemd} \
-                                    --set tpsrv.tpsrv.replicaCount=${tpsrv_count} \
+                                    --set global.catalogueSchemaVersion=${catalogue_schema_version} \
+                                    --set tpsrv.tpsrv.numTapeServers=${tpsrv_count} \
                                     --set-file global.configuration.scheduler=${scheduler_config} \
                                     --set-file tpsrv.tapeConfig="${library_config}" \
                                     --wait --timeout 5m

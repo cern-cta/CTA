@@ -10,6 +10,8 @@ kind: Pod
 metadata:
   name: {{ $name }}
   namespace: {{ $namespace | quote}}
+  annotations:
+    catalogue-schema-version: "{{ .Values.global.catalogueSchemaVersion }}"
   labels:
     app.kubernetes.io/name: {{ include "ctafrontend.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}

@@ -31,7 +31,7 @@ conf:
     scheduler.backendName: "VFS"
 
 tpsrv:
-  replicaCount: 1
+  numTapeServers: 1
   containers:
   - name: rmcd
     isPriviliged: true

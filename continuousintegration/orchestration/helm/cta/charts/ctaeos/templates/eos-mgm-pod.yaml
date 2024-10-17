@@ -2,7 +2,7 @@
 {{$name := include "ctaeos.name" . }}
 
 apiVersion: v1
-kind: Pod
+kind: Pod # EOS has not been made a dployment on purpose yet; as we will be replacing this with the EOS chart at some point anyway
 metadata:
   name: {{ $name }}
   namespace: {{ $namespace | quote}}

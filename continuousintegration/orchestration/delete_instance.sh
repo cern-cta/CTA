@@ -103,6 +103,10 @@ else
   echo "Discarding logs for the current run"
 fi
 
+# Remove old library values files:
+echo "Removing leftover auto-generated library-*-values.yaml files"
+rm /tmp/library-*-values.yaml
+
 echo "Deleting ${instance} instance"
 kubectl delete namespace ${instance}
 echo "Status of library pool after test:"

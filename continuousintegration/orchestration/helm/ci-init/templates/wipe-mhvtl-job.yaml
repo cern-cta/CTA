@@ -5,7 +5,7 @@
 # TODO: does this even need to happen in a pod at all?
 {{- if eq $tapeConfig.library.type "mhvtl" }}
 {{$namespace := .Release.Namespace }}
-{{$name := "cleanup-mhvtl" }}
+{{$name := "wipe-mhvtl" }}
 
 apiVersion: batch/v1
 kind: Job
@@ -21,7 +21,7 @@ spec:
         - name: {{ $name }}
           image: {{ include "init.image" . }}
           imagePullPolicy: {{ include "init.imagePullPolicy" . }}
-          command: ['/opt/run/bin/cleanup_mhvtl.sh']
+          command: ['/opt/run/bin/wipe_mhvtl.sh']
           args: []
           securityContext:
             privileged: {{ .Values.isPriviliged }}
