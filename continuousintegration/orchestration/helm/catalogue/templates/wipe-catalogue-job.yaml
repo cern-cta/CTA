@@ -22,8 +22,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: {{ $name }}
-          image: {{ include "initImage.url" . }}
-          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          image: {{ include "wipeImage.url" . }}
+          imagePullPolicy: {{ .Values.wipeImage.pullPolicy }}
           command: ['/opt/run/bin/wipe_catalogue.sh']
           args: []
           securityContext:
@@ -66,7 +66,7 @@ spec:
           persistentVolumeClaim:
             claimName: claimlogs
       imagePullSecrets:
-      {{- range .Values.initImage.pullSecrets }}
+      {{- range .Values.wipeImage.pullSecrets }}
       - name: {{ . | quote }}
       {{- end }}
 {{- end }}

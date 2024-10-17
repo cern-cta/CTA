@@ -23,16 +23,20 @@ usage() {
   echo ""
   echo "Will (re)deploy the local minikube instance with the latest rpms."
   echo "These rpms are assumed to be located in CTA/build_rpm, as done by the build_rpm.sh script in ci_helpers."
-  echo "  -s, --rpm-src <rpm source>:   Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
+  echo "If the --skip-image-reload flag is provided, the --rpm-src is no longer mandatory."
   echo ""
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "  -n, --namespace <namespace>:          Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
   echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:                      Image tag to use. Defaults to \"dev\" if not provided."
+  echo "  -s, --rpm-src <rpm source>:           Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
+  echo "      --upgrade:                        Upgrade the currently running instance instead of installing it from scratch."
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-postgres-catalogue-values.yaml"
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-file-scheduler-values.yaml"
+  echo "      --library-config <path>:          Path to the yaml file containing the library configuration. If not provided, the create_instance.sh script will autogenerate one."
+  echo "      --spawn-options <options>:        Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   exit 1
 }
 
@@ -45,11 +49,16 @@ redeploy() {
   local skip_image_reload=false
   local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
   local scheduler_config="presets/dev-file-scheduler-values.yaml"
+  local library_config=""
+  local extra_spawn_options=""
+  local upgrade=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
+      --upgrade)
+        upgrade=true ;;
       -n | --namespace)
         if [[ $# -gt 1 ]]; then
           kube_namespace="$2"
@@ -109,6 +118,18 @@ redeploy() {
           exit 1
         fi
         ;;
+      --library-config)
+        if [[ $# -gt 1 ]]; then
+          library_config="$2"
+          shift
+        else
+          echo "Error: --catalogue-config requires an argument"
+          exit 1
+        fi
+        ;;
+      --spawn-options) 
+        extra_spawn_options+=" $2"
+        shift ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -117,10 +138,22 @@ redeploy() {
     shift
   done
 
-  if [ -z "${rpm_src}" ]; then
+  if [ "$skip_image_reload" == "false" ] && [ -z "${rpm_src}" ]; then
     echo "Failure: Missing mandatory argument -s | --rpm-src"
     usage
   fi
+
+  if [ "$upgrade" == "true" ]; then
+    extra_spawn_options+=" --upgrade"
+  fi
+
+  if [ -n "${library_config}" ]; then
+  # If provided
+    extra_spawn_options+=" --library_config ${library_config}"
+  elif [ "$upgrade" == "true" ]; then
+    latest_config_for_namespace=$(ls -t /tmp/${kube_namespace}-library-* | head -n 1)
+    extra_spawn_options+=" --library_config ${latest_config_for_namespace}"
+  fi # else by not providing, create_instance will auto-generate
 
   # Script should be run as cirunner
   if [[ $(whoami) != 'cirunner' ]]; then
@@ -135,14 +168,13 @@ redeploy() {
   cd "$(dirname "$0")"
   cd ../../
 
-  # TODO: the following logic will need to be re-evaluated for upgrades
   # Delete previous instance, if it exists
-  if kubectl get namespace ${kube_namespace} &>/dev/null; then
+  if [ "$upgrade" == "false" ] && kubectl get namespace ${kube_namespace} &>/dev/null; then
     echo "Found existing namespace \"${kube_namespace}\""
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace}
   fi
 
-  if [ ${skip_image_reload} = false ]; then
+  if [ "$skip_image_reload" == "false" ]; then
     # Clear the old image and namespace
     if podman inspect ctageneric:${image_tag} &>/dev/null; then
       echo "Deleting old image and removing it from minikube"
@@ -170,7 +202,8 @@ redeploy() {
                        --wipe-catalogue \
                        --wipe-scheduler \
                        --catalogue-config ${catalogue_config} \
-                       --scheduler-config ${scheduler_config}
+                       --scheduler-config ${scheduler_config} \
+                       ${extra_spawn_options}
   set +x
   echo "Pods redeployed."
 }
