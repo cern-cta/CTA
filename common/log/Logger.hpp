@@ -210,6 +210,19 @@ private:
   using TimestampT = decltype(std::chrono::system_clock::now());
 
   /**
+   * Helper class to format string values in JSON
+   */
+  class stringFormattingJSON {
+  public:
+      explicit stringFormattingJSON(std::string_view str): m_value(str) {};
+    friend std::ostream& operator<<(std::ostream& oss, const stringFormattingJSON& fp);
+  private:
+    std::string_view m_value;
+  };
+
+  friend std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& fp);
+
+  /**
    * Creates and returns the header of a log message
    *
    * Concrete subclasses of the Logger class can decide whether or not to use message headers created by this method.
