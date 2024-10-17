@@ -115,11 +115,6 @@ public:
   std::string getValueStr() const noexcept;
 
   /**
-   * Returns the parameter as a key-value JSON string.
-   */
-  std::string getKeyValueJSON() const noexcept;
-
-  /**
    * Returns a const reference to the variant of the parameter.
    */
   const ParamValType &getValueVariant() const noexcept;
@@ -156,20 +151,6 @@ protected:
    * The value of the parameter in the original type
    */
   ParamValType m_value;
-
-  /**
-   * Helper class to format string values in JSON
-   */
-  class stringFormattingJSON {
-  public:
-    explicit stringFormattingJSON(const std::string& str);
-    friend std::ostream& operator<<(std::ostream& oss, const stringFormattingJSON& fp);
-  private:
-    const std::string & m_value;
-  };
-
-  friend std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& fp);
-
   /**
    * Helper class to format floating-point values
    */
