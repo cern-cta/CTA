@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 
+#include "catalogue/tests/CatalogueTestUtils.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
@@ -33,6 +34,7 @@
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -344,6 +346,28 @@ public:
     tapeDrive.creationLog = log;
     tapeDrive.lastModificationLog = log;
     return tapeDrive;
+  }
+
+  cta::common::dataStructures::ArchiveRequest createArchiveRequest() {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    return request;
   }
 
 private:
@@ -7401,6 +7425,114 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   // Observe results
   ASSERT_EQ(catalogue.Tape()->getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
   ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
+}
+
+TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
+  using namespace cta;
+  setupDefaultCatalogue();
+  Scheduler &scheduler = getScheduler();
+  auto & catalogue = getCatalogue();
+  cta::common::dataStructures::EntryLog creationLog;
+  creationLog.host="host2";
+  creationLog.time=0;
+  creationLog.username="admin1";
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
+  diskFileInfo.path="path/to/file";
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
+  request.creationLog=creationLog;
+  request.diskFileInfo=diskFileInfo;
+  request.diskFileID="diskFileID";
+  request.fileSize=100*1000*1000;
+  cta::common::dataStructures::RequesterIdentity requester;
+  requester.name = s_userName;
+  requester.group = "userGroup";
+  request.requester = requester;
+  request.srcURL="srcURL";
+  request.storageClass=s_storageClassName;
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  // create the physical library first
+  const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary2();
+  catalogue.PhysicalLibrary()->createPhysicalLibrary(s_adminOnAdminHost, physicalLibrary);
+  const auto physLibs = catalogue.PhysicalLibrary()->getPhysicalLibraries();
+  ASSERT_EQ(1, physLibs.size());
+
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, physicalLibrary.name, libraryComment);
+  {
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+
+  auto tape = getDefaultTape();
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+
+  const std::string driveName = "tape_drive";
+
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+  const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
+      request.requester, lc);
+  scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
+
+  {
+    // Emulate a tape server
+    std::unique_ptr<cta::TapeMount> mount;
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
+    //nextMount should be false as the VO write max drives is 0
+    ASSERT_FALSE(nextMount);
+    catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+    //Reset the VO write max drives to a positive number should give a new mount
+    nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
+    ASSERT_TRUE(nextMount);
+    // setting the logicalLibrary to disabled should not give a new mount
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, true);
+    nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
+    ASSERT_FALSE(nextMount);
+    // now set physicalLibrary to disabled, and enable logical library, should still not be getting a mount
+    cta::common::dataStructures::UpdatePhysicalLibrary pl;
+    pl.name                      = physicalLibrary.name;
+    pl.guiUrl                    = physicalLibrary.guiUrl.value();
+    pl.webcamUrl                 = physicalLibrary.webcamUrl.value();
+    pl.location                  = physicalLibrary.location.value();
+    pl.nbPhysicalCartridgeSlots  = physicalLibrary.nbPhysicalCartridgeSlots;
+    pl.nbAvailableCartridgeSlots = physicalLibrary.nbAvailableCartridgeSlots.value();
+    pl.nbPhysicalDriveSlots      = physicalLibrary.nbPhysicalDriveSlots;
+    pl.comment                   = physicalLibrary.comment.value();
+    pl.isDisabled                = true;
+    pl.disabledReason            = "reason";
+
+    catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
+
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
+
+    nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
+    ASSERT_FALSE(nextMount);
+
+    // now enable both physical and logical library, should be getting a next mount
+    pl.isDisabled = false;
+    catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
+    nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
+    ASSERT_TRUE(nextMount);
+  }
 }
 
 #undef TEST_MOCK_DB
