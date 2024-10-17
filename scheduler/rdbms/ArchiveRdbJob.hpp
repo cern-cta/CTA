@@ -61,7 +61,7 @@ class ArchiveRdbJob : public SchedulerDatabase::ArchiveJob {
    * @param connPool
    * @param rset
    */
-  void initialize(const rdbms::Rset &rset);
+  void initialize(const rdbms::Rset &rset, log::LogContext & lc);
   /**
    * Reset all data members to return the job object to the pool
    */
