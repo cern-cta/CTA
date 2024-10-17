@@ -83,23 +83,35 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
     timings.insertAndReset("mountFetchBatchTime", t);
 
+    cta::utils::Timer t3;
     // Construct the return value
     uint64_t totalBytes = 0;
     // Precompute the maximum value before the loop
     common::dataStructures::TapeFile tpfile;
     auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
     while (true) {
+      cta::utils::Timer ta;
+      cta::utils::Timer t2;
       bool hasNext = resultSet.next(); // Call to next
+      timings.insertAndReset("mountFetchBatchCallNextTime", t2);
       if (!hasNext) break; // Exit if no more rows
       auto job = m_jobPool.acquireJob();
+      timings.insertAndReset("mountFetchBatchAquireJobTime", t2);
+
       job->initialize(resultSet);
+      timings.insertAndReset("mountFetchBatchinitializeJobTime", t2);
       //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
+      timings.insertAndReset("mountFetchBatchinitializeEmplaceTime", t2);
       uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
       totalBytes += sizeInBytes;
       auto& tapeFile = retVector.back()->tapeFile;
       tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       tapeFile.blockId = maxBlockId;
+      timings.insertAndReset("mountFetchBatchRestOpsTime", t2);
+      timings.insertAndReset("mountFetchBatchRowTime", ta);
+      // the break below must not happen - we must check the bytesRequested condition in the SQL query or do another update in case
+      // we hit this if statement ! TO BE FIXED  - otherwise we generate jobs in the DB which will never get queued in the task queue !!!
       if (totalBytes >= bytesRequested) break;
     }
     selconn.commit();
