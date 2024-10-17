@@ -47,20 +47,20 @@ CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Reque
     m_lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
   } catch (cta::exception::Exception &ex) {
     m_lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.getMessageValue());
   } catch (std::runtime_error &ex) {
     m_lc.log(cta::log::ERR, ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.what());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what());
   } catch (...) {
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, "Error processing gRPC GenericRequest");
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, "Error processing gRPC GenericRequest");
   }
   return Status::OK;
 }
