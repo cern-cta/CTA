@@ -136,7 +136,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
   }
   return utils::toUint8(stringValue);
   */
-  return utils:toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
+  return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
 }
 
 //------------------------------------------------------------------------------
