@@ -3,7 +3,7 @@ nameOverride: scheduler
 isPriviliged: true
 wipeScheduler: true
 
-initImage:
+wipeImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""
