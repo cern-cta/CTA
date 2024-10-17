@@ -3027,8 +3027,16 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
 
   /* Read drive status */
   {
-    const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
-    const int ioctl_errno = errno;
+    int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+    int ioctl_errno = errno;
+    if (-1 == ioctl_rc) {
+        // Newer kernels throw an IO error the first time a drive is opened after a reset if the tape position is unknown
+        // A rewind at the start of the session takes care of this. The check should succeed the second time. 
+        rewind();
+        ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+        ioctl_errno = errno;
+    }
+
     if(-1 == ioctl_rc) {
       std::ostringstream errMsg;
       errMsg << "Could not read drive status in waitUntilReady: " << m_SCSIInfo.nst_dev;
