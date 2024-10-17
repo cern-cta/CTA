@@ -213,7 +213,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
     return utils::toUint64(stringValue);
     */
-    return utils::toUint32(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint64(PQgetvalue(m_resItr->get(), 0, ifield));
   }
 
   //------------------------------------------------------------------------------
