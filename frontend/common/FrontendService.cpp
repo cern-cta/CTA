@@ -53,8 +53,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     // log header, or not
     auto log_header = config.getOptionValueBool("cta.log.log_header");
     bool shortHeader = false;
-    if (log_header.first)
-      shortHeader = !log_header.second;
+    if (log_header.has_value())
+      shortHeader = !log_header.value();
 
     // Set the log context
     if(loggerURL.value() == "stdout:") {
@@ -327,8 +327,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::pair<bool, bool> TLS = config.getOptionValueBool("TLS");
-  m_Tls = TLS.second; // default value is false
+  std::optional<bool> TLS = config.getOptionValueBool("TLS");
+  m_Tls = TLS.has_value() ? TLS.value() : false; // default value is false
   auto TlsKey = config.getOptionValueStr("TlsKey");
   if (TlsKey.has_value())
     m_TlsKey = TlsKey.value();

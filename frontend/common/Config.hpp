@@ -57,7 +57,7 @@ public:
   /*!
   * Get a single option bool value from config
   */
-  std::pair<bool, bool> getOptionValueBool(const std::string &key) const;
+  std::optional<bool> getOptionValueBool(const std::string &key) const;
 
 private:
   //! Configuration option list type
