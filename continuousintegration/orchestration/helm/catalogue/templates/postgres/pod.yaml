@@ -8,7 +8,8 @@ metadata:
   name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }} # TODO: fill in correct labels
+    # TODO: fill in correct labels
+    app.kubernetes.io/name: {{ $name }}
 spec:
   restartPolicy: Never
   containers:
@@ -32,6 +33,6 @@ spec:
       value: {{ $catalogueConfig.postgresConfig.password }}
     - name: POSTGRES_DB
       value: {{ $catalogueConfig.postgresConfig.database }}
-    command: {{.command}}
-    args: {{.args}}
+    command: []
+    args: []
 {{- end }}

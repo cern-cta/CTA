@@ -1,6 +1,6 @@
 apiVersion: v2
 name: cta
-description: A CTA helmchart for CI runner. On itself it only contains configmaps that are used in every other subchart
+description: A Helm chart CTA. On itself it only contains configmaps that are used in the subcharts.
 type: application
 version: 0.2.0
 appVersion: "5.11.10.1"

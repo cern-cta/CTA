@@ -24,7 +24,7 @@ spec:
           command: ['/opt/run/bin/wipe_catalogue.sh']
           args: []
           securityContext:
-            privileged: false
+            privileged: true
           stdin: true
           env:
             - name: MY_NAME
@@ -34,13 +34,11 @@ spec:
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
             - name: WIPE_CATALOGUE
-              value: "{{ .Values.wipeCatalogue }}"
+              value: {{ .Values.wipeCatalogue | quote }}
             - name: SCHEMA_VERSION
               value: {{ .Values.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND
               value: {{ $catalogueConfig.backend | quote}}
-            - name: CATALOGUE_URL
-              value: {{ include "catalogue.url" . | quote}}
           volumeMounts:
             - name: catalogue-config
               mountPath: /etc/cta/cta-catalogue.conf

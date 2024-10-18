@@ -33,6 +33,8 @@ yum clean packages
 
 echo "Using catalogue backend: $CATALOGUE_BACKEND"
 
+CATALOGUE_URL=$(cat /etc/cta/cta-catalogue.conf)
+
 echo "Wiping catalogue"
 if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
   if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
@@ -52,7 +54,7 @@ if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
 elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
   echo "Purging Oracle recycle bin"
-  # oracle sqlplus client binary path
+  # Note that these commands have been failing for a while now (not just in this branch). What do we do with it?
   ORACLE_SQLPLUS="/usr/bin/sqlplus64"
   test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
   LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
