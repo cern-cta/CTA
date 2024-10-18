@@ -45,7 +45,7 @@ spec:
       volumes:
       - name: cta-conf-volume
         configMap:
-          name: catalogue-configmap
+          name: cta-catalogue-conf
       - name: shared
         hostPath:
           path: /opt/cta

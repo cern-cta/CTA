@@ -208,53 +208,56 @@ create_instance() {
     done
   fi
 
-
+  helm dependency update helm/common
   # For now only allow an upgrade of the CTA chart
   # Once deployments are in place, we can also look into redeploying the catalogue and scheduler
   if [ $upgrade == 0 ]; then
-    echo "Installing ci-init chart..."
-    set -x
-    helm ${helm_command} ci-init helm/ci-init --namespace ${namespace} \
-                                              --set global.image.registry="${registry_host}" \
-                                              --set global.image.tag="${image_tag}" \
-                                              --set-file tapeConfig=${library_config} \
-                                              --wait --wait-for-jobs --timeout 2m
+    helm dependency update helm/init
+    helm dependency update helm/init/charts/kdc
+    helm dependency update helm/catalogue
+    helm dependency update helm/scheduler
+    echo "Installing init chart..."
+    (set -x; helm ${helm_command} init-${namespace} helm/init \
+                                  --namespace ${namespace} \
+                                  --set global.image.registry="${registry_host}" \
+                                  --set global.image.tag="${image_tag}" \
+                                  --set-file tapeConfig=${library_config} \
+                                  --wait --wait-for-jobs --timeout 2m)
 
-    # Technically the catalogue and scheduler charts can be installed in parallel, but let's keep things simple for now
-    echo "Installing catalogue chart..."
+    # At some point this can be done in parallel
     echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-    helm ${helm_command} catalogue helm/catalogue --namespace ${namespace} \
-                                                  --set wipeImage.registry="${registry_host}" \
-                                                  --set wipeImage.tag="${image_tag}" \
-                                                  --set schemaVersion="${catalogue_schema_version}" \
-                                                  --set wipeCatalogue=${wipe_catalogue} \
-                                                  --set-file configuration=${catalogue_config} \
-                                                  --wait --wait-for-jobs --timeout 2m
-
-    echo "Installing scheduler chart..."
-    helm ${helm_command} scheduler helm/scheduler --namespace ${namespace} \
-                                                  --set wipeImage.registry="${registry_host}" \
-                                                  --set wipeImage.tag="${image_tag}" \
-                                                  --set wipeScheduler=${wipe_scheduler} \
-                                                  --set-file configuration=${scheduler_config} \
-                                                  --wait --wait-for-jobs --timeout 2m
-    set +x
+    echo "Installing catalogue and scheduler charts..."
+    (set -x; helm ${helm_command} catalogue-${namespace} helm/catalogue \
+                                  --namespace ${namespace} \
+                                  --set wipeImage.registry="${registry_host}" \
+                                  --set wipeImage.tag="${image_tag}" \
+                                  --set schemaVersion="${catalogue_schema_version}" \
+                                  --set wipeCatalogue=${wipe_catalogue} \
+                                  --set-file configuration=${catalogue_config} \
+                                  --wait --wait-for-jobs --timeout 2m)
+    (set -x; helm ${helm_command} scheduler-${namespace} helm/scheduler \
+                                  --namespace ${namespace} \
+                                  --set wipeImage.registry="${registry_host}" \
+                                  --set wipeImage.tag="${image_tag}" \
+                                  --set wipeScheduler=${wipe_scheduler} \
+                                  --set-file configuration=${scheduler_config} \
+                                  --wait --wait-for-jobs --timeout 2m)
+    exit
   fi
   echo ""
   echo "Processing dependencies of cta chart..."
   helm dependency update helm/cta
   echo "Installing cta chart..."
-  set -x
-  helm ${helm_command} cta helm/cta --namespace ${namespace} \
-                                    --set global.image.registry="${registry_host}" \
-                                    --set global.image.tag="${image_tag}" \
-                                    --set global.useSystemd=${use_systemd} \
-                                    --set global.catalogueSchemaVersion=${catalogue_schema_version} \
-                                    --set tpsrv.tpsrv.numTapeServers=${tpsrv_count} \
-                                    --set-file global.configuration.scheduler=${scheduler_config} \
-                                    --set-file tpsrv.tapeConfig="${library_config}" \
-                                    --wait --timeout 5m
-  set +x
+  (set -x; helm ${helm_command} cta-${namespace} helm/cta \
+                                --namespace ${namespace} \
+                                --set global.image.registry="${registry_host}" \
+                                --set global.image.tag="${image_tag}" \
+                                --set global.useSystemd=${use_systemd} \
+                                --set global.catalogueSchemaVersion=${catalogue_schema_version} \
+                                --set tpsrv.tpsrv.numTapeServers=${tpsrv_count} \
+                                --set-file global.configuration.scheduler=${scheduler_config} \
+                                --set-file tpsrv.tapeConfig="${library_config}" \
+                                --wait --timeout 5m)
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
     exit 0  

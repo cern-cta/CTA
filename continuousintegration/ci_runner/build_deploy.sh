@@ -76,7 +76,7 @@ compile_deploy() {
   local build_namespace="build"
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
-  local build_pod_name="cta-build"
+  local build_pod_name="cta-build-pod"
   local cta_version="5"
   local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
   local scheduler_config="presets/dev-file-scheduler-values.yaml"
@@ -203,7 +203,7 @@ compile_deploy() {
       echo "Starting a new build pod: ${build_pod_name}..."
       case "${operating_system}" in
         alma9)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
+          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/alma9-build-pod.yml -n ${build_namespace}
           ;;
         *)
           echo "Invalid operating system provided: ${operating_system}"

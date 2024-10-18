@@ -16,14 +16,22 @@ sqlite:{{ $config.sqliteConfig.filepath | replace "%NAMESPACE" .Release.Namespac
 {{- end }}
 {{- end }}
 
-{{/* Set container image for the init job */}}
-{{- define "wipeImage.url" -}}
-{{- if and .Values.wipeImage.registry .Values.wipeImage.repository .Values.wipeImage.tag -}}
-  {{- $registry := .Values.wipeImage.registry -}}
-  {{- $repository := .Values.wipeImage.repository -}}
-  {{- $tag := .Values.wipeImage.tag -}}
-  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
-{{- else }}
-{{- fail "You must provide .Values.wipeImage with registry, repository, and tag values." -}}
+{{- define "catalogueWipe.image" -}}
+  {{ include "common.images.image" (dict "imageRoot" .Values.wipeImage ) }}
 {{- end }}
+
+{{- define "catalogueWipe.imagePullPolicy" -}}
+  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.wipeImage ) }}
+{{- end }}
+
+{{- define "catalogueWipe.imagePullSecrets" -}}
+  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.wipeImage ) }}
+{{- end }}
+
+{{- define "catalogue.config" -}}
+  {{- $catalogueConfig := .Values.configuration }}
+  {{- if ne (typeOf $catalogueConfig) "string" -}}
+    {{- $catalogueConfig = $catalogueConfig | toYaml }}
+  {{- end }}
+  {{- $catalogueConfig -}}
 {{- end }}

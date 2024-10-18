@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "description": "Override the default name of the chart (e.g., scheduler)."
+    },
+    "wipeScheduler": {
+      "type": "boolean",
+      "description": "Determines if the scheduler should be wiped on start."
+    },
+    "component": {
+      "type": "string",
+      "description": "The component of the application (e.g., scheduler)."
+    },
+    "partOf": {
+      "type": "string",
+      "description": "The larger system that this application is part of (e.g., cta)."
+    },
+    "wipeImage": {
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string",
+          "description": "The Docker registry for the wipe image."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The repository for the wipe image."
+        },
+        "tag": {
+          "type": "string",
+          "description": "The tag for the wipe image. Leave empty to use the latest."
+        },
+        "pullPolicy": {
+          "type": "string",
+          "description": "The image pull policy (e.g., IfNotPresent)."
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Image pull secrets to authenticate against the registry."
+        }
+      },
+      "required": ["registry", "repository", "pullPolicy", "pullSecrets"],
+      "description": "Configuration for the wipe image used during scheduler wiping."
+    },
+    "configuration": {
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "YAML configuration provided as a string (via --set-file)."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "backend": {
+              "type": "string",
+              "enum": ["file", "ceph", "postgres"],
+              "description": "The type of backend to use (e.g., file, ceph, postgres)."
+            },
+            "cephConfig": {
+              "type": "object",
+              "properties": {
+                "mon": {
+                  "type": "string",
+                  "description": "Ceph monitor address."
+                },
+                "monport": {
+                  "type": "string",
+                  "description": "Ceph monitor port."
+                },
+                "pool": {
+                  "type": "string",
+                  "description": "Ceph pool."
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "Ceph namespace."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Ceph user ID."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Ceph user key."
+                }
+              },
+              "required": ["mon", "monport", "pool", "namespace", "id", "key"],
+              "description": "Ceph backend configuration."
+            },
+            "postgresConfig": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "description": "PostgreSQL database username."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "PostgreSQL database password."
+                },
+                "database": {
+                  "type": "string",
+                  "description": "PostgreSQL database name."
+                },
+                "server": {
+                  "type": "string",
+                  "description": "PostgreSQL server address."
+                }
+              },
+              "required": ["username", "password", "database", "server"],
+              "description": "PostgreSQL backend configuration."
+            },
+            "fileConfig": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Filepath for file-based backend."
+                }
+              },
+              "required": ["path"],
+              "description": "File-based backend configuration."
+            }
+          },
+          "required": ["backend"],
+          "oneOf": [
+            {
+              "properties": {
+                "backend": {
+                  "enum": ["ceph"]
+                },
+                "cephConfig": { "type": "object" }
+              }
+            },
+            {
+              "properties": {
+                "backend": {
+                  "enum": ["postgres"]
+                },
+                "postgresConfig": { "type": "object" }
+              }
+            },
+            {
+              "properties": {
+                "backend": {
+                  "enum": ["file"]
+                },
+                "fileConfig": { "type": "object" }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "required": ["nameOverride", "wipeScheduler", "component", "partOf", "wipeImage", "configuration"]
+}

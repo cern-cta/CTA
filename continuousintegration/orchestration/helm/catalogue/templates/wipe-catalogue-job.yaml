@@ -1,17 +1,14 @@
 {{- if .Values.wipeCatalogue -}}
-{{$namespace := .Release.Namespace }}
-{{$name := "wipe-catalogue" }}
-# This allows the user to set the configuration using either --set-file or using --values
-{{- $config := .Values.configuration }}
-{{- if eq (typeOf $config) "string" -}}
-  {{- $config = $config | fromYaml }}
-{{- end }}
-
+{{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
+{{- $namespace := .Release.Namespace }}
+{{- $name := "wipe-catalogue" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
   namespace: {{ $namespace | quote}}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
     "helm.sh/hook-delete-policy": keep
@@ -22,12 +19,12 @@ spec:
       restartPolicy: Never
       containers:
         - name: {{ $name }}
-          image: {{ include "wipeImage.url" . }}
-          imagePullPolicy: {{ .Values.wipeImage.pullPolicy }}
+          image: {{ include "catalogueWipe.image" . }}
+          imagePullPolicy: {{ include "catalogueWipe.imagePullPolicy" . }}
           command: ['/opt/run/bin/wipe_catalogue.sh']
           args: []
           securityContext:
-            privileged: {{ .Values.isPriviliged }}
+            privileged: false
           stdin: true
           env:
             - name: MY_NAME
@@ -41,12 +38,9 @@ spec:
             - name: SCHEMA_VERSION
               value: {{ .Values.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND
-              value: {{ $config.backend | quote}}
+              value: {{ $catalogueConfig.backend | quote}}
             - name: CATALOGUE_URL
               value: {{ include "catalogue.url" . | quote}}
-            {{- if .Values.env }}
-            {{ .Values.env | toYaml | nindent 12 }}
-            {{- end }}
           volumeMounts:
             - name: catalogue-config
               mountPath: /etc/cta/cta-catalogue.conf
@@ -58,7 +52,7 @@ spec:
       volumes:
         - name: catalogue-config
           configMap:
-            name: catalogue-configmap
+            name: cta-catalogue-conf
         - name: shared
           hostPath:
             path: /opt/cta
@@ -66,7 +60,5 @@ spec:
           persistentVolumeClaim:
             claimName: claimlogs
       imagePullSecrets:
-      {{- range .Values.wipeImage.pullSecrets }}
-      - name: {{ . | quote }}
-      {{- end }}
+      {{- include "catalogueWipe.imagePullSecrets" . | nindent 6 }}
 {{- end }}
