@@ -67,7 +67,7 @@ public:
   virtual uint64_t columnUint64NoOpt(const std::string &colName) const = 0;
   virtual std::string columnStringNoOpt(const std::string &colName) const = 0;
   virtual double  columnDoubleNoOpt(const std::string& colName) const = 0;
-  virtual bool columnBoolNoOpt(const std::string &colName) const = false;
+  virtual bool columnBoolNoOpt(const std::string &colName) const = 0;
 
   /**
    * Returns true if the specified column contains a null value.
