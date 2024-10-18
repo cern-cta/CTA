@@ -167,7 +167,7 @@ namespace cta::schedulerdb::postgres {
       reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
       mountId = rset.columnOptionalUint64("MOUNT_ID");
       status = from_string<ArchiveJobStatus>(
-              rset.columnStringNoOpt("STATUS");
+              rset.columnStringNoOpt("STATUS"));
       tapePool = rset.columnStringNoOpt("TAPE_POOL");
       mountPolicy = rset.columnStringNoOpt("MOUNT_POLICY");
       priority = rset.columnUint16NoOpt("PRIORITY");
