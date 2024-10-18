@@ -389,6 +389,39 @@ public:
     return request;
   }
 
+  std::pair<uint64_t, bool> common_setup_queue_archive_request() {
+    using namespace cta;
+
+    Scheduler &scheduler = getScheduler();
+
+  #ifdef STDOUT_LOGGING
+    log::StdoutLogger dl("dummy", "unitTest");
+  #else
+    log::DummyLogger dl("", "");
+  #endif
+    log::LogContext lc(dl);
+
+    uint64_t archiveFileId;
+    {
+      // Queue an archive request.
+      cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
+      request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      request.storageClass=s_storageClassName;
+      archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+      scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+    }
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    bool found=false;
+    for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
+      for (auto & req: tp.second) {
+        if (req.archiveFileID == archiveFileId)
+          found = true;
+      }
+    }
+    return std::make_pair(archiveFileId, found);
+  }
+    
 private:
 
   // Prevent copying
@@ -556,24 +589,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
   log::LogContext lc(dl);
 
   uint64_t archiveFileId;
-  {
-    // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
-    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
-  }
-  scheduler.waitSchedulerDbSubthreadsComplete();
-
-  // Check that we have the file in the queues
-  bool found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
-    for (auto & req: tp.second) {
-      if (req.archiveFileID == archiveFileId)
-        found = true;
-    }
-  }
+  bool found;
+  std::tie(archiveFileId, found) = common_setup_queue_archive_request();
   ASSERT_TRUE(found);
 
   // Create the environment for the migration to happen (library + tape)
@@ -744,27 +761,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
   log::LogContext lc(dl);
 
   uint64_t archiveFileId;
-  {
-    // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
-    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
-  }
-  scheduler.waitSchedulerDbSubthreadsComplete();
-
-  // Check that we have the file in the queues
-  // TODO: for this to work all the time, we need an index of all requests
-  // (otherwise we miss the selected ones).
-  // Could also be limited to querying by ID (global index needed)
-  bool found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
-    for (auto & req: tp.second) {
-      if (req.archiveFileID == archiveFileId)
-        found = true;
-    }
-  }
+  bool found;
+  std::tie(archiveFileId, found) = common_setup_queue_archive_request();
   ASSERT_TRUE(found);
 
   // Create the environment for the migration to happen (library + tape)
@@ -934,27 +932,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
   log::LogContext lc(dl);
 
   uint64_t archiveFileId;
-  {
-    // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
-    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
-  }
-  scheduler.waitSchedulerDbSubthreadsComplete();
-
-  // Check that we have the file in the queues
-  // TODO: for this to work all the time, we need an index of all requests
-  // (otherwise we miss the selected ones).
-  // Could also be limited to querying by ID (global index needed)
-  bool found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
-    for (auto & req: tp.second) {
-      if (req.archiveFileID == archiveFileId)
-        found = true;
-    }
-  }
+  bool found;
+  std::tie(archiveFileId, found) = common_setup_queue_archive_request(); 
   ASSERT_TRUE(found);
 
   // Create the environment for the migration to happen (library + tape)
