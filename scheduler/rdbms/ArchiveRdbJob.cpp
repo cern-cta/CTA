@@ -78,10 +78,10 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset &rset)
   };
 
 void ArchiveRdbJob::initialize(const rdbms::Rset &rset, log::LogContext & lc) {
-  cta::log::TimingList timings;
-  cta::utils::Timer t;
+  //cta::log::TimingList timings;
+  //cta::utils::Timer t;
   m_jobRow = rset;
-  timings.insOrIncAndReset("ArchiveRdbJob_rset_init", t);
+  //timings.insOrIncAndReset("ArchiveRdbJob_rset_init", t);
   // Reset or update other member variables as necessary
   m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
   m_mountId = m_jobRow.mountId.value_or(0); // use mountId or 0 if not set
@@ -94,7 +94,7 @@ void ArchiveRdbJob::initialize(const rdbms::Rset &rset, log::LogContext & lc) {
   archiveFile = m_jobRow.archiveFile;
   tapeFile.vid = m_jobRow.vid;
   tapeFile.copyNb = m_jobRow.copyNb;
-  timings.insOrIncAndReset("ArchiveRdbJob_dbjobmembers_init", t);
+  //timings.insOrIncAndReset("ArchiveRdbJob_dbjobmembers_init", t);
   // Re-initialize report type
   if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
     reportType = ReportType::CompletionReport;
@@ -103,10 +103,10 @@ void ArchiveRdbJob::initialize(const rdbms::Rset &rset, log::LogContext & lc) {
   } else {
     reportType = ReportType::NoReportRequired;
   }
-  timings.insOrIncAndReset("ArchiveRdbJob_status_init", t);
-  cta::log::ScopedParamContainer logParams(lc);
-  timings.addToLog(logParams);
-  lc.log(cta::log::INFO, "In ArchiveRdbJob::initialize(): Finished initializing job object with new values.");
+  //timings.insOrIncAndReset("ArchiveRdbJob_status_init", t);
+  //cta::log::ScopedParamContainer logParams(lc);
+  //timings.addToLog(logParams);
+  //lc.log(cta::log::INFO, "In ArchiveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
 void ArchiveRdbJob::reset() {
