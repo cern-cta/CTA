@@ -626,6 +626,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
     // new FID does not matter because archive file still exists in catalogue
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, "0");
 
+    // Wait 0.1 second to allow sql transactions to commit
+    usleep(100000);
+
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
     //assert both copies present
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
@@ -1120,6 +1123,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
     m_catalogue->Tape()->setTapeDirty(m_admin, tape2.vid, false);
 
     m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(12345678)); //previous fid + 1
+
+    // Wait 0.1 second to allow sql transactions to commit
+    usleep(100000);
 
     //assert archive file has been restored in the catalogue
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
