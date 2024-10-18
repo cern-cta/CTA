@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <algorithm>
 
 namespace cta::log {
 

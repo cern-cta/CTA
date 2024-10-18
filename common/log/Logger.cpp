@@ -15,7 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <algorithm>
 #include <iomanip>
+#include <variant>
 
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
@@ -194,7 +196,7 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
  //------------------------------------------------------------------------------
 // stringFormattingJSON << operator overload
 //------------------------------------------------------------------------------
-std::ostream& operator<<(std::ostream& oss, const Param::stringFormattingJSON& fp) {
+std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& fp) {
   std::ostringstream oss_tmp;
   for (char c : fp.m_value) {
     switch (c) {
@@ -259,20 +261,24 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
         break;
       case LogFormat::JSON:
         os << "," << "\"" << stringFormattingJSON(param.getName()) << "\":";
-        std::visit([&os](auto &&arg) {
-          using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, bool>) {
-            os << (arg ? "true" : "false");
-          } else if constexpr (std::is_same_v<T, std::string>) {
-            os << "\"" << stringFormattingJSON(arg) << "\"";
-          } else if constexpr (std::is_integral_v<T>) {
-            os << arg;
-          } else if constexpr (std::is_floating_point_v<T>) {
-            os << floatingPointFormatting(arg);
-          } else {
-            static_assert(always_false<T>::value, "Type not supported");
-          }
-        }, param.getValueVariant());
+        if (param.getValueVariant().has_value()){
+          std::visit([&os](auto &&arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, bool>) {
+              os << (arg ? "true" : "false");
+            } else if constexpr (std::is_same_v<T, std::string>) {
+              os << "\"" << stringFormattingJSON(arg) << "\"";
+            } else if constexpr (std::is_integral_v<T>) {
+              os << arg;
+            } else if constexpr (std::is_floating_point_v<T>) {
+              os << floatingPointFormatting(arg);
+            } else {
+              static_assert(always_false<T>::value, "Type not supported");
+            }
+          }, param.getValueVariant().value());
+        } else {
+          os << "null";
+        }
         break;
     }
   }
