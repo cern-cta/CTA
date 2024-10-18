@@ -104,12 +104,15 @@ std::string PostgresRset::columnBlob(const std::string &colName) const {
       std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
       // using move semantics to avoid unnecessary copies
       return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
+  } else {
+    throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
   }
-  return std::nullopt;  // Use std::optional to indicate absence of blob
 }
 
-bool columnBoolNoOpt(const std::string &colName) const {
+bool PostgresRset::columnBoolNoOpt(const std::string &colName) const {
   try {
     const auto strValue = columnStringNoOpt(colName);
     if (strValue == "t" || strValue == "true") {

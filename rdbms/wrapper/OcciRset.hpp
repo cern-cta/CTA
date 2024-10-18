@@ -86,7 +86,7 @@ public:
   uint64_t columnUint64NoOpt(const std::string &colName) const { return 0; };
   std::string columnStringNoOpt(const std::string &colName) const { return std::string(); };
   double  columnDoubleNoOpt(const std::string& colName) const { return 0; };
-  bool Rset::columnBoolNoOpt(const std::string &colName) const { return false; };
+  bool   columnBoolNoOpt(const std::string &colName) const { return false; };
 
 
   /**
