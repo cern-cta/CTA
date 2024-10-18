@@ -90,7 +90,7 @@ public:
   ReturnType callImpl(Func func, const std::string& colName) const {
     try {
       if (nullptr == m_impl) {
-        throw exception::InvalidResultSet("This result set is invalid");
+        throw InvalidResultSet("This result set is invalid");
       }
       return (m_impl.get()->*func)(colName); // Call the method
     } catch (exception::Exception &ex) {
