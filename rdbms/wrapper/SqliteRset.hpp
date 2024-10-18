@@ -73,7 +73,7 @@ public:
   uint8_t columnPGint16(const std::string &colName) const { return 0; };
   uint8_t columnPGint32(const std::string &colName) const { return 0; };
   uint8_t columnPGint64(const std::string &colName) const { return 0; };
-  uint8_t columnPGString(const std::string &colName) const { return ""; };
+  uint8_t columnPGString(const std::string &colName) const { return std::string(); };
   double  columnPGDouble(const std::string& colName) const { return 0; };
   /**
    * Returns true if the specified column contains a null value.
