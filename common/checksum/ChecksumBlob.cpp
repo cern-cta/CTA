@@ -109,6 +109,15 @@ void ChecksumBlob::deserialize(const std::string &bytearray) {
   ProtobufToChecksumBlob(p_csb, *this);
 }
 
+void ChecksumBlob::deserialize(std::string&& bytearray) {
+  common::ChecksumBlob p_csb;
+  // Move the string to avoid extra copies
+  if (!p_csb.ParseFromString(std::move(bytearray))) {
+    throw exception::Exception("ChecksumBlob: deserialization failed");
+  }
+  ProtobufToChecksumBlob(p_csb, *this);
+}
+
 void ChecksumBlob::deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32) {
   common::ChecksumBlob p_csb;
   // A nullptr value in the CHECKSUM_BLOB column will return an empty bytearray. If the bytearray is empty

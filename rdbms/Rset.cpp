@@ -73,30 +73,33 @@ Rset &Rset::operator=(Rset &&rhs) {
 // and handling null case within the implementation
 //------------------------------------------------------------------------------
 
-uint8_t Rset::columnPGUint8(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGUint8, colName);
+uint8_t Rset::columnUint8NoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
 }
 
-uint16_t Rset::columnPGUint16(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGUint16, colName);
+uint16_t Rset::columnUint16NoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
 }
 
-uint32_t Rset::columnPGUint32(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGUint32, colName);
+uint32_t Rset::columnUint32NoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
 }
 
-uint64_t Rset::columnPGUint64(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGUint64, colName);
+uint64_t Rset::columnUint64NoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
 }
 
-std::string Rset::columnPGString(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGString, colName);
+std::string Rset::columnStringNoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnStringNoOpt, colName);
 }
 
-double Rset::columnPGDouble(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnPGDouble, colName);
+double Rset::columnDoubleNoOpt(const std::string& colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnDoubleNoOpt, colName);
 }
 
+bool Rset::columnBoolNoOpt(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnBoolNoOpt, colName);
+}
 
 //------------------------------------------------------------------------------
 // columnString

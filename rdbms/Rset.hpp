@@ -132,16 +132,21 @@ public:
   /**
    * Testing new PG methods without passing through optionals
    * and handling the null case within the implementation
-   *
+   * These methods do not use columnOptional methods to check
+   * if value is Null and Throw
+   * They are expected to throw directly if the value is null
+   * from within their implementatinos ithout the need
+   * to construct additional optionals in between !
    * @param colName
    * @return
    */
-  uint8_t columnPGUint8(const std::string &colName) const;
-  uint16_t columnPGUint16(const std::string &colName) const;
-  uint32_t columnPGUint32(const std::string &colName) const;
-  uint64_t columnPGUint64(const std::string &colName) const;
-  std::string columnPGString(const std::string &colName) const;
-  double  columnPGDouble(const std::string& colName) const;
+  uint8_t columnUint8NoOpt(const std::string &colName) const;
+  uint16_t columnUint16NoOpt(const std::string &colName) const;
+  uint32_t columnUint32NoOpt(const std::string &colName) const;
+  uint64_t columnUint64NoOpt(const std::string &colName) const;
+  std::string columnStringNoOpt(const std::string &colName) const;
+  double  columnDoubleNoOpt(const std::string& colName) const;
+  bool    columnBoolNoOpt(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).

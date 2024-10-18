@@ -51,16 +51,23 @@ public:
   virtual bool next() = 0;
 
   /**
-   * Place holders for testing new methods implemented and used only for PG
+   * Testing new PG methods without passing through optionals
+   * and handling the null case within the implementation
+   * These methods do not use columnOptional methods to check
+   * if value is Null and Throw
+   * They are expected to throw directly if the value is null
+   * from within their implementatinos ithout the need
+   * to construct additional optionals in between !
    * @param colName
    * @return
    */
-  virtual uint8_t columnPGUint8(const std::string &colName) const = 0;
-  virtual uint16_t columnPGUint16(const std::string &colName) const = 0;
-  virtual uint32_t columnPGUint32(const std::string &colName) const = 0;
-  virtual uint64_t columnPGUint64(const std::string &colName) const = 0;
-  virtual std::string columnPGString(const std::string &colName) const = 0;
-  virtual double  columnPGDouble(const std::string& colName) const = 0;
+  virtual uint8_t columnUint8NoOpt(const std::string &colName) const = 0;
+  virtual uint16_t columnUint16NoOpt(const std::string &colName) const = 0;
+  virtual uint32_t columnUint32NoOpt(const std::string &colName) const = 0;
+  virtual uint64_t columnUint64NoOpt(const std::string &colName) const = 0;
+  virtual std::string columnStringNoOpt(const std::string &colName) const = 0;
+  virtual double  columnDoubleNoOpt(const std::string& colName) const = 0;
+  virtual bool columnBoolNoOpt(const std::string &colName) const = false;
 
   /**
    * Returns true if the specified column contains a null value.

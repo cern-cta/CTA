@@ -95,19 +95,38 @@ bool PostgresRset::isPGColumnNull(int ifield) const {
 std::string PostgresRset::columnBlob(const std::string &colName) const {
   std::optional<std::string> blob = columnOptionalString(colName);
 
-  if(blob) {
+  if (blob) {
     size_t blob_len;
     unsigned char *blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
-    if(blob_ptr != nullptr) {
-      std::string blob_str(reinterpret_cast<const char*>(blob_ptr), blob_len);
-      PQfreemem(blob_ptr);
-      return blob_str;
+
+    if (blob_ptr != nullptr) {
+      // using unique_ptr with custom deleter to automatically free memory
+      std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
+      // using move semantics to avoid unnecessary copies
+      return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
     }
   }
-  return std::string();
+  return std::nullopt;  // Use std::optional to indicate absence of blob
 }
 
-std::string PostgresRset::columnPGString(const std::string& colName) const {
+bool columnBoolNoOpt(const std::string &colName) const {
+  try {
+    const auto strValue = columnStringNoOpt(colName);
+    if (strValue == "t" || strValue == "true") {
+      return true;
+    } else if (strValue == "f" || strValue == "false") {
+      return false;
+    } else {
+      throw exception::Exception("Invalid boolean string representation: " + strValue);
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+std::string PostgresRset::columnStringNoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -127,7 +146,7 @@ std::string PostgresRset::columnPGString(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // Get uint8_t value from a column with error handling
 //------------------------------------------------------------------------------
-uint8_t PostgresRset::columnPGUint8(const std::string& colName) const {
+uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -146,7 +165,7 @@ uint8_t PostgresRset::columnPGUint8(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // Get uint16_t value from a column with error handling
 //------------------------------------------------------------------------------
-uint16_t PostgresRset::columnPGUint16(const std::string& colName) const {
+uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -166,7 +185,7 @@ uint16_t PostgresRset::columnPGUint16(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // Get uint32_t value from a column with error handling
 //------------------------------------------------------------------------------
-uint32_t PostgresRset::columnPGUint32(const std::string& colName) const {
+uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -186,7 +205,7 @@ uint32_t PostgresRset::columnPGUint32(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // Get uint64_t value from a column with error handling
 //------------------------------------------------------------------------------
-uint64_t PostgresRset::columnPGUint64(const std::string& colName) const {
+uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -206,7 +225,7 @@ uint64_t PostgresRset::columnPGUint64(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // Get double value from a column with error handling
 //------------------------------------------------------------------------------
-double PostgresRset::columnPGDouble(const std::string& colName) const {
+double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
   try {
     const int ifield = getColumnIndex(colName);
 
@@ -253,10 +272,10 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
   return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
 }
 
-//------------------------------------------------------------------------------
-// columnOptionalUint16
-//------------------------------------------------------------------------------
-std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &colName) const {
+  //------------------------------------------------------------------------------
+  // columnOptionalUint16
+  //------------------------------------------------------------------------------
+  std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &colName) const {
 
   const int ifield = getColumnIndex(colName);
 
