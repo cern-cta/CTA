@@ -318,6 +318,28 @@ public:
     return tapeDrive;
   }
 
+  cta::common::dataStructures::ArchiveRequest createArchiveRequest() {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    return request;
+  }
+
 private:
 
   // Prevent copying
@@ -370,25 +392,8 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
 
-  cta::common::dataStructures::EntryLog creationLog;
-  creationLog.host="host2";
-  creationLog.time=0;
-  creationLog.username="admin1";
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.gid=GROUP_2;
-  diskFileInfo.owner_uid=CMS_USER;
-  diskFileInfo.path="path/to/file";
-  cta::common::dataStructures::ArchiveRequest request;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
   request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.creationLog=creationLog;
-  request.diskFileInfo=diskFileInfo;
-  request.diskFileID="diskFileID";
-  request.fileSize=100*1000*1000;
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = s_userName;
-  requester.group = "userGroup";
-  request.requester = requester;
-  request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
   log::DummyLogger dl("", "");
@@ -970,25 +975,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::ArchiveRequest request;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
     request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.creationLog=creationLog;
-    request.diskFileInfo=diskFileInfo;
-    request.diskFileID="diskFileID";
-    request.fileSize=100*1000*1000;
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = s_userName;
-    requester.group = "userGroup";
-    request.requester = requester;
-    request.srcURL="srcURL";
     request.storageClass=dualCopyStorageClassName;
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
@@ -1765,25 +1753,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::ArchiveRequest request;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
     request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-    request.creationLog=creationLog;
-    request.diskFileInfo=diskFileInfo;
-    request.diskFileID="diskFileID";
-    request.fileSize=100*1000*1000;
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = s_userName;
-    requester.group = "userGroup";
-    request.requester = requester;
-    request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
     request.archiveErrorReportURL="null:";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
@@ -1880,25 +1851,8 @@ TEST_P(SchedulerTest, showqueues) {
   uint64_t archiveFileId __attribute__((unused));
   {
     // Queue an archive request.
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
-    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
-    diskFileInfo.path="path/to/file";
-    cta::common::dataStructures::ArchiveRequest request;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
     request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-    request.creationLog=creationLog;
-    request.diskFileInfo=diskFileInfo;
-    request.diskFileID="diskFileID";
-    request.fileSize=100*1000*1000;
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = s_userName;
-    requester.group = "userGroup";
-    request.requester = requester;
-    request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
@@ -2467,27 +2421,13 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   const uint8_t NUMBER_OF_FILES = 10;
   for (auto i = 0; i < NUMBER_OF_FILES; i++) {
     // Queue several archive requests.
-    cta::common::dataStructures::EntryLog creationLog;
-    creationLog.host="host2";
-    creationLog.time=0;
-    creationLog.username="admin1";
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.gid=GROUP_2;
-    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     diskFileInfo.path += std::to_string(i);
-    cta::common::dataStructures::ArchiveRequest request;
     request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
-    request.diskFileID="diskFileID";
     request.diskFileID += std::to_string(i);
-    request.fileSize=100*1000*1000;
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = s_userName;
-    requester.group = "userGroup";
-    request.requester = requester;
-    request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
     archiveFileIds[i] = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileIds[i], s_diskInstance, request, lc);
@@ -2733,25 +2673,8 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   uint64_t archiveFileId;
 
   // Queue an archive request.
-  cta::common::dataStructures::EntryLog creationLog;
-  creationLog.host="host2";
-  creationLog.time=0;
-  creationLog.username="admin1";
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.gid=GROUP_2;
-  diskFileInfo.owner_uid=CMS_USER;
-  diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
   request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-  request.creationLog=creationLog;
-  request.diskFileInfo=diskFileInfo;
-  request.diskFileID="diskFileID";
-  request.fileSize=100*1000*1000;
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = s_userName;
-  requester.group = "userGroup";
-  request.requester = requester;
-  request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
   archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
@@ -3046,28 +2969,14 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
 TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   using namespace cta;
 
-  setupDefaultCatalogue();
+  // reverse order: here we first setup the catalog, then get the scheduler and catalogue, whereas
+  // in our common method, we do the setup step last...
+  // let's see what happens if I swap the order
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
-  cta::common::dataStructures::EntryLog creationLog;
-  creationLog.host="host2";
-  creationLog.time=0;
-  creationLog.username="admin1";
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.gid=GROUP_2;
-  diskFileInfo.owner_uid=CMS_USER;
-  diskFileInfo.path="path/to/file";
-  cta::common::dataStructures::ArchiveRequest request;
+  setupDefaultCatalogue();
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
   request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.creationLog=creationLog;
-  request.diskFileInfo=diskFileInfo;
-  request.diskFileID="diskFileID";
-  request.fileSize=100*1000*1000;
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = s_userName;
-  requester.group = "userGroup";
-  request.requester = requester;
-  request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
   // Create the environment for the migration to happen (library + tape)
@@ -3122,25 +3031,8 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
-  cta::common::dataStructures::EntryLog creationLog;
-  creationLog.host="host2";
-  creationLog.time=0;
-  creationLog.username="admin1";
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.gid=GROUP_2;
-  diskFileInfo.owner_uid=CMS_USER;
-  diskFileInfo.path="path/to/file";
-  cta::common::dataStructures::ArchiveRequest request;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
   request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.creationLog=creationLog;
-  request.diskFileInfo=diskFileInfo;
-  request.diskFileID="diskFileID";
-  request.fileSize=100*1000*1000;
-  cta::common::dataStructures::RequesterIdentity requester;
-  requester.name = s_userName;
-  requester.group = "userGroup";
-  request.requester = requester;
-  request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
   // Create the environment for the migration to happen (library + tape)
