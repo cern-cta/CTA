@@ -70,9 +70,9 @@ public:
    * @return
    */
   uint8_t columnPGUint8(const std::string &colName) const { return 0; };
-  uint8_t columnPGint16(const std::string &colName) const { return 0; };
-  uint8_t columnPGint32(const std::string &colName) const { return 0; };
-  uint8_t columnPGint64(const std::string &colName) const { return 0; };
+  uint8_t columnPGUint16(const std::string &colName) const { return 0; };
+  uint8_t columnPGUint32(const std::string &colName) const { return 0; };
+  uint8_t columnPGUint64(const std::string &colName) const { return 0; };
   std::string columnPGString(const std::string &colName) const { return std::string(); };
   double  columnPGDouble(const std::string& colName) const { return 0; };
   /**
