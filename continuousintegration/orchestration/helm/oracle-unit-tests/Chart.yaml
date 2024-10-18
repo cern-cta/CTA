@@ -4,3 +4,8 @@ version: 0.1.0
 description: A chart for spawning a job that performs the RDBMS unit tests on an oracle database. Requires the catalogue chart to have been installed.
 type: application
 appVersion: "5.11.10.1"
+
+dependencies:
+- name: common
+  version: 0.1.0
+  repository: "file://../common"

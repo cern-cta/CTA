@@ -1,51 +1,11 @@
-{{/* Pick container image. It may be from:
-    - `.Values.image` (Has the highest priority)
-    - `.Values.global.image` (Has lower priority)
-*/}}
-{{- define "oracle-unit-tests.image" -}}
-{{- if and .Values.global .Values.global.image.registry .Values.global.image.repository .Values.global.image.tag -}}
-  {{- $registry := .Values.global.image.registry -}}
-  {{- $repository := .Values.global.image.repository -}}
-  {{- $tag := .Values.global.image.tag | toString -}}
-  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
-{{- else if and .Values.image.registry .Values.image.repository .Values.image.tag -}}
-  {{- $registry := .Values.image.registry -}}
-  {{- $repository := .Values.image.repository -}}
-  {{- $tag := .Values.image.tag | toString -}}
-  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
-{{- else }}
-{{- fail "You must either provide .Values.global.image or .Values.image with registry, repository, and tag values." -}}
-{{- end }}
+{{- define "oracleUnitTest.image" -}}
+  {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{/* Pick image pull policy. It might be from:
-    - .Values.global.image.pullPolicy (Takes priority)
-    - .Values.image.pullPolicy
-*/}}
-{{- define "oracle-unit-tests.imagePullPolicy" -}}
-{{- if and .Values.global .Values.global.image.pullPolicy (not (empty .Values.global.image.pullPolicy)) -}}
-{{- .Values.global.image.pullPolicy | quote -}}
-{{- else if and .Values.image.pullPolicy (not (empty .Values.image.pullPolicy)) -}}
-{{- .Values.image.pullPolicy | quote -}}
-{{- else }}
-"Always"
-{{- end }}
+{{- define "oracleUnitTest.imagePullPolicy" -}}
+  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{/* Pick image pull secrets. It might be from:
-    - .Values.global.image.pullSecrets (Takes priority)
-    - .Values.image.pullSecrets
-*/}}
-{{- define "oracle-unit-tests.imagePullSecrets" -}}
-{{- if and .Values.global .Values.global.image.pullSecrets -}}
-  {{- range .Values.global.image.pullSecrets }}
-    - name: {{ . | quote }}
-  {{- end }}
-{{- else if and .Values.image.pullSecrets -}}
-  {{- range .Values.image.pullSecrets }}
-    - name: {{ . | quote }}
-  {{- end }}
-{{- else }}
-{{- fail "You must provide imagePullSecrets value either in .Values.global.image.pullSecrets or .Values.image.pullSecrets" -}}
-{{- end }}
+{{- define "oracleUnitTest.imagePullSecrets" -}}
+  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}

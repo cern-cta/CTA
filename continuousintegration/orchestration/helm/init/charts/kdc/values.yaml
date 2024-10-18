@@ -1,6 +1,6 @@
 
 nameOverride: kdc
-isPriviliged: false
+isPriviliged: true
 component: kdc
 partOf: init
 
