@@ -87,12 +87,12 @@ public:
 
   // Generic method to handle calls to m_impl
   template <typename ReturnType, typename... Args>
-  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::*func)(Args...) const, Args... args) const {
+  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::*func)(const std::string&) const, const std::string& colName) const {
     try {
       if (nullptr == m_impl) {
         throw InvalidResultSet("This result set is invalid");
       }
-      return (m_impl.get()->*func)(args...); 
+      return (m_impl.get()->*func)(colName);
     } catch (exception::Exception &ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
       throw;
