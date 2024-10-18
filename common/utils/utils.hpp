@@ -245,6 +245,55 @@ namespace cta::utils {
    * @param str The string.
    * @return The unisgned integer.
    */
+  uint8_t toPGUint8(std::string_view str);
+
+  /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
+  uint16_t toPGUint16(std::string_view str);
+
+  /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unsigned integer.
+   */
+  uint32_t toPGUint32(std::string_view str);
+
+  /**
+   * Parses the specified string representation of an unsigned 64-bit integer.
+   *
+   * Please note that "-1" is a valid string and will parse successfully.
+   *
+   * @return The parsed unsigned 64-bit integer.
+   */
+  uint64_t toPGUint64(std::string_view str);
+
+  /**
+   * Parses the specified string representation of a double.
+   *
+   * @return The parsed double.
+   */
+  double toPGDouble(std::string_view str);
+
+  /**
+   * Parses the specified string representation of an unsigned 64-bit integer.
+   *
+   * Please note that "-1" is a valid string and will parse successfully.
+   *
+   * @return The parsed unsigned 64-bit integer.
+   */
+  uint64_t toUint64(const std::string &str);
+
+  /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
   uint8_t toUint8(const std::string &str);
 
   /**

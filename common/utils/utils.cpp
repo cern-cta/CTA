@@ -480,9 +480,9 @@ std::string errnoToString(const int errnoValue) {
 }
 
 //------------------------------------------------------------------------------
-// toUint8
+// toPGUint8
 //------------------------------------------------------------------------------
-uint8_t toUint8(const std::string &str) {
+uint8_t toPGUint8(std::string_view str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer";
@@ -490,7 +490,7 @@ uint8_t toUint8(const std::string &str) {
   }
 
   try {
-    unsigned long value = std::stoul(str);
+    unsigned long value = std::stoul(std::string(str));
 
     if (value > std::numeric_limits<uint8_t>::max()) {
       std::ostringstream msg;
@@ -515,7 +515,7 @@ uint8_t toUint8(const std::string &str) {
 //------------------------------------------------------------------------------
 // toUint16
 //------------------------------------------------------------------------------
-uint16_t toUint16(const std::string &str) {
+uint16_t toPGUint16(std::string_view str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer";
@@ -523,7 +523,7 @@ uint16_t toUint16(const std::string &str) {
   }
 
   try {
-    unsigned long value = std::stoul(str);
+    unsigned long value = std::stoul(std::string(str));
 
     if (value > std::numeric_limits<uint16_t>::max()) {
       std::ostringstream msg;
@@ -544,7 +544,7 @@ uint16_t toUint16(const std::string &str) {
   }
 }
 
-uint32_t toUint32(const std::string &str) {
+uint32_t toPGUint32(std::string_view str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer";
@@ -552,7 +552,7 @@ uint32_t toUint32(const std::string &str) {
   }
 
   try {
-    unsigned long value = std::stoul(str);
+    unsigned long value = std::stoul(std::string(str));
 
     if (value > std::numeric_limits<uint32_t>::max()) {
       std::ostringstream msg;
@@ -573,7 +573,7 @@ uint32_t toUint32(const std::string &str) {
   }
 }
 
-uint64_t toUint64(const std::string &str) {
+uint64_t toPGUint64(std::string_view str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer";
@@ -581,7 +581,7 @@ uint64_t toUint64(const std::string &str) {
   }
 
   try {
-    unsigned long long value = std::stoull(str);
+    unsigned long long value = std::stoull(std::string(str));
 
     if (value > std::numeric_limits<uint64_t>::max()) {
       std::ostringstream msg;
@@ -602,15 +602,14 @@ uint64_t toUint64(const std::string &str) {
   }
 }
 
-double toDouble(const std::string &str) {
+double toPGDouble(std::string_view str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to double: An empty string is not a valid number";
     throw exception::Exception(msg.str());
   }
-
   try {
-    return std::stod(str);
+    return std::stod(std::string(str));
 
   } catch (const std::invalid_argument &) {
     std::ostringstream msg;
@@ -622,9 +621,6 @@ double toDouble(const std::string &str) {
     throw exception::Exception(msg.str());
   }
 }
-
-
-/* OLD INEFFICIENT IMPLEMENTATION
 
 //------------------------------------------------------------------------------
 // toUint8

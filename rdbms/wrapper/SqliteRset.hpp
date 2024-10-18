@@ -65,6 +65,17 @@ public:
   bool next() override;
 
   /**
+   * Place holders for testing new methods implemented and used only for PG
+   * @param colName
+   * @return
+   */
+  uint8_t columnPGUint8(const std::string &colName) const {};
+  uint8_t columnPGint16(const std::string &colName) const {};
+  uint8_t columnPGint32(const std::string &colName) const {};
+  uint8_t columnPGint64(const std::string &colName) const {};
+  uint8_t columnPGString(const std::string &colName) const {};
+  double  columnPGDouble(const std::string& colName) const {};
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
