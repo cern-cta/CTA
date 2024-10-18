@@ -1,12 +1,7 @@
 {{- if .Values.wipeScheduler -}}
-{{$namespace := .Release.Namespace }}
-{{$name := "wipe-scheduler" }}
-# This allows the user to set the configuration using either --set-file or using --values
-{{- $config := .Values.configuration }}
-{{- if eq (typeOf $config) "string" -}}
-  {{- $config = $config | fromYaml }}
-{{- end }}
-# {{- if eq $config.backend "ceph" }}
+{{- $namespace := .Release.Namespace }}
+{{- $name := "wipe-scheduler" }}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -19,8 +14,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: {{ $name }}
-          image: {{ include "wipeImage.url" . }}
-          imagePullPolicy: {{ .Values.wipeImage.pullPolicy }}
+          image: {{ include "schedulerWipe.image" . }}
+          imagePullPolicy: {{ include "schedulerWipe.imagePullPolicy" . }}
           command: ['/opt/run/bin/wipe_scheduler.sh']
           args: []
           securityContext:
@@ -36,16 +31,16 @@ spec:
             - name: WIPE_SCHEDULER
               value: "{{ .Values.wipeScheduler }}"
             - name: SCHEDULER_BACKEND
-              value: {{ $config.backend | quote}}
+              value: {{ $schedulerConfig.backend | quote}}
             - name: SCHEDULER_URL
               value: {{ include "scheduler.url" . | quote}}
-            {{- if eq $config.backend "ceph" }}
+            {{- if eq $schedulerConfig.backend "ceph" }}
             - name: SCHEDULER_CEPH_NAMESPACE
-              value: {{ $config.cephConfig.namespace | quote}}
+              value: {{ $schedulerConfig.cephConfig.namespace | quote}}
             - name: SCHEDULER_CEPH_ID
-              value: {{ $config.cephConfig.id | quote}}
+              value: {{ $schedulerConfig.cephConfig.id | quote}}
             - name: SCHEDULER_CEPH_POOL
-              value: {{ $config.cephConfig.pool | quote}}
+              value: {{ $schedulerConfig.cephConfig.pool | quote}}
             {{- end }}
             {{- if .Values.env }}
             {{ .Values.env | toYaml | nindent 12 }}
@@ -58,13 +53,13 @@ spec:
               name: logstorage
             - mountPath: /shared
               name: shared
-            {{- if eq $config.backend "ceph" }}
+            {{- if eq $schedulerConfig.backend "ceph" }}
             - name: ceph-config
               mountPath: /etc/ceph/ceph.conf
               subPath: ceph.conf
             - name: ceph-config
-              mountPath: /etc/ceph/ceph.client.{{ $config.cephConfig.id }}.keyring
-              subPath: ceph.client.{{ $config.cephConfig.id }}.keyring
+              mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+              subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
             {{- end }}
       volumes:
         - name: scheduler-config
@@ -76,14 +71,11 @@ spec:
         - name: logstorage
           persistentVolumeClaim:
             claimName: claimlogs
-        {{- if eq $config.backend "ceph" }}
+        {{- if eq $schedulerConfig.backend "ceph" }}
         - name: ceph-config
           configMap:
             name: ceph-configmap
         {{- end}}
       imagePullSecrets:
-      {{- range .Values.wipeImage.pullSecrets }}
-      - name: {{ . | quote }}
-      {{- end }}
-# {{- end }}
+      {{- include "schedulerWipe.imagePullSecrets" . | nindent 6 }}
 {{- end }}

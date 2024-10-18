@@ -63,7 +63,7 @@ spec:
       name: yum.repos.d-config
   - name: catalogue-config
     configMap:
-      name: catalogue-configmap
+      name: cta-catalogue-conf
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs

@@ -3,4 +3,4 @@ name: catalogue-updater
 version: 0.1.0
 description: A chart for spawning a catalogue updater. Requires the catalogue chart to have been installed.
 type: application
-appVersion: "1.16.0"
+appVersion: "5.11.10.1"

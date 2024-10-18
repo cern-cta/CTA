@@ -16,14 +16,22 @@ postgresql:postgresql://{{ $config.postgresConfig.username }}:{{ $config.postgre
 {{- end }}
 {{- end }}
 
-{{/* Set container image for the init job */}}
-{{- define "wipeImage.url" -}}
-{{- if and .Values.wipeImage.registry .Values.wipeImage.repository .Values.wipeImage.tag -}}
-  {{- $registry := .Values.wipeImage.registry -}}
-  {{- $repository := .Values.wipeImage.repository -}}
-  {{- $tag := .Values.wipeImage.tag -}}
-  {{- printf "%s/%s:%s" $registry $repository $tag | quote -}}
-{{- else }}
-{{- fail "You must provide .Values.wipeImage with registry, repository, and tag values." -}}
+{{- define "schedulerWipe.image" -}}
+  {{ include "common.images.image" (dict "imageRoot" .Values.wipeImage ) }}
 {{- end }}
+
+{{- define "schedulerWipe.imagePullPolicy" -}}
+  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.wipeImage ) }}
+{{- end }}
+
+{{- define "schedulerWipe.imagePullSecrets" -}}
+  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.wipeImage ) }}
+{{- end }}
+
+{{- define "scheduler.config" -}}
+  {{- $schedulerConfig := .Values.configuration }}
+  {{- if ne (typeOf $schedulerConfig) "string" -}}
+    {{- $schedulerConfig = $schedulerConfig | toYaml }}
+  {{- end }}
+  {{- $schedulerConfig -}}
 {{- end }}

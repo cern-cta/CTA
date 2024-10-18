@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "component": {
+      "type": "string",
+      "description": "The component of the application (e.g., frontend, backend, database)"
+    },
+    "partOf": {
+      "type": "string",
+      "description": "The larger system that this application is part of (e.g., CTA)"
+    }
+  },
+  "required": ["component", "partOf"]
+}
