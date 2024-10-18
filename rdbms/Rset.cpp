@@ -73,27 +73,27 @@ Rset &Rset::operator=(Rset &&rhs) {
 // and handling null case within the implementation
 //------------------------------------------------------------------------------
 
-uint8_t columnPGUint8(const std::string &colName) const {
+uint8_t Rset::columnPGUint8(const std::string &colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGUint8, colName);
 }
 
-uint16_t columnPGUint16(const std::string &colName) const {
+uint16_t Rset::columnPGUint16(const std::string &colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGUint16, colName);
 }
 
-uint32_t columnPGUint32(const std::string &colName) const {
+uint32_t Rset::columnPGUint32(const std::string &colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGUint32, colName);
 }
 
-uint64_t columnPGUint64(const std::string &colName) const {
+uint64_t Rset::columnPGUint64(const std::string &colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGUint64, colName);
 }
 
-std::string columnPGString(const std::string &colName) const {
+std::string Rset::columnPGString(const std::string &colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGString, colName);
 }
 
-double columnPGDouble(const std::string& colName) const {
+double Rset::columnPGDouble(const std::string& colName) const {
   return callImpl(&wrapper::RsetWrapper::columnPGDouble, colName);
 }
 
