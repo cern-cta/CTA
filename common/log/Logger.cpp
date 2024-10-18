@@ -45,12 +45,12 @@ Logger::~Logger() = default;
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
+  // Ignore messages whose priority is not of interest
+  if(priority > m_logMask) return;
+
   // Get current time with high precision
   auto timeStamp = std::chrono::system_clock::now();
   const int pid = getpid();
-
-  // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) return;
 
   // Try to find the textual representation of the syslog priority
   std::map<int, std::string>::const_iterator priorityTextPair =
