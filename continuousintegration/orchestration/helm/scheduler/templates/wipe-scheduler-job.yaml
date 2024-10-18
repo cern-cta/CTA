@@ -21,7 +21,7 @@ spec:
         - name: {{ $name }}
           image: {{ include "wipeImage.url" . }}
           imagePullPolicy: {{ .Values.wipeImage.pullPolicy }}
-          command: ['/opt/run/bin/setup_scheduler.sh']
+          command: ['/opt/run/bin/wipe_scheduler.sh']
           args: []
           securityContext:
             privileged: {{ .Values.isPriviliged }}
