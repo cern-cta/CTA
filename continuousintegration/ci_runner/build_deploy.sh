@@ -279,7 +279,7 @@ compile_deploy() {
   if [ ${skip_deploy} = false ]; then
 
 
-    local redeploy_flags="--wipe-catalogue --wipe-scheduler"
+    local redeploy_flags=""
     if [ ${skip_image_reload} = true ]; then
       redeploy_flags+=" --skip-image-reload"
     fi
@@ -290,6 +290,7 @@ compile_deploy() {
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
       --catalogue-config "${catalogue_config}" \
       --scheduler-config "${scheduler_config}" \
+      --spawn-options " --wipe-catalogue --wipe-scheduler" \
       ${redeploy_flags}
   fi
 }
