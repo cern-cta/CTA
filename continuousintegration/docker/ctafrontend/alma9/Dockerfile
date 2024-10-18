@@ -26,6 +26,9 @@ ENV LOCALORCHESTRATIONDIR="/opt/ci" \
 ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
 ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
 
+RUN echo "YUM_REPOS_DIR is: ${YUM_REPOS_DIR}"
+RUN echo "YUM_VERSIONLOCK_FILE is: ${YUM_VERSIONLOCK_FILE}"
+
 # Manage repos before running yum
 COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
 COPY ${YUM_VERSIONLOCK_FILE}  /etc/dnf/plugins/versionlock.list

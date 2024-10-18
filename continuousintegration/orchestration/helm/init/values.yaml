@@ -1,0 +1,29 @@
+
+nameOverride: init
+component: init
+partOf: init
+
+# Storage for the shared logs of the deployment
+logStorage: "2Gi"
+# Storage for the EOS FSTs
+fstStorage: "3Gi"
+
+global:
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets:
+    - ctaregsecret
+
+
+# This can either be provided via --set-file or specified directly here
+tapeConfig:
+  library:
+    type: ""
+    name: ""
+    device: ""
+    drivenames: []
+    drivedevices: []
+    tapes: []

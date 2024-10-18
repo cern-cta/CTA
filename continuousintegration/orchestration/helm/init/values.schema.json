@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "component": {
+      "type": "string",
+      "description": "The component of the application (e.g., frontend, backend, database)"
+    },
+    "partOf": {
+      "type": "string",
+      "description": "The larger system that this application is part of (e.g., CTA)"
+    },
+    "tapeConfig": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Library configuration provided as a string (via --set-file)."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "library": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The type of library (e.g., mhvtl)"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the library (e.g., VLSTK10)"
+                },
+                "device": {
+                  "type": "string",
+                  "description": "The device associated with the library (e.g., sg0)"
+                },
+                "drivenames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "A list of drive names (e.g., VDSTK01, VDSTK02)"
+                },
+                "drivedevices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "A list of drive device names (e.g., nst2, nst0)"
+                },
+                "tapes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "A list of tapes (e.g., V00101, V00102)"
+                }
+              },
+              "required": ["type", "name", "device"],
+              "description": "Library configuration containing type, name, device, drive names, drive devices, and tapes."
+            }
+          },
+          "required": ["library"]
+        }
+      ]
+    }
+  },
+  "required": ["component", "partOf", "tapeConfig"]
+}

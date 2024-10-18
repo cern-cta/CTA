@@ -123,7 +123,7 @@ spec:
   volumes:
   - name: catalogue-config
     configMap:
-      name: catalogue-configmap
+      name: cta-catalogue-conf
   - name: scheduler-config
     configMap:
       name: scheduler-configmap

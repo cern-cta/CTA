@@ -1,20 +1,22 @@
 
 nameOverride: catalogue
-isPriviliged: true
-wipeCatalogue: true
+wipeCatalogue: false
+component: catalogue
+partOf: cta
 
 wipeImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""
   pullPolicy: IfNotPresent
-  pullSecrets: 
-    - ctaregsecret
+  pullSecrets:
+  - ctaregsecret
 
 # TODO: is this the best place to put/name this?
 catalogueServicePort: 5432
 schemaVersion: ""
 
+# This can either be provided via --set-file or specified directly here
 configuration:
   backend: "" # Can be sqlite, orale or postgres.
   oracleConfig:
@@ -28,5 +30,3 @@ configuration:
     database: ""
   sqliteConfig:
     filepath: ""
-
-env: []

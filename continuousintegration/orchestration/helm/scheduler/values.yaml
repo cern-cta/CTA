@@ -1,19 +1,19 @@
 
 nameOverride: scheduler
-isPriviliged: true
-wipeScheduler: true
+wipeScheduler: false
+component: scheduler
+partOf: cta
 
 wipeImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""
   pullPolicy: IfNotPresent
-  pullSecrets: 
-    - ctaregsecret
-
+  pullSecrets:
+  - ctaregsecret
 
 configuration:
-  backend: ceph  # Options: file, ceph, postgres
+  backend: "" # Options: file, ceph, postgres
   cephConfig:
     mon: ""
     monport: ""
@@ -28,5 +28,3 @@ configuration:
     server: ""
   fileConfig:
     path: ""
-
-env: []

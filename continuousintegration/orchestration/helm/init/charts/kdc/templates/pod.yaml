@@ -1,0 +1,46 @@
+{{- $namespace := .Release.Namespace }}
+{{- $accountName := .Values.serviceAccount.name }}
+{{- $name := include "kdc.name" . }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace | quote}}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceAccountName: {{ $accountName }}
+  restartPolicy: Never
+  containers:
+  - name: {{ $name }}
+    image: {{ include "kdc.image" . }}
+    imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
+    stdin: true
+    env:
+    - name: MY_NAME
+      value: {{ $name }}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote}}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote}}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
+    {{- end}}
+    {{- if (.Values.customEntrypoint)}}
+    command: {{.Values.customEntrypoint.command }}
+    args: {{.Values.customEntrypoint.args }}
+    {{- end}}
+    readinessProbe:
+      exec:
+        command: {{ .Values.readinessProbe.commandsAtRuntime | toJson }}
+      initialDelaySeconds: {{ .Values.readinessProbe.delay }}
+      periodSeconds: 10
+      failureThreshold: {{ .Values.readinessProbe.failureTolerance }}
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
+    volumeMounts:
+    {{- include "kdc.volumeMounts" . | nindent 4 }}
+  volumes:
+  {{- include "kdc.volumes" . | nindent 2 }}
+  imagePullSecrets:
+  {{- include "kdc.imagePullSecrets" . | nindent 4 }}
