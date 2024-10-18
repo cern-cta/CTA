@@ -348,7 +348,7 @@ public:
     return tapeDrive;
   }
 
-  cta::common::dataStructures::ArchiveRequest createArchiveRequest() {
+  template<typename T> cta::common::dataStructures::ArchiveRequest createArchiveRequest(std::string storageClass, T checksumBlob) {
     cta::common::dataStructures::EntryLog creationLog;
     creationLog.host="host2";
     creationLog.time=0;
@@ -367,6 +367,8 @@ public:
     requester.group = "userGroup";
     request.requester = requester;
     request.srcURL="srcURL";
+    request.storageClass = storageClass;
+    request.checksumBlob.insert(cta::checksum::ADLER32, checksumBlob);
     return request;
   }
 
@@ -404,9 +406,7 @@ public:
     uint64_t archiveFileId;
     {
       // Queue an archive request.
-      cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-      request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-      request.storageClass=s_storageClassName;
+      cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, 0x1234abcd);
       archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
       scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
     }
@@ -475,9 +475,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
-  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.storageClass=s_storageClassName;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, "1111");
 
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
@@ -1214,9 +1212,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=dualCopyStorageClassName;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(dualCopyStorageClassName, 0x1234abcd);
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1509,9 +1505,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=s_storageClassName;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, 0x1234abcd);
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1729,9 +1723,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-    request.storageClass=s_storageClassName;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, 0x1234abcd);
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1955,9 +1947,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   uint64_t archiveFileId;
   {
     // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-    request.storageClass=s_storageClassName;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, "1111");
     request.archiveErrorReportURL="null:";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
@@ -2039,9 +2029,7 @@ TEST_P(SchedulerTest, showqueues) {
   uint64_t archiveFileId __attribute__((unused));
   {
     // Queue an archive request.
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-    request.storageClass=s_storageClassName;
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, "1111");
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -4214,12 +4202,10 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
     diskFileInfo.path="path/to/file";
     diskFileInfo.path += std::to_string(i);
-    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, 0x1234abcd);
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.diskFileID += std::to_string(i);
-    request.storageClass=s_storageClassName;
     archiveFileIds[i] = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileIds[i], s_diskInstance, request, lc);
   }
@@ -5504,9 +5490,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   uint64_t archiveFileId;
 
   // Queue an archive request.
-  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-  request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
-  request.storageClass=s_storageClassName;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, 0x1234abcd);
   archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
@@ -5949,9 +5933,7 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount){
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
-  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.storageClass=s_storageClassName;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, "1111");
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
@@ -7103,9 +7085,7 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled){
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
-  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
-  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
-  request.storageClass=s_storageClassName;
+  cta::common::dataStructures::ArchiveRequest request = createArchiveRequest(s_storageClassName, "1111");
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
