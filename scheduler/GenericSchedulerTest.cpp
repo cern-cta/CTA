@@ -2921,12 +2921,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
 TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   using namespace cta;
 
-  // reverse order: here we first setup the catalog, then get the scheduler and catalogue, whereas
-  // in our common method, we do the setup step last...
-  // let's see what happens if I swap the order
+  setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
   auto & catalogue = getCatalogue();
-  setupDefaultCatalogue();
   cta::common::dataStructures::ArchiveRequest request = createArchiveRequest();
   request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
   request.storageClass=s_storageClassName;
