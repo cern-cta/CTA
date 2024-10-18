@@ -140,7 +140,7 @@ public:
   uint8_t columnPGint16(const std::string &colName) const;
   uint8_t columnPGint32(const std::string &colName) const;
   uint8_t columnPGint64(const std::string &colName) const;
-  uint8_t columnPGString(const std::string &colName) const;
+  std::string columnPGString(const std::string &colName) const;
   double  columnPGDouble(const std::string& colName) const;
 
   /**
