@@ -483,6 +483,153 @@ std::string errnoToString(const int errnoValue) {
 // toUint8
 //------------------------------------------------------------------------------
 uint8_t toUint8(const std::string &str) {
+  if (str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  try {
+    unsigned long value = std::stoul(str);
+
+    if (value > std::numeric_limits<uint8_t>::max()) {
+      std::ostringstream msg;
+      msg << "Failed to convert '" << str << "' to uint8_t: Number too big";
+      throw exception::Exception(msg.str());
+    }
+
+    return static_cast<uint8_t>(value);
+
+  } catch (const std::invalid_argument &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint8_t: Invalid number format";
+    throw exception::Exception(msg.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint8_t: Value out of range";
+    throw exception::Exception(msg.str());
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// toUint16
+//------------------------------------------------------------------------------
+uint16_t toUint16(const std::string &str) {
+  if (str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  try {
+    unsigned long value = std::stoul(str);
+
+    if (value > std::numeric_limits<uint16_t>::max()) {
+      std::ostringstream msg;
+      msg << "Failed to convert '" << str << "' to uint16_t: Number too big";
+      throw exception::Exception(msg.str());
+    }
+
+    return static_cast<uint16_t>(value);
+
+  } catch (const std::invalid_argument &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint16_t: Invalid number format";
+    throw exception::Exception(msg.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint16_t: Value out of range";
+    throw exception::Exception(msg.str());
+  }
+}
+
+uint32_t toUint32(const std::string &str) {
+  if (str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  try {
+    unsigned long value = std::stoul(str);
+
+    if (value > std::numeric_limits<uint32_t>::max()) {
+      std::ostringstream msg;
+      msg << "Failed to convert '" << str << "' to uint32_t: Number too big";
+      throw exception::Exception(msg.str());
+    }
+
+    return static_cast<uint32_t>(value);
+
+  } catch (const std::invalid_argument &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint32_t: Invalid number format";
+    throw exception::Exception(msg.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint32_t: Value out of range";
+    throw exception::Exception(msg.str());
+  }
+}
+
+uint64_t toUint64(const std::string &str) {
+  if (str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  try {
+    unsigned long long value = std::stoull(str);
+
+    if (value > std::numeric_limits<uint64_t>::max()) {
+      std::ostringstream msg;
+      msg << "Failed to convert '" << str << "' to uint64_t: Number too big";
+      throw exception::Exception(msg.str());
+    }
+
+    return static_cast<uint64_t>(value);
+
+  } catch (const std::invalid_argument &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint64_t: Invalid number format";
+    throw exception::Exception(msg.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint64_t: Value out of range";
+    throw exception::Exception(msg.str());
+  }
+}
+
+double toDouble(const std::string &str) {
+  if (str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to double: An empty string is not a valid number";
+    throw exception::Exception(msg.str());
+  }
+
+  try {
+    return std::stod(str);
+
+  } catch (const std::invalid_argument &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to double: Invalid number format";
+    throw exception::Exception(msg.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to double: Value out of range";
+    throw exception::Exception(msg.str());
+  }
+}
+
+
+/* OLD INEFFICIENT IMPLEMENTATION
+
+//------------------------------------------------------------------------------
+// toUint8
+//------------------------------------------------------------------------------
+uint8_t toUint8(const std::string &str) {
   if(str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint8_t: An empty string is not"
@@ -515,9 +662,6 @@ uint8_t toUint8(const std::string &str) {
   return value;
 }
 
-//------------------------------------------------------------------------------
-// toUint16
-//------------------------------------------------------------------------------
 uint16_t toUint16(const std::string &str) {
   if(str.empty()) {
     std::ostringstream msg;
@@ -586,6 +730,47 @@ uint32_t toUint32(const std::string &str) {
 
   return value;
 }
+
+//------------------------------------------------------------------------------
+// toUint64
+//------------------------------------------------------------------------------
+uint64_t toUint64(const std::string &str) {
+  try {
+    try {
+      return std::stoul(str);
+    } catch(std::invalid_argument &) {
+      throw exception::Exception("Invalid uint64");
+    } catch(std::out_of_range &) {
+      throw exception::Exception("Out of range");
+    } catch(std::exception &se) {
+      throw exception::Exception(se.what());
+    }
+  } catch(exception::Exception  &ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as an unsigned 64-bit integer: " +
+      ex.getMessage().str());
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// toDouble
+//------------------------------------------------------------------------------
+double toDouble(const std::string &str) {
+  try {
+    try {
+      return std::stod(str);
+    } catch(std::invalid_argument &) {
+      throw exception::Exception("Invalid double");
+    } catch(std::out_of_range &) {
+      throw exception::Exception("Out of range");
+    } catch(std::exception &se) {
+      throw exception::Exception(se.what());
+    }
+  } catch(exception::Exception  &ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
+      ex.getMessage().str());
+  }
+}*/
 
 //------------------------------------------------------------------------------
 // toUid
@@ -682,26 +867,6 @@ bool isValidUInt(const std::string &str) {
 }
 
 //------------------------------------------------------------------------------
-// toUint64
-//------------------------------------------------------------------------------
-uint64_t toUint64(const std::string &str) {
-  try {
-    try {
-      return std::stoul(str);
-    } catch(std::invalid_argument &) {
-      throw exception::Exception("Invalid uint64");
-    } catch(std::out_of_range &) {
-      throw exception::Exception("Out of range");
-    } catch(std::exception &se) {
-      throw exception::Exception(se.what());
-    }
-  } catch(exception::Exception  &ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str + " as an unsigned 64-bit integer: " +
-      ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // isValidDecimal
 //------------------------------------------------------------------------------
 bool isValidDecimal(const std::string &str) {
@@ -734,26 +899,6 @@ bool isValidDecimal(const std::string &str) {
   }
 
   return true;
-}
-
-//------------------------------------------------------------------------------
-// toDouble
-//------------------------------------------------------------------------------
-double toDouble(const std::string &str) {
-  try {
-    try {
-      return std::stod(str);
-    } catch(std::invalid_argument &) {
-      throw exception::Exception("Invalid double");
-    } catch(std::out_of_range &) {
-      throw exception::Exception("Out of range");
-    } catch(std::exception &se) {
-      throw exception::Exception(se.what());
-    }
-  } catch(exception::Exception  &ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
-      ex.getMessage().str());
-  }
 }
 
 //------------------------------------------------------------------------------
