@@ -177,7 +177,7 @@ namespace cta::schedulerdb::postgres {
       copyNb = rset.columnUint16NoOpt("COPY_NB");
       startTime = rset.columnUint64NoOpt("START_TIME");
       archiveFile.checksumBlob.deserialize(
-              std::move(rset.columnBlob("CHECKSUMBLOB")));
+              std::move(rset.columnBoolNoOpt("CHECKSUMBLOB")));
       archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
       archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
       archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
