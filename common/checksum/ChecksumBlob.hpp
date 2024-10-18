@@ -104,6 +104,10 @@ public:
   void deserialize(const std::string &bytearray);
 
   /*!
+  * Deserialize from a byte array with move semantics to avoid extra copies
+  */
+  void deserialize(std::string&& bytearray);
+  /*!
    * Deserialize from a byte array. In case of an invalid byte array, use the supplied Adler32 value instead.
    */
   void deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32);

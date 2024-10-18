@@ -162,50 +162,50 @@ namespace cta::schedulerdb::postgres {
     }
 
     ArchiveJobQueueRow &operator=(const rdbms::Rset &rset) {
-      jobId = rset.columnPGUint64("JOB_ID");
-      reqId = rset.columnPGUint64("ARCHIVE_REQUEST_ID");
-      reqJobCount = rset.columnPGUint32("REQUEST_JOB_COUNT");
-      mountId = std::move(rset.columnOptionalUint64("MOUNT_ID"));
-      status = std::move(from_string<ArchiveJobStatus>(
-              rset.columnPGString("STATUS")));
-      tapePool = std::move(rset.columnPGString("TAPE_POOL"));
-      mountPolicy = std::move(rset.columnPGString("MOUNT_POLICY"));
-      priority = rset.columnUint16("PRIORITY");
-      minArchiveRequestAge = rset.columnPGUint32("MIN_ARCHIVE_REQUEST_AGE");
-      archiveFile.archiveFileID = rset.columnPGUint64("ARCHIVE_FILE_ID");
-      archiveFile.fileSize = rset.columnPGUint64("SIZE_IN_BYTES");
-      copyNb = rset.columnUint16("COPY_NB");
-      startTime = rset.columnPGUint64("START_TIME");
+      jobId = rset.columnUint64NoOpt("JOB_ID");
+      reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
+      reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
+      mountId = rset.columnOptionalUint64("MOUNT_ID");
+      status = from_string<ArchiveJobStatus>(
+              rset.columnStringNoOpt("STATUS");
+      tapePool = rset.columnStringNoOpt("TAPE_POOL");
+      mountPolicy = rset.columnStringNoOpt("MOUNT_POLICY");
+      priority = rset.columnUint16NoOpt("PRIORITY");
+      minArchiveRequestAge = rset.columnUint32NoOpt("MIN_ARCHIVE_REQUEST_AGE");
+      archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
+      archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
+      copyNb = rset.columnUint16NoOpt("COPY_NB");
+      startTime = rset.columnUint64NoOpt("START_TIME");
       archiveFile.checksumBlob.deserialize(
               std::move(rset.columnBlob("CHECKSUMBLOB")));
-      archiveFile.creationTime = rset.columnPGUint64("CREATION_TIME");
-      archiveFile.diskInstance = std::move(rset.columnPGString("DISK_INSTANCE"));
-      archiveFile.diskFileId = std::move(rset.columnPGString("DISK_FILE_ID"));
-      archiveFile.diskFileInfo.owner_uid = rset.columnPGUint32("DISK_FILE_OWNER_UID");
-      archiveFile.diskFileInfo.gid = rset.columnPGUint32("DISK_FILE_GID");
-      archiveFile.diskFileInfo.path = std::move(rset.columnPGString("DISK_FILE_PATH"));
-      archiveReportUrl = std::move(rset.columnPGString("ARCHIVE_REPORT_URL"));
-      archiveErrorReportUrl = std::move(rset.columnPGString("ARCHIVE_ERROR_REPORT_URL"));
-      requesterName = std::move(rset.columnPGString("REQUESTER_NAME"));
-      requesterGroup = std::move(rset.columnPGString("REQUESTER_GROUP"));
-      srcUrl = std::move(rset.columnPGString("SRC_URL"));
-      archiveFile.storageClass = std::move(rset.columnPGString("STORAGE_CLASS"));
-      is_reporting = rset.columnBool("IS_REPORTING");
-      in_drive_queue = rset.columnBool("IN_DRIVE_QUEUE");
-      vid = std::move(rset.columnPGString("VID"));
-      drive = std::move(rset.columnPGString("DRIVE"));
-      host = std::move(rset.columnPGString("HOST"));
-      mount_type = std::move(rset.columnPGString("MOUNT_TYPE"));
-      logical_library = std::move(rset.columnPGString("LOGICAL_LIBRARY"));
+      archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
+      archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
+      archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
+      archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
+      archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
+      archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
+      archiveReportUrl = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
+      archiveErrorReportUrl = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
+      requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
+      requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
+      srcUrl = rset.columnStringNoOpt("SRC_URL");
+      archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
+      is_reporting = rset.columnBoolNoOpt("IS_REPORTING");
+      in_drive_queue = rset.columnBoolNoOpt("IN_DRIVE_QUEUE");
+      vid = rset.columnStringNoOpt("VID");
+      drive = rset.columnStringNoOpt("DRIVE");
+      host = rset.columnStringNoOpt("HOST");
+      mount_type = rset.columnStringNoOpt("MOUNT_TYPE");
+      logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
       failureLogs = std::move(rset.columnOptionalString("FAILURE_LOG"));
       reportFailureLogs = std::move(rset.columnOptionalString("REPORT_FAILURE_LOG"));
-      lastMountWithFailure = rset.columnPGUint32("LAST_MOUNT_WITH_FAILURE");
-      retriesWithinMount = rset.columnUint16("RETRIES_WITHIN_MOUNT");
-      maxRetriesWithinMount = rset.columnUint16("MAX_RETRIES_WITHIN_MOUNT");
-      totalRetries = rset.columnUint16("TOTAL_RETRIES");
-      maxReportRetries = rset.columnUint16("MAX_REPORT_RETRIES");
-      maxTotalRetries = rset.columnUint16("MAX_TOTAL_RETRIES");
-      totalReportRetries = rset.columnUint16("TOTAL_REPORT_RETRIES");
+      lastMountWithFailure = rset.columnUint32NoOpt("LAST_MOUNT_WITH_FAILURE");
+      retriesWithinMount = rset.columnUint16NoOpt("RETRIES_WITHIN_MOUNT");
+      maxRetriesWithinMount = rset.columnUint16NoOpt("MAX_RETRIES_WITHIN_MOUNT");
+      totalRetries = rset.columnUint16NoOpt("TOTAL_RETRIES");
+      maxReportRetries = rset.columnUint16NoOpt("MAX_REPORT_RETRIES");
+      maxTotalRetries = rset.columnUint16NoOpt("MAX_TOTAL_RETRIES");
+      totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
       return *this;
     }
 

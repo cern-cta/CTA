@@ -78,12 +78,20 @@ public:
   std::string columnBlob(const std::string &colName) const override;
 
   /**
+    * Returns the value of the specified column as a binary string (byte array).
+    *
+    * @param colName The name of the column.
+    * @return The string value of the specified column.
+    */
+  bool columnBoolNoOpt(const std::string &colName) const;
+
+  /**
    * Returns the value of the specified column as a string.
    *
    * @param colName
    * @return
    */
-  std::string columnPGString(const std::string& colName) const;
+  std::string columnStringNoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -91,7 +99,7 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnPGUint8(const std::string& colName) const;
+  uint8_t columnUint8NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -99,7 +107,7 @@ public:
    * @param colName
    * @return
    */
-  uint16_t columnPGUint16(const std::string& colName) const;
+  uint16_t columnUint16NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -107,7 +115,7 @@ public:
    * @param colName
    * @return
    */
-  uint32_t columnPGUint32(const std::string& colName) const;
+  uint32_t columnUint32NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -115,7 +123,7 @@ public:
    * @param colName
    * @return
    */
-  uint64_t columnPGUint64(const std::string& colName) const;
+  uint64_t columnUint64NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an double.
@@ -123,7 +131,7 @@ public:
    * @param colName
    * @return
    */
-  double columnPGDouble(const std::string& colName) const;
+  double columnDoubleNoOpt(const std::string& colName) const;
   /**
    * Returns the value of the specified column as a string.
    *
