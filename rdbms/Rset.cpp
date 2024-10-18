@@ -78,15 +78,15 @@ uint8_t Rset::columnUint8NoOpt(const std::string &colName) const {
 }
 
 uint16_t Rset::columnUint16NoOpt(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
+  return callImpl(&wrapper::RsetWrapper::columnUint16NoOpt, colName);
 }
 
 uint32_t Rset::columnUint32NoOpt(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
+  return callImpl(&wrapper::RsetWrapper::columnUint32NoOpt, colName);
 }
 
 uint64_t Rset::columnUint64NoOpt(const std::string &colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
+  return callImpl(&wrapper::RsetWrapper::columnUint64NoOpt, colName);
 }
 
 std::string Rset::columnStringNoOpt(const std::string &colName) const {
