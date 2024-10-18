@@ -69,12 +69,12 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnPGUint8(const std::string &colName) const {};
-  uint8_t columnPGint16(const std::string &colName) const {};
-  uint8_t columnPGint32(const std::string &colName) const {};
-  uint8_t columnPGint64(const std::string &colName) const {};
-  uint8_t columnPGString(const std::string &colName) const {};
-  double  columnPGDouble(const std::string& colName) const {};
+  uint8_t columnPGUint8(const std::string &colName) const { return 0; };
+  uint8_t columnPGint16(const std::string &colName) const { return 0; };
+  uint8_t columnPGint32(const std::string &colName) const { return 0; };
+  uint8_t columnPGint64(const std::string &colName) const { return 0; };
+  uint8_t columnPGString(const std::string &colName) const { return ""; };
+  double  columnPGDouble(const std::string& colName) const { return 0; };
   /**
    * Returns true if the specified column contains a null value.
    *

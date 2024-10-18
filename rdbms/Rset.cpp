@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/InvalidResultSet.hpp"
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/Rset.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
