@@ -235,6 +235,7 @@ create_instance() {
                                   --set wipeCatalogue=${wipe_catalogue} \
                                   --set-file configuration=${catalogue_config} \
                                   --wait --wait-for-jobs --timeout 2m)
+
     (set -x; helm ${helm_command} scheduler-${namespace} helm/scheduler \
                                   --namespace ${namespace} \
                                   --set wipeImage.registry="${registry_host}" \
@@ -242,7 +243,6 @@ create_instance() {
                                   --set wipeScheduler=${wipe_scheduler} \
                                   --set-file configuration=${scheduler_config} \
                                   --wait --wait-for-jobs --timeout 2m)
-    exit
   fi
   echo ""
   echo "Processing dependencies of cta chart..."

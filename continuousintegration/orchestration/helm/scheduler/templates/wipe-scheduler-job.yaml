@@ -19,7 +19,7 @@ spec:
           command: ['/opt/run/bin/wipe_scheduler.sh']
           args: []
           securityContext:
-            privileged: {{ .Values.isPriviliged }}
+            privileged: true
           stdin: true
           env:
             - name: MY_NAME

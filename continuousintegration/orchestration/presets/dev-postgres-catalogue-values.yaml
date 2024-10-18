@@ -3,4 +3,4 @@ postgresConfig:
   username: cta
   password: cta
   database: cta
-  server: postgres
+  server: postgres-catalogue

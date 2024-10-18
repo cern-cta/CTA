@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etc-cta-ctacli
+  name: cta-cli-conf
   labels:
     app.kubernetes.io/name: {{ include "ctacli.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
