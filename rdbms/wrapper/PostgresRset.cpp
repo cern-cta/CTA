@@ -17,6 +17,7 @@
 
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
