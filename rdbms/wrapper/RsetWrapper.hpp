@@ -56,9 +56,9 @@ public:
    * @return
    */
   virtual uint8_t columnPGUint8(const std::string &colName) const = 0;
-  virtual uint8_t columnPGUint16(const std::string &colName) const = 0;
-  virtual uint8_t columnPGUint32(const std::string &colName) const = 0;
-  virtual uint8_t columnPGUint64(const std::string &colName) const = 0;
+  virtual uint16_t columnPGUint16(const std::string &colName) const = 0;
+  virtual uint32_t columnPGUint32(const std::string &colName) const = 0;
+  virtual uint64_t columnPGUint64(const std::string &colName) const = 0;
   virtual std::string columnPGString(const std::string &colName) const = 0;
   virtual double  columnPGDouble(const std::string& colName) const = 0;
 

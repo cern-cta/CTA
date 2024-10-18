@@ -137,9 +137,9 @@ public:
    * @return
    */
   uint8_t columnPGUint8(const std::string &colName) const;
-  uint8_t columnPGUint16(const std::string &colName) const;
-  uint8_t columnPGUint32(const std::string &colName) const;
-  uint8_t columnPGUint64(const std::string &colName) const;
+  uint16_t columnPGUint16(const std::string &colName) const;
+  uint32_t columnPGUint32(const std::string &colName) const;
+  uint64_t columnPGUint64(const std::string &colName) const;
   std::string columnPGString(const std::string &colName) const;
   double  columnPGDouble(const std::string& colName) const;
 
