@@ -51,6 +51,18 @@ public:
   virtual bool next() = 0;
 
   /**
+   * Place holders for testing new methods implemented and used only for PG
+   * @param colName
+   * @return
+   */
+  virtual uint8_t columnPGUint8(const std::string &colName) const = 0;
+  virtual uint8_t columnPGUint16(const std::string &colName) const = 0;
+  virtual uint8_t columnPGUint32(const std::string &colName) const = 0;
+  virtual uint8_t columnPGUint64(const std::string &colName) const = 0;
+  virtual std::string columnPGString(const std::string &colName) const = 0;
+  virtual double  columnPGDouble(const std::string& colName) const = 0;
+
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
