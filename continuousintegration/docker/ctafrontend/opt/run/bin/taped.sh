@@ -42,7 +42,7 @@ echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVENAMES[${driveslot}]}.conf"
 
 # cta-taped setup
-echo "taped BufferSizeBytes 262144" > "${TAPED_CONF_FILE}"
+echo "taped BufferSizeBytes 5242880" > "${TAPED_CONF_FILE}"
 echo "taped BufferCount 200" >> "${TAPED_CONF_FILE}"
 echo "taped MountCriteria 2000000, 100" >> "${TAPED_CONF_FILE}"
 echo "taped WatchdogIdleSessionTimer 2" >> "${TAPED_CONF_FILE}" # Make tape servers more responsive, thus improving CI test speed
@@ -55,6 +55,9 @@ echo "taped DriveControlPath smc${driveslot}" >> "${TAPED_CONF_FILE}"
 # Decrease schedulerDB cache timeout for tests
 echo "taped TapeCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
 echo "taped RetrieveQueueCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
+echo "taped ArchiveFlushBytesFiles 32000000000,5000" >> "${TAPED_CONF_FILE}"
+echo "taped ArchiveFetchBytesFiles 80000000000,20000" >> "${TAPED_CONF_FILE}"
+echo "taped NbDiskThreads 2" >> "${TAPED_CONF_FILE}"
 
 echo "general InstanceName CI" >> "${TAPED_CONF_FILE}"
 echo "general SchedulerBackendName VFS" >> "${TAPED_CONF_FILE}"
