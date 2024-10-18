@@ -116,10 +116,8 @@ std::string PostgresRset::columnPGString(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    // Construct the string efficiently without strlen since the length is known to PG
-    size_t length = PQgetlength(m_resItr->get(), 0, ifield);
 
-    return std::move(std::string(cstrValue, length));
+    return std::string(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -138,9 +136,7 @@ uint8_t PostgresRset::columnPGUint8(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
-
-    return utils::toUint8(stringValue);
+    return utils::toPGUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -159,9 +155,8 @@ uint16_t PostgresRset::columnPGUint16(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
 
-    return utils::toUint16(stringValue);
+    return utils::toPGUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -180,9 +175,8 @@ uint32_t PostgresRset::columnPGUint32(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
 
-    return utils::toUint32(stringValue);
+    return utils::toPGUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -201,9 +195,8 @@ uint64_t PostgresRset::columnPGUint64(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
 
-    return utils::toUint64(stringValue);
+    return utils::toPGUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -222,9 +215,8 @@ double PostgresRset::columnPGDouble(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
 
-    return utils::toDouble(stringValue);
+    return utils::toPGDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;

@@ -69,6 +69,35 @@ Rset &Rset::operator=(Rset &&rhs) {
   }
   return *this;
 }
+//------------------------------------------------------------------------------
+// Testing new PG implementation of the methods without passing through optionals
+// and handling null case within the implementation
+//------------------------------------------------------------------------------
+
+uint8_t columnPGUint8(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGUint8, colName);
+}
+
+uint16_t columnPGUint16(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGUint16, colName);
+}
+
+uint32_t columnPGUint32(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGUint32, colName);
+}
+
+uint64_t columnPGUint64(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGUint64, colName);
+}
+
+std::string columnPGString(const std::string &colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGString, colName);
+}
+
+double columnPGDouble(const std::string& colName) const {
+  return callImpl(&wrapper::RsetWrapper::columnPGDouble, colName);
+}
+
 
 //------------------------------------------------------------------------------
 // columnString

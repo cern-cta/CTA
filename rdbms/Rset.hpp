@@ -85,6 +85,19 @@ public:
    */
   Rset &operator=(Rset &&rhs);
 
+  // Generic method to handle calls to m_impl
+  template <typename Func, typename ReturnType>
+  ReturnType callImpl(Func func, const std::string& colName) const {
+    try {
+      if (nullptr == m_impl) {
+        throw exception::InvalidResultSet("This result set is invalid");
+      }
+      return (m_impl.get()->*func)(colName); // Call the method
+    } catch (exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+      throw;
+    }
+  }
   /**
    * Returns the SQL statement.
    *
@@ -115,6 +128,20 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   bool columnIsNull(const std::string &colName) const;
+
+  /**
+   * Testing new PG methods without passing through optionals
+   * and handling the null case within the implementation
+   *
+   * @param colName
+   * @return
+   */
+  uint8_t columnPGUint8(const std::string &colName) const;
+  uint8_t columnPGint16(const std::string &colName) const;
+  uint8_t columnPGint32(const std::string &colName) const;
+  uint8_t columnPGint64(const std::string &colName) const;
+  uint8_t columnPGString(const std::string &colName) const;
+  double  columnPGDouble(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
