@@ -84,6 +84,13 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }
 
+//------------------------------------------------------------------------------
+// isPGColumnNull
+//------------------------------------------------------------------------------
+bool PostgresRset::isPGColumnNull(int ifield) const {
+  return PQgetisnull(m_resItr->get(), 0, ifield);
+}
+
 std::string PostgresRset::columnBlob(const std::string &colName) const {
   std::optional<std::string> blob = columnOptionalString(colName);
 
@@ -97,6 +104,130 @@ std::string PostgresRset::columnBlob(const std::string &colName) const {
     }
   }
   return std::string();
+}
+
+std::string PostgresRset::columnPGString(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    // Construct the string efficiently without strlen since the length is known to PG
+    size_t length = PQgetlength(m_resItr->get(), 0, ifield);
+
+    return std::move(std::string(cstrValue, length));
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint8_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint8_t PostgresRset::columnPGUint8(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+
+    return utils::toUint8(stringValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint16_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint16_t PostgresRset::columnPGUint16(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+
+    return utils::toUint16(stringValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint32_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint32_t PostgresRset::columnPGUint32(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+
+    return utils::toUint32(stringValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint64_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint64_t PostgresRset::columnPGUint64(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+
+    return utils::toUint64(stringValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get double value from a column with error handling
+//------------------------------------------------------------------------------
+double PostgresRset::columnPGDouble(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    std::string stringValue(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+
+    return utils::toDouble(stringValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -126,17 +257,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
     return std::nullopt;
   }
 
-  /* commenting out the string valur conversion since
-   * this might be a bottleneck if we need to get faster on thousands of rows
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if(!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
-  }
-  return utils::toUint8(stringValue);
-  */
-  return utils::toUint8(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
+  return utils:toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
 }
 
 //------------------------------------------------------------------------------
@@ -151,8 +272,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
     return std::nullopt;
   }
 
-    /* commenting out the string valur conversion since
-     * this might be a bottleneck if we need to get faster on thousands of rows
     const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
     if(!utils::isValidUInt(stringValue)) {
@@ -161,8 +280,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
     }
 
     return utils::toUint16(stringValue);
-     */
-    return utils::toUint16(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
@@ -177,8 +294,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
       return std::nullopt;
     }
 
-    /* commenting out the string valur conversion since
-     * this might be a bottleneck if we need to get faster on thousands of rows
     const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
     if(!utils::isValidUInt(stringValue)) {
@@ -186,8 +301,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
                                  " which is not a valid unsigned integer");
     }
 
-    return utils::toUint32(stringValue);*/
-    return utils::toUint32(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
+    return utils::toUint32(stringValue);
   }
 
   //------------------------------------------------------------------------------
@@ -202,8 +316,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
       return std::nullopt;
     }
 
-    /* commenting out the string valur conversion since
-     * this might be a bottleneck if we need to get faster on thousands of rows
     const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
     if(!utils::isValidUInt(stringValue)) {
@@ -212,8 +324,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
     }
 
     return utils::toUint64(stringValue);
-    */
-    return utils::toUint64(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
@@ -228,8 +338,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
       return std::nullopt;
     }
 
-    /* commenting out the string valur conversion since
-     * this might be a bottleneck if we need to get faster on thousands of rows
     const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
     if(!utils::isValidDecimal(stringValue)) {
@@ -238,8 +346,6 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
     }
 
     return utils::toDouble(stringValue);
-     */
-    return utils::toDouble(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
   }
 
   //------------------------------------------------------------------------------
