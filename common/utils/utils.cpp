@@ -766,7 +766,7 @@ double toDouble(const std::string &str) {
     throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
       ex.getMessage().str());
   }
-}*/
+}
 
 //------------------------------------------------------------------------------
 // toUid
