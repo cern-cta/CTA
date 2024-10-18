@@ -86,13 +86,13 @@ public:
   Rset &operator=(Rset &&rhs);
 
   // Generic method to handle calls to m_impl
-  template <typename Func, typename ReturnType>
-  ReturnType callImpl(Func func, const std::string& colName) const {
+  template <typename ReturnType, typename... Args>
+  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::*func)(Args...) const, Args... args) const {
     try {
       if (nullptr == m_impl) {
         throw InvalidResultSet("This result set is invalid");
       }
-      return (m_impl.get()->*func)(colName); // Call the method
+      return (m_impl.get()->*func)(args...); 
     } catch (exception::Exception &ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
       throw;
