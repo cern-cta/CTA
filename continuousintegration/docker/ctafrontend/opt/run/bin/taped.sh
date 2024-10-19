@@ -55,9 +55,10 @@ echo "taped DriveControlPath smc${driveslot}" >> "${TAPED_CONF_FILE}"
 # Decrease schedulerDB cache timeout for tests
 echo "taped TapeCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
 echo "taped RetrieveQueueCacheMaxAgeSecs 1" >> "${TAPED_CONF_FILE}"
-echo "taped ArchiveFlushBytesFiles 32000000000,5000" >> "${TAPED_CONF_FILE}"
-echo "taped ArchiveFetchBytesFiles 80000000000,20000" >> "${TAPED_CONF_FILE}"
+echo "taped ArchiveFlushBytesFiles 32000000000,1000" >> "${TAPED_CONF_FILE}"
+echo "taped ArchiveFetchBytesFiles 80000000000,8000" >> "${TAPED_CONF_FILE}"
 echo "taped NbDiskThreads 2" >> "${TAPED_CONF_FILE}"
+echo "taped LogMask ERR" >> "${TAPED_CONF_FILE}"
 
 echo "general InstanceName CI" >> "${TAPED_CONF_FILE}"
 echo "general SchedulerBackendName VFS" >> "${TAPED_CONF_FILE}"

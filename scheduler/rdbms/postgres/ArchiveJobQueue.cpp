@@ -134,6 +134,7 @@ namespace cta::schedulerdb::postgres {
   uint64_t ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list <std::string> &jobIDs){
     std::string sqlpart;
     for (const auto &piece : jobIDs) sqlpart += piece + ",";
+    if (!sqlpart.empty()) { sqlpart.pop_back(); }
     std::string sql = R"SQL(
       UPDATE ARCHIVE_JOB_QUEUE SET
         STATUS = :STATUS,
