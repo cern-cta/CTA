@@ -32,7 +32,7 @@ yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 
 ESCAPEDURL=$(echo ${OBJECTSTOREURL} | sed 's/\//\\\//g')
 sed -i "s/^.*cta.objectstore.backendpath.*$/cta.objectstore.backendpath ${ESCAPEDURL}/" /etc/cta/cta-frontend-xrootd.conf
-echo "cta.log.level ERR" >> /etc/cta/cta-frontend-xrootd.conf
+#echo "cta.log.level ERR" >> /etc/cta/cta-frontend-xrootd.conf
 
 # Set the ObjectStore URL in the ObjectStore Tools configuration
 
