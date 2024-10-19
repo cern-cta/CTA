@@ -120,7 +120,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 
           // We wait a bit before polling the scheduler again.
           // TODO: parametrize the duration?
-          sleep(5);
+          // TESTING SETUP:  changing to 1 sec for tests !!!
+          sleep(1);
         } else {
           lc.log(cta::log::DEBUG, "Desired drive state is UP.");
           break;
