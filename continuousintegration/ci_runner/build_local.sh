@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -40,7 +41,7 @@ usage() {
   exit 1
 }
 
-compile_deploy() {
+build_local() {
 
   # Input args
   local clean_build_dir=false
@@ -120,7 +121,7 @@ compile_deploy() {
   cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../.."
 
   if [ ${skip_srpms} = false ]; then
-    echo "Building SRPMs..."
+    log_info "Building SRPMs..."
     local build_srpm_flags=""
     if [[ ${clean_build_dirs} = true ]]; then
       build_srpm_flags+=" --clean-build-dir"
@@ -142,7 +143,7 @@ compile_deploy() {
       ${build_srpm_flags}
   fi
 
-  echo "Compiling the CTA project from source directory"
+  log_info "Compiling the CTA project from source directory"
 
   local build_rpm_flags="--jobs ${num_jobs}"
 
@@ -171,7 +172,7 @@ compile_deploy() {
     build_rpm_flags+=" --install"
   fi
 
-  echo "Building RPMs..."
+  log_info "Building RPMs..."
   ./continuousintegration/ci_helpers/build_rpm.sh \
     --build-dir build_rpm \
     --build-generator "${build_generator}" \
@@ -184,9 +185,9 @@ compile_deploy() {
     --oracle-support ${oracle_support} \
     ${build_rpm_flags}
 
-  echo "Build successful"
+  log_info "Build successful"
 
   cd "${initial_loc}"
 }
 
-compile_deploy "$@"
+build_local "$@"

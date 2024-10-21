@@ -21,7 +21,12 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-die() { echo "$@" 1>&2 ; exit 1; }
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+
+die() { 
+  echo "$@" 1>&2
+  exit 1;
+}
 
 usage() {
   echo "Script to create a Kubernetes instance and run a system test script in this instance."
@@ -48,12 +53,12 @@ execute_cmd_with_log() {
   mycmd=$1
   logfile=$2
   timeout=$3
+  start_time=$(date +%s)
   echo "================================================================================"
-  echo "$(date): Launching ${mycmd}"
+  echo "Launching ${mycmd}"
   echo "================================================================================"
   eval "(${mycmd} | tee -a ${logfile}) &"
   execute_log_pid=$!
-  # capture the return code of the last command executed in execute_log function
   execute_log_rc=''
 
   for ((i=0;i<${timeout};i++)); do
@@ -64,24 +69,28 @@ execute_cmd_with_log() {
       break
     fi
   done
+  end_time=$(date +%s)
+  elapsed_time=$(( end_time - start_time ))
   echo "================================================================================"
-  echo "Waiting for process took $i iterations"
+  echo "Waiting for process took ${elapsed_time} seconds"
 
   if [ "${execute_log_rc}" == "" ]; then
-    echo "TIMEOUTING COMMAND, setting exit status to 1"
+    echo "TIMEOUTING COMMAND, setting exit status to 1" 1>&2
     kill -9 -${execute_log_pid}
     execute_log_rc=1
   fi
 
   if [ "${execute_log_rc}" != "0" ]; then
+    echo "Process exited with exit code: ${execute_log_rc}." 1>&2
     if [ $keepnamespace == 0 ] ; then
-      echo "FAILURE: process exited with exit code: ${execute_log_rc}. Cleaning up environment"
+      echo "Cleaning up environment"
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
-      die "Cleanup completed"
+      echo "Cleanup completed"
     else
-      die "FAILURE: process exited with exit code: ${execute_log_rc}. Skipping environment clean up"
+      echo "Skipping environment clean up"
     fi
+    die "Command execution of $mycmd failed"
   fi
 }
 
@@ -176,7 +185,7 @@ run_systemtest() {
       echo "Cleaning up old namespaces:"
       kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git'
       kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git' | xargs -itoto ./delete_instance.sh -n toto -D
-      echo "DONE"
+      echo "Cleanup complete"
   fi
 
   # create instance timeout after 10 minutes
@@ -199,10 +208,11 @@ run_systemtest() {
 
   # delete instance?
   if [ $keepnamespace == 1 ] ; then
-    exit 0
+    return 0
   fi
   ./delete_instance.sh -n ${namespace}
-  exit $?
+  return $?
 }
 
-run_systemtest "$@"
+exit_code=$(run_systemtest "$@")
+exit ${exit_code}

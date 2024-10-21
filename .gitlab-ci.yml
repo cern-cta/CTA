@@ -1,13 +1,13 @@
 stages:
-  - prepare
-  - analysis
-  - build
-  - build:image
-  - build:tagged
-  - test
-  - release:changelog
-  - release:internal
-  - release:external
+- prepare
+- analysis
+- build
+- build:image
+- build:tagged
+- test
+- release:changelog
+- release:internal
+- release:external
 
 variables:
   CTA_VERSION: 5
@@ -18,6 +18,7 @@ variables:
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
   VALGRIND_DB_UNIT_TESTS: false
+  BASH_LOGGING_ENABLED: 1 # For the cirunner scripts
   # Images
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
@@ -39,4 +40,4 @@ workflow:
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
 
 include:
-  - local: .gitlab/ci/*.gitlab-ci.yml
+- local: .gitlab/ci/*.gitlab-ci.yml

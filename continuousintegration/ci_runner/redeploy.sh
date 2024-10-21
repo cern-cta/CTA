@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -188,8 +189,7 @@ redeploy() {
     fi
 
     ## Create and load the new image
-    echo "Building image based on ${rpm_src}"
-    set -x
+    echo "Building image from ${rpm_src}"
     ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
                                                      --rpm-src "${rpm_src}" \
                                                      --operating-system "${operating_system}" \
@@ -204,14 +204,12 @@ redeploy() {
   # Redeploy containers
   echo "Redeploying containers"
   cd continuousintegration/orchestration
-  set -x
   ./create_instance.sh --namespace ${kube_namespace} \
                        --registry-host localhost \
                        --image-tag ${image_tag} \
                        --catalogue-config ${catalogue_config} \
                        --scheduler-config ${scheduler_config} \
                        ${extra_spawn_options}
-  set +x
   echo "Pods redeployed."
 }
 

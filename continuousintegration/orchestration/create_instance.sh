@@ -16,10 +16,16 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 die() {
   echo "$@" 1>&2
   exit 1
+}
+
+log_run() {
+  echo "Running: $*"
+  "$@"
 }
 
 usage() {
@@ -46,16 +52,14 @@ usage() {
   exit 1
 }
 
-
 check_helm_installed() {
   # First thing we do is check whether helm is installed
   if ! command -v helm >/dev/null 2>&1; then
-    die "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
+    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
   fi
 }
 
 create_instance() {
-
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
@@ -79,11 +83,11 @@ create_instance() {
       -h | --help) usage ;;
       -o|--scheduler-config) 
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
+        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
       -d|--catalogue-config) 
         catalogue_config="$2" 
-        test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
+        test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
       -l|--library-config) 
         library_config="$2"
@@ -132,14 +136,14 @@ create_instance() {
     echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
     usage
   fi
+  if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then 
+    die "Library model ${library_model} does not exist"
+  fi
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using latest tag"
     catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
     catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
     catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
-  fi
-  if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then 
-    die "ERROR: Library model ${library_model} does not exist\n"
   fi
 
   if [ $dry_run == 1 ]; then
@@ -169,7 +173,7 @@ create_instance() {
   devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
   if [ -z "$unused_devices" ]; then
-    die "ERROR: No unused library devices available. All the following libraries are in use: $devices_in_use"
+    die "No unused library devices available. All the following libraries are in use: $devices_in_use"
   fi
 
   # Determine the library config to use
@@ -184,13 +188,11 @@ create_instance() {
     # See what device was provided in the config and check that it is not in use
     library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
     if ! echo "$unused_devices" | grep -qw "$library_device"; then
-      die "ERROR: provided library config specifies a device that is already in use: $library_device"
+      die "provided library config specifies a device that is already in use: $library_device"
     fi
   fi
   echo "Using library device: ${library_device}"
-  echo "---"
   cat $library_config
-  echo "---"
 
   # Create the namespace if necessary
   if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
@@ -217,38 +219,37 @@ create_instance() {
     helm dependency update helm/catalogue
     helm dependency update helm/scheduler
     echo "Installing init chart..."
-    (set -x; helm ${helm_command} init-${namespace} helm/init \
+    log_run helm ${helm_command} init-${namespace} helm/init \
                                   --namespace ${namespace} \
                                   --set global.image.registry="${registry_host}" \
                                   --set global.image.tag="${image_tag}" \
                                   --set-file tapeConfig=${library_config} \
-                                  --wait --wait-for-jobs --timeout 2m)
+                                  --wait --wait-for-jobs --timeout 2m
 
     # At some point this can be done in parallel
     echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
     echo "Installing catalogue and scheduler charts..."
-    (set -x; helm ${helm_command} catalogue-${namespace} helm/catalogue \
+    log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
                                   --namespace ${namespace} \
                                   --set wipeImage.registry="${registry_host}" \
                                   --set wipeImage.tag="${image_tag}" \
                                   --set schemaVersion="${catalogue_schema_version}" \
                                   --set wipeCatalogue=${wipe_catalogue} \
                                   --set-file configuration=${catalogue_config} \
-                                  --wait --wait-for-jobs --timeout 2m)
+                                  --wait --wait-for-jobs --timeout 2m
 
-    (set -x; helm ${helm_command} scheduler-${namespace} helm/scheduler \
+    log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
                                   --namespace ${namespace} \
                                   --set wipeImage.registry="${registry_host}" \
                                   --set wipeImage.tag="${image_tag}" \
                                   --set wipeScheduler=${wipe_scheduler} \
                                   --set-file configuration=${scheduler_config} \
-                                  --wait --wait-for-jobs --timeout 2m)
+                                  --wait --wait-for-jobs --timeout 2m
   fi
-  echo ""
   echo "Processing dependencies of cta chart..."
   helm dependency update helm/cta
   echo "Installing cta chart..."
-  (set -x; helm ${helm_command} cta-${namespace} helm/cta \
+  log_run helm ${helm_command} cta-${namespace} helm/cta \
                                 --namespace ${namespace} \
                                 --set global.image.registry="${registry_host}" \
                                 --set global.image.tag="${image_tag}" \
@@ -257,10 +258,10 @@ create_instance() {
                                 --set tpsrv.tpsrv.numTapeServers=${tpsrv_count} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeConfig="${library_config}" \
-                                --wait --timeout 5m)
+                                --wait --timeout 5m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
-    exit 0  
+    return
   fi
 }
 
@@ -269,7 +270,7 @@ setup_system() {
   # Eventually, the user should be able to provide a setup script that will be executed here.
   # Set up kerberos
   echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-  echo -n "Using kinit for ctacli and client"
+  echo "Using kinit for ctacli and client"
   kubectl --namespace=${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
   kubectl --namespace=${namespace} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
   # space=${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
