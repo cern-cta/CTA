@@ -49,6 +49,7 @@ log_start() {
   exec 1> /tmp/stdout_pipe_$$ 2> /tmp/stderr_pipe_$$
 
   trap log_end EXIT
+  
   start_time=$(date +%s)
   echo "Starting: $current_script $*"
 }

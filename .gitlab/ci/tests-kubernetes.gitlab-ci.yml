@@ -3,14 +3,14 @@
 
 .kubernetes-test:
   needs:
-    - job: docker-build-ctageneric
-      optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
+  - job: docker-build-ctageneric
+    optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - when: on_success
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    when: never
+  - if: $CI_COMMIT_TAG
+    when: never
+  - when: on_success
   variables:
     TEST_SCRIPT:
     # Passed to the run_systemtest.sh script verbatim
@@ -75,17 +75,17 @@
     when: always
     expire_in: 30 days
     paths:
-      - pod_logs
+    - pod_logs
   tags: # Used to indicate that these jobs should run on our own cirunner machines
-    - kubernetes
-    - mhvtl
+  - kubernetes
+  - mhvtl
 
 # Tests
 
 k8s-test-client:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -93,7 +93,7 @@ k8s-test-client:
 k8s-test-client-gfal2:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -101,7 +101,7 @@ k8s-test-client-gfal2:
 k8s-test-repack:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -109,15 +109,15 @@ k8s-test-repack:
 k8s-test-cta-admin:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
-k8s-unit-test-oracle:
+.k8s-unit-test-oracle:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   variables:
     # Note that for now, this is still deploying the entirety of CTA before doing the unit tests
     # We need to think about a clean option to tell create_instance what to deploy (or where to stop)
@@ -125,52 +125,52 @@ k8s-unit-test-oracle:
     # The oracle pod needs the image tag as well
     EXTRA_ARGS: "--test-timeout 2400"
   before_script:
-    - !reference [.kubernetes-test, before_script]
-    - IMAGE_TAG=8325945git52652e71
-    # Note that we need to do this here as the image-tag is not available yet in the variables part
-    - export EXTRA_TEST_ARGS="--image-tag ${IMAGE_TAG}"
+  - !reference [.kubernetes-test, before_script]
+  - IMAGE_TAG=8325945git52652e71
+  # Note that we need to do this here as the image-tag is not available yet in the variables part
+  - export EXTRA_TEST_ARGS="--image-tag ${IMAGE_TAG}"
 
 # Manually triggered
 
 .manual-rules:
   rules:
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: manual
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
+  # For pivot CTA releases: vX.Y.0
+  - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+    when: on_success
+  # For non-pivot CTA releases
+  - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
+    when: manual
+  - if: $CI_PIPELINE_SOURCE == "web"
+    when: manual
+    allow_failure: true
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: manual
+    allow_failure: true
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: on_success
 
 k8s-test-liquibase-update:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   rules:
-    - !reference [.manual-rules, rules]
+  - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_liquibase_update.sh"
     EXTRA_ARGS: "--test-timeout 2400"
   before_script:
-    - !reference [.kubernetes-test, before_script]
-    - git submodule update --init --recursive
-    - PREV_CATALOGUE_VERSION=$(./continuousintegration/ci_helpers/get_prev_catalogue_schema_version.sh)
-    # Note that we need to do this here as the image-tag is not available yet in the variables part
-    - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
+  - !reference [.kubernetes-test, before_script]
+  - git submodule update --init --recursive
+  - PREV_CATALOGUE_VERSION=$(./continuousintegration/ci_helpers/get_prev_catalogue_schema_version.sh)
+  # Note that we need to do this here as the image-tag is not available yet in the variables part
+  - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
 k8s-test-external-tape-formats:
   stage: test
   extends:
-    - .kubernetes-test
+  - .kubernetes-test
   rules:
-    - !reference [.manual-rules, rules]
+  - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
     EXTRA_OPTIONS: "--test-timeout 2400"
