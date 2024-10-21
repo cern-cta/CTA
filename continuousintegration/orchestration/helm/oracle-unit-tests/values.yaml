@@ -1,9 +1,0 @@
-nameOverride: oracle-unit-tests
-
-image:
-  registry: gitlab-registry.cern.ch/cta
-  repository: ctageneric
-  tag: ""
-  pullPolicy: IfNotPresent
-  pullSecrets: 
-    - ctaregsecret
