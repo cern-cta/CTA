@@ -4,3 +4,8 @@ description: A Helm chart of tape servers for the Kubernetes CI test instance. I
 type: application
 version: 0.2.0
 appVersion: "5.11.10.1"
+
+dependencies:
+- name: common
+  version: 0.1.0
+  repository: "file://../../../common"

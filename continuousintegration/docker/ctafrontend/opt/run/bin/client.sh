@@ -17,11 +17,14 @@
 
 . /opt/run/bin/init_pod.sh
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
 yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python3
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # sleep forever but exit immediately when pod is deleted
