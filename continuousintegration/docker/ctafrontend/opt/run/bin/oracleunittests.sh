@@ -20,7 +20,6 @@
 set -e
 
 yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
 
 # Install missing RPMs
 yum -y install cta-catalogueutils cta-systemtests
