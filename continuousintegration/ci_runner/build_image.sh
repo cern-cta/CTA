@@ -15,6 +15,9 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+
 usage() {
   echo "Usage: $0 [options] -t|--tag <image_tag> -o|--operating-system <os> -s|--rpm-src <rpm source>"
   echo ""
