@@ -139,7 +139,7 @@ unit-test-oracle:
   - yum -y install cta-catalogueutils
   - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
   - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
-  - echo 'oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE}' > ${CTA_CATALOGUE_CONF}
+  - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
   - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
   - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
   - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
