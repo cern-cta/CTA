@@ -131,13 +131,12 @@ unit-test-oracle:
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
-    ORACLE_DATABASE: intdb19
+    # Note that this expects the full url; not a shortname relying on tnsnames
+    ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
   before_script:
   - *before-script-alma9
   script:
   - yum -y install cta-catalogueutils
-  - yum install -y oracle-instantclient-tnsnames.ora.noarch
-  - /etc/cron.hourly/tnsnames-update.cron
   - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
   - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
   - echo 'oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE}' > ${CTA_CATALOGUE_CONF}
