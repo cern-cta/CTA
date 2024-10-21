@@ -5,26 +5,8 @@ global:
     repository: ctageneric
     tag: ""
     pullPolicy: IfNotPresent
-    pullSecrets: 
-      - ctaregsecret
+    pullSecrets:
+    - ctaregsecret
   useSystemd: false
 
   catalogueSchemaVersion: ""
-
-  configuration:
-    scheduler:
-      backend: "" # Options: file, ceph, postgres
-      cephConfig:
-        mon: ""
-        monport: ""
-        pool: ""
-        namespace: ""
-        id: ""
-        key: ""
-      postgresConfig:
-        username: ""
-        password: ""
-        database: ""
-        server: ""
-      fileConfig:
-        path: ""

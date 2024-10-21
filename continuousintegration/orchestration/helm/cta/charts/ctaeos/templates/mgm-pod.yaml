@@ -1,17 +1,13 @@
-{{$namespace := .Release.Namespace }}
-{{$name := include "ctaeos.name" . }}
-
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "ctaeos.name" . }}
 apiVersion: v1
-kind: Pod # EOS has not been made a dployment on purpose yet; as we will be replacing this with the EOS chart at some point anyway
+kind: Pod
 metadata:
   name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
-  {{- if (.Values.labels)}}
-    {{.Values.labels | toYaml  | nindent 4}}
-  {{- else}}
-    app.kubernetes.io/name: {{$name | quote}}
-  {{- end}}
+    app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
+    {{- include "common.labels.noname" . | nindent 4 }}
 spec:
   restartPolicy: Never
   containers:

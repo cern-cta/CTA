@@ -5,11 +5,9 @@ imagePullSecrets:
 isPriviliged: true
 readinessProbe:
 
+mgmLabel: ctaeos-mgm
+
 service:
-  selectors:
-    app.kubernetes.io/name: ctaeos-mgm
-  labels:
-    app.kubernetes.io/name: ctaeos-mgm
   ports:
   - name: ctaeos-mgm
     port: 1094
@@ -30,11 +28,7 @@ env:
 - name: TERM
   value: "xterm"
 
-labels:
-  app.kubernetes.io/name: ctaeos-mgm
-
 # defines all of the volumes consumed by pod
-
 volumeMounts:
 - mountPath: /shared
   name: shared

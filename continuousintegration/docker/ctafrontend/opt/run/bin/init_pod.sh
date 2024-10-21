@@ -17,6 +17,9 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+
 LOGMOUNT=/mnt/logs
 
 PV_PATH=""
@@ -60,3 +63,5 @@ fi
 # some yum optimisations for the standard system
 SQUID_PROXY=squid.kube-system.svc.cluster.local
 ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Finished"

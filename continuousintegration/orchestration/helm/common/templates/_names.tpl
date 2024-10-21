@@ -14,10 +14,10 @@
 */}}
 {{- define "common.names.fullname" -}}
 {{- if .Values.fullnameOverride -}}
-  {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" | quote -}}
+  {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
   {{- $name := default .Chart.Name .Values.nameOverride -}}
-  {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" | quote -}}
+  {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 {{- end }}
 
@@ -26,9 +26,9 @@
 */}}
 {{- define "common.names.name" -}}
 {{- if .Values.nameOverride -}}
-  {{- .Values.nameOverride | trunc 63 | trimSuffix "-" | quote -}}
+  {{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-  {{- .Chart.Name | trunc 63 | trimSuffix "-" | quote -}}
+  {{- .Chart.Name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 {{- end }}
 
@@ -38,5 +38,5 @@
    with Kubernetes' name limitations.
 */}}
 {{- define "common.names.release" -}}
-{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" | quote -}}
+{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
 {{- end }}

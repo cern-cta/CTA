@@ -1,15 +1,11 @@
-{{- $tapeConfig := .Values.tapeConfig }}
-{{- if eq (typeOf $tapeConfig) "string" -}}
-  {{- $tapeConfig = $tapeConfig | fromYaml }}
-{{- end }}
 
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
 {{- $numTapeServers := int .Values.tpsrv.numTapeServers }}
 {{- $drivenamesCount := len $tapeConfig.library.drivenames }}
 {{- if gt $numTapeServers $drivenamesCount }}
   {{- fail (printf "Error: numTapeServers (%d) is larger than the number of available drives (%d)" $numTapeServers $drivenamesCount) }}
 {{- end }}
-
-
 {{- range $i := until ($numTapeServers) }}
 {{- $driveSlot := int $i }}
 {{- $driveName := index $tapeConfig.library.drivenames $i }}
@@ -20,13 +16,7 @@ kind: ConfigMap
 metadata:
   name: sysconfig-tpsrv-{{ $i }}-configmap
   labels:
-    app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
-    app.kubernetes.io/component: tape
-    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
-    app.kubernetes.io/managed-by: {{ $.Release.Service }}
-    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
 {{- if (include "tpsrv.useSystemd" $) }}
   cta-rmcd: |-

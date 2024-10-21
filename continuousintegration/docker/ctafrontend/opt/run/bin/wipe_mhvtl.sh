@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
 
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
@@ -54,3 +55,4 @@ done
 #  done
 
 echo "### WIPE COMPLETED ###"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"

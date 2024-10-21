@@ -1,17 +1,10 @@
 
-{{$namespace := .Release.Namespace }}
-{{$imageVersion := include "tpsrv.image" . }}
-{{$imagePullPolicy := include "tpsrv.imagePullPolicy" . }}
-{{$imagePullSecrets := include "tpsrv.imagePullSecrets" . }}
-{{- $schedulerConfig := .Values.global.configuration.scheduler }}
-{{- if eq (typeOf $schedulerConfig) "string" -}}
-  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
-{{- end }}
-{{- $tapeConfig := .Values.tapeConfig }}
-{{- if eq (typeOf $tapeConfig) "string" -}}
-  {{- $tapeConfig = $tapeConfig | fromYaml }}
-{{- end }}
-
+{{- $namespace := .Release.Namespace -}}
+{{- $imageVersion := include "tpsrv.image" . -}}
+{{- $imagePullPolicy := include "tpsrv.imagePullPolicy" . -}}
+{{- $imagePullSecrets := include "tpsrv.imagePullSecrets" . -}}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
 # Spawn numTapeServers pods
 {{- range $i := until (int .Values.tpsrv.numTapeServers) }}
 {{- $podName := printf "tpsrv%02d" (add $i 1) }} # server names start from 1
@@ -25,13 +18,7 @@ metadata:
   annotations:
     catalogue-schema-version: "{{ $.Values.global.catalogueSchemaVersion }}"
   labels:
-    app.kubernetes.io/name: {{ include "tpsrv.name" $ }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
-    app.kubernetes.io/component: tape
-    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
-    app.kubernetes.io/managed-by: {{ $.Release.Service }}
-    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    {{-  include "common.labels.standard" $ | nindent 4 }}
     cta/library-device: {{ $tapeConfig.library.device }}
 spec:
   restartPolicy: Always
