@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -180,15 +181,14 @@ compile_deploy() {
   fi
   echo "CTA directory found"
 
-  # Check if namespace exists
-  if kubectl get namespace "${build_namespace}" &>/dev/null; then
-    echo "Found existing namespace ${build_namespace}."
-  else
-    echo "Creating namespace: ${build_namespace}"
-    kubectl create namespace "${build_namespace}"
-  fi
-
   if [ ${skip_build} = false ]; then
+    # Check if namespace exists
+    if kubectl get namespace "${build_namespace}" &>/dev/null; then
+      echo "Found existing build namespace ${build_namespace}"
+    else
+      echo "Creating build namespace: ${build_namespace}"
+      kubectl create namespace "${build_namespace}"
+    fi
     # Delete old pod
     if [ ${reset} = true ]; then
       echo "Attempting shutdown of existing build pod..."
