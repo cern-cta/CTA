@@ -208,11 +208,10 @@ run_systemtest() {
 
   # delete instance?
   if [ $keepnamespace == 1 ] ; then
-    return 0
+    exit 0
   fi
   ./delete_instance.sh -n ${namespace}
-  return $?
+  exit $?
 }
 
-exit_code=$(run_systemtest "$@")
-exit ${exit_code}
+run_systemtest "$@"

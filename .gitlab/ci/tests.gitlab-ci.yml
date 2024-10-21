@@ -136,6 +136,8 @@ unit-test-oracle:
   - *before-script-alma9
   script:
   - yum -y install cta-catalogueutils
+  - yum install -y oracle-instantclient-tnsnames.ora.noarch
+  - ./etc/cron.hourly/tnsnames-update.cron
   - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
   - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
   - echo 'oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE}' > ${CTA_CATALOGUE_CONF}
