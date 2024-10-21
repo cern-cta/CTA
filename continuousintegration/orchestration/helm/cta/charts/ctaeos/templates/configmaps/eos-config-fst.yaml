@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   labels:
     config: eoscta
+    app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
+    {{- include "common.labels.noname" . | nindent 4 }}
   name: eos-config-fst
   namespace: {{.Release.Namespace}}
 data:
@@ -33,7 +35,7 @@ data:
     # ofs.tpc pgm should point to an existing executable file but it is completely ignored by eos ofs implementation
     ###########################################################
     # this URL can be overwritten by EOS_BROKER_URL defined /etc/sysconfig/xrd
-    fstofs.broker root://{{- .Values.nameOverride}}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
+    fstofs.broker root://{{- .Values.nameOverride }}.{{- .Release.Namespace}}.svc.cluster.local:1097//eos/
     fstofs.autoboot true
     fstofs.quotainterval 10
     fstofs.metalog /var/eos/md/

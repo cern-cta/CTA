@@ -6,8 +6,8 @@ description: An initilaization chart for the cta project when running in a ci co
 type: application
 
 dependencies:
-  - name: kdc
-    version: 0.2.1
-  - name: common
-    version: 0.1.0
-    repository: "file://../common"
+- name: kdc
+  version: 0.2.1
+- name: common
+  version: 0.1.0
+  repository: "file://../common"

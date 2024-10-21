@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
@@ -57,7 +58,6 @@ else
   runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 
   echo "taped died"
-
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
   sleep infinity
-
 fi

@@ -17,6 +17,7 @@
 
 . /opt/run/bin/init_pod.sh
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
@@ -56,6 +57,7 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   echo "ctafrontend died"
   echo "analysing core file if any"
   /opt/run/bin/ctafrontend_bt.sh
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
   sleep infinity
 else
   # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`

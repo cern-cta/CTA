@@ -105,10 +105,9 @@ volumeMounts:
   name: krb5-config-volume
   subPath: krb5.conf
 
-
 # readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
 readinessProbe:
-  commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
+  commandsAtRuntime: ["chown", "cta", "/etc/cta/eos.sss.keytab"]
   delay: 10
   failureTolerance: 10
 # Ports opened in container

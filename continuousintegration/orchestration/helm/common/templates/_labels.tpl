@@ -14,8 +14,22 @@
 app.kubernetes.io/name: {{ include "common.names.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-app.kubernetes.io/component: {{ .Values.component | quote }}
-app.kubernetes.io/part-of: {{ .Values.partOf | quote }}
+app.kubernetes.io/component: {{ .Values.component | default (.Chart.Name) | quote }}
+app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
+{{- end }}
+
+{{/*
+   Generate standard Kubernetes labels for a resource without the name.
+   It includes the app, release name, version, component, part-of, managed-by, and Helm chart info.
+   Uses the naming helpers from _naming.tpl to generate consistent names and handle truncation.
+*/}}
+{{- define "common.labels.noname" -}}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/component: {{ .Values.component | default (.Chart.Name) | quote }}
+app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 {{- end }}
@@ -28,8 +42,8 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 app.kubernetes.io/name: {{ include "common.names.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-app.kubernetes.io/component: {{ .Values.component | quote }}
-app.kubernetes.io/part-of: {{ .Values.partOf | quote }}
+app.kubernetes.io/component: {{ .Values.component | default (.Chart.Name) | quote }}
+app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 {{- end }}

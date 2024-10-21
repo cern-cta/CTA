@@ -22,55 +22,45 @@
   before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
-    # Keep the namespace name under 64 characters;
-    - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
-    - git submodule update --init --recursive
-    # Which scheduler to use
-    - |
-      if [ $SCHED_TYPE == "objectstore" ]; then
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
-      else
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-postgres-values.yaml
-      fi
-    # Which catalogue to use
-    - |
-      if [ $ORACLE_SUPPORT == "ON" ]; then
-        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
-      else
-        CATALOGUE_CONFIG=presets/dev-postgres-catalogue-values.yaml
-      fi
-    # Which image tag to use
-    - |
-      if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
-        GET_IMAGE_TAG_OPTS=" --systemtest-only"
-      else
-        GET_IMAGE_TAG_OPTS=" --pipeline-id ${CI_PIPELINE_ID}"
-      fi
-    - cd continuousintegration/ci_helpers/
-    - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
-    # Hardcode the tag for now so that I can test this properly
-    # The problem is that SYSTEMTESTS_ONLY grabs the latest image from the main branch, but I need the latest one from my branch
-    # Not sure if that is worth programming into the get_image_tag.sh script, as it would require more complex logic
-    # - IMAGE_TAG=8325945git52652e71
-    # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - args_array=($EXTRA_ARGS)
-    - |
-      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
-        extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")
-      fi
-    - |
-      if [[ -n "${EXTRA_TEST_ARGS}" ]]; then
-        extra_args+=(--test-options "${EXTRA_TEST_ARGS}")
-      fi
-    # Run test
-    - cd ../orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE}
-                          --image-tag ${IMAGE_TAG}
-                          --test-script ${TEST_SCRIPT}
-                          --cleanup-namespaces
-                          --catalogue-config ${CATALOGUE_CONFIG}
-                          --scheduler-config ${SCHEDULER_CONFIG}
-                          "${extra_args[@]}"
+  # Keep the namespace name under 64 characters;
+  - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
+  - git submodule update --init --recursive
+  # Which scheduler to use
+  - |
+    if [ $SCHED_TYPE == "objectstore" ]; then
+      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+    else
+      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-postgres-values.yaml
+    fi
+  # Which catalogue to use
+  - |
+    if [ $ORACLE_SUPPORT == "ON" ]; then
+      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+    else
+      CATALOGUE_CONFIG=presets/dev-postgres-catalogue-values.yaml
+    fi
+  # Which image tag to use
+  - |
+    if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
+      GET_IMAGE_TAG_OPTS=" --systemtest-only"
+    else
+      GET_IMAGE_TAG_OPTS=" --pipeline-id ${CI_PIPELINE_ID}"
+    fi
+  - cd continuousintegration/ci_helpers/
+  - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
+  # Set up the additional arguments array to pass to the run_systemtest.sh script
+  - args_array=($EXTRA_ARGS)
+  - |
+    if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
+      extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")
+    fi
+  - |
+    if [[ -n "${EXTRA_TEST_ARGS}" ]]; then
+      extra_args+=(--test-options "${EXTRA_TEST_ARGS}")
+    fi
+  # Run test
+  - cd ../orchestration/
+  - ./run_systemtest.sh --namespace ${NAMESPACE} --image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
   artifacts:
     when: always
     expire_in: 30 days
@@ -113,22 +103,6 @@ k8s-test-cta-admin:
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTRA_ARGS: "--test-timeout 2400"
-
-.k8s-unit-test-oracle:
-  stage: test
-  extends:
-  - .kubernetes-test
-  variables:
-    # Note that for now, this is still deploying the entirety of CTA before doing the unit tests
-    # We need to think about a clean option to tell create_instance what to deploy (or where to stop)
-    TEST_SCRIPT: "tests/unit_test_oracle.sh"
-    # The oracle pod needs the image tag as well
-    EXTRA_ARGS: "--test-timeout 2400"
-  before_script:
-  - !reference [.kubernetes-test, before_script]
-  - IMAGE_TAG=8325945git52652e71
-  # Note that we need to do this here as the image-tag is not available yet in the variables part
-  - export EXTRA_TEST_ARGS="--image-tag ${IMAGE_TAG}"
 
 # Manually triggered
 

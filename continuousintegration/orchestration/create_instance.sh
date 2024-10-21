@@ -218,6 +218,11 @@ create_instance() {
     helm dependency update helm/init/charts/kdc
     helm dependency update helm/catalogue
     helm dependency update helm/scheduler
+    helm dependency update helm/cta/charts/client
+    helm dependency update helm/cta/charts/ctacli
+    helm dependency update helm/cta/charts/ctaeos
+    helm dependency update helm/cta/charts/ctafrontend
+    helm dependency update helm/cta/charts/tpsrv
     echo "Installing init chart..."
     log_run helm ${helm_command} init-${namespace} helm/init \
                                   --namespace ${namespace} \
@@ -261,7 +266,7 @@ create_instance() {
                                 --wait --timeout 5m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
-    return
+    exit 0
   fi
 }
 

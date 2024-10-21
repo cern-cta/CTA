@@ -1,21 +1,13 @@
 {{- $name := include "ctafrontend.name" .}}
-{{- with .Values.service}}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $name }}
   labels:
-    app.kubernetes.io/name: {{ $name }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
-    app.kubernetes.io/component: frontend
-    app.kubernetes.io/part-of: {{ $.Values.partOf | default "cta" }}
-    app.kubernetes.io/managed-by: {{ $.Release.Service }}
-    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   selector:
     app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
-  {{- .ports | toYaml | nindent 4}}
-{{- end}}
+  {{- .Values.service.ports | toYaml | nindent 4}}

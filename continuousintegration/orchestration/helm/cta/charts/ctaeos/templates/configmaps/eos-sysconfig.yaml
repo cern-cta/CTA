@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   labels:
     config: eoscta
+    app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
+    {{- include "common.labels.noname" . | nindent 4 }}
   name: eos-sysconfig
   namespace: {{.Release.Namespace}}
 data:

@@ -1,20 +1,10 @@
-{{- $schedulerConfig := .Values.global.configuration.scheduler }}
-{{- if eq (typeOf $schedulerConfig) "string" -}}
-  {{- $schedulerConfig = $schedulerConfig | fromYaml }}
-{{- end }}
-
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cta-frontend-xrootd-configmap
   labels:
-    app.kubernetes.io/name: {{ include "ctafrontend.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-    app.kubernetes.io/component: frontend
-    app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-frontend-xrootd.conf: |-
     #
