@@ -35,10 +35,62 @@ spec:
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     volumeMounts:
+    - mountPath: /etc/config/eos
+      name: eosconfig
+    - mountPath: /etc/config/eoscta
+      name: eosctaconfig
+    - mountPath: /etc/cta/castor-migration.conf
+      name: castor-migration-conf
+      subPath: castor-migration.conf
+    - mountPath: /etc/cta/cta-fst-gcd.conf
+      name: cta-fst-gcd
+      subPath: cta-fst-gcd.conf
+    - mountPath: /etc/xrd.cf.mgm
+      name: eos-config-mgm
+      subPath: xrd.cf.mgm
+    - mountPath: /etc/xrd.cf.fst
+      name: eos-config-fst
+      subPath: xrd.cf.fst
+    - mountPath: /etc/xrd.cf.mq
+      name: eos-config-mq
+      subPath: xrd.cf.mq
+    - mountPath: /etc/xrootd-quarkdb.cfg
+      name: eos-config-quarkdb
+      subPath: xrootd-quarkdb.cfg
+    - mountPath: /etc/sysconfig/eos
+      name: eos-sysconfig
+      subPath: eos
     - name: eos-status
       mountPath: /eos-status
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
   volumes:
+  - name: cta-fst-gcd
+    configMap:
+      name: cta-fst-gcd
+  - name: eosconfig
+    configMap:
+      name: eos-config-base
+  - name: eosctaconfig
+    configMap:
+      name: eos-grpc-keytab
+  - name: castor-migration-conf
+    configMap:
+      name: castor-migration
+  - name: eos-config-mgm
+    configMap:
+      name: eos-config-mgm
+  - name: eos-config-fst
+    configMap:
+      name: eos-config-fst
+  - name: eos-config-mq
+    configMap:
+      name: eos-config-mq
+  - name: eos-config-quarkdb
+    configMap:
+      name: eos-config-quarkdb
+  - name: eos-sysconfig
+    configMap:
+      name: eos-sysconfig
   - name: eos-status
     persistentVolumeClaim:
       claimName: eos-status-pvc

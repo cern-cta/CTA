@@ -48,9 +48,6 @@ useradd --uid 13002 --gid 1300 ctaadmin2
 useradd --uid 14001 --gid 1400 eosadmin1
 useradd --uid 14002 --gid 1400 eosadmin2
 
-# copy needed template configuration files (nice to get all lines for logs)
-yes | cp -r /opt/ci/ctaeos/etc /
-
 eoshost=$(hostname -f)
 
 # All our scripts are set to exclusively use ctaeos instance name:
