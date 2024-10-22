@@ -323,3 +323,4 @@ The current deployment of this CTA has a few limitations that make it unsuitable
 - It is not yet possible to redeploy individual subcharts of the `cta` chart.
 - It only supports handling a single library. What if there are multiple libraries? How to handle multiple library configurations?
 - Authentication is currently somewhat hardcoded.
+- The `init_pod.sh` script requires every pod to run in priviledged mode

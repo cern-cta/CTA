@@ -40,6 +40,12 @@ spec:
             - name: CATALOGUE_BACKEND
               value: {{ $catalogueConfig.backend | quote}}
           volumeMounts:
+            - name: purge-database-ext
+              mountPath: /opt/ci/purge_database.ext
+              subPath: purge_database.ext
+            - name: purge-recyclebin-ext
+              mountPath: /opt/ci/purge_recyclebin.ext
+              subPath: purge_recyclebin.ext
             - name: catalogue-config
               mountPath: /etc/cta/cta-catalogue.conf
               subPath: cta-catalogue.conf
@@ -48,6 +54,12 @@ spec:
             - mountPath: /shared
               name: shared
       volumes:
+        - name: purge-database-ext
+          configMap:
+            name: purge-database-ext
+        - name: purge-recyclebin-ext
+          configMap:
+            name: purge-recyclebin-ext
         - name: catalogue-config
           configMap:
             name: cta-catalogue-conf

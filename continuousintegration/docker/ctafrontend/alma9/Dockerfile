@@ -19,8 +19,7 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 # Environment variables
-ENV LOCALORCHESTRATIONDIR="/opt/ci" \
-    BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
+ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
     CTAREPODIR="/opt/repo"
 
 ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
@@ -50,7 +49,7 @@ RUN yum install -y \
     # Newer version of CTA requires xroot >= 4.4.1-1...
     # therefore set epel priority to 4...
     # Create local repo for cta artifacts and to cache RPMs locally
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR} \
+    mkdir -p ${CTAREPODIR}/RPMS/x86_64 \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)
@@ -77,9 +76,6 @@ RUN yum install -y sqlite
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# Add pod specific configuration
-COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
 # Docker image run setup
 COPY ${BASEDIR}/run.sh /
