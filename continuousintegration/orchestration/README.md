@@ -29,17 +29,19 @@ A CTA instance is fully deployed using [Helm](https://helm.sh/). Helm uses the c
 
 To understand each of these required configuration options, we will go through the spawning of each component separately, detail how it works and what configuration is expected from you. Note that you most likely won't have to interact with Helm directly; all of the important/required configuration can be done through the `create_instance.sh` script.
 
+Charts that have CTA-specific functionality (basically all of them), rely on an image `ctageneric`. This is the image built as specified in the `docker/` directory. This image contains all of the CTA RPMs, in addition to the startup-scripts required for each container.
+
 ### Init
 
-The chart that will be installed is the `init` chart. This chart sets up three important resources:
+The first chart that will be installed is the `init` chart. This chart sets up three important resources:
 - A persistent volume claim for the logs. The reason is that each pod in the namespace writes their log to the same persistent volume (so that they can all be collected in one place).
 - The Key Distribution Center (kdc) pod. This sets up everything necessary for authentication (both sss and kerberos). Runs the KDC server for authenticating EOS end-users and CTA tape operators.
 - If configured, it will spawn a job that cleans up/wipes MHVTL. It does so by making sure that there are no tapes remaining in the drives.
 
 The `init` chart expects the following required parameters:
 - `global.image.tag`: the tag for the `ctageneric` image to use. This is used by the `kdc` pod.
-- `global.image.registry`: while not technically required, it is typically desirable to provide `global.image.registry`, as this will default to `gitlab-registry.cern.ch/cta` otherwise.
-- `tapeConfig`: this is the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
+- `global.image.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `tapeConfig`: this contains the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
 
 The library configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The library configuration can be provided explicitly to `create_instance.sh` using `--library-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
 
@@ -78,11 +80,11 @@ The `catalogue` chart is installed second and does a few things:
 
 The catalogue supports both Oracle and Postgres backends. A Postgres database can be deployed locally, but an Oracle database cannot. As such, **when using Oracle it will use a centralized database**. This is of course not ideal, but there is no way around this. For development purposes, you are expected to use your own Oracle account (see [internal docs](https://tapeoperations.docs.cern.ch/dev/centrally_managed_resources/#oracle-dbs-for-development-and-ci)). This is also something extremely important to be aware of for the CI. It is vitally important that there is only ever a single instance connecting with a given account. Multiple instances connecting with the same account **will interfere with eachother**. To prevent this, each of our custom CI runners has their own Oracle account and jobs are not allowed to run concurrently on the same runner.
 
-For the sake of repeatable tests, it is therefore important to always wipe the catalogue. Not doing so will cause the database to have potential leftovers from previous runs. It should also be noted, that at the end of the wipe catalogue job, the catalogue will be re-initialised with the configured catalogue schema. As such, the only situation in which one would not want to wipe the catalogue is if there is important data in the catalogue that you want to test on.
+For the sake of repeatable tests, it is therefore important to always wipe the catalogue. Not doing so will cause the database to have potential leftovers from previous runs. It should also be noted, that at the end of the wipe catalogue job, the catalogue will be re-initialised with the configured catalogue schema. That means even an empty database will need to be "wiped" in order to initialise the catalogue. As such, the only situation in which one would not want to wipe the catalogue is if there is important data in the catalogue that you want to test on.
 
 The `catalogue` chart expects the following required parameters:
 - `wipeImage.tag`: the tag for the `ctageneric` image to use. Used by the wipe catalogue job.
-- `wipeImage.registry`: while not technically required, it is typically desirable to provide `global.image.registry`, as this will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `wipeImage.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
 - `schemaVersion`: the catalogue schema version to deploy.
 - `wipeCatalogue`: whether to wipe the catalogue or not.
 - `configuration`: the catalogue configuration.
@@ -110,16 +112,16 @@ Note that only one of these `*Config` fields needs to be provided (based on the 
 
 The `scheduler` chart can also be installed as soon as the `init` chart is ready. At the moment, to keep the script simple this done sequentially, but it could in theory be installed at the same time as the `catalogue` chart. The `scheduler` chart:
 - Generates a a configmap containing `cta-objectstore-tools.conf`.
-- If CEPH is the configured backend, it will spawn an additional configmap with some CEPH configuration details
+- If CEPH is the configured backend, it will create an additional configmap with some CEPH configuration details
 - If configured, spawns a job that wipes the scheduler.
 
 The `scheduler` chart expects the following required parameters:
 - `wipeImage.tag`: the tag for the `ctageneric` image to use. Used by the wipe scheduler job.
-- `wipeImage.registry`: while not technically required, it is typically desirable to provide `global.image.registry`, as this will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `wipeImage.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
 - `wipeScheduler`: whether to wipe the scheduler or not.
 - `configuration`: the scheduler configuration.
 
-The `scheduler` can be configured to use one of three backends: CEPH, VFS (virtual file system), or Postgres. This is configured through the scheduler configured: the third and final of the three "main" configurations. It can be explicitly provided using the `--scheduler-config` flag. If not provided, it will default to `presets/dev-file-scheduler-values.yaml`. The configuration looks as follows:
+The `scheduler` can be configured to use one of three backends: CEPH, VFS (virtual file system), or Postgres. This is configured through the scheduler configuration: the third and final of the three "main" configurations. It can be explicitly provided using the `--scheduler-config` flag. If not provided, it will default to `presets/dev-file-scheduler-values.yaml`. The configuration looks as follows:
 
 ```yaml
 backend: "" # Options: file, ceph, postgres
@@ -149,7 +151,6 @@ Finally, we have the `cta` chart. This chart spawns the different components req
   * One EOS mgm.
   * One EOS fst.
   * One EOS mq.
-  * The cta command-line tool to be run by the EOS workflow engine to communicate with the CTA front end.
   * The EOS Simple Shared Secret (SSS) to be used by the EOS mgm and EOS fst to authenticate each other.
   * The CTA SSS to be used by the cta command-line tool to authenticate itself and therefore the EOS instance with the CTA front end.
   * The tape server SSS to be used by the EOS mgm to authenticate file transfer requests from the tape servers.
@@ -190,7 +191,7 @@ To summarise, the `create_instance.sh` script does the following:
 6. Install the `cta` chart, spawning all the different CTA pods: a number of tape servers, an EOS MGM, a frontend, a client to communicate with the frontend, and an admin client (`ctacli`).
 7. Perform some simple initialization of the EOS workflow rules and kerberos tickets on the client/ctacli pods.
 
-Note that once this is done, the instance is still barebones. For example, you won't be able to execute any `cta-admin` commands on the `ctacli` yet. To get something to play with, you are advised to run `tests/prepare_tests.sh`, which will setup some basic resources.
+Note that once this is done, the instance is still relatively barebones. For example, you won't be able to execute any `cta-admin` commands on the `ctacli` yet. To get something to play with, you are advised to run `tests/prepare_tests.sh`, which will setup some basic resources.
 
 ## Deleting a CTA instance
 
@@ -215,16 +216,16 @@ The deletion of an instance is relatively straightforward and can be done throug
   ./create_instance.sh -n dev --image-tag <some-tag>
   ```
 
-- Running a system test locally from a tagged `ctageneric` image in the `gitlab-registry.cern.ch/cta` registry (Postgres catalogue + VFS scheduler)
+- Running a system test locally from a tagged `ctageneric` image in the `gitlab-registry.cern.ch/cta` registry (Postgres catalogue + VFS scheduler):
+
   ```sh
   ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-file-scheduler-values.yaml --catalogue-config presets/dev-postgres-catalogue-values.yaml --image-tag <some-tag>
- <some-tag>
   ```
 
-- Running a system test locally from a local image (Postgres catalogue + VFS scheduler)
+- Running a system test locally from a local image (Postgres catalogue + VFS scheduler):
+
   ```sh
-  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-file-scheduler-values.yaml --catalogue-config presets/dev-postgres-catalogue-values.yaml --image-tag dev --registry-host localhost
- <some-tag>
+  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-file-scheduler-values.yaml --catalogue-config presets/dev-postgres-catalogue-values.yaml --image-tag <some-tag> --registry-host localhost
   ```
 
 Of course, once an instance is spawned, you can also run some simple tests manually instead of relying on `run_systemtest.sh`:
@@ -244,13 +245,14 @@ When something goes wrong, start by looking at the logs:
 ### Dump the objectstore content
 
 Connect to a pod where the objectstore is configured, like `ctafrontend`:
-```
-[root@ctadevjulien CTA]# kubectl --namespace $NAMESPACE exec ctafrontend -it bash
+
+```sh
+kubectl --namespace $NAMESPACE exec ctafrontend -it bash
 ```
 
 From there, you need to install the missing `protocolbuffer` tools like `protoc` binary, and then dump all the objects you want.
 
-```
+```sh
 [root@ctafrontend /]# yum install -y  protobuf-compiler
 ...
 Installed:
@@ -298,7 +300,7 @@ RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
 
 If some tests run for long, the kerberos token in the cli pod should be renewed with:
 
-```
+```sh
 kubectl --namespace=${namespace} exec ctacli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
 ```
 
