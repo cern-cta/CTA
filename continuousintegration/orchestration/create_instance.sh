@@ -59,6 +59,24 @@ check_helm_installed() {
   fi
 }
 
+update_chart_dependencies() {
+  echo "Updating chart dependencies"
+  charts=("init"
+    "common"
+    "init/charts/kdc"
+    "catalogue"
+    "scheduler"
+    "cta/charts/client"
+    "cta/charts/ctacli"
+    "cta/charts/ctaeos"
+    "cta/charts/ctafrontend"
+    "cta/charts/tpsrv"
+  )
+  for chart in "${charts[@]}"; do
+    helm dependency update helm/"$chart" > /dev/null
+  done
+}
+
 create_instance() {
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
@@ -210,19 +228,10 @@ create_instance() {
     done
   fi
 
-  helm dependency update helm/common
+  update_chart_dependencies
   # For now only allow an upgrade of the CTA chart
   # Once deployments are in place, we can also look into redeploying the catalogue and scheduler
   if [ $upgrade == 0 ]; then
-    helm dependency update helm/init
-    helm dependency update helm/init/charts/kdc
-    helm dependency update helm/catalogue
-    helm dependency update helm/scheduler
-    helm dependency update helm/cta/charts/client
-    helm dependency update helm/cta/charts/ctacli
-    helm dependency update helm/cta/charts/ctaeos
-    helm dependency update helm/cta/charts/ctafrontend
-    helm dependency update helm/cta/charts/tpsrv
     echo "Installing init chart..."
     log_run helm ${helm_command} init-${namespace} helm/init \
                                   --namespace ${namespace} \

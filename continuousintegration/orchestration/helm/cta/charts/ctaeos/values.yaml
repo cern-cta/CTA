@@ -1,7 +1,8 @@
-nameOverride: ctaeos
-# Container image that user would like to use if chart is used on its own
+# If required, the user can specify a custom image here
 image:
-imagePullSecrets:
+component: ctaeos
+partOf: cta
+nameOverride: ctaeos
 isPriviliged: true
 readinessProbe:
 

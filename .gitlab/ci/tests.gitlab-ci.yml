@@ -143,6 +143,9 @@ unit-test-oracle:
   - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
   - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
   - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+  # Adding this resource group ensures only a single instance of this job can run at any given time
+  # This is necessary as the job uses a single account on a centralized database.
+  resource_group: oracle-centralized-db
 
 test-cta-release:
   stage: test
