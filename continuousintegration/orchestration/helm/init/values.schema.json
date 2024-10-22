@@ -48,11 +48,17 @@
               "description": "Image pull secrets for registry authentication."
             }
           },
-          "required": ["registry", "repository", "tag"],
+          "required": [
+            "registry",
+            "repository",
+            "tag"
+          ],
           "description": "Global image settings."
         }
       },
-      "required": ["image"],
+      "required": [
+        "image"
+      ],
       "description": "Global configuration settings."
     },
     "tapeConfig": {
@@ -101,14 +107,28 @@
                   "description": "A list of tapes (e.g., V00101, V00102)."
                 }
               },
-              "required": ["type", "name", "device"],
-              "description": "Library configuration containing type, name, device, drive names, drive devices, and tapes."
+              "required": [
+                "type",
+                "name",
+                "device"
+              ],
+              "description":
+                "Library configuration containing type, name, device, drive names, drive devices, and tapes."
             }
           },
-          "required": ["library"]
+          "required": [
+            "library"
+          ]
         }
       ]
     }
   },
-  "required": ["nameOverride", "component", "partOf", "logStorage", "global", "tapeConfig"]
+  "required": [
+    "nameOverride",
+    "component",
+    "partOf",
+    "logStorage",
+    "global",
+    "tapeConfig"
+  ]
 }

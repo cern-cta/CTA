@@ -46,9 +46,18 @@
           "description": "List of image pull secrets for registry authentication."
         }
       },
-      "required": ["registry", "repository", "tag"],
+      "required": [
+        "registry",
+        "repository",
+        "tag"
+      ],
       "description": "Image configuration for the catalogue updater."
     }
   },
-  "required": ["catalogueSourceVersion", "catalogueDestinationVersion", "catalogueCommitId", "image"]
+  "required": [
+    "catalogueSourceVersion",
+    "catalogueDestinationVersion",
+    "catalogueCommitId",
+    "image"
+  ]
 }
