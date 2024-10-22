@@ -57,18 +57,9 @@ execute_cmd_with_log() {
   echo "================================================================================"
   echo "Launching ${mycmd}"
   echo "================================================================================"
-  eval "(${mycmd} | tee -a ${logfile}) &"
-  execute_log_pid=$!
-  execute_log_rc=''
+  timeout "${timeout}" bash -c "${mycmd}" | tee -a "${logfile}"
+  execute_log_rc=$?
 
-  for ((i=0;i<${timeout};i++)); do
-    sleep 1
-    if [ ! -d /proc/${execute_log_pid} ]; then
-      wait ${execute_log_pid}
-      execute_log_rc=$?
-      break
-    fi
-  done
   end_time=$(date +%s)
   elapsed_time=$(( end_time - start_time ))
   echo "================================================================================"
@@ -203,7 +194,7 @@ run_systemtest() {
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
   cd $(dirname ${systemtest_script})
-  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options} 2>&1" "${log_dir}/systests.sh.log" ${systemtestscript_timeout}
+  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options} 2>&1" "${log_dir}/test.log" ${systemtestscript_timeout}
   cd ${orchestration_dir}
 
   # delete instance?
