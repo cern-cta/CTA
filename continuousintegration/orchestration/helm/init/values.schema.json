@@ -18,10 +18,6 @@
       "type": "string",
       "description": "The size of the storage for shared logs of the deployment (e.g., 2Gi)."
     },
-    "fstStorage": {
-      "type": "string",
-      "description": "The size of the storage for the EOS FSTs (e.g., 3Gi)."
-    },
     "global": {
       "type": "object",
       "properties": {
@@ -114,5 +110,5 @@
       ]
     }
   },
-  "required": ["nameOverride", "component", "partOf", "logStorage", "fstStorage", "global", "tapeConfig"]
+  "required": ["nameOverride", "component", "partOf", "logStorage", "global", "tapeConfig"]
 }

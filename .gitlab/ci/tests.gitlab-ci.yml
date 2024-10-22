@@ -125,6 +125,8 @@ unit-test-oracle:
     when: never
   - if: $SYSTEMTESTS_ONLY == "TRUE"
     when: never
+  - if: $ORACLE_SUPPORT == "OFF"
+    when: never
   - when: on_success
   image: $EL9_IMAGE
   variables:

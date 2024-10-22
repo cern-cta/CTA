@@ -1,10 +1,9 @@
 # Folder content
 
 * `ci_helpers`: helper scripts used by gilab_ci
+* `ci_runner`: setup scripts for running the ci tests using RPMs
 * `docker`: Docker files and content needed to build the needed docker images
 * `orchestration`: orchestration specific files: this contains all the pods definitions and *startup scripts* launched in the pod containers during instanciation.
-* `ci_runner`: setup scripts for running the ci tests using RPMs
-* `ci_runner/vmBootstrap`: As set of scripts describing the preparation of a machine for fresh install to running CI scripts **MUST NOT BE RUN BLINDLY**
 
 # How to update the EOS version used in CI
 

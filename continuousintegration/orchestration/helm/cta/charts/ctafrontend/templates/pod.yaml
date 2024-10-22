@@ -24,6 +24,14 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    {{- if eq $schedulerConfig.backend "ceph" }}
+    - name: SCHEDULER_CEPH_NAMESPACE
+      value: {{ $schedulerConfig.cephConfig.namespace | quote}}
+    - name: SCHEDULER_CEPH_ID
+      value: {{ $schedulerConfig.cephConfig.id | quote}}
+    - name: SCHEDULER_CEPH_POOL
+      value: {{ $schedulerConfig.cephConfig.pool | quote}}
+    {{- end }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}

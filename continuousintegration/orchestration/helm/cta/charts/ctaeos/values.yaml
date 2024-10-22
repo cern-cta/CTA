@@ -8,6 +8,9 @@ readinessProbe:
 
 mgmLabel: ctaeos-mgm
 
+# Storage for the EOS FSTs
+fstStorage: "3Gi"
+
 service:
   ports:
   - name: ctaeos-mgm

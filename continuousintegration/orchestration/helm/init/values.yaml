@@ -5,8 +5,6 @@ partOf: init
 
 # Storage for the shared logs of the deployment
 logStorage: "2Gi"
-# Storage for the EOS FSTs
-fstStorage: "3Gi"
 
 global:
   image:
