@@ -2,13 +2,62 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
+    "nameOverride": {
+      "type": "string",
+      "description": "Override the default name of the chart (e.g., init)."
+    },
     "component": {
       "type": "string",
-      "description": "The component of the application (e.g., frontend, backend, database)"
+      "description": "The component of the application (e.g., frontend, backend, database)."
     },
     "partOf": {
       "type": "string",
-      "description": "The larger system that this application is part of (e.g., CTA)"
+      "description": "The larger system that this application is part of (e.g., CTA)."
+    },
+    "logStorage": {
+      "type": "string",
+      "description": "The size of the storage for shared logs of the deployment (e.g., 2Gi)."
+    },
+    "fstStorage": {
+      "type": "string",
+      "description": "The size of the storage for the EOS FSTs (e.g., 3Gi)."
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Docker registry for the image."
+            },
+            "repository": {
+              "type": "string",
+              "description": "Image repository."
+            },
+            "tag": {
+              "type": "string",
+              "description": "Image tag."
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Image pull policy (e.g., IfNotPresent)."
+            },
+            "pullSecrets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Image pull secrets for registry authentication."
+            }
+          },
+          "required": ["registry", "repository", "tag"],
+          "description": "Global image settings."
+        }
+      },
+      "required": ["image"],
+      "description": "Global configuration settings."
     },
     "tapeConfig": {
       "oneOf": [
@@ -24,36 +73,36 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "The type of library (e.g., mhvtl)"
+                  "description": "The type of library (e.g., mhvtl)."
                 },
                 "name": {
                   "type": "string",
-                  "description": "The name of the library (e.g., VLSTK10)"
+                  "description": "The name of the library (e.g., VLSTK10)."
                 },
                 "device": {
                   "type": "string",
-                  "description": "The device associated with the library (e.g., sg0)"
+                  "description": "The device associated with the library (e.g., sg0)."
                 },
                 "drivenames": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
-                  "description": "A list of drive names (e.g., VDSTK01, VDSTK02)"
+                  "description": "A list of drive names (e.g., VDSTK01, VDSTK02)."
                 },
                 "drivedevices": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
-                  "description": "A list of drive device names (e.g., nst2, nst0)"
+                  "description": "A list of drive device names (e.g., nst2, nst0)."
                 },
                 "tapes": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
-                  "description": "A list of tapes (e.g., V00101, V00102)"
+                  "description": "A list of tapes (e.g., V00101, V00102)."
                 }
               },
               "required": ["type", "name", "device"],
@@ -65,5 +114,5 @@
       ]
     }
   },
-  "required": ["component", "partOf", "tapeConfig"]
+  "required": ["nameOverride", "component", "partOf", "logStorage", "fstStorage", "global", "tapeConfig"]
 }

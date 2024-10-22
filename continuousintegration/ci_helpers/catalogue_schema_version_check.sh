@@ -15,24 +15,26 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+usage() {
+  echo "Usage: $0 [options] <cta_repo_dir>"
+  echo ""
+  echo "Validates the CTA repository."
+  echo "  <cta_repo_dir>:          Path to the CTA repository."
+  echo ""
+  echo "options:"
+  echo "  -p:                      Validate pivot release."
+  echo "  -n:                      Validate non-pivot release."
+  echo "  -t:                      Validate CTA catalogue schema submodule tag."
+  echo ""
+  exit 1
+}
+
 # Validate pivot schema version
 check_pivot_release=0
 # Validate non-pivot schema version
 check_non_pivot_release=0
 # By default, do not check cta-catalogue-schema submodule tags
 check_catalogue_submodule_tags=0
-
-usage() { cat <<EOF 1>&2
-Usage: $0 [-p|-n] [-t] <cta_repo_dir>
-Options:
-  <cta_repo_dir>    Path to CTA repository
-  -p                Validate pivot release
-  -n                Validate non-pivot release
-  -t                Validate CTA catalogue schema submodule tag.
-EOF
-exit 1
-}
-
 while getopts "pnt" o; do
     case "${o}" in
         p)
@@ -59,14 +61,12 @@ cta_repo_dir=$1
 if ! test -d ${cta_repo_dir}; then
   echo "Error: directory '${cta_repo_dir}' does not exist"
   usage
-  exit 1
 fi
 cta_repo_dir=$(readlink -f $cta_repo_dir)
 
 if [ "$check_pivot_release" -eq "1" ] && [ "$check_non_pivot_release" -eq "1" ]; then
   echo "Error: Can't set both '-p' and '-c'"
   usage
-  exit 1
 fi
 
 # Extract variable directly set on a cmake file
@@ -167,7 +167,7 @@ for PREV_VERSION in $(echo $CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_PREV_L); do
 done
 
 # Fail if there were error...
-if [ ! -z "${error}" ]; then
+if [ -n "${error}" ]; then
     echo -e "Error:\n${error}"
     exit 1
 fi

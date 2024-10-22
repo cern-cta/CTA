@@ -1,9 +1,10 @@
 # Note: this yml file is just a migration of the pod-ctafrontend-grpc.yml. It has not been tested yet.
 # Other pods would need additional configuration in order to know how they can communicate with this one
 
-# Container image that user would like to use if chart is used on its own
+# If required, the user can specify a custom image here
 image:
-imagePullSecret:
+component: ctafrontend-grpc
+partOf: cta
 nameOverride: ctafrontend-grpc
 isPriviliged: true
 
@@ -85,7 +86,7 @@ volumeMounts:
 
 # readiness probe job is to mark a pod as ready when exactly all of the files are prepared.
 readinessProbe:
-  commandsAtRuntime: [ "chown", "cta", "/etc/cta/eos.sss.keytab"]
+  commandsAtRuntime: ["chown", "cta", "/etc/cta/eos.sss.keytab"]
   delay: 10
   failureTolerance: 10
 # Ports opened in container

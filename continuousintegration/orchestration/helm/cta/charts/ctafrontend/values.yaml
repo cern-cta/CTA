@@ -1,11 +1,11 @@
-# Container image that user would like to use if chart is used on its own
+# If required, the user can specify a custom image here
 image:
-imagePullSecret:
+component: ctafrontend
+partOf: cta
 nameOverride: ctafrontend
 isPriviliged: true
 
 conf:
-  # TODO: should this be here?
   catalogue:
     numberOfConnections: 10
 

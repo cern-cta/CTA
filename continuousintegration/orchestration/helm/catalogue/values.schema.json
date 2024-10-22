@@ -31,7 +31,7 @@
         },
         "tag": {
           "type": "string",
-          "description": "The tag for the wipe image. Leave empty to use latest."
+          "description": "The tag for the wipe image."
         },
         "pullPolicy": {
           "type": "string",
@@ -45,7 +45,7 @@
           "description": "Image pull secrets to authenticate against the registry."
         }
       },
-      "required": ["registry", "repository", "pullPolicy", "pullSecrets"],
+      "required": ["registry", "repository", "tag"],
       "description": "Configuration for the wipe image used during catalogue wiping."
     },
     "catalogueServicePort": {

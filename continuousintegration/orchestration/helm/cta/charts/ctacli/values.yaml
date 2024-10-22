@@ -1,7 +1,7 @@
-# Container image that user would like to use if chart is used on its own
+# If required, the user can specify a custom image here
 image:
-imagePullSecrets:
-
+component: ctacli
+partOf: cta
 nameOverride: ctacli
 isPriviliged: true
 

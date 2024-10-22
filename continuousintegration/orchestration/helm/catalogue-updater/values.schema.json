@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "description": "Override the default name of the chart (e.g., catalogue-updater).",
+      "default": "catalogue-updater"
+    },
+    "catalogueSourceVersion": {
+      "type": "string",
+      "description": "The version of the source catalogue."
+    },
+    "catalogueDestinationVersion": {
+      "type": "string",
+      "description": "The version of the destination catalogue."
+    },
+    "catalogueCommitId": {
+      "type": "string",
+      "description": "The commit ID of the catalogue."
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string",
+          "description": "Docker registry for the image."
+        },
+        "repository": {
+          "type": "string",
+          "description": "Image repository."
+        },
+        "tag": {
+          "type": "string",
+          "description": "Image tag (use SHA256 hash for specific image version)."
+        },
+        "pullPolicy": {
+          "type": "string",
+          "description": "Image pull policy (e.g., IfNotPresent)."
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of image pull secrets for registry authentication."
+        }
+      },
+      "required": ["registry", "repository", "tag"],
+      "description": "Image configuration for the catalogue updater."
+    }
+  },
+  "required": ["catalogueSourceVersion", "catalogueDestinationVersion", "catalogueCommitId", "image"]
+}

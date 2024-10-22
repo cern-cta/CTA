@@ -32,32 +32,6 @@ usage() {
   exit 1
 }
 
-# Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    -h|--help) usage ;;
-    -o|--target-file)
-      target_file="$2"
-      shift ;;
-    -d|--library-device)
-      library_device="$2"
-      shift ;;
-    -t|--library-type)
-      library_type="$2"
-      shift ;;
-    *)
-      echo "Unsupported argument: $1"
-      usage ;;
-  esac
-  shift
-done
-
-# Ensure required arguments are provided
-if [[ -z "$target_file" || -z "$library_device" || -z "$library_type" ]]; then
-  echo "Error: --target-file, --library-device and --library-type are required."
-  usage
-fi
-
 # Generates a values.yaml file with the library configuration
 generate_library_config() {
   local target_file="$1"
@@ -108,6 +82,32 @@ $(for device in ${drivedevices}; do echo "    - \"${device}\""; done)
 $(for tape in ${tapes}; do echo "    - \"${tape}\""; done)
 EOF
 }
+
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -h|--help) usage ;;
+    -o|--target-file)
+      target_file="$2"
+      shift ;;
+    -d|--library-device)
+      library_device="$2"
+      shift ;;
+    -t|--library-type)
+      library_type="$2"
+      shift ;;
+    *)
+      echo "Unsupported argument: $1"
+      usage ;;
+  esac
+  shift
+done
+
+# Ensure required arguments are provided
+if [[ -z "$target_file" || -z "$library_device" || -z "$library_type" ]]; then
+  echo "Error: --target-file, --library-device and --library-type are required."
+  usage
+fi
 
 # Call the function with parsed arguments
 generate_library_config "$target_file" "$library_device" "$library_type"
