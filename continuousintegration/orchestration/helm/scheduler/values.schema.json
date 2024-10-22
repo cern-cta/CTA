@@ -45,7 +45,13 @@
           "description": "Image pull secrets to authenticate against the registry."
         }
       },
-      "required": ["registry", "repository", "tag", "pullPolicy", "pullSecrets"],
+      "required": [
+        "registry",
+        "repository",
+        "tag",
+        "pullPolicy",
+        "pullSecrets"
+      ],
       "description": "Configuration for the wipe image used during scheduler wiping."
     },
     "configuration": {
@@ -59,7 +65,11 @@
           "properties": {
             "backend": {
               "type": "string",
-              "enum": ["file", "ceph", "postgres"],
+              "enum": [
+                "file",
+                "ceph",
+                "postgres"
+              ],
               "description": "The type of backend to use (e.g., file, ceph, postgres)."
             },
             "cephConfig": {
@@ -90,7 +100,14 @@
                   "description": "Ceph user key."
                 }
               },
-              "required": ["mon", "monport", "pool", "namespace", "id", "key"],
+              "required": [
+                "mon",
+                "monport",
+                "pool",
+                "namespace",
+                "id",
+                "key"
+              ],
               "description": "Ceph backend configuration."
             },
             "postgresConfig": {
@@ -113,7 +130,12 @@
                   "description": "PostgreSQL server address."
                 }
               },
-              "required": ["username", "password", "database", "server"],
+              "required": [
+                "username",
+                "password",
+                "database",
+                "server"
+              ],
               "description": "PostgreSQL backend configuration."
             },
             "fileConfig": {
@@ -124,34 +146,50 @@
                   "description": "Filepath for file-based backend."
                 }
               },
-              "required": ["path"],
+              "required": [
+                "path"
+              ],
               "description": "File-based backend configuration."
             }
           },
-          "required": ["backend"],
+          "required": [
+            "backend"
+          ],
           "oneOf": [
             {
               "properties": {
                 "backend": {
-                  "enum": ["ceph"]
+                  "enum": [
+                    "ceph"
+                  ]
                 },
-                "cephConfig": { "type": "object" }
+                "cephConfig": {
+                  "type": "object"
+                }
               }
             },
             {
               "properties": {
                 "backend": {
-                  "enum": ["postgres"]
+                  "enum": [
+                    "postgres"
+                  ]
                 },
-                "postgresConfig": { "type": "object" }
+                "postgresConfig": {
+                  "type": "object"
+                }
               }
             },
             {
               "properties": {
                 "backend": {
-                  "enum": ["file"]
+                  "enum": [
+                    "file"
+                  ]
                 },
-                "fileConfig": { "type": "object" }
+                "fileConfig": {
+                  "type": "object"
+                }
               }
             }
           ]
@@ -159,5 +197,12 @@
       ]
     }
   },
-  "required": ["nameOverride", "wipeScheduler", "component", "partOf", "wipeImage", "configuration"]
+  "required": [
+    "nameOverride",
+    "wipeScheduler",
+    "component",
+    "partOf",
+    "wipeImage",
+    "configuration"
+  ]
 }

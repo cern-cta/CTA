@@ -45,7 +45,11 @@
           "description": "Image pull secrets to authenticate against the registry."
         }
       },
-      "required": ["registry", "repository", "tag"],
+      "required": [
+        "registry",
+        "repository",
+        "tag"
+      ],
       "description": "Configuration for the wipe image used during catalogue wiping."
     },
     "catalogueServicePort": {
@@ -68,7 +72,11 @@
           "properties": {
             "backend": {
               "type": "string",
-              "enum": ["sqlite", "oracle", "postgres"],
+              "enum": [
+                "sqlite",
+                "oracle",
+                "postgres"
+              ],
               "description": "The type of backend to use (e.g., sqlite, oracle, postgres)."
             },
             "oracleConfig": {
@@ -87,7 +95,11 @@
                   "description": "Oracle database password."
                 }
               },
-              "required": ["username", "database", "password"],
+              "required": [
+                "username",
+                "database",
+                "password"
+              ],
               "description": "Oracle backend configuration."
             },
             "postgresConfig": {
@@ -110,7 +122,12 @@
                   "description": "PostgreSQL database name."
                 }
               },
-              "required": ["username", "password", "server", "database"],
+              "required": [
+                "username",
+                "password",
+                "server",
+                "database"
+              ],
               "description": "PostgreSQL backend configuration."
             },
             "sqliteConfig": {
@@ -121,34 +138,50 @@
                   "description": "Filepath for the SQLite database."
                 }
               },
-              "required": ["filepath"],
+              "required": [
+                "filepath"
+              ],
               "description": "SQLite backend configuration."
             }
           },
-          "required": ["backend"],
+          "required": [
+            "backend"
+          ],
           "oneOf": [
             {
               "properties": {
                 "backend": {
-                  "enum": ["oracle"]
+                  "enum": [
+                    "oracle"
+                  ]
                 },
-                "oracleConfig": { "type": "object" }
+                "oracleConfig": {
+                  "type": "object"
+                }
               }
             },
             {
               "properties": {
                 "backend": {
-                  "enum": ["postgres"]
+                  "enum": [
+                    "postgres"
+                  ]
                 },
-                "postgresConfig": { "type": "object" }
+                "postgresConfig": {
+                  "type": "object"
+                }
               }
             },
             {
               "properties": {
                 "backend": {
-                  "enum": ["sqlite"]
+                  "enum": [
+                    "sqlite"
+                  ]
                 },
-                "sqliteConfig": { "type": "object" }
+                "sqliteConfig": {
+                  "type": "object"
+                }
               }
             }
           ]
@@ -156,5 +189,13 @@
       ]
     }
   },
-  "required": ["nameOverride", "wipeCatalogue", "component", "partOf", "wipeImage", "catalogueServicePort", "configuration"]
+  "required": [
+    "nameOverride",
+    "wipeCatalogue",
+    "component",
+    "partOf",
+    "wipeImage",
+    "catalogueServicePort",
+    "configuration"
+  ]
 }

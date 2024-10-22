@@ -11,5 +11,8 @@
       "description": "The larger system that this application is part of (e.g., CTA)"
     }
   },
-  "required": ["component", "partOf"]
+  "required": [
+    "component",
+    "partOf"
+  ]
 }

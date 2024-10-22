@@ -32,7 +32,13 @@
               "description": "Image pull secrets for registry authentication."
             }
           },
-          "required": ["registry", "repository", "tag", "pullPolicy", "pullSecrets"],
+          "required": [
+            "registry",
+            "repository",
+            "tag",
+            "pullPolicy",
+            "pullSecrets"
+          ],
           "description": "Global image settings."
         },
         "useSystemd": {
@@ -57,7 +63,11 @@
                   "properties": {
                     "backend": {
                       "type": "string",
-                      "enum": ["file", "ceph", "postgres"],
+                      "enum": [
+                        "file",
+                        "ceph",
+                        "postgres"
+                      ],
                       "description": "The backend type to use (e.g., file, ceph, postgres)."
                     },
                     "cephConfig": {
@@ -88,7 +98,14 @@
                           "description": "Ceph user key."
                         }
                       },
-                      "required": ["mon", "monport", "pool", "namespace", "id", "key"],
+                      "required": [
+                        "mon",
+                        "monport",
+                        "pool",
+                        "namespace",
+                        "id",
+                        "key"
+                      ],
                       "description": "Configuration for Ceph backend."
                     },
                     "postgresConfig": {
@@ -111,7 +128,12 @@
                           "description": "PostgreSQL server address."
                         }
                       },
-                      "required": ["username", "password", "database", "server"],
+                      "required": [
+                        "username",
+                        "password",
+                        "database",
+                        "server"
+                      ],
                       "description": "Configuration for PostgreSQL backend."
                     },
                     "fileConfig": {
@@ -122,34 +144,50 @@
                           "description": "File path for file-based backend."
                         }
                       },
-                      "required": ["path"],
+                      "required": [
+                        "path"
+                      ],
                       "description": "Configuration for file-based backend."
                     }
                   },
-                  "required": ["backend"],
+                  "required": [
+                    "backend"
+                  ],
                   "oneOf": [
                     {
                       "properties": {
                         "backend": {
-                          "enum": ["ceph"]
+                          "enum": [
+                            "ceph"
+                          ]
                         },
-                        "cephConfig": { "type": "object" }
+                        "cephConfig": {
+                          "type": "object"
+                        }
                       }
                     },
                     {
                       "properties": {
                         "backend": {
-                          "enum": ["postgres"]
+                          "enum": [
+                            "postgres"
+                          ]
                         },
-                        "postgresConfig": { "type": "object" }
+                        "postgresConfig": {
+                          "type": "object"
+                        }
                       }
                     },
                     {
                       "properties": {
                         "backend": {
-                          "enum": ["file"]
+                          "enum": [
+                            "file"
+                          ]
                         },
-                        "fileConfig": { "type": "object" }
+                        "fileConfig": {
+                          "type": "object"
+                        }
                       }
                     }
                   ]
@@ -157,12 +195,21 @@
               ]
             }
           },
-          "required": ["scheduler"],
+          "required": [
+            "scheduler"
+          ],
           "description": "Global configuration settings for the scheduler."
         }
       },
-      "required": ["image", "useSystemd", "catalogueSchemaVersion", "configuration"]
+      "required": [
+        "image",
+        "useSystemd",
+        "catalogueSchemaVersion",
+        "configuration"
+      ]
     }
   },
-  "required": ["global"]
+  "required": [
+    "global"
+  ]
 }
