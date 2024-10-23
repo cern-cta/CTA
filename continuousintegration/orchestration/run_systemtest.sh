@@ -21,8 +21,6 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
-
 die() { 
   echo "$@" 1>&2
   exit 1;
@@ -57,7 +55,10 @@ execute_cmd_with_log() {
   echo "================================================================================"
   echo "Launching ${mycmd}"
   echo "================================================================================"
-  timeout "${timeout}" bash -c "${mycmd}" | tee -a "${logfile}"
+  echo "Logging to: ${logfile}"
+  {
+    timeout "${timeout}" bash -c "${mycmd}"
+  } 2>&1  | (tee -a "${logfile}")
   execute_log_rc=$?
 
   end_time=$(date +%s)
@@ -180,13 +181,13 @@ run_systemtest() {
   fi
 
   # create instance timeout after 10 minutes
-  execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options} 2>&1" "${log_dir}/create_instance.log" ${create_instance_timeout}
+  execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
 
   # Launch preflighttest and timeout after ${preflighttest_timeout} seconds
   if [ -x ${preflighttest_script} ]; then
     cd $(dirname ${preflighttest_script})
     echo "Launching preflight test: ${preflighttest_script}"
-    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace} 2>&1" "${log_dir}/$(basename ${preflighttest_script}).log" ${preflighttest_timeout}
+    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" "${log_dir}/$(basename ${preflighttest_script}).log" ${preflighttest_timeout}
     cd ${orchestration_dir}
   else
     echo "Skipping preflight test: ${preflighttest_script} not available"
@@ -194,7 +195,7 @@ run_systemtest() {
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
   cd $(dirname ${systemtest_script})
-  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options} 2>&1" "${log_dir}/test.log" ${systemtestscript_timeout}
+  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" "${log_dir}/test.log" ${systemtestscript_timeout}
   cd ${orchestration_dir}
 
   # delete instance?
