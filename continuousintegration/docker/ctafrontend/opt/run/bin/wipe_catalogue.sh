@@ -17,7 +17,7 @@
 
 . /opt/run/bin/init_pod.sh
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"

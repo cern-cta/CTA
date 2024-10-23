@@ -30,10 +30,10 @@ spec:
     {{- if (.commandsAtRuntime)}}
     readinessProbe:
       exec:
-        command: {{.commandsAtRuntime | toJson}}
-      initialDelaySeconds: {{.delay}}
-      periodSeconds: 10
-      failureThreshold: {{.failureTolerance}}
+        command: {{ .readinessProbe.commandsAtRuntime | toJson }}
+      initialDelaySeconds: {{ .readinessProbe.delay }}
+      periodSeconds: {{ .readinessProbe.periodSeconds }}
+      failureThreshold: {{ .readinessProbe.failureTolerance }}
     {{- end}}
     stdin: true
     env:

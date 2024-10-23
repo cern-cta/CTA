@@ -17,15 +17,15 @@
 
 . /opt/run/bin/init_pod.sh
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
 
 # Install missing RPMs
 yum -y install cta-cli cta-debuginfo
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
+touch /CTACLI_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 # sleep forever but exit immediately when pod is deleted
 exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

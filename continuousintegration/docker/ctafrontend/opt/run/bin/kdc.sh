@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs (kdc)
 yum -y install heimdal-server heimdal-workstation
@@ -80,8 +80,8 @@ done < $keypasses_file
 echo Done.
 
 echo "### KDC ready ###"
-touch /root/kdcReady
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
+touch /KDC_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 # sleep forever but exit immediately when pod is deleted
 exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

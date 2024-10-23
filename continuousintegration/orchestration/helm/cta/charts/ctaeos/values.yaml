@@ -50,7 +50,6 @@ volumeMounts:
   name: sss-keytab
   subPath: eos.keytab
 
-
 volumes:
 - name: shared
   hostPath:

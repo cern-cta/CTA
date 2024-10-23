@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
@@ -26,17 +26,16 @@ die() {
 
 # enable cta repository from previously built artifacts
 yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
 
 # install the needed packages
 # the scheduler tools are installed once the scheduler type is known (see below)
-yum -y install ceph-common
-yum clean packages
 
 if [ "$SCHEDULER_BACKEND" == "postgres" ]; then
     echo "Installing the cta-scheduler-utils"
     yum -y install cta-scheduler-utils
 else
+    yum -y install ceph-common
+    yum-config-manager --enable ceph
     echo "Installing the cta-objectstore-tools"
     yum -y install cta-objectstore-tools
 fi

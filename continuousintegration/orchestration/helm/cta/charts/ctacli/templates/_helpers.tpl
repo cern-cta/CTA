@@ -15,21 +15,6 @@
 {{- end }}
 
 {{/*
-Defines ReadinessProbe. Its use case might vary whether
-you want to just check if pod is ready to use or to try
-to invoke commands at the runtime of the pod.
-*/}}
-{{- define "ctacli.readinessProbe" -}}
-readinessProbe:
-  exec:
-    command: {{.commandsAtRuntime | toJson}}
-  initialDelaySeconds: {{.delay}}
-  periodSeconds: 10
-  failureThreshold: {{.failureTolerance}}
-{{- end -}}
-
-
-{{/*
 Sets pesistent volumes for the chart. When loaded as as subchart
 it will load additionally all of the global configs as well
 (or if .Values.global is defined in subchart as well)

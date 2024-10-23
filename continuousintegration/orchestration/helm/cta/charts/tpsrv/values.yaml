@@ -38,6 +38,11 @@ tpsrv:
     isPriviliged: true
     command: ['/opt/run/bin/rmcd.sh']
     args: ["none"]
+    readinessProbe:
+      commandsAtRuntime: ["test", "-f", "/RMCD_READY"]
+      delay: 2
+      periodSeconds: 1
+      failureTolerance: 60
     env:
     - name: MY_CONTAINER
       value: "rmcd"
@@ -58,6 +63,11 @@ tpsrv:
       cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
       chmod 600 /etc/cta/cta-taped.sss.keytab;
       /opt/run/bin/taped.sh;
+    readinessProbe:
+      commandsAtRuntime: ["test", "-f", "/TAPED_READY"]
+      delay: 2
+      periodSeconds: 1
+      failureTolerance: 60
     env:
     - name: MY_CONTAINER
       value: "taped"

@@ -14,20 +14,6 @@
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{/*
-Defines ReadinessProbe. Its use case might vary whether
-you want to just check if pod is ready to use or to try
-to invoke commands at the runtime of the pod.
-*/}}
-{{- define "client.readinessProbe" -}}
-readinessProbe:
-  exec:
-    command: {{.commandsAtRuntime | toJson}}
-  initialDelaySeconds: {{.delay}}
-  periodSeconds: 10
-  failureThreshold: {{.failureTolerance}}
-{{- end -}}
-
 
 {{/*
 Sets pesistent volumes for the chart. When loaded as as subchart
