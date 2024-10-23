@@ -55,3 +55,11 @@ it will load additionally all of the global configs as well
   {{- end }}
 {{- end}}
 {{- end -}}
+
+{{- define "scheduler.config" -}}
+  {{- $schedulerConfig := .Values.global.configuration.scheduler }}
+  {{- if ne (typeOf $schedulerConfig) "string" -}}
+    {{- $schedulerConfig = $schedulerConfig | toYaml }}
+  {{- end }}
+  {{- $schedulerConfig -}}
+{{- end }}

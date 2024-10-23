@@ -28,9 +28,12 @@ spec:
     command: {{.Values.customEntrypoint.command  | toJson}}
     args: {{.Values.customEntrypoint.args}}
     {{- end}}
-    {{- if (.Values.readinessProbe)}}
-    {{include "client.readinessProbe" .Values.readinessProbe | nindent 4}}
-    {{- end}}
+    readinessProbe:
+      exec:
+        command: ["test", "-f", "/CLIENT_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     volumeMounts:

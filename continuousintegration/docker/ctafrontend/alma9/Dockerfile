@@ -40,6 +40,7 @@ RUN yum install -y \
       yum-utils \
       createrepo epel-release \
       jq bc \
+      sqlite \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
@@ -72,7 +73,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
     rm -f /etc/rc.d/rc.local
 
 # Sqlite3 not installed by default in Alma9 image
-RUN yum install -y sqlite
+# RUN yum install -y sqlite
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)

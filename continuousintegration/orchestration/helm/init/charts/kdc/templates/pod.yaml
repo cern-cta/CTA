@@ -32,10 +32,10 @@ spec:
     {{- end}}
     readinessProbe:
       exec:
-        command: {{ .Values.readinessProbe.commandsAtRuntime | toJson }}
-      initialDelaySeconds: {{ .Values.readinessProbe.delay }}
-      periodSeconds: 10
-      failureThreshold: {{ .Values.readinessProbe.failureTolerance }}
+        command: ["test", "-f", "/KDC_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     volumeMounts:

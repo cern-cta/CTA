@@ -51,6 +51,7 @@ volumeMounts:
 
 # As to mark whether the kdc has generated all of the secrets needed
 readinessProbe:
-  commandsAtRuntime: ["cat", "/root/kdcReady"]
-  delay: 10
+  commandsAtRuntime: ["test", "-f", "/KDC_READY"]
+  delay: 2
+  periodSeconds: 1
   failureTolerance: 10

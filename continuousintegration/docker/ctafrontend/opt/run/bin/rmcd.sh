@@ -17,7 +17,7 @@
 
 . /opt/run/bin/init_pod.sh
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
@@ -47,6 +47,7 @@ else
 
   # to get rmcd logs to stdout
   tail -F /var/log/cta/cta-rmcd.log &
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
+  touch /RMCD_READY
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
   runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
 fi

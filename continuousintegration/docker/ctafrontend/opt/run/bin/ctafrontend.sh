@@ -17,7 +17,7 @@
 
 . /opt/run/bin/init_pod.sh
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
@@ -52,12 +52,12 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
   cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
   source /tmp/cta-frontend_env
-
+  touch /CTAFRONTEND_READY
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
   runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
   echo "ctafrontend died"
   echo "analysing core file if any"
   /opt/run/bin/ctafrontend_bt.sh
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
   sleep infinity
 else
   # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`

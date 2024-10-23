@@ -18,7 +18,7 @@
 set -x
 . /opt/run/bin/init_pod.sh
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Started"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 yum-config-manager --enable cta-artifacts
 
@@ -390,7 +390,7 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
 fi
 
 touch /eos-status/EOSOK
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Ready"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /bin/bash
