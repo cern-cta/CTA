@@ -45,7 +45,7 @@ if [ ! -z "${error}" ]; then
 fi
 
 echo "Preparing namespace for the tests"
-bash -x ./prepare_tests.sh -n ${NAMESPACE}
+./prepare_tests.sh -n ${NAMESPACE}
 
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 kubectl -n ${NAMESPACE} cp client_prepare_file.sh client:/root/client_prepare_file.sh
