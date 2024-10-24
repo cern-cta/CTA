@@ -182,13 +182,6 @@ redeploy() {
   fi
 
   if [ "$skip_image_reload" == "false" ]; then
-    # Clear the old image and namespace
-    if podman inspect ctageneric:${image_tag} &>/dev/null; then
-      echo "Deleting old image and removing it from minikube"
-      podman rmi ctageneric:${image_tag}
-      minikube image rm localhost/ctageneric:${image_tag}
-    fi
-
     ## Create and load the new image
     echo "Building image from ${rpm_src}"
     ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
@@ -196,10 +189,12 @@ redeploy() {
                                                      --operating-system "${operating_system}" \
                                                      ${extra_build_options}
     # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
-    podman save -o ctageneric_${image_tag}.tar localhost/ctageneric:${image_tag}
+    echo "Saving image locally"
+    tmpfile=$(mktemp) && trap 'rm -f $tmpfile' EXIT
+    podman save -o $tmpfile localhost/ctageneric:${image_tag}
     echo "Loading new image into minikube"
-    minikube image load ctageneric_${image_tag}.tar
-    rm ctageneric_${image_tag}.tar
+    minikube image load $tmpfile --overwrite
+    podman image prune -f
   fi
 
   # Redeploy containers
