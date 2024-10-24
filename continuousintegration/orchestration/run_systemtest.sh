@@ -171,7 +171,11 @@ run_systemtest() {
   fi
 
   log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
-  mkdir -p ${log_dir}
+  mkdir -p "${log_dir}"
+  if [ -d "${log_dir}" ]; then
+    # Delete log contents of previous runs if they exist
+    rm -rf "${log_dir:?}/"*
+  fi
 
   if [ $cleanup_namespaces == 1 ]; then
       echo "Cleaning up old namespaces:"
