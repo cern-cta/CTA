@@ -191,7 +191,9 @@ run_systemtest() {
   if [ -x ${preflighttest_script} ]; then
     cd $(dirname ${preflighttest_script})
     echo "Launching preflight test: ${preflighttest_script}"
-    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" "${log_dir}/$(basename ${preflighttest_script}).log" ${preflighttest_timeout}
+    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" \
+                         "${log_dir}/$(basename ${preflighttest_script} | cut -d. -f1).log" \
+                         ${preflighttest_timeout}
     cd ${orchestration_dir}
   else
     echo "Skipping preflight test: ${preflighttest_script} not available"
@@ -199,7 +201,9 @@ run_systemtest() {
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
   cd $(dirname ${systemtest_script})
-  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" "${log_dir}/test.log" ${systemtestscript_timeout}
+  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" \
+                       "${log_dir}/$(basename ${systemtest_script} | cut -d. -f1).log" \
+                       ${systemtestscript_timeout}
   cd ${orchestration_dir}
 
   # delete instance?
