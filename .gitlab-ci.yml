@@ -1,13 +1,13 @@
 stages:
-- prepare
-- analysis
-- build
-- build:image
-- build:tagged
-- test
-- release:changelog
-- release:internal
-- release:external
+  - prepare
+  - analysis
+  - build
+  - build:image
+  - build:tagged
+  - test
+  - release:changelog
+  - release:internal
+  - release:external
 
 variables:
   CTA_VERSION: 5
@@ -40,4 +40,4 @@ workflow:
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
 
 include:
-- local: .gitlab/ci/*.gitlab-ci.yml
+  - local: .gitlab/ci/*.gitlab-ci.yml
