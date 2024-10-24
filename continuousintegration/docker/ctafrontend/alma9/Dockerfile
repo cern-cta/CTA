@@ -18,23 +18,33 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
-# Environment variables
 ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
     CTAREPODIR="/opt/repo"
 
-ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+# Docker image run setup
+COPY ${BASEDIR}/run.sh /
 
-RUN echo "YUM_REPOS_DIR is: ${YUM_REPOS_DIR}"
-RUN echo "YUM_VERSIONLOCK_FILE is: ${YUM_VERSIONLOCK_FILE}"
+# Add custom rc.local to massage kubernetes resources for the taget docker container
+COPY ${BASEDIR}/rc.local /etc/rc.d
 
-# Manage repos before running yum
-COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
-COPY ${YUM_VERSIONLOCK_FILE}  /etc/dnf/plugins/versionlock.list
+# Make sure it can be executed by root
+RUN chmod 744 /etc/rc.local
+
+# disable selinux so that systemd works if the container is booted with an image that already contains selinux
+COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
 
+# Custom Yum repo setup
+ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
+ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+
+COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
+COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
+
+# Install necessary packages
+# Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
 RUN yum install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
@@ -74,20 +84,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# Docker image run setup
-COPY ${BASEDIR}/run.sh /
-
-# Add custom rc.local to massage kubernetes resources for
-# the taget docker container
-COPY ${BASEDIR}/rc.local /etc/rc.d
-
-# Make sure it can be executed by root
-RUN chmod 744 /etc/rc.local
-
-# disable selinux so that systemd works if the container is booted
-# with an image that already contains selinux
-COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # One more thing so that we can use systemd
 VOLUME [ "/sys/fs/cgroup" ]

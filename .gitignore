@@ -11,7 +11,6 @@ build_srpm/
 build_rpm/
 image_rpms/
 pod_logs/
-temp/
 tmp/
 
 # helm files
