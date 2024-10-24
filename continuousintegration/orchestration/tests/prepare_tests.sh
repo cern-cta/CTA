@@ -329,6 +329,21 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
      --activityregex ^T0Reprocess$                                    \
      --mountpolicy ctasystest --comment "ctasystest"
 
+# PATCH TO BE REMOVED ONCE KERNEL ISSUE IF FIXED
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') load 1 0
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') load 2 1
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') load 3 2
+
+for drive in $(lsscsi -g | grep tape | awk '{print $6}'); do
+  mt -f $drive status # This should return EIO
+  mt -f $drive rewind
+  mt -f $drive status # No EIO
+done
+
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') unload 1 0
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') unload 2 1
+mtx -f $(lsscsi -g | grep mediumx | awk '{print $7}') unload 3 2
+
 echo "Labeling tapes:"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
