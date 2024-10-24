@@ -66,6 +66,7 @@ update_chart_dependencies() {
     "init/charts/kdc"
     "catalogue"
     "scheduler"
+    "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
     "cta/charts/ctaeos"
@@ -260,8 +261,6 @@ create_instance() {
                                   --set-file configuration=${scheduler_config} \
                                   --wait --wait-for-jobs --timeout 2m
   fi
-  echo "Processing dependencies of cta chart..."
-  helm dependency update helm/cta
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
                                 --namespace ${namespace} \
