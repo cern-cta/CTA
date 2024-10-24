@@ -130,6 +130,6 @@ spec:
     {{- $.Values.global.volumes | toYaml | nindent 2}}
   {{- end}}
   imagePullSecrets:
-  {{ $imagePullSecrets | nindent 4 }}
+  {{ $imagePullSecrets | nindent 2 }}
 ---
 {{- end}} # End of tape server count range loop

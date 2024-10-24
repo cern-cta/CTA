@@ -3,8 +3,8 @@
    This file contains helper functions to work with Docker images, including image name construction,
    pull policy selection, and pull secrets.
 
-   The `common.images.image` function generates the full image name, 
-   `common.images.pullPolicy` selects the appropriate image pull policy, and 
+   The `common.images.image` function generates the full image name,
+   `common.images.pullPolicy` selects the appropriate image pull policy, and
    `common.images.pullSecrets` handles image pull secrets.
 */}}
 
@@ -56,12 +56,12 @@
   {{- $imageRoot := .imageRoot -}}
   {{- $global := .global -}}
   {{- if $global.pullSecrets -}}
-    {{- range $global.pullSecrets -}}
-      - name: {{ . | quote }}
+    {{- range $global.pullSecrets }}
+    - name: {{ . | quote }}
     {{- end -}}
   {{- else if $imageRoot.pullSecrets -}}
-    {{- range $imageRoot.pullSecrets -}}
-      - name: {{ . | quote }}
+    {{- range $imageRoot.pullSecrets }}
+    - name: {{ . | quote }}
     {{- end -}}
   {{- end -}}
 {{- end -}}

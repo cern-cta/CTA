@@ -46,6 +46,5 @@ spec:
     configMap:
       name: etc-cta-ctacli
   {{include "ctacli.volumes" . | nindent 2}}
-
   imagePullSecrets:
-  {{ include "ctacli.imagePullSecrets" . | nindent 4 }}
+  {{ include "ctacli.imagePullSecrets" . | nindent 2 }}

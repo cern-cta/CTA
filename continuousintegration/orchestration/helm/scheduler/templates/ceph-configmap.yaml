@@ -16,7 +16,7 @@ data:
   ceph.conf: |
     [global]
       mon host = {{ $schedulerConfig.cephConfig.mon }}:{{ $schedulerConfig.cephConfig.monport }}
-    
+
   ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring: |
     [client.{{ $schedulerConfig.cephConfig.id }}]
       key = {{ $schedulerConfig.cephConfig.key }}

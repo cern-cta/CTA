@@ -46,6 +46,5 @@ spec:
     configMap:
       name: etc-cta-client
   {{include "client.volumes" . | nindent 2}}
-
   imagePullSecrets:
-  {{ include "client.imagePullSecrets" . | nindent 4 }}
+  {{ include "client.imagePullSecrets" . | nindent 2 }}

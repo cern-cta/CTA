@@ -43,4 +43,4 @@ spec:
   volumes:
   {{- include "kdc.volumes" . | nindent 2 }}
   imagePullSecrets:
-  {{- include "kdc.imagePullSecrets" . | nindent 4 }}
+  {{- include "kdc.imagePullSecrets" . | nindent 2 }}
