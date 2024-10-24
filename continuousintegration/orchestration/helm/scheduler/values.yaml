@@ -11,6 +11,7 @@ wipeImage:
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret
+  - reg-ctageneric
 
 configuration:
   backend: "" # Options: file, ceph, postgres
