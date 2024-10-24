@@ -20,7 +20,7 @@ spec:
       - |
         touch /eos-status/CANSTART
         echo -n "Waiting for EOS to be initialised"
-        while [ ! -f /eos-status/EOSOK ]; do
+        while [ ! -f /eos-status/EOS_READY ]; do
           echo -n "."
           sleep 1
         done
