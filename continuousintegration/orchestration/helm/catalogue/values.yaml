@@ -11,6 +11,7 @@ wipeImage:
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret
+  - reg-ctageneric
 
 # TODO: is this the best place to put/name this?
 catalogueServicePort: 5432

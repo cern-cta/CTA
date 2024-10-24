@@ -14,6 +14,7 @@ global:
     pullPolicy: IfNotPresent
     pullSecrets:
     - ctaregsecret
+    - reg-ctageneric
 
 
 # This can either be provided via --set-file or specified directly here
