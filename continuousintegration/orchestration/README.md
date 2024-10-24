@@ -256,7 +256,7 @@ From there, you need to install the missing `protocolbuffer` tools like `protoc`
 [root@ctafrontend /]# yum install -y  protobuf-compiler
 ...
 Installed:
-  protobuf-compiler.x86_64 0:2.5.0-7.el7                                        
+  protobuf-compiler.x86_64 0:2.5.0-7.el7
 
 Complete!
 

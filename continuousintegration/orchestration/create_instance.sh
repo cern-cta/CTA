@@ -87,7 +87,7 @@ create_instance() {
   library_model="mhvtl"
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
-  wipe_catalogue=false 
+  wipe_catalogue=false
   wipe_scheduler=false
   use_systemd=false # By default to not use systemd to manage services inside the containers
   tpsrv_count=2
@@ -99,33 +99,33 @@ create_instance() {
   while [[ "$#" -gt 0 ]]; do
     case $1 in
       -h | --help) usage ;;
-      -o|--scheduler-config) 
+      -o|--scheduler-config)
         scheduler_config="$2"
         test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
-      -d|--catalogue-config) 
-        catalogue_config="$2" 
+      -d|--catalogue-config)
+        catalogue_config="$2"
         test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
-      -l|--library-config) 
+      -l|--library-config)
         library_config="$2"
         shift ;;
-      -m|--model) 
+      -m|--model)
         library_model="$2"
         shift ;;
-      -n|--namespace) 
+      -n|--namespace)
         namespace="$2"
         shift ;;
-      -r|--registry-host) 
+      -r|--registry-host)
         registry_host="$2"
         shift ;;
-      -i|--image-tag) 
+      -i|--image-tag)
         image_tag="$2"
         shift ;;
-      --tpsrv-count) 
+      --tpsrv-count)
         tpsrv_count="$2"
         shift ;;
-      -c|--catalogue-version) 
+      -c|--catalogue-version)
         catalogue_schema_version="$2"
         shift ;;
       -S|--use-systemd) use_systemd=true ;;
@@ -154,7 +154,7 @@ create_instance() {
     echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
     usage
   fi
-  if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then 
+  if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then
     die "Library model ${library_model} does not exist"
   fi
   if [ -z "${catalogue_schema_version}" ]; then

@@ -46,11 +46,11 @@ delete_instance() {
   while [[ "$#" -gt 0 ]]; do
     case $1 in
       -h | --help) usage ;;
-      -n|--namespace) 
+      -n|--namespace)
         namespace="$2"
         shift ;;
       -D|--discard-logs) collect_logs=false ;;
-      -l|--log-dir) 
+      -l|--log-dir)
         log_dir="$2"
         test -d "${log_dir}" || die "ERROR: Log directory ${log_dir} does not exist"
         test -w "${log_dir}" || die "ERROR: Canot write to log directory ${log_dir}"

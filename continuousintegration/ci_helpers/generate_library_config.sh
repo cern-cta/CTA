@@ -38,11 +38,11 @@ generate_library_config() {
   local library_device="$2"
   local library_type="$3"
   local lsscsi_g="$(lsscsi -g)"
-  
+
   local line=$(echo "$lsscsi_g" | grep "${library_device}")
   local scsi_host="$(echo "$line" | sed -e 's/^.//' | cut -d\: -f1)"
   local scsi_channel="$(echo "$line" | cut -d\: -f2)"
-  
+
   # Get drive names
   local drivenames=$(echo "$lsscsi_g" | \
                     grep "^.${scsi_host}:${scsi_channel}:" | \
@@ -58,7 +58,7 @@ generate_library_config() {
                       sed -e 's%/dev/%n%' | \
                       paste -sd' ' -)
 
-  
+
   # Get the tapes currently in the library
   local tapes=$(mtx -f "/dev/${library_device}" status | \
                 grep "Storage Element" | \

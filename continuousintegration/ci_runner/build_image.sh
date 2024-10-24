@@ -107,7 +107,7 @@ buildImage() {
         fi
         ;;
       *)
-        echo "Unsupported argument: $1" 
+        echo "Unsupported argument: $1"
         usage ;;
     esac
     shift

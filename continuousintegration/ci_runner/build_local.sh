@@ -77,7 +77,7 @@ build_local() {
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-srpms) skip_srpms=true ;;
       --install) install=true ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
           shift
@@ -121,7 +121,7 @@ build_local() {
   cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../.."
 
   if [ ${skip_srpms} = false ]; then
-    log_info "Building SRPMs..."
+    echo "Building SRPMs..."
     local build_srpm_flags=""
     if [[ ${clean_build_dirs} = true ]]; then
       build_srpm_flags+=" --clean-build-dir"
@@ -143,7 +143,7 @@ build_local() {
       ${build_srpm_flags}
   fi
 
-  log_info "Compiling the CTA project from source directory"
+  echo "Compiling the CTA project from source directory"
 
   local build_rpm_flags="--jobs ${num_jobs}"
 
@@ -172,7 +172,7 @@ build_local() {
     build_rpm_flags+=" --install"
   fi
 
-  log_info "Building RPMs..."
+  echo "Building RPMs..."
   ./continuousintegration/ci_helpers/build_rpm.sh \
     --build-dir build_rpm \
     --build-generator "${build_generator}" \
@@ -185,7 +185,7 @@ build_local() {
     --oracle-support ${oracle_support} \
     ${build_rpm_flags}
 
-  log_info "Build successful"
+  echo "Build successful"
 
   cd "${initial_loc}"
 }
