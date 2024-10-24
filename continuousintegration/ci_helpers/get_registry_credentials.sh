@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 secret_is_dockerconfigjson() {
-  test $(kubectl get secret $1 -o jsonpath='{.type}') == "kubernetes.io/dockerconfigjson" 
+  test $(kubectl get secret $1 -o jsonpath='{.type}') == "kubernetes.io/dockerconfigjson"
 }
 
 get_credentials() {

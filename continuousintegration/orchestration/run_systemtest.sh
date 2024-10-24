@@ -21,7 +21,7 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-die() { 
+die() {
   echo "$@" 1>&2
   exit 1;
 }
@@ -104,38 +104,38 @@ run_systemtest() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
-      -s|--test-script) 
-        systemtest_script="$2" 
+      -s|--test-script)
+        systemtest_script="$2"
         test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
         shift ;;
-      -n|--namespace) 
+      -n|--namespace)
         namespace="$2"
         shift ;;
-      -t|--test-timeout) 
+      -t|--test-timeout)
         systemtestscript_timeout="$2"
         shift ;;
-      -r|--registry-host) 
+      -r|--registry-host)
         registry_host="$2"
         spawn_options+=" --registry-host ${registry_host}"
         shift ;;
-      -i|--image-tag) 
+      -i|--image-tag)
         image_tag="$2"
         spawn_options+=" --image-tag ${image_tag}"
         shift ;;
-      -o|--scheduler-config) 
+      -o|--scheduler-config)
         scheduler_config="$2"
         test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
         spawn_options+=" --scheduler-config ${scheduler_config}"
         shift ;;
-      -d|--catalogue-config) 
-        catalogue_config="$2" 
+      -d|--catalogue-config)
+        catalogue_config="$2"
         test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
         spawn_options+=" --catalogue-config ${catalogue_config}"
         shift ;;
-      --spawn-options) 
+      --spawn-options)
         extra_spawn_options="$2"
         shift ;;
-      --test-options) 
+      --test-options)
         extra_test_options="$2"
         shift ;;
       -K|--keep-namespace) keepnamespace=1 ;;

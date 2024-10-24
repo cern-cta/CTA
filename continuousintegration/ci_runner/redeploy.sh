@@ -130,10 +130,10 @@ redeploy() {
           exit 1
         fi
         ;;
-      --spawn-options) 
+      --spawn-options)
         extra_spawn_options+=" $2"
         shift ;;
-      --build-options) 
+      --build-options)
         extra_build_options="$2"
         shift ;;
       *)
@@ -154,9 +154,10 @@ redeploy() {
   fi
 
   if [ -n "${library_config}" ]; then
-  # If provided
+    # If provided
     extra_spawn_options+=" --library-config ${library_config}"
   elif [ "$upgrade" == "true" ]; then
+    # Grab the auto-generated one of the current instance
     latest_config_for_namespace=$(ls -t /tmp/${kube_namespace}-library-* | head -n 1)
     extra_spawn_options+=" --library-config ${latest_config_for_namespace}"
   fi # else by not providing, create_instance will auto-generate
@@ -210,7 +211,6 @@ redeploy() {
                        --catalogue-config ${catalogue_config} \
                        --scheduler-config ${scheduler_config} \
                        ${extra_spawn_options}
-  echo "Pods redeployed."
 }
 
 redeploy "$@"

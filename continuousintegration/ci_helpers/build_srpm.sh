@@ -68,7 +68,7 @@ build_srpm() {
           usage
         fi
         ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
               echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."

@@ -28,7 +28,7 @@ list_images() {
   local registry_name="cta/ctageneric"
   local docker_registry="gitlab-registry.cern.ch"
 
-  
+
   local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local jwt_token=$(bash ${script_dir}/get_registry_credentials.sh)
 

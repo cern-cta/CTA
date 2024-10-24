@@ -77,7 +77,7 @@ compile_deploy() {
   local build_namespace="build"
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
-  local build_pod_name="cta-build-pod"
+  local build_pod_name="cta-build"
   local cta_version="5"
   local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
   local scheduler_config="presets/dev-file-scheduler-values.yaml"
@@ -102,7 +102,7 @@ compile_deploy() {
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-image-reload) skip_image_reload=true ;;
       --force-install) force_install=true ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
           shift
