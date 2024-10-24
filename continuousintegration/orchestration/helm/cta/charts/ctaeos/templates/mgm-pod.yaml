@@ -95,6 +95,5 @@ spec:
     persistentVolumeClaim:
       claimName: eos-status-pvc
   {{include "ctaeos.volumes" . | nindent 2}}
-
   imagePullSecrets:
-  {{ include "ctaeos.imagePullSecrets" . | nindent 4 }}
+  {{ include "ctaeos.imagePullSecrets" . | nindent 2 }}

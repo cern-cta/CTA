@@ -6,7 +6,7 @@
 */}}
 
 {{/*
-   Generate the full name for a resource, handling name overrides and ensuring the final name is 
+   Generate the full name for a resource, handling name overrides and ensuring the final name is
    truncated to 63 characters, as Kubernetes requires.
    - If .Values.fullnameOverride is provided, it is used as the full name.
    - If .Values.nameOverride is provided, the release name is combined with the nameOverride.
