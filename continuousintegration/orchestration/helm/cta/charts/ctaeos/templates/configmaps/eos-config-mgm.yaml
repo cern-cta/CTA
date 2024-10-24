@@ -63,7 +63,8 @@ data:
     mgmofs.archivedir /var/eos/archive
 
     # report store path
-    mgmofs.reportstorepath /var/eos/report
+    # Note that this reports directly to var/log so that it goes where all logs go
+    mgmofs.reportstorepath /var/log/eos/report
 
     # this defines the default config to load
     mgmofs.autoloadconfig default
