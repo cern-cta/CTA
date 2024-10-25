@@ -1,85 +1,108 @@
 {{- $namespace := .Release.Namespace -}}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
-{{- $driveSlot := (.StatefulSetOrdinal | int) -}}
-{{- $numDrives := len $tapeConfig.library.drivenames -}}
-{{- $driveName := index $tapeConfig.library.drivenames $driveSlot -}}
+{{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+{{ include "validate.tapeServers" . }}
+{{ range $tapeServers }}
+{{- $tpsrvName := .name -}}
+{{- $libraryDevice := .libraryDevice -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: "tpsrv"
   namespace: {{ $namespace | quote }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
   serviceName: "tpsrv"  # Ensure a headless service exists with this name; allows for stable DNS entries
-  replicas: {{ $numDrives }} # Spawn a tpsrv pod for each provided drive
+  replicas: 1
   selector:
     matchLabels:
-      app: tpsrv
+      app.kubernetes.io/name: {{ $tpsrvName }}
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
-        app: tpsrv
-        cta/library-device: {{ $tapeConfig.library.device }}
+        app.kubernetes.io/name: {{ $tpsrvName }}
+        {{- include "common.labels.noname" $ | nindent 8 }}
+        cta/library-device: {{ .libraryDevice }}
       annotations:
-        catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
+        catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
       restartPolicy: Always
       imagePullSecrets:
-      {{- include "tpsrv.imagePullSecrets" . | nindent 6 }}
+      {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
       containers:
-      {{- range .Values.tpsrv.containers }}
-      - name: {{ .name | default "tpsrv" | quote }}
+      # RMCD container
+      - name: rmcd
         image: {{ include "tpsrv.image" $ }}
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
-        {{- if (.commandsAtRuntime) }}
-        readinessProbe:
-          exec:
-            command: {{ .readinessProbe.commandsAtRuntime | toJson }}
-          initialDelaySeconds: {{ .readinessProbe.delay }}
-          periodSeconds: {{ .readinessProbe.periodSeconds }}
-          failureThreshold: {{ .readinessProbe.failureTolerance }}
-        {{- end }}
+        securityContext:
+          privileged: true
         stdin: true
+        command: ['/opt/run/bin/rmcd.sh']
+        args: ["none"]
+        readinessProbe:
+          commandsAtRuntime: ["test", "-f", "/RMCD_READY"]
+          delay: 2
+          periodSeconds: 1
+          failureTolerance: 60
         env:
         - name: MY_NAME
-          value: "tpsrv-{{ $driveSlot }}"
+          value: {{ $tpsrvName }}
         - name: MY_NAMESPACE
           value: {{ $namespace | quote }}
         - name: INSTANCE_NAME
           value: {{ $namespace | quote }}
-        - name: LIBRARYTYPE
-          value: {{ $tapeConfig.library.type | quote }}
-        - name: LIBRARYNAME
-          value: {{ $tapeConfig.library.name | quote }}
         - name: LIBRARYDEVICE
-          value: {{ $tapeConfig.library.device | quote }}
+          value: {{ $libraryDevice | quote }}
+        - name: MY_CONTAINER
+          value: "rmcd"
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        {{- if $.Values.taped.volumeMounts }}
+        {{ $.Values.taped.volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if $.Values.global.volumeMounts }}
+        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+        - name: sysconfig-tpsrv-config
+          mountPath: /etc/sysconfig/cta-taped
+          subPath: cta-taped
+      # For each drive, spawn a separate taped container
+      {{- range $index, $driveName := .drivesnames }}
+      - name: "taped-{{ $index }}"
+        image: {{ include "tpsrv.image" $ }}
+        imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
+        securityContext:
+          privileged: true
+        command: {{ $.Values.taped.command | toJson }}
+        {{- if ($.Values.taped.args) }}
+        args: {{ $.Values.taped.args }}
+        {{- end }}
+        readinessProbe:
+          exec:
+            command: {{ $.Values.taped.readinessProbe.commandsAtRuntime | toJson }}
+          initialDelaySeconds: {{ $.Values.taped.readinessProbe.delay }}
+          periodSeconds: {{ $.Values.taped.readinessProbe.periodSeconds }}
+          failureThreshold: {{ $.Values.taped.readinessProbe.failureTolerance }}
+        stdin: true
+        env:
+        - name: MY_NAME
+          value: {{ $tpsrvName }}
+        - name: MY_NAMESPACE
+          value: {{ $namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ $namespace | quote }}
+        - name: MY_CONTAINER
+          value: "taped-{{ $index }}"
+        - name: eoshost
+          value: "mgm"
+        - name: LIBRARYDEVICE
+          value: {{ $libraryDevice | quote }}
         - name: DRIVENAME
           value: {{ $driveName }}
-        - name: DRIVENAMES
-          value: {{ $tapeConfig.library.drivenames | join "," | quote }}
-        - name: DRIVEDEVICES
-          value: {{ $tapeConfig.library.drivedevices | join "," | quote }}
-        {{- if $tapeConfig.library.driveserials }}
-        - name: DRIVESERIALS
-          value: {{ $tapeConfig.library.driveserials | join "," | quote }}
-        {{- end }}
-        - name: TAPES
-          value: {{ $tapeConfig.library.tapes | join "," | quote }}
-        {{- if (.env) }}
-          {{- .env | toYaml | nindent 8 }}
-        {{- end }}
-        command: {{ .command | toJson }}
-        {{- if (.args) }}
-        args: {{ .args }}
-        {{- end }}
-        securityContext:
-          privileged: {{ .isPriviliged }}
-        {{- if (.ports) }}
-        ports:
-        {{- .ports | toYaml | nindent 8 }}
+        {{- if ($.Values.taped.env) }}
+          {{- $.Values.taped.env | toYaml | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: cta-taped-config
@@ -91,6 +114,8 @@ spec:
         - name: scheduler-config
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
+        - mountPath: /etc/config/eos
+          name: eosconfig
         {{- if ($.Values.global.useSystemd) }}
         - name: sysconfig-tpsrv-config
           mountPath: /etc/sysconfig/cta-rmcd
@@ -107,9 +132,11 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- .volumeMounts | toYaml | nindent 8 }}
-        {{- if ($.Values.global.volumes) }}
-          {{- $.Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- if $.Values.taped.volumeMounts }}
+        {{ $.Values.taped.volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if $.Values.global.volumeMounts }}
+        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
       {{- end }} # End of containers loop
       volumes:
@@ -118,19 +145,30 @@ spec:
           name: cta-catalogue-conf
       - name: scheduler-config
         configMap:
-          name: scheduler-configmap
-      - name: cta-taped-config
+          name: cta-scheduler-conf
+      - name: eosconfig
         configMap:
-          name: cta-taped-tpsrv-{{ $driveSlot }}-configmap
+          name: eos-config-base
       - name: sysconfig-tpsrv-config
         configMap:
-          name: sysconfig-tpsrv-{{ $driveSlot }}-configmap
+          name: cta-sysconfig-tpsrv-conf
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:
-          name: ceph-configmap
+          name: ceph-conf
       {{- end }}
-      {{- .Values.tpsrv.volumes | toYaml | nindent 6 }}
-      {{- if (.Values.global.volumes) }}
-        {{- .Values.global.volumes | toYaml | nindent 6 }}
+      {{- range $index, $driveName := .drivesnames }} # generate configmap for each drive in the tape server
+      - name: cta-taped-config
+        configMap:
+          name: cta-taped-tpsrv-{{ lower $driveName }}-conf
+      {{- end }} # End of drive-specific configmaps loop
+      {{- if eq $schedulerConfig.backend "ceph" }}
       {{- end }}
+      {{- if $.Values.taped.volumes }}
+      {{ $.Values.taped.volumes | toYaml | nindent 6 }}
+      {{- end }}
+      {{- if $.Values.global.volumes }}
+      {{ $.Values.global.volumes | toYaml | nindent 6 }}
+      {{- end }}
+---
+{{- end }}

@@ -75,16 +75,16 @@ spec:
   volumes:
   - name: xrootd-config
     configMap:
-      name: cta-frontend-xrootd-configmap
+      name: cta-frontend-xrootd-conf
   - name: catalogue-config
     configMap:
       name: cta-catalogue-conf
   - name: scheduler-config
     configMap:
-      name: scheduler-configmap
+      name: cta-scheduler-conf
   {{- if eq $schedulerConfig.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
-      name: ceph-configmap
+      name: ceph-conf
   {{- end}}
   {{include "ctafrontend.volumes" . | nindent 2}}

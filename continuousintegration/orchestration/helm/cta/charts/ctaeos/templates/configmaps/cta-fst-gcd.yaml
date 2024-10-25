@@ -5,7 +5,7 @@ metadata:
     config: eoscta
     app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
     {{- include "common.labels.noname" . | nindent 4 }}
-  name: cta-fst-gcd
+  name: eos-cta-fst-gcd
   namespace: {{.Release.Namespace}}
 data:
   cta-fst-gcd.conf: |

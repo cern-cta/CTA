@@ -70,12 +70,6 @@ service:
 
 # defines all of the volumes consumed by pod
 volumes:
-- name: shared
-  hostPath:
-    path: /opt/cta
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
 - name: eosctaconfig
   configMap:
     name: eos-grpc-keytab
@@ -90,10 +84,6 @@ volumes:
     name: krb5-config
 
 volumeMounts:
-- mountPath: /shared
-  name: shared
-- mountPath: /mnt/logs
-  name: logstorage
 - mountPath: /etc/cta/eos.grpc.keytab
   subPath: eos.grpc.keytab
   name: eosctaconfig

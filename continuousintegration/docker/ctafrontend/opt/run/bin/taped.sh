@@ -51,6 +51,9 @@ else
 
   tail -F "/var/log/cta/cta-taped-${DRIVENAME}.log" &
 
+
+  CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVENAME}.log"
+
   # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
   # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
   # working correctly

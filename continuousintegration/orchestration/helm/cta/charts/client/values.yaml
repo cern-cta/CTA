@@ -24,15 +24,9 @@ env:
 
 # defines all of the volumes consumed by pod
 volumes:
-- name: shared
-  hostPath:
-    path: /opt/cta
 - name: eosconfig
   configMap:
     name: eos-config-base
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
 - name: sss-keytab
   secret:
     secretName: eos-sss-keytab
@@ -53,10 +47,6 @@ volumes:
     secretName: ctaadmin2-keytab
 
 volumeMounts:
-- mountPath: /shared
-  name: shared
-- mountPath: /mnt/logs
-  name: logstorage
 - mountPath: /etc/config/eos
   name: eosconfig
 - mountPath: /tmp/eos.keytab

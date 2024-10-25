@@ -34,10 +34,6 @@ env:
 
 # defines all of the volumes consumed by pod
 volumeMounts:
-- mountPath: /shared
-  name: shared
-- mountPath: /mnt/logs
-  name: logstorage
 - mountPath: /fst
   name: fststorage
 - mountPath: /etc/krb5.conf
@@ -51,12 +47,6 @@ volumeMounts:
   subPath: eos.keytab
 
 volumes:
-- name: shared
-  hostPath:
-    path: /opt/cta
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
 - name: fststorage
   persistentVolumeClaim:
     claimName: claimfst

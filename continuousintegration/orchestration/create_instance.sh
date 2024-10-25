@@ -84,11 +84,11 @@ create_instance() {
   registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-postgres-catalogue-values.yaml
   scheduler_config=presets/dev-file-scheduler-values.yaml
-  library_model="mhvtl"
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   wipe_catalogue=false
   wipe_scheduler=false
+  reset_tapes=false
   use_systemd=false # By default to not use systemd to manage services inside the containers
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
   upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
@@ -109,9 +109,6 @@ create_instance() {
       -l|--library-config)
         library_config="$2"
         shift ;;
-      -m|--model)
-        library_model="$2"
-        shift ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -127,6 +124,7 @@ create_instance() {
       -S|--use-systemd) use_systemd=true ;;
       -O|--wipe-scheduler) wipe_scheduler=true ;;
       -D|--wipe-catalogue) wipe_catalogue=true ;;
+         --reset-tapes) reset_tapes=true ;;
       --upgrade) upgrade=1 ;;
       --dry-run) dry_run=1 ;;
       *)
@@ -149,9 +147,6 @@ create_instance() {
   if [ $upgrade == 1 ] && [ -z $library_config ]; then
     echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
     usage
-  fi
-  if [ "-${library_model}-" != "-ibm-" ] && [ "-${library_model}-" != "-mhvtl-" ] ; then
-    die "Library model ${library_model} does not exist"
   fi
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using latest tag"
@@ -182,8 +177,9 @@ create_instance() {
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  # Grab a unique library
-  devices_all=$(lsscsi -g | grep mediumx | awk {'print $7'} | sed -e 's%/dev/%%' | sort)
+  # Grab a unique library (or more)
+  devices_all=$(./../ci_helpers/tape/list_all_libraries.sh)
+  # TODO: check if this supports multiple labels
   devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
   if [ -z "$unused_devices" ]; then
@@ -195,11 +191,11 @@ create_instance() {
     echo "Library configuration not provided. Auto-generating..."
     library_config=$(mktemp /tmp/${namespace}-library-XXXXXX-values.yaml)
     library_device=$(echo "$unused_devices" | head -n 1)
-    ./../ci_helpers/generate_library_config.sh --target-file $library_config  \
-                                               --library-device $library_device \
-                                               --library-type $library_model
+    ./../ci_helpers/tape/generate_deafult_libraries_config.sh --target-file $library_config  \
+                                                              --library-device $library_device \
+                                                              --library-type $library_model
   elif [ $upgrade == 0 ]; then
-    # See what device was provided in the config and check that it is not in use
+    # See what devices were provided in the config and check that it is not in use
     library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
     if ! echo "$unused_devices" | grep -qw "$library_device"; then
       die "provided library config specifies a device that is already in use: $library_device"
@@ -232,7 +228,8 @@ create_instance() {
                                   --namespace ${namespace} \
                                   --set global.image.registry="${registry_host}" \
                                   --set global.image.tag="${image_tag}" \
-                                  --set-file tapeConfig=${library_config} \
+                                  --set resetMhvtl=true \
+                                  --set-file libraries=${library_config} \
                                   --wait --wait-for-jobs --timeout 2m
 
     # At some point this can be done in parallel
@@ -267,11 +264,10 @@ create_instance() {
                                 --set global.useSystemd=${use_systemd} \
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
-                                --set-file tpsrv.tapeConfig="${library_config}" \
+                                --set-file tpsrv.libraries="${library_config}" \
                                 --wait --timeout 5m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
-    echo "Skipping setup..."
     exit 0
   fi
 }

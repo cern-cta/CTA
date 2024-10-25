@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ceph-configmap
+  name: ceph-conf
   labels:
     app.kubernetes.io/name: scheduler
     app.kubernetes.io/instance: {{ .Release.Name }}

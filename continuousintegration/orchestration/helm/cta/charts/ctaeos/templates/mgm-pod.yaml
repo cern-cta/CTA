@@ -68,7 +68,7 @@ spec:
   volumes:
   - name: cta-fst-gcd
     configMap:
-      name: cta-fst-gcd
+      name: eos-cta-fst-gcd
   - name: eosconfig
     configMap:
       name: eos-config-base
@@ -77,7 +77,7 @@ spec:
       name: eos-grpc-keytab
   - name: castor-migration-conf
     configMap:
-      name: castor-migration
+      name: eos-castor-migration
   - name: eos-config-mgm
     configMap:
       name: eos-config-mgm

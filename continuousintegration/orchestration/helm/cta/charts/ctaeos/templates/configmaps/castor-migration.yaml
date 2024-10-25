@@ -5,7 +5,7 @@ metadata:
     config: eoscta
     app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
     {{- include "common.labels.noname" . | nindent 4 }}
-  name: castor-migration
+  name: eos-castor-migration
   namespace: {{.Release.Namespace}}
 data:
   #eos.token must be the same as in client.sh

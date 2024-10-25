@@ -14,12 +14,20 @@
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{- define "tpsrv.tapeConfig" -}}
-  {{- $tapeConfig := .Values.tapeConfig }}
-  {{- if ne (typeOf $tapeConfig) "string" -}}
-    {{- $tapeConfig = $tapeConfig | toYaml }}
+{{- define "tpsrv.libraries" -}}
+  {{- $libraryConfig := .Values.libraries }}
+  {{- if ne (typeOf $libraryConfig) "string" -}}
+    {{- $libraryConfig = $libraryConfig | toYaml }}
   {{- end }}
-  {{- $tapeConfig -}}
+  {{- $libraryConfig -}}
+{{- end }}
+
+{{- define "tpsrv.tapeServers" -}}
+  {{- $tapeServersConfig := .Values.tapeServers }}
+  {{- if ne (typeOf $tapeServersConfig) "string" -}}
+    {{- $tapeServersConfig = $tapeServersConfig | toYaml }}
+  {{- end }}
+  {{- $tapeServersConfig -}}
 {{- end }}
 
 {{- define "scheduler.config" -}}
@@ -37,4 +45,28 @@
 {{- else }}
   {{- .Values.useSystemd }}
 {{- end }}
+{{- end }}
+
+{{/*
+    Helper to validate unique names and unique drives across tapeServers
+*/}}
+{{- define "validate.tapeServers" -}}
+  {{- $uniqueNames := dict -}}
+  {{- $uniqueDrives := dict -}}
+  {{- range .Values.tapeServers }} # TODO: reference variable here
+    {{- $name := .name -}}
+    {{- $drives := .drives -}}
+    {{- if hasKey $uniqueNames $name }}
+      {{- fail (printf "Duplicate tapeServer name found: %s. Names must be unique." $name) }}
+    {{- else }}
+      {{- $_ := set $uniqueNames $name true }}
+    {{- end }}
+    {{- range $drives }}
+      {{- if hasKey $uniqueDrives . }}
+        {{- fail (printf "Duplicate drive found: %s. Drives must be unique across all tapeServers." .) }}
+      {{- else }}
+        {{- $_ := set $uniqueDrives . true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}

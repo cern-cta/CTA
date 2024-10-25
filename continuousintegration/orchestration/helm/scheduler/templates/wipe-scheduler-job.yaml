@@ -64,7 +64,7 @@ spec:
       volumes:
         - name: scheduler-config
           configMap:
-            name: scheduler-configmap
+            name: cta-scheduler-conf
         - name: shared
           hostPath:
             path: /opt/cta
@@ -74,6 +74,6 @@ spec:
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: ceph-config
           configMap:
-            name: ceph-configmap
+            name: ceph-conf
         {{- end}}
 {{- end }}

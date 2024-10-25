@@ -15,14 +15,22 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
   sleep 1
   exit 1
 }
+
+
+. /opt/run/bin/init_pod.sh
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
+library_devices="$1"
+
+if [[ -z "$library_devices" ]]; then
+  die "No library devices to reset"
+fi
+
 
 # install the needed packages
 # the scheduler tools are installed once the scheduler type is known (see below)
@@ -33,26 +41,14 @@ yum clean packages
 # BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
 # Emptying drives and move tapes to home slots
 echo "Unloading tapes that could be remaining in the drives from previous runs"
-mtx -f /dev/${LIBRARYDEVICE} status
-for unload in $(mtx -f /dev/${LIBRARYDEVICE}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
-  # normally, there is no need to rewind with virtual tapes...
-  mtx -f /dev/${LIBRARYDEVICE} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+for library_device in ${library_devices}; do
+  echo "Cleaning library device: /dev/${library_device}"
+  mtx -f /dev/${library_device} status
+  for unload in $(mtx -f /dev/${library_device}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
+    # normally, there is no need to rewind with virtual tapes...
+    mtx -f /dev/${library_device} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+  done
 done
-#  echo "Labelling tapes using the first drive in ${LIBRARYNAME}: ${DRIVENAMES[${driveslot}]} on /dev/${DRIVEDEVICES[${driveslot}]}:"
-#  for ((i=0; i<${#TAPES[@]}; i++)); do
-#    vid=${TAPES[${i}]}
-#    tapeslot=$((${i}+1)) # tape slot is 1 for tape[0] and so on...
-#
-#    echo -n "${vid} in slot ${tapeslot} "
-#    mtx -f /dev/${LIBRARYDEVICE} load ${tapeslot} ${driveslot}
-#    cd /tmp
-#      echo "VOL1${vid}                           CASTOR                                    3">label.file
-#      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
-#      dd if=label.file of=/dev/${DRIVEDEVICES[${driveslot}]} bs=80 count=1
-#      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
-#    mtx -f /dev/${LIBRARYDEVICE} unload ${tapeslot} ${driveslot}
-#    echo "OK"
-#  done
 
 echo "### WIPE COMPLETED ###"
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"

@@ -1,14 +1,17 @@
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
-{{- $drives := $tapeConfig.library.drivenames }}
+{{- $libraries := include "tpsrv.libraries" . | fromYaml -}}
+# TODO: make this use the tapeservers config
+{{- range $libraries -}}
+{{- $drives := .drivesnames }}
+{{- $libraryDevice := .libraryDevice }}
 {{- range $driveSlot, $driveName := $drives }}
 # Generate unique config map for each tape drive
 apiVersion: v1
 kind: ConfigMap
 metadata:
   # The name cannot use the drivename as this contains uppercase letters
-  name: cta-taped-tpsrv-{{ $driveSlot }}-configmap
+  name: cta-taped-tpsrv-{{ lower $driveName }}-conf
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
@@ -21,7 +24,7 @@ data:
     taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
     taped DriveName {{ $driveName }}
     taped DriveLogicalLibrary {{ $driveName }}
-    taped DriveDevice /dev/{{ index $tapeConfig.library.drivedevices $driveSlot }}
+    taped DriveDevice /dev/{{ $libraryDevice }}
     taped DriveControlPath smc{{ $driveSlot }}
     # Decrease schedulerDB cache timeout for tests
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
@@ -32,4 +35,5 @@ data:
     general InstanceName {{ $.Values.conf.general.instanceName }}
     general SchedulerBackendName {{ $schedulerConfig.backendName }}
 ---
+{{- end }}
 {{- end }}

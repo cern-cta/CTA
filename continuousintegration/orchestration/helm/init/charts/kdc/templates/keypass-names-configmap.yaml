@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: keypass-names-config
+  name: keypass-names-conf
   namespace: {{ .Release.Namespace }}
   labels:
     config: keypass-names

@@ -36,7 +36,7 @@ service:
 volumes:
 - name: keypass-names
   configMap:
-    name: keypass-names-config
+    name: keypass-names-conf
 - name: krb5-config-volume
   configMap:
     name: krb5-config

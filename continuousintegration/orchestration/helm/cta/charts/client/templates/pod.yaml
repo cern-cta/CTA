@@ -47,4 +47,4 @@ spec:
   - name: cta-conf-volume
     configMap:
       name: etc-cta-client
-  {{include "client.volumes" . | nindent 2}}
+  {{ include "client.volumes" . | nindent 2 }}

@@ -14,10 +14,20 @@
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{- define "init.tapeConfig" -}}
-  {{- $tapeConfig := .Values.tapeConfig }}
-  {{- if ne (typeOf $tapeConfig) "string" -}}
-    {{- $tapeConfig = $tapeConfig | toYaml }}
+{{- define "init.libraries" -}}
+  {{- $libraryConfig := .Values.libraries }}
+  {{- if ne (typeOf $libraryConfig) "string" -}}
+    {{- $libraryConfig = $libraryConfig | toYaml }}
   {{- end }}
-  {{- $tapeConfig -}}
+  {{- $libraryConfig -}}
+{{- end }}
+
+{{- define "init.mhvtlLibraryDevices" -}}
+{{- $filteredDevices := list -}}
+{{- range (include "tpsrv.libraries" . | fromYaml) }}
+  {{- if eq .libraryType "mhvtl" }}
+    {{- $filteredDevices = append $filteredDevices .libraryDevice }}
+  {{- end }}
+{{- end }}
+{{- join " " $filteredDevices -}}
 {{- end }}

@@ -17,12 +17,10 @@ global:
     - reg-ctageneric
 
 
-# This can either be provided via --set-file or specified directly here
-tapeConfig:
-  library:
-    type: ""
-    name: ""
-    device: ""
-    drivenames: []
-    drivedevices: []
-    tapes: []
+resetMhvtl: true
+# TODO: use the same format as the tapeservers config
+# libraries:
+#   - libraryDevice: ""
+#     libraryType: ""
+#     drives: []
+

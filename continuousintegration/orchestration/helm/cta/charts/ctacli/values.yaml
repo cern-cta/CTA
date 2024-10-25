@@ -36,12 +36,6 @@ service:
 
 # defines all of the volumes consumed by pod
 volumes:
-- name: shared
-  hostPath:
-    path: /opt/cta
-- name: logstorage
-  persistentVolumeClaim:
-    claimName: claimlogs
 - name: keytab
   secret:
     secretName: ctaadmin1-keytab
@@ -63,10 +57,3 @@ volumeMounts:
 - name: krb5-config-volume
   mountPath: /etc/krb5.conf
   subPath: krb5.conf
-- name: shared
-  mountPath: /shared
-- name: logstorage
-  mountPath: /mnt/logs
-
-
-readinessProbe:

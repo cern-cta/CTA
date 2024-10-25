@@ -50,36 +50,13 @@ generate_library_config() {
                     sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/' | \
                     paste -sd' ' -)
 
-  # Get drive devices
-  local drivedevices=$(echo "$lsscsi_g" | \
-                      grep "^.${scsi_host}:${scsi_channel}:" | \
-                      grep tape | \
-                      awk '{print $6}' | \
-                      sed -e 's%/dev/%n%' | \
-                      paste -sd' ' -)
-
-
-  # Get the tapes currently in the library
-  local tapes=$(mtx -f "/dev/${library_device}" status | \
-                grep "Storage Element" | \
-                grep "Full" | \
-                grep -o 'VolumeTag *= *[^ ]*' | \
-                grep -o '[^= ]*$' | \
-                cut -c 1-6 | \
-                paste -sd' ' -)
-
   # Generate the values.yaml configuration
   cat <<EOF > "$target_file"
-library:
-  type: "${library_type}"
-  name: "$(echo ${line} | awk '{print $4}')"
-  device: "${library_device}"
-  drivenames:
+libraries:
+  - libraryType: "${library_type}"
+    libraryDevice: "${library_device}"
+    drivenames:
 $(for name in ${drivenames}; do echo "    - \"${name}\""; done)
-  drivedevices:
-$(for device in ${drivedevices}; do echo "    - \"${device}\""; done)
-  tapes:
-$(for tape in ${tapes}; do echo "    - \"${tape}\""; done)
 EOF
 }
 

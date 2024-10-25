@@ -1,8 +1,6 @@
-{{- $tapeConfig := include "init.tapeConfig" . | fromYaml }}
-# TODO: does this even need to happen in a pod at all?
-{{- if eq $tapeConfig.library.type "mhvtl" }}
+{{- if .Values.resetMhvtl -}}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "wipe-mhvtl" }}
+{{- $name := "reset-mhvtl" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -19,8 +17,10 @@ spec:
         - name: {{ $name }}
           image: {{ include "init.image" . }}
           imagePullPolicy: {{ include "init.imagePullPolicy" . }}
-          command: ['/opt/run/bin/wipe_mhvtl.sh']
-          args: []
+          command:
+          - "/opt/run/bin/reset_mhvtl.sh"
+          args:
+          - "{{ include "init.libraryDevices" . }}"
           securityContext:
             privileged: true # Because of MHVTL
           stdin: true
@@ -31,13 +31,6 @@ spec:
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
-            - name: LIBRARYTYPE
-              value: {{ $tapeConfig.library.type | quote }}
-            - name: LIBRARYDEVICE
-              value: {{ $tapeConfig.library.device | quote }}
-            {{- if .Values.env }}
-            {{ .Values.env | toYaml | nindent 12 }}
-            {{- end }}
           volumeMounts:
             - mountPath: /mnt/logs
               name: logstorage

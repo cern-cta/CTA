@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cta-frontend-xrootd-configmap
+  name: cta-frontend-xrootd-conf
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:

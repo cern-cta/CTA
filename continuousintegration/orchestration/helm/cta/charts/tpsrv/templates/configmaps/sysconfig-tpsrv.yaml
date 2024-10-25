@@ -1,14 +1,7 @@
-
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
-{{- $drives := $tapeConfig.library.drivenames }}
-{{- range $driveSlot, $driveName := $drives }}
-# Generate unique config map for each tape drive as each gets its own log file
-# Note that this could also be done in the taped script itself
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: sysconfig-tpsrv-{{ $driveSlot }}-configmap
+  name: cta-sysconfig-tpsrv-conf
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
@@ -18,8 +11,5 @@ data:
     CTA_RMCD_OPTIONS={{ $.Values.conf.rmcd.options }}
 {{- end }}
   cta-taped: |-
-    CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-{{ $driveName }}.log"
     XrdSecPROTOCOL={{ $.Values.conf.taped.secProtocol }}
     XrdSecSSSKT={{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
----
-{{- end }}

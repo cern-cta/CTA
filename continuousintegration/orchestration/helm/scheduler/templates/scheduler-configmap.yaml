@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: scheduler-configmap
+  name: cta-scheduler-conf
 data:
   cta-objectstore-tools.conf: |-
     ObjectStore BackendPath {{ include "scheduler.url" . }}
