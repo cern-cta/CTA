@@ -96,6 +96,8 @@
 - cta/CTA#906 - Ensured consistent naming for the Helm charts
 - cta/CTA#918 - Improve RPM job organization and introduced additional information in pipeline names
 - cta/CTA#924 - Run postgresql unit tests with valgrind only in nightly builds
+- cta/CTA#872 - Fix pipeline docker build for tagged builds
+- cta/CTA#913 - Don't run CI pipeline when there are no changes on branch
 
 ### Code Quality
 - cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
