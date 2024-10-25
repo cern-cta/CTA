@@ -7,11 +7,13 @@ metadata:
   name: {{ $name }}
   namespace: {{ $namespace | quote}}
   annotations:
-    catalogue-schema-version: "{{ .Values.global.catalogueSchemaVersion }}"
+    catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{ include "ctafrontend.imagePullSecrets" . | nindent 2 }}
   containers:
   - name: {{ $name }}
     image: {{ include "ctafrontend.image" . }}
@@ -86,5 +88,3 @@ spec:
       name: ceph-configmap
   {{- end}}
   {{include "ctafrontend.volumes" . | nindent 2}}
-  imagePullSecrets:
-  {{ include "ctafrontend.imagePullSecrets" . | nindent 2 }}

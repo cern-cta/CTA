@@ -108,14 +108,14 @@ cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /o
 ## Configuring host certificate
 /opt/run/bin/ctaeos_https.sh
 
-# Waiting for /CANSTART file before starting eos
-echo -n "Waiting for /CANSTART before going further"
+# Waiting for /CAN_START file before starting eos
+echo -n "Waiting for /CAN_START before going further"
 for ((i=0;i<600;i++)); do
-  test -f /eos-status/CANSTART && break
+  test -f /eos-status/CAN_START && break
   sleep 1
   echo -n .
 done
-test -f /eos-status/CANSTART && echo OK || exit 1
+test -f /eos-status/CAN_START && echo OK || exit 1
 
 
 # setting higher OS limits for EOS processes
@@ -389,7 +389,7 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
   eos vid set map -grpc key:${MIGRATION_TOKEN} vuid:${MIGRATION_UID} vgid:${MIGRATION_UID}
 fi
 
-touch /eos-status/EOSOK
+touch /eos-status/EOS_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then

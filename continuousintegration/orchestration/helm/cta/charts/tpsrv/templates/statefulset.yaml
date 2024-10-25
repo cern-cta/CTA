@@ -1,0 +1,136 @@
+{{- $namespace := .Release.Namespace -}}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
+{{- $driveSlot := (.StatefulSetOrdinal | int) -}}
+{{- $numDrives := len $tapeConfig.library.drivenames -}}
+{{- $driveName := index $tapeConfig.library.drivenames $driveSlot -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "tpsrv"
+  namespace: {{ $namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceName: "tpsrv"  # Ensure a headless service exists with this name; allows for stable DNS entries
+  replicas: {{ $numDrives }} # Spawn a tpsrv pod for each provided drive
+  selector:
+    matchLabels:
+      app: tpsrv
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" . | nindent 8 }}
+        app: tpsrv
+        cta/library-device: {{ $tapeConfig.library.device }}
+      annotations:
+        catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+      {{- include "tpsrv.imagePullSecrets" . | nindent 6 }}
+      containers:
+      {{- range .Values.tpsrv.containers }}
+      - name: {{ .name | default "tpsrv" | quote }}
+        image: {{ include "tpsrv.image" $ }}
+        imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
+        {{- if (.commandsAtRuntime) }}
+        readinessProbe:
+          exec:
+            command: {{ .readinessProbe.commandsAtRuntime | toJson }}
+          initialDelaySeconds: {{ .readinessProbe.delay }}
+          periodSeconds: {{ .readinessProbe.periodSeconds }}
+          failureThreshold: {{ .readinessProbe.failureTolerance }}
+        {{- end }}
+        stdin: true
+        env:
+        - name: MY_NAME
+          value: "tpsrv-{{ $driveSlot }}"
+        - name: MY_NAMESPACE
+          value: {{ $namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ $namespace | quote }}
+        - name: LIBRARYTYPE
+          value: {{ $tapeConfig.library.type | quote }}
+        - name: LIBRARYNAME
+          value: {{ $tapeConfig.library.name | quote }}
+        - name: LIBRARYDEVICE
+          value: {{ $tapeConfig.library.device | quote }}
+        - name: DRIVENAME
+          value: {{ $driveName }}
+        - name: DRIVENAMES
+          value: {{ $tapeConfig.library.drivenames | join "," | quote }}
+        - name: DRIVEDEVICES
+          value: {{ $tapeConfig.library.drivedevices | join "," | quote }}
+        {{- if $tapeConfig.library.driveserials }}
+        - name: DRIVESERIALS
+          value: {{ $tapeConfig.library.driveserials | join "," | quote }}
+        {{- end }}
+        - name: TAPES
+          value: {{ $tapeConfig.library.tapes | join "," | quote }}
+        {{- if (.env) }}
+          {{- .env | toYaml | nindent 8 }}
+        {{- end }}
+        command: {{ .command | toJson }}
+        {{- if (.args) }}
+        args: {{ .args }}
+        {{- end }}
+        securityContext:
+          privileged: {{ .isPriviliged }}
+        {{- if (.ports) }}
+        ports:
+        {{- .ports | toYaml | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: cta-taped-config
+          mountPath: /etc/cta/cta-taped-{{ $driveName }}.conf
+          subPath: cta-taped-{{ $driveName }}.conf
+        - name: catalogue-config
+          mountPath: /etc/cta/cta-catalogue.conf
+          subPath: cta-catalogue.conf
+        - name: scheduler-config
+          mountPath: /etc/cta/cta-objectstore-tools.conf
+          subPath: cta-objectstore-tools.conf
+        {{- if ($.Values.global.useSystemd) }}
+        - name: sysconfig-tpsrv-config
+          mountPath: /etc/sysconfig/cta-rmcd
+          subPath: cta-rmcd
+        {{- end }}
+        - name: sysconfig-tpsrv-config
+          mountPath: /etc/sysconfig/cta-taped
+          subPath: cta-taped
+        {{- if eq $schedulerConfig.backend "ceph" }}
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.conf
+          subPath: ceph.conf
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+          subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+        {{- end }}
+        {{- .volumeMounts | toYaml | nindent 8 }}
+        {{- if ($.Values.global.volumes) }}
+          {{- $.Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+      {{- end }} # End of containers loop
+      volumes:
+      - name: catalogue-config
+        configMap:
+          name: cta-catalogue-conf
+      - name: scheduler-config
+        configMap:
+          name: scheduler-configmap
+      - name: cta-taped-config
+        configMap:
+          name: cta-taped-tpsrv-{{ $driveSlot }}-configmap
+      - name: sysconfig-tpsrv-config
+        configMap:
+          name: sysconfig-tpsrv-{{ $driveSlot }}-configmap
+      {{- if eq $schedulerConfig.backend "ceph" }}
+      - name: cta-ceph-volume
+        configMap:
+          name: ceph-configmap
+      {{- end }}
+      {{- .Values.tpsrv.volumes | toYaml | nindent 6 }}
+      {{- if (.Values.global.volumes) }}
+        {{- .Values.global.volumes | toYaml | nindent 6 }}
+      {{- end }}

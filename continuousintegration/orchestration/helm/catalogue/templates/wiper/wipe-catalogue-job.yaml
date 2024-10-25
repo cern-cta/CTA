@@ -17,6 +17,8 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+      {{- include "catalogueWipe.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: {{ $name }}
           image: {{ include "catalogueWipe.image" . }}
@@ -69,6 +71,4 @@ spec:
         - name: logstorage
           persistentVolumeClaim:
             claimName: claimlogs
-      imagePullSecrets:
-      {{- include "catalogueWipe.imagePullSecrets" . | nindent 6 }}
 {{- end }}

@@ -160,9 +160,9 @@ Finally, we have the `cta` chart. This chart spawns the different components req
 - `ctafrontend`
   * One CTA front-end.
   * The CTA SSS of the EOS instance that will be used by the CTA front end to authenticate the cta command-line run by the workflow engine of the EOS instance.
-- `tpsrvXX` *No two pods in the same namespace can have the same name, hence each tpsrv pod will be numbered differently*
-  * One `cta-taped` daemon running in `taped` container of `tpsrvxxx` pod.
-  * One `rmcd` daemon running in `rmcd` container of `tpsrvxxx` pod.
+- `tpsrv-x`
+  * One `cta-taped` daemon running in `taped` container of `tpsrv-x` pod.
+  * One `rmcd` daemon running in `rmcd` container of `tpsrv-x` pod.
   * The tape server SSS to be used by cta-taped to authenticate its file transfer requests with the EOS mgm (all tape servers will use the same SSS).
 - `client`
   * The `cta` command-line tool to be used by `eosusers`.
@@ -176,8 +176,10 @@ The `cta` chart expects the following required parameters:
 - `global.useSystemd`: whether to use systemd or not. For now, systemd support has not been implemented.
 - `global.catalogueSchemaVersion`: The schema version of the catalogue. This is not currently used, but once all the charts use Kubernetes deployments, this can be used to automatically redeploy the relevant pods when this version changes (the frontend and tape servers).
 - `global.configuration.scheduler`: The scheduler configuration (same as detailed above). This is required as some pods need to mount specific volumes to specific places when CEPH is used as a backend.
-- `tpsrv.tpsrv.numTapeServers`: The number of tape servers to spawn. This must be less than or equal to the number of drives available. Each tape server will map itself to a drive according to its index (i.e. `tpsrv01` will get drive 0, as it is the "first" tape server). At some point this should be improved to be more configurable.
 - `tpsrv.tapeConfig`: The library configuration (same as detailed above). Used by the tape servers.
+
+**How many tpsrv pods are spawned?**
+The number of tpsrv pods spawned depends on the provided library configuration provided as `tpsrv.tapeConfig`. This library configuration contains a number of drive names. For each drive, two configmaps are generated. Then each drive gets its own tpsrv pod. What if you want to use a subset of the drives? Just provide a library configuration that contains only the drives you want.
 
 ### The whole process
 
@@ -314,8 +316,7 @@ A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user,
 The current deployment of this CTA has a few limitations that make it unsuitable for a wider adoption. These limitations are listed below. Note that the list is not necessarily conclusive.
 
 - Only a single replica of each pod can be deployed (apart from the tape servers), because each chart still uses plain pod configurations. This should be moved to deployments at some point.
-- While it is possible to spawn multiple tape servers, it is not yet possible to easily configure which tape server should be responsible for which drive. By extension, it is also not yet possible to assign multiple drives to a tape server.
-- It is not possible to define different schedulers for different tape servers.
+- It is not possible to define different schedulers for different tape servers (or in general super unique configurations per tape server).
 - The `ctaeos` chart is not exactly very pretty and also not very flexible. This should be replaced by a more generic disk buffer chart.
 - All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase.
 - The GRPC frontend configuration has not been tested/implemented yet.

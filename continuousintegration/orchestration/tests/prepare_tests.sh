@@ -45,10 +45,10 @@ MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-# Set the TAPES and DRIVENAME based on the config in tpsrv01
-echo "Reading library configuration from tpsrv01"
-DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01 -c taped -- printenv DRIVENAME)
-IFS=',' read -r -a TAPES <<< "$(kubectl exec -n ${NAMESPACE} tpsrv01 -c taped -- printenv TAPES)"
+# Set the TAPES and DRIVENAME based on the config in tpsrv-0
+echo "Reading library configuration from tpsrv-0"
+DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv-0 -c taped -- printenv DRIVENAME)
+IFS=',' read -r -a TAPES <<< "$(kubectl exec -n ${NAMESPACE} tpsrv-0 -c taped -- printenv TAPES)"
 echo "Using drive: $DRIVENAME"
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
@@ -319,10 +319,10 @@ echo "Labeling tapes:"
 for VID in "${TAPES[@]}"; do
   echo "  cta-tape-label --vid ${VID} --force"
   # for debug use
-  # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
+  # kubectl --namespace ${NAMESPACE} exec tpsrv-0 -c taped  -- cta-tape-label --vid ${VID} --debug
   # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
-  kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --force
+  kubectl --namespace ${NAMESPACE} exec tpsrv-0 -c taped  -- cta-tape-label --vid ${VID} --force
   if [ $? -ne 0 ]; then
     echo "ERROR: failed to label the tape ${VID}"
     exit 1

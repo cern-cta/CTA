@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/name: {{ $name }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{- range .Values.image.pullSecrets }}
+  - name: {{ . }}
+  {{- end }}
   containers:
   - name: {{ $name }}
     # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
@@ -65,7 +69,3 @@ spec:
     persistentVolumeClaim:
       claimName: claimlogs
 
-  imagePullSecrets:
-  {{- range .Values.image.pullSecrets }}
-  - name: {{ . }}
-  {{- end }}

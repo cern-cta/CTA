@@ -9,6 +9,8 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{ include "ctacli.imagePullSecrets" . | nindent 2 }}
   containers:
   - name: {{ $name }}
     image: {{ include "ctacli.image" . }}
@@ -46,5 +48,3 @@ spec:
     configMap:
       name: etc-cta-ctacli
   {{include "ctacli.volumes" . | nindent 2}}
-  imagePullSecrets:
-  {{ include "ctacli.imagePullSecrets" . | nindent 2 }}

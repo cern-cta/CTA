@@ -69,7 +69,7 @@ TEST_POSTRUN=""
 
 VERBOSE=1
 if [[ $VERBOSE == 1 ]]; then
-  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
+  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv-*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 

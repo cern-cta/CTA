@@ -22,7 +22,7 @@ exit 1
 }
 
 NAMESPACE=""
-tape_server='tpsrv01'
+tape_server='tpsrv-0'
 
 while getopts "n:" o; do
   case "${o}" in

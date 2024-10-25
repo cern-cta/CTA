@@ -57,11 +57,11 @@
   {{- $global := .global -}}
   {{- if $global.pullSecrets -}}
     {{- range $global.pullSecrets }}
-    - name: {{ . | quote }}
+- name: {{ . | quote }}
     {{- end -}}
   {{- else if $imageRoot.pullSecrets -}}
     {{- range $imageRoot.pullSecrets }}
-    - name: {{ . | quote }}
+- name: {{ . | quote }}
     {{- end -}}
   {{- end -}}
 {{- end -}}

@@ -1,20 +1,14 @@
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $tapeConfig := include "tpsrv.tapeConfig" . | fromYaml -}}
-{{- $numTapeServers := int .Values.tpsrv.numTapeServers }}
-{{- $drivenamesCount := len $tapeConfig.library.drivenames }}
-{{- if gt $numTapeServers $drivenamesCount }}
-  {{- fail (printf "Error: numTapeServers (%d) is larger than the number of available drives (%d)" $numTapeServers $drivenamesCount) }}
-{{- end }}
-{{- range $i := until ($numTapeServers) }}
-{{- $driveSlot := int $i }}
-{{- $driveName := index $tapeConfig.library.drivenames $i }}
-# Generate unique config map for each tape server pod
+{{- $drives := $tapeConfig.library.drivenames }}
+{{- range $driveSlot, $driveName := $drives }}
+# Generate unique config map for each tape drive
 apiVersion: v1
 kind: ConfigMap
 metadata:
   # The name cannot use the drivename as this contains uppercase letters
-  name: cta-taped-tpsrv-{{ $i }}-configmap
+  name: cta-taped-tpsrv-{{ $driveSlot }}-configmap
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:

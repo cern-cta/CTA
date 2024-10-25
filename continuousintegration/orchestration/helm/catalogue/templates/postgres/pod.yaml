@@ -1,7 +1,7 @@
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
 {{- if eq $catalogueConfig.backend "postgres" -}}
-{{$namespace := .Release.Namespace }}
-{{$name := "postgres-catalogue" }}
+{{- $namespace := .Release.Namespace -}}
+{{- $name := "postgres-catalogue" -}}
 apiVersion: v1
 kind: Pod
 metadata:

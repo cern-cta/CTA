@@ -43,7 +43,6 @@ usage() {
   echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
   echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
-  echo "      --tpsrv-count <count>:          Set the number of tape servers to spawn. Defaults to 2."
   echo "  -S, --use-systemd:                  Use systemd to manage services inside containers. Defaults to false"
   echo "  -O, --wipe-scheduler:               Wipe scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --wipe-catalogue:               Wipe catalogue content during initialization phase. Defaults to false."
@@ -91,7 +90,6 @@ create_instance() {
   wipe_catalogue=false
   wipe_scheduler=false
   use_systemd=false # By default to not use systemd to manage services inside the containers
-  tpsrv_count=2
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
   upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
@@ -122,9 +120,6 @@ create_instance() {
         shift ;;
       -i|--image-tag)
         image_tag="$2"
-        shift ;;
-      --tpsrv-count)
-        tpsrv_count="$2"
         shift ;;
       -c|--catalogue-version)
         catalogue_schema_version="$2"
@@ -217,11 +212,10 @@ create_instance() {
   if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
     kubectl create namespace ${namespace}
-    # Copy secrets needed for image pulling
+    echo "Copying secrets into ${namespace} namespace"
     for secret_name in ${registry_secrets}; do
       # If the secret exists...
       if kubectl get secret ${secret_name} &> /dev/null; then
-        echo "Copying ${secret_name} secret into ${namespace} namespace"
         kubectl get secret ${secret_name} -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
       else
         echo "Secret ${secret_name} not found. Skipping..."
@@ -251,7 +245,8 @@ create_instance() {
                                   --set schemaVersion="${catalogue_schema_version}" \
                                   --set wipeCatalogue=${wipe_catalogue} \
                                   --set-file configuration=${catalogue_config} \
-                                  --wait --wait-for-jobs --timeout 2m
+                                  --wait --wait-for-jobs --timeout 2m &
+    catalogue_pid=$!
 
     log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
                                   --namespace ${namespace} \
@@ -259,7 +254,10 @@ create_instance() {
                                   --set wipeImage.tag="${image_tag}" \
                                   --set wipeScheduler=${wipe_scheduler} \
                                   --set-file configuration=${scheduler_config} \
-                                  --wait --wait-for-jobs --timeout 2m
+                                  --wait --wait-for-jobs --timeout 2m &
+    scheduler_pid=$!
+
+    wait $catalogue_pid $scheduler_pid
   fi
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
@@ -268,12 +266,12 @@ create_instance() {
                                 --set global.image.tag="${image_tag}" \
                                 --set global.useSystemd=${use_systemd} \
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
-                                --set tpsrv.tpsrv.numTapeServers=${tpsrv_count} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeConfig="${library_config}" \
                                 --wait --timeout 5m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
+    echo "Skipping setup..."
     exit 0
   fi
 }

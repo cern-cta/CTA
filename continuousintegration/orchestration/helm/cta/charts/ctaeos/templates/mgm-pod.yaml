@@ -10,6 +10,8 @@ metadata:
     {{- include "common.labels.noname" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{ include "ctaeos.imagePullSecrets" . | nindent 2 }}
   containers:
   - name: "mgm"
     image: {{ include "ctaeos.image" . }}
@@ -95,5 +97,3 @@ spec:
     persistentVolumeClaim:
       claimName: eos-status-pvc
   {{include "ctaeos.volumes" . | nindent 2}}
-  imagePullSecrets:
-  {{ include "ctaeos.imagePullSecrets" . | nindent 2 }}

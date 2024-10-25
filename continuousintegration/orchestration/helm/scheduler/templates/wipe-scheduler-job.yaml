@@ -12,6 +12,8 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+      {{- include "schedulerWipe.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: {{ $name }}
           image: {{ include "schedulerWipe.image" . }}
@@ -28,8 +30,6 @@ spec:
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
-            - name: WIPE_SCHEDULER
-              value: "{{ .Values.wipeScheduler }}"
             - name: SCHEDULER_BACKEND
               value: {{ $schedulerConfig.backend | quote}}
             - name: SCHEDULER_URL
@@ -76,6 +76,4 @@ spec:
           configMap:
             name: ceph-configmap
         {{- end}}
-      imagePullSecrets:
-      {{- include "schedulerWipe.imagePullSecrets" . | nindent 6 }}
 {{- end }}
