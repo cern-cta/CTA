@@ -1,10 +1,10 @@
 
 nameOverride: scheduler
-wipeScheduler: false
+resetScheduler: false
 component: scheduler
 partOf: cta
 
-wipeImage:
+resetImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""

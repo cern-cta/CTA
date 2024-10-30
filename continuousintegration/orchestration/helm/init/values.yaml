@@ -17,10 +17,21 @@ global:
     - reg-ctageneric
 
 
-resetMhvtl: true
-# TODO: use the same format as the tapeservers config
-# libraries:
-#   - libraryDevice: ""
-#     libraryType: ""
-#     drives: []
-
+resetTapes: true
+tapeServers: {}
+# The following is an example format of tapeServers
+#
+# tapeServers:
+#   tpsrv01:
+#     libraryDevice: "sg0"
+#     libraryType: "mhvtl"
+#     libraryName: "VLSTK10"
+#     driveNames:
+#     - "VDSTK01"
+#   tpsrv02:
+#     libraryDevice: "sg0"
+#     libraryType: "mhvtl"
+#     libraryName: "VLSTK10"
+#     drivesNames:
+#     - "VDSTK02"
+#     - "VDSTK03"

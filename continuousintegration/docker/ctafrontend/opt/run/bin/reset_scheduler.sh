@@ -47,7 +47,7 @@ if [ "$SCHEDULER_BACKEND" == "file" ]; then
   echo "Wiping objectstore"
   rm -fr $SCHEDULER_URL
   mkdir -p $SCHEDULER_URL
-  cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
+  cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   chmod -R 777 $SCHEDULER_URL
 elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   echo "Postgres scheduler config file content: "
@@ -62,7 +62,7 @@ else
     echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"
     rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | xargs -L 100 -P 100 rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE rm
   fi
-  cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
+  cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   echo "Rados objectstore ${SCHEDULER_URL} content:"
   rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls
 fi

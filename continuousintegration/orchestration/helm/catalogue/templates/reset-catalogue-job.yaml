@@ -1,7 +1,7 @@
-{{- if .Values.wipeCatalogue -}}
+{{- if .Values.resetCatalogue -}}
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "wipe-catalogue" }}
+{{- $name := "reset-catalogue" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -18,12 +18,12 @@ spec:
     spec:
       restartPolicy: Never
       imagePullSecrets:
-      {{- include "catalogueWipe.imagePullSecrets" . | nindent 6 }}
+      {{- include "catalogueReset.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: {{ $name }}
-          image: {{ include "catalogueWipe.image" . }}
-          imagePullPolicy: {{ include "catalogueWipe.imagePullPolicy" . }}
-          command: ['/opt/run/bin/wipe_catalogue.sh']
+          image: {{ include "catalogueReset.image" . }}
+          imagePullPolicy: {{ include "catalogueReset.imagePullPolicy" . }}
+          command: ['/opt/run/bin/reset_catalogue.sh']
           args: []
           securityContext:
             privileged: true
@@ -36,7 +36,7 @@ spec:
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
             - name: WIPE_CATALOGUE
-              value: {{ .Values.wipeCatalogue | quote }}
+              value: {{ .Values.resetCatalogue | quote }}
             - name: SCHEMA_VERSION
               value: {{ .Values.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND

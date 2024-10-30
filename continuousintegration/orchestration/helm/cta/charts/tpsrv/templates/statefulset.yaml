@@ -2,18 +2,18 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
 {{ include "validate.tapeServers" . }}
-{{ range $tapeServers }}
-{{- $tpsrvName := .name -}}
+{{ range $name,$tapeServerConfig := $tapeServers }}
+{{- $tpsrvName := $name -}}
 {{- $libraryDevice := .libraryDevice -}}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: StatefulSet # StatefulSets enforce at most x pods semantics (in our case x=1)
 metadata:
-  name: "tpsrv"
+  name: {{ $tpsrvName }}
   namespace: {{ $namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
-  serviceName: "tpsrv"  # Ensure a headless service exists with this name; allows for stable DNS entries
+  serviceName: {{ $tpsrvName }}  # Ensure a headless service exists with this name; allows for stable DNS entries
   replicas: 1
   selector:
     matchLabels:
@@ -22,7 +22,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $tpsrvName }}
-        {{- include "common.labels.noname" $ | nindent 8 }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
         cta/library-device: {{ .libraryDevice }}
       annotations:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
@@ -41,10 +41,11 @@ spec:
         command: ['/opt/run/bin/rmcd.sh']
         args: ["none"]
         readinessProbe:
-          commandsAtRuntime: ["test", "-f", "/RMCD_READY"]
-          delay: 2
+          exec:
+            command: ["test", "-f", "/RMCD_READY"]
+          initialDelaySeconds: 5
           periodSeconds: 1
-          failureTolerance: 60
+          failureThreshold: 60
         env:
         - name: MY_NAME
           value: {{ $tpsrvName }}
@@ -69,7 +70,7 @@ spec:
           mountPath: /etc/sysconfig/cta-taped
           subPath: cta-taped
       # For each drive, spawn a separate taped container
-      {{- range $index, $driveName := .drivesnames }}
+      {{- range $index, $driveName := .driveNames }}
       - name: "taped-{{ $index }}"
         image: {{ include "tpsrv.image" $ }}
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
@@ -81,10 +82,10 @@ spec:
         {{- end }}
         readinessProbe:
           exec:
-            command: {{ $.Values.taped.readinessProbe.commandsAtRuntime | toJson }}
-          initialDelaySeconds: {{ $.Values.taped.readinessProbe.delay }}
-          periodSeconds: {{ $.Values.taped.readinessProbe.periodSeconds }}
-          failureThreshold: {{ $.Values.taped.readinessProbe.failureTolerance }}
+            command: ["test", "-f", "/TAPED_READY"]
+          initialDelaySeconds: 5
+          periodSeconds: 1
+          failureThreshold: 60
         stdin: true
         env:
         - name: MY_NAME
@@ -157,13 +158,11 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- range $index, $driveName := .drivesnames }} # generate configmap for each drive in the tape server
+      {{- range $index, $driveName := .driveNames }} # configmap for each drive in the tape server
       - name: cta-taped-config
         configMap:
           name: cta-taped-tpsrv-{{ lower $driveName }}-conf
       {{- end }} # End of drive-specific configmaps loop
-      {{- if eq $schedulerConfig.backend "ceph" }}
-      {{- end }}
       {{- if $.Values.taped.volumes }}
       {{ $.Values.taped.volumes | toYaml | nindent 6 }}
       {{- end }}

@@ -3,21 +3,23 @@ image:
 component: tpsrv
 partOf: cta
 
-# TODO: this will be provided eventually instead of hardcoded here
-tapeServers:
-  - name: tpsrv01
-    libraryDevice: "sg0"
-    libraryType: "mhvtl"
-    libraryName: "?"
-    drivesnames:
-    - "VDSTK01"
-  - name: tpsrv02
-    libraryDevice: "sg0"
-    libraryType: "mhvtl"
-    libraryName: "?"
-    drivesnames:
-    - "VDSTK02"
-    - "VDSTK03"
+# tapeServers: {}
+# The following is an example format of tapeServers
+#
+# tapeServers:
+#   tpsrv01:
+#     libraryDevice: "sg0"
+#     libraryType: "mhvtl"
+#     libraryName: "VLSTK10"
+#     driveNames:
+#     - "VDSTK01"
+#   tpsrv02:
+#     libraryDevice: "sg0"
+#     libraryType: "mhvtl"
+#     libraryName: "VLSTK10"
+#     drivesNames:
+#     - "VDSTK02"
+#     - "VDSTK03"
 
 conf:
   rmcd:
@@ -40,22 +42,13 @@ conf:
 
 taped:
   command: ["/bin/sh", "-c"]
-  # Not moving chown here due to the fact that the user might not yet exists
+  # Not moving chown here due to the fact that the user might not yet exist
   args:
   - |
     cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
     chmod 600 /etc/cta/cta-taped.sss.keytab;
     /opt/run/bin/taped.sh;
-  readinessProbe:
-    commandsAtRuntime: ["test", "-f", "/TAPED_READY"]
-    delay: 2
-    periodSeconds: 1
-    failureTolerance: 60
   env:
-  - name: MY_CONTAINER
-    value: "taped"
-  - name: eoshost
-    value: "mgm"
   - name: TERM
     value: "xterm"
   volumeMounts:

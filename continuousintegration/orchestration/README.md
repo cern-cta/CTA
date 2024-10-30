@@ -50,7 +50,7 @@ library:
   type: "mhvtl"
   name: "VLSTK10"
   device: "sg0"
-  drivenames:
+  driveNames:
     - "VDSTK01"
     - "VDSTK02"
     - "VDSTK03"

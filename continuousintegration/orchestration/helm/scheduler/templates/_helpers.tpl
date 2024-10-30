@@ -16,16 +16,16 @@ postgresql:postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $sched
 {{- end }}
 {{- end }}
 
-{{- define "schedulerWipe.image" -}}
-  {{ include "common.images.image" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "schedulerReset.image" -}}
+  {{ include "common.images.image" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
-{{- define "schedulerWipe.imagePullPolicy" -}}
-  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "schedulerReset.imagePullPolicy" -}}
+  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
-{{- define "schedulerWipe.imagePullSecrets" -}}
-  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "schedulerReset.imagePullSecrets" -}}
+  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
 {{- define "scheduler.config" -}}

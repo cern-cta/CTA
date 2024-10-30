@@ -1,10 +1,10 @@
 
 nameOverride: catalogue
-wipeCatalogue: false
+resetCatalogue: false
 component: catalogue
 partOf: cta
 
-wipeImage:
+resetImage:
   registry: gitlab-registry.cern.ch/cta
   repository: ctageneric
   tag: ""

@@ -25,7 +25,7 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
    It includes the app, release name, version, component, part-of, managed-by, and Helm chart info.
    Uses the naming helpers from _naming.tpl to generate consistent names and handle truncation.
 */}}
-{{- define "common.labels.noname" -}}
+{{- define "common.labels.withoutname" -}}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/component: {{ .Values.component | default (.Chart.Name) | quote }}

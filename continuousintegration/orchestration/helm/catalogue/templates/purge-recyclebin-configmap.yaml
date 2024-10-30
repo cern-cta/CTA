@@ -1,4 +1,4 @@
-{{- if .Values.wipeCatalogue -}}
+{{- if .Values.resetCatalogue -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:

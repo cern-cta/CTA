@@ -58,10 +58,10 @@ else
   # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
   # working correctly
   CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVENAME}.conf"
+  touch /TAPED_READY
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
   runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 
   echo "taped died"
-  touch /TAPED_READY
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
   sleep infinity
 fi

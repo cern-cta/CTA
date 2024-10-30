@@ -45,11 +45,10 @@ MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-# Set the TAPES and DRIVENAME based on the config in tpsrv-0
-echo "Reading library configuration from tpsrv-0"
-DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv-0 -c taped -- printenv DRIVENAME)
-LIBRARYDEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv-0 -c taped -- printenv DRIVENAME)
-# TODO: fix tape server names
+# Set the TAPES and DRIVENAME based on the config in tpsrv01-0
+echo "Reading library configuration from tpsrv01-0"
+DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVENAME)
+LIBRARYDEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVENAME)
 TAPES=$(../../ci_helpers/tape/list_all_tapes_in_library.sh --library-device $LIBRARYDEVICE)
 echo "Using drive: $DRIVENAME"
 echo "Using tapes:"
@@ -60,7 +59,7 @@ done
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()
 for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
-  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped -- bash -c "find /etc/cta | grep cta-taped- | xargs cat" | grep LogicalLibrary | awk 'NR==1 {print $3}'))
+  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped-0 -- bash -c "find /etc/cta | grep cta-taped- | xargs cat" | grep LogicalLibrary | awk 'NR==1 {print $3}'))
 done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
@@ -321,10 +320,10 @@ echo "Labeling tapes:"
 for VID in "${TAPES[@]}"; do
   echo "  cta-tape-label --vid ${VID} --force"
   # for debug use
-  # kubectl --namespace ${NAMESPACE} exec tpsrv-0 -c taped  -- cta-tape-label --vid ${VID} --debug
+  # kubectl --namespace ${NAMESPACE} exec tpsrv01-0 -c taped-0  -- cta-tape-label --vid ${VID} --debug
   # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
-  kubectl --namespace ${NAMESPACE} exec tpsrv-0 -c taped  -- cta-tape-label --vid ${VID} --force
+  kubectl --namespace ${NAMESPACE} exec tpsrv01-0 -c taped-0  -- cta-tape-label --vid ${VID} --force
   if [ $? -ne 0 ]; then
     echo "ERROR: failed to label the tape ${VID}"
     exit 1

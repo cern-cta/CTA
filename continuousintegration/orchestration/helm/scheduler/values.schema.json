@@ -6,9 +6,9 @@
       "type": "string",
       "description": "Override the default name of the chart (e.g., scheduler)."
     },
-    "wipeScheduler": {
+    "resetScheduler": {
       "type": "boolean",
-      "description": "Determines if the scheduler should be wiped on start."
+      "description": "Determines if the scheduler should be reset on start."
     },
     "component": {
       "type": "string",
@@ -18,20 +18,20 @@
       "type": "string",
       "description": "The larger system that this application is part of (e.g., cta)."
     },
-    "wipeImage": {
+    "resetImage": {
       "type": "object",
       "properties": {
         "registry": {
           "type": "string",
-          "description": "The Docker registry for the wipe image."
+          "description": "The Docker registry for the reset image."
         },
         "repository": {
           "type": "string",
-          "description": "The repository for the wipe image."
+          "description": "The repository for the reset image."
         },
         "tag": {
           "type": "string",
-          "description": "The tag for the wipe image."
+          "description": "The tag for the reset image."
         },
         "pullPolicy": {
           "type": "string",
@@ -52,7 +52,7 @@
         "pullPolicy",
         "pullSecrets"
       ],
-      "description": "Configuration for the wipe image used during scheduler wiping."
+      "description": "Configuration for the reset image used during scheduler wiping."
     },
     "configuration": {
       "anyOf": [
@@ -199,10 +199,10 @@
   },
   "required": [
     "nameOverride",
-    "wipeScheduler",
+    "resetScheduler",
     "component",
     "partOf",
-    "wipeImage",
+    "resetImage",
     "configuration"
   ]
 }

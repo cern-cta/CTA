@@ -1,10 +1,12 @@
-{{- if .Values.resetMhvtl -}}
+{{- if .Values.resetTapes -}}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "reset-mhvtl" }}
+{{- $uniqueLibraries := include "init.uniqueLibraryDevices" . | fromYaml -}}
+{{ range $libraryDevice,$libraryType := $uniqueLibraries }}
+{{- $name := "reset-tapes" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ $name }}-job
+  name: {{ printf "%s-%s-job" $name $libraryDevice }}
   namespace: {{ $namespace | quote}}
 spec:
   backoffLimit: 0
@@ -12,17 +14,16 @@ spec:
     spec:
       restartPolicy: Never
       imagePullSecrets:
-      {{- include "init.imagePullSecrets" . | nindent 6 }}
+      {{- include "init.imagePullSecrets" $ | nindent 6 }}
       containers:
         - name: {{ $name }}
-          image: {{ include "init.image" . }}
-          imagePullPolicy: {{ include "init.imagePullPolicy" . }}
+          image: {{ include "init.image" $ }}
+          imagePullPolicy: {{ include "init.imagePullPolicy" $ }}
           command:
-          - "/opt/run/bin/reset_mhvtl.sh"
-          args:
-          - "{{ include "init.libraryDevices" . }}"
+          - "/opt/run/bin/reset_tapes.sh"
+          args: []
           securityContext:
-            privileged: true # Because of MHVTL
+            privileged: true # Because of the scsi commands
           stdin: true
           env:
             - name: MY_NAME
@@ -31,6 +32,10 @@ spec:
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
+            - name: LIBRARY_DEVICE
+              value: {{ $libraryDevice | quote }}
+            - name: LIBRARY_TYPE
+              value: {{ $libraryType | quote }}
           volumeMounts:
             - mountPath: /mnt/logs
               name: logstorage
@@ -43,4 +48,6 @@ spec:
         - name: logstorage
           persistentVolumeClaim:
             claimName: claimlogs
+{{- end }}
+---
 {{- end }}

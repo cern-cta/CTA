@@ -4,7 +4,7 @@ metadata:
   labels:
     config: eoscta
     app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
-    {{- include "common.labels.noname" . | nindent 4 }}
+    {{- include "common.labels.withoutname" . | nindent 4 }}
   name: eos-config-fst
   namespace: {{.Release.Namespace}}
 data:

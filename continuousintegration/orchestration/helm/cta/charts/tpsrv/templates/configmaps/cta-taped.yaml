@@ -1,9 +1,8 @@
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $libraries := include "tpsrv.libraries" . | fromYaml -}}
-# TODO: make this use the tapeservers config
-{{- range $libraries -}}
-{{- $drives := .drivesnames }}
+{{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+{{- range $tapeServers -}}
+{{- $drives := .driveNames }}
 {{- $libraryDevice := .libraryDevice }}
 {{- range $driveSlot, $driveName := $drives }}
 # Generate unique config map for each tape drive

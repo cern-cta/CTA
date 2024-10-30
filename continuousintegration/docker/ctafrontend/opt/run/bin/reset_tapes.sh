@@ -15,40 +15,45 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+# This script expects the LIBRARY_DEVICE and LIBRARY_TYPE environment variables to be present
+
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
   sleep 1
   exit 1
 }
 
+# We do this check here as well so that we can terminate early
+if [[ ! $LIBRARY_TYPE = "mhvtl" ]]; then
+  echo "Resetting tapes on library type: $LIBRARY_TYPE is not supported"
+  exit 0
+fi
+
 
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-library_devices="$1"
-
-if [[ -z "$library_devices" ]]; then
-  die "No library devices to reset"
-fi
-
 
 # install the needed packages
 # the scheduler tools are installed once the scheduler type is known (see below)
 yum -y install mt-st mtx lsscsi sg3_utils
 yum clean packages
 
-# library management
-# BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
-# Emptying drives and move tapes to home slots
-echo "Unloading tapes that could be remaining in the drives from previous runs"
-for library_device in ${library_devices}; do
-  echo "Cleaning library device: /dev/${library_device}"
-  mtx -f /dev/${library_device} status
-  for unload in $(mtx -f /dev/${library_device}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
-    # normally, there is no need to rewind with virtual tapes...
-    mtx -f /dev/${library_device} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
-  done
-done
 
-echo "### WIPE COMPLETED ###"
+if [[ $LIBRARY_TYPE = "mhvtl" ]]; then
+  # library management
+  # BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
+  # Emptying drives and move tapes to home slots
+  echo "Unloading tapes that could be remaining in the drives from previous runs"
+  echo "Cleaning library device: /dev/${LIBRARY_DEVICE}"
+  mtx -f /dev/${LIBRARY_DEVICE} status
+  for unload in $(mtx -f /dev/${LIBRARY_DEVICE}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
+    # normally, there is no need to rewind with virtual tapes...
+    mtx -f /dev/${LIBRARY_DEVICE} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+  done
+else
+  echo "Resetting tapes on library type: $LIBRARY_TYPE is not supported"
+fi
+
+echo "### RESET COMPLETED ###"
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"

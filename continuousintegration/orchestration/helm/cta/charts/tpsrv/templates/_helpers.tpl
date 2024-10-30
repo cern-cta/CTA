@@ -53,9 +53,9 @@
 {{- define "validate.tapeServers" -}}
   {{- $uniqueNames := dict -}}
   {{- $uniqueDrives := dict -}}
-  {{- range .Values.tapeServers }} # TODO: reference variable here
-    {{- $name := .name -}}
-    {{- $drives := .drives -}}
+  {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+  {{- range $name,$tapeServerConfig := $tapeServers }}
+    {{- $drives := .driveNames -}}
     {{- if hasKey $uniqueNames $name }}
       {{- fail (printf "Duplicate tapeServer name found: %s. Names must be unique." $name) }}
     {{- else }}

@@ -16,16 +16,16 @@ sqlite:{{ $catalogueConfig.sqliteConfig.filepath | replace "%NAMESPACE" .Release
 {{- end }}
 {{- end }}
 
-{{- define "catalogueWipe.image" -}}
-  {{ include "common.images.image" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "catalogueReset.image" -}}
+  {{ include "common.images.image" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
-{{- define "catalogueWipe.imagePullPolicy" -}}
-  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "catalogueReset.imagePullPolicy" -}}
+  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
-{{- define "catalogueWipe.imagePullSecrets" -}}
-  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.wipeImage ) }}
+{{- define "catalogueReset.imagePullSecrets" -}}
+  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
 {{- define "catalogue.config" -}}

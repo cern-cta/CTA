@@ -14,20 +14,26 @@
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{- define "init.libraries" -}}
-  {{- $libraryConfig := .Values.libraries }}
-  {{- if ne (typeOf $libraryConfig) "string" -}}
-    {{- $libraryConfig = $libraryConfig | toYaml }}
+{{- define "init.tapeServers" -}}
+  {{- $tapeServersConfig := .Values.tapeServers }}
+  {{- if ne (typeOf $tapeServersConfig) "string" -}}
+    {{- $tapeServersConfig = $tapeServersConfig | toYaml }}
   {{- end }}
-  {{- $libraryConfig -}}
+  {{- $tapeServersConfig -}}
 {{- end }}
 
-{{- define "init.mhvtlLibraryDevices" -}}
-{{- $filteredDevices := list -}}
-{{- range (include "tpsrv.libraries" . | fromYaml) }}
-  {{- if eq .libraryType "mhvtl" }}
-    {{- $filteredDevices = append $filteredDevices .libraryDevice }}
+{{- define "init.uniqueLibraryDevices" -}}
+  {{- $uniqueDevices := dict -}}
+  {{- $tapeServers := include "init.tapeServers" . | fromYaml -}}
+  {{- range $tapeServers }}
+    {{- $device := .libraryDevice -}}
+    {{- $type := .libraryType -}}
+
+    {{- if not (hasKey $uniqueDevices $device) }}
+      {{- $_ := set $uniqueDevices $device $type }}
+    {{- end }}
   {{- end }}
-{{- end }}
-{{- join " " $filteredDevices -}}
+  {{- range $device, $type := $uniqueDevices }}
+    {{ $device }}: {{ $type }}
+  {{- end }}
 {{- end }}

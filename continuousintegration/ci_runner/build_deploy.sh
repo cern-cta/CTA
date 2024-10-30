@@ -290,7 +290,7 @@ compile_deploy() {
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
       --catalogue-config "${catalogue_config}" \
       --scheduler-config "${scheduler_config}" \
-      --spawn-options " --wipe-catalogue --wipe-scheduler" \
+      --spawn-options " --reset-catalogue --reset-scheduler" \
       ${redeploy_flags}
   fi
 }

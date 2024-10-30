@@ -22,7 +22,7 @@ exit 1
 }
 
 NAMESPACE=""
-tape_server='tpsrv-0'
+tape_server='tpsrv01-0'
 
 while getopts "n:" o; do
   case "${o}" in
@@ -42,13 +42,13 @@ fi
 
 # Install systest rpm that contains the osm reader test.
 echo "Installing cta systest rpms in ${tape_server} - taped container... "
-kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- bash -c "yum -y install cta-systemtests"
+kubectl -n ${NAMESPACE} exec ${tape_server} -c taped-0 -- bash -c "yum -y install cta-systemtests"
 
 # Get the device to be used.
 echo "Obtaining drive device and name"
-device_name=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- ls /etc/cta/ | grep 'cta-taped-.*\.conf' | awk 'NR==1')
+device_name=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped-0 -- ls /etc/cta/ | grep 'cta-taped-.*\.conf' | awk 'NR==1')
 device_name="${device_name:10:-5}"
-device=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
+device=$(kubectl -n ${NAMESPACE} exec ${tape_server} -c taped-0 -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
 echo "Using device: ${device}; name ${device_name}"
 
 # Copy and run the above a script to the rmcd pod to load osm tape
@@ -56,6 +56,6 @@ kubectl -n ${NAMESPACE} cp read_osm_tape.sh ${tape_server}:/root/read_osm_tape.s
 kubectl -n ${NAMESPACE} exec ${tape_server} -c rmcd -- bash -c "/bin/bash /root/read_osm_tape.sh ${device}"
 
 # Run the test
-kubectl -n ${NAMESPACE} exec ${tape_server} -c taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
+kubectl -n ${NAMESPACE} exec ${tape_server} -c taped-0 -- cta-osmReaderTest ${device_name} ${device} || exit 1
 
 exit 0

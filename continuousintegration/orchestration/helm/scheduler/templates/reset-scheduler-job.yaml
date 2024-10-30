@@ -1,6 +1,6 @@
-{{- if .Values.wipeScheduler -}}
+{{- if .Values.resetScheduler -}}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "wipe-scheduler" }}
+{{- $name := "reset-scheduler" }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 apiVersion: batch/v1
 kind: Job
@@ -13,12 +13,12 @@ spec:
     spec:
       restartPolicy: Never
       imagePullSecrets:
-      {{- include "schedulerWipe.imagePullSecrets" . | nindent 6 }}
+      {{- include "schedulerReset.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: {{ $name }}
-          image: {{ include "schedulerWipe.image" . }}
-          imagePullPolicy: {{ include "schedulerWipe.imagePullPolicy" . }}
-          command: ['/opt/run/bin/wipe_scheduler.sh']
+          image: {{ include "schedulerReset.image" . }}
+          imagePullPolicy: {{ include "schedulerReset.imagePullPolicy" . }}
+          command: ['/opt/run/bin/reset_scheduler.sh']
           args: []
           securityContext:
             privileged: true

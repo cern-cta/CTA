@@ -97,7 +97,7 @@ run_systemtest() {
   keepnamespace=0 # keep or drop namespace after systemtest_script? By default drop it.
   systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
   cleanup_namespaces=0 # by default do not cleanup leftover namespaces
-  spawn_options=" --wipe-catalogue --wipe-scheduler"
+  spawn_options=" --reset-catalogue --reset-scheduler"
   extra_test_options=""
 
   # Parse command line arguments

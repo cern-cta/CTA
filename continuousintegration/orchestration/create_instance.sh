@@ -38,14 +38,14 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
-  echo "  -l, --library-config <file>:        Path to the library configuration values file. If not provided, this file will be auto-generated."
+  echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
   echo "  -m, --library-model <model>:        Specify the library model to use. Defaults to mhvtl"
   echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
   echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -S, --use-systemd:                  Use systemd to manage services inside containers. Defaults to false"
-  echo "  -O, --wipe-scheduler:               Wipe scheduler datastore content during initialization phase. Defaults to false."
-  echo "  -D, --wipe-catalogue:               Wipe catalogue content during initialization phase. Defaults to false."
+  echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
+  echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --upgrade:                      Upgrade the existing deployment."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   exit 1
@@ -86,9 +86,8 @@ create_instance() {
   scheduler_config=presets/dev-file-scheduler-values.yaml
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
-  wipe_catalogue=false
-  wipe_scheduler=false
-  reset_tapes=false
+  reset_catalogue=false
+  reset_scheduler=false
   use_systemd=false # By default to not use systemd to manage services inside the containers
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
   upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
@@ -106,8 +105,8 @@ create_instance() {
         catalogue_config="$2"
         test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
-      -l|--library-config)
-        library_config="$2"
+      --tapeservers-config)
+        tapeservers_config="$2"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -122,9 +121,8 @@ create_instance() {
         catalogue_schema_version="$2"
         shift ;;
       -S|--use-systemd) use_systemd=true ;;
-      -O|--wipe-scheduler) wipe_scheduler=true ;;
-      -D|--wipe-catalogue) wipe_catalogue=true ;;
-         --reset-tapes) reset_tapes=true ;;
+      -O|--reset-scheduler) reset_scheduler=true ;;
+      -D|--reset-catalogue) reset_catalogue=true ;;
       --upgrade) upgrade=1 ;;
       --dry-run) dry_run=1 ;;
       *)
@@ -144,7 +142,7 @@ create_instance() {
     echo "Missing mandatory argument: -i | --image-tag"
     usage
   fi
-  if [ $upgrade == 1 ] && [ -z $library_config ]; then
+  if [ $upgrade == 1 ] && [ -z $tapeservers_config ]; then
     echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
     usage
   fi
@@ -163,23 +161,21 @@ create_instance() {
     helm_command="install"
   fi
 
-  if [ "$wipe_catalogue" == "true" ] ; then
-    echo "Catalogue content will be wiped"
+  if [ "$reset_catalogue" == "true" ] ; then
+    echo "Catalogue content will be reset"
   else
     echo "Catalogue content will be kept"
   fi
 
-  if [ "$wipe_scheduler" == "true" ]; then
-    echo "scheduler data store content will be wiped"
+  if [ "$reset_scheduler" == "true" ]; then
+    echo "scheduler data store content will be reset"
   else
     echo "scheduler data store content will be kept"
   fi
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  # Grab a unique library (or more)
   devices_all=$(./../ci_helpers/tape/list_all_libraries.sh)
-  # TODO: check if this supports multiple labels
   devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
   if [ -z "$unused_devices" ]; then
@@ -187,22 +183,29 @@ create_instance() {
   fi
 
   # Determine the library config to use
-  if [ -z "${library_config}" ]; then
+  if [ -z "${tapeservers_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
-    library_config=$(mktemp /tmp/${namespace}-library-XXXXXX-values.yaml)
-    library_device=$(echo "$unused_devices" | head -n 1)
-    ./../ci_helpers/tape/generate_deafult_libraries_config.sh --target-file $library_config  \
-                                                              --library-device $library_device \
-                                                              --library-type $library_model
+    # This file is cleaned up again by delete_instance.sh
+    tapeservers_config=$(mktemp /tmp/${namespace}-tapeservers-XXXXXX-values.yaml)
+    # TODO: pass these as flags
+    num_library_devices=1
+    max_drives_per_tpsrv=1
+    # Generate a comma separated list of library devices based on the number of library devices
+    # the user wants to generate
+    library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
+    ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file $tapeservers_config  \
+                                                        --library-devices $library_devices \
+                                                        --library-type "mhvtl" \
+                                                        --max-drives-per-tpsrv $max_drives_per_tpsrv
   elif [ $upgrade == 0 ]; then
-    # See what devices were provided in the config and check that it is not in use
-    library_device=$(awk '/device:/ {gsub("\"","",$2); print $2}' $library_config)
-    if ! echo "$unused_devices" | grep -qw "$library_device"; then
-      die "provided library config specifies a device that is already in use: $library_device"
-    fi
+    # Check that all devices in the provided config are available
+    for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
+      if ! echo "$unused_devices" | grep -qw "$library_device"; then
+        die "provided library config specifies a device that is already in use: $library_device"
+      fi
+    done
   fi
-  echo "Using library device: ${library_device}"
-  cat $library_config
+  cat $tapeservers_config
 
   # Create the namespace if necessary
   if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
@@ -221,15 +224,15 @@ create_instance() {
 
   update_chart_dependencies
   # For now only allow an upgrade of the CTA chart
-  # Once deployments are in place, we can also look into redeploying the catalogue and scheduler
+  # Once deployments are in place, we can also look into upgrading the catalogue and scheduler
   if [ $upgrade == 0 ]; then
     echo "Installing init chart..."
     log_run helm ${helm_command} init-${namespace} helm/init \
                                   --namespace ${namespace} \
                                   --set global.image.registry="${registry_host}" \
                                   --set global.image.tag="${image_tag}" \
-                                  --set resetMhvtl=true \
-                                  --set-file libraries=${library_config} \
+                                  --set resetTapes=true \
+                                  --set-file tapeServers=${tapeservers_config} \
                                   --wait --wait-for-jobs --timeout 2m
 
     # At some point this can be done in parallel
@@ -237,19 +240,19 @@ create_instance() {
     echo "Installing catalogue and scheduler charts..."
     log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
                                   --namespace ${namespace} \
-                                  --set wipeImage.registry="${registry_host}" \
-                                  --set wipeImage.tag="${image_tag}" \
+                                  --set resetImage.registry="${registry_host}" \
+                                  --set resetImage.tag="${image_tag}" \
                                   --set schemaVersion="${catalogue_schema_version}" \
-                                  --set wipeCatalogue=${wipe_catalogue} \
+                                  --set resetCatalogue=${reset_catalogue} \
                                   --set-file configuration=${catalogue_config} \
                                   --wait --wait-for-jobs --timeout 2m &
     catalogue_pid=$!
 
     log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
                                   --namespace ${namespace} \
-                                  --set wipeImage.registry="${registry_host}" \
-                                  --set wipeImage.tag="${image_tag}" \
-                                  --set wipeScheduler=${wipe_scheduler} \
+                                  --set resetImage.registry="${registry_host}" \
+                                  --set resetImage.tag="${image_tag}" \
+                                  --set resetScheduler=${reset_scheduler} \
                                   --set-file configuration=${scheduler_config} \
                                   --wait --wait-for-jobs --timeout 2m &
     scheduler_pid=$!
@@ -264,7 +267,7 @@ create_instance() {
                                 --set global.useSystemd=${use_systemd} \
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
-                                --set-file tpsrv.libraries="${library_config}" \
+                                --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 5m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then

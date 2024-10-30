@@ -129,8 +129,8 @@ delete_instance() {
   fi
 
   # Remove old library values files:
-  echo "Removing auto-generated library-*-values.yaml files"
-  rm -f /tmp/${namespace}-library-*-values.yaml
+  echo "Removing auto-generated ${namespace}-tapeservers-*-values.yaml files"
+  rm -f /tmp/${namespace}-tapeservers-*-values.yaml
 
   echo "Deleting ${namespace} instance"
   kubectl delete namespace ${namespace}
