@@ -35,8 +35,6 @@ spec:
               value: {{ $namespace | quote}}
             - name: INSTANCE_NAME
               value: {{ $namespace | quote}}
-            - name: WIPE_CATALOGUE
-              value: {{ .Values.resetCatalogue | quote }}
             - name: SCHEMA_VERSION
               value: {{ .Values.schemaVersion | quote}}
             - name: CATALOGUE_BACKEND

@@ -77,7 +77,7 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FI
 # option so to be able to export the test setup we need to source the file
 # client_env (file generated in client_setup with all env varss and fucntions)
 #
-# Also, to show the output of tpsrv-X rmcd to the logs we need to tail the files
+# Also, to show the output of tpsr-X rmcd to the logs we need to tail the files
 # before every related script and kill it a the end. Another way to do this would
 # require to change the stdin/out/err of the tail process and set//reset it
 # at the beginning and end of each kubectl exec command.
@@ -86,7 +86,7 @@ TEST_POSTRUN=""
 
 VERBOSE=1
 if [[ $VERBOSE == 1 ]]; then
-  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv-*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
+  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 

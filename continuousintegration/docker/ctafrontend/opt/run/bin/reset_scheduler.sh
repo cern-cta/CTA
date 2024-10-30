@@ -67,5 +67,5 @@ else
   rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls
 fi
 
-echo "### SCHEDULER WIPE COMPLETED ###"
+echo "### SCHEDULER RESET COMPLETED ###"
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"

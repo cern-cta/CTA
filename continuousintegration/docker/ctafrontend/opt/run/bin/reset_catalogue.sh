@@ -69,5 +69,5 @@ else
   die "ERROR: Unsupported database type: ${CATALOGUE_BACKEND}"
 fi
 
-echo "### CATALOGUE WIPE COMPLETED ###"
+echo "### CATALOGUE RESET COMPLETED ###"
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"
