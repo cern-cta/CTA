@@ -35,6 +35,7 @@
 #include "common/log/TimingList.hpp"
 #include "common/Timer.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/AutoRollback.hpp"
 
 namespace cta::catalogue {
 
@@ -55,10 +56,12 @@ FileRecycleLogItor RdbmsFileRecycleLogCatalogue::getFileRecycleLogItor(
 
 void RdbmsFileRecycleLogCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
   const std::string &newFid) {
+  log::LogContext lc(m_log);
   auto fileRecycleLogitor = getFileRecycleLogItor(searchCriteria);
   auto conn = m_connPool->getConn();
-  log::LogContext lc(m_log);
+  rdbms::AutoRollback autoRollback(conn);
   restoreEntryInRecycleLog(conn, fileRecycleLogitor, newFid, lc);
+  autoRollback.cancel();
 }
 
 void RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(rdbms::Conn &conn,

@@ -102,7 +102,6 @@ void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string 
 //------------------------------------------------------------------------------
 void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
-  rdbms::AutoRollback autoRollback(conn);
   const auto fileRecycleLogCatalogue = static_cast<RdbmsFileRecycleLogCatalogue*>(
     m_rdbmsCatalogue->FileRecycleLog().get());
   std::list<InsertFileRecycleLog> insertedFilesRecycleLog
@@ -151,7 +150,6 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
     stmt2.bindUint64(":FSEQ",fileRecycleLog.fSeq);
     stmt2.executeNonQuery();
   }
-  conn.commit();
 }
 
 void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
