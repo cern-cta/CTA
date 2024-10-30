@@ -21,7 +21,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
-ln -s /dev/${LIBRARYDEVICE} /dev/smc
+ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
@@ -32,7 +32,7 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
   # rmcd will be running as non root user, we need to fix a few things:
   # device access rights
-  chmod 666 /dev/${LIBRARYDEVICE}
+  chmod 666 /dev/${LIBRARY_DEVICE}
 
   echo "Launching cta-rmcd with systemd:"
   systemctl start cta-rmcd

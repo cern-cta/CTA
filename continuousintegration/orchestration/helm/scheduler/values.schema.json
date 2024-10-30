@@ -66,11 +66,11 @@
             "backend": {
               "type": "string",
               "enum": [
-                "file",
+                "VFS",
                 "ceph",
                 "postgres"
               ],
-              "description": "The type of backend to use (e.g., file, ceph, postgres)."
+              "description": "The type of backend to use (e.g., VFS, ceph, postgres)."
             },
             "cephConfig": {
               "type": "object",
@@ -138,7 +138,7 @@
               ],
               "description": "PostgreSQL backend configuration."
             },
-            "fileConfig": {
+            "vfsConfig": {
               "type": "object",
               "properties": {
                 "path": {
@@ -184,10 +184,10 @@
               "properties": {
                 "backend": {
                   "enum": [
-                    "file"
+                    "VFS"
                   ]
                 },
-                "fileConfig": {
+                "vfsConfig": {
                   "type": "object"
                 }
               }

@@ -53,7 +53,7 @@ spec:
           value: {{ $namespace | quote }}
         - name: INSTANCE_NAME
           value: {{ $namespace | quote }}
-        - name: LIBRARYDEVICE
+        - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
         - name: MY_CONTAINER
           value: "rmcd"
@@ -98,9 +98,9 @@ spec:
           value: "taped-{{ $index }}"
         - name: eoshost
           value: "mgm"
-        - name: LIBRARYDEVICE
+        - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
-        - name: DRIVENAME
+        - name: DRIVE_NAME
           value: {{ $driveName }}
         {{- if ($.Values.taped.env) }}
           {{- $.Values.taped.env | toYaml | nindent 8 }}

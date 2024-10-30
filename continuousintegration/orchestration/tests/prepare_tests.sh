@@ -45,12 +45,12 @@ MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-# Set the TAPES and DRIVENAME based on the config in tpsrv01-0
+# Set the TAPES and DRIVE_NAME based on the config in tpsrv01-0
 echo "Reading library configuration from tpsrv01-0"
-DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVENAME)
-LIBRARYDEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv LIBRARYDEVICE)
-mapfile -t TAPES < <(./tape/list_all_tapes_in_library.sh -d $LIBRARYDEVICE)
-echo "Using drive: $DRIVENAME"
+DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVE_NAME)
+LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv LIBRARY_DEVICE)
+mapfile -t TAPES < <(./tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
+echo "Using drive: $DRIVE_NAME"
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
   echo "- $VID"
@@ -330,8 +330,8 @@ for VID in "${TAPES[@]}"; do
   fi
 done
 
-echo "Setting drive up: ${DRIVENAME}"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAME}
+echo "Setting drive up: ${DRIVE_NAME}"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVE_NAME}
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting

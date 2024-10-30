@@ -43,7 +43,7 @@ fi
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
 # Clean up scheduler
-if [ "$SCHEDULER_BACKEND" == "file" ]; then
+if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
   echo "Wiping objectstore"
   rm -fr $SCHEDULER_URL
   mkdir -p $SCHEDULER_URL

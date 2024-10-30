@@ -27,5 +27,5 @@ configuration:
     password: ""
     database: ""
     server: ""
-  fileConfig:
+  vfsConfig:
     path: ""

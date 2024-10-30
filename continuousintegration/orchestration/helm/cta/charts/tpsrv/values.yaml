@@ -38,7 +38,6 @@ conf:
     ctaTapedSss: "cta-taped.sss.keytab"
   general:
     instanceName: "CI"
-    scheduler.backendName: "VFS"
 
 taped:
   command: ["/bin/sh", "-c"]

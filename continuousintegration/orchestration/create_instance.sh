@@ -83,7 +83,7 @@ create_instance() {
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
   registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-postgres-catalogue-values.yaml
-  scheduler_config=presets/dev-file-scheduler-values.yaml
+  scheduler_config=presets/dev-vfs-scheduler-values.yaml
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   reset_catalogue=false

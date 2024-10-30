@@ -32,7 +32,7 @@ data:
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
     general InstanceName {{ $.Values.conf.general.instanceName }}
-    general SchedulerBackendName {{ $schedulerConfig.backendName }}
+    general SchedulerBackendName {{ $schedulerConfig.backend }}
 ---
 {{- end }}
 {{- end }}

@@ -35,7 +35,7 @@ usage() {
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
   echo "      --upgrade:                        Upgrade the currently running instance instead of installing it from scratch."
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: continuousintegration/orchestration/presets/dev-postgres-catalogue-values.yaml"
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-file-scheduler-values.yaml"
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: continuousintegration/orchestration/presets/dev-vfs-scheduler-values.yaml"
   echo "      --library-config <path>:          Path to the yaml file containing the library configuration. If not provided, the create_instance.sh script will autogenerate one."
   echo "      --spawn-options <options>:        Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image script."
@@ -50,7 +50,7 @@ redeploy() {
   local rpm_src=""
   local skip_image_reload=false
   local catalogue_config="presets/dev-postgres-catalogue-values.yaml"
-  local scheduler_config="presets/dev-file-scheduler-values.yaml"
+  local scheduler_config="presets/dev-vfs-scheduler-values.yaml"
   local library_config=""
   local extra_spawn_options=""
   local extra_build_options=""

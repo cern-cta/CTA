@@ -41,7 +41,7 @@ if [ -z "${NAMESPACE}" ]; then
 fi
 
 # Install systest rpm that contains the osm reader test.
-echo "Installing cta systest rpms in ${tape_server} - taped container... "
+echo "Installing cta systest rpms in ${tape_server} - taped-0 container... "
 kubectl -n ${NAMESPACE} exec ${tape_server} -c taped-0 -- bash -c "yum -y install cta-systemtests"
 
 # Get the device to be used.
