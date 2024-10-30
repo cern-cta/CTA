@@ -49,7 +49,7 @@ MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 echo "Reading library configuration from tpsrv01-0"
 DRIVENAME=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVENAME)
 LIBRARYDEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv LIBRARYDEVICE)
-TAPES=$(../../ci_helpers/tape/list_all_tapes_in_library.sh --library-device $LIBRARYDEVICE)
+mapfile -t TAPES < <(./tape/list_all_tapes_in_library.sh -d $LIBRARYDEVICE)
 echo "Using drive: $DRIVENAME"
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
