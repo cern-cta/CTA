@@ -284,6 +284,7 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
       TAPE.LAST_FSEQ AS LAST_FSEQ,
       TAPE.IS_FULL AS IS_FULL,
+      TAPE.DIRTY AS DIRTY,
       TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
       TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
       TAPE.LABEL_FORMAT AS LABEL_FORMAT,
@@ -1641,6 +1642,7 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
       TAPE.LAST_FSEQ AS LAST_FSEQ,
       TAPE.IS_FULL AS IS_FULL,
+      TAPE.DIRTY AS DIRTY,
       TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
       TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
@@ -1717,6 +1719,7 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.full = rset.columnBool("IS_FULL");
+    tape.dirty = rset.columnBool("DIRTY");
     tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
     tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
