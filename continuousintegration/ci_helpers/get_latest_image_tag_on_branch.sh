@@ -21,14 +21,13 @@ die() {
 }
 
 usage() {
-  echo "Script to automatically construct a docker image tag based on the arguments provided."
+  echo "Script to automatically find the latest docker image tag on a given branch."
   echo ""
   echo "Usage: $0 [options]"
   echo ""
   echo "Options:"
-  echo "  -h, --help:                             Show help output."
-  echo "  -p|--pipeline-id <gitlab pipeline ID>:  GitLab pipeline ID (optional)."
-  echo "  -S|--systemtest-only:                   Use system test image only (from the latest commit on main)."
+  echo "  -h, --help:             Show help output."
+  echo "  -b|--branch branch:     The branch on which to find the latest image tag."
   exit 1
 }
 
@@ -36,9 +35,8 @@ usage() {
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -h | --help) usage ;;
-    -S|--systemtest-only) systest_only=1 ;;
-    -p|--pipeline-id)
-      pipeline_id="$2"
+    -b|--branch)
+      branch="$2"
       shift ;;
     *)
       echo "Unsupported argument: $1"
@@ -48,25 +46,20 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+if [ -z "$branch" ]; then
+  die "Please provide a branch to find the latest image tag for"
+fi
+
 # Check if registry credentials are valid
 ./get_registry_credentials.sh --check > /dev/null || die "Error: Credential check failed."
 
 # Get commit ID
-if [[ ${systest_only} -eq 1 ]]; then
-  # In this case, grab the latest commit that is online on the main branch as this will already have an image associated with it
-  commit_id=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
-else
-  commit_id=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-fi
+# Grab the latest commit that is online on the given branch as this will already have an image associated with it
+commit_id=$(curl --silent --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits?ref_name=${branch}" \
+          | jq -cr '.[0].short_id' \
+          | sed -e 's/\(........\).*/\1/')
 
-# Determine the image tag
-if [[ "${systest_only}" -eq 1 ]]; then
-  imagetag=$(./list_images.sh 2>/dev/null | grep ${commit_id} | tail -n1)
-elif [ -n "${pipeline_id}" ]; then
-  imagetag=$(./list_images.sh 2>/dev/null | grep ${commit_id} | grep ^${pipeline_id}git | sort -n | tail -n1)
-else
-  imagetag=$(./list_images.sh 2>/dev/null | grep ${commit_id} | sort -n | tail -n1)
-fi
+imagetag=$(./list_images.sh 2>/dev/null | grep ${commit_id} | tail -n1)
 
 # Validate if image tag was found
 if [ -z "${imagetag}" ]; then

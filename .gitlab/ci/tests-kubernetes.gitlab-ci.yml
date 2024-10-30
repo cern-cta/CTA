@@ -43,14 +43,17 @@
         CATALOGUE_CONFIG=presets/dev-postgres-catalogue-values.yaml
       fi
     # Which image tag to use
+    - cd continuousintegration/ci_helpers/
     - |
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
-        GET_IMAGE_TAG_OPTS=" --systemtest-only"
+        if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
+          IMAGE_TAG=$(./get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
+        else
+          IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
+        fi
       else
-        GET_IMAGE_TAG_OPTS=" --pipeline-id ${CI_PIPELINE_ID}"
+        IMAGE_TAG=$CTA_BUILD_ID
       fi
-    - cd continuousintegration/ci_helpers/
-    - IMAGE_TAG=$(./get_image_tag.sh ${GET_IMAGE_TAG_OPTS})
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - args_array=($EXTRA_ARGS)
     - |
