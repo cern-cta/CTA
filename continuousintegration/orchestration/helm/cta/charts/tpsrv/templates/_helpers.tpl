@@ -55,18 +55,39 @@
   {{- $uniqueDrives := dict -}}
   {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
   {{- range $name,$tapeServerConfig := $tapeServers }}
-    {{- $drives := .driveNames -}}
+    {{- $drives := .drives -}}
     {{- if hasKey $uniqueNames $name }}
       {{- fail (printf "Duplicate tapeServer name found: %s. Names must be unique." $name) }}
     {{- else }}
       {{- $_ := set $uniqueNames $name true }}
     {{- end }}
     {{- range $drives }}
-      {{- if hasKey $uniqueDrives . }}
+      {{- if hasKey $uniqueDrives .name }}
         {{- fail (printf "Duplicate drive found: %s. Drives must be unique across all tapeServers." .) }}
       {{- else }}
-        {{- $_ := set $uniqueDrives . true }}
+        {{- $_ := set $uniqueDrives .name true }}
       {{- end }}
     {{- end }}
   {{- end }}
+{{- end }}
+
+{{/*
+    Helper to get a list of all unique drives across tapeServers as a list.
+*/}}
+{{- define "tpsrv.allDrives" -}}
+  {{- $uniqueDrives := dict -}}
+  {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+  {{- range $name, $tapeServerConfig := $tapeServers }}
+    {{- range $drive := $tapeServerConfig.drives }}
+      {{- if not (hasKey $uniqueDrives $drive.name) }}
+        {{- $_ := set $uniqueDrives $drive.name $drive.device }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- $drivesList := list }}
+  {{- range $name, $device := $uniqueDrives }}
+    {{- $drive := dict "name" $name "device" $device }}
+    {{- $drivesList = append $drivesList $drive }}
+  {{- end }}
+  {{- toYaml $drivesList }}
 {{- end }}

@@ -1,9 +1,7 @@
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
-{{- range $tapeServers -}}
-{{- $libraryDevice := .libraryDevice }}
-{{- range $driveSlot, $drive := .drives }}
+{{- $allDrives := include "tpsrv.allDrives" . | fromYamlArray }}
+{{- range $driveSlot, $drive := $allDrives }}
 # Generate unique config map for each tape drive
 apiVersion: v1
 kind: ConfigMap
@@ -33,5 +31,4 @@ data:
     general InstanceName {{ $.Values.conf.general.instanceName }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
 ---
-{{- end }}
 {{- end }}

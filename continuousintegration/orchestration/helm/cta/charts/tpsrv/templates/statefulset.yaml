@@ -60,9 +60,6 @@ spec:
         - name: TERM
           value: "xterm"
         volumeMounts:
-        {{- if $.Values.taped.volumeMounts }}
-        {{ $.Values.taped.volumeMounts | toYaml | nindent 8 }}
-        {{- end }}
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
