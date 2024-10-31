@@ -36,14 +36,14 @@ Charts that have CTA-specific functionality (basically all of them), rely on an 
 The first chart that will be installed is the `init` chart. This chart sets up three important resources:
 - A persistent volume claim for the logs. The reason is that each pod in the namespace writes their log to the same persistent volume (so that they can all be collected in one place).
 - The Key Distribution Center (kdc) pod. This sets up everything necessary for authentication (both sss and kerberos). Runs the KDC server for authenticating EOS end-users and CTA tape operators.
-- If configured, it will spawn a job that cleans up/wipes MHVTL. It does so by making sure that there are no tapes remaining in the drives.
+- If configured, it will spawn jobs that reset tapes that are still in the drives. For now, this is only supported for MHVTL. One job is spawned for each library device.
 
 The `init` chart expects the following required parameters:
 - `global.image.tag`: the tag for the `ctageneric` image to use. This is used by the `kdc` pod.
 - `global.image.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
-- `tapeConfig`: this contains the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
+- `tapeServers`: this contains the tape servers configuration. This details which tape servers should be spawned. For each tape server, it details the library type, library device, library name, and all the drives that this tape server is reponsible for. In this init stage, this configuration is only used to determine which library devices need to be cleaned up by the tape reset job.
 
-The library configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The library configuration can be provided explicitly to `create_instance.sh` using `--library-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
+The tapeservers configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The tapeservers configuration can be provided explicitly to `create_instance.sh` using `--tapeservers-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
 
 ```yaml
 tpsrv01:
@@ -64,7 +64,7 @@ tpsrv02:
       device: "nst1"
 ```
 
-It is important to note that - for now - the CTA instance setup only supports a single library (device). Each Helm deployment of CTA will get an annotation to specify which library it is using. When spawning a new CTA instance, it will first check if there are libraries available by looking at all the available libraries and looking at what is deployed. If a config file is provided with a library that is already in use, the instance spawning will fail.
+Each Helm deployment of CTA will get an annotation to specify which libraries it is using. When spawning a new CTA instance, it will first check if there are libraries available by looking at all the available libraries and looking at what is deployed. If a config file is provided with a library that is already in use, the instance spawning will fail.
 
 ### Catalogue
 
@@ -155,13 +155,11 @@ Finally, we have the `cta` chart. This chart spawns the different components req
 - `ctafrontend`
   * One CTA front-end.
   * The CTA SSS of the EOS instance that will be used by the CTA front end to authenticate the cta command-line run by the workflow engine of the EOS instance.
-- `tpsrv-x`
-  * One `cta-taped` daemon running in `taped` container of `tpsrv-x` pod.
-  * One `rmcd` daemon running in `rmcd` container of `tpsrv-x` pod.
+- `tpsrvxx-0`
+  * One `cta-taped` daemon running in a `taped` container. Each pod will have as many `taped` containers as drives specified in the tapeservers config.
+  * One `rmcd` daemon running in `rmcd` container of `tpsrvxx-0` pod.
   * The tape server SSS to be used by cta-taped to authenticate its file transfer requests with the EOS mgm (all tape servers will use the same SSS).
 - `client`
-  * The `cta` command-line tool to be used by `eosusers`.
-  * The `eos` command-line tool.
   * This pod has the keytab of `user1` who is allowed to read-write file in `root://ctaeos//eos/ctaeos/cta`.
 
 The `cta` chart expects the following required parameters:
@@ -171,10 +169,7 @@ The `cta` chart expects the following required parameters:
 - `global.useSystemd`: whether to use systemd or not. For now, systemd support has not been implemented.
 - `global.catalogueSchemaVersion`: The schema version of the catalogue. This is not currently used, but once all the charts use Kubernetes deployments, this can be used to automatically redeploy the relevant pods when this version changes (the frontend and tape servers).
 - `global.configuration.scheduler`: The scheduler configuration (same as detailed above). This is required as some pods need to mount specific volumes to specific places when CEPH is used as a backend.
-- `tpsrv.tapeConfig`: The library configuration (same as detailed above). Used by the tape servers.
-
-**How many tpsrv pods are spawned?**
-The number of tpsrv pods spawned depends on the provided library configuration provided as `tpsrv.tapeConfig`. This library configuration contains a number of drive names. For each drive, two configmaps are generated. Then each drive gets its own tpsrv pod. What if you want to use a subset of the drives? Just provide a library configuration that contains only the drives you want.
+- `tpsrv.tapeServers`: The tape servers configuration (same as detailed above) used to determine which tape servers to spawn.
 
 ### The whole process
 
@@ -310,13 +305,12 @@ A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user,
 
 The current deployment of this CTA has a few limitations that make it unsuitable for a wider adoption. These limitations are listed below. Note that the list is not necessarily conclusive.
 
-- Only a single replica of each pod can be deployed (apart from the tape servers), because each chart still uses plain pod configurations. This should be moved to deployments at some point.
-- It is not possible to define different schedulers for different tape servers (or in general super unique configurations per tape server).
-- The `ctaeos` chart is not exactly very pretty and also not very flexible. This should be replaced by a more generic disk buffer chart.
-- All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase.
+- For the most part, the charts still use plain pod configurations. This should be moved to deployments at some point to ensure we can properly roll out upgrades.
+- It is not possible to define different schedulers for different tape servers (although this would be relatively easy to add support for).
+- The `ctaeos` chart is not exactly very pretty and also not very flexible. This is because it will be replaced by a more generic disk buffer chart at some point.
+- All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase. It is relatively easy to make an option to turn this off though.
 - The GRPC frontend configuration has not been tested/implemented yet.
 - There is no systemd support (do we even want this in a containerized setup?).
 - It is not yet possible to redeploy individual subcharts of the `cta` chart.
-- It only supports handling a single library. What if there are multiple libraries? How to handle multiple library configurations?
 - Authentication is currently somewhat hardcoded.
 - The `init_pod.sh` script requires every pod to run in priviledged mode

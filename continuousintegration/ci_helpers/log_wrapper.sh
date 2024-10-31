@@ -24,12 +24,13 @@
 # Second, it hurts the portability of the script that sources this, and does not make it as easy to turn off logging.
 log_info() {
   local message="$*"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [$current_script] $message"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [$current_script]  $message"
+
 }
 
 log_error() {
   local message="$*"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] [$current_script] $message" >&2
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] [$current_script]  $message" >&2
 }
 
 log_start() {
@@ -41,9 +42,9 @@ log_start() {
   # The output of stderr will be redirect to log_error
   mkfifo /tmp/stdout_pipe_$$
   mkfifo /tmp/stderr_pipe_$$
-  cat < /tmp/stdout_pipe_$$ | while read -r line; do log_info "$line"; done &
+  cat < /tmp/stdout_pipe_$$ | while IFS= read -r line; do log_info "$line"; done &
   pid_stdout=$!
-  cat < /tmp/stderr_pipe_$$ | while read -r line; do log_error "$line"; done &
+  cat < /tmp/stderr_pipe_$$ | while IFS= read -r line; do log_error "$line"; done &
   pid_stderr=$!
   # Redirect stdout and stderr to the pipes
   exec 1> /tmp/stdout_pipe_$$ 2> /tmp/stderr_pipe_$$

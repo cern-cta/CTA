@@ -136,6 +136,7 @@ generate_tpsrvs_config() {
   local lsscsi_g="$(lsscsi -g)"
   # Loop over each provided library device
   for library_device in "${library_devices[@]}"; do
+    # TODO: this probably won't yet work properly for multiple library devices as the drives are not directly associated with a library device
     generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives"
   done
 }

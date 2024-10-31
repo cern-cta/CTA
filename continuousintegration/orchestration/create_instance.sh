@@ -205,7 +205,9 @@ create_instance() {
       fi
     done
   fi
+  echo "---"
   cat $tapeservers_config
+  echo "---"
 
   # Create the namespace if necessary
   if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
