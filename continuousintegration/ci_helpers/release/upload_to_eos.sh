@@ -128,7 +128,8 @@ upload_to_eos() {
     exit 1
   fi
 
-  yum install -y krb5-workstation rsync openssh-clients xrootd-client
+  dnf install -y epel-release
+  dnf install -y krb5-workstation rsync openssh-clients xrootd-client
 
   # Get credentials
   echo "$eos_account_password" | kinit $eos_account_username@CERN.CH 2>&1 >/dev/null
