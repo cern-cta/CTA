@@ -95,7 +95,7 @@ release-cta:
         exit 0;
       fi
     - echo "Publishing to internal CTA repository"
-    - bash -v ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                                   --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_rpm/RPM/RPMS
                                                                   --eos-path /eos/user/c/ctareg/www/cta-repo
@@ -112,7 +112,7 @@ release-cta-testing:
       allow_failure: true
   script:
     - echo "Publishing to testing CTA repository"
-    - bash -v ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                                   --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_rpm/RPM/RPMS/x86_64
                                                                   --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta
@@ -129,7 +129,7 @@ release-cta-stable:
       allow_failure: true
   script:
     - echo "Publishing to public CTA repository"
-    - bash -v ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+    - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                                   --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                                   --source-dir build_rpm/RPM/RPMS/x86_64
                                                                   --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta

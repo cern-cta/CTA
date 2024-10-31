@@ -165,3 +165,5 @@ upload_to_eos() {
     echo "WARNING: Krb5 credentials for $eos_account_username have not been cleared up"
   fi
 }
+
+upload_to_eos "$@"
