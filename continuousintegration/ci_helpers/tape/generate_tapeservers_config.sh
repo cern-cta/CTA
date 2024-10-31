@@ -66,23 +66,35 @@ generate_tpsrvs_config_for_library() {
   # Extract library name and drive names
   local library_name=$(echo "${line}" | awk '{print $4}')
   mapfile -t driveNames < <(echo "$lsscsi_g" | \
-                      grep "^.${scsi_host}:${scsi_channel}:" | \
-                      grep tape | \
-                      sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/')
+                        grep "^.${scsi_host}:${scsi_channel}:" | \
+                        grep tape | \
+                        sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/')
 
-  # Split driveNames into chunks of size max_drives
+  mapfile -t driveDevices < <(echo "$lsscsi_g" | \
+                        grep "^.${scsi_host}:${scsi_channel}:" | \
+                        grep tape | \
+                        awk '{print $6}' | \
+                        sed -e 's%/dev/%n%')
+
+  # Split driveNames and driveDevices into chunks of size max_drives
   for ((i=0; i < ${#driveNames[@]}; i+=max_drives)); do
     driveNamesChunk=( "${driveNames[@]:i:max_drives}" )
-    # Append configuration to target file
+    driveDevicesChunk=( "${driveDevices[@]:i:max_drives}" )
+
+    # Increment server counter and generate server name
     local tpsrv_name=$(printf "tpsrv%02d" "$tpsrv_counter")
     ((tpsrv_counter++))
-  cat <<EOF >> "$target_file"
+
+    # Append configuration to the target file
+    cat <<EOF >> "$target_file"
 ${tpsrv_name}:
   libraryType: "${library_type}"
   libraryDevice: "${library_device}"
   libraryName: "${library_name}"
-  driveNames:
-$(for name in "${driveNamesChunk[@]}"; do echo "    - \"$name\""; done)
+  drives:
+$(for ((j=0; j < ${#driveNamesChunk[@]}; j++)); do
+  printf "    - name: \"%s\"\n      device: \"%s\"\n" "${driveNamesChunk[j]}" "${driveDevicesChunk[j]}"
+done)
 EOF
   done
 }

@@ -46,27 +46,22 @@ The `init` chart expects the following required parameters:
 The library configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The library configuration can be provided explicitly to `create_instance.sh` using `--library-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
 
 ```yaml
-library:
-  type: "mhvtl"
-  name: "VLSTK10"
-  device: "sg0"
-  driveNames:
-    - "VDSTK01"
-    - "VDSTK02"
-    - "VDSTK03"
-  drivedevices:
-    - "nst2"
-    - "nst0"
-    - "nst1"
-  tapes:
-    - "V00101"
-    - "V00102"
-    - "V00103"
-    - "V00104"
-    - "V00105"
-    - "V00106"
-    - "V00107"
-    - "V00108"
+tpsrv01:
+  libraryType: "MHVTL"
+  libraryDevice: "sg0"
+  libraryName: "VLSTK10"
+  drives:
+    - name: "VDSTK01"
+      device: "nst2"
+    - name: "VDSTK02"
+      device: "nst0"
+tpsrv02:
+  libraryType: "MHVTL"
+  libraryDevice: "sg0"
+  libraryName: "VLSTK10"
+  drives:
+    - name: "VDSTK03"
+      device: "nst1"
 ```
 
 It is important to note that - for now - the CTA instance setup only supports a single library (device). Each Helm deployment of CTA will get an annotation to specify which library it is using. When spawning a new CTA instance, it will first check if there are libraries available by looking at all the available libraries and looking at what is deployed. If a config file is provided with a library that is already in use, the instance spawning will fail.

@@ -49,7 +49,8 @@ MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 echo "Reading library configuration from tpsrv01-0"
 DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv DRIVE_NAME)
 LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} tpsrv01-0 -c taped-0 -- printenv LIBRARY_DEVICE)
-mapfile -t TAPES < <(./tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mapfile -t TAPES < <(${SCRIPT_DIR}/../../ci_helpers/tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
 echo "Using drive: $DRIVE_NAME"
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
@@ -352,18 +353,20 @@ kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "mkdir -p /tmp/eosad
 # Filling services in DNS on all pods
 ###
 # Generate hosts file for all defined services
-TMP_HOSTS=$(mktemp)
-KUBERNETES_DOMAIN_NAME='svc.cluster.local'
-KUBEDNS_IP=$(kubectl -n kube-system get service kube-dns -o json | jq -r '.spec.clusterIP')
-for service in $(kubectl --namespace=${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
-  service_IP=$(nslookup -timeout=1 ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${KUBEDNS_IP} | grep -A1 ${service}.${NAMESPACE} | grep Address | awk '{print $2}')
-  echo "${service_IP} ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${service}"
-done > ${TMP_HOSTS}
 
-# push to all Running containers removing already generated entries
-kubectl -n ${NAMESPACE} get pods -o json | jq -r '.items[] | select(.status.phase=="Running") | {name: .metadata.name, containers: .spec.containers[].name} | {command: (.name + " -c " + .containers)}|to_entries[]|(.value)' | while read container; do
-  cat ${TMP_HOSTS} | grep -v $(echo ${container} | awk '{print $1}')| kubectl -n ${NAMESPACE} exec ${container} -i -- bash -c "cat >> /etc/hosts"
-done
+# None of the services have external IPs, so this does nothing
+# TMP_HOSTS=$(mktemp)
+# KUBERNETES_DOMAIN_NAME='svc.cluster.local'
+# KUBEDNS_IP=$(kubectl -n kube-system get service kube-dns -o json | jq -r '.spec.clusterIP')
+# for service in $(kubectl --namespace=${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
+#   service_IP=$(nslookup -timeout=1 ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${KUBEDNS_IP} | grep -A1 ${service}.${NAMESPACE} | grep Address | awk '{print $2}')
+#   echo "${service_IP} ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${service}"
+# done > ${TMP_HOSTS}
+
+# # push to all Running containers removing already generated entries
+# kubectl -n ${NAMESPACE} get pods -o json | jq -r '.items[] | select(.status.phase=="Running") | {name: .metadata.name, containers: .spec.containers[].name} | {command: (.name + " -c " + .containers)}|to_entries[]|(.value)' | while read container; do
+#   cat ${TMP_HOSTS} | grep -v $(echo ${container} | awk '{print $1}')| kubectl -n ${NAMESPACE} exec ${container} -i -- bash -c "cat >> /etc/hosts"
+# done
 
 setup_tapes_for_multicopy_test() {
 

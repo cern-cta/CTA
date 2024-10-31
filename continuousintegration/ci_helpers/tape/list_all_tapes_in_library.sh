@@ -55,5 +55,4 @@ mtx -f "/dev/${library_device}" status | \
     grep "Full" | \
     grep -o 'VolumeTag *= *[^ ]*' | \
     grep -o '[^= ]*$' | \
-    cut -c 1-6 | \
-    paste -sd' ' -
+    cut -c 1-6

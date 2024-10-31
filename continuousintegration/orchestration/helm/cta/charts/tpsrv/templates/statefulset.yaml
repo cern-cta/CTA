@@ -70,7 +70,7 @@ spec:
           mountPath: /etc/sysconfig/cta-taped
           subPath: cta-taped
       # For each drive, spawn a separate taped container
-      {{- range $index, $driveName := .driveNames }}
+      {{- range $index, $drive := .drives }}
       - name: "taped-{{ $index }}"
         image: {{ include "tpsrv.image" $ }}
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
@@ -96,19 +96,22 @@ spec:
           value: {{ $namespace | quote }}
         - name: MY_CONTAINER
           value: "taped-{{ $index }}"
+          # TODO: remove this
         - name: eoshost
           value: "mgm"
         - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
+        - name: DRIVE_DEVICE
+          value: {{ $drive.device | quote }}
         - name: DRIVE_NAME
-          value: {{ $driveName }}
+          value: {{ $drive.name }}
         {{- if ($.Values.taped.env) }}
           {{- $.Values.taped.env | toYaml | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: cta-taped-config
-          mountPath: /etc/cta/cta-taped-{{ $driveName }}.conf
-          subPath: cta-taped-{{ $driveName }}.conf
+          mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
+          subPath: cta-taped-{{ $drive.name }}.conf
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
@@ -158,10 +161,10 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- range $index, $driveName := .driveNames }} # configmap for each drive in the tape server
+      {{- range $index, $drive := .drives }} # configmap for each drive in the tape server
       - name: cta-taped-config
         configMap:
-          name: cta-taped-tpsrv-{{ lower $driveName }}-conf
+          name: cta-taped-{{ lower $drive.name }}-conf
       {{- end }} # End of drive-specific configmaps loop
       {{- if $.Values.taped.volumes }}
       {{ $.Values.taped.volumes | toYaml | nindent 6 }}
