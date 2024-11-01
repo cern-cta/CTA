@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -x
 BASE_REPORT_DIRECTORY=/var/log
 
 usage() { cat <<EOF 1>&2
@@ -515,7 +516,7 @@ repackMoveAndAddCopies() {
   fi
 
   # Check that 2 copies were written to default tapepool (archive route 1 and 2) and 1 copy to repack tapepool (archive route 3)
-  TAPEPOOL_LIST=$(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid V00101 | jq ".[] | .destinationInfos[] | .vid" | xargs -I{} kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --vid {} | jq -r '.[] .tapepool')
+  TAPEPOOL_LIST=$(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ".[] | .destinationInfos[] | .vid" | xargs -I{} kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --vid {} | jq -r '.[] .tapepool')
 
   if [[ $TAPEPOOL_LIST != *"$defaultTapepool"* ]]; then
     echo "Did not find $defaultTapepool in repack archive destination pools. Archive route failed."

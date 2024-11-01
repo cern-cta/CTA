@@ -344,9 +344,9 @@ kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- rpm -qa|grep eos-server
 echo "Adding super client capabilities"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
-kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "mkdir -p /tmp/ctaadmin2"
-kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "mkdir -p /tmp/poweruser1"
-kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "mkdir -p /tmp/eosadmin1"
+kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/ctaadmin2
+kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/poweruser1
+kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/eosadmin1
 
 
 ###
@@ -358,7 +358,7 @@ kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "mkdir -p /tmp/eosad
 # TMP_HOSTS=$(mktemp)
 # KUBERNETES_DOMAIN_NAME='svc.cluster.local'
 # KUBEDNS_IP=$(kubectl -n kube-system get service kube-dns -o json | jq -r '.spec.clusterIP')
-# for service in $(kubectl --namespace=${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
+# for service in $(kubectl --namespace ${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
 #   service_IP=$(nslookup -timeout=1 ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${KUBEDNS_IP} | grep -A1 ${service}.${NAMESPACE} | grep Address | awk '{print $2}')
 #   echo "${service_IP} ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${service}"
 # done > ${TMP_HOSTS}

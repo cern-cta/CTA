@@ -293,7 +293,7 @@ RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
 If some tests run for long, the kerberos token in the cli pod should be renewed with:
 
 ```sh
-kubectl --namespace=${namespace} exec ctacli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
+kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
 ```
 
 ## Gitlab CI integration
