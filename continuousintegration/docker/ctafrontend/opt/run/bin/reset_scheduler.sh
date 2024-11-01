@@ -34,8 +34,8 @@ if [ "$SCHEDULER_BACKEND" == "postgres" ]; then
     echo "Installing the cta-scheduler-utils"
     yum -y install cta-scheduler-utils
 else
-    yum -y install ceph-common
     yum-config-manager --enable ceph
+    yum -y install ceph-common
     echo "Installing the cta-objectstore-tools"
     yum -y install cta-objectstore-tools
 fi

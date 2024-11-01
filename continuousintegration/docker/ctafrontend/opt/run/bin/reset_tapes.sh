@@ -35,10 +35,7 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # install the needed packages
-# the scheduler tools are installed once the scheduler type is known (see below)
-yum -y install mt-st mtx lsscsi sg3_utils
-yum clean packages
-
+yum -y install mtx
 
 if [[ $LIBRARY_TYPE = "mhvtl" ]]; then
   # library management
