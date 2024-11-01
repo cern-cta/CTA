@@ -333,6 +333,7 @@ done
 
 echo "Setting drive up: ${DRIVE_NAME}"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVE_NAME}
+sleep 5
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting
