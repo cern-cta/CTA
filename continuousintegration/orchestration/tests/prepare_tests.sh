@@ -329,6 +329,12 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
      --activityregex ^T0Reprocess$                                    \
      --mountpolicy ctasystest --comment "ctasystest"
 
+# Clear power on sense generate during boot.
+for SG_DEVICE in $(lsscsi -g | grep tape | awk '{print $7}'); do
+  sg_modes $SG_DEVICE
+done
+
+
 echo "Labeling tapes:"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
