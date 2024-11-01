@@ -1,7 +1,7 @@
-{{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
-{{- if eq $catalogueConfig.backend "postgres" -}}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if eq $schedulerConfig.backend "postgres" }}
 {{- $namespace := .Release.Namespace -}}
-{{- $name := "postgres-catalogue" -}}
+{{- $name := "postgres-scheduler" -}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,16 +23,14 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
-    - name: SCHEMA_VERSION
-      value: {{ $.Values.schemaVersion | quote}}
     - name: PGDATA
-      value: {{ $catalogueConfig.postgresConfig.path }}
+      value: {{ $schedulerConfig.postgresConfig.path }}
     - name: POSTGRES_USER
-      value: {{ $catalogueConfig.postgresConfig.username }}
+      value: {{ $schedulerConfig.postgresConfig.username }}
     - name: POSTGRES_PASSWORD
-      value: {{ $catalogueConfig.postgresConfig.password }}
+      value: {{ $schedulerConfig.postgresConfig.password }}
     - name: POSTGRES_DB
-      value: {{ $catalogueConfig.postgresConfig.database }}
+      value: {{ $schedulerConfig.postgresConfig.database }}
     command: []
     args: []
 {{- end }}

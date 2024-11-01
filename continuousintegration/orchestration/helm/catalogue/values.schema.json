@@ -52,11 +52,6 @@
       ],
       "description": "Configuration for the reset image used during catalogue wiping."
     },
-    "catalogueServicePort": {
-      "type": "integer",
-      "description": "The port on which the catalogue service will run.",
-      "default": 5432
-    },
     "schemaVersion": {
       "type": "string",
       "description": "The schema version to be used by the catalogue service."
@@ -195,7 +190,6 @@
     "component",
     "partOf",
     "resetImage",
-    "catalogueServicePort",
     "configuration"
   ]
 }

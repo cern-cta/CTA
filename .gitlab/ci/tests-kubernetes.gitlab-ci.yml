@@ -29,6 +29,7 @@
   script:
     - git submodule update --init --recursive
     # Which scheduler to use
+    # TODO: why use a centralized postgres scheduler here?
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
@@ -40,7 +41,7 @@
       if [ $ORACLE_SUPPORT == "ON" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
-        CATALOGUE_CONFIG=presets/dev-postgres-catalogue-values.yaml
+        CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
     # Which image tag to use
     - cd continuousintegration/ci_helpers/

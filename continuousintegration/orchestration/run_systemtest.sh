@@ -49,7 +49,7 @@ usage() {
 
 execute_cmd_with_log() {
   mycmd=$1
-  logfile=$2
+  logfile=$(realpath "$2")
   timeout=$3
   start_time=$(date +%s)
   echo "================================================================================"
@@ -89,7 +89,7 @@ execute_cmd_with_log() {
 run_systemtest() {
 
   orchestration_dir=${PWD} # orchestration directory so that we can come back here and launch delete_instance during cleanup
-  create_instance_timeout=1400 # time out for the create_instance.sh script
+  create_instance_timeout=600 # time out for the create_instance.sh script
   preflighttest_script='tests/preflighttest.sh'
   preflighttest_timeout=60 # default preflight checks timeout is 60 seconds
 
@@ -191,22 +191,22 @@ run_systemtest() {
 
   # Launch preflighttest and timeout after ${preflighttest_timeout} seconds
   if [ -x ${preflighttest_script} ]; then
-    cd $(dirname ${preflighttest_script})
+    cd $(dirname "${preflighttest_script}")
     echo "Launching preflight test: ${preflighttest_script}"
     execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" \
                          "${log_dir}/$(basename ${preflighttest_script} | cut -d. -f1).log" \
                          ${preflighttest_timeout}
-    cd ${orchestration_dir}
+    cd "${orchestration_dir}"
   else
     echo "Skipping preflight test: ${preflighttest_script} not available"
   fi
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
-  cd $(dirname ${systemtest_script})
+  cd $(dirname "${systemtest_script}")
   execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" \
                        "${log_dir}/$(basename ${systemtest_script} | cut -d. -f1).log" \
                        ${systemtestscript_timeout}
-  cd ${orchestration_dir}
+  cd "${orchestration_dir}"
 
   # delete instance?
   if [ $keepnamespace == 1 ] ; then

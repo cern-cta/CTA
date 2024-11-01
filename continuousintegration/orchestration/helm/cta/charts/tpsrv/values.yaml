@@ -6,20 +6,22 @@ partOf: cta
 # tapeServers: {}
 # The following is an example format of tapeServers
 #
-# tapeServers:
-#   tpsrv01:
-#     libraryDevice: "sg0"
-#     libraryType: "mhvtl"
-#     libraryName: "VLSTK10"
-#     driveNames:
-#     - "VDSTK01"
-#   tpsrv02:
-#     libraryDevice: "sg0"
-#     libraryType: "mhvtl"
-#     libraryName: "VLSTK10"
-#     drivesNames:
-#     - "VDSTK02"
-#     - "VDSTK03"
+# tpsrv01:
+#   libraryType: "MHVTL"
+#   libraryDevice: "sg0"
+#   libraryName: "VLSTK10"
+#   drives:
+#     - name: "VDSTK01"
+#       device: "nst2"
+#     - name: "VDSTK02"
+#       device: "nst0"
+# tpsrv02:
+#   libraryType: "MHVTL"
+#   libraryDevice: "sg0"
+#   libraryName: "VLSTK10"
+#   drives:
+#     - name: "VDSTK03"
+#       device: "nst1"
 
 conf:
   rmcd:

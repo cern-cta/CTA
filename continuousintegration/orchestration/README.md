@@ -84,7 +84,7 @@ The `catalogue` chart expects the following required parameters:
 - `wipeCatalogue`: whether to wipe the catalogue or not.
 - `configuration`: the catalogue configuration.
 
-The catalogue configuration is the second of the three "main" configurations. It can be explicitly provided using the `--catalogue-config` flag. If not provided, it will default to `presets/dev-postgres-catalogue-values.yaml`. The configuration looks as follows:
+The catalogue configuration is the second of the three "main" configurations. It can be explicitly provided using the `--catalogue-config` flag. If not provided, it will default to `presets/dev-catalogue-postgres-values.yaml`. The configuration looks as follows:
 
 ```yaml
 backend: "" # Can be sqlite, orale or postgres.
@@ -116,7 +116,7 @@ The `scheduler` chart expects the following required parameters:
 - `wipeScheduler`: whether to wipe the scheduler or not.
 - `configuration`: the scheduler configuration.
 
-The `scheduler` can be configured to use one of three backends: CEPH, VFS (virtual file system), or Postgres. This is configured through the scheduler configuration: the third and final of the three "main" configurations. It can be explicitly provided using the `--scheduler-config` flag. If not provided, it will default to `presets/dev-vfs-scheduler-values.yaml`. The configuration looks as follows:
+The `scheduler` can be configured to use one of three backends: CEPH, VFS (virtual file system), or Postgres. This is configured through the scheduler configuration: the third and final of the three "main" configurations. It can be explicitly provided using the `--scheduler-config` flag. If not provided, it will default to `presets/dev-scheduler-vfs-values.yaml`. The configuration looks as follows:
 
 ```yaml
 backend: "" # Options: VFS, ceph, postgres
@@ -211,13 +211,13 @@ The deletion of an instance is relatively straightforward and can be done throug
 - Running a system test locally from a tagged `ctageneric` image in the `gitlab-registry.cern.ch/cta` registry (Postgres catalogue + VFS scheduler):
 
   ```sh
-  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-vfs-scheduler-values.yaml --catalogue-config presets/dev-postgres-catalogue-values.yaml --image-tag <some-tag>
+  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --image-tag <some-tag>
   ```
 
 - Running a system test locally from a local image (Postgres catalogue + VFS scheduler):
 
   ```sh
-  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-vfs-scheduler-values.yaml --catalogue-config presets/dev-postgres-catalogue-values.yaml --image-tag <some-tag> --registry-host localhost
+  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --image-tag <some-tag> --registry-host localhost
   ```
 
 Of course, once an instance is spawned, you can also run some simple tests manually instead of relying on `run_systemtest.sh`:

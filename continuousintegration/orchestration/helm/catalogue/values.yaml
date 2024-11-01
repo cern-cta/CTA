@@ -13,21 +13,19 @@ resetImage:
   - ctaregsecret
   - reg-ctageneric
 
-# TODO: is this the best place to put/name this?
-catalogueServicePort: 5432
 schemaVersion: ""
 
 # This can either be provided via --set-file or specified directly here
-configuration:
-  backend: "" # Can be sqlite, orale or postgres.
-  oracleConfig:
-    username: ""
-    database: ""
-    password: ""
-  postgresConfig:
-    username: ""
-    password: ""
-    server: ""
-    database: ""
-  sqliteConfig:
-    filepath: ""
+# configuration:
+#   backend: "" # Can be sqlite, orale or postgres.
+#   oracleConfig:
+#     username: ""
+#     database: ""
+#     password: ""
+#   postgresConfig:
+#     username: ""
+#     password: ""
+#     server: ""
+#     database: ""
+#   sqliteConfig:
+#     filepath: ""

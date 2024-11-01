@@ -13,19 +13,19 @@ resetImage:
   - ctaregsecret
   - reg-ctageneric
 
-configuration:
-  backend: "" # Options: file, ceph, postgres
-  cephConfig:
-    mon: ""
-    monport: ""
-    pool: ""
-    namespace: ""
-    id: ""
-    key: ""
-  postgresConfig:
-    username: ""
-    password: ""
-    database: ""
-    server: ""
-  vfsConfig:
-    path: ""
+# configuration:
+#   backend: "" # Options: file, ceph, postgres
+#   cephConfig:
+#     mon: ""
+#     monport: ""
+#     pool: ""
+#     namespace: ""
+#     id: ""
+#     key: ""
+#   postgresConfig:
+#     username: ""
+#     password: ""
+#     database: ""
+#     server: ""
+#   vfsConfig:
+#     path: ""

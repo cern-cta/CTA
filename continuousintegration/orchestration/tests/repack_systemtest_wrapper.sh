@@ -15,7 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-set -x
 BASE_REPORT_DIRECTORY=/var/log
 
 usage() { cat <<EOF 1>&2

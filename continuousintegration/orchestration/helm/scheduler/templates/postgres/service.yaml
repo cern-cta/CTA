@@ -1,7 +1,7 @@
-{{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
-{{- if eq $catalogueConfig.backend "postgres" -}}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if eq $schedulerConfig.backend "postgres" }}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "postgres-catalogue" }}
+{{- $name := "postgres-scheduler" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,6 +14,6 @@ spec:
   clusterIP: None
   ports:
     - name: {{ $name }}
-      port: 5432
+      port: 5433
       protocol: TCP
 {{- end }}

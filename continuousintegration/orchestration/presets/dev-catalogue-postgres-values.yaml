@@ -3,4 +3,5 @@ postgresConfig:
   username: cta
   password: cta
   database: cta
+  path: /var/lib/postgresql/data/pgdata
   server: postgres-catalogue

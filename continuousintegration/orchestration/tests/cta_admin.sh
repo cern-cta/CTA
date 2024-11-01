@@ -184,6 +184,12 @@ readarray -t dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.d
 readarray -t vids <<< $(admin_cta --json ta ls --all | jq -r '.[] | .vid')
 readarray -t lls <<< $(admin_cta --json ll ls | jq -r '.[] | .name')
 
+echo "UP:" "${dr_names[*]}"
+echo "DOWN: " "${dr_names_down[*]}"
+echo "Logical Libs: " "${lls[*]}"
+
+admin_cta dr ls
+
 ########################################
 # Misc - v #############################
 ########################################
