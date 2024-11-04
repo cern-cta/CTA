@@ -32,7 +32,8 @@ build-cta-srpm:
     CCACHE_COMPILERCHECK: content
     CCACHE_MAXSIZE: "1G"
   before_script:
-    - yum install -y epel-release ccache
+    - yum install -y epel-release
+    - yum install -y ccache
     - ccache --zero-stats
   script:
     - yum install -y git
@@ -78,7 +79,8 @@ build-cta-rpm:
     CCACHE_COMPILERCHECK: content
     CCACHE_MAXSIZE: "1G"
   before_script:
-    - yum install -y epel-release ccache
+    - yum install -y epel-release
+    - yum install -y ccache
     - ccache --zero-stats
   script:
     - yum install -y git
