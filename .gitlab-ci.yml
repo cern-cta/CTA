@@ -11,6 +11,7 @@ stages:
 
 variables:
   CTA_PIPELINE_NAME: "Default Pipeline"
+  CI_PIPELINE_DESCRIPTION: "This is a test description"
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
@@ -42,7 +43,7 @@ workflow:
         on_job_failure: none
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       variables:
-          CTA_PIPELINE_NAME: "CTA pipeline with Oracle support: $ORACLE_SUPPORT and $SCHED_TYPE Schedule"
+          CTA_PIPELINE_NAME: "CTA pipeline with Oracle support: $ORACLE_SUPPORT and $SCHED_TYPE scheduler"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
