@@ -66,6 +66,7 @@ build-cta-rpm:
   before_script:
     - yum install -y epel-release
     - yum install -y ccache
+    - export PATH="/usr/lib/ccache:$PATH"
     - ccache --zero-stats
   script:
     - yum install -y git
