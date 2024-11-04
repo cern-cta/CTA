@@ -19,6 +19,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <streambuf>
 
 namespace unitTests {
 
@@ -135,6 +136,33 @@ TEST_F(cta_log_LoggerTest, testConstructorWithADouble5) {
   ASSERT_NO_THROW(param.reset(new Param("Name", 1e+30)));
   ASSERT_EQ(std::string("Name"), param->getName());
   ASSERT_EQ(std::string("1e+30"), param->getValueStr());
+}
+
+// Insert characters that need to be scaped for all possible arguments.
+// And check the output from stdout/file.
+TEST_F(cta_log_LoggerTest, testMsgEscaping) {
+  using namespace cta::log;
+  StdoutLogger std_logger("dummy\'", "cta_log_\"TEST\"", DEBUG);
+
+  // Set static params
+  std::map<std::string, std::string> staticParamMap;
+  staticParamMap["dummy_static\?"] = "value_why\?";
+  std_logger.setStaticParams(staticParamMap);
+
+  //  () operator will write directly to stdout, lets redirect that stream into
+  //  a variable so that we can check the output.
+  std::streambuf* oldCoutStreamBuffer = cout.rdbuf();
+  ostringstream strCout;
+  cout.rdbug( strCout.rdbuf());
+
+  std_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
+
+  // Restore cout
+  cout.rdbuf(oldCoutStreamBuffer);
+
+  std::cout << strCout ;
+  // Validate message
+  ASSERT_EQ(1,1);
 }
 
 } // namespace unitTests
