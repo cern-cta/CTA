@@ -27,6 +27,13 @@ build-cta-srpm:
     - when: on_success
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
+    CCACHE_BASEDIR: $CI_PROJECT_DIR
+    CCACHE_DIR: $CI_PROJECT_DIR/ccache
+    CCACHE_COMPILERCHECK: content
+    CCACHE_MAXSIZE: "1G"
+  before_script:
+    - yum install -y ccache
+    - ccache --zero-stats
   script:
     - yum install -y git
     - git submodule update --init --recursive
@@ -42,6 +49,14 @@ build-cta-srpm:
                                                        --jobs $(nproc --ignore=1)
                                                        --install
                                                        ${EXTRA_BUILD_FLAGS}
+  after_script:
+    - ccache --show-stats
+  cache:
+    # Note that GitLab automatically inserts a -protected/-non_protected postfix based on whether the branch is protected or not
+    # This means the main branch uses a different cache from the feature branches.
+    - key: ccache-$CI_JOB_NAME-$CI_CCACHE_KEY_POSTFIX
+      paths:
+        - $CCACHE_DIR
 
 build-cta-rpm:
   stage: build
@@ -58,6 +73,13 @@ build-cta-rpm:
     - when: on_success
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
+    CCACHE_BASEDIR: $CI_PROJECT_DIR
+    CCACHE_DIR: $CI_PROJECT_DIR/ccache
+    CCACHE_COMPILERCHECK: content
+    CCACHE_MAXSIZE: "1G"
+  before_script:
+    - yum install -y ccache
+    - ccache --zero-stats
   script:
     - yum install -y git
     - git submodule update --init --recursive
@@ -76,6 +98,12 @@ build-cta-rpm:
                                                       --jobs $(nproc --ignore=1)
                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
+  after_script:
+    - ccache --show-stats
+  cache:
+    - key: ccache-$CI_JOB_NAME-$CI_CCACHE_KEY_POSTFIX
+      paths:
+        - $CCACHE_DIR
 
 # Documentation export
 

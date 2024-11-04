@@ -17,6 +17,7 @@ variables:
   UNIT_TEST: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
+  CI_CCACHE_KEY_POSTFIX: DEFAULT
   # Images
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
