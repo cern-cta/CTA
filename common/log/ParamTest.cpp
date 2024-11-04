@@ -23,7 +23,7 @@
 
 namespace unitTests {
 
-class cta_log_LoggerTest: public ::testing::Test {
+class cta_log_LoggerTest : public ::testing::Test {
 protected:
 
   void SetUp() {
@@ -31,8 +31,7 @@ protected:
 
   void TearDown() {
   }
-}; // cta_log_ParamTest
-
+};  // cta_log_ParamTest
 
 // Tests for floating point formatting.
 TEST_F(cta_log_LoggerTest, testConstructorWithAString) {
@@ -136,4 +135,4 @@ TEST_F(cta_log_LoggerTest, testConstructorWithADouble5) {
   ASSERT_EQ(std::string("Name"), param->getName());
   ASSERT_EQ(std::string("1e+30"), param->getValueStr());
 }
-}
+}  // namespace unitTests

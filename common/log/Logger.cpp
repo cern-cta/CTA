@@ -46,7 +46,9 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
   // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) return;
+  if (priority > m_logMask) {
+    return;
+  }
 
   // Get current time with high precision
   auto timeStamp = std::chrono::system_clock::now();
@@ -184,8 +186,7 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
          << m_programName << ": ";
       break;
     case LogFormat::JSON:
-      os << R"("epoch_time":)" << ts_s_fraction
-         << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
+      os << R"("epoch_time":)" << ts_s_fraction << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
          << R"("hostname":")" << stringFormattingJSON(m_hostName) << R"(",)"
          << R"("program":")" << stringFormattingJSON(m_programName) << R"(",)";
@@ -193,26 +194,41 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
   return os.str();
 }
 
- //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // stringFormattingJSON << operator overload
 //------------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& fp) {
   std::ostringstream oss_tmp;
   for (char c : fp.m_value) {
     switch (c) {
-    case '\"': oss_tmp << R"(\")"; break;
-    case '\\': oss_tmp << R"(\\)"; break;
-    case '\b': oss_tmp << R"(\b)"; break;
-    case '\f': oss_tmp << R"(\f)"; break;
-    case '\n': oss_tmp << R"(\n)"; break;
-    case '\r': oss_tmp << R"(\r)"; break;
-    case '\t': oss_tmp << R"(\t)"; break;
-    default:
-      if ('\x00' <= c && c <= '\x1f') {
-        oss_tmp << R"(\u)" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
-      } else {
-        oss_tmp << c;
-      }
+      case '\"':
+        oss_tmp << R"(\")";
+        break;
+      case '\\':
+        oss_tmp << R"(\\)";
+        break;
+      case '\b':
+        oss_tmp << R"(\b)";
+        break;
+      case '\f':
+        oss_tmp << R"(\f)";
+        break;
+      case '\n':
+        oss_tmp << R"(\n)";
+        break;
+      case '\r':
+        oss_tmp << R"(\r)";
+        break;
+      case '\t':
+        oss_tmp << R"(\t)";
+        break;
+      default:
+        if ('\x00' <= c && c <= '\x1f') {
+          oss_tmp << R"(\u)" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
+        }
+        else {
+          oss_tmp << c;
+        }
     }
   }
   oss << oss_tmp.str();
@@ -231,11 +247,7 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
   // Append the log level, the thread id and the message text
   switch(m_logFormat) {
     case LogFormat::DEFAULT:
-      os << R"(LVL=")" << logLevel
-         << R"(" PID=")" << pid
-         << R"(" TID=")" << tid
-         << R"(" MSG=")" << msg
-         << R"(" )";
+      os << R"(LVL=")" << logLevel << R"(" PID=")" << pid << R"(" TID=")" << tid << R"(" MSG=")" << msg << R"(" )";
       break;
     case LogFormat::JSON:
       os << R"("log_level":")" << logLevel << R"(",)"
@@ -260,23 +272,31 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
         }
         break;
       case LogFormat::JSON:
-        os << "," << "\"" << stringFormattingJSON(param.getName()) << "\":";
-        if (param.getValueVariant().has_value()){
-          std::visit([&os](auto &&arg) {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, bool>) {
-              os << (arg ? "true" : "false");
-            } else if constexpr (std::is_same_v<T, std::string>) {
-              os << "\"" << stringFormattingJSON(arg) << "\"";
-            } else if constexpr (std::is_integral_v<T>) {
-              os << arg;
-            } else if constexpr (std::is_floating_point_v<T>) {
-              os << floatingPointFormatting(arg);
-            } else {
-              static_assert(always_false<T>::value, "Type not supported");
-            }
-          }, param.getValueVariant().value());
-        } else {
+        os << ","
+           << "\"" << stringFormattingJSON(param.getName()) << "\":";
+        if (param.getValueVariant().has_value()) {
+          std::visit(
+            [&os](auto&& arg) {
+              using T = std::decay_t<decltype(arg)>;
+              if constexpr (std::is_same_v<T, bool>) {
+                os << (arg ? "true" : "false");
+              }
+              else if constexpr (std::is_same_v<T, std::string>) {
+                os << "\"" << stringFormattingJSON(arg) << "\"";
+              }
+              else if constexpr (std::is_integral_v<T>) {
+                os << arg;
+              }
+              else if constexpr (std::is_floating_point_v<T>) {
+                os << floatingPointFormatting(arg);
+              }
+              else {
+                static_assert(always_false<T>::value, "Type not supported");
+              }
+            },
+            param.getValueVariant().value());
+        }
+        else {
           os << "null";
         }
         break;

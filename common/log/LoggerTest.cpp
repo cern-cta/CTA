@@ -26,15 +26,12 @@
 
 namespace unitTests {
 
-class cta_log_LoggerTest: public ::testing::Test {
+class cta_log_LoggerTest : public ::testing::Test {
 protected:
+  void SetUp() {}
 
-  void SetUp() {
-  }
-
-  void TearDown() {
-  }
-}; // cta_log_ParamTest
+  void TearDown() {}
+};  // cta_log_ParamTest
 
 // Insert characters that need to be scaped for all possible arguments.
 // And check the output from stdout/file.
@@ -51,7 +48,7 @@ TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   //  a variable so that we can check the output.
   std::streambuf* oldCoutStreamBuffer = std::cout.rdbuf();
   std::ostringstream strCout;
-  std::cout.rdbuf( strCout.rdbuf());
+  std::cout.rdbuf(strCout.rdbuf());
 
   std_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
 
@@ -59,9 +56,10 @@ TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   std::cout.rdbuf(oldCoutStreamBuffer);
   std::cout << strCout.str();
   // Validate message
-  std::regex regex_pattern(R"(^\{"log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\\\"":"value_why\\\""\}\n$)");
+  std::regex regex_pattern(
+    R"(^\{"log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\\\"":"value_why\\\""\}\n$)");
 
   EXPECT_TRUE(std::regex_match(strCout.str(), regex_pattern));
 }
 
-} // namespace unitTests
+}  // namespace unitTests

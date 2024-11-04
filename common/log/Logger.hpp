@@ -161,10 +161,12 @@ protected:
   struct always_false : std::false_type {};
 
   // A helper trait to check for operator<<
-  template <typename, typename = void>
+  template<typename, typename = void>
   struct has_ostream_operator : std::false_type {};
-  template <typename T>
-  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type {};
+
+  template<typename T>
+  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>>
+      : std::true_type {};
 
   /**
    * Helper class to format floating-point values
@@ -262,8 +264,9 @@ private:
    */
   class stringFormattingJSON {
   public:
-      explicit stringFormattingJSON(std::string_view str): m_value(str) {};
+    explicit stringFormattingJSON(std::string_view str) : m_value(str) {};
     friend std::ostream& operator<<(std::ostream& oss, const stringFormattingJSON& fp);
+
   private:
     std::string_view m_value;
   };
