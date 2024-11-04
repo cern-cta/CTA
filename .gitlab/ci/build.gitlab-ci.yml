@@ -15,12 +15,16 @@
 
 # Generic build jobs for rpms and srpms
 
-.build-cta-srpm:
+build-cta-srpm:
+  stage: build
   extends:
     - .build-cta
-  needs: 
+  needs:
     - job: modify-versionlock
       optional: true
+  rules:
+    - !reference [.build-cta, rules]
+    - when: on_success
   variables:
     BUILD_PATH: "build_srpm/RPM/SRPMS/"
   script:
@@ -39,9 +43,19 @@
                                                        --install
                                                        ${EXTRA_BUILD_FLAGS}
 
-.build-cta-rpm:
+build-cta-rpm:
+  stage: build
   extends:
     - .build-cta
+  needs:
+    - job: build-cta-srpm
+    - job: modify-versionlock
+      optional: true
+  rules:
+    - !reference [.build-cta, rules]
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
   script:
@@ -62,78 +76,6 @@
                                                       --jobs $(nproc --ignore=1)
                                                       --install
                                                        ${EXTRA_BUILD_FLAGS}
-
-# Regular alma9 build
-
-build-cta-srpm:
-  stage: build
-  extends:
-    - .build-cta-srpm
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
-build-cta-rpm:
-  stage: build
-  extends:
-    - .build-cta-rpm
-  needs:
-    - job: build-cta-srpm
-    - job: modify-versionlock
-      optional: true
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
-
-# Postgres build
-
-build-cta-srpm-pgsched:
-  stage: build
-  extends:
-    - .build-cta-srpm
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
-
-build-cta-rpm-pgsched:
-  stage: build
-  extends:
-    - .build-cta-rpm
-  needs:
-    - job: build-cta-srpm-pgsched
-    - job: modify-versionlock
-      optional: true
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
-
-# No-oracle build
-
-build-cta-srpm-no-oracle:
-  stage: build
-  extends:
-    - .build-cta-srpm
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
-
-build-cta-rpm-no-oracle:
-  stage: build
-  needs:
-    - job: build-cta-srpm-no-oracle
-    - job: modify-versionlock
-      optional: true
-  extends:
-    - .build-cta-rpm
-  rules:
-    - !reference [.build-cta, rules]
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 # Documentation export
 
