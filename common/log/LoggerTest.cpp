@@ -46,7 +46,7 @@ TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   str_logger.setStaticParams(staticParamMap);
 
   str_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
-
+  std::cout << str_logger.getLog();
   // Validate message
   std::regex regex_pattern(
     R"(^\{"epoch_time":\d+\.\d+,"local_time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}","hostname":"dummy\\"","program":"cta_log_\\"TEST\\"","log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\nSomething went wrong\\nin line -1\\n","dummy_static\\"":"value_static\\""\}\n$)");
