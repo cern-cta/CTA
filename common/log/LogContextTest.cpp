@@ -84,7 +84,6 @@ namespace unitTests {
     LogContext lc(sl);
     lc.pushOrReplace(Param("valid_\"key", "Valid \n out"));
     lc.log(INFO, "Split message\n by newline");
-    std::cout << sl.getLog();
 
     std::regex regex_pattern(
       R"(^\{"epoch_time":\d+\.\d+,"local_time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}","hostname":"dummy\\\"","program":"cta_log_LogContextTest_escaped\\\"","log_level":"INFO","pid":\d+,"tid":\d+,"message":"Split message\\n by newline","dummy_static\\\"":"value_why\\\"","valid_\\\"key":"Valid \\n out"\}\n$)");
