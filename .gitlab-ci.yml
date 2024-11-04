@@ -33,7 +33,7 @@ default:
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
 
 workflow:
-  name: '$CTA_PIPELINE_NAME'
+  name: $CTA_PIPELINE_NAME
   auto_cancel:
     on_job_failure: all
   rules:
@@ -42,7 +42,7 @@ workflow:
         on_job_failure: none
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       variables:
-          CTA_PIPELINE_NAME: 'CTA pipeline with Oracle support: $ORACLE_SUPPORT and $SCHED_TYPE Scheduler
+          CTA_PIPELINE_NAME: "CTA pipeline with Oracle support: $ORACLE_SUPPORT and $SCHED_TYPE Schedule"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
