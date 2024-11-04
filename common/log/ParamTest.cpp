@@ -34,7 +34,6 @@ protected:
 }; // cta_log_ParamTest
 
 
-
 // Tests for floating point formatting.
 TEST_F(cta_log_LoggerTest, testConstructorWithAString) {
   using namespace cta::log;
@@ -136,4 +135,5 @@ TEST_F(cta_log_LoggerTest, testConstructorWithADouble5) {
   ASSERT_NO_THROW(param.reset(new Param("Name", 1e+30)));
   ASSERT_EQ(std::string("Name"), param->getName());
   ASSERT_EQ(std::string("1e+30"), param->getValueStr());
+}
 }

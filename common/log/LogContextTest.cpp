@@ -75,7 +75,7 @@ namespace unitTests {
     // Set static params
     std::map<std::string, std::string> staticParamMap;
     staticParamMap["dummy_static\?"] = "value_why\?";
-    sl.setStaticParams(stacicParamMap);
+    sl.setStaticParams(staticParamMap);
 
     // Set a param with a character to be escaped.
     LogContext lc(sl);
