@@ -72,17 +72,17 @@ namespace unitTests {
   }
 
   TEST(cta_log_LogContextTest, logMessageEscaping) {
-    StringLogger sl("dummy\"", "cta_log_LogContextTest_escaped\"", DEBUG);
+    StringLogger sl(R"(dummy")", R"(cta_log_LogContextTest_escaped")", DEBUG);
     sl.setLogFormat("json");
 
     // Set static params
     std::map<std::string, std::string> staticParamMap;
-    staticParamMap["dummy_static\""] = "value_why\"";
+    staticParamMap[R"(dummy_static")"] = R"(value_why")";
     sl.setStaticParams(staticParamMap);
 
     // Set a param with a character to be escaped.
     LogContext lc(sl);
-    lc.pushOrReplace(Param("valid_\"key", "Valid \n out"));
+    lc.pushOrReplace(Param(R"(valid_"key)", "Valid \n out"));
     lc.log(INFO, "Split message\n by newline");
 
     std::regex regex_pattern(
