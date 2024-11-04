@@ -16,10 +16,13 @@
  */
 
 #include "common/log/Param.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <streambuf>
+#include <regex>
 
 namespace unitTests {
 
@@ -143,7 +146,7 @@ TEST_F(cta_log_LoggerTest, testConstructorWithADouble5) {
 TEST_F(cta_log_LoggerTest, testMsgEscaping) {
   using namespace cta::log;
   StdoutLogger std_logger("dummy\'", "cta_log_\"TEST\"", DEBUG);
-
+  std_logger.setLogFormat("json");
   // Set static params
   std::map<std::string, std::string> staticParamMap;
   staticParamMap["dummy_static\?"] = "value_why\?";
@@ -151,18 +154,19 @@ TEST_F(cta_log_LoggerTest, testMsgEscaping) {
 
   //  () operator will write directly to stdout, lets redirect that stream into
   //  a variable so that we can check the output.
-  std::streambuf* oldCoutStreamBuffer = cout.rdbuf();
-  ostringstream strCout;
-  cout.rdbug( strCout.rdbuf());
+  std::streambuf* oldCoutStreamBuffer = std::cout.rdbuf();
+  std::ostringstream strCout;
+  std::cout.rdbuf( strCout.rdbuf());
 
   std_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
 
   // Restore cout
-  cout.rdbuf(oldCoutStreamBuffer);
+  std::cout.rdbuf(oldCoutStreamBuffer);
 
-  std::cout << strCout ;
+  std::cout << strCout.str() ;
   // Validate message
-  ASSERT_EQ(1,1);
+  std::regex reg_expr("{\"log_level\":\"ERROR\",\"pid\":\\d*,\"tid\":\\d*,\"message\":\"Exception message with new lines:\\nSomething went wrong\\nin line -1\\n\",\"dummy_static\?\":\"value_why\?\"}");
+  ASSERT_EQ(regex_match(strCout.str(), reg_expr));
 }
 
 } // namespace unitTests
