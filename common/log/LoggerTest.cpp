@@ -16,7 +16,7 @@
  */
 
 #include "common/log/Param.hpp"
-#include "common/log/StdoutLogger.hpp"
+#include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
 
@@ -37,29 +37,21 @@ protected:
 // And check the output from stdout/file.
 TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   using namespace cta::log;
-  StdoutLogger std_logger("dummy\'", "cta_log_\"TEST\"", DEBUG);
-  std_logger.setLogFormat("json");
+  StringLogger str_logger("dummy\"", "cta_log_\"TEST\"", DEBUG);
+  str_logger.setLogFormat("json");
+
   // Set static params
   std::map<std::string, std::string> staticParamMap;
   staticParamMap["dummy_static\""] = "value_why\"";
-  std_logger.setStaticParams(staticParamMap);
+  str_logger.setStaticParams(staticParamMap);
 
-  //  () operator will write directly to stdout, lets redirect that stream into
-  //  a variable so that we can check the output.
-  std::streambuf* oldCoutStreamBuffer = std::cout.rdbuf();
-  std::ostringstream strCout;
-  std::cout.rdbuf(strCout.rdbuf());
+  str_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
 
-  std_logger(ERR, "Exception message with new lines:\nSomething went wrong\nin line -1\n");
-
-  // Restore cout
-  std::cout.rdbuf(oldCoutStreamBuffer);
-  std::cout << strCout.str();
   // Validate message
   std::regex regex_pattern(
-    R"(^\{"log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\\\"":"value_why\\\""\}\n$)");
+    R"(^\{"epoch_time":\d+\.\d+,"local_time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}","hostname":"dummy\\\"","program":"cta_log_\\\"TEST\\\"","log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\\\"":"value_why\\\""\}\n$)");
 
-  EXPECT_TRUE(std::regex_match(strCout.str(), regex_pattern));
+  EXPECT_TRUE(std::regex_match(str_logger.getLog(), regex_pattern));
 }
 
 }  // namespace unitTests
