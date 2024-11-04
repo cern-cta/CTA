@@ -71,6 +71,7 @@ namespace unitTests {
 
   TEST(cta_log_LogContextTest, logMessageEscaping) {
     StringLogger sl("dummy\"", "cta_log_LogContextTest_escaped\"", DEBUG);
+    sl.setLogFormat("json");
 
     // Set static params
     std::map<std::string, std::string> staticParamMap;
