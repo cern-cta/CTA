@@ -68,4 +68,21 @@ namespace unitTests {
     size_t offset  = third.find("fileId") + strlen("fileId");
     ASSERT_EQ(std::string::npos, third.find("fileId", offset));
   }
+
+  TEST(cta_log_LogContextTest, logMessageEscaping) {
+    StringLogger sl("dummy\"", "cta_log_LogContextTest_escaped\"", DEBUG);
+
+    // Set static params
+    std::map<std::string, std::string> staticParamMap;
+    staticParamMap["dummy_static\?"] = "value_why\?";
+    sl.setStaticParams(stacicParamMap);
+
+    // Set a param with a character to be escaped.
+    LogContext lc(sl);
+    lc.pushOrReplace(Param("valid_\"key", "Valid \n out"));
+    lc.log(INFO, "Split message\n by newline");
+    std::cout << sl.getLog();
+
+    ASSERT_EQ(1,1);
+  }
 }

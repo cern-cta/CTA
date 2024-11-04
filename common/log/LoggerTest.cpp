@@ -44,7 +44,7 @@ TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   std_logger.setLogFormat("json");
   // Set static params
   std::map<std::string, std::string> staticParamMap;
-  staticParamMap["dummy_static\?"] = "value_why\?";
+  staticParamMap["dummy_static\""] = "value_why\"";
   std_logger.setStaticParams(staticParamMap);
 
   //  () operator will write directly to stdout, lets redirect that stream into
@@ -58,7 +58,6 @@ TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   // Restore cout
   std::cout.rdbuf(oldCoutStreamBuffer);
 
-  std::cout << strCout.str() ;
   // Validate message
   std::regex regex_pattern(R"(\{"log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\?":"value_why\?"\}\n)");
 
