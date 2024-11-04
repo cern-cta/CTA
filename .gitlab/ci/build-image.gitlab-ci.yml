@@ -20,8 +20,6 @@ docker-build-ctageneric:
   image:
     name: $DOCKER_IMAGE_BUILDER_IMAGE
     entrypoint: [""]
-  before_script:
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
     # The dockerfile wants the rpms in the image_rpms directory. The build step generated the rpms in build_rpm/RPM/RPMS/x86_64

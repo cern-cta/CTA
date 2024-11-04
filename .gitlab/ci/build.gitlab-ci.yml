@@ -40,7 +40,7 @@ build-cta-srpm:
     - git submodule update --init --recursive
     - EXTRA_BUILD_FLAGS=""
     - if [ "${UNIT_TEST}" == "OFF" ]; then EXTRA_BUILD_FLAGS+=" --skip-unit-tests"; fi
-    -  bash -x continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
+    - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
                                                        --build-generator "${BUILD_GENERATOR}"
                                                        --create-build-dir
                                                        --cta-version ${CTA_VERSION}

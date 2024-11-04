@@ -15,12 +15,9 @@
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
-    JOB_NAME: ${CI_JOB_NAME}
-  before_script:
-    - echo "Invalidating default common before_script for kubernetes-test"
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     # Keep the namespace name under 64 characters;
-    - export NAMESPACE="${JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
+    NAMESPACE: "${CI_JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
+  before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
     - git submodule update --init --recursive
