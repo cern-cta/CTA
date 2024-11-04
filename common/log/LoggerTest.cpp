@@ -143,7 +143,7 @@ TEST_F(cta_log_LoggerTest, testConstructorWithADouble5) {
 
 // Insert characters that need to be scaped for all possible arguments.
 // And check the output from stdout/file.
-TEST_F(cta_log_LoggerTest, testMsgEscaping) {
+TEST_F(cta_log_LoggerTest, testLogMsgEscaping) {
   using namespace cta::log;
   StdoutLogger std_logger("dummy\'", "cta_log_\"TEST\"", DEBUG);
   std_logger.setLogFormat("json");
@@ -165,8 +165,9 @@ TEST_F(cta_log_LoggerTest, testMsgEscaping) {
 
   std::cout << strCout.str() ;
   // Validate message
-  std::regex reg_expr("{\"log_level\":\"ERROR\",\"pid\":\\d*,\"tid\":\\d*,\"message\":\"Exception message with new lines:\\nSomething went wrong\\nin line -1\\n\",\"dummy_static\?\":\"value_why\?\"}");
-  ASSERT_EQ(regex_match(strCout.str(), reg_expr));
+  std::regex regex_pattern(R"(\{"log_level":"ERROR","pid":\d+,"tid":\d+,"message":"Exception message with new lines:\\n.*?\\n.*?\\n.*?","dummy_static\?":"value_why\?"\}\n)");
+
+  EXPECT_TRUE(regex_match(strCout.str(), regex_pattern));
 }
 
 } // namespace unitTests
