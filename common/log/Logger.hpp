@@ -268,7 +268,7 @@ private:
     std::string_view m_value;
   };
 
-  friend std::ostream& operator<<(std::ostream& oss, const Logger:stringFormattingJSON& fp);
+  friend std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& fp);
 
   /**
    * Creates and returns the header of a log message

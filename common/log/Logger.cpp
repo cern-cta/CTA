@@ -187,8 +187,8 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
       os << R"("epoch_time":)" << ts_s_fraction
          << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
-         << R"("hostname":")" << m_hostName << R"(",)"
-         << R"("program":")" << m_programName << R"(",)";
+         << R"("hostname":")" << stringFormattingJSON(m_hostName) << R"(",)"
+         << R"("program":")" << stringFormattingJSON(m_programName) << R"(",)";
   }
   return os.str();
 }
