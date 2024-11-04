@@ -55,7 +55,8 @@ build-cta-srpm:
   cache:
     # Note that GitLab automatically inserts a -protected/-non_protected postfix based on whether the branch is protected or not
     # This means the main branch uses a different cache from the feature branches.
-    - key: ccache-$CI_JOB_NAME-$CI_CCACHE_KEY_POSTFIX
+    - key: ccache-$CI_JOB_NAME
+      policy: $BUILD_CACHE_POLICY
       paths:
         - $CCACHE_DIR
 
@@ -103,7 +104,8 @@ build-cta-rpm:
   after_script:
     - ccache --show-stats
   cache:
-    - key: ccache-$CI_JOB_NAME-$CI_CCACHE_KEY_POSTFIX
+    - key: ccache-$CI_JOB_NAME
+      policy: $BUILD_CACHE_POLICY
       paths:
         - $CCACHE_DIR
 
