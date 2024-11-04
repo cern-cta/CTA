@@ -16,6 +16,7 @@
 # Generic build jobs for rpms and srpms
 
 build-cta-srpm:
+  name: "dummy name test"
   stage: build
   extends:
     - .build-cta
