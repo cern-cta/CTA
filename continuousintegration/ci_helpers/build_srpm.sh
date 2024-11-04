@@ -262,5 +262,4 @@ build_srpm() {
   cmake --build . --target cta_srpm -- -j "${num_jobs}"
 }
 
-echo "$*"
 build_srpm "$@"
