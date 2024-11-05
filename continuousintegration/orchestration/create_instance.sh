@@ -46,6 +46,8 @@ usage() {
   echo "  -S, --use-systemd:                  Use systemd to manage services inside containers. Defaults to false"
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
+  echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
+  echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
   echo "      --upgrade:                      Upgrade the existing deployment."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   exit 1
@@ -92,6 +94,8 @@ create_instance() {
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
   upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
+  num_library_devices=1 # For the auto-generated tapeservers config
+  max_drives_per_tpsrv=1
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -119,6 +123,12 @@ create_instance() {
         shift ;;
       -c|--catalogue-version)
         catalogue_schema_version="$2"
+        shift ;;
+      --num-libraries)
+        num_library_devices="$2"
+        shift ;;
+      --max-drives-per-tpsrv)
+        max_drives_per_tpsrv="$2"
         shift ;;
       -S|--use-systemd) use_systemd=true ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
@@ -187,11 +197,7 @@ create_instance() {
     echo "Library configuration not provided. Auto-generating..."
     # This file is cleaned up again by delete_instance.sh
     tapeservers_config=$(mktemp /tmp/${namespace}-tapeservers-XXXXXX-values.yaml)
-    # TODO: pass these as flags
-    num_library_devices=1
-    max_drives_per_tpsrv=1
-    # Generate a comma separated list of library devices based on the number of library devices
-    # the user wants to generate
+    # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
     library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
     ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file $tapeservers_config  \
                                                         --library-devices $library_devices \

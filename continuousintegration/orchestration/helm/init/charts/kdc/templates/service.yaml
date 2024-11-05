@@ -10,4 +10,9 @@ spec:
     app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
-  {{- .Values.service.ports | toYaml | nindent 4}}
+  - name: kdc-tcp
+    port: 88
+    protocol: TCP
+  - name: kdc-udp
+    port: 88
+    protocol: UDP

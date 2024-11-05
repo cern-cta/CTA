@@ -7,55 +7,12 @@ isPriviliged: true
 readinessProbe:
 
 mgmLabel: ctaeos-mgm
+mgmPort: 1094
 
 # Storage for the EOS FSTs
 fstStorage: "3Gi"
 
-service:
-  ports:
-  - name: ctaeos-mgm
-    port: 1094
-    protocol: TCP
-
-# Changes the entrypoint of the container's image to the script and provide arguments if needed
-customEntrypoint:
-  command: ["/bin/sh", "-c"]
-  args:
-  - |
-    cat /tmp/eos.keytab > /etc/eos.keytab;
-    chmod 400 /etc/eos.keytab;
-    /opt/run/bin/ctaeos-mgm-log-wrapper.sh;
-
 env:
 - name: frontend
   value: 'cta-frontend:10955'
-- name: TERM
-  value: "xterm"
 
-# defines all of the volumes consumed by pod
-volumeMounts:
-- mountPath: /fst
-  name: fststorage
-- mountPath: /etc/krb5.conf
-  name: krb5-config-volume
-  subPath: krb5.conf
-- mountPath: /etc/eos-server.krb5.keytab
-  name: keytab
-  subPath: eos-server.krb5.keytab
-- mountPath: /tmp/eos.keytab
-  name: sss-keytab
-  subPath: eos.keytab
-
-volumes:
-- name: fststorage
-  persistentVolumeClaim:
-    claimName: claimfst
-- name: krb5-config-volume
-  configMap:
-    name: krb5-config
-- name: keytab
-  secret:
-    secretName: eos-server-keytab
-- name: sss-keytab
-  secret:
-    secretName: eos-sss-keytab

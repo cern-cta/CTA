@@ -17,6 +17,14 @@ spec:
     image: {{ include "ctaeos.image" . }}
     imagePullPolicy: {{ include "ctaeos.imagePullPolicy" . }}
     stdin: true
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      cat /tmp/eos.keytab > /etc/eos.keytab;
+      chmod 400 /etc/eos.keytab;
+      /opt/run/bin/ctaeos-mgm-log-wrapper.sh;
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
     env:
     - name: MY_NAME
       value: {{ $name }}
@@ -24,18 +32,11 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: TERM
+      value: "xterm"
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
-    {{- if (.Values.customEntrypoint)}}
-    command: {{.Values.customEntrypoint.command | toJson}}
-    args: {{.Values.customEntrypoint.args}}
-    {{- end}}
-    {{- if (.Values.readinessProbe)}}
-    {{include "ctaeos.readinessProbe" .Values.readinessProbe | nindent 4}}
-    {{- end}}
-    securityContext:
-      privileged: {{ .Values.isPriviliged }}
     volumeMounts:
     - mountPath: /etc/config/eos
       name: eosconfig
@@ -64,6 +65,17 @@ spec:
       subPath: eos
     - name: eos-status
       mountPath: /eos-status
+    - mountPath: /fst
+      name: fststorage
+    - mountPath: /etc/krb5.conf
+      name: krb5-config-volume
+      subPath: krb5.conf
+    - mountPath: /etc/eos-server.krb5.keytab
+      name: keytab
+      subPath: eos-server.krb5.keytab
+    - mountPath: /tmp/eos.keytab
+      name: sss-keytab
+      subPath: eos.keytab
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
   volumes:
   - name: cta-fst-gcd
@@ -96,4 +108,16 @@ spec:
   - name: eos-status
     persistentVolumeClaim:
       claimName: eos-status-pvc
+  - name: fststorage
+    persistentVolumeClaim:
+      claimName: claimfst
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
+  - name: keytab
+    secret:
+      secretName: eos-server-keytab
+  - name: sss-keytab
+    secret:
+      secretName: eos-sss-keytab
   {{include "ctaeos.volumes" . | nindent 2}}

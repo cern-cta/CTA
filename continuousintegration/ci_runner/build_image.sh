@@ -26,11 +26,11 @@ usage() {
   echo "  -o, --operating-system <os>:    Specifies for which operating system to build the rpms. Supported operating systems: [alma9]."
   echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo ""
-  echo "Optional arguments:"
-  echo "  --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
-  echo "  --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
-  echo "  --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
-  echo "  -h, --help:                     Shows help output."
+  echo "options:"
+  echo "  -h, --help:                         Shows help output."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
+  echo "      --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
+  echo "      --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
   exit 1
 }
 

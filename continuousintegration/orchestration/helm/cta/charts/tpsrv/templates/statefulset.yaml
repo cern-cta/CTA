@@ -73,10 +73,12 @@ spec:
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
         securityContext:
           privileged: true
-        command: {{ $.Values.taped.command | toJson }}
-        {{- if ($.Values.taped.args) }}
-        args: {{ $.Values.taped.args }}
-        {{- end }}
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
+          chmod 600 /etc/cta/cta-taped.sss.keytab;
+          /opt/run/bin/taped.sh;
         readinessProbe:
           exec:
             command: ["test", "-f", "/TAPED_READY"]
@@ -93,18 +95,14 @@ spec:
           value: {{ $namespace | quote }}
         - name: MY_CONTAINER
           value: "taped-{{ $index }}"
-          # TODO: remove this
-        - name: eoshost
-          value: "mgm"
+        - name: TERM
+          value: "xterm"
         - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
         - name: DRIVE_DEVICE
           value: {{ $drive.device | quote }}
         - name: DRIVE_NAME
           value: {{ $drive.name }}
-        {{- if ($.Values.taped.env) }}
-          {{- $.Values.taped.env | toYaml | nindent 8 }}
-        {{- end }}
         volumeMounts:
         - name: cta-taped-config
           mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
@@ -117,6 +115,9 @@ spec:
           subPath: cta-objectstore-tools.conf
         - mountPath: /etc/config/eos
           name: eosconfig
+        - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
+          name: tape-sss
+          subPath: cta-tpsrv-tmp.sss.keytab
         {{- if ($.Values.global.useSystemd) }}
         - name: sysconfig-tpsrv-config
           mountPath: /etc/sysconfig/cta-rmcd
@@ -133,9 +134,6 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if $.Values.taped.volumeMounts }}
-        {{ $.Values.taped.volumeMounts | toYaml | nindent 8 }}
-        {{- end }}
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
@@ -146,7 +144,7 @@ spec:
           name: cta-catalogue-conf
       - name: scheduler-config
         configMap:
-          name: cta-scheduler-conf
+          name: cta-objectstore-conf
       - name: eosconfig
         configMap:
           name: eos-config-base
@@ -163,9 +161,9 @@ spec:
         configMap:
           name: cta-taped-{{ lower $drive.name }}-conf
       {{- end }} # End of drive-specific configmaps loop
-      {{- if $.Values.taped.volumes }}
-      {{ $.Values.taped.volumes | toYaml | nindent 6 }}
-      {{- end }}
+      - name: tape-sss
+        secret:
+          secretName: tpsrv-sss-keytab
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}

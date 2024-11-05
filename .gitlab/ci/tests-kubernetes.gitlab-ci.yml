@@ -24,17 +24,15 @@
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     # Keep the namespace name under 64 characters;
     - export NAMESPACE="${JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
-    # TODO: this should eventually just be part of the runner setup
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
     - git submodule update --init --recursive
     # Which scheduler to use
-    # TODO: why use a centralized postgres scheduler here?
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-postgres-values.yaml
+        SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
     # Which catalogue to use
     - |

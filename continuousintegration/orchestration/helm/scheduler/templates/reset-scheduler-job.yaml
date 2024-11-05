@@ -46,9 +46,15 @@ spec:
             {{ .Values.env | toYaml | nindent 12 }}
             {{- end }}
           volumeMounts:
+          {{- if eq $schedulerConfig.backend "postgres" }}
+            - name: scheduler-config
+              mountPath: /etc/cta/cta-scheduler.conf
+              subPath: cta-scheduler.conf
+          {{- else }}
             - name: scheduler-config
               mountPath: /etc/cta/cta-objectstore-tools.conf
               subPath: cta-objectstore-tools.conf
+          {{- end}}
             - mountPath: /mnt/logs
               name: logstorage
             - mountPath: /shared
@@ -62,9 +68,15 @@ spec:
               subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
             {{- end }}
       volumes:
+        {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           configMap:
             name: cta-scheduler-conf
+        {{- else }}
+        - name: scheduler-config
+          configMap:
+            name: cta-objectstore-conf
+        {{- end }}
         - name: shared
           hostPath:
             path: /opt/cta

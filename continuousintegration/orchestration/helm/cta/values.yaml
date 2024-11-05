@@ -21,6 +21,7 @@ global:
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
+
   volumeMounts:
   - name: shared
     mountPath: /shared

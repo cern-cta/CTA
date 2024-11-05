@@ -1,10 +1,12 @@
-
 nameOverride: init
 component: init
 partOf: init
 
 # Storage for the shared logs of the deployment
 logStorage: "2Gi"
+
+# This ensures a namespaces cannot just take up the entire VM space
+maxTotalNamespaceStorage: "20Gi"
 
 global:
   image:

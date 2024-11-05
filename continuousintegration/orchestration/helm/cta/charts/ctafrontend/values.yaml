@@ -5,6 +5,8 @@ partOf: cta
 nameOverride: ctafrontend
 isPriviliged: true
 
+frontendPort: 10955
+
 conf:
   catalogue:
     numberOfConnections: 10
@@ -44,60 +46,5 @@ conf:
     sss: "/etc/cta/eos.sss.keytab"
     allowedProtocols: "sss krb5"
 
-
-# Changes the entrypoint of the container's image to the script and provide arguments if needed
-customEntrypoint:
-  command: ["/bin/sh", "-c"]
-  args:
-  - |
-    cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
-    chmod 400 /etc/cta/eos.sss.keytab;
-    /opt/run/bin/ctafrontend.sh;
-    chown cta /etc/cta/eos.sss.keytab;
-
 # Additional environment variables
-env:
-- name: TERM
-  value: "xterm"
-
-# defines service ports for the pod
-service:
-  ports:
-  - name: ctafrontend
-    port: 10955
-    protocol: TCP
-
-# defines all of the volumes consumed by pod
-volumes:
-- name: eosctaconfig
-  configMap:
-    name: eos-grpc-keytab
-- name: keytab
-  secret:
-    secretName: cta-frontend-keytab
-- name: sss-keytab
-  secret:
-    secretName: frontend-sss-keytab
-- name: krb5-config-volume
-  configMap:
-    name: krb5-config
-
-volumeMounts:
-- mountPath: /etc/cta/eos.grpc.keytab
-  subPath: eos.grpc.keytab
-  name: eosctaconfig
-- mountPath: /etc/cta/cta-frontend.krb5.keytab
-  name: keytab
-  subPath: cta-frontend.krb5.keytab
-- mountPath: /etc/cta/eos-tmp.sss.keytab
-  name: sss-keytab
-  subPath: eos-tmp.sss.keytab
-- mountPath: /etc/krb5.conf
-  name: krb5-config-volume
-  subPath: krb5.conf
-
-# Ports opened in container
-ports:
-- containerPort: 10955
-  name: ctafrontend
-  protocol: TCP
+env: []

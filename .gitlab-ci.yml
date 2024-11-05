@@ -12,7 +12,6 @@ stages:
 variables:
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
-  # TODO: frontend type
   ORACLE_SUPPORT: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true

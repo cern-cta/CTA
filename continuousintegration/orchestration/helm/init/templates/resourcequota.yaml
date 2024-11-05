@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: storage-quota
+  namespace: {{ .Release.Namespace }}
+spec:
+  hard:
+    requests.storage: {{ .Values.maxTotalNamespaceStorage }}

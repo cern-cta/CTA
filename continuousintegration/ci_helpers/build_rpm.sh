@@ -24,7 +24,7 @@ usage() {
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
   echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
-  echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
+  echo "  --scheduler-type <type>:                      The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
@@ -39,7 +39,7 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --cmake-build-type <build-type>:          Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --cmake-build-type <type>:                Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
 
   exit 1
 }
@@ -105,6 +105,10 @@ build_rpm() {
         ;;
       --scheduler-type)
         if [[ $# -gt 1 ]]; then
+          if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+              echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
+              exit 1
+          fi
           scheduler_type="$2"
           shift
         else

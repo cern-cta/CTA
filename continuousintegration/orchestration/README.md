@@ -87,7 +87,7 @@ The `catalogue` chart expects the following required parameters:
 The catalogue configuration is the second of the three "main" configurations. It can be explicitly provided using the `--catalogue-config` flag. If not provided, it will default to `presets/dev-catalogue-postgres-values.yaml`. The configuration looks as follows:
 
 ```yaml
-backend: "" # Can be sqlite, orale or postgres.
+backend: "" # Can be sqlite, oracle or postgres.
 oracleConfig:
   username: ""
   database: ""
@@ -305,6 +305,7 @@ A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user,
 
 The current deployment of this CTA has a few limitations that make it unsuitable for a wider adoption. These limitations are listed below. Note that the list is not necessarily conclusive.
 
+- If a remote DB is specified in the catalogue/scheduler config, a local pod will still be spawned. It will connect to the remote correctly, but there is currently no way of turning off the spawning of a local pod here.
 - For the most part, the charts still use plain pod configurations. This should be moved to deployments at some point to ensure we can properly roll out upgrades.
 - It is not possible to define different schedulers for different tape servers (although this would be relatively easy to add support for).
 - The `ctaeos` chart is not exactly very pretty and also not very flexible. This is because it will be replaced by a more generic disk buffer chart at some point.

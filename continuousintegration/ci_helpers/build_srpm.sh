@@ -23,7 +23,7 @@ usage() {
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
   echo "  --build-generator <generator>:        Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "  --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
+  echo "  --scheduler-type <type>:              The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
   echo ""
@@ -33,7 +33,7 @@ usage() {
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --cmake-build-type <build-type>:  Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   exit 1
 }
 
@@ -91,6 +91,10 @@ build_srpm() {
         ;;
       --scheduler-type)
         if [[ $# -gt 1 ]]; then
+          if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+              echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
+              exit 1
+          fi
           scheduler_type="$2"
           shift
         else

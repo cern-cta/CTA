@@ -1,0 +1,10 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if ne $schedulerConfig.backend "postgres" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-objectstore-conf
+data:
+  cta-objectstore-tools.conf: |-
+    ObjectStore BackendPath {{ include "scheduler.url" . }}
+{{- end }}

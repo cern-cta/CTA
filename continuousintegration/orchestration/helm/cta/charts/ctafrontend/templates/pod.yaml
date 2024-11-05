@@ -19,6 +19,21 @@ spec:
     image: {{ include "ctafrontend.image" . }}
     imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
     stdin: true
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
+      chmod 400 /etc/cta/eos.sss.keytab;
+      /opt/run/bin/ctafrontend.sh;
+      chown cta /etc/cta/eos.sss.keytab;
+    readinessProbe:
+      exec:
+        command: ["test", "-f", "/CTAFRONTEND_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
     env:
     - name: MY_NAME
       value: {{ $name }}
@@ -33,25 +48,11 @@ spec:
       value: {{ $schedulerConfig.cephConfig.id | quote}}
     - name: SCHEDULER_CEPH_POOL
       value: {{ $schedulerConfig.cephConfig.pool | quote}}
+    - name: TERM
+      value: "xterm"
     {{- end }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
-    {{- end}}
-    {{- if (.Values.customEntrypoint)}}
-    command: {{.Values.customEntrypoint.command  | toJson}}
-    args: {{.Values.customEntrypoint.args}}
-    {{- end}}
-    readinessProbe:
-      exec:
-        command: ["test", "-f", "/CTAFRONTEND_READY"]
-      initialDelaySeconds: 2
-      periodSeconds: 1
-      failureThreshold: 60
-    securityContext:
-      privileged: {{ .Values.isPriviliged }}
-    {{- if (.Values.ports)}}
-    ports:
-        {{- .Values.ports | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
     - name: catalogue-config
@@ -71,6 +72,18 @@ spec:
       mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
       subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
     {{- end }}
+    - mountPath: /etc/cta/eos.grpc.keytab
+      subPath: eos.grpc.keytab
+      name: eosctaconfig
+    - mountPath: /etc/cta/cta-frontend.krb5.keytab
+      name: keytab
+      subPath: cta-frontend.krb5.keytab
+    - mountPath: /etc/cta/eos-tmp.sss.keytab
+      name: sss-keytab
+      subPath: eos-tmp.sss.keytab
+    - mountPath: /etc/krb5.conf
+      name: krb5-config-volume
+      subPath: krb5.conf
     {{ include "ctafrontend.volumeMounts" . | nindent 4 }}
   volumes:
   - name: xrootd-config
@@ -81,10 +94,22 @@ spec:
       name: cta-catalogue-conf
   - name: scheduler-config
     configMap:
-      name: cta-scheduler-conf
+      name: cta-objectstore-conf
   {{- if eq $schedulerConfig.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:
       name: ceph-conf
   {{- end}}
-  {{include "ctafrontend.volumes" . | nindent 2}}
+  - name: eosctaconfig
+    configMap:
+      name: eos-grpc-keytab
+  - name: keytab
+    secret:
+      secretName: cta-frontend-keytab
+  - name: sss-keytab
+    secret:
+      secretName: frontend-sss-keytab
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
+  {{ include "ctafrontend.volumes" . | nindent 2 }}
