@@ -10,13 +10,14 @@ stages:
   - release:external
 
 variables:
-  CTA_PIPELINE_NAME: "Default Pipeline"
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
-  UNIT_TEST: "ON"
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
+  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+  CTA_PIPELINE_NAME: "$CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
+  VALGRIND_DB_UNIT_TESTS: false
   # Images
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
@@ -26,11 +27,6 @@ variables:
 
 default:
   interruptible: true
-  before_script:
-    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
-    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
 
 workflow:
   name: $CTA_PIPELINE_NAME
@@ -41,8 +37,6 @@ workflow:
       auto_cancel:
         on_job_failure: none
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
-      variables:
-          CTA_PIPELINE_NAME: "$CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

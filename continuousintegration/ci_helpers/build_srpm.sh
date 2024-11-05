@@ -32,7 +32,6 @@ usage() {
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
-  echo "      --skip-unit-tests:                Skips the unit tests."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --cmake-build-type <build-type>:  Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   exit 1
@@ -51,7 +50,6 @@ build_srpm() {
   local clean_build_dir=false
   local install=false
   local num_jobs=1
-  local skip_unit_tests=false
   local oracle_support=true
   local cmake_build_type=""
 
@@ -68,7 +66,7 @@ build_srpm() {
           usage
         fi
         ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
               echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
@@ -119,7 +117,6 @@ build_srpm() {
           usage
         fi
         ;;
-      --skip-unit-tests) skip_unit_tests=true ;;
       --oracle-support)
         if [[ $# -gt 1 ]]; then
           if [ "$2" = "OFF" ]; then
@@ -237,14 +234,6 @@ build_srpm() {
   else
     # the else clause is necessary to prevent cmake from caching this variable
     cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
-  fi
-
-  if [[ ${skip_unit_tests} = true ]]; then
-    echo "Skipping unit tests"
-    cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1"
-  else
-    # the else clause is necessary to prevent cmake from caching this variable
-    cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
   fi
 
   if [[ ${scheduler_type} != "objectstore" ]]; then

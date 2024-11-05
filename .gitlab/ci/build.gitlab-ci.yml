@@ -30,8 +30,6 @@ build-cta-srpm:
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - EXTRA_BUILD_FLAGS=""
-    - if [ "${UNIT_TEST}" == "OFF" ]; then EXTRA_BUILD_FLAGS+=" --skip-unit-tests"; fi
     - ./continuousintegration/ci_helpers/build_srpm.sh --build-dir build_srpm
                                                        --build-generator "${BUILD_GENERATOR}"
                                                        --create-build-dir
@@ -41,7 +39,6 @@ build-cta-srpm:
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --jobs $(nproc --ignore=1)
                                                        --install
-                                                       ${EXTRA_BUILD_FLAGS}
 
 build-cta-rpm:
   stage: build
@@ -62,8 +59,6 @@ build-cta-rpm:
     - yum install -y git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - EXTRA_BUILD_FLAGS=""
-    - if [ "${UNIT_TEST}" == "OFF" ]; then EXTRA_BUILD_FLAGS+=" --skip-unit-tests"; fi
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
                                                       --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
@@ -75,7 +70,6 @@ build-cta-rpm:
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --jobs $(nproc --ignore=1)
                                                       --install
-                                                       ${EXTRA_BUILD_FLAGS}
 
 # Documentation export
 

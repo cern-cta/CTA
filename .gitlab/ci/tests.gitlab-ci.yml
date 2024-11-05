@@ -93,8 +93,12 @@ unit-test-postgresql:
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
-    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
-    - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - |
+      if [ "$VALGRIND_DB_UNIT_TESTS" = "true" ]; then
+        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+      else
+        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+      fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
 test-cta-release:
