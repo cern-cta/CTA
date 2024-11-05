@@ -15,6 +15,7 @@
 
 # Generic build jobs for rpms and srpms
 
+# The srpm build does not use a cache, since the build is so fast that it would not add anything
 build-cta-srpm:
   stage: build
   extends:
@@ -42,7 +43,6 @@ build-cta-srpm:
                                                        --jobs $(nproc --ignore=1)
                                                        --install
                                                        ${EXTRA_BUILD_FLAGS}
-# The srpm build does not use a cache, since the build is so fast that it would not add anything
 
 build-cta-rpm:
   stage: build

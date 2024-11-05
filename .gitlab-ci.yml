@@ -40,6 +40,10 @@ workflow:
       variables:
         BUILD_CACHE_POLICY: push # Don't rely on ccache in the main branch
         CTA_PIPELINE_NAME: "$CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
+    - if: $CI_COMMIT_TAG
+      variables:
+        BUILD_CACHE_POLICY: push # Don't rely on ccache for tags
+        CTA_PIPELINE_NAME: "Tagged pipeline: $CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       variables:
           CTA_PIPELINE_NAME: "$CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
