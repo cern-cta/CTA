@@ -18,7 +18,7 @@ variables:
   SYSTEMTESTS_ONLY: "FALSE"
   BUILD_GENERATOR: "Unix Makefiles"
   BUILD_CACHE_POLICY: pull-push # Change to e.g. push to not use the cache at all
-  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
+  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   # Images
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
