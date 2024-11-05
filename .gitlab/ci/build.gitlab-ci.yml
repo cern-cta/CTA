@@ -66,7 +66,7 @@ build-cta-rpm:
   before_script:
     - yum install -y epel-release
     - yum install -y ccache
-    - export PATH="/usr/lib/ccache:$PATH"
+    - mkdir .ccache
     - ccache --zero-stats
   script:
     - yum install -y git
@@ -90,7 +90,7 @@ build-cta-rpm:
   after_script:
     - ccache --show-stats
   cache:
-    - key: ccache-$CI_JOB_NAME
+    - key: ccache-$CI_JOB_NAME_SLUG
       policy: $BUILD_CACHE_POLICY
       paths:
         - .ccache/

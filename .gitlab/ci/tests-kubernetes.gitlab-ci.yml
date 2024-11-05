@@ -15,11 +15,11 @@
   variables:
     TEST_SCRIPT:
     EXTENDED_OPTIONS:
-    # Keep the namespace name under 64 characters;
-    NAMESPACE: "${CI_JOB_NAME:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
   before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
+    # Keep the namespace name under 64 characters;
+    - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
     - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
     - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
