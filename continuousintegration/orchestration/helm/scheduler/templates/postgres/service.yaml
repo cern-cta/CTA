@@ -1,5 +1,5 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
-{{- if eq $schedulerConfig.backend "postgres" }}
+{{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
 {{- $namespace := .Release.Namespace }}
 {{- $name := "postgres-scheduler" }}
 apiVersion: v1

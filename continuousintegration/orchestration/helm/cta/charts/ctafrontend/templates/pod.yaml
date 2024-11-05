@@ -58,9 +58,15 @@ spec:
     - name: catalogue-config
       mountPath: /etc/cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
+    {{- if eq $schedulerConfig.backend "postgres" }}
+    - name: scheduler-config
+      mountPath: /etc/cta/cta-scheduler.conf
+      subPath: cta-scheduler.conf
+    {{- else }}
     - name: scheduler-config
       mountPath: /etc/cta/cta-objectstore-tools.conf
       subPath: cta-objectstore-tools.conf
+    {{- end }}
     - name: xrootd-config
       mountPath: /etc/cta/cta-frontend-xrootd.conf
       subPath: cta-frontend-xrootd.conf
@@ -92,9 +98,15 @@ spec:
   - name: catalogue-config
     configMap:
       name: cta-catalogue-conf
+  {{- if eq $schedulerConfig.backend "postgres" }}
+  - name: scheduler-config
+    configMap:
+      name: cta-scheduler-conf
+  {{- else }}
   - name: scheduler-config
     configMap:
       name: cta-objectstore-conf
+  {{- end }}
   {{- if eq $schedulerConfig.backend "ceph" }}
   - name: cta-ceph-volume
     configMap:

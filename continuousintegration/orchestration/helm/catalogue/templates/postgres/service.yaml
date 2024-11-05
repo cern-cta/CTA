@@ -1,5 +1,5 @@
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
-{{- if eq $catalogueConfig.backend "postgres" -}}
+{{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
 {{- $namespace := .Release.Namespace }}
 {{- $name := "postgres-catalogue" }}
 apiVersion: v1

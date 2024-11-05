@@ -55,9 +55,17 @@ if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
 elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
+
+  cat <<EOF > /etc/yum.repos.d/Oracle-InstantClient-OL9.x.repo
+[Oracle-InstantClient-OL9.x]
+name=CentOS/RHEL Oracle InstantClient repository for OL9.x packages
+baseurl=https://linuxsoft.cern.ch/mirror/yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient/x86_64
+enabled=1
+gpgkey=http://linuxsoft.cern.ch/mirror/yum.oracle.com/RPM-GPG-KEY-oracle-ol9
+priority=5
+EOF
+  yum install -y oracle-instantclient19.19-sqlplus
   echo "Purging Oracle recycle bin"
-  # Note that these commands have been failing for a while now (not just in this branch). What do we do with it?
-  ORACLE_SQLPLUS="/usr/bin/sqlplus64"
   test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
   LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
   LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext

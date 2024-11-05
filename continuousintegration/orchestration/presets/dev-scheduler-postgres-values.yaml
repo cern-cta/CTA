@@ -1,5 +1,6 @@
 backend: postgres
 postgresConfig:
+  remote: false
   username: cta
   password: cta
   database: postgres-scheduler
