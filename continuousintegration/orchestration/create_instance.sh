@@ -265,7 +265,10 @@ create_instance() {
                                   --wait --wait-for-jobs --timeout 2m &
     scheduler_pid=$!
 
-    wait $catalogue_pid $scheduler_pid
+    # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
+    wait $catalogue_pid || exit 1
+    wait $scheduler_pid || exit 1
+
   fi
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \

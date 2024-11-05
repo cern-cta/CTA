@@ -282,55 +282,58 @@ build_rpm() {
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
-    cmake_options+=" -DVCS_VERSION=${vcs_version}"
+    cmake_options+=" -D VCS_VERSION=${vcs_version}"
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
       echo "Using build type: ${cmake_build_type}"
-      cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
+      cmake_options+=" -D CMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
       echo "Skipping debug packages"
-      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=1"
+      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=1"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=0"
+      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=0"
     fi
 
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
+      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
     fi
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       echo "Skipping unit tests";
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
+      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=1";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
+      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=0"
     fi
 
     # CCache
     if [[ ${enable_ccache} = true ]]; then
       echo "Enabling ccache";
-      cmake_options+=" -DENABLE_CCACHE:STRING=1";
+      cmake_options+=" -D ENABLE_CCACHE:STRING=1";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DENABLE_CCACHE:STRING=0"
+      cmake_options+=" -D ENABLE_CCACHE:STRING=0"
     fi
 
     # Scheduler type
-    if [[ ${scheduler_type} != "objectstore" ]]; then
+    if [[ ${scheduler_type} == "postgres" ]]; then
       echo "Using specified scheduler database type $SCHED_TYPE";
-      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
-      cmake_options+=" ${sched_opt}";
+      local sched_opt=" -D CTA_USE_PGSCHED";
+      cmake_options+=" -D CTA_USE_PGSCHED";
+    else
+      # unset it
+      cmake_options+=" -U CTA_USE_PGSCHED";
     fi
 
     cd "${build_dir}"

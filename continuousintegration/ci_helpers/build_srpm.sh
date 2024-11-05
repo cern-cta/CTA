@@ -225,25 +225,29 @@ build_srpm() {
   # Cmake
   export CTA_VERSION=${cta_version}
 
-  cmake_options+=" -DPackageOnly:Bool=true"
-  cmake_options+=" -DVCS_VERSION=${vcs_version}"
+  cmake_options+=" -D PackageOnly:Bool=true"
+  cmake_options+=" -D VCS_VERSION=${vcs_version}"
 
   if [[ ! ${cmake_build_type} = "" ]]; then
-    cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
+    cmake_options+=" -D CMAKE_BUILD_TYPE=${cmake_build_type}"
   fi
 
   if [[ ${oracle_support} = false ]]; then
     echo "Disabling Oracle Support"
-    cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON"
+    cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
   else
     # the else clause is necessary to prevent cmake from caching this variable
-    cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
+    cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
   fi
 
-  if [[ ${scheduler_type} != "objectstore" ]]; then
-    echo "Using specified scheduler database type $SCHED_TYPE"
-    local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true "
-    cmake_options+=" ${sched_opt}"
+   # Scheduler type
+  if [[ ${scheduler_type} == "postgres" ]]; then
+    echo "Using specified scheduler database type $SCHED_TYPE";
+    local sched_opt=" -D CTA_USE_PGSCHED";
+    cmake_options+=" -D CTA_USE_PGSCHED";
+  else
+    # unset it
+    cmake_options+=" -U CTA_USE_PGSCHED";
   fi
 
   cd "${build_dir}"
