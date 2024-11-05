@@ -146,6 +146,56 @@ public:
 
 protected:
   /**
+   * `is_optional_type<T>` will be used to detect, at compile time, if a variable is of type `std::optional`
+   */
+  // Assume T is not std::optional by default
+  template<typename T>
+  struct is_optional_type : std::false_type {};
+
+  // Specialization for std::optional<T>
+  template<typename T>
+  struct is_optional_type<std::optional<T>> : std::true_type {};
+
+  // A helper template that is always false
+  template<typename T>
+  struct always_false : std::false_type {};
+
+  // A helper trait to check for operator<<
+  template<typename, typename = void>
+  struct has_ostream_operator : std::false_type {};
+
+  template<typename T>
+  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>>
+      : std::true_type {};
+
+  /**
+   * Helper class to format floating-point values
+   */
+  template<typename T>
+  class floatingPointFormatting {
+  public:
+    explicit floatingPointFormatting(T value) : m_value(value) {
+      static_assert(std::is_floating_point_v<T>, "Template parameter must be a floating point type.");
+    }
+
+    friend std::ostream& operator<<(std::ostream& oss, const floatingPointFormatting& fp) {
+      constexpr int nr_digits = std::numeric_limits<T>::digits10;
+      std::ostringstream oss_tmp;
+      oss_tmp << std::setprecision(nr_digits) << fp.m_value;
+      // Find if value contains a '.' or 'e/E', making it clear that it's a floating-point value
+      if (oss_tmp.str().find_first_of(".eE") == std::string::npos) {
+        // If not, append ".0" to make it clear that it's a floating point
+        oss_tmp << ".0";
+      }
+      oss << oss_tmp.str();
+      return oss;
+    }
+
+  private:
+    T m_value;
+  };
+
+  /**
    * The name of the host to be prepended to every log message
    */
   const std::string m_hostName;
@@ -208,6 +258,20 @@ private:
    * Timestamp type
    */
   using TimestampT = decltype(std::chrono::system_clock::now());
+
+  /**
+   * Helper class to format string values in JSON
+   */
+  class stringFormattingJSON {
+  public:
+    explicit stringFormattingJSON(std::string_view str) : m_value(str) {};
+    friend std::ostream& operator<<(std::ostream& oss, const stringFormattingJSON& fp);
+
+  private:
+    std::string_view m_value;
+  };
+
+  friend std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& fp);
 
   /**
    * Creates and returns the header of a log message

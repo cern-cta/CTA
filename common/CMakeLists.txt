@@ -173,6 +173,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LogContextTest.cpp
   log/LogLevelTest.cpp
   log/ParamTest.cpp
+  log/LoggerTest.cpp
   log/JsonTest.cpp
   log/StringLoggerTest.cpp
   log/LoggerParamTypeTest.cpp

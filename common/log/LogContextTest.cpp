@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <regex>
+
 using namespace cta::log;
 
 namespace unitTests {
@@ -67,5 +69,25 @@ namespace unitTests {
     std::string third = sl.getLog();
     size_t offset  = third.find("fileId") + strlen("fileId");
     ASSERT_EQ(std::string::npos, third.find("fileId", offset));
+  }
+
+  TEST(cta_log_LogContextTest, logMessageEscaping) {
+    StringLogger sl(R"(dummy")", R"(cta_log_LogContextTest_escaped")", DEBUG);
+    sl.setLogFormat("json");
+
+    // Set static params
+    std::map<std::string, std::string> staticParamMap;
+    staticParamMap[R"(dummy_static")"] = R"(value_why")";
+    sl.setStaticParams(staticParamMap);
+
+    // Set a param with a character to be escaped.
+    LogContext lc(sl);
+    lc.pushOrReplace(Param(R"(valid_"key)", "Valid \n out"));
+    lc.log(INFO, "Split message\n by newline");
+    std::cout << sl.getLog();
+
+    std::regex regex_pattern(
+      R"(^\{"epoch_time":\d+\.\d+,"local_time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}","hostname":"dummy\\"","program":"cta_log_LogContextTest_escaped\\"","log_level":"INFO","pid":\d+,"tid":\d+,"message":"Split message\\n by newline","dummy_static\\"":"value_why\\"","valid_\\"key":"Valid \\n out"\}\n$)");
+    EXPECT_TRUE(std::regex_match(sl.getLog(), regex_pattern));
   }
 }
