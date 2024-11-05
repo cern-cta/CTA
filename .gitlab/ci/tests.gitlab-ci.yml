@@ -97,7 +97,7 @@ unit-test-postgresql:
       if [ "$VALGRIND_DB_UNIT_TESTS" = "true" ]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
-       /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
