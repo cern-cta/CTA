@@ -1,3 +1,8 @@
+# v5.11.0.1-1
+
+### Bug Fixes
+- cta/CTA#766 - Fix broken cta-release RPM
+
 # v5.11.0.0-1
 
 ### Catalogue Schema
@@ -37,7 +42,7 @@
 
 ### Continuous Integration
 - cta/CTA#257 - Allow CTA CI runner to use MHVTL ULTRIUM config
-- cta/CTA#597 - Validate staging activity field metadata is correctly set 
+- cta/CTA#597 - Validate staging activity field metadata is correctly set
 - cta/CTA#615 - Going to xrdfs xattr API for EOS5 extended attribute tests (EOS >= 5.2.17)
 - cta/CTA#616 - Fix CI errors during systemtests caused by SchedulerDB caching
 - cta/CTA#658 - Revert eviction test to original behaviour and sleeps for Mgm syncer to catch up
@@ -157,7 +162,7 @@
 - cta/CTA#460 - Fix "trying to unlock an unlocked lock" error
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#469 - Fix command 'cta-admin drive ls' not showing REPACK VO on mounts of type ARCHIVE_FOR_REPACK
-- cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
+- cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit
 - cta/CTA#473 - Fix some code smells from repack expansion changes
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities

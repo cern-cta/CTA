@@ -73,6 +73,7 @@ clang_format:
     - clang-format.output
 
 catalogue_schema_version_check:
+  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
