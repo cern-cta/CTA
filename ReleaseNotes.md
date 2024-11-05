@@ -69,7 +69,8 @@
 - cta/CTA#874 - Remove outdated eos regression test
 - cta/CTA#879 - Fix CI for development setup and no oracle pipeline
 - cta/CTA#872 - Fix pipeline docker build for tagged builds
-- cta/CTA#743 - Fix development environment setup for AlmaLinux 9.4 
+- cta/CTA#743 - Fix development environment setup for AlmaLinux 9.4
+- cta/CTA#918 - Improve RPM job organization and introduced additional information in pipeline names
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files

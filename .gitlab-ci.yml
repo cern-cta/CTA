@@ -10,6 +10,7 @@ stages:
   - release:external
 
 variables:
+  CTA_PIPELINE_NAME: "Default Pipeline"
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
@@ -32,6 +33,7 @@ default:
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
 
 workflow:
+  name: $CTA_PIPELINE_NAME
   auto_cancel:
     on_job_failure: all
   rules:
@@ -39,6 +41,8 @@ workflow:
       auto_cancel:
         on_job_failure: none
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      variables:
+          CTA_PIPELINE_NAME: "$CI_COMMIT_MESSAGE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

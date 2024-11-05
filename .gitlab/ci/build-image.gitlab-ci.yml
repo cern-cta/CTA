@@ -4,11 +4,6 @@ docker-build-ctageneric:
     - job: modify-versionlock
       optional: true
     - job: build-cta-rpm
-      optional: true
-    - job: build-cta-rpm-pgsched
-      optional: true
-    - job: build-cta-rpm-no-oracle
-      optional: true
   retry: 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
