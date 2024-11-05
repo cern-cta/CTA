@@ -97,7 +97,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # ccacheFlags will be empty if ccache is not enabled
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. ${ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
 cmake --build . %{_smp_mflags}
 
 %install
