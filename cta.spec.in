@@ -608,8 +608,7 @@ collects EOS disk copies that have been safely stored to tape.
 %package -n cta-release
 Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
-Requires: yum-plugin-versionlock
-Requires: yum-plugin-priorities
+Requires: python3-dnf-plugin-versionlock
 Requires: python
 Requires: jq
 %description -n cta-release
@@ -620,20 +619,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/yum.repos.d/*
 %attr(0644,root,root) %{_sysconfdir}/pki/rpm-gpg/*
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-release.conf
 %attr(0755,root,root) %{_bindir}/cta-versionlock
-
-%post -n cta-release
-# Add CTA version to cta-release.conf file
-cta_xrootd_version=$(echo "%{ctaVersion}" | cut -d '.' -f 1)
-echo $(jq --argjson CTA_XROOTD_VERSION cta_xrootd_version '. += {"cta_xrootd_version": CTA_XROOTD_VERSION}' %{_sysconfdir}/cta/cta-release.conf) > %{_sysconfdir}/cta/cta-release.conf
-
-%preun -n cta-release
-/usr/bin/cta-versionlock config eos4
-/usr/bin/cta-versionlock remove
-/usr/bin/cta-versionlock config eos5
-/usr/bin/cta-versionlock remove
-
 
 %changelog
 * Mon Jun 03 2024 Joao Afonso <joao.afonso@cern.ch> - 4/5.10.11.0-1

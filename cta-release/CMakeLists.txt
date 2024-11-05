@@ -32,15 +32,8 @@ function(safedl SOURCEURL DESTFILE)
   endif()
 endfunction()
 
-# We need the el version to select the proper key for Oracle repo
-include(../cmake/UseRPMToolsEnvironment.cmake)
-
-if( "${RPMTools_RPMBUILD_DIST}" MATCHES "\\.el([0-9])\\.")
-  set(OSV "${CMAKE_MATCH_1}")
-else()
-# Default to el7
-  set(OSV "7")
-endif()
+set(OSV "9")
+set(OS "alma9")
 
 # Download package signing keys
 safedl("https://storage-ci.web.cern.ch/storage-ci/storageci.key"
@@ -76,18 +69,22 @@ endif()
 
 string(REPLACE "\n" ";" RESULTS ${RESULT})
 
+# We need the el version to set the proper cta versionlock version
+include(../cmake/UseRPMToolsEnvironment.cmake)
+
 foreach(PNAME ${RESULTS})
-    string(APPEND CTAVERSIONLOCK "0:${PNAME}-${CTA_VERSION}-${CTA_RELEASE}${RPMTools_RPMBUILD_DIST}.*\n")
+    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
 endforeach()
 
-file(READ ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
-string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")
-file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAVERSIONLOCK}")
+file(READ ../continuousintegration/docker/ctafrontend/${OS}/yum/pluginconf.d/versionlock.list VERSIONLOCK)
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/${OS}/repos/*.repo"
 )
+
+string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")
+file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAVERSIONLOCK}")
 
 # Signing keys
 file (GLOB KEY_FILES
@@ -101,7 +98,5 @@ install (FILES ${KEY_FILES}
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/pki/rpm-gpg)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-release.conf
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES ${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/opt/run/bin/cta-versionlock
   DESTINATION usr/${CMAKE_INSTALL_BINDIR})

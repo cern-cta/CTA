@@ -208,3 +208,45 @@ dbunittests_postgresql_alma9:
     - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+
+test-cta-release:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - when: on_success
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  variables:
+    CTAREPODIR: /tmp/repo
+  before_script:
+    # This needs to be done manually since v21 RPMs are not available in the OL9 oracle yum repos
+    # This can be removed again once the upgrade to v23 is complete
+    - yum -y install wget
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
+    - yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+  script:
+    - yum install -y createrepo epel-release almalinux-release-devel
+    - mkdir -p ${CTAREPODIR}
+    - cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}
+    - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum install --nogpgcheck -y cta-release
+    - cta-versionlock apply
+    - yum install --nogpgcheck -y cta-frontend
+    - yum install --nogpgcheck -y cta-taped
+    - yum install --nogpgcheck -y cta-rmcd
+    - yum install --nogpgcheck -y cta-smc
+    - yum install --nogpgcheck -y eos-server
+    - yum install --nogpgcheck -y eos-client
+    # Check that everything was installed properly
+    - cta-versionlock --json check-installed > checkpkg-output.json
+  artifacts:
+    when: always
+    paths:
+      - checkpkg-output.json
