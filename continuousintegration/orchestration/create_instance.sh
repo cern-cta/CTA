@@ -253,7 +253,7 @@ create_instance() {
                                   --set schemaVersion="${catalogue_schema_version}" \
                                   --set resetCatalogue=${reset_catalogue} \
                                   --set-file configuration=${catalogue_config} \
-                                  --wait --wait-for-jobs --timeout 2m &
+                                  --wait --wait-for-jobs --timeout 4m &
     catalogue_pid=$!
 
     log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
@@ -262,7 +262,7 @@ create_instance() {
                                   --set resetImage.tag="${image_tag}" \
                                   --set resetScheduler=${reset_scheduler} \
                                   --set-file configuration=${scheduler_config} \
-                                  --wait --wait-for-jobs --timeout 2m &
+                                  --wait --wait-for-jobs --timeout 4m &
     scheduler_pid=$!
 
     # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
@@ -279,7 +279,7 @@ create_instance() {
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 5m
+                                --wait --timeout 8m
 
   if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
     exit 0
