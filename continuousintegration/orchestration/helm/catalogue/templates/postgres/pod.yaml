@@ -16,6 +16,15 @@ spec:
   - name: {{ $name }}
     image: docker.io/postgres:14.10
     stdin: true
+    command: []
+    args: []
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
       value: {{ $name }}
@@ -33,6 +42,4 @@ spec:
       value: {{ $catalogueConfig.postgresConfig.password }}
     - name: POSTGRES_DB
       value: {{ $catalogueConfig.postgresConfig.database }}
-    command: []
-    args: []
 {{- end }}

@@ -25,6 +25,13 @@ spec:
       /opt/run/bin/ctaeos-mgm-log-wrapper.sh;
     securityContext:
       privileged: {{ .Values.isPriviliged }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
       value: {{ $name }}

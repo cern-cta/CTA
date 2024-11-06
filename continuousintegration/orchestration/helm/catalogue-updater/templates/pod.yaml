@@ -19,6 +19,13 @@ spec:
     image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ .Values.image.tag }}"
     imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
       value: {{ $name | quote }}

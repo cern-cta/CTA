@@ -46,6 +46,13 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 1
           failureThreshold: 60
+        resources:
+          requests:
+            memory: {{ $.Values.rmcd.resources.requests.memory | quote }}
+            ephemeral-storage: {{ index $.Values.rmcd.resources.requests "ephemeral-storage" | quote }}
+          limits:
+            memory: {{ $.Values.taped.resources.limits.memory | quote }}
+            ephemeral-storage: {{ index $.Values.taped.resources.limits "ephemeral-storage" | quote }}
         env:
         - name: MY_NAME
           value: {{ $tpsrvName }}

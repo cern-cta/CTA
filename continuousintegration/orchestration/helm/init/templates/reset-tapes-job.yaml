@@ -25,6 +25,13 @@ spec:
           securityContext:
             privileged: true # Because of the scsi commands
           stdin: true
+          resources:
+            requests:
+              memory: "256Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              memory: "2Gi"
+              ephemeral-storage: "1Gi"
           env:
             - name: MY_NAME
               value: {{ $name }}

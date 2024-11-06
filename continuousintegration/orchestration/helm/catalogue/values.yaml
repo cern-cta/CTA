@@ -29,3 +29,12 @@ schemaVersion: ""
 #     database: ""
 #   sqliteConfig:
 #     filepath: ""
+
+# Note that this is only used if a postgres pod is spawned
+resources:
+  requests:
+    memory: "256Mi"
+    ephemeral-storage: "1Gi"
+  limits:
+    memory: "2Gi"
+    ephemeral-storage: "20Gi"

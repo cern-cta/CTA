@@ -41,3 +41,21 @@ conf:
 #   drives:
 #     - name: "VDSTK03"
 #       device: "nst1"
+
+taped:
+  resources:
+    requests:
+      memory: "256Mi"
+      ephemeral-storage: "1Gi"
+    limits:
+      memory: "4Gi"
+      ephemeral-storage: "8Gi"
+
+rmcd:
+  resources:
+    requests:
+      memory: "256Mi"
+      ephemeral-storage: "1Gi"
+    limits:
+      memory: "4Gi"
+      ephemeral-storage: "8Gi"

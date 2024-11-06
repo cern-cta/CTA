@@ -16,3 +16,10 @@ env:
 - name: frontend
   value: 'cta-frontend:10955'
 
+resources:
+  requests:
+    memory: "2Gi"
+    ephemeral-storage: "8Gi"
+  limits:
+    memory: "16Gi"
+    ephemeral-storage: "36Gi"
