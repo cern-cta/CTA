@@ -1,4 +1,0 @@
-schedulerBackend: file
-schedulerconfig:
-  file:
-    path: /shared/%NAMESPACE/objectstore

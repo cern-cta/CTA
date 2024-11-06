@@ -1,0 +1,3 @@
+backend: "VFS"
+vfsConfig:
+  path: /shared/%NAMESPACE/objectstore

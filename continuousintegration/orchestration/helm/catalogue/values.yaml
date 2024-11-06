@@ -1,0 +1,40 @@
+
+nameOverride: catalogue
+resetCatalogue: false
+component: catalogue
+partOf: cta
+
+resetImage:
+  registry: gitlab-registry.cern.ch/cta
+  repository: ctageneric
+  tag: ""
+  pullPolicy: IfNotPresent
+  pullSecrets:
+  - ctaregsecret
+  - reg-ctageneric
+
+schemaVersion: ""
+
+# This can either be provided via --set-file or specified directly here
+# configuration:
+#   backend: "" # Can be sqlite, oracle or postgres.
+#   oracleConfig:
+#     username: ""
+#     database: ""
+#     password: ""
+#   postgresConfig:
+#     username: ""
+#     password: ""
+#     server: ""
+#     database: ""
+#   sqliteConfig:
+#     filepath: ""
+
+# Note that this is only used if a postgres pod is spawned
+resources:
+  requests:
+    memory: "256Mi"
+    ephemeral-storage: "1Gi"
+  limits:
+    memory: "2Gi"
+    ephemeral-storage: "20Gi"

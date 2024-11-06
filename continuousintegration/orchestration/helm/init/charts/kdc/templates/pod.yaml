@@ -1,43 +1,64 @@
-{{$namespace := .Release.Namespace }}
-{{$accountName := .Values.serviceAccount.name }}
-{{$name := include "kdc.name" . }}
-{{$secret := include "kdc.imageSecret" .}}
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "kdc.name" . }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
-    k8s-app: {{$name}}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
-  serviceAccountName: {{$accountName}}
+  serviceAccountName: secret-creator
   restartPolicy: Never
   containers:
-  - name: {{$name}}
+  - name: {{ $name }}
     image: {{ include "kdc.image" . }}
+    imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
     stdin: true
+    command: ['/opt/run/bin/kdc.sh']
+    args: []
+    readinessProbe:
+      exec:
+        command: ["test", "-f", "/KDC_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
-      value: {{$name}}
+      value: {{ $name }}
     - name: MY_NAMESPACE
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: TERM
+      value: "xterm"
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
-    {{- if (.Values.customEntrypoint)}}
-    command: {{.Values.customEntrypoint.command}}
-    args: {{.Values.customEntrypoint.args}}
-    {{- end}}
-    {{- if (.Values.readinessProbe)}}
-    {{include "kdc.readinessProbe" .Values.readinessProbe | nindent 4}}
-    {{- end}}
-    securityContext:
-      privileged: {{ .Values.isPriviliged }}
-    {{ include "kdc.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
-  {{include "kdc.volumes" . | nindent 2}}
-
+    volumeMounts:
+    - name: krb5-config-volume
+      mountPath: /etc/krb5.conf
+      subPath: krb5.conf
+    - name: keypass-names
+      mountPath: /tmp/keypass-names.txt
+      subPath: keypass-names.txt
+    {{- include "kdc.volumeMounts" . | nindent 4 }}
+  volumes:
+  - name: keypass-names
+    configMap:
+      name: keypass-names-conf
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
+  {{- include "kdc.volumes" . | nindent 2 }}
   imagePullSecrets:
-  - name: {{$secret}}
+  {{- include "kdc.imagePullSecrets" . | nindent 2 }}

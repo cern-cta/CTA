@@ -11,7 +11,11 @@ build_srpm/
 build_rpm/
 image_rpms/
 pod_logs/
+tmp/
 
 # helm files
 Chart.lock
 **/get_helm.sh
+
+# Archive files
+**/*.tgz

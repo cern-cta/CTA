@@ -26,6 +26,7 @@ docker-build-ctageneric:
     # The dockerfile wants the rpms in the image_rpms directory. The build step generated the rpms in build_rpm/RPM/RPMS/x86_64
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
+    - echo "Building image ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}

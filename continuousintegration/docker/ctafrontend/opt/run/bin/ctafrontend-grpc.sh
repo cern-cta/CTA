@@ -24,20 +24,7 @@ yum-config-manager --enable ceph
 # cta-catalogueutils is needed to delete the db at the end of instance
 yum -y install cta-debuginfo cta-catalogueutils ceph-common cta-frontend-grpc
 
-
-/opt/run/bin/init_objectstore.sh
-. /tmp/objectstore-rc.sh
-
-
-echo "ObjectStore BackendPath $OBJECTSTOREURL" >/etc/cta/cta-objectstore-tools.conf
-
-
-cat <<EOF > /etc/cta/cta.conf
-general InstanceName CI_local
-general SchedulerBackendName vfsCI
-ObjectStore BackendPath ${OBJECTSTOREURL}
-EOF
-
+# TODO: this should be updated once grpc is fixed
 cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 #
 # Config properties of cta-frontend-grpc
@@ -47,13 +34,6 @@ cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 # change to '--tls' to enable
 GRPC_USE_TLS=""
 EOF
-
-
-/opt/run/bin/init_database.sh
-. /tmp/database-rc.sh
-
-echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
-
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available

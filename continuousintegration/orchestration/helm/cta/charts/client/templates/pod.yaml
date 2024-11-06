@@ -1,41 +1,102 @@
-{{$namespace := .Release.Namespace }}
-{{$name := include "client.name" . }}
-
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "client.name" . }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
-    k8s-app: {{$name}}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{ include "client.imagePullSecrets" . | nindent 2 }}
   containers:
-  - name: {{$name}}
+  - name: {{ $name }}
     image: {{ include "client.image" . }}
+    imagePullPolicy: {{ include "client.imagePullPolicy" . }}
     stdin: true
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      cat /tmp/eos.keytab > /etc/eos.keytab;
+      chmod 600 /etc/eos.keytab;
+      /opt/run/bin/client.sh;
+    readinessProbe:
+      exec:
+        command: ["test", "-f", "/CLIENT_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
-      value: {{$name}}
+      value: {{ $name }}
     - name: MY_NAMESPACE
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: TERM
+      value: "xterm"
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
-    {{- if (.Values.customEntrypoint)}}
-    command: {{.Values.customEntrypoint.command  | toJson}}
-    args: {{.Values.customEntrypoint.args}}
-    {{- end}}
-    {{- if (.Values.readinessProbe)}}
-    {{include "client.readinessProbe" .Values.readinessProbe | nindent 4}}
-    {{- end}}
-    securityContext:
-      privileged: {{ .Values.isPriviliged }}
-    {{- include "client.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
-  {{- include "client.volumes" . | nindent 2}}
-
-  imagePullSecrets:
-  - name: {{ include "client.imageSecret" . }}
+    volumeMounts:
+    - name: cta-conf-volume
+      mountPath: /etc/cta/cta-cli.conf
+      subPath: cta-cli.conf
+    - mountPath: /etc/config/eos
+      name: eosconfig
+    - mountPath: /tmp/eos.keytab
+      name: sss-keytab
+      subPath: eos.keytab
+    - mountPath: /etc/krb5.conf
+      name: krb5-config-volume
+      subPath: krb5.conf
+    - mountPath: /root/user1.keytab
+      name: user1-keytab
+      subPath: user1.keytab
+    - mountPath: /root/eosadmin1.keytab
+      name: eosadmin1-keytab
+      subPath: eosadmin1.keytab
+    - mountPath: /root/poweruser1.keytab
+      name: poweruser1-keytab
+      subPath: poweruser1.keytab
+    - mountPath: /root/ctaadmin2.keytab
+      name: ctaadmin2-keytab
+      subPath: ctaadmin2.keytab
+    {{ include "client.volumeMounts" . | nindent 4 }}
+  volumes:
+  - name: cta-conf-volume
+    configMap:
+      name: etc-cta-client
+  - name: eosconfig
+    configMap:
+      name: eos-config-base
+  - name: sss-keytab
+    secret:
+      secretName: eos-sss-keytab
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
+  - name: user1-keytab
+    secret:
+      secretName: user1-keytab
+  - name: eosadmin1-keytab
+    secret:
+      secretName: eosadmin1-keytab
+  - name: poweruser1-keytab
+    secret:
+      secretName: poweruser1-keytab
+  - name: ctaadmin2-keytab
+    secret:
+      secretName: ctaadmin2-keytab
+  {{ include "client.volumes" . | nindent 2 }}

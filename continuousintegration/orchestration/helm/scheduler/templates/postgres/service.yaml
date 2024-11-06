@@ -1,0 +1,19 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
+{{- $namespace := .Release.Namespace }}
+{{- $name := "postgres-scheduler" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+    - name: {{ $name }}
+      port: 5433
+      protocol: TCP
+{{- end }}

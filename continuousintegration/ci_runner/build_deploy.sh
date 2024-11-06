@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -28,24 +29,25 @@ usage() {
   echo "Usage: $0 [options]"
   echo ""
   echo "options:"
-  echo "  -h, --help:                               Shows help output."
-  echo "  -r, --reset:                              Shut down the build container and start a new one to ensure a fresh build."
-  echo "  -o, --operating-system <os>:              Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
-  echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "      --clean-build-dir:                    Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --clean-build-dirs:                   Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-  echo "      --disable-oracle-support:             Disables support for oracle."
-  echo "      --disable-ccache:                     Disables ccache for the building of the rpms."
-  echo "      --skip-build:                         Skips the build step."
-  echo "      --skip-deploy:                        Skips the redeploy step."
-  echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
-  echo "      --skip-debug-packages                 Skips the building of the debug RPM packages."
-  echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
-  echo "      --force-install:                      Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
-  echo "  --catalogue-credentials <path>: Path to the yaml file containing the type and credentials to configure the Catalogue. You can find an example file in the orchestration directory. Default: continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  echo "  --scheduler-credentials <path>: Path to the yaml file containing the type and credentials to configure the Scheduler. You can find an example file in the orchestration directory. Default: continuosintegration/orchestration/sched-vfs-creds.yaml.example"
+  echo "  -h, --help:                           Shows help output."
+  echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build."
+  echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
+  echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --disable-oracle-support:         Disables support for oracle."
+  echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
+  echo "      --force-install:                  Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
+  echo "      --skip-build:                     Skips the build step."
+  echo "      --skip-deploy:                    Skips the redeploy step."
+  echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
+  echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
+  echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
+  echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
+  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
+  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   exit 1
 }
 
@@ -61,6 +63,7 @@ compile_deploy() {
   local skip_cmake=false
   local skip_unit_tests=false
   local skip_debug_packages=false
+  local skip_image_reload=false
   local build_generator="Ninja"
   local cmake_build_type=""
   local operating_system="alma9"
@@ -76,8 +79,8 @@ compile_deploy() {
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
   local cta_version="5"
-  local catalogue_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/pgsql-pod-creds.yaml.example"
-  local scheduler_credentials="/home/cirunner/shared/CTA/continuousintegration/orchestration/sched-vfs-creds.yaml.example"
+  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
 
   # These versions don't affect anything functionality wise
   local vcs_version="dev"
@@ -97,8 +100,9 @@ compile_deploy() {
       --skip-cmake) skip_cmake=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
+      --skip-image-reload) skip_image_reload=true ;;
       --force-install) force_install=true ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
           shift
@@ -142,17 +146,27 @@ compile_deploy() {
           usage
         fi
         ;;
-      --catalogue-credentials)
-        test -f $2 || { echo "Error: --catalogue-credentials file $2 does not exist."; exit 1; }
-        catalogue_credentials=$2
+      --catalogue-config)
+        if [[ $# -gt 1 ]]; then
+          catalogue_config="$2"
+          shift
+        else
+          echo "Error: --catalogue-config requires an argument"
+          exit 1
+        fi
         shift
         ;;
-      --scheduler-credentials)
-        test -f $2 || { echo "Error: --scheduler-credentials file $2 does not exist."; exit 1; }
-        scheduler_credentials=$2
-        shift
+      --scheduler-config)
+        if [[ $# -gt 1 ]]; then
+          scheduler_config="$2"
+          shift
+        else
+          echo "Error: --scheduler-config requires an argument"
+          exit 1
+        fi
         ;;
       *)
+        echo "Unsupported argument: $1"
         usage
         ;;
     esac
@@ -167,15 +181,14 @@ compile_deploy() {
   fi
   echo "CTA directory found"
 
-  # Check if namespace exists
-  if kubectl get namespace "${build_namespace}" &>/dev/null; then
-    echo "Found existing namespace ${build_namespace}."
-  else
-    echo "Creating namespace: ${build_namespace}"
-    kubectl create namespace "${build_namespace}"
-  fi
-
   if [ ${skip_build} = false ]; then
+    # Check if namespace exists
+    if kubectl get namespace "${build_namespace}" &>/dev/null; then
+      echo "Found existing build namespace ${build_namespace}"
+    else
+      echo "Creating build namespace: ${build_namespace}"
+      kubectl create namespace "${build_namespace}"
+    fi
     # Delete old pod
     if [ ${reset} = true ]; then
       echo "Attempting shutdown of existing build pod..."
@@ -190,7 +203,7 @@ compile_deploy() {
       echo "Starting a new build pod: ${build_pod_name}..."
       case "${operating_system}" in
         alma9)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/pod-build-alma9.yml -n ${build_namespace}
+          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/alma9-build-pod.yml -n ${build_namespace}
           ;;
         *)
           echo "Invalid operating system provided: ${operating_system}"
@@ -264,13 +277,21 @@ compile_deploy() {
   fi
 
   if [ ${skip_deploy} = false ]; then
+
+
+    local redeploy_flags=""
+    if [ ${skip_image_reload} = true ]; then
+      redeploy_flags+=" --skip-image-reload"
+    fi
     echo "Redeploying CTA pods..."
     bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
       -n ${deploy_namespace} \
       --operating-system "${operating_system}" \
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
-      --catalogue-credentials ${catalogue_credentials} \
-      --scheduler-credentials ${scheduler_credentials}
+      --catalogue-config "${catalogue_config}" \
+      --scheduler-config "${scheduler_config}" \
+      --spawn-options " --reset-catalogue --reset-scheduler" \
+      ${redeploy_flags}
   fi
 }
 

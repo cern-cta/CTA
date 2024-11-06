@@ -24,7 +24,7 @@ usage() {
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
   echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
-  echo "  --scheduler-type <scheduler-type>:            The scheduler type. Ex: objectstore."
+  echo "  --scheduler-type <type>:                      The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
@@ -39,7 +39,7 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --cmake-build-type <build-type>:          Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --cmake-build-type <type>:                Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
 
   exit 1
 }
@@ -79,7 +79,7 @@ build_rpm() {
           usage
         fi
         ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
               echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
@@ -105,6 +105,10 @@ build_rpm() {
         ;;
       --scheduler-type)
         if [[ $# -gt 1 ]]; then
+          if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+              echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
+              exit 1
+          fi
           scheduler_type="$2"
           shift
         else
@@ -278,55 +282,58 @@ build_rpm() {
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
-    cmake_options+=" -DVCS_VERSION=${vcs_version}"
+    cmake_options+=" -D VCS_VERSION=${vcs_version}"
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
       echo "Using build type: ${cmake_build_type}"
-      cmake_options+=" -DCMAKE_BUILD_TYPE=${cmake_build_type}"
+      cmake_options+=" -D CMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
       echo "Skipping debug packages"
-      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=1"
+      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=1"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DSKIP_DEBUG_PACKAGES:STRING=0"
+      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=0"
     fi
 
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
       echo "Disabling Oracle Support";
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DDISABLE_ORACLE_SUPPORT:BOOL=OFF"
+      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
     fi
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       echo "Skipping unit tests";
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=1";
+      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=1";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DSKIP_UNIT_TESTS:STRING=0"
+      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=0"
     fi
 
     # CCache
     if [[ ${enable_ccache} = true ]]; then
       echo "Enabling ccache";
-      cmake_options+=" -DENABLE_CCACHE:STRING=1";
+      cmake_options+=" -D ENABLE_CCACHE:STRING=1";
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -DENABLE_CCACHE:STRING=0"
+      cmake_options+=" -D ENABLE_CCACHE:STRING=0"
     fi
 
     # Scheduler type
-    if [[ ${scheduler_type} != "objectstore" ]]; then
+    if [[ ${scheduler_type} == "postgres" ]]; then
       echo "Using specified scheduler database type $SCHED_TYPE";
-      local sched_opt=" -DCTA_USE_$(echo "${scheduler_type}" | tr '[:lower:]' '[:upper:]'):Bool=true ";
-      cmake_options+=" ${sched_opt}";
+      local sched_opt=" -D CTA_USE_PGSCHED";
+      cmake_options+=" -D CTA_USE_PGSCHED";
+    else
+      # unset it
+      cmake_options+=" -U CTA_USE_PGSCHED";
     fi
 
     cd "${build_dir}"

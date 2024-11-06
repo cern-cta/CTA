@@ -1,0 +1,26 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if eq $schedulerConfig.backend "ceph" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-conf
+  labels:
+    app.kubernetes.io/name: scheduler
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/component: scheduler
+    app.kubernetes.io/part-of: {{ .Values.partOf | default "cta" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+data:
+  ceph.conf: |
+    [global]
+      mon host = {{ $schedulerConfig.cephConfig.mon }}:{{ $schedulerConfig.cephConfig.monport }}
+
+  ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring: |
+    [client.{{ $schedulerConfig.cephConfig.id }}]
+      key = {{ $schedulerConfig.cephConfig.key }}
+      caps mon = "allow r"
+      caps osd = "allow rwx pool={{ $schedulerConfig.cephConfig.pool }} namespace={{ $schedulerConfig.cephConfig.namespace }}"
+
+{{- end }}

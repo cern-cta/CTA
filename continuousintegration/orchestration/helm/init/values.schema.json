@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "description": "Override the default name of the chart (e.g., init)."
+    },
+    "component": {
+      "type": "string",
+      "description": "The component of the application (e.g., frontend, backend, database)."
+    },
+    "partOf": {
+      "type": "string",
+      "description": "The larger system that this application is part of (e.g., CTA)."
+    },
+    "logStorage": {
+      "type": "string",
+      "description": "The size of the storage for shared logs of the deployment (e.g., 2Gi)."
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Docker registry for the image."
+            },
+            "repository": {
+              "type": "string",
+              "description": "Image repository."
+            },
+            "tag": {
+              "type": "string",
+              "description": "Image tag."
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Image pull policy (e.g., IfNotPresent)."
+            },
+            "pullSecrets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Image pull secrets for registry authentication."
+            }
+          },
+          "required": [
+            "registry",
+            "repository",
+            "tag"
+          ],
+          "description": "Global image settings."
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "description": "Global configuration settings."
+    }
+  },
+  "required": [
+    "nameOverride",
+    "component",
+    "partOf",
+    "logStorage",
+    "global"
+  ]
+}

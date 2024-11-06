@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -21,250 +21,199 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-# global variable to capture the return code of the last command executed in execute_log function
-execute_log_rc=0
-# orchestration directory so that we can come back here and launch delete_instance during cleanup
-orchestration_dir=${PWD}
-# keep or drop namespace after systemtest_script? By default drop it.
-keepnamespace=0
-# by default use sqlite DB
-useoracle=0
-# by default use VFS objectstore
-useceph=0
-# by default do not use systemd to manage services in containers
-usesystemd=0
-# time out for the kubernetes eoscta instance creation
-CREATEINSTANCE_TIMEOUT=1400
-# preflight test script
-PREFLIGHTTEST_SCRIPT='tests/preflighttest.sh'
-# default preflight checks timeout is 60 seconds
-PREFLIGHTTEST_TIMEOUT=60
-# default systemtest timeout is 1 hour
-SYSTEMTEST_TIMEOUT=3600
-# by default do not cleanup leftover namespaces
-cleanup_namespaces=0
-# By default assume that ORACLE_SUPPORT is ON
-# if this script is running outside of gitlab CI
-test -z ${ORACLE_SUPPORT+x} && ORACLE_SUPPORT="ON"
-# By default assume that SCHED_TYPE is "objectstore"
-# if this script is running outside of gitlab CI
-test -z ${SCHED_TYPE+x} && SCHED_TYPE="objectstore"
-
-die() { echo "$@" 1>&2 ; exit 1; }
-
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -i <docker image tag>] \
-      [-t <systemtest timeout in seconds>] [-e <eos_configmap>] \
-      [-a <additional_k8_resources>] [-k] [-O] \
-      [-D | -d <database_configmap>] [-S] [-U] \
-      [-Q]
-
-Options:
-  -k    keep namespace after systemtest_script run if successful
-  -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
-  -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
-  -S    Use systemd to manage services inside containers
-  -a    additional kubernetes resources added to the kubernetes namespace
-  -U    Run database unit test only
-  -C    Cleanup leftover kubernetes namespaces
-  -u    Prepare the pods to run the liquibase test
-  -T    Execute tests for external tape formats
-  -Q    Create the cluster using the last ctageneric image from main
-Create a kubernetes instance and launch the system test script specified.
-Makes sure the created instance is cleaned up at the end and return the status of the system test.
-EOF
-
-exit 1
+die() {
+  echo "$@" 1>&2
+  exit 1;
 }
 
-# options that must be passed to create_instance
-# always delete DB and OBJECTSTORE for tests
-CREATE_OPTS="-D -O"
+usage() {
+  echo "Script to create a Kubernetes instance and run a system test script in this instance."
+  echo ""
+  echo "Usage: $0 -n <namespace> -s <systemtest_script> -o <scheduler_config> -d <catalogue_config> -i <image_tag> [options]"
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                     Shows help output."
+  echo "  -n, --namespace <namespace>:    Specify the Kubernetes namespace (mandatory)."
+  echo "  -s, --test-script <script>:     Path to the system test script (mandatory)."
+  echo "  -o, --scheduler-config <file>:  Path to the scheduler config file (mandatory)."
+  echo "  -d, --catalogue-config <file>:  Path to the catalogue config file (mandatory)."
+  echo "  -i, --image-tag <tag>:          Docker image tag for the deployment (mandatory)."
+  echo "  -r, --registry-host <host>:     Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
+  echo "  -t, --test-timeout <seconds>:   Timeout for the system test in seconds."
+  echo "      --spawn-options <options>:  Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --test-options <options>:   Additional options to pass verbatim to the test script."
+  echo "  -K, --keep-namespace:           Keep the namespace after the system test script run if successful."
+  echo "  -C, --cleanup-namespaces:       Clean up leftover Kubernetes namespaces."
+  exit 1
+}
 
-while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCTQ" o; do
-    case "${o}" in
-        s)
-            systemtest_script=${OPTARG}
-            test -f ${systemtest_script} || error="${error}systemtest script file ${systemtest_script} does not exist\n"
-            ;;
-        n)
-            namespace=${OPTARG}
-            ;;
-        d)
-            CREATE_OPTS="${CREATE_OPTS} -d ${OPTARG}"
-            ;;
-        p)
-            CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
-            ;;
-        e)
-            config_eos=${OPTARG}
-            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
-            ;;
-        a)
-            CREATE_OPTS="${CREATE_OPTS} -a ${OPTARG}"
-            ;;
-        t)
-            SYSTEMTEST_TIMEOUT=${OPTARG}
-            ;;
-        k)
-            keepnamespace=1
-            ;;
-        D)
-            useoracle=1
-            ;;
-        O)
-            useceph=1
-            ;;
-        S)
-            usesystemd=1
-            ;;
-        U)
-            CREATE_OPTS="${CREATE_OPTS} -U"
-            PREFLIGHTTEST_SCRIPT='/usr/bin/true' # we do not run preflight test in the context of unit tests
-            ;;
-        C)
-            cleanup_namespaces=1
-            ;;
-        u)
-            CREATE_OPTS="${CREATE_OPTS} -u"
-            ;;
-        T)
-            CREATE_OPTS="${CREATE_OPTS} -T"
-            ;;
-        Q)
-            CREATE_OPTS="${CREATE_OPTS} -Q"
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
-
-
-if [ -z "${namespace}" ]; then
-    echo "a namespace is mandatory" 1>&2
-    usage
-fi
-
-if [ -z "${systemtest_script}" ]; then
-    echo "a systemtest script is mandatory" 1>&2
-    usage
-fi
-
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
-
-# ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
-if [ $ORACLE_SUPPORT == "OFF" ] ; then
-  database_configmap="pgsql-pod-creds.yaml.example"
-  CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
-  useoracle=0
-fi
-
-if [ $useoracle == 1 ] ; then
-    database_credentials=$(find /opt/kubernetes/CTA/ | grep oracle-creds.yaml | head -1)
-    if [ "-${database_credentials}-" == "--" ]; then
-      die "Oracle database requested but not database configuration was found."
-    else
-      CREATE_OPTS="${CREATE_OPTS} -d ${database_credentials}"
-    fi
-fi
-
-# SCHED_TYPE is an external variable of the gitlab-ci to use postgres scheduler backend if CTA is compiled with it
-if [ $SCHED_TYPE == "pgsched" ] ; then
-  schedstore_creds=$(find /opt/kubernetes/CTA/ | grep pgsched-creds.yaml | head -1)
-  CREATE_OPTS="${CREATE_OPTS} -o ${schedstore_creds}"
-  useceph=0
-fi
-
-if [ $useceph == 1 ] ; then
-    objectstore_credentials=$(find /opt/kubernetes/CTA/ | grep objectstore-file.yaml | head -1)
-    if [ "-${objectstore_credentials}-" == "--" ]; then
-      die "Ceph objecstore requested but not objectstore configuration was found."
-    else
-      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_credentials}"
-    fi
-fi
-
-if [ ! -z "${config_eos}" ]; then
-    CREATE_OPTS="${CREATE_OPTS} -e ${config_eos}"
-fi
-
-if [ $usesystemd == 1 ] ; then
-    CREATE_OPTS="${CREATE_OPTS} -S"
-fi
-
-log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
-mkdir -p ${log_dir}
-
-if [ $cleanup_namespaces == 1 ]; then
-    echo "Cleaning up old namespaces:"
-    kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git'
-    kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git' | xargs -itoto ./delete_instance.sh -n toto -D
-    echo DONE
-fi
-
-function execute_log {
+execute_cmd_with_log() {
   mycmd=$1
-  logfile=$2
+  logfile=$(realpath "$2")
   timeout=$3
-  echo "$(date): Launching ${mycmd}"
-  eval "(${mycmd} | tee -a ${logfile}) &"
-  execute_log_pid=$!
-  execute_log_rc=''
+  start_time=$(date +%s)
+  echo "================================================================================"
+  echo "Launching ${mycmd}"
+  echo "================================================================================"
+  echo "Logging to: ${logfile}"
+  {
+    timeout "${timeout}" bash -c "${mycmd}"
+  } 2>&1  | (tee -a "${logfile}")
+  execute_log_rc=$?
 
-  for ((i=0;i<${timeout};i++)); do
-    sleep 1
-    if [ ! -d /proc/${execute_log_pid} ]; then
-      wait ${execute_log_pid}
-      execute_log_rc=$?
-      break
-    fi
-  done
-  echo $i
+  end_time=$(date +%s)
+  elapsed_time=$(( end_time - start_time ))
+  echo "================================================================================"
+  echo "Waiting for process took ${elapsed_time} seconds"
 
   if [ "${execute_log_rc}" == "" ]; then
-    echo "TIMEOUTING COMMAND, setting exit status to 1"
+    echo "TIMEOUTING COMMAND, setting exit status to 1" 1>&2
     kill -9 -${execute_log_pid}
     execute_log_rc=1
   fi
 
   if [ "${execute_log_rc}" != "0" ]; then
+    echo "Process exited with exit code: ${execute_log_rc}." 1>&2
     if [ $keepnamespace == 0 ] ; then
-      echo "FAILURE: cleaning up environment"
+      echo "Cleaning up environment"
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
+      echo "Cleanup completed"
+    else
+      echo "Skipping environment clean up"
     fi
-    echo "FAILURE: environment will not be cleaned up"
-    exit 1
+    die "Command execution of $mycmd failed"
   fi
 }
 
+run_systemtest() {
 
-# create instance timeout after 10 minutes
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" ${CREATEINSTANCE_TIMEOUT}
+  orchestration_dir=${PWD} # orchestration directory so that we can come back here and launch delete_instance during cleanup
+  create_instance_timeout=600 # time out for the create_instance.sh script
+  preflighttest_script='tests/preflighttest.sh'
+  preflighttest_timeout=60 # default preflight checks timeout is 60 seconds
 
-# Launch preflighttest and timeout after ${PREFLIGHTTEST_TIMEOUT} seconds
-if [ -x ${PREFLIGHTTEST_SCRIPT} ]; then
-  cd $(dirname ${PREFLIGHTTEST_SCRIPT})
-  echo "Launching preflight test: ${PREFLIGHTTEST_SCRIPT}"
-  execute_log "./$(basename ${PREFLIGHTTEST_SCRIPT}) -n ${namespace} 2>&1" "${log_dir}/$(basename ${PREFLIGHTTEST_SCRIPT}).log" ${PREFLIGHTTEST_TIMEOUT}
-  cd ${orchestration_dir}
-else
-  echo "SKIPPING preflight test: ${PREFLIGHTTEST_SCRIPT} not available"
-fi
+  # Argument defaults
+  keepnamespace=0 # keep or drop namespace after systemtest_script? By default drop it.
+  systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
+  cleanup_namespaces=0 # by default do not cleanup leftover namespaces
+  spawn_options=" --reset-catalogue --reset-scheduler"
+  extra_test_options=""
 
-# launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds
-cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" ${SYSTEMTEST_TIMEOUT}
-cd ${orchestration_dir}
+  # Parse command line arguments
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage ;;
+      -s|--test-script)
+        systemtest_script="$2"
+        test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
+        shift ;;
+      -n|--namespace)
+        namespace="$2"
+        shift ;;
+      -t|--test-timeout)
+        systemtestscript_timeout="$2"
+        shift ;;
+      -r|--registry-host)
+        registry_host="$2"
+        spawn_options+=" --registry-host ${registry_host}"
+        shift ;;
+      -i|--image-tag)
+        image_tag="$2"
+        spawn_options+=" --image-tag ${image_tag}"
+        shift ;;
+      -o|--scheduler-config)
+        scheduler_config="$2"
+        test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
+        spawn_options+=" --scheduler-config ${scheduler_config}"
+        shift ;;
+      -d|--catalogue-config)
+        catalogue_config="$2"
+        test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
+        spawn_options+=" --catalogue-config ${catalogue_config}"
+        shift ;;
+      --spawn-options)
+        extra_spawn_options="$2"
+        shift ;;
+      --test-options)
+        extra_test_options="$2"
+        shift ;;
+      -K|--keep-namespace) keepnamespace=1 ;;
+      -C|--cleanup-namespaces) cleanup_namespaces=1 ;;
+      *)
+        echo "Unsupported argument: $1"
+        usage
+        ;;
+    esac
+    shift
+  done
 
-# delete instance?
-if [ $keepnamespace == 1 ] ; then
-  exit 0
-fi
-./delete_instance.sh -n ${namespace}
-exit $?
+  # Argument checks
+  if [ -z "${namespace}" ]; then
+    echo "Missing mandatory argument: -n | --namespace"
+    usage
+  fi
+  if [ -z "${systemtest_script}" ]; then
+    echo "Missing mandatory argument: -s | --test-script"
+    usage
+  fi
+  if [ -z "${image_tag}" ]; then
+    echo "Missing mandatory argument: -i | --image-tag"
+    usage
+  fi
+  if [ -z "${scheduler_config}" ]; then
+    echo "Missing mandatory argument: -o | --scheduler-config"
+    usage
+  fi
+  if [ -z "${catalogue_config}" ]; then
+    echo "Missing mandatory argument: -d | --catalogue-config"
+    usage
+  fi
+
+  log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
+  mkdir -p "${log_dir}"
+  if [ -d "${log_dir}" ]; then
+    # Delete log contents of previous runs if they exist
+    rm -rf "${log_dir:?}/"*
+  fi
+
+  if [ $cleanup_namespaces == 1 ]; then
+      echo "Cleaning up old namespaces:"
+      kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git'
+      kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep -E '\-[0-9]+git' | xargs -itoto ./delete_instance.sh -n toto -D
+      echo "Cleanup complete"
+  elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
+    die "Namespace ${namespace} already exists"
+  fi
+
+  # create instance timeout after 10 minutes
+  execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
+
+  # Launch preflighttest and timeout after ${preflighttest_timeout} seconds
+  if [ -x ${preflighttest_script} ]; then
+    cd $(dirname "${preflighttest_script}")
+    echo "Launching preflight test: ${preflighttest_script}"
+    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" \
+                         "${log_dir}/$(basename ${preflighttest_script} | cut -d. -f1).log" \
+                         ${preflighttest_timeout}
+    cd "${orchestration_dir}"
+  else
+    echo "Skipping preflight test: ${preflighttest_script} not available"
+  fi
+
+  # launch system test and timeout after ${systemtestscript_timeout} seconds
+  cd $(dirname "${systemtest_script}")
+  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" \
+                       "${log_dir}/$(basename ${systemtest_script} | cut -d. -f1).log" \
+                       ${systemtestscript_timeout}
+  cd "${orchestration_dir}"
+
+  # delete instance?
+  if [ $keepnamespace == 1 ] ; then
+    exit 0
+  fi
+  ./delete_instance.sh -n ${namespace}
+  exit $?
+}
+
+run_systemtest "$@"

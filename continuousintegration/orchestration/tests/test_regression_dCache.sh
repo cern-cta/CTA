@@ -24,7 +24,6 @@ EOF
 }
 
 NAMESPACE=""
-tape_server='tpsrv01'
 
 while getopts "n:" o; do
   case "${o}" in
@@ -56,6 +55,3 @@ echo "DEBUG INFO... descibe statefulset"
 kubectl -n "${NAMESPACE}" describe statefulset
 echo "DEBUG INFO... descibe pod"
 kubectl -n "${NAMESPACE}" describe pod store-dcache-door
-
-
-exit 0

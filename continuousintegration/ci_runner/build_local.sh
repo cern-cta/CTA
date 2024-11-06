@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -24,23 +25,23 @@ usage() {
   echo "Usage: $0 [options]"
   echo ""
   echo "options:"
-  echo "  -h, --help:                               Shows help output."
-  echo "      --build-generator <generator>:        Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "      --clean-build-dir:                    Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --clean-build-dirs:                   Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --cmake-build-type <build-type>:      Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-  echo "      --disable-oracle-support:             Disables support for oracle."
-  echo "      --disable-ccache:                     Disables ccache for the building of the rpms."
-  echo "      --skip-cmake:                         Skips the cmake step of the build_rpm stage during the build process."
-  echo "      --skip-debug-packages                 Skips the building of the debug RPM packages."
-  echo "      --skip-unit-tests:                    Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --skip-srpms:                         Skips the building of the SRPMs."
-  echo "      --install:                            Installs the required yum packages."
-  echo "      --scheduler-type <scheduler-type>:    The scheduler type. Ex: objectstore."
+  echo "  -h, --help:                           Shows help output."
+  echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
+  echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "      --disable-oracle-support:         Disables support for oracle."
+  echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
+  echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
+  echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
+  echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
+  echo "      --skip-srpms:                     Skips the building of the SRPMs."
+  echo "      --install:                        Installs the required yum packages."
+  echo "      --scheduler-type <type>:          The scheduler type. Ex: objectstore."
   exit 1
 }
 
-compile_deploy() {
+build_local() {
 
   # Input args
   local clean_build_dir=false
@@ -76,7 +77,7 @@ compile_deploy() {
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-srpms) skip_srpms=true ;;
       --install) install=true ;;
-      --build-generator) 
+      --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
           shift
@@ -108,6 +109,7 @@ compile_deploy() {
         fi
         ;;
       *)
+        echo "Unsupported argument: $1"
         usage
         ;;
     esac
@@ -188,4 +190,4 @@ compile_deploy() {
   cd "${initial_loc}"
 }
 
-compile_deploy "$@"
+build_local "$@"

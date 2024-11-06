@@ -17,32 +17,19 @@
 
 . /opt/run/bin/init_pod.sh
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
 
-# source library configuration file
-echo "Using this configuration for library:"
-/opt/run/bin/init_library.sh
-cat /tmp/library-rc.sh
-. /tmp/library-rc.sh
+ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
-ln -s /dev/${LIBRARYDEVICE} /dev/smc
-
+# install RPMs
+yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # systemd is available
-
-cat <<EOF >/etc/sysconfig/cta-rmcd
-DAEMON_COREFILE_LIMIT=unlimited
-CTA_RMCD_OPTIONS=/dev/smc
-EOF
-
-  # install RPMs
-  yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
-
   # rmcd will be running as non root user, we need to fix a few things:
   # device access rights
-  chmod 666 /dev/${LIBRARYDEVICE}
+  chmod 666 /dev/${LIBRARY_DEVICE}
 
   echo "Launching cta-rmcd with systemd:"
   systemctl start cta-rmcd
@@ -52,12 +39,10 @@ EOF
 
 else
   # systemd is not available
-  # install RPMs?
-  yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
   # to get rmcd logs to stdout
   tail -F /var/log/cta/cta-rmcd.log &
-
+  touch /RMCD_READY
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
   runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
-
 fi

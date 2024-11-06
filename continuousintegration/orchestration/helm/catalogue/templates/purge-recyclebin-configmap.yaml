@@ -1,0 +1,15 @@
+{{- if .Values.resetCatalogue -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: purge-recyclebin-ext
+data:
+  purge_recyclebin.ext: -|
+    set LINESIZE 1000
+    set pages 1000
+    select * from user_ts_quotas;
+    SELECT * FROM RECYCLEBIN;
+    SELECT * FROM USER_RECYCLEBIN;
+    purge recyclebin;
+    quit;
+{{- end }}

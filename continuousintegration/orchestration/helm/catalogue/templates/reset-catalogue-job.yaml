@@ -1,0 +1,79 @@
+{{- if .Values.resetCatalogue -}}
+{{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
+{{- $namespace := .Release.Namespace }}
+{{- $name := "reset-catalogue" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-job
+  namespace: {{ $namespace | quote}}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
+    "helm.sh/hook-delete-policy": keep
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+      {{- include "catalogueReset.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "catalogueReset.image" . }}
+          imagePullPolicy: {{ include "catalogueReset.imagePullPolicy" . }}
+          command: ['/opt/run/bin/reset_catalogue.sh']
+          args: []
+          securityContext:
+            privileged: true
+          stdin: true
+          resources:
+            requests:
+              memory: "256Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              memory: "2Gi"
+              ephemeral-storage: "1Gi"
+          env:
+            - name: MY_NAME
+              value: {{ $name }}
+            - name: MY_NAMESPACE
+              value: {{ $namespace | quote}}
+            - name: INSTANCE_NAME
+              value: {{ $namespace | quote}}
+            - name: SCHEMA_VERSION
+              value: {{ .Values.schemaVersion | quote}}
+            - name: CATALOGUE_BACKEND
+              value: {{ $catalogueConfig.backend | quote}}
+          volumeMounts:
+            - name: purge-database-ext
+              mountPath: /opt/ci/purge_database.ext
+              subPath: purge_database.ext
+            - name: purge-recyclebin-ext
+              mountPath: /opt/ci/purge_recyclebin.ext
+              subPath: purge_recyclebin.ext
+            - name: catalogue-config
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+            - mountPath: /mnt/logs
+              name: logstorage
+            - mountPath: /shared
+              name: shared
+      volumes:
+        - name: purge-database-ext
+          configMap:
+            name: purge-database-ext
+        - name: purge-recyclebin-ext
+          configMap:
+            name: purge-recyclebin-ext
+        - name: catalogue-config
+          configMap:
+            name: cta-catalogue-conf
+        - name: shared
+          hostPath:
+            path: /opt/cta
+        - name: logstorage
+          persistentVolumeClaim:
+            claimName: claimlogs
+{{- end }}

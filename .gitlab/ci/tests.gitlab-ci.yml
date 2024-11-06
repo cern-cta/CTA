@@ -101,6 +101,41 @@ unit-test-postgresql:
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
+unit-test-oracle:
+  stage: test
+  needs:
+    - job: build-cta-rpm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - if: $ORACLE_SUPPORT == "OFF"
+      when: never
+    - when: on_success
+  image: $EL9_IMAGE
+  variables:
+    CTAREPODIR: /tmp/repo
+    ORACLE_USERNAME: cta_dev04
+    ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
+    # Note that this expects the full url; not a shortname relying on tnsnames
+    ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
+  before_script:
+    - *before-script-alma9
+  script:
+    - yum -y install cta-catalogueutils
+    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
+    - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
+    - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+  # Adding this resource group ensures only a single instance of this job can run at any given time
+  # This is necessary as the job uses a single account on a centralized database.
+  resource_group: oracle-centralized-db-cta-dev04
+
 test-cta-release:
   stage: test
   needs:
@@ -109,6 +144,8 @@ test-cta-release:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - when: on_success
   image: $EL9_IMAGE
@@ -141,4 +178,4 @@ test-cta-release:
   artifacts:
     when: always
     paths:
-    - checkpkg-output.json
+      - checkpkg-output.json

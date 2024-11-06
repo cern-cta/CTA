@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "description": "Docker registry for the image."
+            },
+            "repository": {
+              "type": "string",
+              "description": "Image repository."
+            },
+            "tag": {
+              "type": "string",
+              "description": "Image tag."
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Image pull policy (e.g., IfNotPresent)."
+            },
+            "pullSecrets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Image pull secrets for registry authentication."
+            }
+          },
+          "required": [
+            "registry",
+            "repository",
+            "tag",
+            "pullPolicy",
+            "pullSecrets"
+          ],
+          "description": "Global image settings."
+        },
+        "useSystemd": {
+          "type": "boolean",
+          "description": "Use systemd for service management."
+        },
+        "catalogueSchemaVersion": {
+          "type": "string",
+          "description": "Version of the catalogue schema. Used for automatic redeployment."
+        },
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "scheduler": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "YAML configuration provided as a string (via --set-file)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "backend": {
+                      "type": "string",
+                      "enum": [
+                        "VFS",
+                        "ceph",
+                        "postgres"
+                      ],
+                      "description": "The backend type to use (e.g., VFS, ceph, postgres)."
+                    },
+                    "cephConfig": {
+                      "type": "object",
+                      "properties": {
+                        "mon": {
+                          "type": "string",
+                          "description": "Ceph monitor address."
+                        },
+                        "monport": {
+                          "type": "string",
+                          "description": "Ceph monitor port."
+                        },
+                        "pool": {
+                          "type": "string",
+                          "description": "Ceph pool."
+                        },
+                        "namespace": {
+                          "type": "string",
+                          "description": "Ceph namespace."
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Ceph user ID."
+                        },
+                        "key": {
+                          "type": "string",
+                          "description": "Ceph user key."
+                        }
+                      },
+                      "required": [
+                        "mon",
+                        "monport",
+                        "pool",
+                        "namespace",
+                        "id",
+                        "key"
+                      ],
+                      "description": "Configuration for Ceph backend."
+                    },
+                    "postgresConfig": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "string",
+                          "description": "PostgreSQL username."
+                        },
+                        "password": {
+                          "type": "string",
+                          "description": "PostgreSQL password."
+                        },
+                        "database": {
+                          "type": "string",
+                          "description": "PostgreSQL database name."
+                        },
+                        "server": {
+                          "type": "string",
+                          "description": "PostgreSQL server address."
+                        }
+                      },
+                      "required": [
+                        "username",
+                        "password",
+                        "database",
+                        "server"
+                      ],
+                      "description": "Configuration for PostgreSQL backend."
+                    },
+                    "vfsConfig": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "description": "File path for file-based backend."
+                        }
+                      },
+                      "required": [
+                        "path"
+                      ],
+                      "description": "Configuration for file-based backend."
+                    }
+                  },
+                  "required": [
+                    "backend"
+                  ],
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "backend": {
+                          "enum": [
+                            "ceph"
+                          ]
+                        },
+                        "cephConfig": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "backend": {
+                          "enum": [
+                            "postgres"
+                          ]
+                        },
+                        "postgresConfig": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "backend": {
+                          "enum": [
+                            "VFS"
+                          ]
+                        },
+                        "vfsConfig": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "scheduler"
+          ],
+          "description": "Global configuration settings for the scheduler."
+        }
+      },
+      "required": [
+        "image",
+        "useSystemd",
+        "catalogueSchemaVersion",
+        "configuration"
+      ]
+    }
+  },
+  "required": [
+    "global"
+  ]
+}

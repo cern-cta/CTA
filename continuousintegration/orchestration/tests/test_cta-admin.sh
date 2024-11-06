@@ -55,7 +55,7 @@ echo "Copying test scripts to pods..."
 kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 
 # Wait for script to rm the drive and restore it.
-# TODO: This is not working correctly on CI but it works for buildtree. Not needed at the moment but when grpc frontend is ready we will need to restart restart tpsrv02 pod.
+# TODO: This is not working correctly on CI but it works for buildtree. Not needed at the moment but when grpc frontend is ready we will need to restart restart tpsrv01-0 pod.
 # (
 # TIMEOUT=360
 # SECS=0
@@ -69,21 +69,21 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 #   SECS=$(( ${SECS} + 1 ))
 # done
 #
-# kubectl -n ${NAMESPACE} delete pod tpsrv02
+# kubectl -n ${NAMESPACE} delete pod tpsrv01-0
 #
 # SECS=0
-# while test 1 == "$(kubectl -n ${NAMESPACE} get pods | grep tpsrv02 | wc -l)"; do
+# while test 1 == "$(kubectl -n ${NAMESPACE} get pods | grep tpsrv01-0 | wc -l)"; do
 #   if test ${SECS} -eq ${TIMEOUT}; then
-#     echo "HOST: ERROR. Timed out while waiting for tpsrv02 to be deleted."
+#     echo "HOST: ERROR. Timed out while waiting for tpsrv01-0 to be deleted."
 #   fi
-#   echo "HOST: Waiting for tpsrv02 to be deleted..."
+#   echo "HOST: Waiting for tpsrv01-0 to be deleted..."
 #   sleep 1
 #   SECS=$(( ${SECS} + 1 ))
 # done
 #
 # # Find the yaml file used to generate the pod.
-# tpsrv02_yaml=$(find /tmp | grep pod-tpsrv02.yaml)
-# kubectl create -f ${tpsrv02_yaml} --namespace=${NAMESPACE}
+# tpsrv-1_yaml=$(find /tmp | grep pod-tpsrv01-0.yaml)
+# kubectl create -f ${tpsrv-1_yaml} --namespace=${NAMESPACE}
 #
 # exit 0
 # ) &

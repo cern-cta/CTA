@@ -1,0 +1,19 @@
+{{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
+{{- if and (eq $catalogueConfig.backend "postgres") (not $catalogueConfig.postgresConfig.remote) }}
+{{- $namespace := .Release.Namespace }}
+{{- $name := "postgres-catalogue" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+    - name: {{ $name }}
+      port: 5432
+      protocol: TCP
+{{- end }}

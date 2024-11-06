@@ -18,26 +18,39 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
-# my environment variables
-ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
-    LOCALORCHESTRATIONDIR="/opt/ci" \
-    BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
+ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
     CTAREPODIR="/opt/repo"
 
-# Manage repos before running yum
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
-COPY ${BASEDIR}/../etc/ /etc/
-# COPY ${BASEDIR}/yum/ /etc/yum/
-COPY ${BASEDIR}/etc/yum/pluginconf.d/versionlock.list  /etc/dnf/plugins/versionlock.list
+# Docker image run setup
+COPY ${BASEDIR}/run.sh /
+
+# Add custom rc.local to massage kubernetes resources for the taget docker container
+COPY ${BASEDIR}/rc.local /etc/rc.d
+
+# Make sure it can be executed by root
+RUN chmod 744 /etc/rc.local
+
+# disable selinux so that systemd works if the container is booted with an image that already contains selinux
+COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
 
+# Custom Yum repo setup
+ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
+ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+
+COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
+COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
+
+# Install necessary packages
+# Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
 RUN yum install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
       jq bc \
+      sqlite \
   && \
     # where do we want to get xroot from?
     # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
@@ -47,7 +60,7 @@ RUN yum install -y \
     # Newer version of CTA requires xroot >= 4.4.1-1...
     # therefore set epel priority to 4...
     # Create local repo for cta artifacts and to cache RPMs locally
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR} \
+    mkdir -p ${CTAREPODIR}/RPMS/x86_64 \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)
@@ -69,28 +82,8 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   ; \
     rm -f /etc/rc.d/rc.local
 
-# Sqlite3 not installed by default in Alma9 image
-RUN yum install -y sqlite
-
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# Add pod specific configuration
-COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
-
-# Docker image run setup
-COPY ${BASEDIR}/run.sh /
-
-# Add custom rc.local to massage kubernetes resources for
-# the taget docker container
-COPY ${BASEDIR}/rc.local /etc/rc.d
-
-# Make sure it can be executed by root
-RUN chmod 744 /etc/rc.local
-
-# disable selinux so that systemd works if the container is booted
-# with an image that already contains selinux
-COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # One more thing so that we can use systemd
 VOLUME [ "/sys/fs/cgroup" ]

@@ -1,2 +1,63 @@
+# Ignore the local Git repository
 .git
+.gitignore
+
+# Ignore logs
+*.log
+log/
+logs/
+
+# Ignore any compiled Python files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Ignore local environment and configuration files
+*.env
+.env.*
+Dockerfile.env
+
+# Ignore Dockerfile backups and temp files
+Dockerfile.*
+!Dockerfile
+*.swp
+*.tmp
+
+# Ignore build artifacts
+build_*/
+build/
+dist/
+*.o
+*.a
+*.out
+*.so
+*.class
+*.jar
+*.war
+*.dll
+*.exe
+*.pdb
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files and caches
+tmp/
+cache/
+*.bak
+*.old
+*.swp
+*.swo
+*.swn
+*.tmp
+*.orig
+
+# Ignore repo related files
 assets/

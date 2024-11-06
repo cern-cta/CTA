@@ -1,4 +1,29 @@
-# Here are stored global settings for all the project pods
+# These settings are available to all the subcharts
 global:
-  imagePullSecret: "ctaregsecret"
-  image: gitlab-registry.cern.ch/cta/ctageneric:7894245git8a4cc01b
+  image:
+    registry: gitlab-registry.cern.ch/cta
+    repository: ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets:
+    - ctaregsecret
+    - reg-ctageneric
+  useSystemd: false
+
+  # This is not directly used by the pod yet. Once we have converted the pods into deployments,
+  # the relevant pods can automatically redeploy on a schema version change.
+  catalogueSchemaVersion: ""
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+
+  volumeMounts:
+  - name: shared
+    mountPath: /shared
+  - name: logstorage
+    mountPath: /mnt/logs

@@ -18,9 +18,9 @@
 
 
 echo "Looking for HTTP staging activity..."
-activity_http=$(cat $(find /var/eos/report/$(date +%Y)/$(date +%m)/ | grep '.eosreport') | grep 'event=stage' | grep 'activity=CTA-Test-HTTP-CI-TEST-activity-passing')
+activity_http=$(cat $(find /var/log/eos/report/$(date +%Y)/$(date +%m)/ | grep '.eosreport') | grep 'event=stage' | grep 'activity=CTA-Test-HTTP-CI-TEST-activity-passing')
 
-report_file_name="/var/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)$(date +%d).eosreport"
+report_file_name="/var/log/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)$(date +%d).eosreport"
 
 # Check that activity is set for staging of file `test_valid_instance`
 valid_act_stage_logline=$(cat $report_file_name | grep 'event=stage' | grep 'test_valid_instance')

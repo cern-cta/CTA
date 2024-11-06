@@ -1,0 +1,78 @@
+{{ $name := "liquibase-update" }}
+{{ $namespace := .Release.Namespace }}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  restartPolicy: Never
+  imagePullSecrets:
+  {{- range .Values.image.pullSecrets }}
+  - name: {{ . }}
+  {{- end }}
+  containers:
+  - name: {{ $name }}
+    # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
+    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    stdin: true
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+    env:
+    - name: MY_NAME
+      value: {{ $name | quote }}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote }}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote }}
+    - name: TERM
+      value: "xterm"
+    # This sets up the script used in the liquibase update test
+    command: ["/bin/bash", "-c"]
+    args:
+      - |
+        echo "#!/bin/bash" > /launch_liquibase.sh && \
+        echo "COMMAND=\$1" >> /launch_liquibase.sh && \
+        echo "/entrypoint.sh -d -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -i '{{ .Values.catalogueCommitId }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh && \
+        chmod +x /launch_liquibase.sh
+        sleep infinity
+    volumeMounts:
+    - name: yum-repos
+      mountPath: /shared/etc_yum.repos.d
+    - name: catalogue-config
+      mountPath: /shared/etc_cta/cta-catalogue.conf
+      subPath: cta-catalogue.conf
+    - name: logstorage
+      mountPath: /mnt/logs
+    securityContext:
+      privileged: true
+    readinessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - "-c"
+          - "test -f /launch_liquibase.sh"
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+      successThreshold: 1
+  volumes:
+  - name: yum-repos
+    configMap:
+      name: yum.repos.d-config
+  - name: catalogue-config
+    configMap:
+      name: cta-catalogue-conf
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-cta-client
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  cta-cli.conf: |-
+    cta.endpoint {{ .Values.conf.cta.endpoint }}

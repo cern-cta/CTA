@@ -4,36 +4,73 @@
 .kubernetes-test:
   needs:
     - job: docker-build-ctageneric
+      optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
     - when: on_success
   variables:
     TEST_SCRIPT:
-    EXTENDED_OPTIONS:
+    # Passed to the run_systemtest.sh script verbatim
+    EXTRA_ARGS: ""
+    # Passed to the create_instance.sh script verbatim
+    EXTRA_SPAWN_ARGS: ""
+    # Passed to the test script verbatim
+    EXTRA_TEST_ARGS: ""
+  before_script:
   before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
     # Keep the namespace name under 64 characters;
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
     - git submodule update --init --recursive
-    - cd continuousintegration/orchestration/
-    - if [[ ${SYSTEMTESTS_ONLY} == "TRUE" ]]; then ONLY_SYSTEST_OPT='-Q' ; fi
-    - ./run_systemtest.sh -n ${NAMESPACE}
-                          -p ${CI_PIPELINE_ID}
-                          -s ${TEST_SCRIPT}
-                          ${EXTENDED_OPTIONS}
-                          ${ONLY_SYSTEST_OPT}
+    # Which scheduler to use
+    - |
+      if [ $SCHED_TYPE == "objectstore" ]; then
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+      else
+        SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
+      fi
+    # Which catalogue to use
+    - |
+      if [ $ORACLE_SUPPORT == "ON" ]; then
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+      else
+        CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+      fi
+    # Which image tag to use
+    - cd continuousintegration/ci_helpers/
+    - |
+      if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
+        if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
+          IMAGE_TAG=$(./get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
+        else
+          IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
+        fi
+      else
+        IMAGE_TAG=$CTA_BUILD_ID
+      fi
+    # Set up the additional arguments array to pass to the run_systemtest.sh script
+    - args_array=($EXTRA_ARGS)
+    - |
+      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
+        extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")
+      fi
+    - |
+      if [[ -n "${EXTRA_TEST_ARGS}" ]]; then
+        extra_args+=(--test-options "${EXTRA_TEST_ARGS}")
+      fi
+    # Run test
+    - cd ../orchestration/
+    - ./run_systemtest.sh --namespace ${NAMESPACE} --image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
   artifacts:
     when: always
     expire_in: 30 days
     paths:
       - pod_logs
-  tags:
+  tags: # Used to indicate that these jobs should run on our own cirunner machines
     - kubernetes
     - mhvtl
 
@@ -45,7 +82,7 @@ k8s-test-client:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-client-gfal2:
   stage: test
@@ -53,7 +90,7 @@ k8s-test-client-gfal2:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-repack:
   stage: test
@@ -61,7 +98,7 @@ k8s-test-repack:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-cta-admin:
   stage: test
@@ -69,18 +106,7 @@ k8s-test-cta-admin:
     - .kubernetes-test
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
-
-k8s-unit-test-oracle:
-  stage: test
-  extends:
-    - .kubernetes-test
-  variables:
-    # The extended option execute a special code path in `create_instance.sh` that just spawns a pod
-    # that runs the oracle unit tests. The script this pod runs is `pod-oracleunittests.sh`, and the
-    # pod's yaml file is `pod-oracleunittests.yaml`
-    TEST_SCRIPT: "/usr/bin/true"
-    EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
+    EXTRA_ARGS: "--test-timeout 2400"
 
 # Manually triggered
 
@@ -108,8 +134,14 @@ k8s-test-liquibase-update:
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/update_db_test.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
+    TEST_SCRIPT: "tests/test_liquibase_update.sh"
+    EXTRA_ARGS: "--test-timeout 2400"
+  before_script:
+    - !reference [.kubernetes-test, before_script]
+    - git submodule update --init --recursive
+    - PREV_CATALOGUE_VERSION=$(./continuousintegration/ci_helpers/get_prev_catalogue_schema_version.sh)
+    # Note that we need to do this here as the image-tag is not available yet in the variables part
+    - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
 k8s-test-external-tape-formats:
   stage: test
@@ -119,7 +151,7 @@ k8s-test-external-tape-formats:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/external_tapes_test.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-regression-dCache:
   stage: test
@@ -129,8 +161,7 @@ k8s-test-regression-dCache:
     - !reference [.manual-rules, rules]
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
-    EXTENDED_OPTIONS: "-O -D -S -C"
+    EXTRA_OPTIONS: "--test-timeout 2400"
   tags:
     - kubernetes
-    #- mhvtl
     - xlarge

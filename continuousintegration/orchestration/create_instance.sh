@@ -15,389 +15,309 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# CTA registry secret name
-ctareg_secret='ctaregsecret'
+set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
 
-# defaults scheduler datastore to objectstore (using a file)
-config_schedstore="/opt/kubernetes/CTA/objectstore/objectstore-file.yaml"
-# defaults DB to sqlite
-config_database="/opt/kubernetes/CTA/database/oracle-creds.yaml"
-# default library model
-model="mhvtl"
-# defaults MGM namespace to quarkdb with http
-config_eos="./eos5-config-quarkdb-https.yaml"
-# shared configmap for eoscta instance
-config_eoscta="./eoscta-config.yaml"
-config_script="./sandbox-script.yaml"
-keypass_names="./keypass-names-configmap.yaml"
-config_kdc="./kdc-krb5.yaml"
-
-# EOS short instance name
-EOSINSTANCE=ctaeos
-
-# By default to not use systemd to manage services inside the containers
-usesystemd=0
-
-# By default keep Database and keep Scheduler datastore data
-# default should not make user loose data if he forgot the option
-keepdatabase=1
-keepobjectstore=1
-
-# By default run the standard test no oracle dbunittests
-runoracleunittests=0
-
-# By default doesn't prepare the images with the previous schema version
-updatedatabasetest=0
-
-# By default doesn't run the tests for external tape formats
-runexternaltapetests=0
-
-# Create an instance for
-systest_only=0
-
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> [-o <schedstore_configmap>] [-d <database_configmap>] \
-      [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID>] [-i <docker image tag>] [-r <docker registry>] \
-      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U] [-Q]
-
-Options:
-  -S    Use systemd to manage services inside containers
-  -D	wipe database content during initialization phase (database content is kept by default)
-  -O	wipe scheduler datastore (objectstore or postgres) content during initialization phase (content is kept by default)
-  -a    additional kubernetes resources added to the kubernetes namespace
-  -U    Run database unit test only
-  -u    Prepare the pods to run the liquibase test
-  -T    Execute tests for external tape formats
-  -Q    Create the cluster using the last ctageneric image from main
-  -r    Provide the docker registry. Defaults to gitlab-registry.cern.ch/cta"
-EOF
-exit 1
+die() {
+  echo "$@" 1>&2
+  exit 1
 }
 
-die() { echo "$@" 1>&2 ; exit 1; }
+log_run() {
+  echo "Running: $*"
+  "$@"
+}
 
-REGISTRY_HOST="gitlab-registry.cern.ch/cta"
-
-while getopts "n:o:d:e:a:p:b:i:r:B:E:SDOUumTQ" o; do
-    case "${o}" in
-        o)
-            config_schedstore=${OPTARG}
-            test -f ${config_schedstore} || error="${error}Scheduler database credentials file ${config_schedstore} does not exist\n"
-            ;;
-        d)
-            config_database=${OPTARG}
-            test -f ${config_database} || error="${error}Database configmap file ${config_database} does not exist\n"
-            ;;
-        e)
-            config_eos=${OPTARG}
-            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
-            ;;
-        a)
-            additional_resources=${OPTARG}
-            test -f ${additional_resources} || error="${error}File ${additional_resources} does not exist\n"
-            ;;
-        m)
-            model=${OPTARG}
-            if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then error="${error}Library model ${model} does not exist\n"; fi
-            ;;
-        n)
-            instance=${OPTARG}
-            ;;
-        p)
-            pipelineid=${OPTARG}
-            ;;
-        i)
-            dockerimage=${OPTARG}
-            ;;
-        r)
-            REGISTRY_HOST=${OPTARG}
-            ;;
-        S)
-            usesystemd=1
-            ;;
-        O)
-            keepobjectstore=0
-            ;;
-        D)
-            keepdatabase=0
-            ;;
-        U)
-            runoracleunittests=1
-            ;;
-        T)
-            runexternaltapetests=1
-            ;;
-        u)
-            updatedatabasetest=1
-            ;;
-        Q)
-            systest_only=1
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
-
-if [ -z "${instance}" ]; then
-    usage
-fi
-
-if [ -n "${pipelineid}" ] && [ -n "${dockerimage}" ]; then
-    usage
-fi
-
-if ! command -v helm >/dev/null 2>&1; then
-    echo "ERROR: Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-    exit 1
-fi
-
-# everyone needs poddir temporary directory to generate pod yamls
-poddir=$(mktemp -d)
-
-# Get Catalogue Schema version
-MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-SCHEMA_VERSION="$MAJOR.$MINOR"
-
-# It sets as schema version the previous to the current one to create a database with that schema version
-if [[ "$updatedatabasetest" == "1" ]] ; then
-  MIGRATION_FILE=$(find ../../catalogue/cta-catalogue-schema -name "*to${SCHEMA_VERSION}.sql")
-  PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
-  SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
-  echo "Deploying with previous catalogue schema version: ${SCHEMA_VERSION}"
-else
-  echo "Deploying with current catalogue schema version: ${SCHEMA_VERSION}"
-fi
-
-# We are going to run with repository based images (they have rpms embedded)
-../ci_helpers/get_registry_credentials.sh --check > /dev/null || { echo "Error: Credential check failed"; exit 1; }
-if [[ ${systest_only} -eq 1 ]]; then
-  COMMITID=$(curl --url "https://gitlab.cern.ch/api/v4/projects/139306/repository/commits" | jq -cr '.[0] | .short_id' | sed -e 's/\(........\).*/\1/')
-else
-  COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-fi
-if [[ "${systest_only}" -eq 1 ]]; then
-  echo "Creating instance from image build for lastest commit on main ${COMMITID}"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | tail -n1)
-elif [ ! -z "${pipelineid}" ]; then
-  echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
-  # just a shortcut to avoid time lost checking against the docker registry...
-  #imagetag=${pipelineid}git${COMMITID}
-elif [ ! -z "${dockerimage}" ]; then
-  echo "Creating instance for image ${dockerimage}"
-  imagetag=${dockerimage}
-else
-  echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
-fi
-if [ "${imagetag}" == "" ]; then
-  echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
-  exit 1
-fi
-
-echo 'copying files to tmpdir'
-cp -R ./helm/init ${poddir}
-cp -R ./helm/cta ${poddir}
-cp ./pod-oracleunittests.yaml ${poddir}
-
-echo "Creating instance using docker image with tag: ${imagetag}"
-
-# For now we do a search replace of the image tag for this pod.
-# Note that this does not replace the registry, so this pod cannot be used with a local image (yet).
-# Eventually this should also be integrated into helm and be overriden using the --set flag.
-# Then the tmp dir is also no longer necessary
-sed -i $poddir/pod-oracleunittests.yaml -e "s/ctageneric\:.*/ctageneric:${imagetag}/g"
-
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
-
-if [ $usesystemd == 1 ] ; then
-    echo "Using systemd to start services on some pods"
-    # TODO: this shouldn't be happening by a find-replace, but rather by updating the values.yml
-    # E.g. either setting an option or using a different values.yml
-    for podname in ctafrontend tpsrv ctaeos; do
-        sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
-    done
-fi
-
-if [ $keepdatabase == 1 ] ; then
-    echo "DB content will be kept"
-else
-    echo "DB content will be wiped"
-fi
-
-if [ $keepobjectstore == 1 ] ; then
-    echo "scheduler data store content will be kept"
-else
-    echo "schedule data store content will be wiped"
-fi
-
-echo -n "Creating ${instance} instance "
-
-kubectl create namespace ${instance} || die "FAILED"
-
-# The CTA registry secret must be copied in the instance namespace to be usable
-kubectl get secret ${ctareg_secret} &> /dev/null
-if [ $? -eq 0 ]; then
-  echo "Copying ${ctareg_secret} secret in ${instance} namespace"
-  kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${instance} create -f -
-fi
-
-echo "Requesting an unused ${model} library"
-kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
-for ((i=0; i<120; i++)); do
-  echo -n "."
-  kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
-  sleep 1
-done
-kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
-echo "OK"
-LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
-echo "Get library device: ${LIBRARY_DEVICE}"
-
-kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
-
-echo "Got library: ${LIBRARY_DEVICE}"
-
-IMAGE="${REGISTRY_HOST}/ctageneric:${imagetag}"
-
-echo  "Setting up init and db pods."
-helm install init ${poddir}/init -n ${instance} --set global.image=${IMAGE} --set catalogue.schemaVersion="${SCHEMA_VERSION}" -f ${config_schedstore} -f ${config_database}
-
-echo -n "Waiting for init"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl --namespace=${instance} get pod init -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
-  sleep 1
-done
-
-if [ $runoracleunittests == 1 ] ; then
-  echo "Running database unit-tests"
-  kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
-
-  echo -n "Waiting for oracleunittests"
-  for ((i=0; i<400; i++)); do
-    echo -n "."
-    kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -E -q 'Succeeded|Failed' && break
-    sleep 1
-  done
+usage() {
+  echo "Spawns a CTA system using Helm and Kubernetes. Requires a setup according to the Minikube CTA CI repository."
   echo ""
-
-  kubectl --namespace=${instance} logs oracleunittests
-
-  # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod oracleunittests -o json | jq -r .status.phase | grep -q Failed); then
-    echo "oracleunittests pod in Error status here are its last log lines:"
-    kubectl --namespace=${instance} logs oracleunittests --tail 10
-    die "ERROR: oracleunittests pod in Error state. Initialization failed."
-  fi
-
-  # database unit-tests were successful => exit now with success
-  exit 0
-fi
-
-
-
-echo ""
-echo "Creating cta instance in ${instance} namespace"
-helm dependency build ${poddir}/cta
-helm dependency update ${poddir}/cta
-helm install cta ${poddir}/cta -n ${instance} \
-                               --set global.image=${IMAGE}
-
-
-kubectl --namespace=${instance} get pods
-
-echo -n "Waiting for all the pods to be in the running state"
-for ((i=0; i<240; i++)); do
-  echo -n "."
-  # exit loop when all pods are in Running state
-  kubectl -n ${instance} get pod -o json | jq -r ".items[] | select(.metadata.name != \"init\") | select(.metadata.name != \"oracleunittests\") | .status.phase"| grep -q -v Running || break
-  sleep 1
-done
-
-kubectl get pods -n ${instance}
-
-if [[ $(kubectl -n toto get pod -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running) ]]; then
-  echo "TIMED OUT"
-  echo "Some pods have not been initialized properly:"
-  kubectl --namespace=${instance} get pod
+  echo "Usage: $0 -n <namespace> -i <image tag> [options]"
+  echo ""
+  echo "options:"
+  echo "  -h, --help:                         Shows help output."
+  echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
+  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
+  echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
+  echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
+  echo "  -m, --library-model <model>:        Specify the library model to use. Defaults to mhvtl"
+  echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
+  echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
+  echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
+  echo "  -S, --use-systemd:                  Use systemd to manage services inside containers. Defaults to false"
+  echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
+  echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
+  echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
+  echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
+  echo "      --upgrade:                      Upgrade the existing deployment."
+  echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   exit 1
-fi
-echo OK
+}
 
-kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
+check_helm_installed() {
+  # First thing we do is check whether helm is installed
+  if ! command -v helm >/dev/null 2>&1; then
+    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
+  fi
+}
 
-echo -n "Waiting for EOS to be configured"
-for ((i=0; i<300; i++)); do
-  echo -n "."
-  [ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] && break
-  sleep 1
-done
-[ "$(kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready")" = "Ready" ] || die "TIMED OUT"
-echo OK
+update_chart_dependencies() {
+  echo "Updating chart dependencies"
+  charts=("init"
+    "common"
+    "init/charts/kdc"
+    "catalogue"
+    "scheduler"
+    "cta/"
+    "cta/charts/client"
+    "cta/charts/ctacli"
+    "cta/charts/ctaeos"
+    "cta/charts/ctafrontend"
+    "cta/charts/tpsrv"
+  )
+  for chart in "${charts[@]}"; do
+    helm dependency update helm/"$chart" > /dev/null
+  done
+}
 
+create_instance() {
+  # Argument defaults
+  # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
+  # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
+  registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
+  catalogue_config=presets/dev-catalogue-postgres-values.yaml
+  scheduler_config=presets/dev-scheduler-vfs-values.yaml
+  # By default keep Database and keep Scheduler datastore data
+  # default should not make user loose data if he forgot the option
+  reset_catalogue=false
+  reset_scheduler=false
+  use_systemd=false # By default to not use systemd to manage services inside the containers
+  registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
+  upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
+  dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
+  num_library_devices=1 # For the auto-generated tapeservers config
+  max_drives_per_tpsrv=1
 
+  # Parse command line arguments
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+      -h | --help) usage ;;
+      -o|--scheduler-config)
+        scheduler_config="$2"
+        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
+        shift ;;
+      -d|--catalogue-config)
+        catalogue_config="$2"
+        test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
+        shift ;;
+      --tapeservers-config)
+        tapeservers_config="$2"
+        shift ;;
+      -n|--namespace)
+        namespace="$2"
+        shift ;;
+      -r|--registry-host)
+        registry_host="$2"
+        shift ;;
+      -i|--image-tag)
+        image_tag="$2"
+        shift ;;
+      -c|--catalogue-version)
+        catalogue_schema_version="$2"
+        shift ;;
+      --num-libraries)
+        num_library_devices="$2"
+        shift ;;
+      --max-drives-per-tpsrv)
+        max_drives_per_tpsrv="$2"
+        shift ;;
+      -S|--use-systemd) use_systemd=true ;;
+      -O|--reset-scheduler) reset_scheduler=true ;;
+      -D|--reset-catalogue) reset_catalogue=true ;;
+      --upgrade) upgrade=1 ;;
+      --dry-run) dry_run=1 ;;
+      *)
+        echo "Unsupported argument: $1"
+        usage
+        ;;
+    esac
+    shift
+  done
 
-
-echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-
-echo -n "Using kinit for ctacli and client"
-kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
-kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
-
-
-
-# space=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-# May be needed for the client to make sure that SSS is not used by default but krb5...
-#echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-echo OK
-
-echo "klist for client:"
-kubectl --namespace=${instance} exec client -- klist
-
-
-echo "klist for ctacli:"
-kubectl --namespace=${instance} exec ctacli -- klist
-
-
-
-
-# Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
-# files from tape and deleting files.
-
-echo "Setting workflows in namespace ${instance} pod ctaeos:"
-CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
-for WORKFLOW in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default
-do
-  echo "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
-  kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
-done
-
-echo "Instance ${instance} successfully created:"
-kubectl --namespace=${instance} get pod
-
-if [ $runexternaltapetests == 1 ] ; then
-  echo "Running database unit-tests"
-  ./tests/external_tapes_test.sh -n ${instance} -P ${poddir}
-
-  kubectl --namespace=${instance} logs externaltapetests
-
-  # database unit-tests went wrong => exit now with error
-  if $(kubectl --namespace=${instance} get pod externaltapetests -o json | jq -r .status.phase | grep -E -q 'Failed'); then
-    echo "externaltapetests pod in Failed status here are its last log lines:"
-    kubectl --namespace=${instance} logs externaltapetests --tail 10
-    die "ERROR: externaltapetests pod in Error state. Initialization failed."
+  # Argument checks
+  if [ -z "${namespace}" ]; then
+    echo "Missing mandatory argument: -n | --namespace"
+    usage
+  fi
+  if [ -z "${image_tag}" ]; then
+    echo "Missing mandatory argument: -i | --image-tag"
+    usage
+  fi
+  if [ $upgrade == 1 ] && [ -z $tapeservers_config ]; then
+    echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
+    usage
+  fi
+  if [ -z "${catalogue_schema_version}" ]; then
+    echo "No catalogue schema version provided: using latest tag"
+    catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+    catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+    catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
   fi
 
-  # database unit-tests were successful => exit now with success
-  exit 0
-fi
+  if [ $dry_run == 1 ]; then
+    helm_command="template --debug"
+  elif [ $upgrade == 1 ]; then
+    helm_command="upgrade --install"
+  else
+    helm_command="install"
+  fi
 
-exit 0
+  if [ "$reset_catalogue" == "true" ] ; then
+    echo "Catalogue content will be reset"
+  else
+    echo "Catalogue content will be kept"
+  fi
+
+  if [ "$reset_scheduler" == "true" ]; then
+    echo "scheduler data store content will be reset"
+  else
+    echo "scheduler data store content will be kept"
+  fi
+
+  # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
+
+  devices_all=$(./../ci_helpers/tape/list_all_libraries.sh)
+  devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
+  unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
+  if [ -z "$unused_devices" ]; then
+    die "No unused library devices available. All the following libraries are in use: $devices_in_use"
+  fi
+
+  # Determine the library config to use
+  if [ -z "${tapeservers_config}" ]; then
+    echo "Library configuration not provided. Auto-generating..."
+    # This file is cleaned up again by delete_instance.sh
+    tapeservers_config=$(mktemp /tmp/${namespace}-tapeservers-XXXXXX-values.yaml)
+    # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
+    library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
+    ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file $tapeservers_config  \
+                                                        --library-devices $library_devices \
+                                                        --library-type "mhvtl" \
+                                                        --max-drives-per-tpsrv $max_drives_per_tpsrv
+  elif [ $upgrade == 0 ]; then
+    # Check that all devices in the provided config are available
+    for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
+      if ! echo "$unused_devices" | grep -qw "$library_device"; then
+        die "provided library config specifies a device that is already in use: $library_device"
+      fi
+    done
+  fi
+  echo "---"
+  cat $tapeservers_config
+  echo "---"
+
+  # Create the namespace if necessary
+  if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
+    echo "Creating ${namespace} namespace"
+    kubectl create namespace ${namespace}
+    echo "Copying secrets into ${namespace} namespace"
+    for secret_name in ${registry_secrets}; do
+      # If the secret exists...
+      if kubectl get secret ${secret_name} &> /dev/null; then
+        kubectl get secret ${secret_name} -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
+      else
+        echo "Secret ${secret_name} not found. Skipping..."
+      fi
+    done
+  fi
+
+  update_chart_dependencies
+  # For now only allow an upgrade of the CTA chart
+  # Once deployments are in place, we can also look into upgrading the catalogue and scheduler
+  if [ $upgrade == 0 ]; then
+    echo "Installing init chart..."
+    log_run helm ${helm_command} init-${namespace} helm/init \
+                                  --namespace ${namespace} \
+                                  --set global.image.registry="${registry_host}" \
+                                  --set global.image.tag="${image_tag}" \
+                                  --set resetTapes=true \
+                                  --set-file tapeServers=${tapeservers_config} \
+                                  --wait --wait-for-jobs --timeout 2m
+
+    # At some point this can be done in parallel
+    echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
+    echo "Installing catalogue and scheduler charts..."
+    log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
+                                  --namespace ${namespace} \
+                                  --set resetImage.registry="${registry_host}" \
+                                  --set resetImage.tag="${image_tag}" \
+                                  --set schemaVersion="${catalogue_schema_version}" \
+                                  --set resetCatalogue=${reset_catalogue} \
+                                  --set-file configuration=${catalogue_config} \
+                                  --wait --wait-for-jobs --timeout 2m &
+    catalogue_pid=$!
+
+    log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
+                                  --namespace ${namespace} \
+                                  --set resetImage.registry="${registry_host}" \
+                                  --set resetImage.tag="${image_tag}" \
+                                  --set resetScheduler=${reset_scheduler} \
+                                  --set-file configuration=${scheduler_config} \
+                                  --wait --wait-for-jobs --timeout 2m &
+    scheduler_pid=$!
+
+    # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
+    wait $catalogue_pid || exit 1
+    wait $scheduler_pid || exit 1
+
+  fi
+  echo "Installing cta chart..."
+  log_run helm ${helm_command} cta-${namespace} helm/cta \
+                                --namespace ${namespace} \
+                                --set global.image.registry="${registry_host}" \
+                                --set global.image.tag="${image_tag}" \
+                                --set global.useSystemd=${use_systemd} \
+                                --set global.catalogueSchemaVersion=${catalogue_schema_version} \
+                                --set-file global.configuration.scheduler=${scheduler_config} \
+                                --set-file tpsrv.tapeServers="${tapeservers_config}" \
+                                --wait --timeout 5m
+
+  if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
+    exit 0
+  fi
+}
+
+# TODO: the following part is configuration that is not (and should not) be part of the Helm setup.
+setup_system() {
+  # Eventually, the user should be able to provide a setup script that will be executed here.
+  # Set up kerberos
+  echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
+  echo "Using kinit for ctacli and client"
+  kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
+  kubectl --namespace ${namespace} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
+  # space=${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
+  # May be needed for the client to make sure that SSS is not used by default but krb5...
+  #echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
+  echo "klist for client:"
+  kubectl --namespace ${namespace} exec client -- klist
+  echo "klist for ctacli:"
+  kubectl --namespace ${namespace} exec ctacli -- klist
+
+
+  # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
+  # files from tape and deleting files.
+  # EOS short instance name
+  eos_instance=ctaeos
+  echo "Setting workflows in namespace ${namespace} pod ${eos_instance}:"
+  cta_workflow_dir=/eos/${eos_instance}/proc/cta/workflow
+  for workflow in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default; do
+    echo "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
+    kubectl --namespace ${namespace} exec ${eos_instance} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
+  done
+
+  echo "Instance ${namespace} successfully created:"
+  kubectl --namespace ${namespace} get pods
+}
+
+check_helm_installed
+create_instance "$@"
+setup_system

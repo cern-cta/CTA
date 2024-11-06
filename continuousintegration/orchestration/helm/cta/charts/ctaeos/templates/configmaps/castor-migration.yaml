@@ -3,7 +3,9 @@ kind: ConfigMap
 metadata:
   labels:
     config: eoscta
-  name: castor-migration-conf
+    app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
+    {{- include "common.labels.withoutname" . | nindent 4 }}
+  name: eos-castor-migration
   namespace: {{.Release.Namespace}}
 data:
   #eos.token must be the same as in client.sh

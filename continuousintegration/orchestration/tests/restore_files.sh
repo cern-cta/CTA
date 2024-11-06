@@ -90,7 +90,7 @@ kubectl -n ${NAMESPACE} exec ctacli -- cta-admin rtf ls --fxid ${FXID} || exit 1
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"
 TMP_DIR=$(mktemp -d)
-kubectl --namespace=${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
+kubectl --namespace ${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
 echo "kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
 echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta-cli.conf"
 
@@ -102,7 +102,7 @@ kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.con
 # there is no reason to install cta-cli rpm on the frontend pod as it is just meant to run the cta-frontend with minimal requirements
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
-kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl --namespace ${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh

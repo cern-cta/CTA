@@ -1,3 +1,4 @@
+#!/bin/bash
 # This file must be sourced from another shell script
 # . /opt/run/bin/init_pod.sh
 
@@ -15,6 +16,9 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
+
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 LOGMOUNT=/mnt/logs
 
@@ -59,3 +63,5 @@ fi
 # some yum optimisations for the standard system
 SQUID_PROXY=squid.kube-system.svc.cluster.local
 ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Finished"

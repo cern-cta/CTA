@@ -1,0 +1,34 @@
+
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $allDrives := include "tpsrv.allDrives" . | fromYamlArray }}
+{{- range $driveSlot, $drive := $allDrives }}
+# Generate unique config map for each tape drive
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # The name cannot use the drivename as this contains uppercase letters
+  name: cta-taped-{{ lower $drive.name }}-conf
+  labels:
+    {{-  include "common.labels.standard" $ | nindent 4 }}
+data:
+  cta-taped-{{ $drive.name }}.conf: |-
+    # cta-taped setup
+    taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
+    taped BufferCount {{ $.Values.conf.taped.bufferCount }}
+    taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
+    taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
+    taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
+    taped DriveName {{ $drive.name }}
+    taped DriveLogicalLibrary {{ $drive.name }}
+    taped DriveDevice /dev/{{ $drive.device }}
+    taped DriveControlPath smc{{ $driveSlot }}
+    # Decrease schedulerDB cache timeout for tests
+    taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
+    taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
+    # Objectstore
+    ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
+    # General
+    general InstanceName {{ $.Values.conf.general.instanceName }}
+    general SchedulerBackendName {{ $schedulerConfig.backend }}
+---
+{{- end }}

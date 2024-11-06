@@ -18,6 +18,8 @@
 set -x
 . /opt/run/bin/init_pod.sh
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
+
 yum-config-manager --enable cta-artifacts
 
 # Install missing RPMs
@@ -45,9 +47,6 @@ useradd --uid 13001 --gid 1300 ctaadmin1
 useradd --uid 13002 --gid 1300 ctaadmin2
 useradd --uid 14001 --gid 1400 eosadmin1
 useradd --uid 14002 --gid 1400 eosadmin2
-
-# copy needed template configuration files (nice to get all lines for logs)
-yes | cp -r /opt/ci/ctaeos/etc /
 
 eoshost=$(hostname -f)
 
@@ -108,15 +107,6 @@ cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /o
 
 ## Configuring host certificate
 /opt/run/bin/ctaeos_https.sh
-
-# Waiting for /CANSTART file before starting eos
-echo -n "Waiting for /CANSTART before going further"
-for ((i=0;i<600;i++)); do
-  test -f /CANSTART && break
-  sleep 1
-  echo -n .
-done
-test -f /CANSTART && echo OK || exit 1
 
 # setting higher OS limits for EOS processes
 maxproc=$(ulimit -u)
@@ -231,53 +221,62 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   fi
 fi
 
-  eos vid enable krb5
-  eos vid enable sss
-  eos vid enable unix
+eos vid enable krb5
+eos vid enable sss
+eos vid enable unix
 
-  # define space default before adding first fs
-  eos space define default
+# define space default before adding first fs
+eos space define default
 
-  EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
+# Waiting for /CAN_START file before starting eos
+echo -n "Waiting for /CAN_START before going further"
+for ((i=0;i<600;i++)); do
+  test -f /eos-status/CAN_START && break
+  sleep 1
+  echo -n .
+done
+test -f /eos-status/CAN_START && echo OK || exit 1
 
-  # Add user daemon to sudoers this is to allow recalls for the moment using this command
-  #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
-  eos vid set membership $(id -u daemon) +sudo
+EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 
-  # Add eosadmin1 and eosadmin2 users are sudoers
-  eos vid set membership $(id -u eosadmin1) +sudo
-  eos vid set membership $(id -u eosadmin2) +sudo
+# Add user daemon to sudoers this is to allow recalls for the moment using this command
+#  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
+eos vid set membership $(id -u daemon) +sudo
 
-  eos node set ${eoshost} on
-  eos space set default on
-  eos attr -r set default=replica /eos
-  eos attr -r set sys.forced.nstripes=1 /eos
+# Add eosadmin1 and eosadmin2 users are sudoers
+eos vid set membership $(id -u eosadmin1) +sudo
+eos vid set membership $(id -u eosadmin2) +sudo
 
-  eos space define tape
-  eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
-  eos mkdir ${CTA_PROC_DIR}
-  eos mkdir ${CTA_WF_DIR}
+eos node set ${eoshost} on
+eos space set default on
+eos attr -r set default=replica /eos
+eos attr -r set sys.forced.nstripes=1 /eos
 
-  # Configure gRPC interface:
-  #
-  # 1. Map requests from the client to EOS virtual identities
-  eos -r 0 0 vid add gateway [:1] grpc
-  # 2. Add authorisation key
-  #
-  # Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
-  EOS_AUTH_KEY=migration-test-token
-  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
-  echo "eos vid ls:"
-  eos -r 0 0 vid ls
-  # 3. Create top-level directory and set permissions to writeable by all
-  eos mkdir ${GRPC_TEST_DIR}
-  eos chmod 777 ${GRPC_TEST_DIR}
+eos space define tape
+eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
+eos mkdir ${CTA_PROC_DIR}
+eos mkdir ${CTA_WF_DIR}
 
-  # HTTP configuration if needed
-  grep -q EosMgmHttp /etc/xrd.cf.mgm && (eos vid enable https; eos space config default taperestapi.status=on; eos space config default taperestapi.stage=on)
+# Configure gRPC interface:
+#
+# 1. Map requests from the client to EOS virtual identities
+eos -r 0 0 vid add gateway [:1] grpc
+# 2. Add authorisation key
+#
+# Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
+EOS_AUTH_KEY=migration-test-token
+eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
+echo "eos vid ls:"
+eos -r 0 0 vid ls
+# 3. Create top-level directory and set permissions to writeable by all
+eos mkdir ${GRPC_TEST_DIR}
+eos chmod 777 ${GRPC_TEST_DIR}
 
-  # Enable eostoken for CI
-  eos space config default space.token.generation=1
+# HTTP configuration if needed
+grep -q EosMgmHttp /etc/xrd.cf.mgm && (eos vid enable https; eos space config default taperestapi.status=on; eos space config default taperestapi.stage=on)
+
+# Enable eostoken for CI
+eos space config default space.token.generation=1
 
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
@@ -294,86 +293,86 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   fi
 fi
 
-  # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
-  # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
-  # this is achieved through the ACLs.
-  # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
-  eos mkdir ${CTA_TEST_DIR}
-  eos chmod 555 ${CTA_TEST_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_TEST_DIR}
-  eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
+# ${CTA_TEST_DIR} must be writable by eosusers and powerusers
+# but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
+# this is achieved through the ACLs.
+# ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
+eos mkdir ${CTA_TEST_DIR}
+eos chmod 555 ${CTA_TEST_DIR}
+eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_TEST_DIR}
+eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
 
-  # Link the attributes of CTA worklow directory to the test directory
-  eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
+# Link the attributes of CTA worklow directory to the test directory
+eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 
-  # ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
-  # but not allow prepare requests.
-  # this is achieved through the ACLs.
-  # This directory is created inside ${CTA_TEST_DIR}.
-  # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
-  eos mkdir ${CTA_TEST_NO_P_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
+# ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
+# but not allow prepare requests.
+# this is achieved through the ACLs.
+# This directory is created inside ${CTA_TEST_DIR}.
+# ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
+eos mkdir ${CTA_TEST_NO_P_DIR}
+eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
 
-  # Prepare the tmp dir so that we can test that the EOS instance is OK
-  eos mkdir ${EOS_TMP_DIR}
-  eos chmod 777 ${EOS_TMP_DIR}
+# Prepare the tmp dir so that we can test that the EOS instance is OK
+eos mkdir ${EOS_TMP_DIR}
+eos chmod 777 ${EOS_TMP_DIR}
 
-  echo "Waiting for the EOS disk filesystem using /fst to boot and come on-line"
-  while test 1 != $(eos fs ls /fst | grep -E 'booted.*online' | wc -l); do
-    echo "Sleeping 1 second"
-    sleep 1
-  done
-
-  # Start the FST garbage collector (the daemon user must be an EOS sudoer by now)
-  if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-    systemctl start cta-fst-gcd
-  else
-    runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
-  fi
-  echo "Giving cta-fst-gcd 1 second to start"
+echo "Waiting for the EOS disk filesystem using /fst to boot and come on-line"
+while test 1 != $(eos fs ls /fst | grep -E 'booted.*online' | wc -l); do
+  echo "Sleeping 1 second"
   sleep 1
-  FST_GCD_PID=$(ps -ef | grep -E '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}')
-  if test "x${FST_GCD_PID}" = x; then
-    echo "cta-fst-gcd is not running"
-    exit 1
-  else
-    echo "cta-fst-gcd is running FST_GCD_PID=${FST_GCD_PID}"
-  fi
+done
+
+# Start the FST garbage collector (the daemon user must be an EOS sudoer by now)
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  systemctl start cta-fst-gcd
+else
+  runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+fi
+echo "Giving cta-fst-gcd 1 second to start"
+sleep 1
+FST_GCD_PID=$(ps -ef | grep -E '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}')
+if test "x${FST_GCD_PID}" = x; then
+  echo "cta-fst-gcd is not running"
+  exit 1
+else
+  echo "cta-fst-gcd is running FST_GCD_PID=${FST_GCD_PID}"
+fi
 
 # test EOS
-  eos -b node ls
+eos -b node ls
 
-  echo "Waiting for the basic file transfer test to succeed (workaround for the booted/online issue )"
-  for ((i=0; i<300; i++)); do
-    # xrdcp --force to overwrite testFile if it was already created in the previous loop
-    # but xrdcp failed for another reason
-    xrdcp --force /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile && break
-    # If the file exists the loop exited on a successfull xrdcp, otherwise it exited upon timeout and all xrdcp failed
-    eos rm ${EOS_TMP_DIR}/testFile
-    echo -n "."
-    sleep 1
-  done
-  echo OK
-  failed_xrdcp_test=$i
-  if test $failed_xrdcp_test -eq 0; then
-    echo "[SUCCESS]: basic file transfer test on online/booted FS." | tee -a /var/log/CI_tests
-  else
-    echo "[ERROR]: basic file transfer test on online/booted FS (${failed_xrdcp_test} attempts)." | tee -a /var/log/CI_tests
-  fi
+echo "Waiting for the basic file transfer test to succeed (workaround for the booted/online issue )"
+for ((i=0; i<300; i++)); do
+  # xrdcp --force to overwrite testFile if it was already created in the previous loop
+  # but xrdcp failed for another reason
+  xrdcp --force /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile && break
+  # If the file exists the loop exited on a successfull xrdcp, otherwise it exited upon timeout and all xrdcp failed
+  eos rm ${EOS_TMP_DIR}/testFile
+  echo -n "."
+  sleep 1
+done
+echo OK
+failed_xrdcp_test=$i
+if test $failed_xrdcp_test -eq 0; then
+  echo "[SUCCESS]: basic file transfer test on online/booted FS." | tee -a /var/log/CI_tests
+else
+  echo "[ERROR]: basic file transfer test on online/booted FS (${failed_xrdcp_test} attempts)." | tee -a /var/log/CI_tests
+fi
 
 # prepare EOS workflow
-  # enable eos workflow engine
-  eos space config default space.wfe=on
-  # set the thread-pool size of concurrently running workflows
-  # it should not be ridiculous (was 10 and we have 500 in production)
-  eos space config default space.wfe.ntx=200
-  ## Is the following really needed?
-  # set interval in which the WFE engine is running
-  # eos space config default space.wfe.interval=1
+# enable eos workflow engine
+eos space config default space.wfe=on
+# set the thread-pool size of concurrently running workflows
+# it should not be ridiculous (was 10 and we have 500 in production)
+eos space config default space.wfe.ntx=200
+## Is the following really needed?
+# set interval in which the WFE engine is running
+# eos space config default space.wfe.interval=1
 
 # prepare EOS garbage collectors
-  # enable the 'file archived' garbage collector
-  eos space config default space.filearchivedgc=on
+# enable the 'file archived' garbage collector
+eos space config default space.filearchivedgc=on
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
@@ -389,8 +388,8 @@ if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
   eos vid set map -grpc key:${MIGRATION_TOKEN} vuid:${MIGRATION_UID} vgid:${MIGRATION_UID}
 fi
 
-
-touch /EOSOK
+touch /eos-status/EOS_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /bin/bash

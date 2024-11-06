@@ -1,0 +1,10 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if eq $schedulerConfig.backend "postgres" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-scheduler-conf
+data:
+  cta-scheduler.conf: |-
+    {{ include "scheduler.url" . }}
+{{- end }}

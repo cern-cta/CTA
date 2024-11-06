@@ -1,41 +1,80 @@
-{{$namespace := .Release.Namespace }}
-{{$name := include "ctacli.name" . }}
-
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "ctacli.name" . }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   namespace: {{ $namespace | quote}}
   labels:
-    k8s-app: {{$name}}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  imagePullSecrets:
+  {{ include "ctacli.imagePullSecrets" . | nindent 2 }}
   containers:
-  - name: {{$name}}
+  - name: {{ $name }}
     image: {{ include "ctacli.image" . }}
+    imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
     stdin: true
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      cat /tmp/eos.keytab > /etc/eos.keytab;
+      chmod 600 /etc/eos.keytab;
+      /opt/run/bin/ctacli.sh
+    readinessProbe:
+      exec:
+        command: ["test", "-f", "/CTACLI_READY"]
+      initialDelaySeconds: 2
+      periodSeconds: 1
+      failureThreshold: 60
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
     env:
     - name: MY_NAME
-      value: {{$name}}
+      value: {{ $name }}
     - name: MY_NAMESPACE
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: TERM
+      value: "xterm"
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
-    {{- if (.Values.customEntrypoint)}}
-    command: {{.Values.customEntrypoint.command | toJson}}
-    args: {{.Values.customEntrypoint.args}}
-    {{- end}}
-    {{- if (.Values.readinessProbe)}}
-    {{include "ctacli.readinessProbe" .Values.readinessProbe | nindent 4}}
-    {{- end}}
-    securityContext:
-      privileged: {{ .Values.isPriviliged }}
+    volumeMounts:
+    - name: cta-conf-volume
+      mountPath: /etc/cta/cta-cli.conf
+      subPath: cta-cli.conf
+    - name: keytab
+      mountPath: /root/ctaadmin1.keytab
+      subPath: ctaadmin1.keytab
+    - name: sss-keytab
+      mountPath: /tmp/eos.keytab
+      subPath: eos.keytab
+    - name: krb5-config-volume
+      mountPath: /etc/krb5.conf
+      subPath: krb5.conf
     {{ include "ctacli.volumeMounts" . | nindent 4 }}
-  # Here are volumes added
+  volumes:
+  - name: cta-conf-volume
+    configMap:
+      name: etc-cta-ctacli
+  - name: keytab
+    secret:
+      secretName: ctaadmin1-keytab
+  - name: sss-keytab
+    secret:
+      defaultMode: 400
+      secretName: eos-sss-keytab
+  - name: krb5-config-volume
+    configMap:
+      name: krb5-config
   {{include "ctacli.volumes" . | nindent 2}}
-
-  imagePullSecrets:
-  - name: {{ include "ctacli.imageSecret" . }}

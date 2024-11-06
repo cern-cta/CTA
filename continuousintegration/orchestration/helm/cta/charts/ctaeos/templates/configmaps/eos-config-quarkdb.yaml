@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    config: eoscta
+    app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
+    {{- include "common.labels.withoutname" . | nindent 4 }}
+  name: eos-config-quarkdb
+  namespace: {{.Release.Namespace}}
+data:
+  xrootd-quarkdb.cfg: |
+    xrd.port 7777
+    xrd.protocol redis:7777 /usr/lib64/libXrdQuarkDB.so
+    redis.mode standalone
+    redis.database /var/lib/quarkdb/quarkdb1
+    redis.password_file  /etc/eos.keytab.xrootd

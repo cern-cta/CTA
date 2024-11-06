@@ -1,15 +1,15 @@
 {{- $name := include "ctafrontend.name" .}}
-{{- with .Values.service}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{$name}}
+  name: {{ $name }}
   labels:
-    k8s-app: {{$name}}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   selector:
-    k8s-app: {{$name}}
+    app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
-  {{- .ports | toYaml | nindent 4}}
-{{- end}}
+  - name: ctafrontend
+    port: {{ .Values.frontendPort }}
+    protocol: TCP
