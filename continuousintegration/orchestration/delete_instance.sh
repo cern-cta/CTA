@@ -69,6 +69,11 @@ delete_instance() {
     usage
   fi
 
+  if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
+    echo "Namespace $namespace does not exist. Skipping deletion"
+    exit 0
+  fi
+
   ###
   # Display all backtraces if any
   ###
