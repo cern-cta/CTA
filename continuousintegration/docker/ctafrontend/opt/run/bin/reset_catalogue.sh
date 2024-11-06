@@ -56,15 +56,8 @@ if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
 elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
 
-  cat <<EOF > /etc/yum.repos.d/Oracle-InstantClient-OL9.x.repo
-[Oracle-InstantClient-OL9.x]
-name=CentOS/RHEL Oracle InstantClient repository for OL9.x packages
-baseurl=https://linuxsoft.cern.ch/mirror/yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient/x86_64
-enabled=1
-gpgkey=http://linuxsoft.cern.ch/mirror/yum.oracle.com/RPM-GPG-KEY-oracle-ol9
-priority=5
-EOF
-  yum install -y oracle-instantclient19.19-sqlplus
+  wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-sqlplus-21.12.0.0.0-1.el9.x86_64.rpm
+  yum install -y oracle-instantclient-sqlplus-21.12.0.0.0-1.el9.x86_64.rpm
   echo "Purging Oracle recycle bin"
   test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
   LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
