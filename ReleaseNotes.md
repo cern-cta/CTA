@@ -85,6 +85,8 @@
 - cta/CTA#833 - Improved logging capabilities and clarity for a number of the top-level CI scripts
 - cta/CTA#162 - Ensured EOS report logs end up in the CI artifacts
 - cta/CTA#868 - Various improvements and clean up of the Helm charts and related scripts
+- cta/CTA#910 - Fixed bug where Oracle recycling bin was not purged correctly
+- cta/CTA#890 - Allow Helm to spawn multiple tape servers and make this fully configurable
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
