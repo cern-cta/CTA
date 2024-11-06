@@ -75,6 +75,16 @@
 - cta/CTA#924 - Run postgresql unit tests with valgrind only in nightly builds
 - cta/CTA#890 - Allow Helm to easily spawn multiple tape servers
 - cta/CTA#872 - Fix pipeline docker build for tagged builds
+- cta/CTA#901 - Moved config file generation from startup scripts to configmaps
+- cta/CTA#887 - Refactored flags for run_systemtest.sh and create_instance.sh scripts
+- cta/CTA#888 - Extracted separate Catalogue chart
+- cta/CTA#900 - Extracted separate Scheduler chart
+- cta/CTA#902 - Use kubernetes labels to check if a library is in use instead of relying on a PVC
+- cta/CTA#893 - Improved the way configs for the scheduler/catalogue is passed
+- cta/CTA#906 - Ensured consistent naming for the Helm charts
+- cta/CTA#833 - Improved logging capabilities and clarity for a number of the top-level CI scripts
+- cta/CTA#162 - Ensured EOS report logs end up in the CI artifacts
+- cta/CTA#868 - Various improvements and clean up of the Helm charts and related scripts
 
 ### Code Quality
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
