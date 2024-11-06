@@ -91,6 +91,11 @@
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 - cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
 
+# v5.11.0.1-1
+
+### Bug Fixes
+- cta/CTA#766 - Fix broken cta-release RPM
+
 # v5.11.0.0-1
 
 ## Summary

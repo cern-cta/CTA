@@ -625,6 +625,9 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 %changelog
 
+* Wed Nov 06 2024 Niels Bugel <niels.alexander.bugel@cern.ch> - 5.11.0.1-1
+- Fix broken cta-release RPM
+
 * Fri Sep 20 2024 Joao Afonso <joao.afonso@cern.ch> - 5.11.0.0-1
 - Catalogue schema version 15.0
 - Releases for CentOS 7 and XRootD 4 discontinued from this version onwards%changelog
