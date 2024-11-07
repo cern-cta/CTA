@@ -1,3 +1,124 @@
+## v5.11.1.0-1
+
+### Features
+
+- cta/CTA#334 - Refactor the libctacatalogue DB interface such that in can be build only with the chosen DB client library, either Oracle or Postgres
+- cta/CTA#355 - Added option to build CTA with ninja
+- cta/CTA#565 - Improve logging of 'Tape session finished' message
+- cta/CTA#598 - Improve tapepool supply option
+- cta/CTA#696 - Added a completely new README.md
+- cta/CTA#709 - Ensure the version control of the new libctacatalogue DB plugins
+- cta/CTA#718 - Add the option to disable a physical library
+- cta/CTA#738 - Add new support for repack archive routes
+- cta/CTA#771 - Remove redundant functionality from `cta-versionlock` script. Added strict version checking for XRootD
+- cta/CTA#782 - Added functionality to allow for the automatic generation of the CHANGELOG.md
+- cta/CTA#819 - Log drive state updates
+
+### Bug Fixes
+
+- cta/CTA#475 - Update dirty bit of a tape after undelete
+- cta/CTA#741 - Fix reading OSM data format where CRC32 is part of the data block
+- cta/CTA#770 - Reversed the order of asserts in testSubprocessWithStdinInput system test for more informative error messages
+- cta/CTA#772 - Make sonarcloud use yum.repos.d-public repos instead of the interal repos
+- cta/CTA#781 - Fixed security issues with build pods
+- cta/CTA#786 - Allow CTA to be build without Oracle support again
+- cta/CTA#839 - Integer underflow when repacking tapes where number of files in storage class is less than number of existing tape copies
+- cta/CTA#899 - Fix JSON escaping for exception messages
+
+### Maintenance
+
+- cta/CTA#734 - Generate cta-admin man page from Markdown
+- cta/CTA#763 - Removed the installOracle21.sh script
+- cta/CTA#779 - Removed outdated doxygen files
+- cta/CTA#784 - Convert all CTA man pages into Markdown
+- cta/CTA#788 - Make SQL multiline strings use raw string literals
+- cta/CTA#791 - Remove redundant Protobuf3 dependencies
+- cta/CTA#792 - Fix inconsistencies between CamelCase and ALL_CAPS in log lines
+- cta/CTA#811 - Removed all CC7 related files and code
+- cta/CTA#817 - Remove oracle tnsnames repo files
+- cta/CTA#823 - Fix returnByReference errors from cpp-check
+- cta/CTA#870 - Add check to see if Helm is installed in create_instance script
+- cta/CTA#875 - Removed duplication of the versionlock file in the Helm setup
+- cta/CTA#882 - Remove cta-fst-gcd deprecation Warning in Alma9
+- cta/CTA#887 - Replaced several deprecated bash features
+
+### Continuous Integration
+
+- cta/CTA#35  - Removed references to `.cern.sh` in the most of the ci
+- cta/CTA#162 - Ensured EOS report logs end up in the CI artifacts
+- cta/CTA#535 - Adding option to trigger CTA pipeline based on tagged EOS release
+- cta/CTA#699 - Fix external tape format CI tests
+- cta/CTA#708 - Added a basic test for the archive metadata to the CI
+- cta/CTA#724 - Added a script to perform containerized compilation on a VM
+- cta/CTA#725 - Extracted the build steps for srpms and rpms into seperate scripts
+- cta/CTA#726 - Fixed deprecation warning for `volume.beta.kubernetes.io/storage-class` annotation
+- cta/CTA#743 - Fix development environment setup for AlmaLinux 9.4
+- cta/CTA#744 - Removed outdated ci_runner/vmBootstrap directory
+- cta/CTA#750 - Removed outdated cc7 ci_runner/eos development directory
+- cta/CTA#777 - Removed XRootD4 support
+- cta/CTA#788 - Updated image used by liquibase-update
+- cta/CTA#797 - Added clang-format support for proto files
+- cta/CTA#798 - Improved naming and structure of various ci jobs
+- cta/CTA#799 - Separated jobs for releasing to stable and test repos
+- cta/CTA#800 - Refactored the `deploy-eos.sh` script
+- cta/CTA#815 - Updated build pod resource request and limits to be more flexible
+- cta/CTA#818 - Add CI stage to automatically apply clang-format styling to a branch
+- cta/CTA#821 - Improved pipeline logic for faster performance and correct cancel propagation
+- cta/CTA#822 - Patch `cpp-check` errors for version 2.15dev and add DMC repo
+- cta/CTA#827 - Install pandoc in GitHub runners
+- cta/CTA#828 - Fix SonarCloud warnings
+- cta/CTA#830 - Add script for building CTA locally
+- cta/CTA#833 - Improved logging capabilities and clarity for a number of the top-level CI scripts
+- cta/CTA#835 - Refactor scripts that made use of /etc/gitlab/gitlabregistry.txt to use kubernetes secret instead
+- cta/CTA#847 - Introduced version-lock for Oracle instant client
+- cta/CTA#852 - Auto cancel pipeline on job failures
+- cta/CTA#859 - Fix CI only running on file object store and postgres catalogue
+- cta/CTA#864 - Re-enable Oracle unit tests
+- cta/CTA#868 - Various improvements and clean up of the Helm charts and related scripts
+- cta/CTA#872 - Fix pipeline docker build for tagged builds
+- cta/CTA#874 - Remove outdated eos regression test
+- cta/CTA#879 - Fix CI for development setup and no oracle pipeline
+- cta/CTA#887 - Refactored flags for run_systemtest.sh and create_instance.sh scripts
+- cta/CTA#888 - Extracted separate Catalogue chart
+- cta/CTA#890 - Allow Helm to easily spawn multiple tape servers
+- cta/CTA#893 - Improved the way configs for the scheduler/catalogue is passed
+- cta/CTA#900 - Extracted separate Scheduler chart
+- cta/CTA#901 - Moved config file generation from startup scripts to configmaps
+- cta/CTA#902 - Use kubernetes labels to check if a library is in use instead of relying on a PVC
+- cta/CTA#906 - Ensured consistent naming for the Helm charts
+- cta/CTA#918 - Improve RPM job organization and introduced additional information in pipeline names
+- cta/CTA#924 - Run postgresql unit tests with valgrind only in nightly builds
+
+### Code Quality
+
+- cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
+- cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
+
+## v5.11.0.1-1
+
+### Bug Fixes
+
+- cta/CTA#766 - Fix broken cta-release RPM
+
+## v5.11.0.0-1
+
+### Summary
+
+- This release can be used to upgrade the CTA catalogue from version 14.0 to 15.0.
+- From this version onwards CentOS-7 and XrootD-4 RPMs will no longer be released.
+
+### Catalogue Schema
+
+- cta/CTA#801 - Update CTA catalogue schema to version 15.0
+
+### Bug Fixes
+
+- cta/CTA#715 - Fix CTA compatibility with multiple catalogue versions
+
+### Continuous Integration
+
+- cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
+
 ## 4.10.11.0-1 / 5.10.11.0-1
 
 ### Features
