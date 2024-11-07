@@ -57,3 +57,4 @@ runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-f
 echo "ctafrontend died"
 echo "analysing core file if any"
 /opt/run/bin/ctafrontend_bt.sh
+sleep infinity # Keep the container alive for debugging purposes

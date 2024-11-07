@@ -40,3 +40,4 @@ source /tmp/cta-frontend_env
 
 runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
 echo "ctafrontend died"
+sleep infinity # Keep the container alive for debugging purposes
