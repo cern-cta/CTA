@@ -22,5 +22,5 @@ resources:
     memory: "256Mi"
     ephemeral-storage: "1Gi"
   limits:
-    memory: "4Gi"
-    ephemeral-storage: "4Gi"
+    memory: "2Gi"
+    ephemeral-storage: "2Gi"
