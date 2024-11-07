@@ -51,5 +51,4 @@ else
   echo "Resetting tapes on library type: $LIBRARY_TYPE is not supported"
 fi
 
-echo "### RESET COMPLETED ###"
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Tape unloading completed"

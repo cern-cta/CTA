@@ -70,3 +70,5 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
+
+RUN yum-config-manager --enable cta-artifacts

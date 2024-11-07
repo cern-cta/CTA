@@ -18,10 +18,9 @@
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-yum-config-manager --enable cta-artifacts
 
 # Install missing RPMs
-yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python3
+yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client python3
 
 touch /CLIENT_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"

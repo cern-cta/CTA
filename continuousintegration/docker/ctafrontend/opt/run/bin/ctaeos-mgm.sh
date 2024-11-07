@@ -20,7 +20,6 @@ set -x
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum-config-manager --enable cta-artifacts
 
 # Install missing RPMs
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd

@@ -41,10 +41,6 @@
           ],
           "description": "Global image settings."
         },
-        "useSystemd": {
-          "type": "boolean",
-          "description": "Use systemd for service management."
-        },
         "catalogueSchemaVersion": {
           "type": "string",
           "description": "Version of the catalogue schema. Used for automatic redeployment."

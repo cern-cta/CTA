@@ -18,7 +18,6 @@
 . /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
