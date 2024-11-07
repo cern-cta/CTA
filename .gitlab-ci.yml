@@ -38,6 +38,11 @@ workflow:
       auto_cancel:
         on_job_failure: none
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      changes:
+        compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
+        paths:
+          - '**/*'
+
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
