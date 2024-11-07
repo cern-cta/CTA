@@ -259,6 +259,12 @@ if [[ $(echo $destinationInfos | jq length) != 0 ]]
 then
   header="DestinationVID\tNbFiles\ttotalSize\n"
   { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
+
+  for vid in $(echo $destinationInfos | jq -r ".[] | .vid")
+  do
+    echo "Executing cta-admin tape ls --vid $vid"
+    admin_cta --json tape ls --vid $vid | jq
+  done
 fi
 
 amountArchivedFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles")
