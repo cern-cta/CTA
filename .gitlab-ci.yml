@@ -3,7 +3,6 @@ stages:
   - analysis
   - build
   - build:image
-  - build:tagged
   - test
   - release:changelog
   - release:internal
