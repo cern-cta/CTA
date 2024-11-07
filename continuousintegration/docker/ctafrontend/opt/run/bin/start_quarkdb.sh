@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,9 +14,6 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-
-# the only argument of this script is the CI_CONTEXT passed by ctaeos-mgm.sh
-CI_CONTEXT=$1
 
 # I need 2 level of directories for quarkdb:
 # /var/lib/<possible PV mount point>/<directory owned by xrootd>
