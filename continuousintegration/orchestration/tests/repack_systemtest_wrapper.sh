@@ -422,6 +422,8 @@ repackMoveAndAddCopies() {
   echo "STEP $1. Testing Repack \"Move and Add copies\" workflow"
   echo "*******************************************************"
 
+  set -x
+
   defaultTapepool="ctasystest"
   tapepoolDestination1_default="systest2_default"
   tapepoolDestination2_default="systest3_default"
@@ -444,23 +446,33 @@ repackMoveAndAddCopies() {
 
   echo "Will change the tapepool of the tapes"
 
-  allVID=`kubectl -n ${NAMESPACE}  exec ctacli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+  echo "Fetching all VIDs"
+  allVID=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+  echo "All VIDs: $allVID"
   allVIDTable=($allVID)
+  echo "All VIDs Table: ${allVIDTable[@]}"
 
   nbVid=${#allVIDTable[@]}
+  echo "Number of VIDs: $nbVid"
 
+  echo "Fetching all Tapepools"
   allTapepool=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
+  echo "All Tapepools: $allTapepool"
   allTapepoolTable=($allTapepool)
+  echo "All Tapepool Table: ${allTapepoolTable[@]}"
 
   nbTapepool=${#allTapepoolTable[@]}
-
+  echo "Number of Tapepools: $nbTapepool"
   nbTapePerTapepool=$(($nbVid / $nbTapepool))
-
-  allTapepool=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
-  allTapepoolTable=($allTapepool)
+  echo "Number of Tapes per Tapepool: $nbTapePerTapepool"
 
   countChanging=0
-  tapepoolIndice=1 #We only change the vid of the remaining other tapes
+  echo "Initial Count Changing: $countChanging"
+  tapepoolIndice=1
+  echo "Initial Tapepool Index: $tapepoolIndice"
+
+
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tp ls
 
   for ((i=$(($nbTapePerTapepool+$(($nbVid%$nbTapepool)))); i<$nbVid; i++));
   do
@@ -472,6 +484,8 @@ repackMoveAndAddCopies() {
       tapepoolIndice=$((tapepoolIndice + 1))
     fi
   done
+
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tp ls
 
   echo "OK"
 

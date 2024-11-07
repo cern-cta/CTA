@@ -161,7 +161,6 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
 fi
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
-admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"
 
 NO_RECALL_FLAG=""
 if [ ! -z $NO_RECALL ]; then
