@@ -20,7 +20,6 @@
     # Passed to the test script verbatim
     EXTRA_TEST_ARGS: ""
   before_script:
-  before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
     # Keep the namespace name under 64 characters;
