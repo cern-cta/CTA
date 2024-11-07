@@ -29,7 +29,6 @@ if [[ ! $LIBRARY_TYPE = "mhvtl" ]]; then
   exit 0
 fi
 
-
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"

@@ -25,24 +25,8 @@ ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 # install RPMs
 yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  # systemd is available
-  # rmcd will be running as non root user, we need to fix a few things:
-  # device access rights
-  chmod 666 /dev/${LIBRARY_DEVICE}
-
-  echo "Launching cta-rmcd with systemd:"
-  systemctl start cta-rmcd
-
-  echo "Status is now:"
-  systemctl status cta-rmcd
-
-else
-  # systemd is not available
-
-  # to get rmcd logs to stdout
-  tail -F /var/log/cta/cta-rmcd.log &
-  touch /RMCD_READY
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-  runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
-fi
+# to get rmcd logs to stdout
+tail -F /var/log/cta/cta-rmcd.log &
+touch /RMCD_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
+runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc

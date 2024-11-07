@@ -28,40 +28,23 @@ ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
 chown cta /etc/cta/${CTATAPEDSSS}
 
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  # systemd is available
-  echo "Launching rmcd with systemd:"
-  systemctl start cta-taped
 
-  echo "Status is now:"
-  systemctl status cta-taped
+. /etc/sysconfig/cta-taped
+export XrdSecPROTOCOL
+export XrdSecSSSKT
 
-  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
-  yum install -y systemd-resolved
-  systemctl start systemd-resolved
+chown cta ${XrdSecSSSKT}
 
-else
-  # systemd is not available
+tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
 
-  . /etc/sysconfig/cta-taped
-  export XrdSecPROTOCOL
-  export XrdSecSSSKT
+CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
 
-  chown cta ${XrdSecSSSKT}
+# cta-taped is ran with runuser to avoid a bug with Docker that prevents both
+# the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
+# working correctly
+CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVE_NAME}.conf"
+touch /TAPED_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
+runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 
-  tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
-
-
-  CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
-
-  # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
-  # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
-  # working correctly
-  CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVE_NAME}.conf"
-  touch /TAPED_READY
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-  runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
-
-  echo "taped died"
-  sleep infinity
-fi
+echo "taped died"

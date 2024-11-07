@@ -1,3 +1,0 @@
-{{- if .Values.global.useSystemd }}
-{{- fail "Error: The option global.useSystemd has not been implemented yet." -}}
-{{- end }}

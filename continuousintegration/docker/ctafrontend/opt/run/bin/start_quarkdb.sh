@@ -50,24 +50,6 @@ cp /etc/eos.keytab /etc/eos.keytab.xrootd
 chmod 400 /etc/eos.keytab.xrootd
 chown xrootd:xrootd /etc/eos.keytab.xrootd
 
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
-# using xrootd server start script with eos-xrootd override...
-# we really need quarkdb start scripts...
-mkdir -p /etc/systemd/system/xrootd\@quarkdb.service.d
-cat <<EOF > /etc/systemd/system/xrootd\@quarkdb.service.d/custom.conf
-[Service]
-ExecStart=
-ExecStart=/opt/eos/xrootd/bin/xrootd -l /var/log/xrootd/xrootd.log -c /etc/xrootd/xrootd-%i.cfg -k fifo -s /var/run/xrootd/xrootd-%i.pid -n %i
-EOF
-  # apply this custom override
-  systemctl daemon-reload
-
-  systemctl start xrootd@quarkdb
-
-  systemctl status xrootd@quarkdb
-else
-  # no systemd
-  XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
-  ${XRDPROG} -n quarkdb -l /var/log/xrootd/xrootd.log -c /etc/xrootd/xrootd-quarkdb.cfg -k fifo -s /var/run/xrootd/xrootd-quarkdb.pid -b -Rxrootd
-fi
+XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
+${XRDPROG} -n quarkdb -l /var/log/xrootd/xrootd.log -c /etc/xrootd/xrootd-quarkdb.cfg -k fifo -s /var/run/xrootd/xrootd-quarkdb.pid -b -Rxrootd
