@@ -13,25 +13,11 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# CTA generic image for system tests
-# FROM must be the first command in Dockerfile!!
-
+# CTA generic image containing all CTA RPMs
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
 ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
     CTAREPODIR="/opt/repo"
-
-# Docker image run setup
-COPY ${BASEDIR}/run.sh /
-
-# Add custom rc.local to massage kubernetes resources for the taget docker container
-COPY ${BASEDIR}/rc.local /etc/rc.d
-
-# Make sure it can be executed by root
-RUN chmod 744 /etc/rc.local
-
-# disable selinux so that systemd works if the container is booted with an image that already contains selinux
-COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
@@ -84,9 +70,3 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# One more thing so that we can use systemd
-VOLUME [ "/sys/fs/cgroup" ]
-
-# And finally run systemd if the entrypoint is not overriden by docker
-ENTRYPOINT ["/usr/sbin/init"]
