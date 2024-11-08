@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -18,7 +18,7 @@
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-yum-config-manager --enable cta-artifacts
+
 yum-config-manager --enable ceph
 
 # Install missing RPMs
@@ -47,27 +47,14 @@ fi
 
 chown cta /etc/cta/eos.sss.keytab
 
-if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
-  # systemd is not available
-  echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
-  cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
-  source /tmp/cta-frontend_env
-  touch /CTAFRONTEND_READY
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-  runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
-  echo "ctafrontend died"
-  echo "analysing core file if any"
-  /opt/run/bin/ctafrontend_bt.sh
-  sleep infinity
-else
-  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
-  yum install -y systemd-resolved
-  systemctl start systemd-resolved
+echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
+cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
+source /tmp/cta-frontend_env
+touch /CTAFRONTEND_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
-  # systemd is available
-  echo "Launching frontend with systemd:"
-  systemctl start cta-frontend
-
-  echo "Status is now:"
-  systemctl status cta-frontend
-fi
+runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
+echo "ctafrontend died"
+echo "analysing core file if any"
+/opt/run/bin/ctafrontend_bt.sh
+sleep infinity # Keep the container alive for debugging purposes

@@ -3,7 +3,7 @@
 # . /opt/run/bin/init_pod.sh
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -51,14 +51,6 @@ echo "DONE"
 echo -n "Yum should resolve names using IPv4 DNS: "
 echo "ip_resolve=IPv4" >> /etc/yum.conf
 echo "DONE"
-
-# defining CI_CONTEXT
-# possible values are "systemd" and "nosystemd"
-# this is just to understand if the container is managed through systemd or not
-CI_CONTEXT="nosystemd"
-if [ "-$(cat /proc/1/cmdline 2>&1 | sed -e 's/\x0//g;s/init.*/init/')-" == '-/usr/sbin/init-' ]; then
-  CI_CONTEXT="systemd"
-fi
 
 # some yum optimisations for the standard system
 SQUID_PROXY=squid.kube-system.svc.cluster.local

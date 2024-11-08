@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,7 +20,6 @@ set -x
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum-config-manager --enable cta-artifacts
 
 # Install missing RPMs
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
@@ -73,8 +72,8 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
   sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/sysconfig/eos
 
 # prepare eos startup
-  # skip systemd for eos initscripts
-    export SYSTEMCTL_SKIP_REDIRECT=1
+# skip systemd for eos initscripts
+export SYSTEMCTL_SKIP_REDIRECT=1
 #  echo y | xrdsssadmin -k ${EOS_INSTANCE}+ -u daemon -g daemon add /etc/eos.keytab
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
@@ -131,43 +130,26 @@ if test -f /var/log/eos/fst/cta-fst-gcd.log; then
   NB_STARTED_CTA_FST_GCD=$(grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l)
 fi
 
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  # generate eos_env file for systemd
-  cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
-  test -e /usr/lib64/libjemalloc.so.1 && echo LD_PRELOAD=/usr/lib64/libjemalloc.so.1 >> /etc/sysconfig/eos_env
+# Using jemalloc as specified in
+# it-puppet-module-eos:
+#  code/templates/etc_sysconfig_mgm.erb
+#  code/templates/etc_sysconfig_mgm_env.erb
+#  code/templates/etc_sysconfig_fst.erb
+#  code/templates/etc_sysconfig_fst_env.erb
+test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
+test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
 
-  # start eos
-  systemctl start eos@mq
-  systemctl start eos@mgm
-  systemctl start eos@fst
-
-  echo -n "Waiting for eos to start"
-  for ((i=1;i<20;i++)); do systemctl status eos@{mq,mgm,fst} &>/dev/null && break; sleep 1; echo -n .; done
-  systemctl status eos@{mq,mgm,fst} &>/dev/null && echo OK || echo FAILED
-
-  systemctl status eos@{mq,mgm,fst}
-else
-  # Using jemalloc as specified in
-  # it-puppet-module-eos:
-  #  code/templates/etc_sysconfig_mgm.erb
-  #  code/templates/etc_sysconfig_mgm_env.erb
-  #  code/templates/etc_sysconfig_fst.erb
-  #  code/templates/etc_sysconfig_fst_env.erb
-  test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
-  test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
-
-  # Using /opt/eos/xrootd/bin/xrootd if it exists
-  # this is valid for CI because eos-xrootd rpm is pulled as a dependency of eos-server only if needed
-  # ie: specified at build time in EOS CI.
-  XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
-  # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
-  #/etc/init.d/eos start
-    ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
-    ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
-    for fst_config in /etc/xrd.cf.fst; do
-       EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
-    done
-fi
+# Using /opt/eos/xrootd/bin/xrootd if it exists
+# this is valid for CI because eos-xrootd rpm is pulled as a dependency of eos-server only if needed
+# ie: specified at build time in EOS CI.
+XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
+# start and setup eos for xrdcp to the ${CTA_TEST_DIR}
+#/etc/init.d/eos start
+  ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
+  ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
+  for fst_config in /etc/xrd.cf.fst; do
+      EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
+  done
 
 # EOS service is starting for the first time we need to check if it is ready before
 # feeding the eos server with commands
@@ -178,48 +160,6 @@ for ((i=0;i<60;i++)); do
   echo -n .
 done
 eos version 2>&1 >/dev/null && echo OK || exit 1
-
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  if eos ns | grep 'In-flight FileMD' && eos ns | grep 'In-flight ContainerMD'; then
-    echo 'The EOS namespace backend is QuarkDB'
-  else
-    echo 'The EOS namespace backend is not QuarkDB'
-    exit 1
-  fi
-
-  if eos ns reserve-ids 4294967296 4294967296; then
-    echo "Reserved EOS file and container IDs up to and including 4294967296"
-  else
-    echo "Failed to reserve EOS file and container IDs"
-    exit 1
-  fi
-  CID_TEST_DIR=/cid_test_dir
-  if eos mkdir ${CID_TEST_DIR}; then
-    echo "Created ${CID_TEST_DIR}"
-  else
-    echo "Failed to create ${CID_TEST_DIR}"
-    exit 1
-  fi
-  echo eos fileinfo ${CID_TEST_DIR}
-  eos fileinfo ${CID_TEST_DIR}
-  CID_TEST_DIR_CID=$(eos fileinfo ${CID_TEST_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://')
-  if test x = "x${CID_TEST_DIR_CID}"; then
-    echo "Failed to determine the EOS container ID of ${CID_TEST_DIR}"
-    exit 1
-  else
-    echo "The EOS container ID of ${CID_TEST_DIR} is ${CID_TEST_DIR_CID}"
-  fi
-  if test 4294967296 -ge ${CID_TEST_DIR_CID}; then
-    echo "Container ID ${CID_TEST_DIR_CID} is illegal because it is within the reserverd set"
-    exit 1
-  fi
-  if eos rmdir ${CID_TEST_DIR}; then
-    echo "Deleted ${CID_TEST_DIR}"
-  else
-    echo "Failed to delete ${CID_TEST_DIR}"
-    exit 1
-  fi
-fi
 
 eos vid enable krb5
 eos vid enable sss
@@ -278,21 +218,6 @@ grep -q EosMgmHttp /etc/xrd.cf.mgm && (eos vid enable https; eos space config de
 # Enable eostoken for CI
 eos space config default space.token.generation=1
 
-
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  CTA_PROC_DIR_CID=$(eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://')
-  if test x = "x${CTA_PROC_DIR_CID}"; then
-    echo "Failed to determine the EOS container ID of ${CTA_PROC_DIR}"
-    exit 1
-  else
-    echo "The EOS container ID of ${CTA_PROC_DIR} is ${CTA_PROC_DIR_CID}"
-  fi
-  if test 4294967296 -ge ${CTA_PROC_DIR_CID}; then
-    echo "Container ID ${CTA_PROC_DIR_CID} is illegal because it is within the reserverd set"
-    exit 1
-  fi
-fi
-
 # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
 # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
 # this is achieved through the ACLs.
@@ -324,11 +249,7 @@ while test 1 != $(eos fs ls /fst | grep -E 'booted.*online' | wc -l); do
 done
 
 # Start the FST garbage collector (the daemon user must be an EOS sudoer by now)
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  systemctl start cta-fst-gcd
-else
-  runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
-fi
+runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
 echo "Giving cta-fst-gcd 1 second to start"
 sleep 1
 FST_GCD_PID=$(ps -ef | grep -E '^daemon .*python3 /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}')
@@ -391,10 +312,4 @@ fi
 touch /eos-status/EOS_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
-if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
-  /bin/bash
-else
-  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
-  yum install -y systemd-resolved
-  systemctl start systemd-resolved
-fi
+/bin/bash

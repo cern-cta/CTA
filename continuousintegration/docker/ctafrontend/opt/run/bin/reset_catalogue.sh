@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -24,9 +24,6 @@ die() {
   sleep 1
   exit 1
 }
-
-# enable cta repository from previously built artifacts
-yum-config-manager --enable cta-artifacts
 
 # install the needed packages
 # the scheduler tools are installed once the scheduler type is known (see below)
@@ -71,5 +68,4 @@ else
   die "ERROR: Unsupported database type: ${CATALOGUE_BACKEND}"
 fi
 
-echo "### CATALOGUE RESET COMPLETED ###"
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Catalogue reset completed"

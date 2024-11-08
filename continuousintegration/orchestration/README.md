@@ -168,7 +168,6 @@ The `cta` chart expects the following required parameters:
 - `global.image.tag`: the tag for the `ctageneric` image to use. Used by all the pods in the subcharts.
 - `global.image.registry`: while not technically required, it is typically desirable to provide `global.image.registry`, as this will default to `gitlab-registry.cern.ch/cta` otherwise.
 - `tapeConfig`: this is the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
-- `global.useSystemd`: whether to use systemd or not. For now, systemd support has not been implemented.
 - `global.catalogueSchemaVersion`: The schema version of the catalogue. This is not currently used, but once all the charts use Kubernetes deployments, this can be used to automatically redeploy the relevant pods when this version changes (the frontend and tape servers).
 - `global.configuration.scheduler`: The scheduler configuration (same as detailed above). This is required as some pods need to mount specific volumes to specific places when CEPH is used as a backend.
 - `tpsrv.tapeServers`: The tape servers configuration (same as detailed above) used to determine which tape servers to spawn.

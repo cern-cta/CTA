@@ -77,10 +77,6 @@ curl -s --cacert ${KUBERNETES_CA_CERT} -H "Authorization: Bearer ${KUBERNETES_TO
 
 done < $keypasses_file
 
-echo Done.
-
-echo "### KDC ready ###"
-
 touch /KDC_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 # sleep forever but exit immediately when pod is deleted

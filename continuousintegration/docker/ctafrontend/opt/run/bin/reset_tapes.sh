@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -29,7 +29,6 @@ if [[ ! $LIBRARY_TYPE = "mhvtl" ]]; then
   exit 0
 fi
 
-
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
@@ -52,5 +51,4 @@ else
   echo "Resetting tapes on library type: $LIBRARY_TYPE is not supported"
 fi
 
-echo "### RESET COMPLETED ###"
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Done"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Tape unloading completed"

@@ -17,7 +17,6 @@
 
 . /opt/run/bin/init_pod.sh
 
-yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # Install missing RPMs
@@ -35,24 +34,10 @@ cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 GRPC_USE_TLS=""
 EOF
 
-if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
-  # systemd is not available
-  echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
-  cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
-  source /tmp/cta-frontend_env
+echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
+cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
+source /tmp/cta-frontend_env
 
-  runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
-  echo "ctafrontend died"
-  sleep infinity
-else
-   # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
-  yum install -y systemd-resolved
-  systemctl start systemd-resolved
-
-  # systemd is available
-  echo "Launching frontend with systemd:"
-  systemctl start cta-frontend-grpc
-
-  echo "Status is now:"
-  systemctl status cta-frontend-grpc
-fi
+runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
+echo "ctafrontend died"
+sleep infinity # Keep the container alive for debugging purposes

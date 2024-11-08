@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2022 CERN
+# @copyright    Copyright © 2022-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -18,31 +18,14 @@
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-yum-config-manager --enable cta-artifacts
 
 ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
 # install RPMs
 yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
-if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
-  # systemd is available
-  # rmcd will be running as non root user, we need to fix a few things:
-  # device access rights
-  chmod 666 /dev/${LIBRARY_DEVICE}
-
-  echo "Launching cta-rmcd with systemd:"
-  systemctl start cta-rmcd
-
-  echo "Status is now:"
-  systemctl status cta-rmcd
-
-else
-  # systemd is not available
-
-  # to get rmcd logs to stdout
-  tail -F /var/log/cta/cta-rmcd.log &
-  touch /RMCD_READY
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-  runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
-fi
+# to get rmcd logs to stdout
+tail -F /var/log/cta/cta-rmcd.log &
+touch /RMCD_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
+runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc

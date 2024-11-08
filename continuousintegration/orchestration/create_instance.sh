@@ -43,7 +43,6 @@ usage() {
   echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
   echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
-  echo "  -S, --use-systemd:                  Use systemd to manage services inside containers. Defaults to false"
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
@@ -90,7 +89,6 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
-  use_systemd=false # By default to not use systemd to manage services inside the containers
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
   upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
@@ -130,7 +128,6 @@ create_instance() {
       --max-drives-per-tpsrv)
         max_drives_per_tpsrv="$2"
         shift ;;
-      -S|--use-systemd) use_systemd=true ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
       --upgrade) upgrade=1 ;;
@@ -275,7 +272,6 @@ create_instance() {
                                 --namespace ${namespace} \
                                 --set global.image.registry="${registry_host}" \
                                 --set global.image.tag="${image_tag}" \
-                                --set global.useSystemd=${use_systemd} \
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
