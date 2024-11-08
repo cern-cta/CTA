@@ -22,7 +22,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install cta-frontend cta-debuginfo ceph-common
+yum -y install cta-frontend cta-catalogueutils cta-debuginfo ceph-common
 
 chown cta /etc/cta/eos.sss.keytab
 

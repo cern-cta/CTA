@@ -22,7 +22,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-yum -y install cta-frontend-grpc cta-debuginfo ceph-common
+yum -y install cta-frontend-grpc cta-catalogueutils cta-debuginfo ceph-common
 
 # TODO: this should be updated once grpc is fixed
 cat <<EOF > /etc/sysconfig/cta-frontend-grpc

@@ -70,9 +70,6 @@ spec:
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-        - name: sysconfig-tpsrv-config
-          mountPath: /etc/sysconfig/cta-taped
-          subPath: cta-taped
       # For each drive, spawn a separate taped container
       {{- range $index, $drive := .drives }}
       - name: "taped-{{ $index }}"

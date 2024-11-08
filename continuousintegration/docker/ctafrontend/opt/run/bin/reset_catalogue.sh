@@ -26,7 +26,6 @@ die() {
 }
 
 # install the needed packages
-# the scheduler tools are installed once the scheduler type is known (see below)
 yum -y install cta-catalogueutils
 yum clean packages
 
