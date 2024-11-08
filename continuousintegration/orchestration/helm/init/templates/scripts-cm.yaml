@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-init
+data:
+  reset_tapes.sh: |
+    {{ .Files.Get "scripts/reset_tapes.sh" | nindent 4 }}

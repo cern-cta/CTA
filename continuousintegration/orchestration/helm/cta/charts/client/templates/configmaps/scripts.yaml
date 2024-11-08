@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-client
+data:
+  client.sh: |
+    {{ .Files.Get "scripts/client.sh" | nindent 4 }}

@@ -40,8 +40,8 @@ if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
     echo "Database connection failed, pausing before a retry"
     sleep 5
     echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
-    echo "Database wiped"
   fi
+  echo "Database wiped"
 else
   rm -fr $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
 fi

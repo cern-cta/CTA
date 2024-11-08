@@ -19,11 +19,11 @@ spec:
     stdin: true
     command: ["/bin/sh", "-c"]
     args:
-    - |
+    - | # TODO
       cat /tmp/eos.keytab > /etc/eos.keytab;
       chmod 400 /etc/eos.keytab;
       yum install -y expect;
-      /opt/run/bin/ctaeos-mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log;
+      bash /scripts/ctaeos_mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log;
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     resources:
@@ -46,6 +46,8 @@ spec:
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
     - mountPath: /etc/config/eos
       name: eosconfig
     - mountPath: /etc/config/eoscta
@@ -86,6 +88,10 @@ spec:
       subPath: eos.keytab
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
   volumes:
+  - name: scripts-volume
+    configMap:
+      name: scripts-ctaeos
+      defaultMode: 0777
   - name: cta-fst-gcd
     configMap:
       name: eos-cta-fst-gcd

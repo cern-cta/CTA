@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-ctafrontend
+data:
+  ctafrontend.sh: |
+    {{ .Files.Get "scripts/ctafrontend.sh" | nindent 4 }}
+  ctafrontend_bt.sh: |
+    {{ .Files.Get "scripts/ctafrontend_bt.sh" | nindent 4 }}
+  ctafrontend_grpc.sh: |
+    {{ .Files.Get "scripts/ctafrontend_grpc.sh" | nindent 4 }}

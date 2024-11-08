@@ -38,7 +38,7 @@ spec:
         securityContext:
           privileged: true
         stdin: true
-        command: ['/opt/run/bin/rmcd.sh']
+        command: ["bash", "/scripts/rmcd.sh"]
         args: ["none"]
         readinessProbe:
           exec:
@@ -67,6 +67,9 @@ spec:
         - name: TERM
           value: "xterm"
         volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts/rmcd.sh
+          subPath: rmcd.sh
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
@@ -79,10 +82,10 @@ spec:
           privileged: true
         command: ["/bin/sh", "-c"]
         args:
-        - |
+        - | # TODO
           cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
           chmod 600 /etc/cta/cta-taped.sss.keytab;
-          /opt/run/bin/taped.sh;
+          bash /scripts/taped.sh;
         readinessProbe:
           exec:
             command: ["test", "-f", "/TAPED_READY"]
@@ -114,6 +117,9 @@ spec:
         - name: XrdSecSSSKT
           value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
         volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts/taped.sh
+          subPath: taped.sh
         - name: cta-taped-config
           mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
           subPath: cta-taped-{{ $drive.name }}.conf
@@ -147,6 +153,10 @@ spec:
         {{- end }}
       {{- end }} # End of containers loop
       volumes:
+      - name: scripts-volume
+        configMap:
+          name: scripts-tpsrv
+          defaultMode: 0777
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf

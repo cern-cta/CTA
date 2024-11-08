@@ -83,7 +83,7 @@ touch   /var/eos/config/${eoshost}/default.eoscf
 chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
 
 # quarkDB only for systemd initially...
-cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh ${CI_CONTEXT}
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /scripts/start_quarkdb.sh ${CI_CONTEXT}
 
 # add taped SSS must be in a kubernetes secret
 #echo >> /etc/eos.keytab
@@ -101,7 +101,7 @@ mkdir -p /fst
 chown daemon:daemon /fst/
 
 ## Configuring host certificate
-/opt/run/bin/ctaeos_https.sh
+/scripts/ctaeos_https.sh
 
 # setting higher OS limits for EOS processes
 maxproc=$(ulimit -u)
@@ -292,7 +292,7 @@ eos space config default space.wfe.ntx=200
 eos space config default space.filearchivedgc=on
 
 # configure preprod directory separately
-/opt/run/bin/eos_configure_preprod.sh
+/scripts/eos_configure_preprod.sh
 
 
 # configure grpc for cta-admin tf dsk file resolution

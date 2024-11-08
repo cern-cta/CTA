@@ -18,10 +18,10 @@ spec:
     stdin: true
     command: ["/bin/sh", "-c"]
     args:
-    - |
+    - | # TODO
       cat /tmp/eos.keytab > /etc/eos.keytab;
       chmod 600 /etc/eos.keytab;
-      /opt/run/bin/client.sh;
+      bash /scripts/client.sh;
     readinessProbe:
       exec:
         command: ["test", "-f", "/CLIENT_READY"]
@@ -50,6 +50,8 @@ spec:
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
     - name: cta-conf-volume
       mountPath: /etc/cta/cta-cli.conf
       subPath: cta-cli.conf
@@ -75,6 +77,10 @@ spec:
       subPath: ctaadmin2.keytab
     {{ include "client.volumeMounts" . | nindent 4 }}
   volumes:
+  - name: scripts-volume
+    configMap:
+      name: scripts-client
+      defaultMode: 0777
   - name: cta-conf-volume
     configMap:
       name: etc-cta-client

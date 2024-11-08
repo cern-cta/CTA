@@ -32,5 +32,5 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
 echo "ctafrontend died"
 echo "analysing core file if any"
-/opt/run/bin/ctafrontend_bt.sh
+/scripts/ctafrontend_bt.sh
 sleep infinity # Keep the container alive for debugging purposes

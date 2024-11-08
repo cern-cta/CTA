@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-ctaeos
+data:
+  ctaeos_https.sh: |
+    {{ .Files.Get "scripts/ctaeos_https.sh" | nindent 4 }}
+  ctaeos_mgm.sh: |
+    {{ .Files.Get "scripts/ctaeos_mgm.sh" | nindent 4 }}
+  eos_configure_preprod.sh: |
+    {{ .Files.Get "scripts/eos_configure_preprod.sh" | nindent 4 }}
+  start_quarkdb.sh: |
+    {{ .Files.Get "scripts/start_quarkdb.sh" | nindent 4 }}

@@ -19,8 +19,7 @@ spec:
         - name: {{ $name }}
           image: {{ include "init.image" $ }}
           imagePullPolicy: {{ include "init.imagePullPolicy" $ }}
-          command:
-          - "/opt/run/bin/reset_tapes.sh"
+          command: ["bash", "/scripts/reset_tapes.sh"]
           args: []
           securityContext:
             privileged: true # Because of the scsi commands
@@ -44,11 +43,17 @@ spec:
             - name: LIBRARY_TYPE
               value: {{ $libraryType | quote }}
           volumeMounts:
+            - name: scripts-volume
+              mountPath: /scripts
             - mountPath: /mnt/logs
               name: logstorage
             - mountPath: /shared
               name: shared
       volumes:
+        - name: scripts-volume
+          configMap:
+            name: scripts-init
+            defaultMode: 0777
         - name: shared
           hostPath:
             path: /opt/cta
