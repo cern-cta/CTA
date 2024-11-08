@@ -49,6 +49,7 @@ generate_tpsrvs_config_for_library() {
   # This is executed only once to ensure consistency
   local lsscsi_g="$4"
   local max_drives="$5"
+  local max_drives_total="$6"
 
   # Find the line in lsscsi output corresponding to the current library device
   local line=$(echo "$lsscsi_g" | grep "mediumx" | grep "${library_device}")
@@ -75,6 +76,10 @@ generate_tpsrvs_config_for_library() {
                         grep tape | \
                         awk '{print $6}' | \
                         sed -e 's%/dev/%n%')
+
+  # Stick with 2 drives for now
+  driveNames=("${driveNames[@]:0:2}")
+  driveDevices=("${driveDevices[@]:0:2}")
 
   # Split driveNames and driveDevices into chunks of size max_drives
   for ((i=0; i < ${#driveNames[@]}; i+=max_drives)); do
@@ -103,7 +108,8 @@ generate_tpsrvs_config() {
   local target_file=""
   local library_type=""
   local library_devices=()
-  local max_drives=2
+  local max_drives_per_tpsrv=2
+  local max_drives_per_library=2
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -118,7 +124,10 @@ generate_tpsrvs_config() {
         IFS=',' read -r -a library_devices <<< "$2"
         shift ;;
       -m| --max-drives-per-tpsrv)
-        max_drives="$2"
+        max_drives_per_tpsrv="$2"
+        shift ;;
+      --max-drives-per-library)
+        max_drives_per_library="$2"
         shift ;;
       *)
         echo "Unsupported argument: $1"
@@ -137,7 +146,7 @@ generate_tpsrvs_config() {
   # Loop over each provided library device
   for library_device in "${library_devices[@]}"; do
     # TODO: this probably won't yet work properly for multiple library devices as the drives are not directly associated with a library device
-    generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives"
+    generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives_per_tpsrv" "$max_drives_per_library"
   done
 }
 
