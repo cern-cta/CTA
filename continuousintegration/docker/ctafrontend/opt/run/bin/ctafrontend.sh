@@ -22,34 +22,10 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-# cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
-
-# Wait for the keytab files to be pushed in by the creation script
-echo -n "Waiting for /etc/cta/eos.sss.keytab."
-for ((;;)); do test -e /etc/cta/eos.sss.keytab && break; sleep 1; echo -n .; done
-echo OK
-echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
-for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
-echo OK
-
-echo "Core files are available as $(cat /proc/sys/kernel/core_pattern) so that those are available as artifacts"
-
-# Configuring  grpc for cta-admin tapefile disk filename resolution
-echo -n "Configuring grpc to ctaeos: "
-if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
-  cp /etc/config/eoscta/eos.grpc.keytab /etc/cta/eos.grpc.keytab
-  echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend-xrootd.conf
-  echo 'OK'
-else
-  echo 'KO'
-fi
+yum -y install cta-frontend cta-debuginfo ceph-common
 
 chown cta /etc/cta/eos.sss.keytab
 
-echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
-cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
-source /tmp/cta-frontend_env
 touch /CTAFRONTEND_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 

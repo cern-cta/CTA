@@ -17,11 +17,12 @@
 
 . /opt/run/bin/init_pod.sh
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
+
 yum-config-manager --enable ceph
 
 # Install missing RPMs
-# cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-debuginfo cta-catalogueutils ceph-common cta-frontend-grpc
+yum -y install cta-frontend-grpc cta-debuginfo ceph-common
 
 # TODO: this should be updated once grpc is fixed
 cat <<EOF > /etc/sysconfig/cta-frontend-grpc
@@ -34,9 +35,8 @@ cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 GRPC_USE_TLS=""
 EOF
 
-echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
-cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
-source /tmp/cta-frontend_env
+touch /CTAFRONTEND_READY
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
 echo "ctafrontend died"
