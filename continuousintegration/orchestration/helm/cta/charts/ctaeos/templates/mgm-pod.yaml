@@ -19,9 +19,7 @@ spec:
     stdin: true
     command: ["/bin/sh", "-c"]
     args:
-    - | # TODO
-      cat /tmp/eos.keytab > /etc/eos.keytab;
-      chmod 400 /etc/eos.keytab;
+    - |
       yum install -y expect;
       bash /scripts/ctaeos_mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log;
     securityContext:
@@ -83,7 +81,7 @@ spec:
     - mountPath: /etc/eos-server.krb5.keytab
       name: keytab
       subPath: eos-server.krb5.keytab
-    - mountPath: /tmp/eos.keytab
+    - mountPath: /etc/eos.keytab
       name: sss-keytab
       subPath: eos.keytab
     {{ include "ctaeos.volumeMounts" . | nindent 4 }}
@@ -134,4 +132,5 @@ spec:
   - name: sss-keytab
     secret:
       secretName: eos-sss-keytab
+      defaultMode: 0400
   {{include "ctaeos.volumes" . | nindent 2}}

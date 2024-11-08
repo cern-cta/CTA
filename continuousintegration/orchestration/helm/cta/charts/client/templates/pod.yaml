@@ -16,12 +16,8 @@ spec:
     image: {{ include "client.image" . }}
     imagePullPolicy: {{ include "client.imagePullPolicy" . }}
     stdin: true
-    command: ["/bin/sh", "-c"]
-    args:
-    - | # TODO
-      cat /tmp/eos.keytab > /etc/eos.keytab;
-      chmod 600 /etc/eos.keytab;
-      bash /scripts/client.sh;
+    command: ["bash", "/scripts/client.sh"]
+    args: []
     readinessProbe:
       exec:
         command: ["test", "-f", "/CLIENT_READY"]
@@ -57,7 +53,7 @@ spec:
       subPath: cta-cli.conf
     - mountPath: /etc/config/eos
       name: eosconfig
-    - mountPath: /tmp/eos.keytab
+    - mountPath: /etc/eos.keytab
       name: sss-keytab
       subPath: eos.keytab
     - mountPath: /etc/krb5.conf
@@ -90,6 +86,7 @@ spec:
   - name: sss-keytab
     secret:
       secretName: eos-sss-keytab
+      defaultMode: 0600
   - name: krb5-config-volume
     configMap:
       name: krb5-config
