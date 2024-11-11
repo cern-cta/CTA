@@ -19,8 +19,12 @@ spec:
     image: {{ include "ctafrontend.image" . }}
     imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
     stdin: true
-    command: ["bash", "/scripts/ctafrontend.sh"]
-    args: []
+    command: ["/bin/sh", "-c"]
+    args:
+    - | # TODO
+      cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
+      chmod 400 /etc/cta/eos.sss.keytab;
+      bash /scripts/ctafrontend.sh;
     readinessProbe:
       exec:
         command: ["test", "-f", "/CTAFRONTEND_READY"]
@@ -88,7 +92,7 @@ spec:
     - mountPath: /etc/cta/cta-frontend.krb5.keytab
       name: keytab
       subPath: cta-frontend.krb5.keytab
-    - mountPath: /etc/cta/eos.sss.keytab
+    - mountPath: /etc/cta/eos-tmp.sss.keytab
       name: sss-keytab
       subPath: eos-tmp.sss.keytab
     - mountPath: /etc/krb5.conf
@@ -129,7 +133,6 @@ spec:
   - name: sss-keytab
     secret:
       secretName: frontend-sss-keytab
-      defaultMode: 0400
   - name: krb5-config-volume
     configMap:
       name: krb5-config

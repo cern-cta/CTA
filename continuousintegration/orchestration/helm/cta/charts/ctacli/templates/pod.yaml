@@ -16,8 +16,13 @@ spec:
     image: {{ include "ctacli.image" . }}
     imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
     stdin: true
-    command: ["bash", "/scripts/ctacli.sh"]
-    args: []
+    command: ["/bin/sh", "-c"]
+    args:
+    # TODO:
+    - |
+      cat /tmp/eos.keytab > /etc/eos.keytab;
+      chmod 600 /etc/eos.keytab;
+      bash /scripts/ctacli.sh
     readinessProbe:
       exec:
         command: ["test", "-f", "/CTACLI_READY"]
@@ -55,7 +60,7 @@ spec:
       mountPath: /root/ctaadmin1.keytab
       subPath: ctaadmin1.keytab
     - name: sss-keytab
-      mountPath: /etc/eos.keytab
+      mountPath: /tmp/eos.keytab
       subPath: eos.keytab
     - name: krb5-config-volume
       mountPath: /etc/krb5.conf
@@ -74,7 +79,7 @@ spec:
       secretName: ctaadmin1-keytab
   - name: sss-keytab
     secret:
-      defaultMode: 0600
+      defaultMode: 400
       secretName: eos-sss-keytab
   - name: krb5-config-volume
     configMap:
