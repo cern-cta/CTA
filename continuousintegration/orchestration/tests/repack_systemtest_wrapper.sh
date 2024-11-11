@@ -453,11 +453,7 @@ repackMoveAndAddCopies() {
   allTapepoolTable=($allTapepool)
 
   nbTapepool=${#allTapepoolTable[@]}
-
   nbTapePerTapepool=$(($nbVid / $nbTapepool))
-
-  allTapepool=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
-  allTapepoolTable=($allTapepool)
 
   countChanging=0
   tapepoolIndice=1 #We only change the vid of the remaining other tapes
