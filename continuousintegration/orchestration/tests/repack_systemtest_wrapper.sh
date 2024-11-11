@@ -422,9 +422,6 @@ repackMoveAndAddCopies() {
   echo "STEP $1. Testing Repack \"Move and Add copies\" workflow"
   echo "*******************************************************"
 
-
-  kubectl -n ${NAMESPACE}  exec ctacli -- cta-admin tape ls --all
-
   defaultTapepool="ctasystest"
   tapepoolDestination1_default="systest2_default"
   tapepoolDestination2_default="systest3_default"
@@ -461,8 +458,6 @@ repackMoveAndAddCopies() {
   countChanging=0
   tapepoolIndice=1 #We only change the vid of the remaining other tapes
 
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tp ls
-
   for ((i=$(($nbTapePerTapepool+$(($nbVid%$nbTapepool)))); i<$nbVid; i++));
   do
     echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}"
@@ -473,8 +468,6 @@ repackMoveAndAddCopies() {
       tapepoolIndice=$((tapepoolIndice + 1))
     fi
   done
-
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tp ls
 
   echo "OK"
 
