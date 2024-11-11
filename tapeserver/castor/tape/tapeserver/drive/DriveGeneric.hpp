@@ -17,6 +17,7 @@
 #pragma once
 
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "common/log/Logger.hpp"
 
 namespace castor::tape::tapeserver::drive {
 
@@ -31,7 +32,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
  */
 class DriveGeneric : public DriveInterface {
 public:
-  DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper & sw);
+  DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log);
 
   /* Operations to be used by the higher levels */
 
@@ -478,6 +479,7 @@ protected:
   int m_tapeFD;
   castor::tape::System::virtualWrapper & m_sysWrapper;
   lbpToUse m_lbpToUse;
+  cta::log::Logger &m_log;
 
   /**
    * Set the MTFastEOM option of the ST driver. This function is used only internally in

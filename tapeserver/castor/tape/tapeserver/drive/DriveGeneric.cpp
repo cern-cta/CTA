@@ -55,8 +55,8 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
   }
 }
 
-drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
-m_tapeFD(-1),  m_sysWrapper(sw), m_lbpToUse(lbpToUse::disabled) {
+drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw, cta::log::Logger &log) : m_SCSIInfo(di),
+m_tapeFD(-1),  m_sysWrapper(sw), m_lbpToUse(lbpToUse::disabled), m_log(log) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
    * will fail after a long timeout when no tape is present (at least with mhvtl)
@@ -1049,6 +1049,7 @@ void drive::DriveGeneric::rewind(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
+  m_log(cta::log::INFO, "In drive::DriveGeneric::rewind: Rewinding drive");
   cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
       "Failed ST ioctl (MTREW) in DriveGeneric::rewind");
