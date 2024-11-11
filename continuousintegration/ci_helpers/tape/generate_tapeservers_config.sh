@@ -36,6 +36,7 @@ usage() {
   echo "  -t, --library-type            Library type to put in the configuration. E.g. mhvtl or IBM"
   echo "  -d, --library-devices         A comma separated list of library devices to generate to include in the configuration file."
   echo "  -m, --max-drives-per-tpsrv    The maximum number of drives that a single tape server can be responsible for. Defaults to 2."
+  echo "      --max-tapeservers         The maximum number of tape servers that will be present in the config. Defaults to 2."
   exit 1
 }
 
@@ -49,7 +50,7 @@ generate_tpsrvs_config_for_library() {
   # This is executed only once to ensure consistency
   local lsscsi_g="$4"
   local max_drives="$5"
-  local max_drives_total="$6"
+  local max_tape_servers="$6"
 
   # Find the line in lsscsi output corresponding to the current library device
   local line=$(echo "$lsscsi_g" | grep "mediumx" | grep "${library_device}")
@@ -77,10 +78,6 @@ generate_tpsrvs_config_for_library() {
                         awk '{print $6}' | \
                         sed -e 's%/dev/%n%')
 
-  # Stick with 2 drives for now
-  driveNames=("${driveNames[@]:0:2}")
-  driveDevices=("${driveDevices[@]:0:2}")
-
   # Split driveNames and driveDevices into chunks of size max_drives
   for ((i=0; i < ${#driveNames[@]}; i+=max_drives)); do
     driveNamesChunk=( "${driveNames[@]:i:max_drives}" )
@@ -88,7 +85,6 @@ generate_tpsrvs_config_for_library() {
 
     # Increment server counter and generate server name
     local tpsrv_name=$(printf "tpsrv%02d" "$tpsrv_counter")
-    ((tpsrv_counter++))
 
     # Append configuration to the target file
     cat <<EOF >> "$target_file"
@@ -101,6 +97,11 @@ $(for ((j=0; j < ${#driveNamesChunk[@]}; j++)); do
   printf "    - name: \"%s\"\n      device: \"%s\"\n" "${driveNamesChunk[j]}" "${driveDevicesChunk[j]}"
 done)
 EOF
+
+    ((tpsrv_counter++))
+    if [ "$tpsrv_counter" -gt "$max_tape_servers" ]; then
+      return
+    fi
   done
 }
 
@@ -109,7 +110,7 @@ generate_tpsrvs_config() {
   local library_type=""
   local library_devices=()
   local max_drives_per_tpsrv=2
-  local max_drives_per_library=2
+  local max_tape_servers=2
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -126,8 +127,8 @@ generate_tpsrvs_config() {
       -m| --max-drives-per-tpsrv)
         max_drives_per_tpsrv="$2"
         shift ;;
-      --max-drives-per-library)
-        max_drives_per_library="$2"
+      --max-tapeservers)
+        max_tape_servers="$2"
         shift ;;
       *)
         echo "Unsupported argument: $1"
@@ -146,7 +147,7 @@ generate_tpsrvs_config() {
   # Loop over each provided library device
   for library_device in "${library_devices[@]}"; do
     # TODO: this probably won't yet work properly for multiple library devices as the drives are not directly associated with a library device
-    generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives_per_tpsrv" "$max_drives_per_library"
+    generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives_per_tpsrv" "$max_tape_servers"
   done
 }
 

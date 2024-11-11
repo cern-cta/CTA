@@ -47,6 +47,7 @@ usage() {
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
+  echo "      --max-tapservers <n>:           If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --upgrade:                      Upgrade the existing deployment."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   exit 1
@@ -94,6 +95,7 @@ create_instance() {
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
+  max_tapeservers=2
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -127,6 +129,9 @@ create_instance() {
         shift ;;
       --max-drives-per-tpsrv)
         max_drives_per_tpsrv="$2"
+        shift ;;
+      --max-tapeservers)
+        max_tapeservers="$2"
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
@@ -197,9 +202,10 @@ create_instance() {
     # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
     library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
     ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file $tapeservers_config  \
-                                                        --library-devices $library_devices \
                                                         --library-type "mhvtl" \
-                                                        --max-drives-per-tpsrv $max_drives_per_tpsrv
+                                                        --library-devices $library_devices \
+                                                        --max-drives-per-tpsrv $max_drives_per_tpsrv \
+                                                        --max-tapeservers $max_tapeservers
   elif [ $upgrade == 0 ]; then
     # Check that all devices in the provided config are available
     for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
