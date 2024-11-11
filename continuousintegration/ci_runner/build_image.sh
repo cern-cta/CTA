@@ -41,9 +41,9 @@ buildImage() {
   local image_tag=""
   local operating_system=""
   local rpm_default_src="image_rpms"
-  local yum_repos_dir="continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/"
-  local yum_versionlock_file="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list"
-  local dockerfile="continuousintegration/docker/ctafrontend/alma9/Dockerfile"
+  local yum_repos_dir="continuousintegration/docker/alma9/etc/yum.repos.d/"
+  local yum_versionlock_file="continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
+  local dockerfile="continuousintegration/docker/alma9/Dockerfile"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
