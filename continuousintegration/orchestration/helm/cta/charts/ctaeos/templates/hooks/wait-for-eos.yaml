@@ -1,5 +1,9 @@
 {{- $namespace := .Release.Namespace -}}
 {{- $name := include "ctaeos.name" . -}}
+# We use a post-install hook to wait for eos to be ready instead of a readiness probe
+# The reason being is that the startup script needs access to the service
+# But the service will only be reachable when the pod is ready
+# As such, the pod will be ready immediately and we use this to wait for it to be done initializing
 apiVersion: v1
 kind: Pod
 metadata:
@@ -18,7 +22,6 @@ spec:
       - /bin/sh
       - -c
       - |
-        touch /eos-status/CAN_START
         echo -n "Waiting for EOS to be initialised"
         while [ ! -f /eos-status/EOS_READY ]; do
           echo -n "."

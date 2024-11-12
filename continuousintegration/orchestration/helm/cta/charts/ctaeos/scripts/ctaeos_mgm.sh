@@ -164,14 +164,12 @@ eos vid enable unix
 # define space default before adding first fs
 eos space define default
 
-# Waiting for /CAN_START file before starting eos
-echo -n "Waiting for /CAN_START before going further"
-for ((i=0;i<600;i++)); do
-  test -f /eos-status/CAN_START && break
-  sleep 1
-  echo -n .
+yum install -y bind-utils
+# nslookup ctaeos
+until nslookup ctaeos; do
+  echo waiting for ctaeos to be reachable;
+  sleep 2;
 done
-test -f /eos-status/CAN_START && echo OK || exit 1
 
 EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 

@@ -116,6 +116,8 @@ spec:
           value: {{ $.Values.conf.taped.secProtocol }}
         - name: XrdSecSSSKT
           value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+        - name: SCHEDULER_BACKEND
+          value: {{ $schedulerConfig.backend | quote}}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/taped.sh

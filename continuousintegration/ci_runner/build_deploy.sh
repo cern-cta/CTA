@@ -31,7 +31,6 @@ usage() {
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build."
-  echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
@@ -66,7 +65,6 @@ compile_deploy() {
   local skip_image_reload=false
   local build_generator="Ninja"
   local cmake_build_type=""
-  local operating_system="alma9"
   local scheduler_type="objectstore"
   local oracle_support="ON"
   local enable_ccache=true
@@ -121,19 +119,6 @@ compile_deploy() {
           shift
         else
           echo "Error: --cmake-build-type requires an argument"
-          usage
-        fi
-        ;;
-      -o | --operating-system)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [alma9]."
-            exit 1
-          fi
-          operating_system="$2"
-          shift
-        else
-          echo "Error: -o | --operating-system requires an argument"
           usage
         fi
         ;;
@@ -201,15 +186,7 @@ compile_deploy() {
     else
       restarted=true
       echo "Starting a new build pod: ${build_pod_name}..."
-      case "${operating_system}" in
-        alma9)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/alma9-build-pod.yml -n ${build_namespace}
-          ;;
-        *)
-          echo "Invalid operating system provided: ${operating_system}"
-          exit 1
-          ;;
-      esac
+      kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/alma9-build-pod.yml -n ${build_namespace}
       kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
       echo "Building SRPMs..."
       local build_srpm_flags=""
@@ -286,7 +263,6 @@ compile_deploy() {
     echo "Redeploying CTA pods..."
     bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
       -n ${deploy_namespace} \
-      --operating-system "${operating_system}" \
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
       --catalogue-config "${catalogue_config}" \
       --scheduler-config "${scheduler_config}" \

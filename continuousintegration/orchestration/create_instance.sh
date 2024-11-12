@@ -39,7 +39,6 @@ usage() {
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
-  echo "  -m, --library-model <model>:        Specify the library model to use. Defaults to mhvtl"
   echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
   echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
@@ -47,7 +46,6 @@ usage() {
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
-  echo "      --upgrade:                      Upgrade the existing deployment."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   exit 1
 }
@@ -90,7 +88,6 @@ create_instance() {
   reset_catalogue=false
   reset_scheduler=false
   registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
-  upgrade=0 # Whether to keep the namespace and perform an upgrade of the Helm charts
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
@@ -109,6 +106,7 @@ create_instance() {
         shift ;;
       --tapeservers-config)
         tapeservers_config="$2"
+        test -f "${tapeservers_config}" || die "catalogue config file ${tapeservers_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -130,7 +128,6 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
-      --upgrade) upgrade=1 ;;
       --dry-run) dry_run=1 ;;
       *)
         echo "Unsupported argument: $1"
@@ -149,10 +146,6 @@ create_instance() {
     echo "Missing mandatory argument: -i | --image-tag"
     usage
   fi
-  if [ $upgrade == 1 ] && [ -z $tapeservers_config ]; then
-    echo "You are performing an upgrade, please provide an existing library configuration using: -l | --library-config"
-    usage
-  fi
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using latest tag"
     catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -162,8 +155,6 @@ create_instance() {
 
   if [ $dry_run == 1 ]; then
     helm_command="template --debug"
-  elif [ $upgrade == 1 ]; then
-    helm_command="upgrade --install"
   else
     helm_command="install"
   fi
@@ -200,7 +191,7 @@ create_instance() {
                                                         --library-devices $library_devices \
                                                         --library-type "mhvtl" \
                                                         --max-drives-per-tpsrv $max_drives_per_tpsrv
-  elif [ $upgrade == 0 ]; then
+  else
     # Check that all devices in the provided config are available
     for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
       if ! echo "$unused_devices" | grep -qw "$library_device"; then
@@ -213,7 +204,7 @@ create_instance() {
   echo "---"
 
   # Create the namespace if necessary
-  if [ $upgrade == 0 ] && [ $dry_run == 0 ] ; then
+  if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
     kubectl create namespace ${namespace}
     echo "Copying secrets into ${namespace} namespace"
@@ -228,45 +219,41 @@ create_instance() {
   fi
 
   update_chart_dependencies
-  # For now only allow an upgrade of the CTA chart
-  # Once deployments are in place, we can also look into upgrading the catalogue and scheduler
-  if [ $upgrade == 0 ]; then
-    echo "Installing init chart..."
-    log_run helm ${helm_command} init-${namespace} helm/init \
-                                  --namespace ${namespace} \
-                                  --set global.image.registry="${registry_host}" \
-                                  --set global.image.tag="${image_tag}" \
-                                  --set resetTapes=true \
-                                  --set-file tapeServers=${tapeservers_config} \
-                                  --wait --wait-for-jobs --timeout 2m
+  echo "Installing init chart..."
+  log_run helm ${helm_command} init-${namespace} helm/init \
+                                --namespace ${namespace} \
+                                --set global.image.registry="${registry_host}" \
+                                --set global.image.tag="${image_tag}" \
+                                --set resetTapes=true \
+                                --set-file tapeServers=${tapeservers_config} \
+                                --wait --wait-for-jobs --timeout 2m
 
-    # At some point this can be done in parallel
-    echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-    echo "Installing catalogue and scheduler charts..."
-    log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
-                                  --namespace ${namespace} \
-                                  --set resetImage.registry="${registry_host}" \
-                                  --set resetImage.tag="${image_tag}" \
-                                  --set schemaVersion="${catalogue_schema_version}" \
-                                  --set resetCatalogue=${reset_catalogue} \
-                                  --set-file configuration=${catalogue_config} \
-                                  --wait --wait-for-jobs --timeout 4m &
-    catalogue_pid=$!
+  # At some point this can be done in parallel
+  echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
+  echo "Installing catalogue and scheduler charts..."
+  log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
+                                --namespace ${namespace} \
+                                --set resetImage.registry="${registry_host}" \
+                                --set resetImage.tag="${image_tag}" \
+                                --set schemaVersion="${catalogue_schema_version}" \
+                                --set resetCatalogue=${reset_catalogue} \
+                                --set-file configuration=${catalogue_config} \
+                                --wait --wait-for-jobs --timeout 4m &
+  catalogue_pid=$!
 
-    log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
-                                  --namespace ${namespace} \
-                                  --set resetImage.registry="${registry_host}" \
-                                  --set resetImage.tag="${image_tag}" \
-                                  --set resetScheduler=${reset_scheduler} \
-                                  --set-file configuration=${scheduler_config} \
-                                  --wait --wait-for-jobs --timeout 4m &
-    scheduler_pid=$!
+  log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
+                                --namespace ${namespace} \
+                                --set resetImage.registry="${registry_host}" \
+                                --set resetImage.tag="${image_tag}" \
+                                --set resetScheduler=${reset_scheduler} \
+                                --set-file configuration=${scheduler_config} \
+                                --wait --wait-for-jobs --timeout 4m &
+  scheduler_pid=$!
 
-    # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
-    wait $catalogue_pid || exit 1
-    wait $scheduler_pid || exit 1
+  # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
+  wait $catalogue_pid || exit 1
+  wait $scheduler_pid || exit 1
 
-  fi
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
                                 --namespace ${namespace} \
@@ -277,7 +264,7 @@ create_instance() {
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 8m
 
-  if [ $dry_run == 1 ] || [ $upgrade == 1 ]; then
+  if [ $dry_run == 1 ]; then
     exit 0
   fi
 }

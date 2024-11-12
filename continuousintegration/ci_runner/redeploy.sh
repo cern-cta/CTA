@@ -29,7 +29,6 @@ usage() {
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "  -n, --namespace <namespace>:          Specify the Kubernetes namespace. Defaults to \"dev\" if not provided."
-  echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "  -t, --tag <tag>:                      Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:           Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
@@ -46,7 +45,6 @@ redeploy() {
   # Default values
   local kube_namespace="dev"
   local image_tag="dev"
-  local operating_system="alma9"
   local rpm_src=""
   local skip_image_reload=false
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
@@ -69,19 +67,6 @@ redeploy() {
         else
           echo "Error: -n|--namespace requires an argument"
           exit 1
-        fi
-        ;;
-      -o | --operating-system)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [alma9]."
-            exit 1
-          fi
-          operating_system="$2"
-          shift
-        else
-          echo "Error: -o | --operating-system requires an argument"
-          usage
         fi
         ;;
       -s | --rpm-src)
@@ -149,19 +134,6 @@ redeploy() {
     usage
   fi
 
-  if [ "$upgrade" == "true" ]; then
-    extra_spawn_options+=" --upgrade"
-  fi
-
-  if [ -n "${library_config}" ]; then
-    # If provided
-    extra_spawn_options+=" --library-config ${library_config}"
-  elif [ "$upgrade" == "true" ]; then
-    # Grab the auto-generated one of the current instance
-    latest_config_for_namespace=$(ls -t /tmp/${kube_namespace}-library-* | head -n 1)
-    extra_spawn_options+=" --library-config ${latest_config_for_namespace}"
-  fi # else by not providing, create_instance will auto-generate
-
   # Script should be run as cirunner
   if [[ $(whoami) != 'cirunner' ]]; then
     # At some point this should be improved; this script shouldn't care as long as minikube is running
@@ -186,7 +158,6 @@ redeploy() {
     echo "Building image from ${rpm_src}"
     ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
                                                      --rpm-src "${rpm_src}" \
-                                                     --operating-system "${operating_system}" \
                                                      ${extra_build_options}
     # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
     echo "Saving image locally"
@@ -197,15 +168,37 @@ redeploy() {
     podman image prune -f
   fi
 
-  # Redeploy containers
-  echo "Redeploying containers"
-  cd continuousintegration/orchestration
-  ./create_instance.sh --namespace ${kube_namespace} \
-                       --registry-host localhost \
-                       --image-tag ${image_tag} \
-                       --catalogue-config ${catalogue_config} \
-                       --scheduler-config ${scheduler_config} \
-                       ${extra_spawn_options}
+  if [ "$upgrade" == "true" ]; then
+    if [ -n "${library_config}" ]; then
+      # If provided
+      extra_spawn_options+=" --library-config ${library_config}"
+    fi # else by not providing, create_instance will auto-generate
+
+    # Redeploy containers
+    echo "Upgrading instance"
+    cd continuousintegration/orchestration
+    ./upgrade_instance.sh --namespace ${kube_namespace} \
+                        --registry-host localhost \
+                        --image-tag ${image_tag} \
+                        --catalogue-config ${catalogue_config} \
+                        --scheduler-config ${scheduler_config} \
+                        ${extra_spawn_options}
+  else
+    if [ -n "${library_config}" ]; then
+      # If provided
+      extra_spawn_options+=" --library-config ${library_config}"
+    fi # else by not providing, create_instance will auto-generate
+
+    # Redeploy containers
+    echo "Deploying instance"
+    cd continuousintegration/orchestration
+    ./create_instance.sh --namespace ${kube_namespace} \
+                        --registry-host localhost \
+                        --image-tag ${image_tag} \
+                        --catalogue-config ${catalogue_config} \
+                        --scheduler-config ${scheduler_config} \
+                        ${extra_spawn_options}
+  fi
 }
 
 redeploy "$@"

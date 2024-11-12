@@ -27,7 +27,6 @@ die() {
 
 # install the needed packages
 yum -y install cta-catalogueutils
-yum clean packages
 
 echo "Using catalogue backend: $CATALOGUE_BACKEND"
 
