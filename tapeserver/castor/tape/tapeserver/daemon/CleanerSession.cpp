@@ -264,8 +264,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
 
   // Instantiate the drive object
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
-    drive(drive::createDrive(driveInfo, m_sysWrapper));
+  auto drive = drive::createDrive(driveInfo, m_sysWrapper, m_log);
 
   if (nullptr == drive.get()) {
     cta::exception::Exception ex;

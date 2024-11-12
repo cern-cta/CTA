@@ -533,7 +533,7 @@ protected:
   compressionStats getCompressionStats();
 public:
 
-  DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
+  DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log) : DriveGeneric(di, sw, log) {
     castor::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
   }
 
@@ -555,7 +555,7 @@ public:
  */
 class DriveMHVTL: public DriveT10000 {
 public:
-  DriveMHVTL(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveT10000(di, sw) {}
+  DriveMHVTL(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log) : DriveT10000(di, sw, log) {}
   void disableLogicalBlockProtection() override;
   void enableCRC32CLogicalBlockProtectionReadOnly() override;
   void enableCRC32CLogicalBlockProtectionReadWrite() override;
@@ -581,7 +581,7 @@ public:
 class DriveLTO : public DriveGeneric {
 public:
 
-  DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
+  DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log) : DriveGeneric(di, sw, log) {
   }
 
   compressionStats getCompression() override;
@@ -596,7 +596,7 @@ public:
 class DriveIBM3592 : public DriveGeneric {
 public:
 
-  DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
+  DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log) : DriveGeneric(di, sw, log) {
   }
 
   compressionStats getCompression() override;

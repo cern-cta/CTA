@@ -22,6 +22,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "common/log/DummyLogger.hpp"
 #include <iostream>
 #include <assert.h>
 #include <memory>
@@ -61,6 +62,7 @@ int main ()
   int fail = 0;
   castor::tape::System::realWrapper sWrapper;
   castor::tape::SCSI::DeviceVector dl(sWrapper);
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   for(castor::tape::SCSI::DeviceVector::iterator i = dl.begin();
           i != dl.end(); ++i) {
     castor::tape::SCSI::DeviceInfo & dev = (*i);
@@ -69,8 +71,7 @@ int main ()
     if (dev.type == castor::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
-        std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-          castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
+        auto drive = castor::tape::tapeserver::drive::createDrive(dev, sWrapper, dummyLogger);
      
         /**
          * From now we could use generic SCSI request for the drive object.

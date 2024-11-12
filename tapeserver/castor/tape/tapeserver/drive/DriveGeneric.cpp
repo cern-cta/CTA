@@ -31,24 +31,24 @@
 
 namespace castor::tape::tapeserver {
 
-drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
-    System::virtualWrapper& sw) {
+std::unique_ptr<drive::DriveInterface> drive::createDrive(SCSI::DeviceInfo di,
+    System::virtualWrapper& sw, cta::log::Logger &log) {
     if (std::string::npos != di.product.find("MHVTL") || std::string::npos != di.vendor.find("MHVTL")) {
-    return new DriveMHVTL(di, sw);
+    return std::make_unique<DriveMHVTL>(di, sw, log);
   } else if (std::string::npos != di.product.find("T10000")) {
-    return new DriveT10000(di, sw);
+    return std::make_unique<DriveT10000>(di, sw, log);
   } else if (std::string::npos != di.product.find("ULT") || std::string::npos != di.product.find("Ultrium")) {
-    return new DriveLTO(di, sw);
+    return std::make_unique<DriveLTO>(di, sw, log);
   } else if (std::string::npos != di.product.find("03592")) {
-    return new DriveIBM3592(di, sw);
+    return std::make_unique<DriveIBM3592>(di, sw, log);
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
     /* In case of a VIRTUAL drive, it could have been pre-allocated
      * for testing purposes (with "pre-cooked" contents). */
-    drive::DriveInterface * ret = sw.getDriveByPath(di.nst_dev);
+    auto ret = std::unique_ptr<drive::DriveInterface>(sw.getDriveByPath(di.nst_dev));
     if (ret) {
       return ret;
     } else {
-      return new FakeDrive();
+      return std::make_unique<FakeDrive>();
     }
   } else {
     throw cta::exception::Exception(std::string("Unsupported drive type: ") + di.product);

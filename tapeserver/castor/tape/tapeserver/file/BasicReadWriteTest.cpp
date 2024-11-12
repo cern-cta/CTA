@@ -90,6 +90,8 @@ int main(int argc, char *argv[]) {
   int fail = 0;
   castor::tape::System::realWrapper sWrapper;
   castor::tape::SCSI::DeviceVector dl(sWrapper);
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
+
   for (castor::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
     castor::tape::SCSI::DeviceInfo & dev = (*i);
     std::cout << std::endl << "-- SCSI device: "
@@ -97,8 +99,7 @@ int main(int argc, char *argv[]) {
     if (dev.type == castor::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
-        std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-          castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
+        auto drive = castor::tape::tapeserver::drive::createDrive(dev, sWrapper, dummyLogger);
 
         /**
          * From now we could use generic SCSI request for the drive object.

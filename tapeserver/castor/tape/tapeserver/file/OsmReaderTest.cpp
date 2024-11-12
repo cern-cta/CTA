@@ -67,7 +67,7 @@ public:
 
 class OsmReaderTest : public ::testing::Test {
 protected:
-  OsmReaderTest() : m_sWrapper(), m_dev(), m_catalogue(std::make_unique<OSMCatalogue>()) {
+  OsmReaderTest() : m_sWrapper(), m_dev(), m_catalogue(std::make_unique<OSMCatalogue>()), m_log("dummy", "dummyLogger") {
   }
 
   void SetUp() override {
@@ -85,7 +85,7 @@ protected:
     // Create drive object and open tape device
     m_dev.product = "MHVTL";
     m_dev.nst_dev = m_nstDev;
-    m_drive.reset(castor::tape::tapeserver::drive::createDrive(m_dev, m_sWrapper));
+    m_drive = castor::tape::tapeserver::drive::createDrive(m_dev, m_sWrapper, m_log);
 
     try {
       /**
@@ -125,6 +125,7 @@ protected:
   std::string m_vid;
   std::string m_nstDev;
   std::string m_devName;
+  cta::log::DummyLogger m_log;
 };
 
 TEST_F(OsmReaderTest, ReadOsmTape) {

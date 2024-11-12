@@ -549,7 +549,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::Lo
  * @param logContext For logging purpose
  * @return the drive if found, nullptr otherwise
  */
-castor::tape::tapeserver::drive::DriveInterface *
+std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
 castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogContext &logContext,
                                                                  cta::TapeMount *mount) {
   // Find the drive in the system's SCSI devices
@@ -571,10 +571,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
     return nullptr;
   }
   try {
-    std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
-    drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
+    auto drive = castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper, m_log);
     if (drive) { drive->config = m_driveConfig; }
-    return drive.release();
+    return drive;
   } catch (cta::exception::Exception& e) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Error opening tape drive", mount, logContext);

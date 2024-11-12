@@ -20,6 +20,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
+#include "common/log/DummyLogger.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 #include <typeinfo>
@@ -34,6 +35,7 @@ namespace unitTests {
 
 TEST(castor_tape_drive_Drive, OpensCorrectly) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -64,8 +66,7 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       std::string expected_classid;
       if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592 *>(drive.get())) {
         expected_classid = std::string(typeid(castor::tape::tapeserver::drive::DriveIBM3592).name());
@@ -82,6 +83,7 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
 
 TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -104,8 +106,7 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       castor::tape::tapeserver::drive::positionInfo posInfo;
       castor::tape::tapeserver::drive::physicalPositionInfo physicalPosInfo;
 
@@ -138,6 +139,7 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
 } 
 TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -160,8 +162,7 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       drive->setDensityAndCompression();
@@ -183,6 +184,7 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
 
 TEST(castor_tape_drive_Drive, setStDriverOptions) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -204,8 +206,7 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive->setSTBufferWrite(true);
@@ -218,6 +219,7 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
 
 TEST(castor_tape_drive_Drive, getDeviceInfo) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -240,8 +242,7 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);   
@@ -266,6 +267,7 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
 
 TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -294,11 +296,11 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
      * is no need take into consideration the IBM tapes at all.
      */
     if (castor::tape::SCSI::Types::tape == i->type && i->product != "03592E08") {
-      castor::tape::tapeserver::drive::DriveGeneric *drive;
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveGeneric> drive;
       castor::tape::tapeserver::drive::compressionStats comp;
       
         {
-          drive = new castor::tape::tapeserver::drive::DriveT10000(*i, sysWrapper);
+          drive = std::make_unique<castor::tape::tapeserver::drive::DriveT10000>(*i, sysWrapper, dummyLogger);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -316,11 +318,9 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
           ASSERT_EQ(0U, comp.toHost);
           ASSERT_EQ(0U, comp.fromTape);
           ASSERT_EQ(0U, comp.toTape);
-
-          delete drive;
         }
         {
-          drive = new castor::tape::tapeserver::drive::DriveIBM3592(*i, sysWrapper);
+          drive = std::make_unique<castor::tape::tapeserver::drive::DriveIBM3592>(*i, sysWrapper, dummyLogger);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -338,11 +338,9 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
           ASSERT_EQ(0U, comp.toHost);
           ASSERT_EQ(0U, comp.fromTape);
           ASSERT_EQ(0U, comp.toTape);
-
-          delete drive;
         }
         {
-          drive = new castor::tape::tapeserver::drive::DriveLTO(*i, sysWrapper);
+          drive = std::make_unique<castor::tape::tapeserver::drive::DriveLTO>(*i, sysWrapper, dummyLogger);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -360,8 +358,6 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
           ASSERT_EQ(0U, comp.toHost);
           ASSERT_EQ(0U, comp.fromTape);
           ASSERT_EQ(0U, comp.toTape);
-
-          delete drive;
         }
     }
   }
@@ -369,6 +365,7 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
 
 TEST(castor_tape_drive_Drive, getLBPInfo) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -391,8 +388,7 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       castor::tape::tapeserver::drive::LBPInfo LBPdata;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);         
@@ -408,6 +404,7 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
 
 TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -430,8 +427,7 @@ TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       castor::tape::tapeserver::drive::LBPInfo LBPdata;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(3);   
@@ -453,6 +449,7 @@ TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
 
 TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
   /* Prepare the test harness */
+  cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
@@ -475,8 +472,7 @@ TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
       castor::tape::tapeserver::drive::LBPInfo LBPdata;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(5);   
@@ -513,12 +509,12 @@ TEST(castor_tape_drive_Drive, getReadErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           std::map<std::string,uint64_t> readErrorsStats =
             drive->getTapeReadErrors();
           ASSERT_EQ(2, readErrorsStats["mountTotalCorrectedReadErrors"]);
@@ -556,12 +552,12 @@ TEST(castor_tape_drive_Drive, getWriteErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           std::map<std::string,uint64_t> writeErrorsStats =
             drive->getTapeWriteErrors();
           ASSERT_EQ(2, writeErrorsStats["mountTotalCorrectedWriteErrors"]);
@@ -599,12 +595,12 @@ TEST(castor_tape_drive_Drive, getNonMediumErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           std::map<std::string,uint32_t> nonMediumErrorsStats =
             drive->getTapeNonMediumErrors();
           ASSERT_EQ(3, nonMediumErrorsStats["mountTotalNonMediumErrorCounts"]);
@@ -641,12 +637,12 @@ TEST(castor_tape_drive_Drive, getVolumeStats) {
   
   
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           if (castor::tape::tapeserver::drive::DriveIBM3592* ibm_drive =
               dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
             std::map<std::string,uint32_t> volumeStats =
@@ -693,12 +689,12 @@ TEST(castor_tape_drive_Drive, getQualityStats) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
   
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           std::map<std::string,float> qualityStats = drive->getQualityStats();
           /*
            * Assertions for common metrics are moved inside the special cases
@@ -764,12 +760,12 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
   
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
            i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           std::map<std::string,uint32_t> driveStats = drive->getDriveStats();
   
           /*
@@ -833,12 +829,12 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
       /* Test: detect devices, then open the device files */
+      cta::log::DummyLogger dummyLogger("dummy", "dummyLogger");
       castor::tape::SCSI::DeviceVector dl(sysWrapper);
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
           i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          auto drive = castor::tape::tapeserver::drive::createDrive(*i, sysWrapper, dummyLogger);
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<uint16_t> tapeAlertCodes = drive->getTapeAlertCodes();
           std::vector<std::string> alerts = drive->getTapeAlerts(tapeAlertCodes);

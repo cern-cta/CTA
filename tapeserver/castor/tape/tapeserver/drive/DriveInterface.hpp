@@ -25,6 +25,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeOut.hpp"
+#include "common/log/Logger.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
@@ -279,6 +280,6 @@ class DriveInterface {
  * @return pointer to the newly allocated drive object
  */
 
-DriveInterface * createDrive(SCSI::DeviceInfo di, System::virtualWrapper & sw);
+std::unique_ptr<DriveInterface> createDrive(SCSI::DeviceInfo di, System::virtualWrapper & sw, cta::log::Logger &log);
 
 } // namespace castor::tape::tapeserver::drive
