@@ -44,9 +44,7 @@ data:
     # Valid formats are default, json
     cta.log.format {{ .Values.conf.logger.logFormat }}
 
-    # CTA XRootD SSI Protobuf log level
-    # cta.log.ssi debug protobuf # TODO: which of these options do we want to make configurable?
-    cta.log.ssi {{ .Values.conf.logger.ssiLogLevel }}
+    cta.log.log_header true
 
     # CTA Repack buffer URL
     # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
@@ -57,39 +55,13 @@ data:
     # Keytab containing gRPC endpoints and tokens for each disk instance
     cta.ns.config {{ .Values.conf.ns.config }}
 
-    #
-    # XRootD/SSI options
-    #
-
-    # Enable SSI debug logging
-    #ssi.trace {{ .Values.conf.xrootd.trace }}
-
-    # Load the CTA SSI plugin
-    xrootd.fslib -2 libXrdSsi.so
-
-    # Load the SSI module
-    ssi.svclib libXrdSsiCta.so
-
-    # Use the security module
-    xrootd.seclib libXrdSec.so
-
-    # Security protocol specification
-    #
-    # Note: the XRootD process needs to be able to read the keytab file
-    sec.protocol krb5 {{ .Values.conf.security.krb5 }}
-    sec.protocol sss -s {{ .Values.conf.security.sss }}
-
-    # Only Kerberos 5 and sss are allowed
-    sec.protbind * only {{ .Values.conf.security.allowedProtocols }}
-
-    # Turn off asynchronous I/O
-    xrootd.async {{ .Values.conf.xrootd.async }}
-
-    # Use a port other than 1094, already used by EOS xroot server
-    xrd.port {{ .Values.conf.xrootd.port }}
-
-    # Export the SSI resource
-    all.export /ctafrontend nolock r/w
+    ### This is something leftover from the xrootd/ssi config, maybe unnecessary
 
     # This does not always need to be added
     cta.ns.config {{ .Values.conf.ns.config }}
+
+    # gRPC options
+    port 17017
+
+    # TLS related variables
+    TLS false
