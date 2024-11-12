@@ -83,27 +83,27 @@ namespace System {
   class realWrapper: public virtualWrapper {
   public:
 
-    virtual DIR* opendir(const char *name) { return ::opendir(name); }
-    virtual struct dirent * readdir(DIR* dirp) { return ::readdir(dirp); }
-    virtual int closedir(DIR* dirp) { return ::closedir(dirp); }
-    virtual int readlink(const char* path, char* buf, size_t len) { return ::readlink(path, buf, len); }
-    virtual char * realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
-    virtual int open(const char* file, int oflag) { return ::open(file, oflag); }
-    virtual int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd) {
+    DIR* opendir(const char *name) override { return ::opendir(name); }
+    struct dirent * readdir(DIR* dirp) override { return ::readdir(dirp); }
+    int closedir(DIR* dirp) override { return ::closedir(dirp); }
+    int readlink(const char* path, char* buf, size_t len) override { return ::readlink(path, buf, len); }
+    char * realpath(const char* name, char* resolved) override { return ::realpath(name, resolved); }
+    int open(const char* file, int oflag) override { return ::open(file, oflag); }
+    int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd) override {
       return ::ioctl(fd, request, mt_cmd);
     }
-    virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
+    int ioctl(int fd, unsigned long int request, struct mtget * mt_status) override {
       return ::ioctl(fd, request, mt_status);
     }
-    virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+    int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) override {
       return ::ioctl(fd, request, sgh);
     }
-    virtual ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
-    virtual ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
-    virtual int close(int fd) { return ::close(fd); }
-    virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
-      getDriveByPath(const std::string &) { return nullptr; }
+    ssize_t read(int fd, void* buf, size_t nbytes) override { return ::read(fd, buf, nbytes); }
+    ssize_t write(int fd, const void *buf, size_t nbytes) override { return ::write(fd, buf, nbytes); }
+    int close(int fd) override { return ::close(fd); }
+    int stat(const char * path, struct stat *buf) override { return ::stat(path, buf); }
+    castor::tape::tapeserver::drive::DriveInterface *
+      getDriveByPath(const std::string &) override { return nullptr; }
   };
   
   /**
@@ -116,21 +116,21 @@ namespace System {
 
     fakeWrapper() : m_nextFD(0) {
     };
-    virtual DIR* opendir(const char *name);
-    virtual struct dirent * readdir(DIR* dirp);
-    virtual int closedir(DIR* dirp);
-    virtual int readlink(const char* path, char* buf, size_t len);
-    virtual char * realpath(const char* name, char* resolved);
-    virtual int open(const char* file, int oflag);
-    virtual int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd);
-    virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status);
-    virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh);
-    virtual ssize_t read(int fd, void* buf, size_t nbytes);
-    virtual ssize_t write(int fd, const void *buf, size_t nbytes);
-    virtual int close(int fd);
-    virtual int stat(const char * path, struct stat *buf);
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
-      getDriveByPath(const std::string & path);
+    DIR* opendir(const char *name) override;
+    struct dirent * readdir(DIR* dirp) override;
+    int closedir(DIR* dirp) override;
+    int readlink(const char* path, char* buf, size_t len) override;
+    char * realpath(const char* name, char* resolved) override;
+    int open(const char* file, int oflag) override;
+    int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd) override;
+    int ioctl(int fd, unsigned long int request, struct mtget * mt_status) override;
+    int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) override;
+    ssize_t read(int fd, void* buf, size_t nbytes) override;
+    ssize_t write(int fd, const void *buf, size_t nbytes) override;
+    int close(int fd) override;
+    int stat(const char * path, struct stat *buf) override;
+    castor::tape::tapeserver::drive::DriveInterface *
+      getDriveByPath(const std::string & path) override;
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;
     std::map<std::string, std::string> m_realpathes;
@@ -143,7 +143,7 @@ namespace System {
     void setupSLC6();
     void setupForVirtualDriveSLC6();
     void referenceFiles();
-    virtual ~fakeWrapper();
+    ~fakeWrapper() override;
 
   private:
 
