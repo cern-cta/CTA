@@ -34,6 +34,8 @@ cat <<EOF > /etc/sysconfig/cta-frontend-grpc
 GRPC_USE_TLS=""
 EOF
 
+echo "Using the grpc frontend for ctafrontend pod"
+
 echo 'echo "Setting environment variables for cta-frontend"' > /tmp/cta-frontend_env
 cat /etc/sysconfig/cta-frontend | grep -v '^\s*\t*#' | sed -e 's/^/export /' >> /tmp/cta-frontend_env
 source /tmp/cta-frontend_env

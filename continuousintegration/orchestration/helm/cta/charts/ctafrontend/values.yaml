@@ -6,6 +6,7 @@ nameOverride: ctafrontend
 isPriviliged: true
 
 frontendPort: 10955
+useGrpcFrontend: true
 
 conf:
   catalogue:
@@ -40,6 +41,9 @@ conf:
     # trace: "debug"
     async: "off"
     port: 10955
+
+  grpc:
+    port: 17017
 
   security:
     krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"

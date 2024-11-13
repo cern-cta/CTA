@@ -20,18 +20,28 @@ spec:
     imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
     stdin: true
     command: ["/bin/sh", "-c"]
+    {{- if ( .Values.useGrpcFrontend ) }}
     args:
     - |
       cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
       chmod 400 /etc/cta/eos.sss.keytab;
+      ## add an if here
+      /opt/run/bin/ctafrontend-grpc.sh;
+      chown cta /etc/cta/eos.sss.keytab;
+    {{- else }}
+      cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
+      chmod 400 /etc/cta/eos.sss.keytab;
       /opt/run/bin/ctafrontend.sh;
       chown cta /etc/cta/eos.sss.keytab;
+    {{- end}}
+    {{- if not ( .Values.useGrpcFrontend ) }}
     readinessProbe:
       exec:
         command: ["test", "-f", "/CTAFRONTEND_READY"]
       initialDelaySeconds: 2
       periodSeconds: 1
       failureThreshold: 60
+    {{- end}}
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     resources:
@@ -74,9 +84,9 @@ spec:
       mountPath: /etc/cta/cta-objectstore-tools.conf
       subPath: cta-objectstore-tools.conf
     {{- end }}
-    - name: xrootd-config
-      mountPath: /etc/cta/cta-frontend-xrootd.conf
-      subPath: cta-frontend-xrootd.conf
+    - name: grpc-config
+      mountPath: /etc/cta/cta-frontend-grpc.conf
+      subPath: cta-frontend-grpc.conf
     {{- if eq $schedulerConfig.backend "ceph" }}
     - name: cta-ceph-volume
       mountPath: /etc/ceph/ceph.conf
@@ -99,9 +109,9 @@ spec:
       subPath: krb5.conf
     {{ include "ctafrontend.volumeMounts" . | nindent 4 }}
   volumes:
-  - name: xrootd-config
+  - name: grpc-config
     configMap:
-      name: cta-frontend-xrootd-conf
+      name: cta-frontend-grpc-conf
   - name: catalogue-config
     configMap:
       name: cta-catalogue-conf
