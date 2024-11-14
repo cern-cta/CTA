@@ -123,8 +123,6 @@ buildImage() {
                           --network host \
                           --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
                           --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file})
-  ;;
-
 }
 
 buildImage "$@"

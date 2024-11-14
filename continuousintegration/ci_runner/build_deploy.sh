@@ -47,6 +47,8 @@ usage() {
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
+  echo "      --upgrade:                        Upgrade the existing CTA instance instead of spawning a new one from scratch."
+  echo "      --force-upgrade:                  Same as --upgrade, but this will force a redeployment of all the CTA pods."
   exit 1
 }
 
@@ -68,6 +70,7 @@ compile_deploy() {
   local scheduler_type="objectstore"
   local oracle_support="ON"
   local enable_ccache=true
+  local upgrade=0
 
   # Defaults
   local num_jobs=8
@@ -100,6 +103,8 @@ compile_deploy() {
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-image-reload) skip_image_reload=true ;;
       --force-install) force_install=true ;;
+      --upgrade) upgrade=true ;;
+      --force-upgrade) force_upgrade=true ;;
       --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
@@ -134,6 +139,7 @@ compile_deploy() {
       --catalogue-config)
         if [[ $# -gt 1 ]]; then
           catalogue_config="$2"
+          custom_catalogue=1
           shift
         else
           echo "Error: --catalogue-config requires an argument"
@@ -144,6 +150,7 @@ compile_deploy() {
       --scheduler-config)
         if [[ $# -gt 1 ]]; then
           scheduler_config="$2"
+          custom_scheduler=1
           shift
         else
           echo "Error: --scheduler-config requires an argument"
@@ -257,15 +264,25 @@ compile_deploy() {
 
 
     local redeploy_flags=""
-    if [ ${skip_image_reload} = true ]; then
+    if [ "${skip_image_reload}" == "true" ]; then
       redeploy_flags+=" --skip-image-reload"
+    fi
+    if [ "${upgrade}" == "true" ]; then
+      redeploy_flags+=" --upgrade"
+    fi
+    if [ "${force_upgrade}" == "true" ]; then
+      redeploy_flags+=" --force-upgrade"
+    fi
+    if [ "$upgrade" == "false" ] || [ "${custom_scheduler:-0}" = "1" ] ; then
+      redeploy_flags+=" --scheduler-config ${scheduler_config}"
+    fi
+    if [ "$upgrade" == "false" ] || [ "${custom_catalogue:-0}" = "1" ] ; then
+      redeploy_flags+=" --catalogue-config ${catalogue_config}"
     fi
     echo "Redeploying CTA pods..."
     bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
       -n ${deploy_namespace} \
       --rpm-src build_rpm/RPM/RPMS/x86_64 \
-      --catalogue-config "${catalogue_config}" \
-      --scheduler-config "${scheduler_config}" \
       --spawn-options " --reset-catalogue --reset-scheduler" \
       ${redeploy_flags}
   fi

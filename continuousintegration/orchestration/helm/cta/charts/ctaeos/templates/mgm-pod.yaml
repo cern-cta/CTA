@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
     {{- include "common.labels.withoutname" . | nindent 4 }}
 spec:
+  terminationGracePeriodSeconds: 5
   restartPolicy: Never
   imagePullSecrets:
   {{ include "ctaeos.imagePullSecrets" . | nindent 2 }}

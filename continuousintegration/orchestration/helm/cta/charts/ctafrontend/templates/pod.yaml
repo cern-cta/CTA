@@ -11,6 +11,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
+  terminationGracePeriodSeconds: 5
   restartPolicy: Never
   imagePullSecrets:
   {{ include "ctafrontend.imagePullSecrets" . | nindent 2 }}

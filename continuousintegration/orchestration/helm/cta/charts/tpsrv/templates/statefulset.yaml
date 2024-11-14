@@ -27,6 +27,7 @@ spec:
       annotations:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
+      terminationGracePeriodSeconds: 5
       restartPolicy: Always
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}

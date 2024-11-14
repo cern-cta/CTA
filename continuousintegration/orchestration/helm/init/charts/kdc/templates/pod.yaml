@@ -8,6 +8,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
+  terminationGracePeriodSeconds: 5
   serviceAccountName: secret-creator
   restartPolicy: Never
   containers:

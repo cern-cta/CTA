@@ -32,11 +32,13 @@ usage() {
   echo "  -t, --tag <tag>:                      Image tag to use. Defaults to \"dev\" if not provided."
   echo "  -s, --rpm-src <rpm source>:           Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
-  echo "      --upgrade:                        Upgrade the currently running instance instead of installing it from scratch."
+  echo "      --upgrade:                        Upgrade the currently running instance instead of installing it from scratch. Old values are reused unless explicitly overriden"
+  echo "      --force-upgrade:                  Same as the --upgrade flag, but forces a re-deployment of all the CTA pods."
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --library-config <path>:          Path to the yaml file containing the library configuration. If not provided, the create_instance.sh script will autogenerate one."
   echo "      --spawn-options <options>:        Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --upgrade-options <options>:      Additional options to pass for the instance upgrade. These are passed verbatim to the upgrade_instance script."
   echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image script."
   exit 1
 }
@@ -52,7 +54,9 @@ redeploy() {
   local library_config=""
   local extra_spawn_options=""
   local extra_build_options=""
+  local extra_upgrade_options=""
   local upgrade=false
+  local force_upgrade=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -60,6 +64,9 @@ redeploy() {
       -h | --help) usage ;;
       --upgrade)
         upgrade=true ;;
+      --force-upgrade)
+        upgrade=true
+        force_upgrade=true ;;
       -n | --namespace)
         if [[ $# -gt 1 ]]; then
           kube_namespace="$2"
@@ -91,6 +98,7 @@ redeploy() {
       --catalogue-config)
         if [[ $# -gt 1 ]]; then
           catalogue_config="$2"
+          custom_catalogue=1
           shift
         else
           echo "Error: --catalogue-config requires an argument"
@@ -100,6 +108,7 @@ redeploy() {
       --scheduler-config)
         if [[ $# -gt 1 ]]; then
           scheduler_config="$2"
+          custom_scheduler=1
           shift
         else
           echo "Error: --scheduler-config requires an argument"
@@ -117,6 +126,9 @@ redeploy() {
         ;;
       --spawn-options)
         extra_spawn_options+=" $2"
+        shift ;;
+      --upgrade-options)
+        extra_upgrade_options+=" $2"
         shift ;;
       --build-options)
         extra_build_options="$2"
@@ -168,36 +180,35 @@ redeploy() {
     podman image prune -f
   fi
 
+  instance_options=""
+  if [ -n "${library_config}" ]; then
+    instance_options+=" --library-config ${library_config}"
+  fi
+  if [ "$upgrade" == "false" ] || [ "${custom_scheduler:-0}" = "1" ] ; then
+    instance_options+=" --scheduler-config ${scheduler_config}"
+  fi
+  if [ "$upgrade" == "false" ] || [ "${custom_catalogue:-0}" = "1" ] ; then
+    instance_options+=" --catalogue-config ${catalogue_config}"
+  fi
   if [ "$upgrade" == "true" ]; then
-    if [ -n "${library_config}" ]; then
-      # If provided
-      extra_spawn_options+=" --library-config ${library_config}"
-    fi # else by not providing, create_instance will auto-generate
-
-    # Redeploy containers
     echo "Upgrading instance"
     cd continuousintegration/orchestration
+    if [ "$force_upgrade" == "true" ]; then
+      instance_options+=" --force"
+    fi
     ./upgrade_instance.sh --namespace ${kube_namespace} \
-                        --registry-host localhost \
-                        --image-tag ${image_tag} \
-                        --catalogue-config ${catalogue_config} \
-                        --scheduler-config ${scheduler_config} \
-                        ${extra_spawn_options}
+                          --registry-host localhost \
+                          --image-tag ${image_tag} \
+                          ${instance_options} \
+                          ${extra_upgrade_options}
   else
-    if [ -n "${library_config}" ]; then
-      # If provided
-      extra_spawn_options+=" --library-config ${library_config}"
-    fi # else by not providing, create_instance will auto-generate
-
-    # Redeploy containers
     echo "Deploying instance"
     cd continuousintegration/orchestration
     ./create_instance.sh --namespace ${kube_namespace} \
-                        --registry-host localhost \
-                        --image-tag ${image_tag} \
-                        --catalogue-config ${catalogue_config} \
-                        --scheduler-config ${scheduler_config} \
-                        ${extra_spawn_options}
+                         --registry-host localhost \
+                         --image-tag ${image_tag} \
+                         ${instance_options} \
+                         ${extra_spawn_options}
   fi
 }
 

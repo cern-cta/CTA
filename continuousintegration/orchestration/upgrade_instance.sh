@@ -69,6 +69,7 @@ update_chart_dependencies() {
 }
 
 upgrade_instance() {
+  set -x
   force=0
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -96,7 +97,7 @@ upgrade_instance() {
         shift ;;
       --force)
         force=1
-        shift ;;
+        ;;
       *)
         echo "Unsupported argument: $1"
         usage
