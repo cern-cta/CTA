@@ -76,6 +76,16 @@ public:
   uint64_t getArchiveFileMaxSize() const { return m_archiveFileMaxSize; }
 
   /*!
+   * Check if 0-length files are disallowed
+   */
+  bool getDisallowZeroLengthFiles() const { return m_disallowZeroLengthFiles; };
+
+  /*!
+   * If 0-length files are disallowed, get the tape pools that are exempt from this restriction
+   */
+   std::vector<std::string> getDisallowZeroLengthFilesExemptions() const { return m_disallowZeroLengthFiles_exceptionStorageClasses; };
+
+  /*!
    * Get the repack buffer URL
    */
   std::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
@@ -157,6 +167,8 @@ private:
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
+  bool                                          m_disallowZeroLengthFiles; //!< Flag to explicitly reject the 0-length files by default
+  std::vector<std::string>                      m_disallowZeroLengthFiles_exceptionStorageClasses; //!< If 0-length files are rejected by default, do not apply check to these tapepools
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;  //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests

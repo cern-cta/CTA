@@ -30,7 +30,9 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   m_catalogue(frontendService.getCatalogue()),
   m_scheduler(frontendService.getScheduler()),
   m_lc(frontendService.getLogContext()),
-  m_verificationMountPolicy(frontendService.getVerificationMountPolicy())
+  m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
+  m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
+  m_zeroLengthFilesDisallowedExceptions{frontendService.getDisallowZeroLengthFilesExemptions().begin(), frontendService.getDisallowZeroLengthFilesExemptions().end()}
 {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
@@ -234,6 +236,13 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
                                  std::to_string(storageClass.vo.maxFileSize) + " bytes)");
     }
     storageClassStr = storageClassItor->second;
+  }
+
+  // Check that the file is not 0-length
+  if (m_zeroLengthFilesDisallowed) {
+    if (!m_zeroLengthFilesDisallowedExceptions.count(storageClassStr)) {
+      throw exception::UserError("Archival of zero-length files not allowed.");
+    }
   }
 
   common::dataStructures::ArchiveRequest request;

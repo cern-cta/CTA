@@ -35,6 +35,11 @@ public:
   explicit Config(const std::string& filename);
 
   /*!
+   * Get a option string list vector from config
+   */
+  std::vector<std::string> getOptionValueStrVector(const std::string &key) const;
+
+  /*!
    * Get a single option string value from config
    */
   std::optional<std::string> getOptionValueStr(const std::string &key) const;

@@ -213,7 +213,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
   m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1000 * 1000 * 1000 : 0;
-
   {
     // Log cta.archivefile.max_size_gb
     std::list<log::Param> params;
@@ -221,6 +220,37 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "max_size_gb"));
     params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() : 0)));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_disallowZeroLengthFiles = config.getOptionValueStr("cta.archivefile.disallow_zero_length").value_or("off") == "on" ? true : false;
+  {
+    // Log cta.archivefile.disallow_zero_length
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("category", "cta.archivefile"));
+    params.push_back(log::Param("key", "disallow_zero_length"));
+    params.push_back(log::Param("value", config.getOptionValueStr("cta.archivefile.disallow_zero_length").value_or("off")));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_disallowZeroLengthFiles_exceptionStorageClasses = config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_sc_list");
+  if (!m_disallowZeroLengthFiles_exceptionStorageClasses.empty()) {
+    // Log cta.archivefile.disallow_zero_length_exempt_sc_list
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("category", "cta.archivefile"));
+    params.push_back(log::Param("key", "disallow_zero_length_exempt_sc_list"));
+    std::ostringstream oss;
+    bool is_first = true;
+    for (auto & val : config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_sc_list")) {
+      if (!is_first) {
+        oss << ",";
+      }
+      oss << val;
+      is_first = false;
+    }
+    params.push_back(log::Param("value", oss.str()));
     log(log::INFO, "Configuration entry", params);
   }
 

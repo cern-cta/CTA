@@ -70,6 +70,9 @@ private:
   cta::Scheduler                             &m_scheduler;                  //!< Reference to CTA Scheduler
   log::LogContext                             m_lc;                         //!< CTA Log Context
   std::string                                 m_verificationMountPolicy;    //!< Verification mount policy
+
+  bool                                        m_zeroLengthFilesDisallowed;           //!< Do not allow 0-length files to be archived
+  std::set<std::string>                       m_zeroLengthFilesDisallowedExceptions; //!< Tape pools exempted from the 0-length file rule (if enabled)
 };
 
 } // namespace cta::frontend
