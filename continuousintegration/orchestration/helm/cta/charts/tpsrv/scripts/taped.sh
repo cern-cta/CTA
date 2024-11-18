@@ -26,9 +26,6 @@ if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum -y install  ceph-common
 fi
 
-chown cta /etc/cta/${CTATAPEDSSS}
-chown cta ${XrdSecSSSKT}
-
 touch /TAPED_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 

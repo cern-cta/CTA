@@ -86,6 +86,7 @@ spec:
         - | # TODO
           cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
           chmod 600 /etc/cta/cta-taped.sss.keytab;
+          chown cta /etc/cta/cta-taped.sss.keytab;
           bash /scripts/taped.sh;
         readinessProbe:
           exec:
@@ -111,12 +112,8 @@ spec:
           value: {{ $drive.device | quote }}
         - name: DRIVE_NAME
           value: {{ $drive.name }}
-        - name: CTATAPEDSSS
-          value: {{ $.Values.conf.taped.ctaTapedSss }}
         - name: XrdSecPROTOCOL
           value: {{ $.Values.conf.taped.secProtocol }}
-        - name: XrdSecSSSKT
-          value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote}}
         volumeMounts:

@@ -17,7 +17,6 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     secProtocol: "sss"
     secSssktPath: "/etc/cta"
-    ctaTapedSss: "cta-taped.sss.keytab"
   general:
     instanceName: "CI"
 
