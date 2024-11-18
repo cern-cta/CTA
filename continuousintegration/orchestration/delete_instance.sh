@@ -37,21 +37,6 @@ usage() {
   exit 1
 }
 
-collect_container_logs() {
-  local namespace="$1"
-  local pod="$2"
-  local container="$3"
-  local output_dir="$4"
-  local output_prefix="$5"
-  # Collect stdout logs
-  kubectl --namespace ${namespace} logs ${pod} -c ${container} > ${output_dir}/${output_prefix}.log
-  # Collect all logs from /var/log for the pods with the label "collect-varlog"
-  label="collect-varlog"
-  if kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.metadata.labels.${label}}" | grep -q '.'; then
-    kubectl cp ${namespace}/${pod}:/var/log ${output_dir}/varlog/${output_prefix}
-  fi
-}
-
 delete_instance() {
   local log_dir=/tmp
   local collect_logs=true
