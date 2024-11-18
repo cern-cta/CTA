@@ -10,6 +10,7 @@ metadata:
     catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
+    collect-varlog: "true"
 spec:
   restartPolicy: Never
   imagePullSecrets:

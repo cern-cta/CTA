@@ -24,6 +24,7 @@ spec:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
         cta/library-device: {{ .libraryDevice }}
+        collect-varlog: "true"
       annotations:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
