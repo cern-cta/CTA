@@ -3836,6 +3836,10 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
+  for (auto & j: jobBatch) {
+    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob *>(j.get());
+    job->m_jobOwned = false;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -5403,6 +5407,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
       sorter.insertRetrieveRequest(rr, *this->m_oStoreDB.m_agentReference, std::optional<uint32_t>(selectedCopyNb), lc);
       rel.release();
       sorter.flushOneRetrieve(lc);
+      m_jobOwned = false;
       return;
     }
 
@@ -5588,6 +5593,7 @@ void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContex
       sorter.insertRetrieveRequest(rr, *this->m_oStoreDB.m_agentReference, std::optional<uint32_t>(selectedCopyNb), lc);
       rrl.release();
       sorter.flushOneRetrieve(lc);
+      m_jobOwned = false;
       return;
     }
     default:
