@@ -234,16 +234,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, "Configuration entry", params);
   }
 
-  m_disallowZeroLengthFiles_exceptionStorageClasses = config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_sc_list");
+  m_disallowZeroLengthFiles_exceptionStorageClasses = config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_vo_list");
   if (!m_disallowZeroLengthFiles_exceptionStorageClasses.empty()) {
-    // Log cta.archivefile.disallow_zero_length_exempt_sc_list
+    // Log cta.archivefile.disallow_zero_length_exempt_vo_list
     std::list<log::Param> params;
     params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
-    params.push_back(log::Param("key", "disallow_zero_length_exempt_sc_list"));
+    params.push_back(log::Param("key", "disallow_zero_length_exempt_vo_list"));
     std::ostringstream oss;
     bool is_first = true;
-    for (auto & val : config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_sc_list")) {
+    for (auto & val : config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_vo_list")) {
       if (!is_first) {
         oss << ",";
       }
