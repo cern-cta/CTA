@@ -79,7 +79,7 @@ delete_instance() {
   ###
   if [ "$collect_logs" = true ]; then
     # Temporary directory for logs
-    tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}_deletion_logs_XXXX")
+    tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
     mkdir -p "${tmpdir}/varlogs"
     echo "Collecting logs to ${tmpdir}"
 
@@ -98,7 +98,6 @@ delete_instance() {
       containers=$(echo "${pods}" | jq -r ".items[] | select(.metadata.name==\"${pod}\") | .spec.containers[].name")
       num_containers=$(echo "${containers}" | wc -w)
 
-      # Iterate over containers
       for container in ${containers}; do
         # Check for backtraces
         backtracefiles=$(kubectl --namespace "${namespace}" exec "${pod}" -c "${container}" -- find /var/log/tmp/ -type f -name '*.bt' 2>/dev/null || true)
@@ -109,22 +108,22 @@ delete_instance() {
           done
         fi
 
-        # Define output name
-        output_name="${pod}"
-        [ "${num_containers}" -gt 1 ] && output_name="${pod}-${container}"
+        # Name of the (sub)directory to output logs to
+        output_dir="${pod}"
+        [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
 
         # Collect stdout logs
-        kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_name}.log"
+        kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
         # Collect /var/log for pods
         if echo "${pods}" | jq -e ".items[] | select(.metadata.name==\"${pod}\") | .metadata.labels[\"collect-varlog\"] == \"true\"" > /dev/null; then
           echo "Collecting /var/log from ${pod} - ${container}"
-          mkdir -p "${tmpdir}/varlogs/${output_name}"
+          mkdir -p "${tmpdir}/varlogs/${output_dir}"
           kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - . \
-            | tar -C "${tmpdir}/varlogs/${output_name}" -xf - \
+            | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
             || echo "Failed to collect /var/log from pod ${pod}, container ${container}"
           # Remove empty files and directories to prevent polluting the output logs
-          find "${tmpdir}/varlogs/${output_name}" -type d -empty -delete -o -type f -empty -delete
+          find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
         fi
       done
     done
@@ -138,6 +137,7 @@ delete_instance() {
     # Save artifacts if running in CI
     if [ -n "${CI_PIPELINE_ID}" ]; then
       echo "Saving logs as artifacts"
+      # Note that this directory must be in the repository so that they can be properly saved as artifacts
       mkdir -p "../../pod_logs/${namespace}"
       cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
       kubectl -n "${namespace}" cp client:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
