@@ -334,11 +334,9 @@ compile_deploy() {
   # Deploy instance
   if [ ${skip_deploy} = false ]; then
     if [ "$upgrade" == "false" ]; then
-      # Delete previous instance, if it exists
-      if kubectl get namespace ${deploy_namespace} &>/dev/null; then
-        echo "Found existing namespace \"${deploy_namespace}\""
-        ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace}
-      fi
+      # By default we discard the logs from deletion as this is not very useful during development
+      # and polutes the dev machine
+      ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
 
       if [ -n "${tapeservers_config}" ]; then
         # If provided
@@ -352,6 +350,8 @@ compile_deploy() {
                           --image-tag ${image_tag} \
                           --catalogue-config ${catalogue_config} \
                           --scheduler-config ${scheduler_config} \
+                          --reset-catalogue \
+                          --reset-scheduler \
                           ${extra_spawn_options}
     else
       echo "Upgrading CTA instance"
