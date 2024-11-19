@@ -40,7 +40,7 @@ usage() {
   echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
   echo "      --force-install:                  Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
   echo "      --skip-build:                     Skips the build step."
-  echo "      --skip-deploy:                    Skips the redeploy step."
+  echo "      --skip-deploy:                    Skips the deploy step."
   echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
