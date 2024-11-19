@@ -203,7 +203,9 @@ compile_deploy() {
   fi
   echo "CTA directory found"
 
+  ###########################################################
   # Build binaries/RPMs
+  ###########################################################
   if [ ${skip_build} = false ]; then
     # Check if namespace exists
     if kubectl get namespace "${build_namespace}" &>/dev/null; then
@@ -299,9 +301,28 @@ compile_deploy() {
     echo "Build successful"
   fi
 
-  build_iteration_file=/tmp/.build_iteration
+  # navigate to root project directory
+  cd "${src_dir}/CTA"
 
-  if [ "$upgrade" == "true" ]; then
+  ###########################################################
+  # Build image
+  ###########################################################
+  build_iteration_file=/tmp/.build_iteration
+  if [ "$upgrade" == "false" ]; then
+    # Start with the tag dev-0
+    local current_build_id=0
+    image_tag="dev-$current_build_id"
+    touch $build_iteration_file
+    echo $current_build_id > $build_iteration_file
+
+    if [ ${image_cleanup} = true ]; then
+      # When deploying an entirely new instance, this is a nice time to clean up old images
+      echo "Cleaning up unused ctageneric images..."
+      podman image ls | grep "localhost/ctageneric" | grep -v dev-0 | awk '{print $3}' | xargs -r podman rmi -f > /dev/null
+      minikube image ls | grep "localhost/ctageneric:dev-" | xargs -r minikube image rm > /dev/null
+    fi
+  else
+    # This continuoully increments the image tag from previous upgrades
     if [ ! -f "$build_iteration_file" ]; then
       echo "Failed to find $build_iteration_file to retrieve build iteration."
       exit 1
@@ -310,24 +331,7 @@ compile_deploy() {
     new_build_id=$((current_build_id + 1))
     image_tag="dev-$new_build_id"
     echo $new_build_id > $build_iteration_file
-  else
-    local current_build_id=0
-    image_tag="dev-$current_build_id"
-    touch $build_iteration_file
-    echo $current_build_id > $build_iteration_file
-
-    if [ ${image_cleanup} = true ]; then
-      # At this point old images can be safely cleaned up
-      echo "Cleaning up unused ctageneric images..."
-      podman image ls | grep "localhost/ctageneric" | grep -v dev-0 | awk '{print $3}' | xargs -r podman rmi -f > /dev/null
-      minikube image ls | grep "localhost/ctageneric:dev-" | xargs -r minikube image rm > /dev/null
-    fi
   fi
-
-  # navigate to root project directory
-  cd "${src_dir}/CTA"
-
-  # Build image
   if [ "$skip_image_reload" == "false" ]; then
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
@@ -336,13 +340,15 @@ compile_deploy() {
                                                      --rpm-src "${rpm_src}" \
                                                      --operating-system "${operating_system}" \
                                                      --load-into-minikube
-    # Pruning of unused layers is done here to ensure we maintain caching
+    # Pruning of unused layers is done after image building to ensure we maintain caching
     if [ ${image_cleanup} = true ]; then
       podman image prune -f > /dev/null
     fi
   fi
 
-  # Deploy instance
+  ###########################################################
+  # Deploy CTA instance
+  ###########################################################
   if [ ${skip_deploy} = false ]; then
     if [ "$upgrade" == "false" ]; then
       # By default we discard the logs from deletion as this is not very useful during development
@@ -350,7 +356,6 @@ compile_deploy() {
       ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
 
       if [ -n "${tapeservers_config}" ]; then
-        # If provided
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
       fi
 

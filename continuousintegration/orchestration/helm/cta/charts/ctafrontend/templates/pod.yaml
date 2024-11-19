@@ -25,7 +25,7 @@ spec:
     - |
       cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
       chmod 400 /etc/cta/eos.sss.keytab;
-      exec /opt/run/bin/ctafrontend.sh;
+      /opt/run/bin/ctafrontend.sh;
     readinessProbe:
       exec:
         command: ["test", "-f", "/CTAFRONTEND_READY"]
