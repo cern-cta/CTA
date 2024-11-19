@@ -313,3 +313,5 @@ touch /eos-status/EOS_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 /bin/bash
+
+rm /eos-status/EOS_READY

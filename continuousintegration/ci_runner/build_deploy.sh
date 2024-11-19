@@ -24,7 +24,7 @@ usage() {
   echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
   echo ""
-  echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM"
+  echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM setup throught the CTA CI Minikube repo"
   echo ""
   echo "Usage: $0 [options]"
   echo ""
@@ -48,6 +48,9 @@ usage() {
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
+  echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
+  echo "      --upgrade:                        Upgrades the existing CTA instance instead of deleting and spawning a new one."
+  echo "      --image-cleanup:                  Performs a cleanup of the ctageneric images in both podman and minikube."
   exit 1
 }
 
@@ -70,6 +73,8 @@ compile_deploy() {
   local scheduler_type="objectstore"
   local oracle_support="ON"
   local enable_ccache=true
+  local upgrade=false
+  local image_cleanup=false
 
   # Defaults
   local num_jobs=8
@@ -101,7 +106,9 @@ compile_deploy() {
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-image-reload) skip_image_reload=true ;;
+      --image-cleanup) image_cleanup=true ;;
       --force-install) force_install=true ;;
+      --upgrade) upgrade=true ;;
       --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
@@ -165,6 +172,15 @@ compile_deploy() {
           exit 1
         fi
         ;;
+      --tapeservers-config)
+        if [[ $# -gt 1 ]]; then
+          tapeservers_config="$2"
+          shift
+        else
+          echo "Error: --tapeservers-config requires an argument"
+          exit 1
+        fi
+        ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -172,6 +188,12 @@ compile_deploy() {
     esac
     shift
   done
+
+  if [ "$skip_image_reload" == "true" ] && [ "$upgrade" == "true" ]; then
+    echo "Upgrading the instance without building a new image is currently not supported"
+    exit 1
+  fi
+
 
   # Check if src_dir specified
   echo "Checking whether CTA directory exists in \"${src_dir}\"..."
@@ -181,6 +203,7 @@ compile_deploy() {
   fi
   echo "CTA directory found"
 
+  # Build binaries/RPMs
   if [ ${skip_build} = false ]; then
     # Check if namespace exists
     if kubectl get namespace "${build_namespace}" &>/dev/null; then
@@ -276,22 +299,77 @@ compile_deploy() {
     echo "Build successful"
   fi
 
-  if [ ${skip_deploy} = false ]; then
+  build_iteration_file=/tmp/.build_iteration
 
-
-    local redeploy_flags=""
-    if [ ${skip_image_reload} = true ]; then
-      redeploy_flags+=" --skip-image-reload"
+  if [ "$upgrade" == "true" ]; then
+    if [ ! -f "$build_iteration_file" ]; then
+      echo "Failed to find $build_iteration_file to retrieve build iteration."
+      exit 1
     fi
-    echo "Redeploying CTA pods..."
-    bash ${src_dir}/CTA/continuousintegration/ci_runner/redeploy.sh \
-      -n ${deploy_namespace} \
-      --operating-system "${operating_system}" \
-      --rpm-src build_rpm/RPM/RPMS/x86_64 \
-      --catalogue-config "${catalogue_config}" \
-      --scheduler-config "${scheduler_config}" \
-      --spawn-options " --reset-catalogue --reset-scheduler" \
-      ${redeploy_flags}
+    local current_build_id=$(cat "$build_iteration_file")
+    new_build_id=$((current_build_id + 1))
+    image_tag="dev-$new_build_id"
+    echo $new_build_id > $build_iteration_file
+  else
+    local current_build_id=0
+    image_tag="dev-$current_build_id"
+    touch $build_iteration_file
+    echo $current_build_id > $build_iteration_file
+  fi
+
+  # navigate to root project directory
+  cd "${src_dir}/CTA"
+
+  # Build image
+  if [ "$skip_image_reload" == "false" ]; then
+    ## Create and load the new image
+    local rpm_src=build_rpm/RPM/RPMS/x86_64
+    echo "Building image from ${rpm_src}"
+    ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
+                                                     --rpm-src "${rpm_src}" \
+                                                     --operating-system "${operating_system}" \
+                                                     --load-into-minikube
+  fi
+
+  # Deploy instance
+  if [ ${skip_deploy} = false ]; then
+    if [ "$upgrade" == "false" ]; then
+      # Delete previous instance, if it exists
+      if kubectl get namespace ${deploy_namespace} &>/dev/null; then
+        echo "Found existing namespace \"${deploy_namespace}\""
+        ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace}
+      fi
+
+      if [ -n "${tapeservers_config}" ]; then
+        # If provided
+        extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
+      fi
+
+      echo "Deploying CTA instance"
+      cd continuousintegration/orchestration
+      ./create_instance.sh --namespace ${deploy_namespace} \
+                          --registry-host localhost \
+                          --image-tag ${image_tag} \
+                          --catalogue-config ${catalogue_config} \
+                          --scheduler-config ${scheduler_config} \
+                          ${extra_spawn_options}
+    else
+      echo "Upgrading CTA instance"
+      cd continuousintegration/orchestration
+      # For now we only support changing the image tag on an upgrade
+      ./upgrade_instance.sh --namespace ${deploy_namespace} \
+                            --registry-host localhost \
+                            --image-tag ${image_tag}
+
+    fi
+  fi
+
+  if [ ${image_cleanup} = true ]; then
+    # At this point old images can be safely cleaned up
+    echo "Cleaning up unused ctageneric images"
+    podman image ls | grep "localhost/ctageneric" | grep -v ${image_tag} | awk '{print $3}' | xargs -r podman rmi -f
+    minikube image ls | grep "localhost/ctageneric:dev-" | grep -v ${image_tag} | xargs -r minikube image rm
+    podman image prune -f
   fi
 }
 

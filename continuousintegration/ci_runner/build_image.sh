@@ -28,6 +28,8 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                         Shows help output."
+  echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
+  echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
   echo "      --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
   echo "      --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
@@ -39,11 +41,13 @@ buildImage() {
   # Default values
   local rpm_src=""
   local image_tag=""
+  local image_name="ctageneric"
   local operating_system=""
   local rpm_default_src="image_rpms"
   local yum_repos_dir="continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/"
   local yum_versionlock_file="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list"
   local dockerfile="continuousintegration/docker/ctafrontend/alma9/Dockerfile"
+  local load_into_minikube=false
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -78,6 +82,18 @@ buildImage() {
           echo "Error: -t|--tag requires an argument"
           exit 1
         fi
+        ;;
+      -n | --name)
+        if [[ $# -gt 1 ]]; then
+          image_name="$2"
+          shift
+        else
+          echo "Error: -n | --name requires an argument"
+          exit 1
+        fi
+        ;;
+      -l | --load-into-minikube)
+        load_into_minikube=true
         ;;
       --dockerfile)
         if [[ $# -gt 1 ]]; then
@@ -133,15 +149,17 @@ buildImage() {
   cd ../../
 
   # Copy the rpms into a predefined rpm directory
+  # This is important to ensure that the RPMs are accessible from the Docker build context
+  # (as the provided location might be outside of the project root)
   trap 'rm -rf ${rpm_default_src}' EXIT
   mkdir -p ${rpm_default_src}
   cp -r ${rpm_src} ${rpm_default_src}
 
+  echo "Building image ${image_name}:${image_tag}"
   case "${operating_system}" in
     alma9)
-      echo "Running on AlmaLinux 9"
       (set -x; podman build . -f ${dockerfile} \
-                              -t ctageneric:${image_tag} \
+                              -t ${image_name}:${image_tag} \
                               --network host \
                               --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
                               --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file})
@@ -151,6 +169,14 @@ buildImage() {
       exit 1
       ;;
   esac
+
+  if [ "$load_into_minikube" == "true" ]; then
+    # This step is necessary because atm podman and minikube don't share the same docker runtime and local registry
+    tmpfile=$(mktemp) && trap 'rm -f $tmpfile' EXIT
+    podman save -o $tmpfile localhost/${image_name}:${image_tag}
+    echo "Loading new image into minikube"
+    minikube image load $tmpfile --overwrite
+  fi
 }
 
 buildImage "$@"

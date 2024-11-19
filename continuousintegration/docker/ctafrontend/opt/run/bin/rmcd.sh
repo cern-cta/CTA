@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+trap "exit 0" SIGTERM SIGINT
+
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
@@ -29,3 +31,4 @@ tail -F /var/log/cta/cta-rmcd.log &
 touch /RMCD_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
+rm /RMCD_READY
