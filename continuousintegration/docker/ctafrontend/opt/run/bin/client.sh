@@ -27,4 +27,3 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 # sleep forever but exit immediately when pod is deleted
 exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
-rm /CLIENT_READY

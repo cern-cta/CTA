@@ -15,8 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-trap "exit 0" SIGTERM SIGINT
-
 . /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
@@ -46,7 +44,8 @@ CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIV
 CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVE_NAME}.conf"
 touch /TAPED_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
+# The exec is necessary to ensure signals are forwarded correctly
+exec runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
 rm /TAPED_READY
 
 echo "taped died"

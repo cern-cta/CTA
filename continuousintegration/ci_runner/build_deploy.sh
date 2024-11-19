@@ -50,7 +50,7 @@ usage() {
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --upgrade:                        Upgrades the existing CTA instance instead of deleting and spawning a new one."
-  echo "      --image-cleanup:                  Performs a cleanup of the ctageneric images in both podman and minikube."
+  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
   exit 1
 }
 
@@ -74,7 +74,7 @@ compile_deploy() {
   local oracle_support="ON"
   local enable_ccache=true
   local upgrade=false
-  local image_cleanup=false
+  local image_cleanup=true
 
   # Defaults
   local num_jobs=8
@@ -106,7 +106,7 @@ compile_deploy() {
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-image-reload) skip_image_reload=true ;;
-      --image-cleanup) image_cleanup=true ;;
+      --skip-image-cleanup) image_cleanup=false ;;
       --force-install) force_install=true ;;
       --upgrade) upgrade=true ;;
       --build-generator)
@@ -315,6 +315,14 @@ compile_deploy() {
     image_tag="dev-$current_build_id"
     touch $build_iteration_file
     echo $current_build_id > $build_iteration_file
+
+    if [ ${image_cleanup} = true ]; then
+      # At this point old images can be safely cleaned up
+      echo "Cleaning up unused ctageneric images..."
+      podman image ls | grep "localhost/ctageneric" | grep -v dev-0 | awk '{print $3}' | xargs -r podman rmi -f > /dev/null
+      minikube image ls | grep "localhost/ctageneric:dev-" | xargs -r minikube image rm > /dev/null
+      podman image prune -f > /dev/null
+    fi
   fi
 
   # navigate to root project directory
@@ -362,14 +370,6 @@ compile_deploy() {
                             --image-tag ${image_tag}
 
     fi
-  fi
-
-  if [ ${image_cleanup} = true ]; then
-    # At this point old images can be safely cleaned up
-    echo "Cleaning up unused ctageneric images"
-    podman image ls | grep "localhost/ctageneric" | grep -v ${image_tag} | awk '{print $3}' | xargs -r podman rmi -f
-    minikube image ls | grep "localhost/ctageneric:dev-" | grep -v ${image_tag} | xargs -r minikube image rm
-    podman image prune -f
   fi
 }
 
