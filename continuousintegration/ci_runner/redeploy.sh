@@ -178,6 +178,8 @@ redeploy() {
   # Delete previous instance, if it exists
   if [ "$upgrade" == "false" ] && kubectl get namespace ${kube_namespace} &>/dev/null; then
     echo "Found existing namespace \"${kube_namespace}\""
+    # By default we discard the logs from deletion as this is not very useful during development
+    # and polutes the dev machine
     ./continuousintegration/orchestration/delete_instance.sh -n ${kube_namespace} --discard-logs
   fi
 
