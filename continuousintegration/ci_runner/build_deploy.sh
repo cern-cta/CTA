@@ -321,7 +321,6 @@ compile_deploy() {
       echo "Cleaning up unused ctageneric images..."
       podman image ls | grep "localhost/ctageneric" | grep -v dev-0 | awk '{print $3}' | xargs -r podman rmi -f > /dev/null
       minikube image ls | grep "localhost/ctageneric:dev-" | xargs -r minikube image rm > /dev/null
-      podman image prune -f > /dev/null
     fi
   fi
 
@@ -337,6 +336,10 @@ compile_deploy() {
                                                      --rpm-src "${rpm_src}" \
                                                      --operating-system "${operating_system}" \
                                                      --load-into-minikube
+    # Pruning of unused layers is done here to ensure we maintain caching
+    if [ ${image_cleanup} = true ]; then
+      podman image prune -f > /dev/null
+    fi
   fi
 
   # Deploy instance
