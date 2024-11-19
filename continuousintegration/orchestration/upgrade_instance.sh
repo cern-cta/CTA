@@ -153,5 +153,13 @@ upgrade_instance() {
 
 }
 
+setup_system() {
+  ./setup/init_kerberos.sh -n ${namespace}
+  ./setup/set_eos_workflows.sh -n ${namespace}
+}
+
 check_helm_installed
 upgrade_instance "$@"
+setup_system
+echo "Instance ${namespace} successfully upgraded:"
+kubectl --namespace ${namespace} get pods

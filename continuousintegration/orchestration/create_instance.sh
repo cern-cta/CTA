@@ -275,38 +275,13 @@ create_instance() {
   fi
 }
 
-# TODO: the following part is configuration that is not (and should not) be part of the Helm setup.
 setup_system() {
-  # Eventually, the user should be able to provide a setup script that will be executed here.
-  # Set up kerberos
-  echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-  echo "Using kinit for ctacli and client"
-  kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
-  kubectl --namespace ${namespace} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
-  # space=${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-  # May be needed for the client to make sure that SSS is not used by default but krb5...
-  #echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-  echo "klist for client:"
-  kubectl --namespace ${namespace} exec client -- klist
-  echo "klist for ctacli:"
-  kubectl --namespace ${namespace} exec ctacli -- klist
-
-
-  # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
-  # files from tape and deleting files.
-  # EOS short instance name
-  eos_instance=ctaeos
-  echo "Setting workflows in namespace ${namespace} pod ${eos_instance}:"
-  cta_workflow_dir=/eos/${eos_instance}/proc/cta/workflow
-  for workflow in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default; do
-    echo "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-    kubectl --namespace ${namespace} exec ${eos_instance} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-  done
-
-  echo "Instance ${namespace} successfully created:"
-  kubectl --namespace ${namespace} get pods
+  ./setup/init_kerberos.sh -n ${namespace}
+  ./setup/set_eos_workflows.sh -n ${namespace}
 }
 
 check_helm_installed
 create_instance "$@"
 setup_system
+echo "Instance ${namespace} successfully created:"
+kubectl --namespace ${namespace} get pods
