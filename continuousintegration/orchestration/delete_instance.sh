@@ -25,7 +25,7 @@ die() {
 }
 
 usage() {
-  echo "Deletes a given Kubernetes namespace and collects their logs."
+  echo "Deletes a given Kubernetes namespace and optionally collects the logs in said namespace."
   echo ""
   echo "Usage: $0 -n <namespace> [options]"
   echo ""
@@ -35,6 +35,79 @@ usage() {
   echo "  -l, --log-dir <dir>:                Base directory to output the logs to. Defaults to /tmp."
   echo "  -D, --discard-logs:                 Do not collect the logs when deleting an instance."
   exit 1
+}
+
+save_logs() {
+  namespace="$1"
+  log_dir="$2"
+
+  # Temporary directory for logs
+  tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
+  mkdir -p "${tmpdir}/varlogs"
+  echo "Collecting logs to ${tmpdir}"
+
+  # We get all the pod details in one go so that we don't have to do too many kubectl calls
+  pods=$(kubectl --namespace "${namespace}" get pods -o json)
+
+  # Iterate over pods
+  echo "${pods}" | jq -r '.items[] | .metadata.name' | while read -r pod; do
+    # Check if logs are accessible
+    if ! kubectl --namespace "${namespace}" logs "${pod}" > /dev/null 2>&1; then
+      echo "Pod: ${pod} failed to start. Logging describe output"
+      kubectl --namespace "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
+      continue
+    fi
+
+    # Get containers for the pod
+    containers=$(echo "${pods}" | jq -r ".items[] | select(.metadata.name==\"${pod}\") | .spec.containers[].name")
+    num_containers=$(echo "${containers}" | wc -w)
+
+    for container in ${containers}; do
+      # Check for backtraces
+      backtracefiles=$(kubectl --namespace "${namespace}" exec "${pod}" -c "${container}" -- find /var/log/tmp/ -type f -name '*.bt' 2>/dev/null || true)
+      if [ -n "${backtracefiles}" ]; then
+        echo "Found backtrace in pod ${pod} - container ${container}:"
+        for backtracefile in ${backtracefiles}; do
+          kubectl --namespace "${namespace}" exec "${pod}" -c "${container}" -- cat "${backtracefile}"
+        done
+      fi
+
+      # Name of the (sub)directory to output logs to
+      output_dir="${pod}"
+      [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
+
+      # Collect stdout logs
+      kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
+
+      # Collect /var/log for any pod with the label "collect-varlog"
+      if echo "${pods}" | jq -e ".items[] | select(.metadata.name==\"${pod}\") | .metadata.labels[\"collect-varlog\"] == \"true\"" > /dev/null; then
+        echo "Collecting /var/log from ${pod} - ${container}"
+        mkdir -p "${tmpdir}/varlogs/${output_dir}"
+        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - . \
+          | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
+          || echo "Failed to collect /var/log from pod ${pod}, container ${container}"
+        # Remove empty files and directories to prevent polluting the output logs
+        find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
+      fi
+    done
+  done
+
+  # Compress /var/log contents
+  echo "Compressing all /var/log contents into single archive"
+  XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.xz" .
+  # Clean up uncompressed files
+  rm -rf "${tmpdir}/varlogs"
+
+  # Save artifacts if running in CI
+  if [ -n "${CI_PIPELINE_ID}" ]; then
+    echo "Saving logs as artifacts"
+    # Note that this directory must be in the repository so that they can be properly saved as artifacts
+    mkdir -p "../../pod_logs/${namespace}"
+    cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
+    kubectl -n "${namespace}" cp client:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
+    # Prevent polluting the runner by cleaning up the original dir in /tmp
+    rm -rf ${tmpdir}
+  fi
 }
 
 delete_instance() {
@@ -74,73 +147,21 @@ delete_instance() {
     exit 0
   fi
 
-  ###
-  # Display all backtraces if any
-  ###
-
-  if kubectl get pod ctacli --namespace ${namespace} >/dev/null 2>&1; then
-    for backtracefile in $(kubectl --namespace ${namespace} exec ctacli -- bash -c 'find /mnt/logs | grep core | grep bt$' 2>/dev/null); do
-      pod=$(echo ${backtracefile} | cut -d/ -f4)
-      echo "Found backtrace in pod ${pod}:"
-      kubectl --namespace ${namespace} exec ctacli -- cat ${backtracefile}
-    done
-  fi
-
-  ###
-  # Collect the logs?
-  ###
-  if [ $collect_logs == true ] ; then
-    # First in a temporary directory so that we can get the logs on the gitlab runner if something bad happens
-    # indeed if the system test fails, artifacts are not collected for the build
-    tmpdir=$(mktemp --tmpdir=${log_dir} -d -t ${namespace}_deletion_logs_XXXX)
-    echo "Collecting pod logs to ${tmpdir}"
-
-    # Collect logs for each pod
-    pods=$(kubectl --namespace ${namespace} get pods -o jsonpath='{.items[*].metadata.name}')
-    for podName in $pods; do
-      # If we cannot get logs, then log the output of kubectl describe
-      if ! kubectl --namespace ${namespace} logs ${podName} > /dev/null 2>&1; then
-        echo "Pod: ${podName} failed to start. Logging describe output"
-        kubectl --namespace ${namespace} describe pod ${podName} > ${tmpdir}/${podName}-describe.log
-        continue
-      fi
-      containers=$(kubectl --namespace ${namespace} get pod ${podName} -o jsonpath='{.spec.containers[*].name}')
-      containerCount=$(echo $containers | wc -w)
-      if [ $containerCount -gt 1 ]; then
-        for containerName in $containers; do
-          kubectl --namespace ${namespace} logs ${podName} -c ${containerName} > ${tmpdir}/${podName}-${containerName}.log
-        done
-      else
-        # If there is only 1 container, don't append any container name
-        kubectl --namespace ${namespace} logs ${podName} > ${tmpdir}/${podName}.log
-      fi
-    done
-
-    if kubectl get pod ctacli --namespace ${namespace} >/dev/null 2>&1; then
-      # Collect all logs (including those residing on pods)
-      kubectl --namespace ${namespace} exec ctacli -- bash -c "XZ_OPT='-0 -T0' tar -C /mnt/logs -Jcf - ." > ${tmpdir}/varlog.tar.xz
-    fi
-
-    if [ -n "${CI_PIPELINE_ID}" ]; then
-      # we are in the context of a CI run => save artifacts in the directory structure of the build
-      echo "Saving logs as artifacts"
-      mkdir -p ../../pod_logs/${namespace}
-      cp -r ${tmpdir}/* ../../pod_logs/${namespace}
-      kubectl -n ${namespace} cp client:/root/trackerdb.db ../../pod_logs/${namespace}/trackerdb.db
-    fi
+  # Optional log collection
+  if [ "$collect_logs" = true ]; then
+    save_logs $namespace $log_dir
   else
-    # Do not Collect logs
     echo "Discarding logs for the current run"
   fi
 
-  # Remove old library values files:
-  echo "Removing auto-generated ${namespace}-tapeservers-*-values.yaml files"
+  # Cleanup of old library values files:
+  echo "Removing auto-generated /tmp/${namespace}-tapeservers-*-values.yaml files"
   rm -f /tmp/${namespace}-tapeservers-*-values.yaml
 
+  # Finally delete the actual namespace
   echo "Deleting ${namespace} instance"
   kubectl delete namespace ${namespace}
-  echo "Status of library pool after test:"
-  kubectl get pv
+  echo "Deletion finished"
 }
 
 delete_instance "$@"

@@ -24,7 +24,7 @@
 # Second, it hurts the portability of the script that sources this, and does not make it as easy to turn off logging.
 __log_info() {
   local message="$*"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] [$current_script]  $message"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO]  [$current_script]  $message"
 
 }
 
@@ -51,7 +51,7 @@ __log_start() {
 
   trap __log_end EXIT
 
-  start_time=$(date +%s)
+  start_time=$(date +%s%N)
   echo "Starting: $current_script $*"
 }
 
@@ -65,9 +65,9 @@ __log_end() {
   wait $pid_stdout
   wait $pid_stderr
 
-  end_time=$(date +%s)
+  end_time=$(date +%s%N)
   elapsed_time=$(( end_time - start_time ))
-  __log_info "Elapsed time: ${elapsed_time} seconds"
+  __log_info "Elapsed time: ${elapsed_time:0: -9}.${elapsed_time: -9:2} seconds"
 }
 
 

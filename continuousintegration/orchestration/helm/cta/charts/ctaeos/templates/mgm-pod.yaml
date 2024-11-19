@@ -8,6 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ .Values.mgmLabel | quote }}
     {{- include "common.labels.withoutname" . | nindent 4 }}
+    collect-varlog: "true"
 spec:
   restartPolicy: Never
   imagePullSecrets:
