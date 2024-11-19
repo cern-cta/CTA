@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 usage() {
   echo "Sets the required CTA workflows in the ctaeos pod in the provided namespace."
   echo ""

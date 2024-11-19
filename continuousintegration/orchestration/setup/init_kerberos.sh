@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 usage() {
   echo "Initialises kerberos for the ctacli and client pods in the provided namespace."
   echo ""
