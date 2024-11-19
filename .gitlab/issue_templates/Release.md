@@ -1,4 +1,4 @@
-* See [Tagging a new CTA release](https://eoscta.docs.cern.ch/cta/tag_cta/)
+* See [Tagging a new CTA release](https://eoscta.docs.cern.ch/latest/dev/ci/tagging_releases/)
 
 <!-- To obtain the commit id, first update the Release Notes with the version number of the next release and commit to master. -->
 
