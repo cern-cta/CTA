@@ -65,7 +65,6 @@ fi
 catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
-catalogue_commitid=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
 migration_files=$(find ../../../catalogue/cta-catalogue-schema -name "*to${catalogue_schema_version}.sql")
 prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
@@ -81,7 +80,6 @@ kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${yum_re
 helm install catalogue-updater ../helm/catalogue-updater --namespace ${NAMESPACE} \
                                                          --set catalogueSourceVersion=$prev_catalogue_schema_version \
                                                          --set catalogueDestinationVersion=$catalogue_schema_version \
-                                                         --set catalogueCommitId=$catalogue_commitid \
                                                          --wait --timeout 2m
 
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
