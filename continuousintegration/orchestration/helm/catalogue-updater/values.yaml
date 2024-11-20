@@ -2,11 +2,10 @@ nameOverride: catalogue-updater
 
 catalogueSourceVersion: ""
 catalogueDestinationVersion: ""
-catalogueCommitId: ""
 image:
   registry: gitlab-registry.cern.ch/cta
   repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
-  tag: "@sha256:12ae741513784eb206b0a2b3447008a9be4a95623f4da195b58de2669357dee6"
+  tag: "@sha256:024ca043b3cf69875ce8ec65656f73c038edb0f26574c0c642bcc828e05bac57"
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret

@@ -15,10 +15,6 @@
       "type": "string",
       "description": "The version of the destination catalogue."
     },
-    "catalogueCommitId": {
-      "type": "string",
-      "description": "The commit ID of the catalogue."
-    },
     "image": {
       "type": "object",
       "properties": {
@@ -57,7 +53,6 @@
   "required": [
     "catalogueSourceVersion",
     "catalogueDestinationVersion",
-    "catalogueCommitId",
     "image"
   ]
 }
