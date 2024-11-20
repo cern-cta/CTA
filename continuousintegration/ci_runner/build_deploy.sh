@@ -45,12 +45,13 @@ usage() {
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
+  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
+  echo "      --spawn-options <options>:        Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --upgrade:                        Upgrades the existing CTA instance instead of deleting and spawning a new one."
-  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
   exit 1
 }
 
@@ -75,6 +76,7 @@ compile_deploy() {
   local enable_ccache=true
   local upgrade=false
   local image_cleanup=true
+  local extra_spawn_options=""
 
   # Defaults
   local num_jobs=8
@@ -178,6 +180,15 @@ compile_deploy() {
           shift
         else
           echo "Error: --tapeservers-config requires an argument"
+          exit 1
+        fi
+        ;;
+      --spawn-options)
+        if [[ $# -gt 1 ]]; then
+          extra_spawn_options+=" $2"
+          shift
+        else
+          echo "Error: --spawn-options requires an argument"
           exit 1
         fi
         ;;
