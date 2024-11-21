@@ -13,6 +13,7 @@ metadata:
     collect-varlog: "true"
 spec:
   restartPolicy: Never
+  terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
   imagePullSecrets:
   {{ include "ctafrontend.imagePullSecrets" . | nindent 2 }}
   containers:

@@ -11,7 +11,7 @@ metadata:
     collect-varlog: "true"
 spec:
   restartPolicy: Never
-  terminationGracePeriodSeconds: 2 # This is low on purpose as the current process has no gracefull shutdown process
+  terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
   imagePullSecrets:
   {{ include "ctaeos.imagePullSecrets" . | nindent 2 }}
   containers:

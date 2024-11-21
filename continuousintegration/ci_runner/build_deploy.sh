@@ -340,8 +340,7 @@ compile_deploy() {
     if [ ${image_cleanup} = true ]; then
       # When deploying an entirely new instance, this is a nice time to clean up old images
       echo "Cleaning up unused ctageneric images..."
-      podman image ls | grep "localhost/ctageneric" | grep -v dev-0 | awk '{print $3}' | xargs -r podman rmi -f > /dev/null
-      minikube image ls | grep "localhost/ctageneric:dev-" | xargs -r minikube image rm > /dev/null
+      minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm > /dev/null 2>&1
     fi
   else
     # This continuoully increments the image tag from previous upgrades

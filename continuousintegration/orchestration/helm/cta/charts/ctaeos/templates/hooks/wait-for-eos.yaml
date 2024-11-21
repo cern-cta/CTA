@@ -3,14 +3,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ $name }}-post-install
+  name: {{ $name }}-wait-for-init
   namespace: {{ $namespace | quote }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   restartPolicy: Never
+  terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
   containers:
   - name: wait-for-eos
     image: busybox
@@ -18,6 +19,7 @@ spec:
       - /bin/sh
       - -c
       - |
+        rm /eos-status/EOS_READY
         touch /eos-status/CAN_START
         echo -n "Waiting for EOS to be initialised"
         while [ ! -f /eos-status/EOS_READY ]; do

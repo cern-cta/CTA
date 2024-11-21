@@ -30,8 +30,7 @@ chown cta /etc/cta/eos.sss.keytab
 touch /CTAFRONTEND_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
-# The exec is necessary to ensure signals are forwarded correctly
-exec runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
+runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
 rm /CTAFRONTEND_READY
 
 echo "ctafrontend died"

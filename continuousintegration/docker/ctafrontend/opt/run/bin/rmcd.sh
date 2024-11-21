@@ -28,5 +28,4 @@ yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 tail -F /var/log/cta/cta-rmcd.log &
 touch /RMCD_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-# The exec is necessary to ensure signals are forwarded correctly
-exec runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
+runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc

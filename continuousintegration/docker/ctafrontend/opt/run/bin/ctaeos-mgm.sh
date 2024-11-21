@@ -24,6 +24,8 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 # Install missing RPMs
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
 
+rm /fst/.eosfsid
+
 ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
 # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
 # yum -y install eos-protobuf3

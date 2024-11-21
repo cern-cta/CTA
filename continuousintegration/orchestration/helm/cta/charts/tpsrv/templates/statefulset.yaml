@@ -29,6 +29,7 @@ spec:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
       restartPolicy: Always
+      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
       containers:
