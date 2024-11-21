@@ -8,6 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ $name }}
 spec:
+  automountServiceAccountToken: false
   restartPolicy: Never
   imagePullSecrets:
   {{- range .Values.image.pullSecrets }}
