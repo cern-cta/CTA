@@ -15,8 +15,7 @@ spec:
   {{- end }}
   containers:
   - name: {{ $name }}
-    # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
-    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ .Values.image.tag }}"
+    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
     imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
     resources:
