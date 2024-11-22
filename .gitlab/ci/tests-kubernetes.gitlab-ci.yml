@@ -86,6 +86,7 @@ k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
+  retry: 2 # test is flaky with gfal2 core dumping
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTRA_ARGS: "--test-timeout 2400"

@@ -31,7 +31,6 @@ test-cta-valgrind:
       when: never
   image: $EL9_IMAGE
   variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   before_script:
     - *before-script-alma9
@@ -52,7 +51,6 @@ system-test-cta:
     - when: on_success
   image: $EL9_IMAGE
   variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   before_script:
     - *before-script-alma9
@@ -73,7 +71,6 @@ unit-test-postgresql:
     - when: on_success
   image: $EL9_IMAGE
   variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   before_script:
     - *before-script-alma9
@@ -120,7 +117,6 @@ unit-test-oracle:
     - when: on_success
   image: $EL9_IMAGE
   variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
