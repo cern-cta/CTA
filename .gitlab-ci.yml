@@ -12,8 +12,7 @@ variables:
   # Git related
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: "1" # Enforce a shallow clone
-  GIT_SUBMODULE_DEPTH: "1"
+  GIT_DEPTH: "1" # Enforce a shallow clone of the main repo
 
 
   # CTA related
