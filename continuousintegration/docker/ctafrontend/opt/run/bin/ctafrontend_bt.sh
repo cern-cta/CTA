@@ -17,7 +17,7 @@
 
 COREFILE=$(ls /var/log/tmp/ctafrontend-*.core | head -n 1)
 
-test -z ${COREFILE} && (echo "NO COREFILE FOUND, EXITING"; exit 1)
+test -z ${COREFILE} && { echo "NO COREFILE FOUND, EXITING"; exit 1; }
 
 echo "PROCESSING COREFILE: ${COREFILE}"
 

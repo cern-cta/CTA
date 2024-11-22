@@ -6,6 +6,8 @@ nameOverride: ctaeos
 isPriviliged: true
 readinessProbe:
 
+terminationGracePeriodSeconds: 0 # This is low on purpose as the current process has no gracefull shutdown process
+
 mgmLabel: ctaeos-mgm
 mgmPort: 1094
 

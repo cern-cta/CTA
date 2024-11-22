@@ -13,6 +13,7 @@ metadata:
     collect-varlog: "true"
 spec:
   restartPolicy: Never
+  terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
   imagePullSecrets:
   {{ include "ctafrontend.imagePullSecrets" . | nindent 2 }}
   containers:
@@ -26,7 +27,6 @@ spec:
       cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
       chmod 400 /etc/cta/eos.sss.keytab;
       /opt/run/bin/ctafrontend.sh;
-      chown cta /etc/cta/eos.sss.keytab;
     readinessProbe:
       exec:
         command: ["test", "-f", "/CTAFRONTEND_READY"]

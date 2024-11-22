@@ -45,6 +45,7 @@ CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVE_NAME}.conf"
 touch /TAPED_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
+rm /TAPED_READY
 
 echo "taped died"
 sleep infinity # Keep the container alive for debugging purposes
