@@ -50,7 +50,6 @@ fi
 
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
-# EOS short instance name
 eos_instance=ctaeos
 echo "Setting workflows in namespace ${namespace} pod ${eos_instance}:"
 cta_workflow_dir=/eos/${eos_instance}/proc/cta/workflow

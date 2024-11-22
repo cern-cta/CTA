@@ -65,7 +65,7 @@ echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
           -d "${secret_json}" \
           "${k8s_api_server}/api/v1/namespaces/${k8s_namespace}/secrets"
 
-  echo "Created Kubernetes secret: ${secret}-keytab in namespace $k8s_namespace"
+  echo "Created Kubernetes secret: ${user}-keytab in namespace $k8s_namespace"
 done
 
 touch /KDC_READY

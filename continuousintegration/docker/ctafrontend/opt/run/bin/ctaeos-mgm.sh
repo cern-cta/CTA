@@ -24,8 +24,7 @@ rm /eos-status/EOS_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-# yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
-yum -y install eos-client eos-server sudo logrotate cta-fst-gcd
+yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server sudo logrotate cta-fst-gcd bind-utils
 
 rm /fst/.eosfsid
 
@@ -166,14 +165,11 @@ eos vid enable unix
 # define space default before adding first fs
 eos space define default
 
-# Waiting for /CAN_START file before starting eos
-echo -n "Waiting for /CAN_START before going further"
-for ((i=0;i<600;i++)); do
-  test -f /eos-status/CAN_START && break
-  sleep 1
-  echo -n .
+# Waiting eos svc to be available
+until nslookup ctaeos; do
+  echo waiting for ctaeos to be reachable;
+  sleep 2;
 done
-test -f /eos-status/CAN_START && echo OK || exit 1
 
 EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 

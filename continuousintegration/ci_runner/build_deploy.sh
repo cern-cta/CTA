@@ -352,8 +352,9 @@ compile_deploy() {
                                                      --operating-system "${operating_system}" \
                                                      --load-into-minikube \
                                                      ${extra_build_options}
-    # Pruning of unused layers is done after image building to ensure we maintain caching
     if [ ${image_cleanup} = true ]; then
+      # Pruning of unused images is done after image building to ensure we maintain caching
+      podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
       podman image prune -f > /dev/null
     fi
   else

@@ -101,6 +101,10 @@ spec:
           value: "xterm"
         - name: DRIVE_NAME
           value: {{ $drive.name }}
+        - name: DRIVE_DEVICE
+          value: {{ $drive.device }}
+        - name: LIBRARY_DEVICE
+          value: {{ $libraryDevice | quote }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote}}
         - name: XrdSecPROTOCOL
