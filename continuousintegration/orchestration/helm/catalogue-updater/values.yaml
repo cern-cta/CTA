@@ -5,7 +5,7 @@ catalogueDestinationVersion: ""
 image:
   registry: gitlab-registry.cern.ch/cta
   repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
-  tag: "test-base.1"
+  tag: "2d5c233a"
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret
