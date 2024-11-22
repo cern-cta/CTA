@@ -157,4 +157,5 @@ catalogue-schema-version-check:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   image: $EL9_IMAGE
   script:
+    - yum install -y git
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
