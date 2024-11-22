@@ -31,7 +31,8 @@ fi
 # working correctly
 touch /TAPED_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --stdout"
+tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
+runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
 rm /TAPED_READY
 
 echo "taped died"

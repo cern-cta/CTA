@@ -40,8 +40,8 @@ spec:
         securityContext:
           privileged: true
         stdin: true
-        command: ['/opt/run/bin/rmcd.sh']
-        args: ["none"]
+        command: ["/opt/run/bin/rmcd.sh"]
+        args: []
         readinessProbe:
           exec:
             command: ["test", "-f", "/RMCD_READY"]
@@ -79,13 +79,8 @@ spec:
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
         securityContext:
           privileged: true
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
-          chmod 600 /etc/cta/cta-taped.sss.keytab;
-          chown cta /etc/cta/cta-taped.sss.keytab;
-          /opt/run/bin/taped.sh;
+        command: ["/opt/run/bin/taped.sh"]
+        args: []
         readinessProbe:
           exec:
             command: ["test", "-f", "/TAPED_READY"]
@@ -130,9 +125,9 @@ spec:
         {{- end }}
         - mountPath: /etc/config/eos
           name: eosconfig
-        - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
+        - mountPath: /etc/cta/cta-taped.sss.keytab
           name: tape-sss
-          subPath: cta-tpsrv-tmp.sss.keytab
+          subPath: cta-tpsrv.sss.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -174,6 +169,10 @@ spec:
       - name: tape-sss
         secret:
           secretName: tpsrv-sss-keytab
+          items:
+            - key: cta-tpsrv.sss.keytab
+              path: tpsrv-sss-keytab
+              mode: 0600
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
