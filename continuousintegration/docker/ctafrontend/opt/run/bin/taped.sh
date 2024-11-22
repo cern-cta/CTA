@@ -18,33 +18,20 @@
 . /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum-config-manager --enable ceph
-
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
+yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo
 
-ln -s /dev/${LIBRARY_DEVICE} /dev/smc
-
-chown cta /etc/cta/${CTATAPEDSSS}
-
-
-. /etc/sysconfig/cta-taped
-export XrdSecPROTOCOL
-export XrdSecSSSKT
-
-chown cta ${XrdSecSSSKT}
-
-tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
-
-CTA_TAPED_OPTIONS="--log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
+if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
+  yum-config-manager --enable ceph
+  yum -y install  ceph-common
+fi
 
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
 # working correctly
-CTA_TAPED_CONF_FILE="/etc/cta/cta-taped-${DRIVE_NAME}.conf"
 touch /TAPED_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-runuser -c "/usr/bin/cta-taped -c ${CTA_TAPED_CONF_FILE} --foreground ${CTA_TAPED_OPTIONS}"
+runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --stdout"
 rm /TAPED_READY
 
 echo "taped died"

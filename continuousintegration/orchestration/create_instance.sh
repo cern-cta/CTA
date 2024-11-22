@@ -60,9 +60,9 @@ check_helm_installed() {
 
 update_chart_dependencies() {
   echo "Updating chart dependencies"
-  charts=("init"
+  charts=(
     "common"
-    "init/charts/kdc"
+    "kdc"
     "catalogue"
     "scheduler"
     "cta/"
@@ -225,18 +225,8 @@ create_instance() {
 
   update_chart_dependencies
 
-  echo "Installing init chart..."
-  log_run helm ${helm_command} init-${namespace} helm/init \
-                                --namespace ${namespace} \
-                                --set global.image.registry="${registry_host}" \
-                                --set global.image.tag="${image_tag}" \
-                                --set resetTapes=true \
-                                --set-file tapeServers=${tapeservers_config} \
-                                --wait --wait-for-jobs --timeout 2m
-
-  # At some point this can be done in parallel
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  echo "Installing catalogue and scheduler charts..."
+  echo "Installing kdc, catalogue and scheduler charts..."
   log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
                                 --namespace ${namespace} \
                                 --set resetImage.registry="${registry_host}" \
@@ -256,9 +246,17 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
+  log_run helm ${helm_command} kdc-${namespace} helm/kdc \
+                                --namespace ${namespace} \
+                                --set image.registry="${registry_host}" \
+                                --set image.tag="${image_tag}" \
+                                --wait --wait-for-jobs --timeout 2m &
+  kdc_pid=$!
+
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
+  wait $kdc_pid || exit 1
 
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
@@ -276,6 +274,7 @@ create_instance() {
 }
 
 setup_system() {
+  ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
   ./setup/set_eos_workflows.sh -n ${namespace}
 }

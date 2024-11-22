@@ -24,7 +24,8 @@ spec:
     - |
       cat /tmp/eos.keytab > /etc/eos.keytab;
       chmod 400 /etc/eos.keytab;
-      /opt/run/bin/ctaeos-mgm-log-wrapper.sh;
+      yum install -y expect;
+      /opt/run/bin/ctaeos-mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log;
     securityContext:
       privileged: {{ .Values.isPriviliged }}
     resources:

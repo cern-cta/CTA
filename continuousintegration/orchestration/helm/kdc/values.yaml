@@ -1,8 +1,16 @@
-
 nameOverride: kdc
 isPriviliged: true
 component: kdc
-partOf: init
+partOf: kdc
+
+image:
+  registry: gitlab-registry.cern.ch/cta
+  repository: ctageneric
+  tag: ""
+  pullPolicy: IfNotPresent
+  pullSecrets:
+  - ctaregsecret
+  - reg-ctageneric
 
 # Additional environment variables
 env: []

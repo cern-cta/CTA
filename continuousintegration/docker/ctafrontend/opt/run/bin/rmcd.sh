@@ -19,13 +19,11 @@
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-ln -s /dev/${LIBRARY_DEVICE} /dev/smc
-
 # install RPMs
 yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
 # to get rmcd logs to stdout
 tail -F /var/log/cta/cta-rmcd.log &
-touch /RMCD_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
+touch /RMCD_READY
+runuser --user cta -- /usr/bin/cta-rmcd -f /dev/${LIBRARY_DEVICE}

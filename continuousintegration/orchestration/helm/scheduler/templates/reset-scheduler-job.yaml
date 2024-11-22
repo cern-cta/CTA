@@ -67,8 +67,6 @@ spec:
               mountPath: /etc/cta/cta-objectstore-tools.conf
               subPath: cta-objectstore-tools.conf
           {{- end}}
-            - mountPath: /mnt/logs
-              name: logstorage
             - mountPath: /shared
               name: shared
             {{- if eq $schedulerConfig.backend "ceph" }}
@@ -92,9 +90,6 @@ spec:
         - name: shared
           hostPath:
             path: /opt/cta
-        - name: logstorage
-          persistentVolumeClaim:
-            claimName: claimlogs
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: ceph-config
           configMap:

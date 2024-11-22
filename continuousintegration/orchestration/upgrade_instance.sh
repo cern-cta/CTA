@@ -54,7 +54,7 @@ check_helm_installed() {
 
 update_chart_dependencies() {
   echo "Updating chart dependencies"
-  charts=("init"
+  charts=(
     "common"
     "cta/"
     "cta/charts/client"
@@ -154,6 +154,7 @@ upgrade_instance() {
 }
 
 setup_system() {
+  ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
   ./setup/set_eos_workflows.sh -n ${namespace}
 }

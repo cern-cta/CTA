@@ -23,12 +23,6 @@ die() {
   exit 1
 }
 
-# We do this check here as well so that we can terminate early
-if [[ ! $LIBRARY_TYPE = "mhvtl" ]]; then
-  echo "Resetting tapes on library type: $LIBRARY_TYPE is not supported"
-  exit 0
-fi
-
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"

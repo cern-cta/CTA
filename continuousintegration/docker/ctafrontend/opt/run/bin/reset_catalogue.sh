@@ -26,9 +26,7 @@ die() {
 }
 
 # install the needed packages
-# the scheduler tools are installed once the scheduler type is known (see below)
 yum -y install cta-catalogueutils
-yum clean packages
 
 echo "Using catalogue backend: $CATALOGUE_BACKEND"
 
@@ -41,12 +39,13 @@ if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
     echo "Database connection failed, pausing before a retry"
     sleep 5
     echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
-    echo "Database wiped"
   fi
 else
   rm -fr $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
 fi
+echo "Catalogue wiped"
 
+echo "Creating catalogue schema..."
 if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   mkdir -p $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
@@ -62,7 +61,6 @@ elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
   # LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/purge_recyclebin.ext
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
 elif [ "$CATALOGUE_BACKEND" == "postgres" ]; then
-  echo "Creating Postgres Catalogue schema"
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create Postgres database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
 else
   die "ERROR: Unsupported database type: ${CATALOGUE_BACKEND}"

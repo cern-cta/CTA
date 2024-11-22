@@ -69,10 +69,6 @@ GRPC_TEST_DIR=/eos/grpctest
 # dir for eos instance basic tests writable and readable by anyone
 EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
-# setup eos host and instance name
-  sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/sysconfig/eos
-  sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/sysconfig/eos
-
 # prepare eos startup
 # skip systemd for eos initscripts
 export SYSTEMCTL_SKIP_REDIRECT=1
@@ -80,34 +76,34 @@ export SYSTEMCTL_SKIP_REDIRECT=1
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
-  chown daemon:daemon /etc/eos.keytab
-  mkdir -p /run/lock/subsys
-  mkdir -p /var/eos/config/${eoshost}
-    chown daemon:root /var/eos/config
-    chown daemon:root /var/eos/config/${eoshost}
-  touch   /var/eos/config/${eoshost}/default.eoscf
-    chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
+chown daemon:daemon /etc/eos.keytab
+mkdir -p /run/lock/subsys
+mkdir -p /var/eos/config/${eoshost}
+chown daemon:root /var/eos/config
+chown daemon:root /var/eos/config/${eoshost}
+touch   /var/eos/config/${eoshost}/default.eoscf
+chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
 
 # quarkDB only for systemd initially...
-cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh ${CI_CONTEXT}
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/ctaeos-start-quarkdb.sh ${CI_CONTEXT}
 
 # add taped SSS must be in a kubernetes secret
 #echo >> /etc/eos.keytab
 #echo '0 u:stage g:tape n:taped+ N:6361736405290319874 c:1481207182 e:0 f:0 k:8e2335f24cf8c7d043b65b3b47758860cbad6691f5775ebd211b5807e1a6ec84' >> /etc/eos.keytab
 
-  #/etc/init.d/eos master mgm
-  #/etc/init.d/eos master mq
-    touch /var/eos/eos.mq.master
-    touch /var/eos/eos.mgm.rw
-    echo "Configured mq mgm on localhost as master"
+#/etc/init.d/eos master mgm
+#/etc/init.d/eos master mq
+touch /var/eos/eos.mq.master
+touch /var/eos/eos.mgm.rw
+echo "Configured mq mgm on localhost as master"
 
-  source /etc/sysconfig/eos
+source /etc/sysconfig/eos
 
-  mkdir -p /fst
-  chown daemon:daemon /fst/
+mkdir -p /fst
+chown daemon:daemon /fst/
 
 ## Configuring host certificate
-/opt/run/bin/ctaeos_https.sh
+/opt/run/bin/ctaeos-https.sh
 
 # setting higher OS limits for EOS processes
 maxproc=$(ulimit -u)
@@ -147,11 +143,11 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
 #/etc/init.d/eos start
-  ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
-  ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
-  for fst_config in /etc/xrd.cf.fst; do
-      EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
-  done
+${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
+${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
+for fst_config in /etc/xrd.cf.fst; do
+    EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
+done
 
 # EOS service is starting for the first time we need to check if it is ready before
 # feeding the eos server with commands
@@ -298,7 +294,7 @@ eos space config default space.wfe.ntx=200
 eos space config default space.filearchivedgc=on
 
 # configure preprod directory separately
-/opt/run/bin/eos_configure_preprod.sh
+/opt/run/bin/ctaeos-configure-preprod.sh
 
 
 # configure grpc for cta-admin tf dsk file resolution
