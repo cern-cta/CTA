@@ -15,12 +15,10 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 die() {
-  stdbuf -i 0 -o 0 -e 0 echo "$@"
-  sleep 1
+  echo "$@" 1>&2
   exit 1
 }
 
@@ -45,10 +43,9 @@ elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   echo "Creating the scheduler DB schema"
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
 elif [ "$SCHEDULER_BACKEND" == "ceph" ]; then
-  yum-config-manager --enable ceph
-  yum -y install ceph-common
   echo "Installing the cta-objectstore-tools"
-  yum -y install cta-objectstore-tools
+  yum-config-manager --enable ceph
+  yum -y install cta-objectstore-tools ceph-common
   echo "Wiping objectstore"
   if [[ $(rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | wc -l) -gt 0 ]]; then
     echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"

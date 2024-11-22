@@ -58,9 +58,9 @@ spec:
       value: {{ $schedulerConfig.cephConfig.id | quote}}
     - name: SCHEDULER_CEPH_POOL
       value: {{ $schedulerConfig.cephConfig.pool | quote}}
+    {{- end }}
     - name: TERM
       value: "xterm"
-    {{- end }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}

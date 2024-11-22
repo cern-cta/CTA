@@ -15,13 +15,10 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 die() {
-  stdbuf -i 0 -o 0 -e 0 echo "$@"
-  sleep 1
+  echo "$@" 1>&2
   exit 1
 }
 
@@ -29,19 +26,18 @@ die() {
 yum -y install cta-catalogueutils
 
 echo "Using catalogue backend: $CATALOGUE_BACKEND"
-
 CATALOGUE_URL=$(cat /etc/cta/cta-catalogue.conf)
 
 echo "Wiping catalogue"
-if [ "$CATALOGUE_BACKEND" != "sqlite" ]; then
+if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
+  rm -fr $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
+else
   if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
     # pause to let db come up
     echo "Database connection failed, pausing before a retry"
     sleep 5
     echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
   fi
-else
-  rm -fr $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2))
 fi
 echo "Catalogue wiped"
 
@@ -59,7 +55,7 @@ elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
   # test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
   # LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/purge_database.ext
   # LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $CATALOGUE_URL | sed -e 's/oracle://') @/opt/ci/purge_recyclebin.ext
-  cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
+  cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create Oracle database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
 elif [ "$CATALOGUE_BACKEND" == "postgres" ]; then
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create Postgres database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
 else

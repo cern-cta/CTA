@@ -16,13 +16,10 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-# cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-frontend cta-debuginfo cta-catalogueutils
-
+yum -y install cta-frontend cta-debuginfo
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum-config-manager --enable ceph
   yum -y install ceph-common

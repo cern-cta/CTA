@@ -20,13 +20,16 @@ set -e
 usage() {
   echo "Initialises kerberos for the ctacli and client pods in the provided namespace."
   echo ""
-  echo "Usage: $0 [options]"
+  echo "Usage: $0 [options] -n <namespace>"
   echo ""
   echo "Options:"
-  echo "  -h, --help:         Show help output."
-  echo "  -n|--namespace:     The kubernetes namespaces to execute this in."
+  echo "  -h, --help:                   Show help output."
+  echo "  -n|--namespace:               The kubernetes namespaces to execute this in."
+  echo "  -r|--krb5-realm <realm>:      The kerberos realm to use. Defaults to TEST.CTA"
   exit 1
 }
+
+krb5_realm="TEST.CTA"
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -34,6 +37,9 @@ while [[ "$#" -gt 0 ]]; do
     -h | --help) usage ;;
     -n|--namespace)
       namespace="$2"
+      shift ;;
+    -r|--krb5-realm)
+      krb5_realm="$2"
       shift ;;
     *)
       echo "Unsupported argument: $1"
@@ -51,8 +57,8 @@ fi
 # Set up kerberos
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 echo "Using kinit for ctacli and client"
-kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
-kubectl --namespace ${namespace} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
+kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${krb5_realm}
+kubectl --namespace ${namespace} exec client -- kinit -kt /root/user1.keytab user1@${krb5_realm}
 
 echo "klist for client:"
 kubectl --namespace ${namespace} exec client -- klist

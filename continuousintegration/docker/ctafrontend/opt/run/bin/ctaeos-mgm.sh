@@ -21,18 +21,14 @@ set -x
 rm /eos-status/EOS_READY
 
 . /opt/run/bin/init_pod.sh
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-
 # Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
+# yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
+yum -y install eos-client eos-server sudo logrotate cta-fst-gcd
 
 rm /fst/.eosfsid
 
-## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
-# Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
-# yum -y install eos-protobuf3
 
 # Check that the /usr/bin/cta-fst-gcd executable has been installed
 test -e /usr/bin/cta-fst-gcd || { echo "/usr/bin/cta-fst-gcd MISSING" ; exit 1; }
@@ -182,7 +178,6 @@ test -f /eos-status/CAN_START && echo OK || exit 1
 EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 
 # Add user daemon to sudoers this is to allow recalls for the moment using this command
-#  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
 eos vid set membership $(id -u daemon) +sudo
 
 # Add eosadmin1 and eosadmin2 users are sudoers

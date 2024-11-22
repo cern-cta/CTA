@@ -22,3 +22,20 @@ resources:
   limits:
     memory: "2Gi"
     ephemeral-storage: "5Gi"
+
+realm: "TEST.CTA"
+keytabs:
+  - user: "user1"
+    keytab: "user1.keytab"
+  - user: "ctaadmin1"
+    keytab: "ctaadmin1.keytab"
+  - user: "ctaadmin2"
+    keytab: "ctaadmin2.keytab"
+  - user: "poweruser1"
+    keytab: "poweruser1.keytab"
+  - user: "eosadmin1"
+    keytab: "eosadmin1.keytab"
+  - user: "cta/cta-frontend"
+    keytab: "cta-frontend.krb5.keytab"
+  - user: "eos/eos-server"
+    keytab: "eos-server.krb5.keytab"
