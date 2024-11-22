@@ -72,9 +72,6 @@ spec:
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-        - name: sysconfig-tpsrv-config
-          mountPath: /etc/sysconfig/cta-taped
-          subPath: cta-taped
       # For each drive, spawn a separate taped container
       {{- range $index, $drive := .drives }}
       - name: "taped-{{ $index }}"
@@ -87,6 +84,7 @@ spec:
         - |
           cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
           chmod 600 /etc/cta/cta-taped.sss.keytab;
+          chown cta /etc/cta/cta-taped.sss.keytab;
           /opt/run/bin/taped.sh;
         readinessProbe:
           exec:
@@ -106,12 +104,14 @@ spec:
           value: "taped-{{ $index }}"
         - name: TERM
           value: "xterm"
-        - name: LIBRARY_DEVICE
-          value: {{ $libraryDevice | quote }}
-        - name: DRIVE_DEVICE
-          value: {{ $drive.device | quote }}
         - name: DRIVE_NAME
           value: {{ $drive.name }}
+        - name: SCHEDULER_BACKEND
+          value: {{ $schedulerConfig.backend | quote}}
+        - name: XrdSecPROTOCOL
+          value: {{ $.Values.conf.taped.secProtocol }}
+        - name: XrdSecSSSKT
+          value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
         volumeMounts:
         - name: cta-taped-config
           mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
@@ -133,14 +133,6 @@ spec:
         - mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
           name: tape-sss
           subPath: cta-tpsrv-tmp.sss.keytab
-        {{- if ($.Values.global.useSystemd) }}
-        - name: sysconfig-tpsrv-config
-          mountPath: /etc/sysconfig/cta-rmcd
-          subPath: cta-rmcd
-        {{- end }}
-        - name: sysconfig-tpsrv-config
-          mountPath: /etc/sysconfig/cta-taped
-          subPath: cta-taped
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -169,9 +161,6 @@ spec:
       - name: eosconfig
         configMap:
           name: eos-config-base
-      - name: sysconfig-tpsrv-config
-        configMap:
-          name: cta-sysconfig-tpsrv-conf
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:

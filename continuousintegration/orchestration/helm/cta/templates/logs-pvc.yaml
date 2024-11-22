@@ -8,7 +8,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: {{ .Values.logStorage  }}
+      storage: {{ .Values.global.logStorage  }}
   selector:
     matchLabels:
       type: logs

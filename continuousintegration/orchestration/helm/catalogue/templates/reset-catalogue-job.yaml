@@ -56,8 +56,6 @@ spec:
             - name: catalogue-config
               mountPath: /etc/cta/cta-catalogue.conf
               subPath: cta-catalogue.conf
-            - mountPath: /mnt/logs
-              name: logstorage
             - mountPath: /shared
               name: shared
       volumes:
@@ -73,7 +71,4 @@ spec:
         - name: shared
           hostPath:
             path: /opt/cta
-        - name: logstorage
-          persistentVolumeClaim:
-            claimName: claimlogs
 {{- end }}

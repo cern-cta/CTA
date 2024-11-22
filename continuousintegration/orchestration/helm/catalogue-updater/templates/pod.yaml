@@ -50,8 +50,6 @@ spec:
     - name: catalogue-config
       mountPath: /shared/etc_cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
-    - name: logstorage
-      mountPath: /mnt/logs
     securityContext:
       privileged: true
     readinessProbe:
@@ -72,7 +70,4 @@ spec:
   - name: catalogue-config
     configMap:
       name: cta-catalogue-conf
-  - name: logstorage
-    persistentVolumeClaim:
-      claimName: claimlogs
 

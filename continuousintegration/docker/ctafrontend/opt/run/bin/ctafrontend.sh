@@ -19,13 +19,17 @@
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum-config-manager --enable ceph
-
 # Install missing RPMs
 # cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
+yum -y install cta-frontend cta-debuginfo cta-catalogueutils
 
-chown cta /etc/cta/eos.sss.keytab
+if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
+  yum-config-manager --enable ceph
+  yum -y install ceph-common
+fi
+
+# The cta user only exists after the install
+chown cta /etc/cta/eos.sss.keytab;
 
 touch /CTAFRONTEND_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
@@ -35,5 +39,5 @@ rm /CTAFRONTEND_READY
 
 echo "ctafrontend died"
 echo "analysing core file if any"
-/opt/run/bin/ctafrontend_bt.sh
+/opt/run/bin/ctafrontend-backtrace.sh
 sleep infinity # Keep the container alive for debugging purposes
