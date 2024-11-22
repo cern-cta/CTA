@@ -10,6 +10,7 @@ changelog-preview:
     - when: never
   image: $PYTHON3_IMAGE
   variables:
+    GIT_DEPTH: 100 # Ensure we don't do a shallow clone here
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
@@ -58,6 +59,7 @@ changelog-update:
     - when: never
   image: $PYTHON3_IMAGE
   variables:
+    GIT_DEPTH: 100 # Ensure we don't do a shallow clone here
     SOURCE_BRANCH: ""
   before_script:
     - pip install requests
@@ -93,11 +95,6 @@ release-cta:
       when: manual
       allow_failure: true
   script:
-    - |
-      if [ -z "${CI_COMMIT_TAG}" ]; then
-        echo "This is not a tagged commit, exiting";
-        exit 0;
-      fi
     - echo "Publishing to internal CTA repository"
     - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                                   --eos-password ${DOCKER_LOGIN_PASSWORD}
