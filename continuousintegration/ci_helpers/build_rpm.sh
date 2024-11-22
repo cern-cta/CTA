@@ -251,7 +251,7 @@ build_rpm() {
       echo "Found Alma 9 install..."
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-      yum -y install epel-release almalinux-release-devel
+      yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
       yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
       case "${build_generator}" in
         "Unix Makefiles")
@@ -268,7 +268,6 @@ build_rpm() {
       if [[ ${enable_ccache} = true ]]; then
         yum -y install ccache
       fi
-      yum -y install yum-plugin-versionlock
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"
