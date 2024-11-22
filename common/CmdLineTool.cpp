@@ -46,11 +46,10 @@ CmdLineTool::~CmdLineTool() = default;
 std::string CmdLineTool::getUsername() {
   char buf[256];
 
-  if(getlogin_r(buf, sizeof(buf))) {
+  if(getlogin_r(buf, sizeof(buf)) != 0) {
     return "UNKNOWN";
-  } else {
-    return buf;
   }
+  return std::string(buf);
 }
 
 //------------------------------------------------------------------------------
@@ -59,12 +58,10 @@ std::string CmdLineTool::getUsername() {
 std::string CmdLineTool::getHostname() {
   char buf[256];
 
-  if(gethostname(buf, sizeof(buf))) {
+  if(gethostname(buf, sizeof(buf)) != 0) {
     return "UNKNOWN";
-  } else {
-    buf[sizeof(buf) - 1] = '\0';
-    return buf;
   }
+  return std::string(buf);
 }
 
 //------------------------------------------------------------------------------

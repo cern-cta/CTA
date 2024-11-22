@@ -44,28 +44,24 @@ CmdLineTool::~CmdLineTool() = default;
 // getUsername
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getUsername() {
-  std::string buf(256, '\0');
+  char buf[256];
 
-  if(getlogin_r(&buf[0], buf.size())) {
+  if(getlogin_r(buf, sizeof(buf)) != 0) {
     return "UNKNOWN";
-  } else {
-    buf.resize(strlen(buf.c_str()));  // Resize the string to remove extra null characters
-    return buf;
   }
+  return std::string(buf);
 }
 
 //------------------------------------------------------------------------------
 // getHostname
 //------------------------------------------------------------------------------
 std::string CmdLineTool::getHostname() {
-  std::string buf(256, '\0');
+  char buf[256];
 
-  if(gethostname(&buf[0], buf.size())) {
+  if(gethostname(buf, sizeof(buf)) != 0) {
     return "UNKNOWN";
-  } else {
-    buf.resize(strlen(buf.c_str()));  // Resize the string to remove extra null characters
-    return buf;
   }
+  return std::string(buf);
 }
 
 //------------------------------------------------------------------------------
