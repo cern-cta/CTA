@@ -29,7 +29,7 @@ public:
   TempFile();
   explicit TempFile(const std::string& path);
 
-  std::string path() { return m_path; };
+  const std::string& path() { return m_path; };
   void randomFill(size_t size);
   uint32_t adler32();
   void stringFill(const std::string &string);
