@@ -1,4 +1,4 @@
-cppcheck-run:
+cppcheck:
   stage: analysis
   image:
     name: $CPPCHECK_IMAGE
@@ -22,38 +22,20 @@ cppcheck-run:
                --check-level=exhaustive
                --suppressions-list=.cppcheck-suppressions.txt
                . 2> cppcheck_out.xml
+    - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
+    - |
+      if cat cppcheck_out.xml | grep -q "<error\s"; then
+        echo "cppcheck detected errors:  "
+        cat cppcheck_out.xml
+        exit 1
+      fi
+    - echo "Done. No errors detected by cppcheck"
   artifacts:
     expire_in: 2 days
-    paths:
-      - cppcheck_out.xml
-
-# based on https://gitlab.com/ahogen/cppcheck-codequality
-cppcheck-report:
-  stage: analysis
-  needs:
-    - cppcheck-run
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - when: always
-  variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
-  image: $EL9_IMAGE
-  before_script:
-    - yum -y install python-pip
-    - python3 -m pip install -U cppcheck_codequality
-  script:
-    - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
-    - if cat cppcheck_out.xml | grep -q "<error\s"; then echo "ERRORS have been detected"; exit 1; fi;
-  artifacts:
     reports:
       codequality: cppcheck.json
+    paths:
+      - cppcheck_out.xml
 
 clang-format-report:
   stage: analysis
