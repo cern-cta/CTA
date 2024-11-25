@@ -528,8 +528,9 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   } 
   catch (exception::Exception &ex) {
     log::ScopedParamContainer spc(m_lc);
+    spc.add("fileId", request.archiveFileID);
     spc.add("catalogueError", ex.getMessage().str());
-    m_lc.log(log::WARN, "Ignoring request to delete archive file from the catalogue.");
+    m_lc.log(log::WARNING, "Ignoring request to delete archive file from the catalogue.");
   }
 
   m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
