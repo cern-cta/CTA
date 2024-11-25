@@ -31,7 +31,7 @@ cppcheck:
       fi
     - echo "Done. No errors detected by cppcheck"
   artifacts:
-    when: always
+    when: on_failure
     expire_in: 2 days
     reports:
       codequality: cppcheck.json
