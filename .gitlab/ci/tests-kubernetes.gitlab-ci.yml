@@ -137,6 +137,14 @@ k8s-test-liquibase-update:
     EXTRA_ARGS: "--test-timeout 2400"
   before_script:
     - !reference [.kubernetes-test, before_script]
+    # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
+    - |
+      CURRENT_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR \K[0-9]+')
+      PREVIOUS_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV \K[0-9]+')
+      if [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
+        echo "We are currently in a non-catalogue release. No update to test."
+        exit 0
+      fi
     - git submodule update --init --recursive
     - PREV_CATALOGUE_VERSION=$(./continuousintegration/ci_helpers/get_prev_catalogue_schema_version.sh)
     # Note that we need to do this here as the image-tag is not available yet in the variables part
