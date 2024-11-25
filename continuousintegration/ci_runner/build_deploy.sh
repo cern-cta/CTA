@@ -211,12 +211,6 @@ compile_deploy() {
     shift
   done
 
-  if [ "$skip_image_reload" == "true" ] && [ "$upgrade" == "true" ]; then
-    echo "Upgrading the instance without building a new image is currently not supported"
-    exit 1
-  fi
-
-
   # Check if src_dir specified
   echo "Checking whether CTA directory exists in \"${src_dir}\"..."
   if [ ! -d "${src_dir}/CTA" ]; then
@@ -330,30 +324,30 @@ compile_deploy() {
   # Build image
   #####################################################################################################################
   build_iteration_file=/tmp/.build_iteration
-  if [ "$upgrade" == "false" ]; then
-    # Start with the tag dev-0
-    local current_build_id=0
-    image_tag="dev-$current_build_id"
-    touch $build_iteration_file
-    echo $current_build_id > $build_iteration_file
-
-    if [ ${image_cleanup} = true ]; then
-      # When deploying an entirely new instance, this is a nice time to clean up old images
-      echo "Cleaning up unused ctageneric images..."
-      minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm > /dev/null 2>&1
-    fi
-  else
-    # This continuoully increments the image tag from previous upgrades
-    if [ ! -f "$build_iteration_file" ]; then
-      echo "Failed to find $build_iteration_file to retrieve build iteration."
-      exit 1
-    fi
-    local current_build_id=$(cat "$build_iteration_file")
-    new_build_id=$((current_build_id + 1))
-    image_tag="dev-$new_build_id"
-    echo $new_build_id > $build_iteration_file
-  fi
   if [ "$skip_image_reload" == "false" ]; then
+    if [ "$upgrade" == "false" ]; then
+      # Start with the tag dev-0
+      local current_build_id=0
+      image_tag="dev-$current_build_id"
+      touch $build_iteration_file
+      echo $current_build_id > $build_iteration_file
+
+      if [ ${image_cleanup} = true ]; then
+        # When deploying an entirely new instance, this is a nice time to clean up old images
+        echo "Cleaning up unused ctageneric images..."
+        minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm > /dev/null 2>&1
+      fi
+    else
+      # This continuoully increments the image tag from previous upgrades
+      if [ ! -f "$build_iteration_file" ]; then
+        echo "Failed to find $build_iteration_file to retrieve build iteration."
+        exit 1
+      fi
+      local current_build_id=$(cat "$build_iteration_file")
+      new_build_id=$((current_build_id + 1))
+      image_tag="dev-$new_build_id"
+      echo $new_build_id > $build_iteration_file
+    fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
@@ -366,6 +360,13 @@ compile_deploy() {
     if [ ${image_cleanup} = true ]; then
       podman image prune -f > /dev/null
     fi
+  else
+    if [ ! -f "$build_iteration_file" ]; then
+      echo "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
+      exit 1
+    fi
+    # If we are not building a new image, use the latest one
+    image_tag=dev-$(cat "$build_iteration_file")
   fi
 
   #####################################################################################################################
@@ -394,11 +395,15 @@ compile_deploy() {
     else
       echo "Upgrading CTA instance"
       cd continuousintegration/orchestration
+
+      upgrade_options=""
+      if [ "$skip_image_reload" == "false" ]; then
+        upgrade_options+=" --registry-host localhost --image-tag ${image_tag}"
+      fi
+
       # For now we only support changing the image tag on an upgrade
       ./upgrade_instance.sh --namespace ${deploy_namespace} \
-                            --registry-host localhost \
-                            --image-tag ${image_tag} \
-                          ${extra_spawn_options}
+                            ${upgrade_options} ${extra_spawn_options}
 
     fi
   fi

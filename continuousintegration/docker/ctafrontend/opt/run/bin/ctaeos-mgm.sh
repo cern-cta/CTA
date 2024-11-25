@@ -16,6 +16,10 @@
 #               submit itself to any jurisdiction.
 
 set -x
+
+# As this is a PVC, reset it just in case (and for upgrades)
+rm /eos-status/EOS_READY
+
 . /opt/run/bin/init_pod.sh
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
