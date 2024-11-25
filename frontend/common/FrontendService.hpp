@@ -83,7 +83,7 @@ public:
   /*!
    * If 0-length files are disallowed, get the tape pools that are exempt from this restriction
    */
-   std::vector<std::string> getDisallowZeroLengthFilesExemptions() const { return m_disallowZeroLengthFiles_exceptionStorageClasses; };
+  const std::vector<std::string>& getDisallowZeroLengthFilesExemptions() const { return m_disallowZeroLengthFiles_exceptionStorageClasses; };
 
   /*!
    * Get the repack buffer URL
