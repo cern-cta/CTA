@@ -525,11 +525,11 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   try {
     request.archiveFile = m_catalogue.ArchiveFile()->getArchiveFileById(request.archiveFileID);
     tl.insertAndReset("catalogueGetArchiveFileByIdTime",t);
-  } catch (exception::Exception&){
-   log::ScopedParamContainer spc(m_lc);
-   spc.add("fileId", request.archiveFileID);
-   m_lc.log(log::DEBUG, "Ignoring request to delete archive file from the catalogue, because it does not exist");
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str("Could not delete the file from the Catalogue. Reason:" + ex.getMessage().str());
+    throw ex;
   }
+
   m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
   tl.insertAndReset("schedulerTime",t);
   // Create a log entry
