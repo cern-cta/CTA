@@ -514,7 +514,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
         archiveRequestAddrItor != m_event.file().xattr().end()) {
       //We have the ArchiveRequest's objectstore address.
       if (objectstoreAddress = archiveRequestAddrItor->second; !objectstoreAddress.empty()) {
-        request.address = objectstoreAddress;;
+        request.address = objectstoreAddress;a;
       }
     }
   }
