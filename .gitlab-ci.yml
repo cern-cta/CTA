@@ -9,6 +9,12 @@ stages:
   - release:external
 
 variables:
+  # Git related
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: "1" # Enforce a shallow clone of the main repo
+
+  # CTA related
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"

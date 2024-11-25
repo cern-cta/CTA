@@ -24,7 +24,6 @@
   script:
     # Keep the namespace name under 64 characters;
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
-    - git submodule update --init --recursive
     # Which scheduler to use
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
@@ -87,6 +86,7 @@ k8s-test-client-gfal2:
   stage: test
   extends:
     - .kubernetes-test
+  retry: 1 # test is flaky with gfal2 core dumping (cta/CTA#776)
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -145,7 +145,6 @@ k8s-test-liquibase-update:
         echo "We are currently in a non-catalogue release. No update to test."
         exit 0
       fi
-    - git submodule update --init --recursive
     - PREV_CATALOGUE_VERSION=$(./continuousintegration/ci_helpers/get_prev_catalogue_schema_version.sh)
     # Note that we need to do this here as the image-tag is not available yet in the variables part
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"

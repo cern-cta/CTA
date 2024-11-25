@@ -10,6 +10,7 @@ changelog-preview:
     - when: never
   image: $PYTHON3_IMAGE
   variables:
+    GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
@@ -93,11 +94,6 @@ release-cta:
       when: manual
       allow_failure: true
   script:
-    - |
-      if [ -z "${CI_COMMIT_TAG}" ]; then
-        echo "This is not a tagged commit, exiting";
-        exit 0;
-      fi
     - echo "Publishing to internal CTA repository"
     - ./continuousintegration/ci_helpers/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                                   --eos-password ${DOCKER_LOGIN_PASSWORD}
