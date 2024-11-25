@@ -10,7 +10,6 @@ changelog-preview:
     - when: never
   image: $PYTHON3_IMAGE
   variables:
-    GIT_DEPTH: 100 # Ensure we don't do a shallow clone here
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
@@ -59,7 +58,6 @@ changelog-update:
     - when: never
   image: $PYTHON3_IMAGE
   variables:
-    GIT_DEPTH: 100 # Ensure we don't do a shallow clone here
     SOURCE_BRANCH: ""
   before_script:
     - pip install requests
