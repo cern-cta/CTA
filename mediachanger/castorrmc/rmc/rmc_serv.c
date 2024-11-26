@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "Cinit.h"
@@ -70,11 +71,9 @@ int rmc_main(const char *const robot)
 	socklen_t fromlen = sizeof(from);
 	const char *msgaddr;
 	int on = 1;	/* for REUSEADDR */
-	fd_set readfd, readmask;
 	int s;
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
-	struct timeval timeval;
 	const char* const func = "rmc_serv";
 
 	g_jid = getpid();
@@ -102,7 +101,7 @@ int rmc_main(const char *const robot)
 	g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
 	if(*robot == '/') {
 		strncpy(g_extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN+1);
-        } else {
+	} else {
 		snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 	}
 	if(g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
@@ -115,41 +114,37 @@ int rmc_main(const char *const robot)
 	{
 		const int max_nb_attempts = 3;
 		int attempt_nb = 1;
-		for(attempt_nb = 1; attempt_nb <= max_nb_attempts;
-                        attempt_nb++) {
-                        rmc_logit (func,
-                                "Trying to get geometry of tape library"
-                                ": attempt_nb=%d\n", attempt_nb);
+		for(attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
+			rmc_logit (func,
+					"Trying to get geometry of tape library"
+					": attempt_nb=%d\n", attempt_nb);
 			c = smc_get_geometry (g_extended_robot_info.smc_fd,
 				g_extended_robot_info.smc_ldr,
 				&g_extended_robot_info.robot_info);
 
 			if(0 == c) {
-                                rmc_logit (func,
-                                         "Got geometry of tape library\n");
+				rmc_logit (func, "Got geometry of tape library\n");
 				break;
 			}
 
 			c = smc_lasterror (&smc_status, &msgaddr);
 			rmc_logit (func, RMC02, "get_geometry", msgaddr);
 
-                        // If this was the last attempt
+			// If this was the last attempt
 			if(max_nb_attempts == attempt_nb) {
 				exit(c);
 			} else {
-                                sleep(1);
-                        }
+				sleep(1);
+			}
 		}
 	}
 
-	FD_ZERO (&readmask);
-	FD_ZERO (&readfd);
 	signal (SIGPIPE, SIG_IGN);
 	signal (SIGXFSZ, SIG_IGN);
 
 	/* open request socket */
 
-	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((s = socket (AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
 		rmc_logit (func, RMC02, "socket", neterror());
 		exit (CONFERR);
 	}
@@ -167,29 +162,37 @@ int rmc_main(const char *const robot)
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 		rmc_logit (func, RMC02, "setsockopt", neterror());
-        }
+	}
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		rmc_logit (func, RMC02, "bind", neterror());
 		exit (CONFERR);
 	}
 	listen (s, 5) ;
 
-	FD_SET (s, &readmask);
+	struct pollfd pfd;
+	pfd.fd = s;
+	pfd.events = POLLIN;
 
-		/* main loop */
-
+	/* main loop */
 	while (1) {
-		if (FD_ISSET (s, &readfd)) {
-			FD_CLR (s, &readfd);
-			const int rpfd =
-				accept (s, (struct sockaddr *) &from, &fromlen);
-			(void) rmc_doit (rpfd);
+		// Check for connections
+		int ret = poll(&pfd, g_maxfds, RMC_CHECKI * 1000);
+		if (ret < 0) {
+			perror("poll() error");
+			continue;
+		} else if (ret == 0) {
+			continue; // timeout; no new connection
 		}
-		memcpy (&readfd, &readmask, sizeof(readmask));
-		timeval.tv_sec = RMC_CHECKI;
-		timeval.tv_usec = 0;
-		if (select (g_maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
-			FD_ZERO (&readfd);
+		// Note that the accept() call is non-blocking
+		if (pfd.revents & POLLIN) {
+			int rpfd = accept(s, (struct sockaddr*)&from, &fromlen);
+			if (rpfd < 0) {
+				// no more connections
+				if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+				perror("accept() error");
+				continue;
+			}
+			rmc_doit(rpfd);
 		}
 	}
 }
