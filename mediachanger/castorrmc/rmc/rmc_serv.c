@@ -61,7 +61,6 @@ struct extended_robot_info g_extended_robot_info;
 
 /* globals with file scope */
 char g_localhost[CA_MAXHOSTNAMELEN+1];
-int g_maxfds;
 
 int rmc_main(const char *const robot)
 {
@@ -266,8 +265,7 @@ int main(const int argc, char **argv)
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-		g_maxfds = Cinitdaemon("rmcd", NULL);
-		if(g_maxfds < 0) {
+		if(Cinitdaemon("rmcd", NULL) < 0) {
 			exit(SYERR);
 		}
 	}
