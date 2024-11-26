@@ -52,12 +52,12 @@ clang-format-report:
     - when: always
   image: $EL9_IMAGE
   script:
-    - yum install -y git-clang-format
+    - yum install -y git-clang-format bat
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
-    - git-clang-format $TARGET_BRANCH HEAD --diff | tee clang-format.diff || true
-    - git apply --stat clang-format.diff
+    - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.diff || true
+    - bat --style=plain --color=always clang-format.diff
   artifacts:
     when: always
     paths:
