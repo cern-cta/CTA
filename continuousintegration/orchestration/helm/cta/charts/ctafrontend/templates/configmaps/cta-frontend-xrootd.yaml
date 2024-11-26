@@ -33,6 +33,12 @@ data:
     # Maximum file size (in GB) that the CTA Frontend will accept for archiving
     cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
 
+    # Disallow 0-length files
+    cta.archivefile.disallow_zero_length {{ .Values.conf.frontend.archiveFileDisallowZeroLength }}
+
+    # Tapepools exempted from this check (if enabled)
+    cta.archivefile.disallow_zero_length_exempt_vo_list {{ .Values.conf.frontend.archiveFileDisallowZeroLengthExemptVoList }}
+
     # CTA Frontend log URL
     cta.log.url {{ .Values.conf.frontend.logUrl }}
 
