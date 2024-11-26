@@ -56,11 +56,11 @@ clang-format-report:
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
-    - git-clang-format $TARGET_BRANCH HEAD --diff | tee clang-format.output
+    - git-clang-format $TARGET_BRANCH HEAD --diff | tee clang-format.diff
   artifacts:
     when: always
     paths:
-      - clang-format.output
+      - clang-format.diff
 
 clang-format-apply:
   stage: analysis
@@ -82,7 +82,7 @@ clang-format-apply:
   image: $EL9_IMAGE
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
-    CLANG_FORMAT_REPORT: clang-format.output
+    CLANG_FORMAT_REPORT: clang-format.diff
   before_script:
     - yum install -y git git-clang-format patch
     - git config user.email $GITLAB_USER_EMAIL
