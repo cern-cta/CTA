@@ -60,7 +60,7 @@ clang-format-report:
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.output
     - |
-      if [ w$(wc -l < clang-format.output) -gt $MAX_OUTPUT_SIZE_TO_LOG  ];
+      if [ w$(wc -l < clang-format.output) -gt $MAX_OUTPUT_SIZE_TO_LOG  ]; then
         echo "clang-format output too long. Please check the job artifacts for details"
       else
         cat clang-format.output
