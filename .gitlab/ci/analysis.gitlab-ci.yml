@@ -51,12 +51,20 @@ clang-format-report:
       when: never
     - when: always
   image: $EL9_IMAGE
+  variables:
+    MAX_OUTPUT_SIZE_TO_LOG: 1000
   script:
     - yum install -y git-clang-format
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
-    - git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+    - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.output
+    - |
+      if [ w$(wc -l < clang-format.output) -gt $MAX_OUTPUT_SIZE_TO_LOG  ];
+        echo "clang-format output too long. Please check the job artifacts for details"
+      else
+        cat clang-format.output
+      fi
   artifacts:
     when: always
     paths:
