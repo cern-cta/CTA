@@ -29,7 +29,7 @@ variables:
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
   DOCKER_IMAGE_BUILDER_IMAGE: gitlab-registry.cern.ch/ci-tools/docker-image-builder
-  CPPCHECK_IMAGE: neszt/cppcheck-docker:2.14.2
+  CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
   GITLAB_RELEASE_CLI_IMAGE: registry.gitlab.com/gitlab-org/release-cli:latest
 
 default:
