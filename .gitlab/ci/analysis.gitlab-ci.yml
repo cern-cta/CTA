@@ -27,6 +27,8 @@ cppcheck:
       if cat cppcheck_out.xml | grep -q "<error\s"; then
         echo "cppcheck detected errors:  "
         cat cppcheck_out.xml
+        cat cppcheck.json
+        cat cppcheck.json | jq
         exit 1
       fi
     - echo "Done. No errors detected by cppcheck"
