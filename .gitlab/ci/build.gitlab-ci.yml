@@ -88,6 +88,7 @@ export-docs:
   needs: []
   stage: build
   rules:
+    - when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
     - echo "Exporting man pages (Markdown)"

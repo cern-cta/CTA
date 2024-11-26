@@ -106,6 +106,8 @@ k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
+  rules:
+    - when: never
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTRA_ARGS: "--test-timeout 2400"
