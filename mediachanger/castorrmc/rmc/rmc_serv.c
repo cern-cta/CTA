@@ -180,16 +180,15 @@ int rmc_main(const char *const robot)
 			perror("poll() error");
 			continue;
 		} else if (ret == 0) {
-			fprintf(stderr, "timeout\n");
 			continue; // timeout; no new connection
 		}
 		// Note that the accept() call is non-blocking
 		if (pfd.revents & POLLIN) {
 			int rpfd = accept(s, (struct sockaddr*)&from, &fromlen);
 			if (rpfd < 0) {
-				perror("accept() error");
 				// no more connections
 				if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+				perror("accept() error");
 				continue;
 			}
 			rmc_doit(rpfd);
