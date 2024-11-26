@@ -525,12 +525,13 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   try {
     request.archiveFile = m_catalogue.ArchiveFile()->getArchiveFileById(request.archiveFileID);
     tl.insertAndReset("catalogueGetArchiveFileByIdTime", t);
-  } 
-  catch (exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     log::ScopedParamContainer spc(m_lc);
     spc.add("fileId", request.archiveFileID);
     spc.add("catalogueError", ex.getMessage().str());
-    m_lc.log(log::ERR, "Received an exception when trying to get archive file by id. Ignoring request to delete archive file.");
+    m_lc.log(log::ERR,
+             "Received an exception when trying to get archive file by id. Ignoring request to delete archive file.");
   }
 
   m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
