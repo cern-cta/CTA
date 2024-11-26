@@ -25,20 +25,16 @@ cppcheck:
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
     - |
       if cat cppcheck_out.xml | grep -q "<error\s"; then
-        echo "cppcheck detected errors:  "
-        cat cppcheck_out.xml
-        cat cppcheck.json
+        echo "cppcheck detected errors. cppcheck-codequality output:"
         cat cppcheck.json | jq
         exit 1
       fi
     - echo "Done. No errors detected by cppcheck"
   artifacts:
     when: on_failure
-    expire_in: 2 days
+    expire_in: 7 days
     reports:
       codequality: cppcheck.json
-    paths:
-      - cppcheck_out.xml
 
 clang-format-report:
   stage: analysis
