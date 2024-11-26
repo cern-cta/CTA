@@ -165,7 +165,6 @@ compile_deploy() {
           echo "Error: --catalogue-config requires an argument"
           exit 1
         fi
-        shift
         ;;
       --scheduler-config)
         if [[ $# -gt 1 ]]; then
