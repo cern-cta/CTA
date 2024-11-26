@@ -51,6 +51,7 @@ build-cta-rpm:
     - when: on_success
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
+    XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
   script:
     - |
       if [ -z "${CI_COMMIT_TAG}" ]; then
@@ -61,14 +62,19 @@ build-cta-rpm:
         echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
       fi
     - yum install -y git
-    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
+    - |
+      if [ -z "$XRD_SSI_VERSION" ]; then
+        echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
+        exit 1
+      fi
     - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
                                                       --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
                                                       --cta-version ${CTA_VERSION}
                                                       --vcs-version ${VCS_VERSION}
-                                                      --xrootd-ssi-version ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}
+                                                      --xrootd-ssi-version ${XRD_SSI_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --jobs $(nproc --ignore=1)
