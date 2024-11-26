@@ -6,8 +6,6 @@ cppcheck:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
@@ -45,8 +43,6 @@ clang-format-report:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - when: always
@@ -71,8 +67,6 @@ clang-format-apply:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
@@ -101,8 +95,6 @@ catalogue-schema-version-check:
   stage: analysis
   dependencies: [] # Ensure no artifacts are downloaded
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
@@ -125,12 +117,6 @@ catalogue-schema-version-check:
       allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
-    # Any merge requests into main
-    #- if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-    #  when: on_success
-    #  allow_failure: false
-    #  variables:
-    #    CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
     # For all other scenarios, manual run only
     - when: on_success
     - allow_failure: false

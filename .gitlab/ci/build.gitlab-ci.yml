@@ -1,10 +1,7 @@
 # Generic build job
-
 .build-cta:
   retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
   image: $EL9_IMAGE
@@ -14,7 +11,6 @@
       - ${BUILD_PATH}
 
 # Generic build jobs for rpms and srpms
-
 build-cta-srpm:
   stage: build
   extends:

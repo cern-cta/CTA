@@ -14,8 +14,6 @@ test-cta-valgrind:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -42,8 +40,6 @@ system-test-cta:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
@@ -62,8 +58,6 @@ unit-test-postgresql:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
@@ -106,8 +100,6 @@ unit-test-oracle:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
@@ -141,8 +133,6 @@ test-cta-release:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
