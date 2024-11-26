@@ -46,7 +46,7 @@ int rmc_dismount(
 	/* Build request header */
 
 	sbp = sendbuf;
-		marshall_LONG (sbp, RMC_MAGIC);
+	marshall_LONG (sbp, RMC_MAGIC);
 	marshall_LONG (sbp, RMC_UNMOUNT);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
