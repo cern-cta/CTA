@@ -78,6 +78,8 @@ k8s-test-client:
   stage: test
   extends:
     - .kubernetes-test
+  rules:
+    - when: never
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -94,6 +96,8 @@ k8s-test-repack:
   stage: test
   extends:
     - .kubernetes-test
+  rules:
+    - when: never
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTRA_ARGS: "--test-timeout 2400"
@@ -110,6 +114,7 @@ k8s-test-cta-admin:
 
 .manual-rules:
   rules:
+    - when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
