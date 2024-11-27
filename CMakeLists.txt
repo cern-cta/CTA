@@ -70,10 +70,12 @@ else ()
 endif ()
 
 if (CTA_USE_PGSCHED)
+  message(STATUS "Using Postgre scheduler")
   add_definitions (-DCTA_PGSCHED)
   set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
   set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=true" CACHE STRING "" FORCE)
 else ()
+  message(STATUS "Using objectstore scheduler")
   set(RPM_USINGOBJECTSTORE "1" CACHE STRING "" FORCE)
   set(RPM_SCHEDOPT "%{nil}" CACHE STRING "" FORCE)
 endif ()
@@ -202,7 +204,7 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
   # as it is trying to pack the build directory as well
-  set(CPACK_SOURCE_IGNORE_FILES 
+  set(CPACK_SOURCE_IGNORE_FILES
     "/.git/"
     "/build_srpm/"
     "/build_rpm/"
