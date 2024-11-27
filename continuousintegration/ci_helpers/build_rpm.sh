@@ -331,10 +331,9 @@ build_rpm() {
     fi
 
     # Scheduler type
-    if [[ ${scheduler_type} == "postgres" ]]; then
+    if [[ ${scheduler_type} == "pgsched" ]]; then
       echo "Using specified scheduler database type $SCHED_TYPE";
-      local sched_opt=" -D CTA_USE_PGSCHED";
-      cmake_options+=" -D CTA_USE_PGSCHED";
+      cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE";
     else
       # unset it
       cmake_options+=" -U CTA_USE_PGSCHED";

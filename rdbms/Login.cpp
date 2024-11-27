@@ -259,6 +259,9 @@ void Login::setPostgresqlConnectionString(const std::string& connectionDetails) 
   } else {
     cta::utils::Regex regex2("(postgresql://.*:)(.*)(@.*)");
     std::vector<std::string> result2 = regex2.exec(connectionDetails);
+    if (result2.size() < 4) {
+      throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+    }
     connectionString += result2[1] + s_hiddenPassword + result2[3];
   }
 }
@@ -270,6 +273,9 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   }
   cta::utils::Regex regex("postgresql://(.*)@");
   std::vector<std::string> result = regex.exec(connectionDetails);
+  if (result.size() < 2) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
   std::string usernamePassword = result[1];
   if (usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
