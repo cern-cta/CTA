@@ -28,6 +28,7 @@ usage() {
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
+  echo "  --cmake-build-type <type>:                    Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo ""
   echo "options:"
   echo "  -i, --install:                                Installs the required packages. Supported operating systems: [alma9]."
@@ -39,7 +40,6 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --cmake-build-type <type>:                Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
 
   exit 1
 }
@@ -216,6 +216,11 @@ build_rpm() {
 
   if [ -z "${xrootd_ssi_version}" ]; then
     echo "Failure: Missing mandatory argument --xrootd-ssi-version"
+    usage
+  fi
+
+  if [ -z "${cmake_build_type}" ]; then
+    echo "Failure: Missing mandatory argument --cmake-build-type";
     usage
   fi
 

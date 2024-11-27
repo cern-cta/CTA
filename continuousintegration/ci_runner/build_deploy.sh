@@ -70,7 +70,7 @@ compile_deploy() {
   local skip_debug_packages=false
   local skip_image_reload=false
   local build_generator="Ninja"
-  local cmake_build_type=""
+  local cmake_build_type="RelWithDebInfo"
   local operating_system="alma9"
   local scheduler_type="objectstore"
   local oracle_support="ON"
@@ -79,6 +79,8 @@ compile_deploy() {
   local image_cleanup=true
   local extra_spawn_options=""
   local extra_build_options=""
+  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
 
   # Defaults
   local num_jobs=8
@@ -87,11 +89,8 @@ compile_deploy() {
   local deploy_namespace="dev"
   local src_dir="/home/cirunner/shared"
   local build_pod_name="cta-build"
-  local cta_version="5"
-  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
-
   # These versions don't affect anything functionality wise
+  local cta_version="5"
   local vcs_version="dev"
   local xrootd_ssi_version="dev"
 
@@ -265,6 +264,7 @@ compile_deploy() {
         --vcs-version ${vcs_version} \
         --scheduler-type ${scheduler_type} \
         --oracle-support ${oracle_support} \
+        --cmake-build-type "${cmake_build_type}" \
         --install \
         --jobs ${num_jobs} \
         ${build_srpm_flags}
@@ -284,10 +284,6 @@ compile_deploy() {
     if [ ${skip_unit_tests} = true ]; then
       build_rpm_flags+=" --skip-unit-tests"
     fi
-    if [[ ! ${cmake_build_type} = "" ]]; then
-      build_rpm_flags+=" --cmake-build-type ${cmake_build_type}"
-    fi
-
     if [[ ${clean_build_dir} = true || ${clean_build_dirs} = true ]]; then
       build_rpm_flags+=" --clean-build-dir"
     fi
@@ -311,6 +307,7 @@ compile_deploy() {
       --xrootd-ssi-version ${xrootd_ssi_version} \
       --scheduler-type ${scheduler_type} \
       --oracle-support ${oracle_support} \
+      --cmake-build-type "${cmake_build_type}" \
       ${build_rpm_flags}
 
     echo "Build successful"

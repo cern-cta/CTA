@@ -16,6 +16,7 @@ variables:
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
   # CTA related
+  CMAKE_BUILD_TYPE: "Debug"
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"

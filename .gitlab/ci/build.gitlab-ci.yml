@@ -35,6 +35,7 @@ build-cta-srpm:
                                                        --vcs-version ${CTA_BUILD_ID}
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
+                                                       --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                        --jobs $(nproc --ignore=1)
                                                        --install
 
@@ -77,6 +78,7 @@ build-cta-rpm:
                                                       --xrootd-ssi-version ${XRD_SSI_VERSION}
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
+                                                      --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                       --jobs $(nproc --ignore=1)
                                                       --install
 

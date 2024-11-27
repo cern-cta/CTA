@@ -26,6 +26,7 @@ usage() {
   echo "  --scheduler-type <type>:              The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
+  echo "  --cmake-build-type <type>:            Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo ""
   echo "options:"
   echo "  -i, --install:                        Installs the required packages. Supported operating systems: [alma9]."
@@ -33,7 +34,6 @@ usage() {
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   exit 1
 }
 
@@ -167,6 +167,11 @@ build_srpm() {
 
   if [ -z "${build_generator}" ]; then
     echo "Failure: Missing mandatory argument --build-generator";
+    usage
+  fi
+
+  if [ -z "${cmake_build_type}" ]; then
+    echo "Failure: Missing mandatory argument --cmake-build-type";
     usage
   fi
 
