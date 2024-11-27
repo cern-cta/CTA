@@ -163,7 +163,7 @@ int rmc_main(const char *const robot)
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 		rmc_logit (func, RMC02, "setsockopt", neterror());
-	}
+        }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		rmc_logit (func, RMC02, "bind", neterror());
 		exit (CONFERR);
