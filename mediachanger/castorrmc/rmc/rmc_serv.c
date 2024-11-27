@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "Cinit.h"
@@ -60,7 +61,6 @@ struct extended_robot_info g_extended_robot_info;
 
 /* globals with file scope */
 char g_localhost[CA_MAXHOSTNAMELEN+1];
-int g_maxfds;
 
 int rmc_main(const char *const robot)
 {
@@ -70,11 +70,9 @@ int rmc_main(const char *const robot)
 	socklen_t fromlen = sizeof(from);
 	const char *msgaddr;
 	int on = 1;	/* for REUSEADDR */
-	fd_set readfd, readmask;
 	int s;
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
-	struct timeval timeval;
 	const char* const func = "rmc_serv";
 
 	g_jid = getpid();
@@ -142,14 +140,12 @@ int rmc_main(const char *const robot)
 		}
 	}
 
-	FD_ZERO (&readmask);
-	FD_ZERO (&readfd);
 	signal (SIGPIPE, SIG_IGN);
 	signal (SIGXFSZ, SIG_IGN);
 
 	/* open request socket */
 
-	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((s = socket (AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
 		rmc_logit (func, RMC02, "socket", neterror());
 		exit (CONFERR);
 	}
@@ -174,22 +170,30 @@ int rmc_main(const char *const robot)
 	}
 	listen (s, 5) ;
 
-	FD_SET (s, &readmask);
+	struct pollfd pfd;
+	pfd.fd = s;
+	pfd.events = POLLIN;
 
-		/* main loop */
-
+	/* main loop */
 	while (1) {
-		if (FD_ISSET (s, &readfd)) {
-			FD_CLR (s, &readfd);
-			const int rpfd =
-				accept (s, (struct sockaddr *) &from, &fromlen);
-			(void) rmc_doit (rpfd);
+		// Check for connections
+		int ret = poll(&pfd, 1, RMC_CHECKI * 1000);
+		if (ret < 0) {
+			perror("poll() error");
+			continue;
+		} else if (ret == 0) {
+			continue; // timeout; no new connection
 		}
-		memcpy (&readfd, &readmask, sizeof(readmask));
-		timeval.tv_sec = RMC_CHECKI;
-		timeval.tv_usec = 0;
-		if (select (g_maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
-			FD_ZERO (&readfd);
+		// Note that the accept() call is non-blocking
+		if (pfd.revents & POLLIN) {
+			int rpfd = accept(s, (struct sockaddr*)&from, &fromlen);
+			if (rpfd < 0) {
+				// no more connections
+				if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+				perror("accept() error");
+				continue;
+			}
+			rmc_doit(rpfd);
 		}
 	}
 }
@@ -262,8 +266,7 @@ int main(const int argc, char **argv)
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-		g_maxfds = Cinitdaemon("rmcd", NULL);
-		if(g_maxfds < 0) {
+		if(Cinitdaemon("rmcd", NULL) < 0) {
 			exit(SYERR);
 		}
 	}
