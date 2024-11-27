@@ -70,7 +70,7 @@ else ()
 endif ()
 
 if (CTA_USE_PGSCHED)
-  message(STATUS "Using Postgre scheduler")
+  message(STATUS "Using Postgres scheduler")
   add_definitions (-DCTA_PGSCHED)
   set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
   set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=true" CACHE STRING "" FORCE)
