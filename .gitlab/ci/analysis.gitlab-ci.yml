@@ -63,7 +63,12 @@ clang-format-report:
         echo "No clang-format issues found"
         exit 0
       fi
-    - bat --style=plain --color=always clang-format.diff
+    - |
+      if [ $(wc -l < clang-format.diff) -le 1000 ]; then
+        bat --style=plain --color=always clang-format.diff
+      else
+        echo "Clang-format output too large. Please check job artifacts"
+      fi
     - exit 1 # clang-format failed, so the job should fail
   artifacts:
     when: on_failure
