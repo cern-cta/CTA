@@ -8,7 +8,7 @@
   {{- if eq $schedulerConfig.backend "ceph" -}}
     rados://{{ $schedulerConfig.cephConfig.id }}@{{ $schedulerConfig.cephConfig.pool }}:{{ $schedulerConfig.cephConfig.namespace }}
   {{- else if eq $schedulerConfig.backend "postgres" -}}
-    postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $schedulerConfig.postgresConfig.password }}@{{ $schedulerConfig.postgresConfig.server }}/{{ $schedulerConfig.postgresConfig.database }}
+    postgresql:postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $schedulerConfig.postgresConfig.password }}@{{ $schedulerConfig.postgresConfig.server }}/{{ $schedulerConfig.postgresConfig.database }}
   {{- else if eq $schedulerConfig.backend "VFS" -}}
     {{ $schedulerConfig.vfsConfig.path | replace "%NAMESPACE" .Release.Namespace }}
   {{- else -}}
