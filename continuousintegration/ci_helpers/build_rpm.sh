@@ -257,7 +257,7 @@ build_rpm() {
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
-      yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc
+      yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
       case "${build_generator}" in
         "Unix Makefiles")
           yum install -y make
