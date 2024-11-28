@@ -365,6 +365,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
+      cta::log::Param mountAttemptedParam("mountAttempted", 0);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -379,7 +380,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam};
+        std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam, mountAttemptedParam};
         m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(logContext,
@@ -496,6 +497,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
+      cta::log::Param mountAttemptedParam("mountAttempted", 0);
+
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         archiveMount->complete();
@@ -506,7 +509,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam};
+        std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam, mountAttemptedParam};
         m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");

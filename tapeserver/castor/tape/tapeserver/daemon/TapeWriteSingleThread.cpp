@@ -292,7 +292,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_watchdog.addParameter(Param("tapePool", m_archiveMount.getPoolName()));
     m_watchdog.addParameter(Param("logicalLibrary", m_drive.config.logicalLibrary));
     m_watchdog.addParameter(Param("capacityInBytes", m_archiveMount.getCapacityInBytes()));
-
+    m_watchdog.addParameter(Param("mountAttempted", 1));
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash
     m_watchdog.updateThreadTimer(totalTimer);

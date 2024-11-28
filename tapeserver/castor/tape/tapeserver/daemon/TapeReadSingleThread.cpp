@@ -272,7 +272,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     m_watchdog.addParameter(Param("tapePool", m_retrieveMount.getPoolName()));
     m_watchdog.addParameter(Param("logicalLibrary", m_drive.config.logicalLibrary));
     m_watchdog.addParameter(Param("capacityInBytes", m_retrieveMount.getCapacityInBytes()));
-
+    m_watchdog.addParameter(Param("mountAttempted", 1));
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash
     m_watchdog.updateThreadTimer(totalTimer);
@@ -304,6 +304,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started for read");
 
       currentErrorToCount = "Error_tapeLoad";
+
       mountTapeReadOnly();
       cta::utils::Timer tapeLoadTimer;
       waitForDrive();
