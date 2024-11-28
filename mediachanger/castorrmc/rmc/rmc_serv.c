@@ -296,7 +296,6 @@ static int rmc_getreq(
 {
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
-	struct hostent *hp;
 	int l;
 	int magic;
 	int msglen;
@@ -322,13 +321,17 @@ static int rmc_getreq(
 			rmc_logit (func, RMC02, "getpeername", neterror());
 			return (ERMCUNREC);
 		}
-		hp = gethostbyaddr ((char *)(&from.sin_addr),
-			sizeof(struct in_addr), from.sin_family);
-		if (hp == NULL)
-			*clienthost = inet_ntoa (from.sin_addr);
-		else
-			*clienthost = hp->h_name ;
-		return (0);
+		struct hostent hbuf;
+    struct hostent* hp;
+    char buffer[1024];
+    int h_err;
+    if (gethostbyaddr_r((void*)(&from.sin_addr), sizeof(struct in_addr), from.sin_family,
+                        &hbuf, buffer, sizeof(buffer), &hp, &h_err) != 0 || hp == NULL) {
+      *clienthost = inet_ntoa(from.sin_addr);
+    } else {
+      *clienthost = hp->h_name;
+    }
+    return 0;
 	} else {
 		if (l > 0) {
 			rmc_logit (func, RMC04, l);

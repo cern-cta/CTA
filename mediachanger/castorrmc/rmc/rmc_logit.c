@@ -33,14 +33,15 @@ int rmc_logit(const char *const func, const char *const msg, ...) {
   va_list args;
   char prtbuf[RMC_PRTBUFSZ];
   int save_errno;
-  struct tm *tm;
   time_t current_time;
   int fd_log;
 
   save_errno = errno;
   va_start(args, msg);
   time(&current_time);
-  tm = localtime(&current_time);
+
+  struct tm localNowBuf;
+  struct tm* tm = localtime_r(&current_time, &localNowBuf);
   snprintf(prtbuf, RMC_PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, g_jid, func);
   size_t prtbufLen = strnlen(prtbuf, RMC_PRTBUFSZ);
   vsnprintf(prtbuf+prtbufLen, RMC_PRTBUFSZ-prtbufLen, msg, args);

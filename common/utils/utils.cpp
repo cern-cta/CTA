@@ -908,12 +908,12 @@ std::string getCurrentLocalTime() {
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
   ::time_t now = (::time_t)tv.tv_sec;
-  struct ::tm * localNow;
   ::time(&now);
-  localNow = ::localtime(&now);
+  struct tm localNowBuf;
+  struct tm* localNow = ::localtime_r(&now, &localNowBuf);
   char buff[80];
   char buff2[10];
-  ::strftime(buff,sizeof(buff), "%b %e %H:%M:%S.", localNow);
+  ::strftime(buff, sizeof(buff), "%b %e %H:%M:%S.", localNow);
   ::snprintf(buff2, sizeof(buff2), "%06ld", tv.tv_usec);
   return std::string(buff) + std::string(buff2);
 }
@@ -925,9 +925,9 @@ std::string getCurrentLocalTime(const std::string & format){
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
   ::time_t now = (::time_t)tv.tv_sec;
-  struct ::tm * localNow;
   ::time(&now);
-  localNow = ::localtime(&now);
+  struct tm localNowBuf;
+  struct tm* localNow = ::localtime_r(&now, &localNowBuf);
   char buff[80];
   ::strftime(buff,sizeof(buff), format.c_str(), localNow);
   return std::string(buff);
@@ -1030,7 +1030,7 @@ std::string decimalToHexadecimal(const std::string &decimalNumber) {
   return fxIdStream.str();
 }
 
-// Check if uuid is correct 
+// Check if uuid is correct
 bool isValidUUID(const std::string &uuid) {
   if (uuid.empty()) {
     return false;

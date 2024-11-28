@@ -112,8 +112,6 @@ int cta::System::porttoi(char* str)
 void cta::System::setUserAndGroup(const std::string &userName, const std::string &groupName) {
   const std::string task = std::string("set user name of process to ") + userName + " and group name of process to " +
     groupName;
-  struct passwd *pwd = nullptr; // password structure pointer
-  struct group  *grp = nullptr; // group structure pointer
 
   // Save original values
   const uid_t ruid = getuid();
@@ -121,20 +119,26 @@ void cta::System::setUserAndGroup(const std::string &userName, const std::string
   const gid_t rgid = getgid();
   const gid_t egid = getegid();
 
+  struct passwd *pwd = nullptr; // password structure pointer
+  struct group  *grp = nullptr; // group structure pointer
+  struct group grp_buf;
+  struct passwd pwd_buf;
+  char buffer[1024];
+
   // Get information on generic stage account from password file
-  if ((pwd = getpwnam(userName.c_str())) == nullptr) {
+  if (getpwnam_r(userName.c_str(), &pwd_buf, buffer, sizeof(buffer), &pwd) != 0 || pwd == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User name not found in password file";
     throw e;
   }
-  // verify existence of its primary group id
-  if (getgrgid(pwd->pw_gid) == nullptr) {
+  // Verify existence of its primary group id
+  if (getgrgid_r(pwd->pw_gid, &grp_buf, buffer, sizeof(buffer), &grp) != 0 || grp == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User does not have a primary group";
     throw e;
   }
   // Get information about group name from group file
-  if ((grp = getgrnam(groupName.c_str())) == nullptr) {
+  if (getgrnam_r(groupName.c_str(), &grp_buf, buffer, sizeof(buffer), &grp) != 0 || grp == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": Group name not found in group file";
     throw e;

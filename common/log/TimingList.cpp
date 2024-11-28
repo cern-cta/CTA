@@ -60,18 +60,21 @@ TimingList& TimingList::operator+=(const TimingList& other) {
     std::string oName;
     double oVal;
     std::tie(oName, oVal) = ot;
+    bool found = false;
     for (auto & t: *this) {
       std::string name;
       double val;
       std::tie(name, val) = t;
       if (name == oName) {
         std::get<1>(t) = val+oVal;
-        goto done;
+        found = true;
+        break;
       }
     }
-    // We did not add this one to an existing entry: just insert a new one.
-    push_back(ot);
-    done:;
+    if(!found) {
+      // We did not add this one to an existing entry: just insert a new one.
+      push_back(ot);
+    }
   }
   return *this;
 }
