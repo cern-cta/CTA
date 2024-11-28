@@ -223,54 +223,56 @@ getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
   const ContainerIdentifier &cId, log::LogContext &lc)
 {
   // Try and get access to a queue.
-  while(true) {
-    objectstore::RootEntry re(cont.m_objectStore);
-    re.fetchNoLock();
-    std::string rqAddress;
-    ContainerTraits<RetrieveQueue,C>::QueueType queueType;
-    auto rql = re.dumpRetrieveQueues(queueType.value);
-    for (auto &rqp : rql) {
-      if (rqp.vid == cId)
-        rqAddress = rqp.address;
-    }
-    if(rqAddress.empty()) throw NoSuchContainer("In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): no such retrieve queue");
+  size_t attemptCount = 0;
 
-    // try and lock the retrieve queue. Any failure from here on means the end of the getting jobs.
-    cont.setAddress(rqAddress);
+retry:
+  objectstore::RootEntry re(cont.m_objectStore);
+  re.fetchNoLock();
+  std::string rqAddress;
+  ContainerTraits<RetrieveQueue,C>::QueueType queueType;
+  auto rql = re.dumpRetrieveQueues(queueType.value);
+  for (auto &rqp : rql) {
+    if (rqp.vid == cId)
+      rqAddress = rqp.address;
+  }
+  if(rqAddress.empty()) throw NoSuchContainer("In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): no such retrieve queue");
+
+  // try and lock the retrieve queue. Any failure from here on means the end of the getting jobs.
+  cont.setAddress(rqAddress);
+  try {
+    if(contLock.isLocked()) contLock.release();
+    contLock.lock(cont);
+    cont.fetch();
+  } catch(cta::exception::Exception & ex) {
+    // The queue is now absent. We can remove its reference in the root entry.
+    // A new queue could have been added in the meantime, and be non-empty.
+    // We will then fail to remove from the RootEntry (non-fatal).
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
     try {
-      if(contLock.isLocked()) contLock.release();
-      contLock.lock(cont);
-      cont.fetch();
-      return;
-    } catch(cta::exception::Exception & ex) {
-      // The queue is now absent. We can remove its reference in the root entry.
-      // A new queue could have been added in the meantime, and be non-empty.
-      // We will then fail to remove from the RootEntry (non-fatal).
-      ScopedExclusiveLock rexl(re);
-      re.fetch();
-      try {
-        re.removeRetrieveQueueAndCommit(cId, queueType.value, lc);
-        log::ScopedParamContainer params(lc);
-        params.add("tapeVid", cId)
-              .add("queueObject", cont.getAddressIfSet());
-        lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
-      } catch (RootEntry::RetrieveQueueNotEmpty &ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("tapeVid", cId)
-              .add("queueObject", cont.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
-      } catch (RootEntry::NoSuchRetrieveQueue &ex) {
-        // Somebody removed the queue in the meantime. Barely worth mentioning.
-        log::ScopedParamContainer params(lc);
-        params.add("tapeVid", cId)
-              .add("queueObject", cont.getAddressIfSet());
-        lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
-      }
-      // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
-      if (contLock.isLocked()) contLock.release();
-      cont.resetAddress();
+      re.removeRetrieveQueueAndCommit(cId, queueType.value, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
+    } catch (RootEntry::RetrieveQueueNotEmpty &ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
+    } catch (RootEntry::NoSuchRetrieveQueue &ex) {
+      // Somebody removed the queue in the meantime. Barely worth mentioning.
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
     }
+    attemptCount++;
+    // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
+    if (contLock.isLocked()) contLock.release();
+    cont.resetAddress();
+    goto retry;
   }
 }
 

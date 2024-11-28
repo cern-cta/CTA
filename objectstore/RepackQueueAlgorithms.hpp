@@ -242,55 +242,56 @@ void ContainerTraits<RepackQueue,C>::
 getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId, log::LogContext& lc)
 {
   // Try and get access to a queue.
-  while(true) {
-    objectstore::RootEntry re(cont.m_objectStore);
-    re.fetchNoLock();
-    std::string rpkQAddress;
-    ContainerTraits<RepackQueue,C>::QueueType queueType;
+  size_t attemptCount = 0;
+  retry:
+  objectstore::RootEntry re(cont.m_objectStore);
+  re.fetchNoLock();
+  std::string rpkQAddress;
+  ContainerTraits<RepackQueue,C>::QueueType queueType;
+  try {
+    rpkQAddress = re.getRepackQueueAddress(queueType.value);
+  } catch (RootEntry::NoSuchRepackQueue &) {
+    throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
+  }
+  // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
+  cont.setAddress(rpkQAddress);
+  //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
+  try {
+    if (contLock.isLocked()) contLock.release();
+    contLock.lock(cont);
+    cont.fetch();
+    //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
+  } catch (cta::exception::NoSuchObject & ex) {
+    // The queue is now absent. We can remove its reference in the root entry.
+    // A new queue could have been added in the mean time, and be non-empty.
+    // We will then fail to remove from the RootEntry (non-fatal).
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
     try {
-      rpkQAddress = re.getRepackQueueAddress(queueType.value);
+      re.removeRepackQueueAndCommit(queueType.value, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("queueObject", cont.getAddressIfSet());
+      lc.log(log::INFO,
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
+    } catch (RootEntry::RepackQueueNotEmpty & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("queueObject", cont.getAddressIfSet())
+            .add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::INFO,
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchRepackQueue &) {
-      throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
+      // Somebody removed the queue in the mean time. Barely worth mentioning.
+      log::ScopedParamContainer params(lc);
+      params.add("queueObject", cont.getAddressIfSet());
+      lc.log(log::DEBUG,
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
-    // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
-    cont.setAddress(rpkQAddress);
-    //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
-    try {
-      if (contLock.isLocked()) contLock.release();
-      contLock.lock(cont);
-      cont.fetch();
-      //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
-      return;
-    } catch (cta::exception::NoSuchObject & ex) {
-      // The queue is now absent. We can remove its reference in the root entry.
-      // A new queue could have been added in the mean time, and be non-empty.
-      // We will then fail to remove from the RootEntry (non-fatal).
-      ScopedExclusiveLock rexl(re);
-      re.fetch();
-      try {
-        re.removeRepackQueueAndCommit(queueType.value, lc);
-        log::ScopedParamContainer params(lc);
-        params.add("queueObject", cont.getAddressIfSet());
-        lc.log(log::INFO,
-            "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
-      } catch (RootEntry::RepackQueueNotEmpty & ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("queueObject", cont.getAddressIfSet())
-              .add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::INFO,
-            "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
-      } catch (RootEntry::NoSuchRepackQueue &) {
-        // Somebody removed the queue in the mean time. Barely worth mentioning.
-        log::ScopedParamContainer params(lc);
-        params.add("queueObject", cont.getAddressIfSet());
-        lc.log(log::DEBUG,
-            "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
-      }
-      //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
-      // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
-      if (contLock.isLocked()) contLock.release();
-      cont.resetAddress();
-    }
+    //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
+    attemptCount++;
+    // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
+    if (contLock.isLocked()) contLock.release();
+    cont.resetAddress();
+    goto retry;
   }
 }
 
