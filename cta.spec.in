@@ -627,12 +627,13 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 Summary: External script to get free disk space
 Group: Application/CTA
 Requires: eos-client
+Requires: gawk
 %description -n cta-eos-freediskspace
-cta-get-free-disk-space is a script that runs on taped and returns
+cta-eos-get-free-disk-space is a script that runs on taped and returns
 the free disk space in the defalut namespace
 %files -n cta-eos-freediskspace
 %defattr(-,root,root)
-%attr(0755,root,root) /usr/local/bin/cta-get-free-disk-space.sh
+%attr(0755,root,root) /usr/local/bin/cta-eos-get-free-disk-space.sh
 
 %changelog
 

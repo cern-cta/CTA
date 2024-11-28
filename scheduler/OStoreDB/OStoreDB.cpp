@@ -3873,9 +3873,7 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::ERR,
             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
-            "for disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
-      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+            "for disk system using external script, backpressure will not be applied");
     }
     return false;
   } catch (std::exception& ex) {
@@ -3953,11 +3951,9 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
-        .log(cta::log::ERR,
+        .log(cta::log::WARNING,
             "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
-            "disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
-      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+            "disk system using external script, backpressure will not be applied");
     }
     return false;
   } catch (std::exception& ex) {
