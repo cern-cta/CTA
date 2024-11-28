@@ -57,7 +57,8 @@ AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
     : AdminCmd(frontendService, clientIdentity, adminCmd),
       m_stream(stream),
       m_schedDb(frontendService.getSchedDb()),
-      m_catalogueConnString(frontendService.getCatalogueConnString()) {}
+      m_catalogueConnString(frontendService.getCatalogueConnString()),
+      m_schedulerBackendName(frontendService.getSchedulerBackendName()) {}
 
 xrd::Response AdminCmdStream::process() {
   xrd::Response response;
@@ -323,7 +324,7 @@ void AdminCmdStream::processDiskInstanceSpace_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processVersion(xrd::Response& response) {
-  m_stream = new xrd::VersionStream(*this, m_catalogue, m_scheduler, m_catalogueConnString);
+  m_stream = new xrd::VersionStream(*this, m_catalogue, m_scheduler, m_catalogueConnString, m_schedulerBackendName);
 
   response.set_show_header(admin::HeaderType::VERSION_CMD);
   response.set_type(xrd::Response::RSP_SUCCESS);

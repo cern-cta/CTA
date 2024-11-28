@@ -36,14 +36,13 @@ cta::admin::TextFormatter formattedText(1000);
 
 const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 
-
 namespace XrdSsiPb {
 
 /*!
 * User error exception
 */
 class UserException : public std::runtime_error {
- using std::runtime_error::runtime_error;
+  using std::runtime_error::runtime_error;
 };
 
 /*!
@@ -52,12 +51,10 @@ class UserException : public std::runtime_error {
 * Defines how Alert messages should be logged
 */
 template<>
-void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
-{
- std::cout << "AlertCallback():" << std::endl;
- Log::DumpProtobuf(Log::PROTOBUF, &alert);
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert& alert) {
+  std::cout << "AlertCallback():" << std::endl;
+  Log::DumpProtobuf(Log::PROTOBUF, &alert);
 }
-
 
 /*!
 * Data/Stream callback.
@@ -65,19 +62,19 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 * Defines how incoming records from the stream should be handled
 */
 template<>
-void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
-{
- using namespace cta::xrd;
- using namespace cta::admin;
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
+  using namespace cta::xrd;
+  using namespace cta::admin;
 
- // Wait for primary response to be handled before allowing stream response
- while(!isHeaderSent) { std::this_thread::yield(); }
+  // Wait for primary response to be handled before allowing stream response
+  while (!isHeaderSent) {
+    std::this_thread::yield();
+  }
 
- // Output results in JSON format for parsing by a script
- if(CtaAdminCmd::isJson())
- {
-   std::cout << CtaAdminCmd::jsonDelim();
-   // clang-format off
+  // Output results in JSON format for parsing by a script
+  if (CtaAdminCmd::isJson()) {
+    std::cout << CtaAdminCmd::jsonDelim();
+    // clang-format off
    switch(record.data_case()) {
      case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
      case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
@@ -112,11 +109,11 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
      default:
        throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
-   // clang-format on
- }
- // Format results in a tabular format for a human
- else switch(record.data_case()) {
-   // clang-format off
+    // clang-format on
+  } else {
+    // Format results in a tabular format for a human
+    switch (record.data_case()) {
+        // clang-format off
    case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
    case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
    case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
@@ -151,9 +148,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    }
 }
 
-} // namespace XrdSsiPb
-
-
+}  // namespace XrdSsiPb
 
 namespace cta::admin {
 
@@ -337,174 +332,191 @@ void CtaAdminCmd::send() const
        case HeaderType::PHYSICALLIBRARY_LS:           formattedText.printPhysicalLibraryLsHeader(); break;
        case HeaderType::NONE:
        default:                                       break;
-       // clang-format on
-     }
-     // Allow stream processing to commence
-     isHeaderSent = true;
-     break;
-   case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-   case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-   case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-   default:                                             throw XrdSsiPb::PbException("Invalid response type.");
- }
+            // clang-format on
+        }
+  }
+  // Allow stream processing to commence
+  isHeaderSent = true;
+  break;
+  case Response::RSP_ERR_PROTOBUF:
+    throw XrdSsiPb::PbException(response.message_txt());
+  case Response::RSP_ERR_USER:
+    throw XrdSsiPb::UserException(response.message_txt());
+  case Response::RSP_ERR_CTA:
+    throw std::runtime_error(response.message_txt());
+  default:
+    throw XrdSsiPb::PbException("Invalid response type.");
+}
+
 // clang-format on
 
- // If there is a Data/Stream payload, wait until it has been processed before exiting
- stream_future.wait();
+// If there is a Data/Stream payload, wait until it has been processed before exiting
+stream_future.wait();
 
- // JSON output is an array of structs, close bracket
- if(isJson()) { std::cout << jsonCloseDelim(); }
+// JSON output is an array of structs, close bracket
+if (isJson()) {
+  std::cout << jsonCloseDelim();
+}
+}  // namespace cta::admin
+
+void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
+  for (int i = start; i < argc; ++i) {
+    int opt_num = i - start;
+
+    cmd_val_t::const_iterator opt_it;
+
+    // Scan options for a match
+
+    for (opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
+      // Special case of OPT_CMD type has an implicit key
+      if (opt_num-- == 0 && opt_it->get_type() == Option::OPT_CMD) {  // Check if the value is '--all'
+        if (std::string(argv[i]) == "--all" || std::string(argv[i]) == "-a") {
+          // Find the OPT_FLAG type --all option explicitly
+          auto flag_it = std::find_if(options.begin(), options.end(), [](const Option& opt) {
+            return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
+          });
+          if (flag_it != options.end()) {
+            addOption(*flag_it, "");  // Add --all as a flag option
+            continue;                 // Move to the next argument
+          }
+          throwUsage("Invalid use of '--all'");
+        }
+        break;  // Normal implicit key handling for CMD
+      }
+      // Regular matching
+      if (*opt_it == argv[i]) {
+        break;
+      }
+    }
+    if (opt_it == options.end()) {
+      throwUsage(std::string("Invalid option: ") + argv[i]);
+    }
+    if ((i += opt_it->num_params()) == argc) {
+      throw std::runtime_error(std::string(argv[i - 1]) + " expects a parameter: " + opt_it->help());
+    }
+
+    addOption(*opt_it, argv[i]);
+  }
 }
 
+void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
+  auto admincmd_ptr = m_request.mutable_admincmd();
 
-
-void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options)
-{
- for(int i = start; i < argc; ++i)
- {
-   int opt_num = i-start;
-
-   cmd_val_t::const_iterator opt_it;
-
-   // Scan options for a match
-
-   for(opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
-     // Special case of OPT_CMD type has an implicit key
-     if(opt_num-- == 0 && opt_it->get_type() == Option::OPT_CMD) break;
-
-        if(*opt_it == argv[i]) break;
-     }
-   if(opt_it == options.end()) {
-     throwUsage(std::string("Invalid option: ") + argv[i]);
-   }
-   if((i += opt_it->num_params()) == argc) {
-     throw std::runtime_error(std::string(argv[i-1]) + " expects a parameter: " + opt_it->help());
-   }
-
-   addOption(*opt_it, argv[i]);
- }
-}
-
-void CtaAdminCmd::addOption(const Option &option, const std::string &value)
-{
- auto admincmd_ptr = m_request.mutable_admincmd();
-
- switch(option.get_type())
- {
-   case Option::OPT_CMD:
-   case Option::OPT_STR: {
-     auto key = strOptions.at(option.get_key());
-     auto new_opt = admincmd_ptr->add_option_str();
-     new_opt->set_key(key);
-     if (option == opt_drivename_cmd && value == "first") {
-       try {
-         new_opt->set_value(
-           cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
-       } catch(cta::exception::Exception &ex){
-         throw std::runtime_error("Could not find a taped configuration file. This option should only be run from a tapeserver.");
-       }
-     } else {
-       new_opt->set_value(value);
-     }
-     break;
-   }
-   case Option::OPT_STR_LIST: {
-     auto key = strListOptions.at(option.get_key());
-     auto new_opt = admincmd_ptr->add_option_str_list();
-     new_opt->set_key(key);
-     readListFromFile(*new_opt, value);
-     break;
-   }
-   case Option::OPT_FLAG:
-   case Option::OPT_BOOL: {
-     auto key = boolOptions.at(option.get_key());
-     auto new_opt = admincmd_ptr->add_option_bool();
-     new_opt->set_key(key);
-     if(option.get_type() == Option::OPT_FLAG || value == "true") {
-       new_opt->set_value(true);
-     } else if(value == "false") {
-       new_opt->set_value(false);
-     } else {
-       throw std::runtime_error(value + " is not a boolean value: " + option.help());
-     }
-     break;
-   }
-   case Option::OPT_UINT: try {
-       auto key = uint64Options.at(option.get_key());
-       int64_t val_int = std::stol(value);
-       if(val_int < 0) throw std::out_of_range("value is negative");
+  switch (option.get_type()) {
+    case Option::OPT_CMD:
+    case Option::OPT_STR: {
+      auto key = strOptions.at(option.get_key());
+      auto new_opt = admincmd_ptr->add_option_str();
+      new_opt->set_key(key);
+      if (option == opt_drivename_cmd && value == "first") {
+        try {
+          new_opt->set_value(cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
+        } catch (cta::exception::Exception& ex) {
+          throw std::runtime_error(
+            "Could not find a taped configuration file. This option should only be run from a tapeserver.");
+        }
+      } else {
+        new_opt->set_value(value);
+      }
+      break;
+    }
+    case Option::OPT_STR_LIST: {
+      auto key = strListOptions.at(option.get_key());
+      auto new_opt = admincmd_ptr->add_option_str_list();
+      new_opt->set_key(key);
+      readListFromFile(*new_opt, value);
+      break;
+    }
+    case Option::OPT_FLAG:
+    case Option::OPT_BOOL: {
+      auto key = boolOptions.at(option.get_key());
+      auto new_opt = admincmd_ptr->add_option_bool();
+      new_opt->set_key(key);
+      if (option.get_type() == Option::OPT_FLAG || value == "true") {
+        new_opt->set_value(true);
+      } else if (value == "false") {
+        new_opt->set_value(false);
+      } else {
+        throw std::runtime_error(value + " is not a boolean value: " + option.help());
+      }
+      break;
+    }
+    case Option::OPT_UINT:
+      try {
+        auto key = uint64Options.at(option.get_key());
+        int64_t val_int = std::stol(value);
+        if (val_int < 0) {
+          throw std::out_of_range("value is negative");
+        }
         auto new_opt = admincmd_ptr->add_option_uint64();
-       new_opt->set_key(key);
-       new_opt->set_value(val_int);
-       break;
-     } catch(std::invalid_argument &) {
-       throw std::runtime_error(value + " is not a valid uint64: " + option.help());
-     } catch(std::out_of_range &) {
-       throw std::runtime_error(value + " is out of range: " + option.help());
-     }
- }
+        new_opt->set_key(key);
+        new_opt->set_value(val_int);
+        break;
+      } catch (std::invalid_argument&) {
+        throw std::runtime_error(value + " is not a valid uint64: " + option.help());
+      } catch (std::out_of_range&) {
+        throw std::runtime_error(value + " is out of range: " + option.help());
+      }
+  }
 }
 
+void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
+  std::ifstream file(filename);
+  if (file.fail()) {
+    throw std::runtime_error("Unable to open file " + filename);
+  }
 
+  std::string line;
 
-void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename)
-{
- std::ifstream file(filename);
- if (file.fail()) {
-   throw std::runtime_error("Unable to open file " + filename);
- }
+  while (std::getline(file, line)) {
+    // Strip out comments
+    auto pos = line.find('#');
+    if (pos != std::string::npos) {
+      line.resize(pos);
+    }
 
- std::string line;
+    // Extract the list items
+    std::stringstream ss(line);
+    while (!ss.eof()) {
+      std::string item;
+      ss >> item;
+      // skip blank lines or lines consisting only of whitespace
+      if (item.empty()) {
+        continue;
+      }
+    }
 
- while(std::getline(file, line)) {
-   // Strip out comments
-   auto pos = line.find('#');
-   if(pos != std::string::npos) {
-     line.resize(pos);
-   }
-
-   // Extract the list items
-   std::stringstream ss(line);
-   while(!ss.eof()) {
-     std::string item;
-     ss >> item;
-     // skip blank lines or lines consisting only of whitespace
-     if(item.empty()) continue;
-
-        if (str_list.key() == OptionStrList::FILE_ID) {
-       // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
-       //   path=/path fid=<fid>
-       // We discard everything except the list of fids. <fid> is a zero-padded hexadecimal number,
-       // but in the CTA catalogue we store disk IDs as a decimal string, so we need to convert it.
-       if (item.substr(0, 4) != "fid=") {
-         continue;
-       }
-       auto fid = item.substr(4);
-       if (!utils::isValidID(fid)) {
-         throw std::runtime_error(fid + " is not a valid file ID");
-       }
-       str_list.add_item(fid);
-     } else {
-       // default case: add all items
-       str_list.add_item(item);
-     }
-   }
- }
+    if (str_list.key() == OptionStrList::FILE_ID) {
+      if (str_list.key() == OptionStrList::FILE_ID) {
+        // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
+        //   path=/path fid=<fid>
+        // We discard everything except the list of fids. <fid> is a zero-padded hexadecimal number,
+        // but in the CTA catalogue we store disk IDs as a decimal string, so we need to convert it.
+        if (item.substr(0, 4) != "fid=") {
+          continue;
+        }
+        auto fid = item.substr(4);
+        if (!utils::isValidID(fid)) {
+          throw std::runtime_error(fid + " is not a valid file ID");
+        }
+        str_list.add_item(fid);
+      } else {
+        // default case: add all items
+        str_list.add_item(item);
+      }
+    }
+  }
 }
 
+void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
+  std::stringstream help;
+  const auto& admincmd = m_request.admincmd().cmd();
 
+  if (error_txt != "") {
+    help << error_txt << std::endl;
+  }
 
-void CtaAdminCmd::throwUsage(const std::string &error_txt) const
-{
- std::stringstream help;
- const auto &admincmd = m_request.admincmd().cmd();
-
- if(error_txt != "") {
-   help << error_txt << std::endl;
- }
-
- if(admincmd == AdminCmd::CMD_NONE)
- {
+  if (admincmd == AdminCmd::CMD_NONE) {  // clang-format off
    // Command has not been set: show generic help
    help << "CTA Administration Tool" << std::endl << std::endl
         << "Usage: " << m_execname << " [--json] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
@@ -512,7 +524,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
         << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
         << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
         << "detailed help on the options of each subcommand, type: " << m_execname << " <command> help" << std::endl << std::endl;
-
+    //clang-format off
    // List help for each command in lexicographic order
    std::set<std::string> helpSet;
    for(auto &helpPair : cmdHelp) {
@@ -529,9 +541,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
  throw std::runtime_error(help.str());
 }
 
-} // namespace cta::admin
-
-
+}  // namespace XrdSsiPb
 
 /*!
 * Start here
@@ -540,9 +550,8 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
 * @param    argv[in]    The command-line arguments
 */
 
-int main(int argc, const char **argv)
-{
- using namespace cta::admin;
+int main(int argc, const char** argv) {
+  using namespace cta::admin;
 
  try {
    // Parse the command line arguments

@@ -21,7 +21,6 @@ conf:
   general:
     instanceName: "CI"
 
-
 # tapeServers: {}
 # The following is an example format of tapeServers
 #

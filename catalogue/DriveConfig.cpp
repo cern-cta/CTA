@@ -58,6 +58,7 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.externalFreeDiskSpaceScript, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.tapeLoadTimeout, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.wdGetNextMountMaxSecs, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.schedulerBackendName, catalogue, tapeDriveName);
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,

@@ -39,7 +39,8 @@ public:
   VersionStream(const frontend::AdminCmdStream& requestMsg,
                 cta::catalogue::Catalogue& catalogue,
                 cta::Scheduler& scheduler,
-                const std::string& catalogueConnString);
+                const std::string& catalogueConnString,
+                const std::string& schedulerBackendName);
 
 private:
   static constexpr const char* const LOG_SUFFIX = "VersionStream";  //!< Identifier for log messages
@@ -49,6 +50,7 @@ private:
   std::string m_catalogue_conn_string;
   std::string m_catalogue_version;
   bool m_is_upgrading;
+  std::string m_scheduler_backend_name;
 
   bool m_is_done = false;
 
@@ -58,7 +60,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
   /*!
-  * Only one item is sent so isDone = true
+    * Only one item is sent so isDone = true
   */
   virtual bool isDone() const { return m_is_done; }
 };
@@ -66,13 +68,15 @@ private:
 VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
                              cta::catalogue::Catalogue& catalogue,
                              cta::Scheduler& scheduler,
-                             const std::string& catalogueConnString)
+                             const std::string& catalogueConnString,
+                             const std::string& schedulerBackendName)
     : XrdCtaStream(catalogue, scheduler),
       m_client_versions(requestMsg.getClientVersion()),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
       m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
-                     catalogue::SchemaVersion::Status::UPGRADING) {
+                     catalogue::SchemaVersion::Status::UPGRADING),
+      m_scheduler_backend_name(schedulerBackendName) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;
   m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
@@ -91,6 +95,7 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   version->set_catalogue_connection_string(m_catalogue_conn_string);
   version->set_catalogue_version(m_catalogue_version);
   version->set_is_upgrading(m_is_upgrading);
+  version->set_scheduler_backend_name(m_scheduler_backend_name);
   streambuf->Push(record);
 
   return streambuf->Size();

@@ -30,6 +30,7 @@ data:
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
     general InstanceName {{ $.Values.conf.general.instanceName }}
-    general SchedulerBackendName {{ $schedulerConfig.backend }}
+    general SchedulerBackendName {{ printf "%s-%s" $drive.name $schedulerConfig.backend }}
+    # general SchedulerBackendName {{ $schedulerConfig.backend }}
 ---
 {{- end }}

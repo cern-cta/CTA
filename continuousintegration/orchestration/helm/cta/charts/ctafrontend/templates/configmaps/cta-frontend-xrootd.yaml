@@ -12,8 +12,8 @@ data:
     #
 
     cta.instance_name {{ .Values.conf.frontend.instanceName }}
-    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
-
+    # cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
+    cta.schedulerdb.scheduler_backend_name {{ printf "VDSTK01-%s" $schedulerConfig.backend }}
     # CTA ObjectStore options
     cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
 

@@ -107,6 +107,21 @@ public:
    */
   void ping(log::LogContext& lc) override;
 
+  /*
+   * Get scheduler backend instance name
+   * passed to m_schedulerBackendName via init method from
+   * "cta.scheduler_backend_name" frontend
+   * or "general SchedulerBackendName" taped configuration file
+   *
+   * @return name of the scheduler backend instance name specified by the operator in the cfg file
+   */
+  std::string getSchedulerBackendName() { return m_schedulerBackendName; };
+
+  /*
+   * Set scheduler backend instance name
+   */
+  void setSchedulerBackendName(std::string scheddbName) { m_schedulerBackendName = scheddbName; };
+
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
    */
@@ -509,6 +524,7 @@ private:
    * The scheduler database.
    */
   SchedulerDatabase& m_db;
+  std::string m_schedulerBackendName = "";
 
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;
