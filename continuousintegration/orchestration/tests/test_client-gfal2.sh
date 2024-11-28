@@ -129,6 +129,10 @@ exit 1
 fi
 
 # Test gfal2 https plugin
+
+echo "Uninstall gfal2-plugin-xrootd before continuing with http tests"
+# The presence of the xrootd package seems to be causing double free/corruption errors in the http plugin
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y remove gfal2-plugin-xrootd"
 echo "Installing gfal2-plugin-http for http gfal test."
 kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
 echo "Enable insecure certs for gfal2"
