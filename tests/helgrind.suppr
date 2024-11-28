@@ -911,6 +911,15 @@
 
 {
    <insert_a_suppression_name_here>
+   Helgrind:PthAPIerror
+   fun:sem_trywait_WRK
+   fun:sem_trywait@*
+   fun:_ZN3cta9threading14PosixSemaphore10tryAcquireEv
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
    Helgrind:Misc
    fun:do_futex_wait.constprop.1
    fun:__new_sem_wait_slow.constprop.0
@@ -922,9 +931,9 @@
    ...
 }
 
-{                                                                                                        
+{
    <insert_a_suppression_name_here>
-   Helgrind:Race                              
+   Helgrind:Race
    fun:_ZN6google8protobuf8internal29InternalMetadataWithArenaBaseINS0_15UnknownFieldSetENS1_25InternalMetadataWithArenaEED1Ev
    fun:_ZN6google8protobuf8internal25InternalMetadataWithArenaD1Ev
    fun:_ZN3cta11objectstore11serializers8TapeFileD1Ev
