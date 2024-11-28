@@ -29,4 +29,4 @@ global:
     mountPath: /mnt/logs
 
   # Storage for the shared logs of the deployment
-  logStorage: "2Gi"
+  logStorage: "8Gi"
