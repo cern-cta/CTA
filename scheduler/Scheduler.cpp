@@ -60,8 +60,16 @@ Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
+    : Scheduler(catalogue, db, "unknown", minFilesToWarrantAMount, minBytesToWarrantAMount) {}
+
+Scheduler::Scheduler(catalogue::Catalogue& catalogue,
+                     SchedulerDatabase& db,
+                     const std::string& schedulerBackendname,
+                     const uint64_t minFilesToWarrantAMount,
+                     const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
       m_db(db),
+      m_schedulerBackendName(schedulerBackendname),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
       m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);

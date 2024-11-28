@@ -161,7 +161,7 @@ bool CatalogueFetch::vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbS
 void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = serviceProviderPtr->SendAsync(request, response, false);
 
   // Handle responses
   switch(response.type()) {

@@ -121,7 +121,7 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  cta_service.Send(request, response);
+  cta_service.Send(request, response, false);
 
   // Handle responses
   switch(response.type())

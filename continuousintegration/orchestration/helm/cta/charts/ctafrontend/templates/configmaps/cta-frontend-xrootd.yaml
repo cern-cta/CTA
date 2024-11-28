@@ -12,12 +12,12 @@ data:
     #
 
     cta.instance_name {{ .Values.conf.frontend.instanceName }}
-    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
-
+  
     # CTA ObjectStore options
     cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
 
     # CTA Scheduler DB options
+    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
     cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
     cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
     cta.schedulerdb.enable_repack_requests {{ .Values.conf.schedulerdb.enableRepackRequests }}
