@@ -82,8 +82,6 @@ int rmc_main(const char *const robot)
 {
 	int c;
 	char domainname[CA_MAXHOSTNAMELEN+1];
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(from);
 	const char *msgaddr;
 	int on = 1;	/* for REUSEADDR */
 	int s;
