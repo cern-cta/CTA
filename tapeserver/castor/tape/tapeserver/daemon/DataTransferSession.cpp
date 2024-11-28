@@ -345,13 +345,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       return readSingleThread.getHardwareStatus();
     }
     else {
-      // If the first pop from the queue fails, just log this was an empty mount and
-      // that's it. The memory management will be deallocated automatically.
-      // If we failed because there are no file to recall or we could not get space
-      // from the buffer to write to, just log it as a warning.
+      // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
+      // will be deallocated automatically.
       int priority = cta::log::ERR;
-      if (noFilesToRecall || !reservationResult) {
+      std::string status = "success";
+      if (!fetchResult || !reservationResult) {
+        // If this is an empty mount because no files have been popped from the queue
+        // or because disk reservation failed, it is just a warning
         priority = cta::log::WARNING;
+        status = "failure";
       }
 
       logContext.log(priority, "Aborting recall mount startup: empty mount");
@@ -362,7 +364,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty recall mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
-      cta::log::Param statusParam("status", "success");
+      cta::log::Param statusParam("status", status);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -479,12 +481,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       return writeSingleThread.getHardwareStatus();
     }
     else {
-      // Just log this was an empty mount and that's it. The memory management will be
-      // deallocated automatically. If we failed to pop something from the queue we will
-      // log an ERROR, if the queue contained no jobs we will just log a WARNING
+      // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
       int priority = cta::log::ERR;
+      std::string status = "failure";
       if (noFilesToMigrate) {
         priority = cta::log::WARNING;
+        status = "success";
       }
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
@@ -493,7 +495,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty migration mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
-      cta::log::Param statusParam("status", "success");
+      cta::log::Param statusParam("status", status);
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         archiveMount->complete();
