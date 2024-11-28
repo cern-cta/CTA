@@ -62,6 +62,22 @@ struct extended_robot_info g_extended_robot_info;
 /* globals with file scope */
 char g_localhost[CA_MAXHOSTNAMELEN+1];
 
+void handle_connection(int s, struct pollfd* pfd) {
+  struct sockaddr_in from;
+  socklen_t fromlen = sizeof(from);
+
+  if (!(pfd->revents & POLLIN)) return; // No incoming connection
+
+  int rpfd = accept(s, (struct sockaddr*)&from, &fromlen);
+  if (rpfd < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) return; // Non-blocking; no connections
+    perror("accept() error");
+    return;
+  }
+
+  rmc_doit(rpfd); // Handle accepted connection
+}
+
 int rmc_main(const char *const robot)
 {
 	int c;
@@ -184,17 +200,7 @@ int rmc_main(const char *const robot)
 		} else if (ret == 0) {
 			continue; // timeout; no new connection
 		}
-		// Note that the accept() call is non-blocking
-		if (pfd.revents & POLLIN) {
-			int rpfd = accept(s, (struct sockaddr*)&from, &fromlen);
-			if (rpfd < 0) {
-				// no more connections
-				if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
-				perror("accept() error");
-				continue;
-			}
-			rmc_doit(rpfd);
-		}
+    handle_connection(s, &pfd);
 	}
 }
 
@@ -266,7 +272,8 @@ int main(const int argc, char **argv)
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-		if(Cinitdaemon("rmcd", NULL) < 0) {
+    int maxfds = Cinitdaemon("rmcd", NULL);
+		if(maxfds < 0) {
 			exit(SYERR);
 		}
 	}
