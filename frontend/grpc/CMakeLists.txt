@@ -23,7 +23,7 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp
+add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
   ../common/Config.cpp)
