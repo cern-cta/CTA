@@ -264,6 +264,7 @@ void TextFormatter::printDriveLsHeader() {
             "session",
             "priority",
             "activity",
+            "scheduler",
             "age",
             "reason");
 }
@@ -272,6 +273,7 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
   //using namespace cta::common::dataStructures;
 
   std::string driveStatusSince;
+  std::string driveSchedulerBackendName = drls_item.scheduler_backend_name();
   std::string filesTransferredInSession;
   std::string bytesTransferredInSession;
   std::string averageBandwidth;
@@ -323,6 +325,7 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
             sessionId,
             drls_item.current_priority(),
             drls_item.current_activity(),
+            driveSchedulerBackendName,
             timeSinceLastUpdate,
             reason);
 }
@@ -1015,7 +1018,8 @@ void TextFormatter::printVersionHeader() {
             "Server xrd-ssi-protobuf",
             "Catalogue schema",
             "DB connection string",
-            "Status");
+            "Status",
+            "Scheduler Backend Name");
 }
 
 void TextFormatter::print(const VersionItem& version_item) {
@@ -1025,7 +1029,8 @@ void TextFormatter::print(const VersionItem& version_item) {
             version_item.server_version().xrootd_ssi_protobuf_interface_version(),
             version_item.catalogue_version(),
             version_item.catalogue_connection_string(),
-            version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION");
+            version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION",
+            version_item.scheduler_backend_name());
 }
 
 void TextFormatter::printRecycleTapeFileLsHeader() {

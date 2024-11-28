@@ -48,18 +48,19 @@ private:
   frontend::Version m_server_versions;
   std::string m_catalogue_conn_string;
   std::string m_catalogue_version;
+  std::optional<std::string> m_schedulerBackendName;
   bool m_is_upgrading;
 
   bool m_is_done = false;
 
   /*!
-    * Fill the buffer
-    */
+   * Fill the buffer
+   */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
   /*!
-  * Only one item is sent so isDone = true
-  */
+   * Only one item is sent so isDone = true
+   */
   virtual bool isDone() const { return m_is_done; }
 };
 
@@ -71,11 +72,18 @@ VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
       m_client_versions(requestMsg.getClientVersion()),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
+      m_schedulerBackendName(scheduler.getSchedulerBackendName()),
       m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
                      catalogue::SchemaVersion::Status::UPGRADING) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;
   m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
+  if (!m_schedulerBackendName) {
+    XrdSsiPb::Log::Msg(
+      XrdSsiPb::Log::ERROR,
+      LOG_SUFFIX,
+      "VersionStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
+  }
 }
 
 int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
@@ -91,6 +99,7 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   version->set_catalogue_connection_string(m_catalogue_conn_string);
   version->set_catalogue_version(m_catalogue_version);
   version->set_is_upgrading(m_is_upgrading);
+  version->set_scheduler_backend_name(m_schedulerBackendName.value());
   streambuf->Push(record);
 
   return streambuf->Size();

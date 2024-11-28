@@ -200,7 +200,7 @@ void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::stri
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  m_serviceProviderPtr->Send(request, response);
+  m_serviceProviderPtr->Send(request, response, false);
 
   // Handle responses
   switch(response.type()) {
@@ -260,7 +260,7 @@ bool EosNamespaceInjection::getMetaDataFromCatalogue(const uint64_t &archiveId) 
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   bool ret = false;
 

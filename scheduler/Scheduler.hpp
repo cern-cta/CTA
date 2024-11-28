@@ -93,6 +93,12 @@ public:
             SchedulerDatabase& db,
             const uint64_t minFilesToWarrantAMount,
             const uint64_t minBytesToWarrantAMount);
+
+  Scheduler(cta::catalogue::Catalogue& catalogue,
+            SchedulerDatabase& db,
+            const std::string& schedulerBackendName,
+            const uint64_t minFilesToWarrantAMount,
+            const uint64_t minBytesToWarrantAMount);
   // TODO: we have out the mount policy parameters here temporarily we will
   // remove them once we know where to put them
 
@@ -106,6 +112,16 @@ public:
    * Lets the exception through in case of failure.
    */
   void ping(log::LogContext& lc) override;
+
+  /*
+   * Get scheduler backend instance name
+   * passed to m_schedulerBackendName via init method from
+   * "cta.scheduler_backend_name" frontend
+   * or "general SchedulerBackendName" taped configuration file
+   *
+   * @return name of the scheduler backend instance name specified by the operator in the cfg file
+   */
+  const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
@@ -509,6 +525,7 @@ private:
    * The scheduler database.
    */
   SchedulerDatabase& m_db;
+  const std::string m_schedulerBackendName;
 
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;

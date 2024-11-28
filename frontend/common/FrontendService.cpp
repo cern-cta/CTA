@@ -94,10 +94,12 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     if (!backendName.has_value()) {
       throw exception::UserError("cta.schedulerdb.scheduler_backend_name is not set in configuration file " +
                                  configFilename);
+    } else {
+      m_schedulerBackendName = backendName.value();
     }
 
     staticParamMap["instance"] = instanceName.value();
-    staticParamMap["sched_backend"] = backendName.value();
+    staticParamMap["sched_backend"] = m_schedulerBackendName;
     log.setStaticParams(staticParamMap);
   }
 
@@ -213,13 +215,14 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
   // Initialise the Scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2 * 1000 * 1000);
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName, 5, 2 * 1000 * 1000);
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
   m_archiveFileMaxSize =
     archiveFileMaxSize.has_value() ? static_cast<uint64_t>(archiveFileMaxSize.value()) * 1000 * 1000 * 1000 : 0;
+
   {
     // Log cta.archivefile.max_size_gb
     std::list<log::Param> params;

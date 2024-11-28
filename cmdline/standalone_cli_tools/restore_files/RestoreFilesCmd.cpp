@@ -268,7 +268,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   // Handle responses
   switch(response.type())
@@ -358,7 +358,7 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  m_serviceProviderPtr->Send(request, response);
+  m_serviceProviderPtr->Send(request, response, false);
 
   // Handle responses
   switch(response.type())
@@ -480,7 +480,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   bool ret;
   // Handle responses
@@ -682,7 +682,7 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   // Handle responses
   switch(response.type())
