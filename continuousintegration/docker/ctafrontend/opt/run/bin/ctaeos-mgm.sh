@@ -21,18 +21,13 @@ set -x
 rm /eos-status/EOS_READY
 
 . /opt/run/bin/init_pod.sh
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-
 # Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
+yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server sudo logrotate cta-fst-gcd bind-utils
 
 rm /fst/.eosfsid
 
-## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
-# Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
-# yum -y install eos-protobuf3
 
 # Check that the /usr/bin/cta-fst-gcd executable has been installed
 test -e /usr/bin/cta-fst-gcd || { echo "/usr/bin/cta-fst-gcd MISSING" ; exit 1; }
@@ -73,10 +68,6 @@ GRPC_TEST_DIR=/eos/grpctest
 # dir for eos instance basic tests writable and readable by anyone
 EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
-# setup eos host and instance name
-  sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/sysconfig/eos
-  sed -i -e "s/DUMMY_INSTANCE_TO_REPLACE/${EOS_INSTANCE}/" /etc/sysconfig/eos
-
 # prepare eos startup
 # skip systemd for eos initscripts
 export SYSTEMCTL_SKIP_REDIRECT=1
@@ -84,34 +75,34 @@ export SYSTEMCTL_SKIP_REDIRECT=1
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
-  chown daemon:daemon /etc/eos.keytab
-  mkdir -p /run/lock/subsys
-  mkdir -p /var/eos/config/${eoshost}
-    chown daemon:root /var/eos/config
-    chown daemon:root /var/eos/config/${eoshost}
-  touch   /var/eos/config/${eoshost}/default.eoscf
-    chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
+chown daemon:daemon /etc/eos.keytab
+mkdir -p /run/lock/subsys
+mkdir -p /var/eos/config/${eoshost}
+chown daemon:root /var/eos/config
+chown daemon:root /var/eos/config/${eoshost}
+touch   /var/eos/config/${eoshost}/default.eoscf
+chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
 
 # quarkDB only for systemd initially...
-cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh ${CI_CONTEXT}
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/ctaeos-start-quarkdb.sh
 
 # add taped SSS must be in a kubernetes secret
 #echo >> /etc/eos.keytab
 #echo '0 u:stage g:tape n:taped+ N:6361736405290319874 c:1481207182 e:0 f:0 k:8e2335f24cf8c7d043b65b3b47758860cbad6691f5775ebd211b5807e1a6ec84' >> /etc/eos.keytab
 
-  #/etc/init.d/eos master mgm
-  #/etc/init.d/eos master mq
-    touch /var/eos/eos.mq.master
-    touch /var/eos/eos.mgm.rw
-    echo "Configured mq mgm on localhost as master"
+#/etc/init.d/eos master mgm
+#/etc/init.d/eos master mq
+touch /var/eos/eos.mq.master
+touch /var/eos/eos.mgm.rw
+echo "Configured mq mgm on localhost as master"
 
-  source /etc/sysconfig/eos
+source /etc/sysconfig/eos
 
-  mkdir -p /fst
-  chown daemon:daemon /fst/
+mkdir -p /fst
+chown daemon:daemon /fst/
 
 ## Configuring host certificate
-/opt/run/bin/ctaeos_https.sh
+/opt/run/bin/ctaeos-https.sh
 
 # setting higher OS limits for EOS processes
 maxproc=$(ulimit -u)
@@ -151,11 +142,11 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
 #/etc/init.d/eos start
-  ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
-  ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
-  for fst_config in /etc/xrd.cf.fst; do
-      EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
-  done
+${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
+${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
+for fst_config in /etc/xrd.cf.fst; do
+    EOS_FST_HTTP_PORT=$(grep XrdHttp: ${fst_config} | sed -e 's/.*XrdHttp://;s/\s.*//') ${XRDPROG} -n fst -c ${fst_config} -l /var/log/eos/xrdlog.fst -b -Rdaemon
+done
 
 # EOS service is starting for the first time we need to check if it is ready before
 # feeding the eos server with commands
@@ -174,19 +165,15 @@ eos vid enable unix
 # define space default before adding first fs
 eos space define default
 
-# Waiting for /CAN_START file before starting eos
-echo -n "Waiting for /CAN_START before going further"
-for ((i=0;i<600;i++)); do
-  test -f /eos-status/CAN_START && break
-  sleep 1
-  echo -n .
+# Waiting eos svc to be available
+until nslookup ctaeos; do
+  echo waiting for ctaeos to be reachable;
+  sleep 2;
 done
-test -f /eos-status/CAN_START && echo OK || exit 1
 
 EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 
 # Add user daemon to sudoers this is to allow recalls for the moment using this command
-#  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
 eos vid set membership $(id -u daemon) +sudo
 
 # Add eosadmin1 and eosadmin2 users are sudoers
@@ -302,7 +289,7 @@ eos space config default space.wfe.ntx=200
 eos space config default space.filearchivedgc=on
 
 # configure preprod directory separately
-/opt/run/bin/eos_configure_preprod.sh
+/opt/run/bin/ctaeos-configure-preprod.sh
 
 
 # configure grpc for cta-admin tf dsk file resolution

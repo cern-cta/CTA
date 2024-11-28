@@ -46,13 +46,4 @@ echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
 
-# Not needed anymore, keep it in case it comes back
-echo -n "Yum should resolve names using IPv4 DNS: "
-echo "ip_resolve=IPv4" >> /etc/yum.conf
-echo "DONE"
-
-# some yum optimisations for the standard system
-SQUID_PROXY=squid.kube-system.svc.cluster.local
-ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Finished"

@@ -9,9 +9,9 @@ metadata:
 data:
   krb5.conf: |
     [libdefaults]
-    default_realm = TEST.CTA
+    default_realm = {{ .Values.realm }}
 
     [realms]
-    TEST.CTA = {
+    {{ .Values.realm }} = {
       kdc=kdc
     }

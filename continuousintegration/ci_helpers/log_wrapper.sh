@@ -67,7 +67,9 @@ __log_end() {
 
   end_time=$(date +%s%N)
   elapsed_time=$(( end_time - start_time ))
-  __log_info "Elapsed time: ${elapsed_time:0: -9}.${elapsed_time: -9:2} seconds"
+  elapsed_time=$(printf "%019d" "$elapsed_time") # Pad to cover short durations
+  __log_info "Elapsed time: $((10#${elapsed_time:0:-9})).${elapsed_time: -9:2} seconds"
+
 }
 
 

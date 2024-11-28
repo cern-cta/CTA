@@ -35,6 +35,7 @@ EOSPOWER_USER="poweruser1"
 CTAADMIN_USER="ctaadmin2"
 EOSADMIN_USER="eosadmin1"
 USER="user1"
+KRB5_REALM="TEST.CTA"
 TOKEN_TIMEOUT=604800
 
 die() {
@@ -44,7 +45,7 @@ die() {
 }
 
 user_kinit() {
-  kinit -kt /root/${USER}.keytab ${USER}@TEST.CTA
+  kinit -kt /root/${USER}.keytab ${USER}@${KRB5_REALM}
   klist
 }
 
@@ -57,7 +58,7 @@ admin_klist() {
 }
 
 admin_kinit() {
-  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 kinit -kt /root/${CTAADMIN_USER}.keytab ${CTAADMIN_USER}@TEST.CTA
+  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 kinit -kt /root/${CTAADMIN_USER}.keytab ${CTAADMIN_USER}@${KRB5_REALM}
   admin_klist
 }
 
@@ -75,7 +76,7 @@ eospower_klist() {
 }
 
 eospower_kinit() {
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 kinit -kt /root/${EOSPOWER_USER}.keytab ${EOSPOWER_USER}@TEST.CTA
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 kinit -kt /root/${EOSPOWER_USER}.keytab ${EOSPOWER_USER}@${KRB5_REALM}
   eospower_klist
 }
 
@@ -93,7 +94,7 @@ eosadmin_klist() {
 }
 
 eosadmin_kinit() {
-  KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kinit -kt /root/${EOSADMIN_USER}.keytab ${EOSADMIN_USER}@TEST.CTA
+  KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kinit -kt /root/${EOSADMIN_USER}.keytab ${EOSADMIN_USER}@${KRB5_REALM}
   eosadmin_klist
 }
 

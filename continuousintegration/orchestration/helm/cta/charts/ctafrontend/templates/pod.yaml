@@ -49,6 +49,8 @@ spec:
       value: {{ $namespace | quote}}
     - name: INSTANCE_NAME
       value: {{ $namespace | quote}}
+    - name: SCHEDULER_BACKEND
+      value: {{ $schedulerConfig.backend | quote}}
     {{- if eq $schedulerConfig.backend "ceph" }}
     - name: SCHEDULER_CEPH_NAMESPACE
       value: {{ $schedulerConfig.cephConfig.namespace | quote}}
@@ -56,9 +58,9 @@ spec:
       value: {{ $schedulerConfig.cephConfig.id | quote}}
     - name: SCHEDULER_CEPH_POOL
       value: {{ $schedulerConfig.cephConfig.pool | quote}}
+    {{- end }}
     - name: TERM
       value: "xterm"
-    {{- end }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}

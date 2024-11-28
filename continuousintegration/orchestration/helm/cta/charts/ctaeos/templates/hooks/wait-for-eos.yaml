@@ -19,7 +19,6 @@ spec:
       - /bin/sh
       - -c
       - |
-        touch /eos-status/CAN_START
         echo -n "Waiting for EOS to be initialised"
         while [ ! -f /eos-status/EOS_READY ]; do
           echo -n "."

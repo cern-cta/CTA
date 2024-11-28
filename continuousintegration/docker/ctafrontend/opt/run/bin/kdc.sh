@@ -15,67 +15,58 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
+set -e
+
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-# Install missing RPMs (kdc)
 yum -y install heimdal-server heimdal-workstation
 
-# Init the kdc store
-echo -n "Initing kdc... "
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited TEST.CTA || (echo Failed. ; exit 1)
-echo Done.
-
-keypasses_file="/tmp/keypass-names.txt"
-KEYTABS=$(cut -d ' ' -f 1 $keypasses_file)
-# KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
-
-# Start kdc
-echo -n "Starting kdc... "
+echo "Initialising key distribution center... "
+/usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited $KRB5_REALM
 /usr/libexec/kdc &
-echo Done.
 
-# Populate KDC and generate keytab files
-echo "Populating kdc... "
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA add --random-password --use-defaults ${KEYTABS}
+# We need to access the Kubernetes API to generate secrets in the current namespace
+k8s_namespace=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+k8s_sa_token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+k8s_sa_ca_cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+k8s_api_server="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
-for NAME in ${KEYTABS}; do
-   echo -n "  Generating /root/$(basename ${NAME}).keytab for ${NAME}"
-  /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/$(basename ${NAME}).keytab ${NAME} && echo OK || echo FAILED
+echo "Creating keytab secrets"
+keytabs=$(cat /tmp/keytabs-names.json)
+# Loop through each keytab entry and generate a secret for it
+echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
+  user=$(echo "$keytab" | jq -r '.user')
+  filename=$(echo "$keytab" | jq -r '.keytab')
+  keytab_path="/root/$(basename "$filename")"
+
+  # Populate KDC and generate keytab file
+  echo "Generating $keytab_path for $user... "
+  /usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM add --random-password --use-defaults "$user" > /dev/null # Otherwise this command outputs the password
+  /usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM ext_keytab --keytab="$keytab_path" "$user"
+
+  content=$(base64 "$keytab_path")
+  secret_json=$(
+    jq -n \
+      --arg name "$(basename "$user")-keytab" \
+      --arg filename "$(basename "$filename")" \
+      --arg content "$content" \
+      '{
+        apiVersion: "v1",
+        kind: "Secret",
+        metadata: { name: $name },
+        type: "Opaque",
+        data: { ($filename): $content }
+      }'
+  )
+  curl -s --cacert "${k8s_sa_ca_cert}" \
+          -H "Authorization: Bearer ${k8s_sa_token}" \
+          -H "Content-Type: application/json" \
+          -X POST \
+          -d "${secret_json}" \
+          "${k8s_api_server}/api/v1/namespaces/${k8s_namespace}/secrets"
+
+  echo "Created Kubernetes secret: ${user}-keytab in namespace $k8s_namespace"
 done
-
-
-KUBERNETES_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-KUBERNETES_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-KUBERNETES_CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-KUBERNETES_API_SERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
-
-while IFS=' ' read -r secret filename
-do
-secret=$(basename ${secret})
-content=$(base64 /root/$secret.keytab)
-
-cat <<EOF > secret.json
-{
-  "apiVersion": "v1",
-  "kind": "Secret",
-  "metadata": {
-    "name": "$secret-keytab"
-  },
-  "type": "Opaque",
-  "data": {
-    "$filename": "$content"
-  }
-}
-
-EOF
-
-curl -s --cacert ${KUBERNETES_CA_CERT} -H "Authorization: Bearer ${KUBERNETES_TOKEN}" \
-     -H "Content-Type: application/json" \
-     -X POST --data @secret.json \
-     ${KUBERNETES_API_SERVER}/api/v1/namespaces/${KUBERNETES_NAMESPACE}/secrets
-
-done < $keypasses_file
 
 touch /KDC_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
