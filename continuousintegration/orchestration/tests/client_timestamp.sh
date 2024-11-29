@@ -60,7 +60,7 @@ fileInfoAfterArchive=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE
 echo "Comparing modify/birth timestampts before archival and after archival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
   echo "Modify/birth timestamps of the file before archiving and after archiving do not match"
-  return 1
+  exit 1
 fi
 
 # Wait a little bit to ensure the timestamps had the opportunity to change
@@ -85,7 +85,7 @@ fileInfoAfterRetrieve=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FIL
 echo "Comparing modify/birth timestampts before archival and after retrival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterRetrieve"; then
   echo "Modify/birth timestamps of the file before archiving and after retrieving do not match"
-  return 1
+  exit 1
 fi
 
 # Wait a little bit to ensure the timestamps had the opportunity to change
@@ -101,7 +101,7 @@ fileInfoAfterEvict=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_N
 echo "Comparing modify/birth timestampts before archival and after final evict"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterEvict"; then
   echo "Modify/birth timestamps of the file before archiving and after evicting do not match"
-  return 1
+  exit 1
 fi
 
 # Delete the file so it doesn't interfere with tests in client_ar.sh
