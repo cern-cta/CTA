@@ -30,9 +30,10 @@ compare_timestamps() {
 
   # Ensure modify and birth match. Change does not matter
   if [[ "$modify_ts1" == "$modify_ts2" && "$birth_ts1" == "$birth_ts2" ]]; then
+    echo "Timestamps match"
     return 0
   else
-    echo "Timestamp modification and birth values do not match for tape"
+    echo "Timestamps do not match. Birth and modify values should stay constant between file operations"
     return 1
   fi
 }
