@@ -20,11 +20,9 @@ compare_timestamps() {
   local ts2="$2"
 
   local modify_ts1=$(echo "$ts1" | grep "Modify:" | awk -F'Timestamp:' '{print $2}' | xargs)
-  local change_ts1=$(echo "$ts1" | grep "Change:" | awk -F'Timestamp:' '{print $2}' | xargs)
   local birth_ts1=$(echo "$ts1" | grep "Birth:" | awk -F'Timestamp:' '{print $2}' | xargs)
 
   local modify_ts2=$(echo "$ts2" | grep "Modify:" | awk -F'Timestamp:' '{print $2}' | xargs)
-  local change_ts2=$(echo "$ts2" | grep "Change:" | awk -F'Timestamp:' '{print $2}' | xargs)
   local birth_ts2=$(echo "$ts2" | grep "Birth:" | awk -F'Timestamp:' '{print $2}' | xargs)
 
   # Ensure modify and birth match. Change does not matter
@@ -58,6 +56,10 @@ if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
   echo "Modify/birth timestamps of the file before archiving and after archiving do not match"
   return 1
 fi
+
+echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
+wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
 echo
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
