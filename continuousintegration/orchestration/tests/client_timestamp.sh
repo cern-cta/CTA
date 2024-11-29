@@ -25,6 +25,9 @@ compare_timestamps() {
   local modify_ts2=$(echo "$ts2" | grep "Modify:" | awk -F'Timestamp:' '{print $2}' | xargs)
   local birth_ts2=$(echo "$ts2" | grep "Birth:" | awk -F'Timestamp:' '{print $2}' | xargs)
 
+  echo "Comparing Modify timestamps: $modify_ts1 to $modify_ts2"
+  echo "Comparing Birth timestamps: $birth_ts1 to $birth_ts2"
+
   # Ensure modify and birth match. Change does not matter
   if [[ "$modify_ts1" == "$modify_ts2" && "$birth_ts1" == "$birth_ts2" ]]; then
     return 0
@@ -53,6 +56,7 @@ wait_for_archive ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
 fileInfoAfterArchive=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
+echo "Comparing modify/birth timestampts before archival and after archival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
   echo "Modify/birth timestamps of the file before archiving and after archiving do not match"
   return 1
@@ -73,6 +77,7 @@ wait_for_retrieve ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
 fileInfoAfterRetrieve=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
+echo "Comparing modify/birth timestampts before archival and after retrival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterRetrieve"; then
   echo "Modify/birth timestamps of the file before archiving and after retrieving do not match"
   return 1
@@ -85,6 +90,7 @@ wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
 fileInfoAfterEvict=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
+echo "Comparing modify/birth timestampts before archival and after final evict"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterEvict"; then
   echo "Modify/birth timestamps of the file before archiving and after evicting do not match"
   return 1
