@@ -623,14 +623,14 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %attr(0755,root,root) %{_bindir}/cta-versionlock
 
-%package -n cta-eos-freediskspace
+%package -n cta-eosdf
 Summary: External script to get free disk space
 Group: Application/CTA
 Requires: eos-client
-%description -n cta-eos-freediskspace
+%description -n cta-eosdf
 eosdf is a script that runs on taped and returns
 the free disk space in the defalut namespace
-%files -n cta-eos-freediskspace
+%files -n cta-eosdf
 %defattr(-,root,root)
 %attr(0755,root,root) /usr/bin/eosdf.sh
 
