@@ -122,6 +122,10 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_s
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
+echo " Launching client_timestamp.sh on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
+
+echo
 echo "Track progress of test"
 (kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
 )&
