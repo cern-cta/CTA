@@ -8,7 +8,7 @@ changelog-preview:
       when: manual
       allow_failure: true
     - when: never
-  image: $PYTHON3_IMAGE
+  image: $IMAGE_PYTHON3
   variables:
     GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
     TO_COMMIT: "HEAD"
@@ -57,7 +57,7 @@ changelog-update:
       when: manual
       allow_failure: true
     - when: never
-  image: $PYTHON3_IMAGE
+  image: $IMAGE_PYTHON3
   variables:
     SOURCE_BRANCH: ""
   before_script:
@@ -88,7 +88,7 @@ release-cta:
   stage: release:internal
   needs:
     - build-cta-rpm
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -105,7 +105,7 @@ release-cta-testing:
   stage: release:external
   needs:
     - build-cta-rpm
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -122,7 +122,7 @@ release-cta-stable:
   stage: release:external
   needs:
     - build-cta-rpm
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
@@ -160,7 +160,7 @@ release-cta-gitlab:
     - release-cta-gitlab-prepare
   rules:
     - if: $CI_COMMIT_TAG
-  image: $GITLAB_RELEASE_CLI_IMAGE
+  image: $IMAGE_GITLAB_RELEASE_CLI
   script:
     - echo "Creating release on GitLab"
   release:
