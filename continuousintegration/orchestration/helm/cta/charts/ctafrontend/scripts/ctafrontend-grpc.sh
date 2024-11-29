@@ -19,10 +19,10 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install cta-frontend cta-debuginfo
+dnf install -y cta-frontend
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
-  yum-config-manager --enable ceph
-  yum -y install ceph-common
+  dnf config-manager --enable ceph
+  dnf install -y ceph-common
 fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
@@ -30,5 +30,5 @@ runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /va
 
 echo "ctafrontend died"
 echo "analysing core file if any"
-/opt/run/bin/ctafrontend-backtrace.sh
+/scripts/ctafrontend-backtrace.sh
 sleep infinity # Keep the container alive for debugging purposes

@@ -21,7 +21,7 @@ test -z ${COREFILE} && { echo "No core dumps found, exiting"; exit 1; }
 
 echo "Processing corefile: ${COREFILE}"
 
-yum install -y xrootd-debuginfo cta-debuginfo gdb
+dnf install -y xrootd-debuginfo cta-debuginfo gdb
 
 cat <<EOF > /tmp/ctabt.gdb
 file /usr/bin/xrootd

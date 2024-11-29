@@ -18,8 +18,8 @@
 usage() {
   echo "Usage: $0 <metadata>"
   echo ""
-  echo "Sends a curl request to ctaeos with some archive metadata. "
-  echo "Can be used in conjunction with grep_eosreport_for_archive_metadata on the ctaeos instance to test whether the metadata is present in the eosreport logs."
+  echo "Sends a curl request to EOS mgm with some archive metadata. "
+  echo "Can be used in conjunction with grep_eosreport_for_archive_metadata on the EOS MGM instance to test whether the metadata is present in the eosreport logs."
   exit 1
 }
 
@@ -36,9 +36,8 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 
-ENDPOINT=https://${EOS_MGM_HOST}:8444/${FILE_LOCATION}
 METADATA="$1"
 
 NOW=$(date +%s)
@@ -57,6 +56,7 @@ eos root://${EOS_MGM_HOST} rm ${FILE_LOCATION} 2>/dev/null
 
 # Do a curl request
 TMP_FILE=$(mktemp)
+echo "Dummy" > "${TMP_FILE}"
 
 echo "Making curl request"
-curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" ${ENDPOINT} --upload-file "${TMP_FILE}"
+curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8443/${FILE_LOCATION}" --upload-file "${TMP_FILE}"

@@ -245,7 +245,7 @@ kubectl --namespace $NAMESPACE exec cta-frontend -it bash
 From there, you need to install the missing `protocolbuffer` tools like `protoc` binary, and then dump all the objects you want.
 
 ```sh
-[root@cta-frontend /]# yum install -y  protobuf-compiler
+[root@cta-frontend /]# dnf install -y  protobuf-compiler
 ...
 Installed:
   protobuf-compiler.x86_64 0:2.5.0-7.el7

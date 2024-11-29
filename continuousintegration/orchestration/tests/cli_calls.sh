@@ -41,13 +41,13 @@ elif [[ "${CLI_TARGET}" == "gfal2-root" ]]; then
 elif [[ "${CLI_TARGET}" == "gfal2-https" ]]; then
   SRC=$(mktemp)
   dd if=/dev/zero of=${SRC} bs=1k count=15 2>/dev/null
-  archive='BEARER_TOKEN=${TOKEN} gfal-copy ${SRC} https://${EOS_MGM_HOST}:8444/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NUM 1\>/dev/null'
+  archive='BEARER_TOKEN=${TOKEN} gfal-copy ${SRC} https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NUM 1\>/dev/null'
 
-  retrieve='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline https://${EOS_MGM_HOST}:8444/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME'
+  retrieve='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME'
 
-  evict_prefix='https://${EOS_MGM_HOST}:8444/${EOS_DIR}/${subdir}/${subdir}'
+  evict_prefix='https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}'
   evict_count=1
   evict='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict FILE_LIST'
 
-  delete='BEARER_TOKEN=${TOKEN} gfal-rm -r https://${EOS_MGM_HOST}:8444/${EOS_DIR} 1>/dev/null &'
+  delete='BEARER_TOKEN=${TOKEN} gfal-rm -r https://${EOS_MGM_HOST}:8443/${EOS_DIR} 1>/dev/null &'
 fi

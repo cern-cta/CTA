@@ -24,7 +24,6 @@ spec:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
         cta/library-device: {{ .libraryDevice }}
-        collect-varlog: "true"
       annotations:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
@@ -34,16 +33,16 @@ spec:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
       initContainers:
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: fix-sss-keytab-ownership
-        image: busybox:latest
-        imagePullPolicy: IfNotPresent
+      - name: init1-fix-sss-keytab-ownership
+        image: {{ include "common.images.busybox" . }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
-          - |
-            cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
-            chmod 600 /root/sss_keytab/output/cta-taped.sss.keytab;
-            # Make CTA user owner
-            chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
+        - |
+          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
+          chmod 600 /root/sss_keytab/output/cta-taped.sss.keytab;
+          # Make CTA user owner
+          chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
         volumeMounts:
           - name: eos-sss-keytab
             mountPath: /root/sss_keytab/input/eos.keytab
@@ -126,7 +125,7 @@ spec:
         - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
         - name: SCHEDULER_BACKEND
-          value: {{ $schedulerConfig.backend | quote}}
+          value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
           value: {{ $.Values.conf.taped.secProtocol }}
         - name: XrdSecSSSKT
@@ -150,8 +149,6 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - mountPath: /etc/config/eos
-          name: eosconfig
         - name: eos-sss-keytab-fixedownership
           mountPath: /etc/cta/cta-taped.sss.keytab
           subPath: cta-taped.sss.keytab
@@ -184,9 +181,6 @@ spec:
         configMap:
           name: cta-objectstore-conf
       {{- end }}
-      - name: eosconfig
-        configMap:
-          name: eos-config-base
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:
@@ -199,7 +193,7 @@ spec:
       {{- end }} # End of drive-specific configmaps loop
       - name: eos-sss-keytab
         secret:
-          secretName: tpsrv-sss-keytab
+          secretName: eos-sss-keytab
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
       {{- if $.Values.global.volumes }}

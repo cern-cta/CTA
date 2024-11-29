@@ -65,3 +65,19 @@
     {{- end -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+   common.images.busybox:
+   Returns the predefined busybox image in the format <repository>:<tag>.
+*/}}
+{{- define "common.images.busybox" -}}
+  "busybox:1.36.1"
+{{- end }}
+
+{{/*
+   common.images.defaultPullPolicy:
+   Returns the default pull policy, "IfNotPresent".
+*/}}
+{{- define "common.images.defaultPullPolicy" -}}
+  "IfNotPresent"
+{{- end }}

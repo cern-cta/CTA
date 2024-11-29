@@ -19,7 +19,7 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client
+dnf install -y cta-cli cta-immutable-file-test xrootd-client eos-client
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 # sleep forever but exit immediately when pod is deleted

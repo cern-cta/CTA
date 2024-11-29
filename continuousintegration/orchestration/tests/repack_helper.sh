@@ -43,8 +43,8 @@ if [ ! -z "${error}" ]; then
 fi
 
 CTA_CLI_POD="cta-cli-0"
-EOS_MGM_POD="ctaeos"
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
+EOS_MGM_HOST="eos-mgm"
 
 executeReclaim() {
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta reclaim -v $1
@@ -67,14 +67,14 @@ writeTapeSummary(){
 }
 
 executeRepack() {
-    WAIT_FOR_REPACK_FILE_TIMEOUT=300
+    WAIT_FOR_REPACK_FILE_TIMEOUT=120
     echo
     echo "Changing the tape $1 to FULL status"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- rm -rf root://${EOS_MGM_HOST}//eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos mkdir /eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos chmod 1777 /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"

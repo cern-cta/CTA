@@ -49,7 +49,7 @@
 #
 ################################################################################
 
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 
 NB_FILES_TAPE=4
 NB_FILES_NO_P=4

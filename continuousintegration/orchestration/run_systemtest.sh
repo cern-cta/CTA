@@ -37,8 +37,10 @@ usage() {
   echo "  -s, --test-script <script>:         Path to the system test script."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler config file."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue config file."
-  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
-  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
+  echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
+  echo "      --eos-image-repository <repo>:  The EOS Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "      --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "  -t, --test-timeout <seconds>:       Timeout for the system test in seconds."
   echo "      --spawn-options <options>:      Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   echo "      --test-options <options>:       Additional options to pass verbatim to the test script."
@@ -122,6 +124,12 @@ run_systemtest() {
       -i|--cta-image-tag)
         cta_image_tag="$2"
         spawn_options+=" --cta-image-tag ${cta_image_tag}"
+        shift ;;
+      --eos-image-repository)
+        spawn_options+=" --eos-image-repository $2"
+        shift ;;
+      --eos-image-tag)
+        spawn_options+=" --eos-image-tag $2"
         shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"

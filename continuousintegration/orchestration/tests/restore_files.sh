@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 EOS_INSTANCE_NAME="ctaeos"
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
 TEST_FILE_NAME=$(uuidgen)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
@@ -51,14 +51,14 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
@@ -115,7 +115,7 @@ echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh cta-frontend:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 # install cta-cli that provides `cta-restore-deleted-files`
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm -q cta-cli || yum install -y cta-cli'
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm -q cta-cli || dnf install -y cta-cli'
 
 echo
 echo "RESTORE FILES"

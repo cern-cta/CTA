@@ -23,7 +23,7 @@ die() {
 }
 
 # install the needed packages
-yum -y install cta-catalogueutils
+dnf install -y cta-catalogueutils
 
 echo "Using catalogue backend: $CATALOGUE_BACKEND"
 CATALOGUE_URL=$(cat /etc/cta/cta-catalogue.conf)
@@ -47,7 +47,7 @@ if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
 elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
-  # yum install -y oracle-instantclient-sqlplus
+  # dnf install -y oracle-instantclient-sqlplus
   # echo "Purging Oracle recycle bin"
   # ORACLE_SQLPLUS="/usr/bin/sqlplus64"
   # test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"

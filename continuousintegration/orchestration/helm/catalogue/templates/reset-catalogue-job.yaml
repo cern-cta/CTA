@@ -6,7 +6,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -36,45 +36,45 @@ spec:
               memory: "2Gi"
               ephemeral-storage: "1Gi"
           env:
-            - name: MY_NAME
-              value: {{ $name }}
-            - name: MY_NAMESPACE
-              value: {{ $namespace | quote}}
-            - name: INSTANCE_NAME
-              value: {{ $namespace | quote}}
-            - name: SCHEMA_VERSION
-              value: {{ .Values.schemaVersion | quote}}
-            - name: CATALOGUE_BACKEND
-              value: {{ $catalogueConfig.backend | quote}}
+          - name: MY_NAME
+            value: {{ $name }}
+          - name: MY_NAMESPACE
+            value: {{ $namespace | quote }}
+          - name: INSTANCE_NAME
+            value: {{ $namespace | quote }}
+          - name: SCHEMA_VERSION
+            value: {{ .Values.schemaVersion | quote }}
+          - name: CATALOGUE_BACKEND
+            value: {{ $catalogueConfig.backend | quote }}
           volumeMounts:
-            - name: scripts-volume
-              mountPath: /scripts
-            - name: purge-database-ext
-              mountPath: /opt/ci/purge_database.ext
-              subPath: purge_database.ext
-            - name: purge-recyclebin-ext
-              mountPath: /opt/ci/purge_recyclebin.ext
-              subPath: purge_recyclebin.ext
-            - name: catalogue-config
-              mountPath: /etc/cta/cta-catalogue.conf
-              subPath: cta-catalogue.conf
-            - mountPath: /shared
-              name: shared
+          - name: scripts-volume
+            mountPath: /scripts
+          - name: purge-database-ext
+            mountPath: /opt/ci/purge_database.ext
+            subPath: purge_database.ext
+          - name: purge-recyclebin-ext
+            mountPath: /opt/ci/purge_recyclebin.ext
+            subPath: purge_recyclebin.ext
+          - name: catalogue-config
+            mountPath: /etc/cta/cta-catalogue.conf
+            subPath: cta-catalogue.conf
+          - mountPath: /shared
+            name: shared
       volumes:
-        - name: scripts-volume
-          configMap:
-            name: scripts-catalogue
-            defaultMode: 0777
-        - name: purge-database-ext
-          configMap:
-            name: purge-database-ext
-        - name: purge-recyclebin-ext
-          configMap:
-            name: purge-recyclebin-ext
-        - name: catalogue-config
-          configMap:
-            name: cta-catalogue-conf
-        - name: shared
-          hostPath:
-            path: /opt/cta
+      - name: scripts-volume
+        configMap:
+          name: scripts-catalogue
+          defaultMode: 0777
+      - name: purge-database-ext
+        configMap:
+          name: purge-database-ext
+      - name: purge-recyclebin-ext
+        configMap:
+          name: purge-recyclebin-ext
+      - name: catalogue-config
+        configMap:
+          name: cta-catalogue-conf
+      - name: shared
+        hostPath:
+          path: /opt/cta
 {{- end }}

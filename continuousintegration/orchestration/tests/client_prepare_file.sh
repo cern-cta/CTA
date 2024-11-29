@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright © 2022 CERN
@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 EOS_BASEDIR=/eos/ctaeos/cta
 
 die() {
