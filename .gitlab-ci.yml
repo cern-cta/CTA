@@ -1,5 +1,6 @@
 stages:
-  - prepare
+  - validation
+  - setup
   - analysis
   - build
   - build:image
@@ -9,17 +10,31 @@ stages:
   - release:external
 
 variables:
-  # Git related
-  GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
-  GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
+  # Pipeline Type
+  # -----
+  # TODO: Not fully implemented, just the required changes for https://gitlab.cern.ch/cta/CTA/-/merge_requests/677.
+  # Will be finalized with https://gitlab.cern.ch/cta/CTA/-/issues/962
+  # Types:
+  #   - DEFAULT
+  #   - EOSREG_CTAMAIN: used to test new tagged EOS versions against latest changes in main.
+  #   - EOSREG_CTATAG: used to test EOS regressions. It will confifure the
+  #              pipeline to run a specific version of EOS/XRD and,
+  #              optionally, a specific tagged CTA release that must
+  #              be available in the public testing repo.
+  PIPELINE_TYPE: "DEFAULT"
+  P_TYPE_EOSREG_XRD_TAG: ""
+  P_TYPE_EOSREG_EOS_TAG: ""
+  P_TYPE_EOSREG_CTA_TAG: ""
+  # -----
+
 
   # CTA related
+  # -----
   CMAKE_BUILD_TYPE: "Debug"
   CTA_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
+
   SYSTEMTESTS_ONLY: "FALSE"
   SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
   BUILD_GENERATOR: "Unix Makefiles"
@@ -27,12 +42,29 @@ variables:
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
   VALGRIND_DB_UNIT_TESTS: false
   BASH_LOGGING_ENABLED: 1 # For the cirunner scripts
+
+  # CI
+  # -----
+  # -----
+
+
+  # CI Git behaviour
+  # -----
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
+  GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
+  # -----
+
+
   # Images
-  EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  PYTHON3_IMAGE: python:3-alpine
-  DOCKER_IMAGE_BUILDER_IMAGE: gitlab-registry.cern.ch/ci-tools/docker-image-builder
-  CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
-  GITLAB_RELEASE_CLI_IMAGE: registry.gitlab.com/gitlab-org/release-cli:latest
+  # -----
+  IMAGE_EL9: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_PYTHON3: python:3-alpine
+  IMAGE_DOCKER_IMAGE_BUILDER: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+  IMAGE_CPPCHECK: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
+  IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
+  # -----
 
 default:
   interruptible: true
@@ -42,7 +74,7 @@ workflow:
   auto_cancel:
     on_job_failure: all
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_job_failure: none
     # Note that the web pipeline source could also concern tagged pipelines
@@ -53,7 +85,6 @@ workflow:
         paths:
           - '**/*'
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
-
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

@@ -1,7 +1,7 @@
 cppcheck:
   stage: analysis
   image:
-    name: $CPPCHECK_IMAGE
+    name: $IMAGE_CPPCHECK
     entrypoint: ["/usr/bin/env"]
   rules:
     - if: $CI_COMMIT_TAG
@@ -50,7 +50,7 @@ clang-format-report:
     - if: $CI_PIPELINE_SOURCE == "trigger"
       when: never
     - when: always
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
   script:
     - yum install -y epel-release
     - yum install -y git-clang-format bat
@@ -93,7 +93,7 @@ clang-format-apply:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       when: never
     - when: manual
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
     CLANG_FORMAT_REPORT: clang-format.diff
@@ -150,7 +150,10 @@ catalogue-schema-version-check:
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $EL9_IMAGE
+  image: $IMAGE_EL9
+  before_script:
+    - yum install -y git
+    - git submodule update --init --recursive
   script:
     - yum install -y git
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .

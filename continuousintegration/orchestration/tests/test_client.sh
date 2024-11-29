@@ -220,17 +220,12 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash /root/stagerrm_tests.sh || exit 1
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-# Get EOS version
-EOS_V=$(kubectl -n ${NAMESPACE} exec client -- eos -v 2>&1 | grep EOS | awk '{print $2}' | awk -F. '{print $1}')
-if [[ $EOS_V == 5 ]]; then
-  echo
-  echo "Launching evict_tests.sh on client pod"
-  echo " Archiving file: xrdcp as user1"
-  echo " Retrieving it as poweruser1"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/evict_tests.sh || exit 1
-  kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-fi
+echo
+echo "Launching evict_tests.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash /root/evict_tests.sh || exit 1
+kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 setup_tapes_for_multicopy_test
 
