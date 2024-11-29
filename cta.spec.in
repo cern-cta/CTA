@@ -628,11 +628,11 @@ Summary: External script to get free disk space
 Group: Application/CTA
 Requires: eos-client
 %description -n cta-eos-freediskspace
-cta-eos-get-free-disk-space is a script that runs on taped and returns
+eosdf is a script that runs on taped and returns
 the free disk space in the defalut namespace
 %files -n cta-eos-freediskspace
 %defattr(-,root,root)
-%attr(0755,root,root) /usr/bin/cta-eos-get-free-disk-space.sh
+%attr(0755,root,root) /usr/bin/eosdf.sh
 
 %changelog
 
