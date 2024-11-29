@@ -62,10 +62,14 @@ if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
   return 1
 fi
 
+# Wait a little bit to ensure the timestamps had the opportunity to change
+sleep 0.1
+
 # Evict file from disk buffer
 echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
 wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
+
 
 # Retrieve file from tape
 echo
@@ -82,6 +86,9 @@ if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterRetrieve"; then
   echo "Modify/birth timestamps of the file before archiving and after retrieving do not match"
   return 1
 fi
+
+# Wait a little bit to ensure the timestamps had the opportunity to change
+sleep 0.1
 
 # Evict again
 echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
