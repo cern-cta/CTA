@@ -3,8 +3,12 @@
 
 .kubernetes-test:
   needs:
-    - job: docker-build-ctageneric
+    - job: build-ctageneric-from-artifacts
       optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
+    - job: prepare
+      optional: true
+    - job: build-ctageneric-from-repos
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -39,11 +43,10 @@
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
     # Which image tag to use
-    - cd continuousintegration/ci_helpers/
     - |
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
-          IMAGE_TAG=$(./get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
+          IMAGE_TAG=$(./continuousintegration/ci_helpers/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
           IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
         fi
@@ -51,7 +54,14 @@
         IMAGE_TAG=$CTA_BUILD_ID
       fi
     # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - args_array=($EXTRA_ARGS)
+    - |
+      if [ $PIPELINE_TYPE == "EOSREG_CTATAG" ]; then
+        echo "Checking out CatalogueSchemaVersion to ${P_TYPE_EOSREG_CTA_TAG} branch"
+        git checkout $P_TYPE_EOSREG_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
+        CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F')' '{ print $1}')
+
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version $CATALOGUE_VERSION.0"
+      fi
     - |
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
         extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")
@@ -61,7 +71,7 @@
         extra_args+=(--test-options "${EXTRA_TEST_ARGS}")
       fi
     # Run test
-    - cd ../orchestration/
+    - cd continuousintegration/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
   artifacts:
     when: always
@@ -102,6 +112,9 @@ k8s-test-cta-admin:
   stage: test
   extends:
     - .kubernetes-test
+  rules:
+    - if:  $PIPELINE_TYPE == "EOSREG_CTATAG"
+      when: never
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTRA_ARGS: "--test-timeout 2400"

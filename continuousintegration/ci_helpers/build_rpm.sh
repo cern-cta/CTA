@@ -276,6 +276,7 @@ build_rpm() {
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"
+      exit 1
     fi
   fi
 
