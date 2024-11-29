@@ -43,6 +43,7 @@ TEST_DIR=/eos/ctaeos/cta/
 eospower_kdestroy
 eospower_kinit
 
+# Archive a file
 echo "xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
 
@@ -57,10 +58,12 @@ if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
   return 1
 fi
 
+# Evict file from disk buffer
 echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
 wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
+# Retrieve file from tape
 echo
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
@@ -72,6 +75,18 @@ fileInfoAfterRetrieve=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FIL
 
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterRetrieve"; then
   echo "Modify/birth timestamps of the file before archiving and after retrieving do not match"
+  return 1
+fi
+
+# Evict again
+echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
+wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
+
+fileInfoAfterEvict=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
+
+if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterEvict"; then
+  echo "Modify/birth timestamps of the file before archiving and after evicting do not match"
   return 1
 fi
 
