@@ -348,12 +348,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
       int priority = cta::log::ERR;
-      std::string status = "success";
-      if (!fetchResult || !reservationResult) {
-        // If this is an empty mount because no files have been popped from the queue
-        // or because disk reservation failed, it is just a warning
+      std::string status = "failure";
+      if (noFilesToRecall) {
+        // If empty mount because the queue contained no jobs log warning and set success
         priority = cta::log::WARNING;
-        status = "failure";
+        status = "success";
       }
 
       logContext.log(priority, "Aborting recall mount startup: empty mount");
