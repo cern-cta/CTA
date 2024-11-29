@@ -22,8 +22,6 @@
 
 """
 
-# TODO: proper argparsing to be done with https://gitlab.cern.ch/cta/CTA/-/issues/962
-
 import re
 import subprocess
 import sys
