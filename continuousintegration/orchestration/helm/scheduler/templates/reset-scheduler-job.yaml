@@ -6,7 +6,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -39,20 +39,20 @@ spec:
             - name: MY_NAME
               value: {{ $name }}
             - name: MY_NAMESPACE
-              value: {{ $namespace | quote}}
+              value: {{ $namespace | quote }}
             - name: INSTANCE_NAME
-              value: {{ $namespace | quote}}
+              value: {{ $namespace | quote }}
             - name: SCHEDULER_BACKEND
-              value: {{ $schedulerConfig.backend | quote}}
+              value: {{ $schedulerConfig.backend | quote }}
             - name: SCHEDULER_URL
-              value: {{ include "scheduler.url" . | quote}}
+              value: {{ include "scheduler.url" . | quote }}
             {{- if eq $schedulerConfig.backend "ceph" }}
             - name: SCHEDULER_CEPH_NAMESPACE
-              value: {{ $schedulerConfig.cephConfig.namespace | quote}}
+              value: {{ $schedulerConfig.cephConfig.namespace | quote }}
             - name: SCHEDULER_CEPH_ID
-              value: {{ $schedulerConfig.cephConfig.id | quote}}
+              value: {{ $schedulerConfig.cephConfig.id | quote }}
             - name: SCHEDULER_CEPH_POOL
-              value: {{ $schedulerConfig.cephConfig.pool | quote}}
+              value: {{ $schedulerConfig.cephConfig.pool | quote }}
             {{- end }}
             {{- if .Values.env }}
             {{ .Values.env | toYaml | nindent 12 }}
@@ -68,7 +68,7 @@ spec:
             - name: scheduler-config
               mountPath: /etc/cta/cta-objectstore-tools.conf
               subPath: cta-objectstore-tools.conf
-          {{- end}}
+          {{- end }}
             - mountPath: /shared
               name: shared
             {{- if eq $schedulerConfig.backend "ceph" }}
@@ -100,5 +100,5 @@ spec:
         - name: ceph-config
           configMap:
             name: ceph-conf
-        {{- end}}
+        {{- end }}
 {{- end }}

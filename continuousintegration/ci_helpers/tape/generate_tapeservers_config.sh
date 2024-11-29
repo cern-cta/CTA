@@ -113,7 +113,7 @@ generate_tpsrvs_config() {
   local max_tape_servers=2
 
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h|--help) usage ;;
       -o|--target-file)
         target_file="$2"

@@ -25,7 +25,7 @@
 #
 ################################################################################
 
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 CTA_TEST_DIR=/eos/ctaeos/cta
 TEST_FILE_NAME="empty_file"
 

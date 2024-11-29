@@ -651,7 +651,6 @@ def get_logger(hostname, programname, logpath):
       raise UserError('The logging directory {} cannot be written to'.format(logging_dir))
     log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
 
-  log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
   log_handler.setLevel(logging.INFO)
   log_handler.setFormatter(log_formatter)
 

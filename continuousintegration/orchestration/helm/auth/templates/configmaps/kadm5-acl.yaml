@@ -1,0 +1,11 @@
+{{- $svcName := include "kdc.name" .}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kadm5-acl
+  namespace: {{ .Release.Namespace }}
+data:
+  kadm5.acl: |
+    */admin@{{ .Values.kerberos.defaultRealm }} *
+
+

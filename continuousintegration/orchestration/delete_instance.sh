@@ -105,7 +105,7 @@ save_logs() {
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
     local CLIENT_POD="client-0"
-    kubectl -n "${namespace}" cp ${client_pod}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
+    kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
     # Prevent polluting the runner by cleaning up the original dir in /tmp
     rm -rf ${tmpdir}
   fi
@@ -118,7 +118,7 @@ delete_instance() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help) usage ;;
       -n|--namespace)
         namespace="$2"
@@ -161,7 +161,7 @@ delete_instance() {
 
   # Finally delete the actual namespace
   echo "Deleting ${namespace} instance"
-  kubectl delete namespace ${namespace}
+  kubectl delete namespace ${namespace} --grace-period=2
   echo "Deletion finished"
 }
 

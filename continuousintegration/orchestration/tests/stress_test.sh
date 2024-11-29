@@ -45,7 +45,7 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
 
@@ -125,6 +125,6 @@ echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 exit 0

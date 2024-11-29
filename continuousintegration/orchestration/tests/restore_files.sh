@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 EOS_INSTANCE_NAME="ctaeos"
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
 TEST_FILE_NAME=$(uuidgen)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
@@ -57,8 +57,8 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"

@@ -33,7 +33,7 @@ dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_MGM_HOST}."
 
-  echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
+  echo -n "Copying ${NB_FILES} files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
   file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
 
@@ -79,7 +79,7 @@ SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$(((3+${NB_DIRS})*(40+${NB_FILES}/5)))
 while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   start_check=$(date +%s)
-  echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
+  echo "$(date '+%Y-%m-%d %H:%M:%S'): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 

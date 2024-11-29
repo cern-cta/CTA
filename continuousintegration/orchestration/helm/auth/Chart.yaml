@@ -1,0 +1,11 @@
+apiVersion: v2
+name: kdc
+description: KDC instance that generates keytabs by provided keytabs-names.txt file
+type: application
+version: 0.2.1
+appVersion: "5.11.10.1"
+
+dependencies:
+- name: common
+  version: 0.1.0
+  repository: "file://../common"

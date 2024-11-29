@@ -11,7 +11,7 @@ conf:
   cta:
     endpoint: cta-frontend:10955
   eos:
-    instance: ctaeos
+    instance: eos-dev-mgm
     requester:
       user: adm
       group: powerusers

@@ -33,7 +33,7 @@ usage() {
 
 # Parse command line argumetns
 while [[ "$#" -gt 0 ]]; do
-  case $1 in
+  case "$1" in
     -h | --help) usage ;;
     -t | --tag)
       tag="$2"

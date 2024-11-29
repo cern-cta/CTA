@@ -31,7 +31,7 @@ get_credentials() {
 
   local check_mode=false
   while [[ "$#" -gt 0 ]]; do
-      case $1 in
+      case "$1" in
           --check) check_mode=true ;;
           *) echo "Unknown option: $1" ;;
       esac

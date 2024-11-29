@@ -29,7 +29,7 @@
 ################################################################################
 
 
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 CTA_TEST_DIR=/eos/ctaeos/cta
 
 cleanup()

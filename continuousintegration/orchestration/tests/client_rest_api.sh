@@ -26,7 +26,7 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
@@ -51,11 +51,11 @@ echo "Printing poweruser token dump"
 eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSPOWER}" | jq .
 echo
 
-# Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8444
-HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8444/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
+# Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8443
+HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
 echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint"
-WELL_KNOWN=$(curl --insecure "https://${EOS_MGM_HOST}:8444/.well-known/wlcg-tape-rest-api")
+WELL_KNOWN=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api")
 echo "Full well known: ${WELL_KNOWN}"
 
 test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
@@ -72,7 +72,7 @@ test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EO
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8444/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
 
 FINAL_COUNT=0
 TIMEOUT=90
@@ -153,7 +153,7 @@ IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | sel
 echo "$(date +%s): Putting drives down."
 
 for drive in "${dr_names[@]}"; do
-  log_message "Putting drive $drive down."
+  echo "Putting drive $drive down."
   admin_cta dr down "$drive" -r "Tape Rest API abort prepare test"
   sleep 3
 done
@@ -182,7 +182,7 @@ curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Acce
 
 #    5. Put drive up.
 for drive in "${dr_names[@]}"; do
-  log_message "Putting drive $drive up."
+  echo "Putting drive $drive up."
   admin_cta dr up "$drive"
   sleep 3
 done

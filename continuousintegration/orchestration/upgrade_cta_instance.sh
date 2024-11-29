@@ -59,7 +59,6 @@ update_chart_dependencies() {
     "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
-    "cta/charts/ctaeos"
     "cta/charts/ctafrontend"
     "cta/charts/tpsrv"
   )
@@ -72,7 +71,7 @@ upgrade_instance() {
   force=0
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help) usage ;;
       -o|--scheduler-config)
         scheduler_config="$2"

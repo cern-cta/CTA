@@ -6,7 +6,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   labels:
     app.kubernetes.io/name: {{ $name }}
     {{- include "common.labels.withoutname" $ | nindent 4 }}
@@ -34,9 +34,9 @@ spec:
     - name: MY_NAME
       value: {{ $name }}
     - name: MY_NAMESPACE
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: INSTANCE_NAME
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: PGDATA
       value: {{ $schedulerConfig.postgresConfig.path }}
     - name: POSTGRES_USER

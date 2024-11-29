@@ -38,12 +38,12 @@ spec:
     # This sets up the script used in the liquibase update test
     command: ["/bin/bash", "-c"]
     args:
-      - |
-        echo "#!/bin/bash" > /launch_liquibase.sh
-        echo "COMMAND=\$1" >> /launch_liquibase.sh
-        echo "/entrypoint.sh --disable-schema-verify -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh
-        chmod +x /launch_liquibase.sh
-        sleep infinity
+    - |
+      echo "#!/bin/bash" > /launch_liquibase.sh
+      echo "COMMAND=\$1" >> /launch_liquibase.sh
+      echo "/entrypoint.sh --disable-schema-verify -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh
+      chmod +x /launch_liquibase.sh
+      sleep infinity
     volumeMounts:
     - name: yum-repos
       mountPath: /shared/etc_yum.repos.d

@@ -112,7 +112,7 @@ build_deploy() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help) usage ;;
       -r | --reset) reset=true ;;
       --clean-build-dir) clean_build_dir=true ;;

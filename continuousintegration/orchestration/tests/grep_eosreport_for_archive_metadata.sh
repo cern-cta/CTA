@@ -28,7 +28,7 @@ fi
 
 echo "Looking for archive metadata activity..."
 
-REPORT_FILE_NAME="/var/log/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)$(date +%d).eosreport"
+REPORT_FILE_NAME="/var/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)$(date +%d).eosreport"
 ARCHIVE_METADATA="$1"
 
 # Check that archivemetadata is present in the eos report logs
