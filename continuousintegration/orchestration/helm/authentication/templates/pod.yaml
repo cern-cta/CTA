@@ -4,7 +4,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
@@ -36,16 +36,16 @@ spec:
     - name: MY_NAME
       value: {{ $name }}
     - name: MY_NAMESPACE
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: INSTANCE_NAME
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: TERM
       value: "xterm"
     - name: KRB5_REALM
       value: {{ .Values.realm }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
-    {{- end}}
+    {{- end }}
     volumeMounts:
     - name: krb5-config-volume
       mountPath: /etc/krb5.conf

@@ -2,7 +2,7 @@
 Get the namespace
 */}}
 {{- define "kdc.namespace" -}}
-{{ $namespace := .Release.Namespace | quote}}
+{{ $namespace := .Release.Namespace | quote }}
 {{- end -}}
 
 

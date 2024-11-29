@@ -59,7 +59,6 @@ update_chart_dependencies() {
     "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
-    "cta/charts/ctaeos"
     "cta/charts/ctafrontend"
     "cta/charts/tpsrv"
   )

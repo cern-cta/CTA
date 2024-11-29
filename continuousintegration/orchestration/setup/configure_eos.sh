@@ -18,13 +18,14 @@
 set -e
 
 usage() {
-  echo "Sets the required CTA workflows in the ctaeos pod in the provided namespace."
+  echo "Configures an EOS mgm such that it can work with CTA."
   echo ""
-  echo "Usage: $0 [options]"
+  echo "Usage: $0 [options] -m <mgm-pod-name> -n <namespace>"
   echo ""
   echo "Options:"
-  echo "  -h, --help:         Show help output."
-  echo "  -n|--namespace:     The kubernetes namespaces to execute this in."
+  echo "  -h, --help:                     Show help output."
+  echo "  -m|--mgm-name <mgm-name>:       The name of the mgm pod to configure."
+  echo "  -n|--namespace <namespace>:     The kubernetes namespace the pod lives in."
   exit 1
 }
 
@@ -32,6 +33,9 @@ usage() {
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -h | --help) usage ;;
+    -m|--mgm-name)
+      mgm_name="$2"
+      shift ;;
     -n|--namespace)
       namespace="$2"
       shift ;;
@@ -43,6 +47,10 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+if [ -z "$mgm_name" ]; then
+  echo "Missing mandatory argument: -m | --mgm-name" 1>&2
+  exit 1
+fi
 if [ -z "$namespace" ]; then
   echo "Missing mandatory argument: -n | --namespace" 1>&2
   exit 1
@@ -50,10 +58,9 @@ fi
 
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
-eos_instance=ctaeos
-echo "Setting workflows in namespace ${namespace} pod ${eos_instance}:"
-cta_workflow_dir=/eos/${eos_instance}/proc/cta/workflow
+echo "Setting workflows in namespace ${namespace} for mgm ${mgm_name}:"
+cta_workflow_dir=/eos/${mgm_name}/proc/cta/workflow
 for workflow in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default; do
   echo "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-  kubectl --namespace ${namespace} exec ${eos_instance} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
+  kubectl --namespace ${namespace} exec ${mgm_name} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
 done
