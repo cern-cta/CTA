@@ -263,7 +263,7 @@ create_instance() {
                                 --namespace ${namespace} \
                                 --set global.image.registry="${registry_host}" \
                                 --set global.image.tag="${image_tag}" \
-                                --set global.catalogueSchemaVersion=${catalogue_schema_version} \
+                                --set global.catalogueSchemaVersion="${catalogue_schema_version}" \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 8m
