@@ -5,7 +5,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   annotations:
     catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
   labels:
@@ -46,24 +46,24 @@ spec:
     - name: MY_NAME
       value: {{ $name }}
     - name: MY_NAMESPACE
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: INSTANCE_NAME
-      value: {{ $namespace | quote}}
+      value: {{ $namespace | quote }}
     - name: SCHEDULER_BACKEND
-      value: {{ $schedulerConfig.backend | quote}}
+      value: {{ $schedulerConfig.backend | quote }}
     {{- if eq $schedulerConfig.backend "ceph" }}
     - name: SCHEDULER_CEPH_NAMESPACE
-      value: {{ $schedulerConfig.cephConfig.namespace | quote}}
+      value: {{ $schedulerConfig.cephConfig.namespace | quote }}
     - name: SCHEDULER_CEPH_ID
-      value: {{ $schedulerConfig.cephConfig.id | quote}}
+      value: {{ $schedulerConfig.cephConfig.id | quote }}
     - name: SCHEDULER_CEPH_POOL
-      value: {{ $schedulerConfig.cephConfig.pool | quote}}
+      value: {{ $schedulerConfig.cephConfig.pool | quote }}
     {{- end }}
     - name: TERM
       value: "xterm"
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
-    {{- end}}
+    {{- end }}
     volumeMounts:
     - name: catalogue-config
       mountPath: /etc/cta/cta-catalogue.conf
@@ -121,7 +121,7 @@ spec:
   - name: cta-ceph-volume
     configMap:
       name: ceph-conf
-  {{- end}}
+  {{- end }}
   - name: eosctaconfig
     configMap:
       name: eos-grpc-keytab

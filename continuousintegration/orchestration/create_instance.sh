@@ -68,7 +68,6 @@ update_chart_dependencies() {
     "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
-    "cta/charts/ctaeos"
     "cta/charts/ctafrontend"
     "cta/charts/tpsrv"
   )
@@ -211,7 +210,7 @@ create_instance() {
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
-    kubectl create namespace ${namespace}
+    # kubectl create namespace ${namespace}
     echo "Copying secrets into ${namespace} namespace"
     for secret_name in ${registry_secrets}; do
       # If the secret exists...
@@ -224,6 +223,20 @@ create_instance() {
   fi
 
   update_chart_dependencies
+
+  # This sets up the key distribution center and the necessary SSS secrets for communication with eos
+  log_run helm ${helm_command} authentication-${namespace} helm/authentication \
+                                --namespace ${namespace} \
+                                --set image.registry="${registry_host}" \
+                                --set image.tag="${image_tag}" \
+                                --wait --wait-for-jobs --timeout 2m
+
+  log_run helm install eos-${namespace} oci://registry.cern.ch/eos/charts/server \
+                                --namespace ${namespace}\
+                                -f presets/dev-eos-values.yaml
+
+
+  exit
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing kdc, catalogue and scheduler charts..."
@@ -246,17 +259,13 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  log_run helm ${helm_command} kdc-${namespace} helm/kdc \
-                                --namespace ${namespace} \
-                                --set image.registry="${registry_host}" \
-                                --set image.tag="${image_tag}" \
-                                --wait --wait-for-jobs --timeout 2m &
-  kdc_pid=$!
 
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
-  wait $kdc_pid || exit 1
+  wait $eos_pid || exit 1
+
+  # TODO: can we do all of this at the same time?
 
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
@@ -276,7 +285,6 @@ create_instance() {
 setup_system() {
   ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
-  ./setup/set_eos_workflows.sh -n ${namespace}
 }
 
 check_helm_installed

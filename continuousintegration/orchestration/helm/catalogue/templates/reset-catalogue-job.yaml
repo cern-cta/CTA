@@ -6,7 +6,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
-  namespace: {{ $namespace | quote}}
+  namespace: {{ $namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -39,13 +39,13 @@ spec:
             - name: MY_NAME
               value: {{ $name }}
             - name: MY_NAMESPACE
-              value: {{ $namespace | quote}}
+              value: {{ $namespace | quote }}
             - name: INSTANCE_NAME
-              value: {{ $namespace | quote}}
+              value: {{ $namespace | quote }}
             - name: SCHEMA_VERSION
-              value: {{ .Values.schemaVersion | quote}}
+              value: {{ .Values.schemaVersion | quote }}
             - name: CATALOGUE_BACKEND
-              value: {{ $catalogueConfig.backend | quote}}
+              value: {{ $catalogueConfig.backend | quote }}
           volumeMounts:
             - name: purge-database-ext
               mountPath: /opt/ci/purge_database.ext
