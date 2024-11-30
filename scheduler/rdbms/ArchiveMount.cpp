@@ -86,7 +86,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
 
     cta::utils::Timer t3;
     // Construct the return value
-    uint64_t totalBytes = 0;
     // Precompute the maximum value before the loop
     common::dataStructures::TapeFile tpfile;
     auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
@@ -107,17 +106,11 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       retVector.emplace_back(std::move(job));
       //timings.insOrIncAndReset("mountFetchBatchinitializeEmplaceTime", t2);
       uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
-      totalBytes += sizeInBytes;
       auto& tapeFile = retVector.back()->tapeFile;
       tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       tapeFile.blockId = maxBlockId;
       //timings.insOrIncAndReset("mountFetchBatchRestOpsTime", t2);
       //timings.insertAndReset("mountFetchBatchRowTime", ta);
-      // the break below must not happen - we must check the bytesRequested condition in the SQL query or do another update in case
-      // we hit this if statement ! TO BE FIXED  - otherwise we generate jobs in the DB which will never get queued in the task queue !!!
-      if (totalBytes >= bytesRequested) {
-        break;
-      }
     }
     selconn.commit();
   }
