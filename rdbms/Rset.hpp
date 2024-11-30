@@ -87,7 +87,7 @@ public:
 
   // Generic method to handle calls to m_impl
   template<typename ReturnType, typename... Args>
-  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::* func)(const std::string&) const,
+  ReturnType callImpl(ReturnType (wrapper::RsetWrapper::*func)(const std::string&) const,
                       const std::string& colName) const {
     try {
       if (nullptr == m_impl) {

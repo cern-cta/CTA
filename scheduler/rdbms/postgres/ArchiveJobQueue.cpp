@@ -71,9 +71,8 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
-  stmt.bindString(":BYTES_REQUESTED", maxBytesRequested);
+  stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   return stmt.executeQuery();
-
 }
 
 uint64_t

@@ -52,7 +52,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   cta::log::TimingList timings;
   cta::utils::Timer t;
   try {
-    updatedJobIDset = postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+    updatedJobIDset =
+      postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     //logContext.log(cta::log::DEBUG,
     //               "In postgres::ArchiveJobQueueRow::updateMountInfo: attempting to update Mount ID and VID for a batch of jobs.");
