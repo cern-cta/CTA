@@ -105,7 +105,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
       retVector.emplace_back(std::move(job));
       //timings.insOrIncAndReset("mountFetchBatchinitializeEmplaceTime", t2);
-      uint64_t sizeInBytes = retVector.back()->archiveFile.fileSize;
       auto& tapeFile = retVector.back()->tapeFile;
       tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       tapeFile.blockId = maxBlockId;
