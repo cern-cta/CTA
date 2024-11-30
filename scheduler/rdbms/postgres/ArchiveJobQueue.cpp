@@ -39,7 +39,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
     AND STATUS = :STATUS
     AND (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
     ORDER BY PRIORITY DESC, JOB_ID
-    LIMIT :LIMIT FOR UPDATE )
+    LIMIT :LIMIT FOR UPDATE ),
     CUMULATIVE_SELECTION AS (
         SELECT JOB_ID,
                SIZE_IN_BYTES,
