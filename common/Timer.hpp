@@ -28,10 +28,7 @@ namespace cta::utils {
  */
 class Timer {
 public:
-  enum reset_t {
-    keepRunning,
-    resetCounter
-  };
+  enum reset_t { keepRunning, resetCounter };
 
   /**
    * Constructor
@@ -64,6 +61,6 @@ private:
   // High-resolution, monotonic time point
   std::chrono::steady_clock::time_point m_reference;
 
-}; // class Timer
+};  // class Timer
 
-} // namespace cta::utils
+}  // namespace cta::utils

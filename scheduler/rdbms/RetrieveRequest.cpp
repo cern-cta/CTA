@@ -20,15 +20,15 @@
 
 namespace cta::schedulerdb {
 
-  /*!
+/*!
   * Retrieve request exception
   */
-  class RetrieveRequestException : public std::runtime_error {
-    using std::runtime_error::runtime_error;
-  };
+class RetrieveRequestException : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
 
-  void RetrieveRequest::insert() {
-  schedulerdb::postgres::RetrieveJobQueueRow           row;
+void RetrieveRequest::insert() {
+  schedulerdb::postgres::RetrieveJobQueueRow row;
   /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
    * future rewrite using DB columns directly instead of inserting Protobuf objects
    *
@@ -37,32 +37,32 @@ namespace cta::schedulerdb {
    */
 
   row.retrieveReqId = m_requestId;
-  row.mountId       = m_mountId;
-  row.status        = m_status;
-  row.vid           = m_vid;
-  row.priority      = m_priority;
-  row.retMinReqAge  = m_retrieveMinReqAge;
-  row.startTime     = m_startTime;
+  row.mountId = m_mountId;
+  row.status = m_status;
+  row.vid = m_vid;
+  row.priority = m_priority;
+  row.retMinReqAge = m_retrieveMinReqAge;
+  row.startTime = m_startTime;
   row.failureReportUrl = m_failureReportUrl;
   row.failureReportLog = m_failureReportLog;
-  row.isFailed         = m_isFailed;
+  row.isFailed = m_isFailed;
 
   row.retrieveRequest = m_schedRetrieveReq;
-  row.archiveFile     = m_archiveFile;
+  row.archiveFile = m_archiveFile;
 
   // the tapeFiles from the archiveFile are not stored in the row
   // Instead each tapefile is a part of the retrieve job protobuf.
   // So fill in the protobuf Job and Tapefile info here:
 
-  for(const auto &j: m_jobs) {
+  for (const auto& j : m_jobs) {
     /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * schedulerdb::blobser::RetrieveJob *pb_job = rj.add_jobs();
      * schedulerdb::blobser::TapeFile *pb_tf = pb_job->mutable_tapefile();
      */
-    const cta::common::dataStructures::TapeFile *tf = nullptr;
-    for(const auto &f: m_archiveFile.tapeFiles) {
+    const cta::common::dataStructures::TapeFile* tf = nullptr;
+    for (const auto& f : m_archiveFile.tapeFiles) {
       if (f.copyNb == j.copyNb) {
         tf = &f;
         break;
@@ -118,18 +118,18 @@ namespace cta::schedulerdb {
      */
   }
 
-  row.mountPolicyName= m_mountPolicyName;
+  row.mountPolicyName = m_mountPolicyName;
 
-  row.activity       = m_activity;
+  row.activity = m_activity;
   row.diskSystemName = m_diskSystemName;
-  row.actCopyNb      = m_actCopyNb;
+  row.actCopyNb = m_actCopyNb;
 
   // isrepack & repackReqId are stored both individually in the row and inside
   // the repackinfo protobuf
   row.isRepack = m_repackInfo.isRepack;
   row.repackReqId = m_repackInfo.repackRequestId;
 
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
+  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * ri.set_fseq(m_repackInfo.fSeq);
@@ -146,128 +146,133 @@ namespace cta::schedulerdb {
      * rj.SerializeToString(&row.retrieveJobsProtoBuf);
      * ri.SerializeToString(&row.repackInfoProtoBuf);
      */
-    log::ScopedParamContainer params(m_lc);
-    row.addParamsToLogContext(params);
-    //m_txn.reset(new schedulerdb::Transaction(m_conn));
+  log::ScopedParamContainer params(m_lc);
+  row.addParamsToLogContext(params);
+  //m_txn.reset(new schedulerdb::Transaction(m_conn));
 
-    //try {
-    //  //row.insert(*m_txn);
-    //} catch(exception::Exception &ex) {
-    //  params.add("exceptionMessage", ex.getMessageValue());
-    //  m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
-    //  throw;
-    //}
+  //try {
+  //  //row.insert(*m_txn);
+  //} catch(exception::Exception &ex) {
+  //  params.add("exceptionMessage", ex.getMessageValue());
+  //  m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
+  //  throw;
+  //}
 
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): added job to queue.");
+  m_lc.log(log::INFO, "In RetrieveRequest::insert(): added job to queue.");
+}
+
+void RetrieveRequest::update() const {
+  throw RetrieveRequestException("update not implemented.");
+}
+
+void RetrieveRequest::commit() {
+  m_conn->commit();
+}
+
+[[noreturn]] void RetrieveRequest::setFailureReason([[maybe_unused]] std::string_view reason) const {
+  throw RetrieveRequestException("setFailureReason not implemented.");
+}
+
+[[noreturn]] bool RetrieveRequest::addJobFailure([[maybe_unused]] uint32_t copyNumber,
+                                                 [[maybe_unused]] uint64_t mountId,
+                                                 [[maybe_unused]] std::string_view failureReason) const {
+  throw RetrieveRequestException("addJobFailure not implemented.");
+}
+
+void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) const {
+  throw RetrieveRequestException("setRepackInfo not implemented.");
+}
+
+void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status) const {
+  throw RetrieveRequestException("setJobStatus not implemented.");
+}
+
+void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest) {
+  m_schedRetrieveReq = retrieveRequest;
+}
+
+void RetrieveRequest::setRetrieveFileQueueCriteria(
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
+  m_archiveFile = criteria.archiveFile;
+  m_mountPolicyName = criteria.mountPolicy.name;
+
+  m_priority = criteria.mountPolicy.retrievePriority;
+  m_retrieveMinReqAge = criteria.mountPolicy.retrieveMinRequestAge;
+
+  const uint32_t hardcodedRetriesWithinMount = m_repackInfo.isRepack ? 1 : 3;
+  const uint32_t hardcodedTotalRetries = m_repackInfo.isRepack ? 1 : 6;
+  const uint32_t hardcodedReportRetries = 2;
+
+  m_jobs.clear();
+
+  // create jobs for each tapefile in the archiveFile;
+  for (const auto& tf : m_archiveFile.tapeFiles) {
+    m_jobs.emplace_back();
+    m_jobs.back().copyNb = tf.copyNb;
+    m_jobs.back().maxretrieswithinmount = hardcodedRetriesWithinMount;
+    m_jobs.back().maxtotalretries = hardcodedTotalRetries;
+    m_jobs.back().maxreportretries = hardcodedReportRetries;
   }
+}
 
-  void RetrieveRequest::update() const {
-    throw RetrieveRequestException("update not implemented.");
-  }
+void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
+                                          const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
+  m_activity = retrieveRequest.activity;
+}
 
-  void RetrieveRequest::commit() {
-    m_conn->commit();
-  }
+void RetrieveRequest::setDiskSystemName(std::string_view diskSystemName) {
+  m_diskSystemName = diskSystemName;
+}
 
-  [[noreturn]] void RetrieveRequest::setFailureReason([[maybe_unused]] std::string_view reason) const{
-    throw RetrieveRequestException("setFailureReason not implemented.");
-  }
+void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
+  m_schedRetrieveReq.lifecycleTimings.creation_time = creationTime;
+}
 
-  [[noreturn]] bool RetrieveRequest::addJobFailure([[maybe_unused]] uint32_t copyNumber, [[maybe_unused]] uint64_t mountId, [[maybe_unused]] std::string_view failureReason) const {
-    throw RetrieveRequestException("addJobFailure not implemented.");
-  }
+void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
+  throw RetrieveRequestException("setFirstSelectedTime not implemented.");
+}
 
-  void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const {
-    throw RetrieveRequestException("setRepackInfo not implemented.");
-  }
+void RetrieveRequest::setCompletedTime(const uint64_t completedTime) const {
+  throw RetrieveRequestException("setCompletedTime not implemented.");
+}
 
-  void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus &status) const {
-    throw RetrieveRequestException("setJobStatus not implemented.");
-  }
+void RetrieveRequest::setReportedTime(const uint64_t reportedTime) const {
+  throw RetrieveRequestException("setReportedTime not implemented.");
+}
 
-  void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest) {
-    m_schedRetrieveReq = retrieveRequest;
-  }
+void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
+  m_actCopyNb = activeCopyNb;
 
-  void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
-
-    m_archiveFile = criteria.archiveFile;
-    m_mountPolicyName = criteria.mountPolicy.name;
-
-    m_priority = criteria.mountPolicy.retrievePriority;
-    m_retrieveMinReqAge = criteria.mountPolicy.retrieveMinRequestAge;
-
-    const uint32_t hardcodedRetriesWithinMount = m_repackInfo.isRepack ? 1 : 3;
-    const uint32_t hardcodedTotalRetries       = m_repackInfo.isRepack ? 1 : 6;
-    const uint32_t hardcodedReportRetries      = 2;
-
-    m_jobs.clear();
-
-    // create jobs for each tapefile in the archiveFile;
-    for(const auto &tf: m_archiveFile.tapeFiles) {
-      m_jobs.emplace_back();
-      m_jobs.back().copyNb = tf.copyNb;
-      m_jobs.back().maxretrieswithinmount = hardcodedRetriesWithinMount;
-      m_jobs.back().maxtotalretries = hardcodedTotalRetries;
-      m_jobs.back().maxreportretries = hardcodedReportRetries;
+  // copy the active job info to the request level columns
+  for (const auto& j : m_jobs) {
+    if (j.copyNb != m_actCopyNb) {
+      continue;
     }
-  }
-
-  void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
-      const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
-    m_activity = retrieveRequest.activity;
-  }
-
-  void RetrieveRequest::setDiskSystemName(std::string_view diskSystemName) {
-    m_diskSystemName = diskSystemName;
-  }
-
-  void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
-    m_schedRetrieveReq.lifecycleTimings.creation_time = creationTime;
-  }
-
-  void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
-    throw RetrieveRequestException("setFirstSelectedTime not implemented.");
-  }
-
-  void RetrieveRequest::setCompletedTime(const uint64_t completedTime) const {
-    throw RetrieveRequestException("setCompletedTime not implemented.");
-  }
-
-  void RetrieveRequest::setReportedTime(const uint64_t reportedTime) const {
-    throw RetrieveRequestException("setReportedTime not implemented.");
-  }
-
-  void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
-    m_actCopyNb = activeCopyNb;
-
-    // copy the active job info to the request level columns
-    for(const auto &j: m_jobs) {
-      if (j.copyNb != m_actCopyNb) continue;
-      for(const auto &tf: m_archiveFile.tapeFiles) {
-        if (tf.copyNb != m_actCopyNb) continue;
-
-        m_status = j.status;
-        m_vid = tf.vid;
+    for (const auto& tf : m_archiveFile.tapeFiles) {
+      if (tf.copyNb != m_actCopyNb) {
+        continue;
       }
+
+      m_status = j.status;
+      m_vid = tf.vid;
     }
-
   }
+}
 
-  void RetrieveRequest::setIsVerifyOnly(bool isVerifyOnly) {
-    m_schedRetrieveReq.isVerifyOnly = isVerifyOnly;
-  }
+void RetrieveRequest::setIsVerifyOnly(bool isVerifyOnly) {
+  m_schedRetrieveReq.isVerifyOnly = isVerifyOnly;
+}
 
-  void RetrieveRequest::setFailed() const {
-    throw RetrieveRequestException("setFailed not implemented.");
-  }
+void RetrieveRequest::setFailed() const {
+  throw RetrieveRequestException("setFailed not implemented.");
+}
 
-  std::list<RetrieveRequest::RetrieveReqJobDump> RetrieveRequest::dumpJobs() const {
-    throw RetrieveRequestException("dumpJobs not implemented.");
-  }
+std::list<RetrieveRequest::RetrieveReqJobDump> RetrieveRequest::dumpJobs() const {
+  throw RetrieveRequestException("dumpJobs not implemented.");
+}
 
-  RetrieveRequest& RetrieveRequest::operator=(const schedulerdb::postgres::RetrieveJobQueueRow &row) {
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
+RetrieveRequest& RetrieveRequest::operator=(const schedulerdb::postgres::RetrieveJobQueueRow& row) {
+  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * schedulerdb::blobser::RetrieveJobs rj;
@@ -275,21 +280,21 @@ namespace cta::schedulerdb {
      * rj.ParseFromString(row.retrieveJobsProtoBuf);
      * ri.ParseFromString(row.repackInfoProtoBuf);
      */
-    m_requestId         = row.retrieveReqId;
-    m_mountId           = row.mountId;
-    m_status            = row.status;
-    m_vid               = row.vid;
-    m_priority          = row.priority;
-    m_retrieveMinReqAge = row.retMinReqAge;
-    m_startTime         = row.startTime;
-    m_failureReportUrl  = row.failureReportUrl;
-    m_failureReportLog  = row.failureReportLog;
-    m_isFailed          = row.isFailed;
+  m_requestId = row.retrieveReqId;
+  m_mountId = row.mountId;
+  m_status = row.status;
+  m_vid = row.vid;
+  m_priority = row.priority;
+  m_retrieveMinReqAge = row.retMinReqAge;
+  m_startTime = row.startTime;
+  m_failureReportUrl = row.failureReportUrl;
+  m_failureReportLog = row.failureReportLog;
+  m_isFailed = row.isFailed;
 
-    m_schedRetrieveReq = row.retrieveRequest;
-    m_archiveFile      = row.archiveFile;
+  m_schedRetrieveReq = row.retrieveRequest;
+  m_archiveFile = row.archiveFile;
 
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
+  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * the archiveFile above doesn't include the tapeFiles list. We only consider
@@ -308,17 +313,17 @@ namespace cta::schedulerdb {
      *   m_archiveFile.tapeFiles.back().checksumBlob.deserialize( j.tapefile().checksumblob() );
      * }
      */
-    m_mountPolicyName  = row.mountPolicyName;
+  m_mountPolicyName = row.mountPolicyName;
 
-    m_activity         = row.activity;
-    m_diskSystemName   = row.diskSystemName;
-    m_actCopyNb        = row.actCopyNb;
+  m_activity = row.activity;
+  m_diskSystemName = row.diskSystemName;
+  m_actCopyNb = row.actCopyNb;
 
-    m_repackInfo.isRepack        = row.isRepack;
-    m_repackInfo.repackRequestId = row.repackReqId;
-    m_repackInfo.archiveRouteMap.clear();
+  m_repackInfo.isRepack = row.isRepack;
+  m_repackInfo.repackRequestId = row.repackReqId;
+  m_repackInfo.archiveRouteMap.clear();
 
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
+  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * for(auto &rm: ri.archive_routes()) {
@@ -332,8 +337,8 @@ namespace cta::schedulerdb {
      * m_repackInfo.fileBufferURL       = ri.file_buffer_url();
      * m_repackInfo.hasUserProvidedFile = ri.has_user_provided_file();
      */
-    m_jobs.clear();
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
+  m_jobs.clear();
+  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
      *
      * for(auto &j: rj.jobs()) {
@@ -374,7 +379,7 @@ namespace cta::schedulerdb {
      *   }
      * }
      */
-    return *this;
-  }
+  return *this;
+}
 
-  } // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

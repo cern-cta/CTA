@@ -43,7 +43,7 @@ public:
   /**
    * Prohibit copy assignment
    */
-  Transaction &operator=(const Transaction &) = delete;
+  Transaction& operator=(const Transaction&) = delete;
 
   /**
    * Take out an advisory transaction lock per tape pool
@@ -89,7 +89,7 @@ public:
   /**
    * Provides access to the connection
    */
-  cta::rdbms::Conn&  getConn() const;
+  cta::rdbms::Conn& getConn() const;
 
   /**
    * Allows to reset the transaction connection to a new one
@@ -104,4 +104,4 @@ private:
   bool m_begin = false;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

@@ -37,11 +37,18 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-TapeWriteTask::TapeWriteTask(uint64_t blockCount, cta::ArchiveJob* archiveJob, MigrationMemoryManager& mm,
-                             cta::threading::AtomicFlag& errorFlag) :
-m_archiveJob(archiveJob),
-m_memManager(mm), m_fifo(blockCount), m_blockCount(blockCount), m_errorFlag(errorFlag),
-m_archiveFile(m_archiveJob->archiveFile), m_tapeFile(m_archiveJob->tapeFile), m_srcURL(m_archiveJob->srcURL) {
+TapeWriteTask::TapeWriteTask(uint64_t blockCount,
+                             cta::ArchiveJob* archiveJob,
+                             MigrationMemoryManager& mm,
+                             cta::threading::AtomicFlag& errorFlag)
+    : m_archiveJob(archiveJob),
+      m_memManager(mm),
+      m_fifo(blockCount),
+      m_blockCount(blockCount),
+      m_errorFlag(errorFlag),
+      m_archiveFile(m_archiveJob->archiveFile),
+      m_tapeFile(m_archiveJob->tapeFile),
+      m_srcURL(m_archiveJob->srcURL) {
   // Register its fifo to the memory manager as a client in order to get mem block
   // This should not be done in the case of a zero length file.
   if (archiveJob->archiveFile.fileSize) {
@@ -60,7 +67,9 @@ uint64_t TapeWriteTask::fileSize() {
 // execute
 //------------------------------------------------------------------------------
 void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
-                            MigrationReportPacker& reportPacker, MigrationWatchDog& watchdog, cta::log::LogContext& lc,
+                            MigrationReportPacker& reportPacker,
+                            MigrationWatchDog& watchdog,
+                            cta::log::LogContext& lc,
                             cta::utils::Timer& timer) {
   using cta::log::LogContext;
   using cta::log::Param;
@@ -165,7 +174,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
+  }
+  catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
     // so we just log, circulate blocks and don't even send a report
     lc.log(cta::log::DEBUG, "TapeWriteTask: a previous file has failed for migration "
@@ -175,7 +185,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
-  } catch (const Skip& s) {
+  }
+  catch (const Skip& s) {
     // We failed to read anything from the file. We can get rid of any block from the queue to
     // recycle them, and pass the report to the report packer. After than, we can carry on with
     // the write session->
@@ -191,7 +202,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.", lc);
-  } catch (const RecoverableMigrationErrorException& e) {
+  }
+  catch (const RecoverableMigrationErrorException& e) {
     // The disk reading failed due to a size mismatch or wrong checksum
     // just want to report a failed job and proceed with the mount
     if (!currentErrorToCount.empty()) {
@@ -207,8 +219,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
-
-  } catch (const cta::exception::Exception& e) {
+  }
+  catch (const cta::exception::Exception& e) {
     // We can end up there because
     // We failed to open the FileWriter
     // We received a bad block or a block written failed
@@ -229,7 +241,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       // This is indeed the end of the tape. Not an error.
       watchdog.setErrorCount("Info_tapeFilledUp", 1);
       reportPacker.reportTapeFull(lc);
-    } catch (...) {
+    }
+    catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
       // and we will pass the error name to the watchdog.
@@ -252,11 +265,15 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
         errorLevel = cta::log::INFO;
         doReportJobError = false;
       }
-    } catch (...) {}
+    }
+    catch (...) {
+    }
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
-    if (doReportJobError) reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+    if (doReportJobError) {
+      reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+    }
 
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
@@ -277,8 +294,8 @@ MemBlock* TapeWriteTask::getFreeBlock() {
 //------------------------------------------------------------------------------
 void TapeWriteTask::checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::LogContext& lc) {
   using namespace cta::log;
-  if (m_archiveJob->archiveFile.archiveFileID != mb->m_fileid || memBlockId != mb->m_fileBlock || mb->isFailed()
-      || mb->isCanceled()) {
+  if (m_archiveJob->archiveFile.archiveFileID != mb->m_fileid || memBlockId != mb->m_fileBlock || mb->isFailed() ||
+      mb->isCanceled()) {
     LogContext::ScopedParam sp[] = {LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
                                     LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", memBlockId)),
                                     LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
@@ -328,14 +345,14 @@ TapeWriteTask::~TapeWriteTask() {
 // openFileWriter
 //------------------------------------------------------------------------------
 std::unique_ptr<tapeFile::FileWriter>
-  TapeWriteTask::openFileWriter(const std::unique_ptr<tape::tapeFile::WriteSession>& session,
-                                cta::log::LogContext& lc) {
+TapeWriteTask::openFileWriter(const std::unique_ptr<tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc) {
   std::unique_ptr<tape::tapeFile::FileWriter> output;
   try {
     const uint64_t tapeBlockSize = 256 * 1024;
     output = std::make_unique<tape::tapeFile::FileWriter>(session, *m_archiveJob, tapeBlockSize);
     lc.log(cta::log::DEBUG, "Successfully opened the tape file for writing");
-  } catch (const cta::exception::Exception& ex) {
+  }
+  catch (const cta::exception::Exception& ex) {
     cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("exceptionMessage", ex.getMessageValue()));
     lc.log(cta::log::ERR, "Failed to open tape file for writing");
     throw;
@@ -363,8 +380,8 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
     .add("totalTime", m_taskStats.totalTime)
     .add("dataVolume", m_taskStats.dataVolume)
     .add("headerVolume", m_taskStats.headerVolume)
-    .add("driveTransferSpeedMBps", m_taskStats.totalTime ? 1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume)
-                                                             / 1000 / 1000 / m_taskStats.totalTime :
+    .add("driveTransferSpeedMBps", m_taskStats.totalTime ? 1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume) /
+                                                             1000 / 1000 / m_taskStats.totalTime :
                                                            0.0)
     .add("payloadTransferSpeedMBps",
          m_taskStats.totalTime ? 1.0 * m_taskStats.dataVolume / 1000 / 1000 / m_taskStats.totalTime : 0.0)
@@ -391,4 +408,4 @@ cta::ArchiveJob& TapeWriteTask::getArchiveJob() const {
   return *m_archiveJob;
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

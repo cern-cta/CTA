@@ -31,47 +31,51 @@
 #include <cstdint>
 #include <time.h>
 
-
 namespace cta::schedulerdb {
 
 class TapeMountDecisionInfo;
 
 class ArchiveMount : public SchedulerDatabase::ArchiveMount {
- friend class cta::RelationalDB;
- friend class TapeMountDecisionInfo;
- public:
+  friend class cta::RelationalDB;
+  friend class TapeMountDecisionInfo;
 
-   ArchiveMount(RelationalDB &pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType) :
-                m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_ownerId(ownerId), m_queueType(queueType), m_jobPool(pdb.m_connPool) { }
+public:
+  ArchiveMount(RelationalDB& pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType)
+      : m_RelationalDB(pdb),
+        m_connPool(pdb.m_connPool),
+        m_ownerId(ownerId),
+        m_queueType(queueType),
+        m_jobPool(pdb.m_connPool) {}
 
-   const MountInfo & getMountInfo() override;
+  const MountInfo& getMountInfo() override;
 
-   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext) override;
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
+  getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-   void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                       time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
+  void setDriveStatus(common::dataStructures::DriveStatus status,
+                      common::dataStructures::MountType mountType,
+                      time_t completionTime,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
-   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
-   void setJobBatchTransferred(
-      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) override;
-   /**
+  void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                              log::LogContext& lc) override;
+  /**
     * Re-queue batch of jobs
     * Serves PGSCHED purpose only
     *
     * @param jobIDsList
     * @return number of jobs re-queued in the DB
     */
-    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
+  uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
 
 private:
-
-   cta::RelationalDB& m_RelationalDB;
-   cta::rdbms::ConnPool& m_connPool;
-   const std::string& m_ownerId;
-   common::dataStructures::JobQueueType m_queueType;
-   schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
+  cta::RelationalDB& m_RelationalDB;
+  cta::rdbms::ConnPool& m_connPool;
+  const std::string& m_ownerId;
+  common::dataStructures::JobQueueType m_queueType;
+  schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

@@ -29,39 +29,40 @@
 namespace cta::schedulerdb {
 
 CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
-  
+
 class ArchiveRequest {
 public:
-  ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) :
-    m_conn(conn),
-    m_lc(lc) { }
+  ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
   void insert();
   [[noreturn]] void update() const;
 
   // ============================== Job management =============================
-  void addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
-    uint16_t maxReportRetries);
+  void addJob(uint8_t copyNumber,
+              std::string_view tapepool,
+              uint16_t maxRetriesWithinMount,
+              uint16_t maxTotalRetries,
+              uint16_t maxReportRetries);
 
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
   common::dataStructures::ArchiveFile getArchiveFile() const;
-  
+
   void setArchiveReportURL(std::string_view URL);
   std::string getArchiveReportURL() const;
-  
+
   void setArchiveErrorReportURL(std::string_view URL);
   std::string getArchiveErrorReportURL() const;
 
-  void setRequester(const common::dataStructures::RequesterIdentity &requester);
+  void setRequester(const common::dataStructures::RequesterIdentity& requester);
   common::dataStructures::RequesterIdentity getRequester() const;
 
   void setSrcURL(std::string_view srcURL);
   std::string getSrcURL() const;
 
-  void setEntryLog(const common::dataStructures::EntryLog &creationLog);
+  void setEntryLog(const common::dataStructures::EntryLog& creationLog);
   common::dataStructures::EntryLog getEntryLog() const;
-  
-  void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
+
+  void setMountPolicy(const common::dataStructures::MountPolicy& mountPolicy);
   common::dataStructures::MountPolicy getMountPolicy() const;
 
   /* 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID
@@ -69,13 +70,13 @@ public:
    * using Relational DB, we can use archive file ID and instance name for the lookup.
    */
   std::string getIdStr() const { return "bogus"; }
-  
+
   struct JobDump {
     uint32_t copyNb;
     std::string tapePool;
     ArchiveJobStatus status;
   };
-  
+
   [[noreturn]] std::list<JobDump> dumpJobs() const;
 
 private:
@@ -98,21 +99,21 @@ private:
   // References to external objects
   //rdbms::ConnPool &m_connPool;
   rdbms::Conn& m_conn;
-  log::LogContext&  m_lc;
+  log::LogContext& m_lc;
 
   // ArchiveRequest state
   bool m_isReportDecided = false;
   bool m_isRepack = false;
 
   // ArchiveRequest metadata
-  common::dataStructures::ArchiveFile        m_archiveFile;
-  std::string                                m_archiveReportURL;
-  std::string                                m_archiveErrorReportURL;
-  common::dataStructures::RequesterIdentity  m_requesterIdentity;
-  std::string                                m_srcURL;
-  common::dataStructures::EntryLog           m_entryLog;
-  common::dataStructures::MountPolicy        m_mountPolicy;
-  std::list<Job>                             m_jobs;
+  common::dataStructures::ArchiveFile m_archiveFile;
+  std::string m_archiveReportURL;
+  std::string m_archiveErrorReportURL;
+  common::dataStructures::RequesterIdentity m_requesterIdentity;
+  std::string m_srcURL;
+  common::dataStructures::EntryLog m_entryLog;
+  common::dataStructures::MountPolicy m_mountPolicy;
+  std::list<Job> m_jobs;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

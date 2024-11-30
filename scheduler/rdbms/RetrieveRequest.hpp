@@ -42,13 +42,15 @@ class RetrieveRequest {
   friend class cta::RelationalDB;
 
 public:
-    RetrieveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(&conn), m_lc(lc) { }
+  RetrieveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(&conn), m_lc(lc) {}
 
-    RetrieveRequest(log::LogContext& lc, const schedulerdb::postgres::RetrieveJobQueueRow &row) : m_conn(nullptr), m_lc(lc) {
+  RetrieveRequest(log::LogContext& lc, const schedulerdb::postgres::RetrieveJobQueueRow& row)
+      : m_conn(nullptr),
+        m_lc(lc) {
     *this = row;
   }
 
-  RetrieveRequest& operator=(const schedulerdb::postgres::RetrieveJobQueueRow &row);
+  RetrieveRequest& operator=(const schedulerdb::postgres::RetrieveJobQueueRow& row);
 
   void insert();
   void commit();
@@ -57,49 +59,49 @@ public:
   // ============================== Job management =============================
 
   struct RetrieveReqRepackInfo {
-    bool isRepack{false};
+    bool isRepack {false};
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
-    uint64_t repackRequestId{0};
-    uint64_t fSeq{0};
+    uint64_t repackRequestId {0};
+    uint64_t fSeq {0};
     std::string fileBufferURL;
-    bool hasUserProvidedFile{false};
+    bool hasUserProvidedFile {false};
   };
 
   struct RetrieveReqJobDump {
-    uint32_t copyNb{0};
-    cta::schedulerdb::RetrieveJobStatus status{RetrieveJobStatus::RJS_ToTransfer};
+    uint32_t copyNb {0};
+    cta::schedulerdb::RetrieveJobStatus status {RetrieveJobStatus::RJS_ToTransfer};
   };
 
   struct RetrieveRequestJob {
-    uint32_t copyNb{0};
-    uint32_t maxtotalretries{0};
-    uint32_t maxretrieswithinmount{0};
-    uint32_t retrieswithinmount{0};
-    uint32_t totalretries{0};
-    schedulerdb::RetrieveJobStatus status{RetrieveJobStatus::RJS_ToTransfer};
-    uint64_t lastmountwithfailure{0};
+    uint32_t copyNb {0};
+    uint32_t maxtotalretries {0};
+    uint32_t maxretrieswithinmount {0};
+    uint32_t retrieswithinmount {0};
+    uint32_t totalretries {0};
+    schedulerdb::RetrieveJobStatus status {RetrieveJobStatus::RJS_ToTransfer};
+    uint64_t lastmountwithfailure {0};
     std::vector<std::string> failurelogs;
-    uint32_t maxreportretries{0};
-    uint32_t totalreportretries{0};
+    uint32_t maxreportretries {0};
+    uint32_t totalreportretries {0};
     std::vector<std::string> reportfailurelogs;
-    bool isfailed{false};
+    bool isfailed {false};
   };
 
   [[noreturn]] void setFailureReason(std::string_view reason) const;
 
   [[noreturn]] bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
 
-  void setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo) const;
+  void setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) const;
 
-  void setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus &status) const;
+  void setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status) const;
 
-  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
+  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
 
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
 
-  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
+  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
+                           const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
 
   void setDiskSystemName(std::string_view diskSystemName);
 
@@ -113,37 +115,37 @@ public:
   void setIsVerifyOnly(bool isVerifyOnly);
 
   void setFailed() const;
-  
+
   std::list<RetrieveReqJobDump> dumpJobs() const;
 
   std::string getIdStr() const { return "?"; }
 
-  uint64_t                                     m_requestId = 0;
-  uint64_t                                     m_mountId = 0;
-  schedulerdb::RetrieveJobStatus               m_status;
-  std::string                                  m_vid;
-  uint64_t                                     m_priority = 0;
-  time_t                                       m_retrieveMinReqAge = 0;
-  time_t                                       m_startTime = 0;
-  std::string                                  m_failureReportUrl;
-  std::string                                  m_failureReportLog;
-  bool                                         m_isFailed = false;
-  
+  uint64_t m_requestId = 0;
+  uint64_t m_mountId = 0;
+  schedulerdb::RetrieveJobStatus m_status;
+  std::string m_vid;
+  uint64_t m_priority = 0;
+  time_t m_retrieveMinReqAge = 0;
+  time_t m_startTime = 0;
+  std::string m_failureReportUrl;
+  std::string m_failureReportLog;
+  bool m_isFailed = false;
+
   // the archiveFile element in scheduler retrieve request is not used
   cta::common::dataStructures::RetrieveRequest m_schedRetrieveReq;
-  cta::common::dataStructures::ArchiveFile     m_archiveFile;
-  std::string                                  m_mountPolicyName;
-  std::optional<std::string>                   m_activity;
-  std::optional<std::string>                   m_diskSystemName;
-  uint32_t                                     m_actCopyNb = 0;
+  cta::common::dataStructures::ArchiveFile m_archiveFile;
+  std::string m_mountPolicyName;
+  std::optional<std::string> m_activity;
+  std::optional<std::string> m_diskSystemName;
+  uint32_t m_actCopyNb = 0;
 
-  RetrieveReqRepackInfo  m_repackInfo;
-  
+  RetrieveReqRepackInfo m_repackInfo;
+
   std::list<RetrieveRequestJob> m_jobs;
 
   // References to external objects
   rdbms::Conn* m_conn;
-  log::LogContext &m_lc;
+  log::LogContext& m_lc;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

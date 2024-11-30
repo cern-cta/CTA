@@ -30,189 +30,186 @@
 
 namespace cta::schedulerdb::postgres {
 
-  struct ArchiveJobQueueRow {
-    uint64_t jobId = 0;
-    uint64_t reqId = 0;
-    uint32_t reqJobCount = 1;
-    std::optional <std::uint64_t> mountId = std::nullopt;
-    ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
-    std::string tapePool = "";
-    std::string mountPolicy = "";
-    uint32_t priority = 0;
-    uint64_t minArchiveRequestAge = 0;
-    uint8_t copyNb = 0;
-    time_t startTime = 0;                       //!< Time the job was inserted into the queue
-    std::string archiveReportUrl = "";
-    std::string archiveErrorReportUrl = "";
-    std::string requesterName = "";
-    std::string requesterGroup = "";
-    std::string srcUrl = "";
-    uint32_t retriesWithinMount = 0;
-    uint32_t totalRetries = 0;
-    uint64_t lastMountWithFailure = 0;
-    uint32_t maxTotalRetries = 0;
-    uint32_t maxRetriesWithinMount = 0;
-    uint32_t maxReportRetries = 0;
-    uint32_t totalReportRetries = 0;
-    std::optional <std::string> failureLogs = std::nullopt;
-    std::optional <std::string> reportFailureLogs = std::nullopt;
-    bool is_repack = false;
-    bool is_reporting = false;
-    bool in_drive_queue = false;
-    uint64_t repackId = 0;
-    std::string repackFilebufUrl = "";
-    uint64_t repackFseq = 0;
-    std::string repackDestVid = "";
-    std::string vid = "";
-    std::string drive = "";
-    std::string host = "";
-    std::string mount_type = "";
-    std::string logical_library = "";
+struct ArchiveJobQueueRow {
+  uint64_t jobId = 0;
+  uint64_t reqId = 0;
+  uint32_t reqJobCount = 1;
+  std::optional<std::uint64_t> mountId = std::nullopt;
+  ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
+  std::string tapePool = "";
+  std::string mountPolicy = "";
+  uint32_t priority = 0;
+  uint64_t minArchiveRequestAge = 0;
+  uint8_t copyNb = 0;
+  time_t startTime = 0;  //!< Time the job was inserted into the queue
+  std::string archiveReportUrl = "";
+  std::string archiveErrorReportUrl = "";
+  std::string requesterName = "";
+  std::string requesterGroup = "";
+  std::string srcUrl = "";
+  uint32_t retriesWithinMount = 0;
+  uint32_t totalRetries = 0;
+  uint64_t lastMountWithFailure = 0;
+  uint32_t maxTotalRetries = 0;
+  uint32_t maxRetriesWithinMount = 0;
+  uint32_t maxReportRetries = 0;
+  uint32_t totalReportRetries = 0;
+  std::optional<std::string> failureLogs = std::nullopt;
+  std::optional<std::string> reportFailureLogs = std::nullopt;
+  bool is_repack = false;
+  bool is_reporting = false;
+  bool in_drive_queue = false;
+  uint64_t repackId = 0;
+  std::string repackFilebufUrl = "";
+  uint64_t repackFseq = 0;
+  std::string repackDestVid = "";
+  std::string vid = "";
+  std::string drive = "";
+  std::string host = "";
+  std::string mount_type = "";
+  std::string logical_library = "";
 
-    common::dataStructures::ArchiveFile archiveFile;
+  common::dataStructures::ArchiveFile archiveFile;
 
-    ArchiveJobQueueRow() {
-      archiveFile.reconciliationTime = 0;
-      archiveFile.archiveFileID = 0;
-      archiveFile.fileSize = 0;
-      archiveFile.diskFileInfo.owner_uid = 0;
-      archiveFile.diskFileInfo.gid = 0;
-      archiveFile.creationTime = 0;
-      tapePool.reserve(64);
-      mountPolicy.reserve(64);
-      archiveReportUrl.reserve(2048);
-      archiveErrorReportUrl.reserve(2048);
-      requesterName.reserve(64);
-      requesterGroup.reserve(64);
-      srcUrl.reserve(2048);
-      repackFilebufUrl.reserve(2048);
-      repackDestVid.reserve(64);
-      vid.reserve(64);
-      drive.reserve(64);
-      host.reserve(64);
-      mount_type.reserve(64);
-      logical_library.reserve(64);
-    }
+  ArchiveJobQueueRow() {
+    archiveFile.reconciliationTime = 0;
+    archiveFile.archiveFileID = 0;
+    archiveFile.fileSize = 0;
+    archiveFile.diskFileInfo.owner_uid = 0;
+    archiveFile.diskFileInfo.gid = 0;
+    archiveFile.creationTime = 0;
+    tapePool.reserve(64);
+    mountPolicy.reserve(64);
+    archiveReportUrl.reserve(2048);
+    archiveErrorReportUrl.reserve(2048);
+    requesterName.reserve(64);
+    requesterGroup.reserve(64);
+    srcUrl.reserve(2048);
+    repackFilebufUrl.reserve(2048);
+    repackDestVid.reserve(64);
+    vid.reserve(64);
+    drive.reserve(64);
+    host.reserve(64);
+    mount_type.reserve(64);
+    logical_library.reserve(64);
+  }
 
-    /**
+  /**
      * Constructor from row
      *
      * @param row  A single row from the current row of the rset
      */
-    explicit ArchiveJobQueueRow(const rdbms::Rset &rset) {
-      tapePool.reserve(64);
-      mountPolicy.reserve(64);
-      archiveReportUrl.reserve(2048);
-      archiveErrorReportUrl.reserve(2048);
-      requesterName.reserve(64);
-      requesterGroup.reserve(64);
-      srcUrl.reserve(2048);
-      repackFilebufUrl.reserve(2048);
-      repackDestVid.reserve(64);
-      vid.reserve(64);
-      drive.reserve(64);
-      host.reserve(64);
-      mount_type.reserve(64);
-      logical_library.reserve(64);
-      *this = rset;
-    }
+  explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
+    tapePool.reserve(64);
+    mountPolicy.reserve(64);
+    archiveReportUrl.reserve(2048);
+    archiveErrorReportUrl.reserve(2048);
+    requesterName.reserve(64);
+    requesterGroup.reserve(64);
+    srcUrl.reserve(2048);
+    repackFilebufUrl.reserve(2048);
+    repackDestVid.reserve(64);
+    vid.reserve(64);
+    drive.reserve(64);
+    host.reserve(64);
+    mount_type.reserve(64);
+    logical_library.reserve(64);
+    *this = rset;
+  }
 
-    // Reset function
-    void reset() {
-      jobId = 0;
-      reqId = 0;
-      reqJobCount = 1;
-      mountId.reset(); // Resetting optional value
-      status = ArchiveJobStatus::AJS_ToTransferForUser;
-      tapePool.clear();
-      mountPolicy.clear();
-      priority = 0;
-      minArchiveRequestAge = 0;
-      copyNb = 0;
-      startTime = 0;
-      archiveReportUrl.clear();
-      archiveErrorReportUrl.clear();
-      requesterName.clear();
-      requesterGroup.clear();
-      srcUrl.clear();
-      retriesWithinMount = 0;
-      totalRetries = 0;
-      lastMountWithFailure = 0;
-      maxTotalRetries = 0;
-      maxRetriesWithinMount = 0;
-      maxReportRetries = 0;
-      totalReportRetries = 0;
-      failureLogs.reset(); // Resetting optional value
-      reportFailureLogs.reset(); // Resetting optional value
-      is_repack = false;
-      is_reporting = false;
-      in_drive_queue = false;
-      repackId = 0;
-      repackFilebufUrl.clear();
-      repackFseq = 0;
-      repackDestVid.clear();
-      vid.clear();
-      drive.clear();
-      host.clear();
-      mount_type.clear();
-      logical_library.clear();
+  // Reset function
+  void reset() {
+    jobId = 0;
+    reqId = 0;
+    reqJobCount = 1;
+    mountId.reset();  // Resetting optional value
+    status = ArchiveJobStatus::AJS_ToTransferForUser;
+    tapePool.clear();
+    mountPolicy.clear();
+    priority = 0;
+    minArchiveRequestAge = 0;
+    copyNb = 0;
+    startTime = 0;
+    archiveReportUrl.clear();
+    archiveErrorReportUrl.clear();
+    requesterName.clear();
+    requesterGroup.clear();
+    srcUrl.clear();
+    retriesWithinMount = 0;
+    totalRetries = 0;
+    lastMountWithFailure = 0;
+    maxTotalRetries = 0;
+    maxRetriesWithinMount = 0;
+    maxReportRetries = 0;
+    totalReportRetries = 0;
+    failureLogs.reset();        // Resetting optional value
+    reportFailureLogs.reset();  // Resetting optional value
+    is_repack = false;
+    is_reporting = false;
+    in_drive_queue = false;
+    repackId = 0;
+    repackFilebufUrl.clear();
+    repackFseq = 0;
+    repackDestVid.clear();
+    vid.clear();
+    drive.clear();
+    host.clear();
+    mount_type.clear();
+    logical_library.clear();
 
-      // Reset archiveFile struct
-      archiveFile = common::dataStructures::ArchiveFile();
-    }
+    // Reset archiveFile struct
+    archiveFile = common::dataStructures::ArchiveFile();
+  }
 
-    ArchiveJobQueueRow &operator=(const rdbms::Rset &rset) {
-      jobId = rset.columnUint64NoOpt("JOB_ID");
-      reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
-      reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
-      mountId = rset.columnOptionalUint64("MOUNT_ID");
-      status = from_string<ArchiveJobStatus>(
-              rset.columnStringNoOpt("STATUS"));
-      tapePool = rset.columnStringNoOpt("TAPE_POOL");
-      mountPolicy = rset.columnStringNoOpt("MOUNT_POLICY");
-      priority = rset.columnUint16NoOpt("PRIORITY");
-      minArchiveRequestAge = rset.columnUint32NoOpt("MIN_ARCHIVE_REQUEST_AGE");
-      archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
-      archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
-      copyNb = rset.columnUint16NoOpt("COPY_NB");
-      startTime = rset.columnUint64NoOpt("START_TIME");
-      archiveFile.checksumBlob.deserialize(
-              std::move(rset.columnBlob("CHECKSUMBLOB")));
-      archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
-      archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
-      archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
-      archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
-      archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
-      archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
-      archiveReportUrl = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
-      archiveErrorReportUrl = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
-      requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
-      requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
-      srcUrl = rset.columnStringNoOpt("SRC_URL");
-      archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
-      is_reporting = rset.columnBoolNoOpt("IS_REPORTING");
-      in_drive_queue = rset.columnBoolNoOpt("IN_DRIVE_QUEUE");
-      vid = rset.columnStringNoOpt("VID");
-      drive = rset.columnStringNoOpt("DRIVE");
-      host = rset.columnStringNoOpt("HOST");
-      mount_type = rset.columnStringNoOpt("MOUNT_TYPE");
-      logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
-      failureLogs = std::move(rset.columnOptionalString("FAILURE_LOG"));
-      reportFailureLogs = std::move(rset.columnOptionalString("REPORT_FAILURE_LOG"));
-      lastMountWithFailure = rset.columnUint32NoOpt("LAST_MOUNT_WITH_FAILURE");
-      retriesWithinMount = rset.columnUint16NoOpt("RETRIES_WITHIN_MOUNT");
-      maxRetriesWithinMount = rset.columnUint16NoOpt("MAX_RETRIES_WITHIN_MOUNT");
-      totalRetries = rset.columnUint16NoOpt("TOTAL_RETRIES");
-      maxReportRetries = rset.columnUint16NoOpt("MAX_REPORT_RETRIES");
-      maxTotalRetries = rset.columnUint16NoOpt("MAX_TOTAL_RETRIES");
-      totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
-      return *this;
-    }
+  ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
+    jobId = rset.columnUint64NoOpt("JOB_ID");
+    reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
+    reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
+    mountId = rset.columnOptionalUint64("MOUNT_ID");
+    status = from_string<ArchiveJobStatus>(rset.columnStringNoOpt("STATUS"));
+    tapePool = rset.columnStringNoOpt("TAPE_POOL");
+    mountPolicy = rset.columnStringNoOpt("MOUNT_POLICY");
+    priority = rset.columnUint16NoOpt("PRIORITY");
+    minArchiveRequestAge = rset.columnUint32NoOpt("MIN_ARCHIVE_REQUEST_AGE");
+    archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
+    archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
+    copyNb = rset.columnUint16NoOpt("COPY_NB");
+    startTime = rset.columnUint64NoOpt("START_TIME");
+    archiveFile.checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
+    archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
+    archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
+    archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
+    archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
+    archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
+    archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
+    archiveReportUrl = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
+    archiveErrorReportUrl = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
+    requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
+    requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
+    srcUrl = rset.columnStringNoOpt("SRC_URL");
+    archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
+    is_reporting = rset.columnBoolNoOpt("IS_REPORTING");
+    in_drive_queue = rset.columnBoolNoOpt("IN_DRIVE_QUEUE");
+    vid = rset.columnStringNoOpt("VID");
+    drive = rset.columnStringNoOpt("DRIVE");
+    host = rset.columnStringNoOpt("HOST");
+    mount_type = rset.columnStringNoOpt("MOUNT_TYPE");
+    logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
+    failureLogs = std::move(rset.columnOptionalString("FAILURE_LOG"));
+    reportFailureLogs = std::move(rset.columnOptionalString("REPORT_FAILURE_LOG"));
+    lastMountWithFailure = rset.columnUint32NoOpt("LAST_MOUNT_WITH_FAILURE");
+    retriesWithinMount = rset.columnUint16NoOpt("RETRIES_WITHIN_MOUNT");
+    maxRetriesWithinMount = rset.columnUint16NoOpt("MAX_RETRIES_WITHIN_MOUNT");
+    totalRetries = rset.columnUint16NoOpt("TOTAL_RETRIES");
+    maxReportRetries = rset.columnUint16NoOpt("MAX_REPORT_RETRIES");
+    maxTotalRetries = rset.columnUint16NoOpt("MAX_TOTAL_RETRIES");
+    totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
+    return *this;
+  }
 
-    void insert(rdbms::Conn &conn) const {
-
-      // does not set mountId or jobId
-      const char *const sql = R"SQL(
+  void insert(rdbms::Conn& conn) const {
+    // does not set mountId or jobId
+    const char* const sql = R"SQL(
       INSERT INTO ARCHIVE_JOB_QUEUE(
         ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
@@ -278,93 +275,96 @@ namespace cta::schedulerdb::postgres {
         :MAX_REPORT_RETRIES)
     )SQL";
 
-      auto stmt = conn.createStmt(sql);
-      stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
-      stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
-      stmt.bindString(":STATUS", to_string(status));
-      stmt.bindString(":TAPE_POOL", tapePool);
-      stmt.bindString(":MOUNT_POLICY", mountPolicy);
-      stmt.bindUint16(":PRIORITY", priority);
-      stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
-      stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
-      stmt.bindUint16(":COPY_NB", copyNb);
-      stmt.bindUint64(":START_TIME", startTime);
-      stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
-      stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
-      stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
-      stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
-      stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
-      stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
-      stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
-      stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportUrl);
-      stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportUrl);
-      stmt.bindString(":REQUESTER_NAME", requesterName);
-      stmt.bindString(":REQUESTER_GROUP", requesterGroup);
-      stmt.bindString(":SRC_URL", srcUrl);
-      stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
-      stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
-      stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
-      stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
-      stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-      stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
-      stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
-      stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
-      stmt.executeNonQuery();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
+    stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindString(":TAPE_POOL", tapePool);
+    stmt.bindString(":MOUNT_POLICY", mountPolicy);
+    stmt.bindUint16(":PRIORITY", priority);
+    stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
+    stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
+    stmt.bindUint16(":COPY_NB", copyNb);
+    stmt.bindUint64(":START_TIME", startTime);
+    stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
+    stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
+    stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
+    stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
+    stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
+    stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
+    stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
+    stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportUrl);
+    stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportUrl);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":REQUESTER_GROUP", requesterGroup);
+    stmt.bindString(":SRC_URL", srcUrl);
+    stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
+    stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+    stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
+    stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
+    stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+    stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
+    stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
+    stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
+    stmt.executeNonQuery();
+  }
 
-    }
+  void addParamsToLogContext(log::ScopedParamContainer& params) const {
+    // does not set jobId
+    params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
+    params.add("jobID", std::to_string(jobId));
+    params.add("reqId", std::to_string(reqId));
+    params.add("reqJobCount", std::to_string(reqJobCount));
+    params.add("status", to_string(status));
+    params.add("tapePool", tapePool);
+    params.add("mountPolicy", mountPolicy);
+    params.add("priority", priority);
+    params.add("minArchiveRequestAge", minArchiveRequestAge);
+    params.add("archiveFileId", archiveFile.archiveFileID);
+    params.add("sizeInBytes", archiveFile.fileSize);
+    params.add("copyNb", copyNb);
+    params.add("startTime", startTime);
+    params.add("checksumBlob", archiveFile.checksumBlob);
+    params.add("creationTime", archiveFile.creationTime);
+    params.add("diskInstance", archiveFile.diskInstance);
+    params.add("diskFileId", archiveFile.diskFileId);
+    params.add("diskFileOwnerUid", archiveFile.diskFileInfo.owner_uid);
+    params.add("diskFileGid", archiveFile.diskFileInfo.gid);
+    params.add("diskFilePath", archiveFile.diskFileInfo.path);
+    params.add("archiveReportUrl", archiveReportUrl);
+    params.add("archiveErrorReportUrl", archiveErrorReportUrl);
+    params.add("requesterName", requesterName);
+    params.add("requesterGroup", requesterGroup);
+    params.add("srcUrl", srcUrl);
+    params.add("storageClass", archiveFile.storageClass);
+    params.add("retriesWithinMount", retriesWithinMount);
+    params.add("totalRetries", totalRetries);
+    params.add("lastMountWithFailure", lastMountWithFailure);
+    params.add("maxTotalRetries", maxTotalRetries);
+    params.add("maxReportRetries", maxReportRetries);
+  }
 
-    void addParamsToLogContext(log::ScopedParamContainer &params) const {
-      // does not set jobId
-      params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
-      params.add("jobID",  std::to_string(jobId));
-      params.add("reqId",  std::to_string(reqId));
-      params.add("reqJobCount",  std::to_string(reqJobCount));
-      params.add("status", to_string(status));
-      params.add("tapePool", tapePool);
-      params.add("mountPolicy", mountPolicy);
-      params.add("priority", priority);
-      params.add("minArchiveRequestAge", minArchiveRequestAge);
-      params.add("archiveFileId", archiveFile.archiveFileID);
-      params.add("sizeInBytes", archiveFile.fileSize);
-      params.add("copyNb", copyNb);
-      params.add("startTime", startTime);
-      params.add("checksumBlob", archiveFile.checksumBlob);
-      params.add("creationTime", archiveFile.creationTime);
-      params.add("diskInstance", archiveFile.diskInstance);
-      params.add("diskFileId", archiveFile.diskFileId);
-      params.add("diskFileOwnerUid", archiveFile.diskFileInfo.owner_uid);
-      params.add("diskFileGid", archiveFile.diskFileInfo.gid);
-      params.add("diskFilePath", archiveFile.diskFileInfo.path);
-      params.add("archiveReportUrl", archiveReportUrl);
-      params.add("archiveErrorReportUrl", archiveErrorReportUrl);
-      params.add("requesterName", requesterName);
-      params.add("requesterGroup", requesterGroup);
-      params.add("srcUrl", srcUrl);
-      params.add("storageClass", archiveFile.storageClass);
-      params.add("retriesWithinMount", retriesWithinMount);
-      params.add("totalRetries", totalRetries);
-      params.add("lastMountWithFailure", lastMountWithFailure);
-      params.add("maxTotalRetries", maxTotalRetries);
-      params.add("maxReportRetries", maxReportRetries);
-    }
-
-    /**
+  /**
      * Select any jobs from the queue by job ID
      *
      * @param conn       Connection to the DB backend
      * @param jobIDs     List of jobID strings to select
      * @return  result set
      */
-    static rdbms::Rset selectJobsByJobID(rdbms::Conn &conn, const std::list <std::string> &jobIDs) {
-      if (jobIDs.empty()) {
-        rdbms::Rset ret;
-        return ret;
-      }
-      std::string sqlpart;
-      for (const auto &piece: jobIDs) sqlpart += piece + ",";
-      if (!sqlpart.empty()) { sqlpart.pop_back(); }
-      std::string sql = R"SQL(
+  static rdbms::Rset selectJobsByJobID(rdbms::Conn& conn, const std::list<std::string>& jobIDs) {
+    if (jobIDs.empty()) {
+      rdbms::Rset ret;
+      return ret;
+    }
+    std::string sqlpart;
+    for (const auto& piece : jobIDs) {
+      sqlpart += piece + ",";
+    }
+    if (!sqlpart.empty()) {
+      sqlpart.pop_back();
+    }
+    std::string sql = R"SQL(
       SELECT 
         JOB_ID AS JOB_ID,
         ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
@@ -414,11 +414,11 @@ namespace cta::schedulerdb::postgres {
     )SQL" + sqlpart + R"SQL(
       ) ORDER BY PRIORITY DESC, JOB_ID
     )SQL";
-      auto stmt = conn.createStmt(sql);
-      return stmt.executeQuery();
-    }
+    auto stmt = conn.createStmt(sql);
+    return stmt.executeQuery();
+  }
 
-    /**
+  /**
      * When CTA received the deleteArchive request from the disk buffer,
      * this ensures removal from the queue
      *
@@ -428,8 +428,8 @@ namespace cta::schedulerdb::postgres {
      *
      * @return  The number of affected jobs
      */
-    static uint64_t cancelArchiveJob(Transaction &txn, const std::string& diskInstance, uint64_t archiveFileID);
-    /**
+  static uint64_t cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
+  /**
      * Select any jobs with specified status(es) from the report,
      * flag them as being reported and return the job IDs
      *
@@ -439,23 +439,29 @@ namespace cta::schedulerdb::postgres {
      *
      * @return  result set of job IDs
      */
-    static rdbms::Rset
-    flagReportingJobsByStatus(Transaction &txn, std::list <ArchiveJobStatus> statusList, uint64_t gc_delay, uint64_t limit);
+  static rdbms::Rset flagReportingJobsByStatus(Transaction& txn,
+                                               std::list<ArchiveJobStatus> statusList,
+                                               uint64_t gc_delay,
+                                               uint64_t limit);
 
-    /**
+  /**
      * Assign a mount ID and VID to a selection of rows
      *
      * @param txn        Transaction to use for this query
      * @param status     Archive Job Status to select on
      * @param mountInfo  mountInfo object
+     * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
      * @param limit      Maximum number of rows to return
      *
      * @return  result set containing job IDs of the rows which were updated
      */
-    static rdbms::Rset updateMountInfo(Transaction &txn, ArchiveJobStatus status,
-                                       const SchedulerDatabase::ArchiveMount::MountInfo &mountInfo, uint64_t limit);
+  static rdbms::Rset updateMountInfo(Transaction& txn,
+                                     ArchiveJobStatus status,
+                                     const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                     uint64_t maxBytesRequested,
+                                     uint64_t limit);
 
-    /**
+  /**
      * Update job status
      *
      * @param txn        Transaction to use for this query
@@ -463,9 +469,9 @@ namespace cta::schedulerdb::postgres {
      * @param jobIDs     List of jobID strings to select
      * @return           Number of updated rows
      */
-    static uint64_t updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::vector <std::string> &jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs);
 
-    /**
+  /**
      * Update failed job status
      *
      * @param txn                  Transaction to use for this query
@@ -473,9 +479,10 @@ namespace cta::schedulerdb::postgres {
      * @param jobID                jobID to select the job for update
      * @return                     Number of updated rows
      */
-    uint64_t updateFailedJobStatus(Transaction &txn, ArchiveJobStatus status, std::optional <uint64_t> mountId = std::nullopt);
+  uint64_t
+  updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status, std::optional<uint64_t> mountId = std::nullopt);
 
-    /**
+  /**
      * Update job status for a batch of failed jobs (task queue failure use-case, e.g. tape full)
      *
      * @param txn        Transaction to use for this query
@@ -483,38 +490,39 @@ namespace cta::schedulerdb::postgres {
      * @param jobIDs     List of jobID strings to select
      * @return           Number of updated rows
      */
-    static uint64_t updateFailedTaskQueueJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list <std::string> &jobIDs);
+  static uint64_t
+  updateFailedTaskQueueJobStatus(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
 
-    /**
+  /**
      * Update job status when job report failed
      *
      * @param txn                  Transaction to use for this query
      * @param status               Archive Job Status to select on
      * @return                     Number of updated rows
       */
-    uint64_t updateJobStatusForFailedReport(Transaction &txn, ArchiveJobStatus status);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status);
 
-    /**
+  /**
      * Copy the job row to the ARCHIVE FAILED JOB TABLE
      *
      * @param txn                  Transaction to use for this query
      */
-    void copyToFailedJobTable(Transaction &txn);
+  void copyToFailedJobTable(Transaction& txn);
 
-    /**
+  /**
      * Copy the job row to the ARCHIVE FAILED JOB TABLE (static alternative)
      *
      * @param txn                  Transaction to use for this query
      */
-    static void copyToFailedJobTable(Transaction &txn, const std::vector<std::string>& jobIDs);
+  static void copyToFailedJobTable(Transaction& txn, const std::vector<std::string>& jobIDs);
 
-    /**
+  /**
      * Increment Archive Request ID and return the new value
      *
      * @param conn  DB connection to use for this query
      *
      * @return     Archive Request ID
      */
-    static uint64_t getNextArchiveRequestID(rdbms::Conn &conn);
-  };
-}; // namespace cta::schedulerdb::postgres
+  static uint64_t getNextArchiveRequestID(rdbms::Conn& conn);
+};
+};  // namespace cta::schedulerdb::postgres

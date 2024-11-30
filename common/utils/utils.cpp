@@ -44,12 +44,12 @@ using cta::exception::Exception;
 //------------------------------------------------------------------------------
 // assertPathStartsWithASlash
 //------------------------------------------------------------------------------
-static void assertPathStartsWithASlash(const std::string &path) {
-  if(path.empty()) {
+static void assertPathStartsWithASlash(const std::string& path) {
+  if (path.empty()) {
     throw Exception("Path is an empty string");
   }
 
-  if('/' != path[0]) {
+  if ('/' != path[0]) {
     throw Exception("Path does not start with a '/' character");
   }
 }
@@ -58,19 +58,14 @@ static void assertPathStartsWithASlash(const std::string &path) {
 // isValidPathChar
 //------------------------------------------------------------------------------
 static bool isValidPathChar(const char c) {
-  return ('0' <= c && c <= '9') ||
-         ('A' <= c && c <= 'Z') ||
-         ('a' <= c && c <= 'z') ||
-         c == '_'               ||
-         c == '/'               ||
-         c == '.';
+  return ('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '_' || c == '/' || c == '.';
 }
 
 //------------------------------------------------------------------------------
 // assertValidPathChar
 //------------------------------------------------------------------------------
 static void assertValidPathChar(const char c) {
-  if(!isValidPathChar(c)) {
+  if (!isValidPathChar(c)) {
     std::ostringstream message;
     message << "The '" << c << "' character cannot be used within a path";
     throw Exception(message.str());
@@ -80,9 +75,8 @@ static void assertValidPathChar(const char c) {
 //------------------------------------------------------------------------------
 // assertPathContainsValidChars
 //------------------------------------------------------------------------------
-static void assertPathContainsValidChars(const std::string &path) {
-  for(std::string::const_iterator itor = path.begin(); itor != path.end();
-    ++itor) {
+static void assertPathContainsValidChars(const std::string& path) {
+  for (std::string::const_iterator itor = path.begin(); itor != path.end(); ++itor) {
     assertValidPathChar(*itor);
   }
 }
@@ -108,51 +102,52 @@ namespace cta::utils {
 //------------------------------------------------------------------------------
 // isValidIPAddress
 //------------------------------------------------------------------------------
-bool isValidIPAddress(const std::string &address) {
-   const Regex ipv4Regex("((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])");
-   const Regex ipv6Regex("(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"            // 1:2:3:4:5:6:7:8
-                         "([0-9a-fA-F]{1,4}:){1,7}:|"                            // 1::                              1:2:3:4:5:6:7::
-                         "([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"            // 1::8             1:2:3:4:5:6::8  1:2:3:4:5:6::8
-                         "([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|"     // 1::7:8           1:2:3:4:5::7:8  1:2:3:4:5::8
-                         "([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|"     // 1::6:7:8         1:2:3:4::6:7:8  1:2:3:4::8
-                         "([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|"     // 1::5:6:7:8       1:2:3::5:6:7:8  1:2:3::8
-                         "([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|"     // 1::4:5:6:7:8     1:2::4:5:6:7:8  1:2::8
-                         "[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|"          // 1::3:4:5:6:7:8   1::3:4:5:6:7:8  1::8
-                         ":((:[0-9a-fA-F]{1,4}){1,7}|:)|"                        // ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::
-                         "fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"        // fe80::7:8%eth0   fe80::7:8%1     (link-local IPv6 addresses with zone index)
-                         "::(ffff(:0{1,4}){0,1}:){0,1}"
-                         "((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}"
-                         "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|"             // ::255.255.255.255 ::ffff:255.255.255.255 ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
-                         "([0-9a-fA-F]{1,4}:){1,4}:"
-                         "((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}"
-                         "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))");           // 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
+bool isValidIPAddress(const std::string& address) {
+  const Regex ipv4Regex("((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])");
+  const Regex ipv6Regex(
+    "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"         // 1:2:3:4:5:6:7:8
+    "([0-9a-fA-F]{1,4}:){1,7}:|"                         // 1::                              1:2:3:4:5:6:7::
+    "([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"         // 1::8             1:2:3:4:5:6::8  1:2:3:4:5:6::8
+    "([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|"  // 1::7:8           1:2:3:4:5::7:8  1:2:3:4:5::8
+    "([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|"  // 1::6:7:8         1:2:3:4::6:7:8  1:2:3:4::8
+    "([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|"  // 1::5:6:7:8       1:2:3::5:6:7:8  1:2:3::8
+    "([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|"  // 1::4:5:6:7:8     1:2::4:5:6:7:8  1:2::8
+    "[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|"       // 1::3:4:5:6:7:8   1::3:4:5:6:7:8  1::8
+    ":((:[0-9a-fA-F]{1,4}){1,7}|:)|"                     // ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::
+    "fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"  // fe80::7:8%eth0   fe80::7:8%1     (link-local IPv6 addresses with zone index)
+    "::(ffff(:0{1,4}){0,1}:){0,1}"
+    "((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}"
+    "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|"  // ::255.255.255.255 ::ffff:255.255.255.255 ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
+    "([0-9a-fA-F]{1,4}:){1,4}:"
+    "((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}"
+    "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))");  // 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
 
-   return ipv4Regex.has_match(address) || ipv6Regex.has_match(address);
+  return ipv4Regex.has_match(address) || ipv6Regex.has_match(address);
 }
 
 //------------------------------------------------------------------------------
 // assertIsFQDN
 //------------------------------------------------------------------------------
-void assertIsFQDN(const std::string &hostname) {
-   const Regex hostnameRegex("^(([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)|([a-zA-Z0-9]\\.))+[a-zA-Z]{2,63}$");
+void assertIsFQDN(const std::string& hostname) {
+  const Regex hostnameRegex("^(([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)|([a-zA-Z0-9]\\.))+[a-zA-Z]{2,63}$");
 
-   if(hostname.length() > 253 || !hostnameRegex.has_match(hostname)) {
-      throw Exception(hostname + " is not a valid Fully-Qualified Domain Name.");
-   }
+  if (hostname.length() > 253 || !hostnameRegex.has_match(hostname)) {
+    throw Exception(hostname + " is not a valid Fully-Qualified Domain Name.");
+  }
 }
 
 //------------------------------------------------------------------------------
 // assertAbsolutePathSyntax
 //------------------------------------------------------------------------------
-void assertAbsolutePathSyntax(const std::string &path) {
+void assertAbsolutePathSyntax(const std::string& path) {
   try {
     assertPathStartsWithASlash(path);
     assertPathContainsValidChars(path);
     //assertPathDoesContainConsecutiveSlashes(path);
-  } catch(std::exception &ex) {
+  }
+  catch (std::exception& ex) {
     std::ostringstream message;
-    message << "Absolute path \"" << path << "\" contains a syntax error: " <<
-      ex.what();
+    message << "Absolute path \"" << path << "\" contains a syntax error: " << ex.what();
     throw Exception(message.str());
   }
 }
@@ -160,14 +155,14 @@ void assertAbsolutePathSyntax(const std::string &path) {
 //------------------------------------------------------------------------------
 // getEnclosingPath
 //------------------------------------------------------------------------------
-std::string getEnclosingPath(const std::string &path) {
-  if(path == "/") {
+std::string getEnclosingPath(const std::string& path) {
+  if (path == "/") {
     throw Exception("Root directory does not have a parent");
   }
-  const std::string &trimmedPath = trimFinalSlashes(path);
+  const std::string& trimmedPath = trimFinalSlashes(path);
 
   const std::string::size_type lastSlashIndex = trimmedPath.find_last_of('/');
-  if(std::string::npos == lastSlashIndex) {
+  if (std::string::npos == lastSlashIndex) {
     throw Exception("Path does not contain a slash");
   }
   return trimmedPath.substr(0, lastSlashIndex + 1);
@@ -176,14 +171,16 @@ std::string getEnclosingPath(const std::string &path) {
 //------------------------------------------------------------------------------
 // getEnclosedName
 //------------------------------------------------------------------------------
-std::string getEnclosedName(const std::string &path) {
+std::string getEnclosedName(const std::string& path) {
   const std::string::size_type last_slash_idx = path.find_last_of('/');
-  if(std::string::npos == last_slash_idx) {
+  if (std::string::npos == last_slash_idx) {
     return path;
-  } else {
-    if(path.length() == 1) {
+  }
+  else {
+    if (path.length() == 1) {
       return "";
-    } else {
+    }
+    else {
       return path.substr(last_slash_idx + 1);
     }
   }
@@ -192,12 +189,10 @@ std::string getEnclosedName(const std::string &path) {
 //-----------------------------------------------------------------------------
 // getEnclosedNames
 //-----------------------------------------------------------------------------
-std::list<std::string> getEnclosedNames(
-  const std::list<std::string> &paths) {
+std::list<std::string> getEnclosedNames(const std::list<std::string>& paths) {
   std::list<std::string> names;
 
-  for(std::list<std::string>::const_iterator itor = paths.begin();
-    itor != paths.end(); ++itor) {
+  for (std::list<std::string>::const_iterator itor = paths.begin(); itor != paths.end(); ++itor) {
     names.push_back(getEnclosedName(*itor));
   }
 
@@ -207,13 +202,14 @@ std::list<std::string> getEnclosedNames(
 //-----------------------------------------------------------------------------
 // trimSlashes
 //-----------------------------------------------------------------------------
-std::string trimSlashes(const std::string &s) {
+std::string trimSlashes(const std::string& s) {
   // Find first non slash character
   size_t beginpos = s.find_first_not_of("/");
   std::string::const_iterator it1;
   if (std::string::npos != beginpos) {
     it1 = beginpos + s.begin();
-  } else {
+  }
+  else {
     it1 = s.begin();
   }
 
@@ -222,7 +218,8 @@ std::string trimSlashes(const std::string &s) {
   size_t endpos = s.find_last_not_of("/");
   if (std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
-  } else {
+  }
+  else {
     it2 = s.end();
   }
 
@@ -232,13 +229,14 @@ std::string trimSlashes(const std::string &s) {
 //-----------------------------------------------------------------------------
 // trimFinalSlashes
 //-----------------------------------------------------------------------------
-std::string trimFinalSlashes(const std::string &s) {
+std::string trimFinalSlashes(const std::string& s) {
   // Find last non slash chararacter
   std::string::const_iterator it2;
   size_t endpos = s.find_last_not_of("/");
   if (std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
-  } else {
+  }
+  else {
     it2 = s.end();
   }
 
@@ -248,17 +246,15 @@ std::string trimFinalSlashes(const std::string &s) {
 //-----------------------------------------------------------------------------
 // splitString
 //-----------------------------------------------------------------------------
-void splitString(const std::string &str, const char separator,
-  std::vector<std::string> &result) {
-
-  if(str.empty()) {
+void splitString(const std::string& str, const char separator, std::vector<std::string>& result) {
+  if (str.empty()) {
     return;
   }
 
   std::string::size_type beginIndex = 0;
-  std::string::size_type endIndex   = str.find(separator);
+  std::string::size_type endIndex = str.find(separator);
 
-  while(endIndex != std::string::npos) {
+  while (endIndex != std::string::npos) {
     result.push_back(str.substr(beginIndex, endIndex - beginIndex));
     beginIndex = ++endIndex;
     endIndex = str.find(separator, endIndex);
@@ -271,7 +267,7 @@ void splitString(const std::string &str, const char separator,
 // trimString
 //-----------------------------------------------------------------------------
 std::string trimString(std::string_view s) {
-  const std::string& spaces="\t\n\v\f\r ";
+  const std::string& spaces = "\t\n\v\f\r ";
 
   // Find first non-space character
   size_t beginpos = s.find_first_not_of(spaces);
@@ -288,45 +284,53 @@ std::string trimString(std::string_view s) {
 //------------------------------------------------------------------------------
 // postEllipsis
 //------------------------------------------------------------------------------
-std::string postEllipsis(const std::string &s, size_t maxSize) {
+std::string postEllipsis(const std::string& s, size_t maxSize) {
   std::string ellipsis = "[...]";
-  if (maxSize < ellipsis.size())
+  if (maxSize < ellipsis.size()) {
     throw cta::exception::Exception("In cta::utils::postEllipsis(): maxSize cannot be smaller than ellipsis size");
-  if (s.size() <= maxSize)
+  }
+  if (s.size() <= maxSize) {
     return s;
+  }
   return s.substr(0, maxSize - ellipsis.size()) + ellipsis;
 }
 
 //------------------------------------------------------------------------------
 // midEllipsis
 //------------------------------------------------------------------------------
-std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSize) {
+std::string midEllipsis(const std::string& s, size_t maxSize, size_t beginingSize) {
   std::string ellipsis = "[...]";
-  if (maxSize < ellipsis.size() + beginingSize)
-    throw cta::exception::Exception("In cta::utils::midEllipsis(): maxSize cannot be smaller than ellipsis size + beginingSize");
-  if (s.size() <= maxSize)
+  if (maxSize < ellipsis.size() + beginingSize) {
+    throw cta::exception::Exception(
+      "In cta::utils::midEllipsis(): maxSize cannot be smaller than ellipsis size + beginingSize");
+  }
+  if (s.size() <= maxSize) {
     return s;
-  if (!beginingSize)
+  }
+  if (!beginingSize) {
     beginingSize = (maxSize - ellipsis.size()) / 2;
+  }
   return s.substr(0, beginingSize) + ellipsis + s.substr(s.size() - maxSize + ellipsis.size() + beginingSize);
 }
 
 //------------------------------------------------------------------------------
 // preEllipsis
 //------------------------------------------------------------------------------
-std::string preEllipsis(const std::string &s, size_t maxSize) {
+std::string preEllipsis(const std::string& s, size_t maxSize) {
   std::string ellipsis = "[...]";
-  if (maxSize < ellipsis.size())
+  if (maxSize < ellipsis.size()) {
     throw cta::exception::Exception("In cta::utils::postEllipsis(): maxSize cannot be smaller than ellipsis size");
-  if (s.size() <= maxSize)
+  }
+  if (s.size() <= maxSize) {
     return s;
+  }
   return ellipsis + s.substr(s.size() - maxSize + ellipsis.size());
 }
 
 //------------------------------------------------------------------------------
 // singleSpaceString
 //------------------------------------------------------------------------------
-std::string singleSpaceString(const std::string &str) {
+std::string singleSpaceString(const std::string& str) {
   bool inWhitespace = false;
   bool strContainsNonWhiteSpace = false;
 
@@ -334,21 +338,17 @@ std::string singleSpaceString(const std::string &str) {
   std::ostringstream result;
 
   // For each character in the original string
-  for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    ++itor) {
-
+  for (std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
     // If the character is a space or a tab
-    if(*itor == ' ' || *itor == '\t') {
-
+    if (*itor == ' ' || *itor == '\t') {
       // Remember we are in whitespace
       inWhitespace = true;
 
-    // Else the character is not a space or a tab
-    } else {
-
+      // Else the character is not a space or a tab
+    }
+    else {
       // If we are leaving whitespace
-      if(inWhitespace) {
-
+      if (inWhitespace) {
         // Remember we have left whitespace
         inWhitespace = false;
 
@@ -361,14 +361,13 @@ std::string singleSpaceString(const std::string &str) {
 
       // Insert the character into the output string stream
       result << *itor;
-
     }
   }
 
   // If str is not emtpy and does not contain any non-whitespace characters
   // then nothing has been written to the result stream, therefore write a
   // single space
-  if(!str.empty() && !strContainsNonWhiteSpace) {
+  if (!str.empty() && !strContainsNonWhiteSpace) {
     result << " ";
   }
 
@@ -391,10 +390,11 @@ std::string generateUuid() {
 //-----------------------------------------------------------------------------
 // endsWith
 //-----------------------------------------------------------------------------
-bool endsWith(const std::string &str, const char c) {
-  if(str.empty()) {
+bool endsWith(const std::string& str, const char c) {
+  if (str.empty()) {
     return false;
-  } else {
+  }
+  else {
     return c == str.at(str.length() - 1);
   }
 }
@@ -402,13 +402,12 @@ bool endsWith(const std::string &str, const char c) {
 //------------------------------------------------------------------------------
 // setXattr
 //------------------------------------------------------------------------------
-void setXattr(const std::string &path, const std::string &name,
-  const std::string &value) {
-  if(setxattr(path.c_str(), name.c_str(), value.c_str(), value.length(), 0)) {
+void setXattr(const std::string& path, const std::string& name, const std::string& value) {
+  if (setxattr(path.c_str(), name.c_str(), value.c_str(), value.length(), 0)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << "Call to setxattr() failed: path=" << path << " name=" << name <<
-      " value=" << value << ": " << errnoToString(savedErrno);
+    msg << "Call to setxattr() failed: path=" << path << " name=" << name << " value=" << value << ": "
+        << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 }
@@ -416,30 +415,26 @@ void setXattr(const std::string &path, const std::string &name,
 //------------------------------------------------------------------------------
 // getXattr
 //------------------------------------------------------------------------------
-std::string getXattr(const std::string &path,
-  const std::string &name) {
+std::string getXattr(const std::string& path, const std::string& name) {
   const auto sizeOfValue = getxattr(path.c_str(), name.c_str(), nullptr, 0);
-  if(0 > sizeOfValue) {
+  if (0 > sizeOfValue) {
     const int savedErrno = errno;
     std::stringstream msg;
-    msg << "Call to getxattr() failed: path=" << path << " name=" << name <<
-      ": " << errnoToString(savedErrno);
+    msg << "Call to getxattr() failed: path=" << path << " name=" << name << ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 == sizeOfValue) {
+  if (0 == sizeOfValue) {
     return "";
   }
 
   std::unique_ptr<char[]> value(new char[sizeOfValue + 1]);
   bzero(value.get(), sizeOfValue + 1);
 
-  if(0 > getxattr(path.c_str(), name.c_str(), (void *)value.get(),
-    sizeOfValue)) {
+  if (0 > getxattr(path.c_str(), name.c_str(), (void*) value.get(), sizeOfValue)) {
     const int savedErrno = errno;
     std::stringstream msg;
-    msg << "Call to getxattr() failed: path=" << path << " name=" << name <<
-      ": " << errnoToString(savedErrno);
+    msg << "Call to getxattr() failed: path=" << path << " name=" << name << ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
@@ -452,27 +447,31 @@ std::string getXattr(const std::string &path,
 std::string errnoToString(const int errnoValue) {
   char buf[100];
 
-  if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
+  if (!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
     return buf;
-  } else {
+  }
+  else {
     const int errnoSetByStrerror_r_wrapper = errno;
     std::ostringstream oss;
 
-    switch(errnoSetByStrerror_r_wrapper) {
-    case EINVAL:
-      oss << "Failed to convert errnoValue to string: Invalid errnoValue"
-        ": errnoValue=" << errnoValue;
-      break;
-    case ERANGE:
-      oss << "Failed to convert errnoValue to string"
-        ": Destination buffer for error string is too small"
-        ": errnoValue=" << errnoValue;
-      break;
-    default:
-      oss << "Failed to convert errnoValue to string"
-        ": strerror_r_wrapper failed in an unknown way"
-        ": errnoValue=" << errnoValue;
-      break;
+    switch (errnoSetByStrerror_r_wrapper) {
+      case EINVAL:
+        oss << "Failed to convert errnoValue to string: Invalid errnoValue"
+               ": errnoValue="
+            << errnoValue;
+        break;
+      case ERANGE:
+        oss << "Failed to convert errnoValue to string"
+               ": Destination buffer for error string is too small"
+               ": errnoValue="
+            << errnoValue;
+        break;
+      default:
+        oss << "Failed to convert errnoValue to string"
+               ": strerror_r_wrapper failed in an unknown way"
+               ": errnoValue="
+            << errnoValue;
+        break;
     }
 
     return oss.str();
@@ -499,18 +498,18 @@ uint8_t toPGUint8(std::string_view str) {
     }
 
     return static_cast<uint8_t>(value);
-
-  } catch (const std::invalid_argument &) {
+  }
+  catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range &) {
+  }
+  catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Value out of range";
     throw exception::Exception(msg.str());
   }
 }
-
 
 //------------------------------------------------------------------------------
 // toUint16
@@ -532,12 +531,13 @@ uint16_t toPGUint16(std::string_view str) {
     }
 
     return static_cast<uint16_t>(value);
-
-  } catch (const std::invalid_argument &) {
+  }
+  catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint16_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range &) {
+  }
+  catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint16_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -561,12 +561,13 @@ uint32_t toPGUint32(std::string_view str) {
     }
 
     return static_cast<uint32_t>(value);
-
-  } catch (const std::invalid_argument &) {
+  }
+  catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range &) {
+  }
+  catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -590,12 +591,13 @@ uint64_t toPGUint64(std::string_view str) {
     }
 
     return static_cast<uint64_t>(value);
-
-  } catch (const std::invalid_argument &) {
+  }
+  catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range &) {
+  }
+  catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -610,12 +612,13 @@ double toPGDouble(std::string_view str) {
   }
   try {
     return std::stod(std::string(str));
-
-  } catch (const std::invalid_argument &) {
+  }
+  catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range &) {
+  }
+  catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Value out of range";
     throw exception::Exception(msg.str());
@@ -625,8 +628,8 @@ double toPGDouble(std::string_view str) {
 //------------------------------------------------------------------------------
 // toUint8
 //------------------------------------------------------------------------------
-uint8_t toUint8(const std::string &str) {
-  if(str.empty()) {
+uint8_t toUint8(const std::string& str) {
+  if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint8_t: An empty string is not"
            " a valid unsigned integer";
@@ -634,22 +637,21 @@ uint8_t toUint8(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
+  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
   const int savedErrno = errno;
-  if(savedErrno) {
+  if (savedErrno) {
     std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint8_t: " <<
-      errnoToString(savedErrno);
+    msg << "Failed to convert \'" << str << "' to uint8_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 > value) {
+  if (0 > value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint8_t: Negative number";
     throw exception::Exception(msg.str());
   }
 
-  if(255 < value) {
+  if (255 < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint8_t: Number too big";
     throw exception::Exception(msg.str());
@@ -658,31 +660,30 @@ uint8_t toUint8(const std::string &str) {
   return value;
 }
 
-uint16_t toUint16(const std::string &str) {
-  if(str.empty()) {
+uint16_t toUint16(const std::string& str) {
+  if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint16_t: An empty string is not"
-      " a valid unsigned integer";
+           " a valid unsigned integer";
     throw exception::Exception(msg.str());
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
+  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
   const int savedErrno = errno;
-  if(savedErrno) {
+  if (savedErrno) {
     std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint16_t: " <<
-      errnoToString(savedErrno);
+    msg << "Failed to convert \'" << str << "' to uint16_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 > value) {
+  if (0 > value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint16_t: Negative number";
     throw exception::Exception(msg.str());
   }
 
-  if(65535 < value) {
+  if (65535 < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint16_t: Number too big";
     throw exception::Exception(msg.str());
@@ -694,8 +695,8 @@ uint16_t toUint16(const std::string &str) {
 //------------------------------------------------------------------------------
 // toUint32
 //------------------------------------------------------------------------------
-uint32_t toUint32(const std::string &str) {
-  if(str.empty()) {
+uint32_t toUint32(const std::string& str) {
+  if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint32_t: An empty string is not"
            " a valid unsigned integer";
@@ -703,22 +704,21 @@ uint32_t toUint32(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
+  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
   const int savedErrno = errno;
-  if(savedErrno) {
+  if (savedErrno) {
     std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint32_t: " <<
-      errnoToString(savedErrno);
+    msg << "Failed to convert \'" << str << "' to uint32_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 > value) {
+  if (0 > value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint32_t: Negative number";
     throw exception::Exception(msg.str());
   }
 
-  if(4294967295 < value) {
+  if (4294967295 < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint32_t: Number too big";
     throw exception::Exception(msg.str());
@@ -730,72 +730,77 @@ uint32_t toUint32(const std::string &str) {
 //------------------------------------------------------------------------------
 // toUint64
 //------------------------------------------------------------------------------
-uint64_t toUint64(const std::string &str) {
+uint64_t toUint64(const std::string& str) {
   try {
     try {
       return std::stoul(str);
-    } catch(std::invalid_argument &) {
+    }
+    catch (std::invalid_argument&) {
       throw exception::Exception("Invalid uint64");
-    } catch(std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("Out of range");
-    } catch(std::exception &se) {
+    }
+    catch (std::exception& se) {
       throw exception::Exception(se.what());
     }
-  } catch(exception::Exception  &ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str + " as an unsigned 64-bit integer: " +
-      ex.getMessage().str());
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str +
+                               " as an unsigned 64-bit integer: " + ex.getMessage().str());
   }
 }
-
 
 //------------------------------------------------------------------------------
 // toDouble
 //------------------------------------------------------------------------------
-double toDouble(const std::string &str) {
+double toDouble(const std::string& str) {
   try {
     try {
       return std::stod(str);
-    } catch(std::invalid_argument &) {
+    }
+    catch (std::invalid_argument&) {
       throw exception::Exception("Invalid double");
-    } catch(std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("Out of range");
-    } catch(std::exception &se) {
+    }
+    catch (std::exception& se) {
       throw exception::Exception(se.what());
     }
-  } catch(exception::Exception  &ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
-      ex.getMessage().str());
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
 // toUid
 //------------------------------------------------------------------------------
-uid_t toUid(const std::string &str) {
-  if(str.empty()) {
+uid_t toUid(const std::string& str) {
+  if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uid_t: An empty string is not"
-      " a valid uid_t value";
+           " a valid uid_t value";
     throw exception::Exception(msg.str());
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
+  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
   const int savedErrno = errno;
-  if(savedErrno) {
+  if (savedErrno) {
     std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uid_t: " <<
-      errnoToString(savedErrno);
+    msg << "Failed to convert \'" << str << "' to uid_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 > value) {
+  if (0 > value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uid_t: Negative number";
     throw exception::Exception(msg.str());
   }
 
-  if(std::numeric_limits<uid_t>::max() < value) {
+  if (std::numeric_limits<uid_t>::max() < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uid_t: Number too big";
     throw exception::Exception(msg.str());
@@ -807,31 +812,30 @@ uid_t toUid(const std::string &str) {
 //------------------------------------------------------------------------------
 // toGid
 //------------------------------------------------------------------------------
-gid_t toGid(const std::string &str) {
-  if(str.empty()) {
+gid_t toGid(const std::string& str) {
+  if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to gid_t: An empty string is not"
-      " a valid gid_t value";
+           " a valid gid_t value";
     throw exception::Exception(msg.str());
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
+  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
   const int savedErrno = errno;
-  if(savedErrno) {
+  if (savedErrno) {
     std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to gid_t: " <<
-      errnoToString(savedErrno);
+    msg << "Failed to convert \'" << str << "' to gid_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
-  if(0 > value) {
+  if (0 > value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to gid_t: Negative number";
     throw exception::Exception(msg.str());
   }
 
-  if(std::numeric_limits<gid_t>::max() < value) {
+  if (std::numeric_limits<gid_t>::max() < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to gid_t: Number too big";
     throw exception::Exception(msg.str());
@@ -843,18 +847,16 @@ gid_t toGid(const std::string &str) {
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool isValidUInt(const std::string &str) {
+bool isValidUInt(const std::string& str) {
   // An empty string is not a valid unsigned integer
-  if(str.empty()) {
+  if (str.empty()) {
     return false;
   }
 
   // For each character in the string
-  for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    ++itor) {
-
+  for (std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
     // If the current character is not a valid numerical digit
-    if(*itor < '0' || *itor > '9') {
+    if (*itor < '0' || *itor > '9') {
       return false;
     }
   }
@@ -865,31 +867,30 @@ bool isValidUInt(const std::string &str) {
 //------------------------------------------------------------------------------
 // isValidDecimal
 //------------------------------------------------------------------------------
-bool isValidDecimal(const std::string &str) {
+bool isValidDecimal(const std::string& str) {
   // An empty string is not a valid decimal
-  if(str.empty()) {
+  if (str.empty()) {
     return false;
   }
 
   uint64_t nbDecimalPoints = 0;
 
   // For each character in the string
-  for(std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
-
+  for (std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
     const bool isFirstChar = itor == str.begin();
     const bool isMinusChar = '-' == *itor;
     const bool isANumericalDigit = '0' <= *itor && *itor <= '9';
     const bool isADecimalPoint = '.' == *itor;
 
-    if(!(isFirstChar && isMinusChar) && !isANumericalDigit && !isADecimalPoint) {
+    if (!(isFirstChar && isMinusChar) && !isANumericalDigit && !isADecimalPoint) {
       return false;
     }
 
-    if(isADecimalPoint) {
+    if (isADecimalPoint) {
       nbDecimalPoints++;
     }
 
-    if(1 < nbDecimalPoints) {
+    if (1 < nbDecimalPoints) {
       return false;
     }
   }
@@ -900,8 +901,8 @@ bool isValidDecimal(const std::string &str) {
 //------------------------------------------------------------------------------
 // toUpper
 //------------------------------------------------------------------------------
-void toUpper(std::string &str) {
-  for(std::string::iterator itor=str.begin(); itor!=str.end(); ++itor) {
+void toUpper(std::string& str) {
+  for (std::string::iterator itor = str.begin(); itor != str.end(); ++itor) {
     *itor = toupper(*itor);
   }
 }
@@ -909,7 +910,7 @@ void toUpper(std::string &str) {
 //------------------------------------------------------------------------------
 // isUpper
 //------------------------------------------------------------------------------
-bool isUpper(const std::string &str) {
+bool isUpper(const std::string& str) {
   std::string str_upper = str;
   toUpper(str_upper);
   return str_upper == str;
@@ -918,8 +919,8 @@ bool isUpper(const std::string &str) {
 //------------------------------------------------------------------------------
 // toLower
 //------------------------------------------------------------------------------
-void toLower(std::string &str) {
-  for(std::string::iterator itor=str.begin(); itor!=str.end(); ++itor) {
+void toLower(std::string& str) {
+  for (std::string::iterator itor = str.begin(); itor != str.end(); ++itor) {
     *itor = tolower(*itor);
   }
 }
@@ -927,10 +928,9 @@ void toLower(std::string &str) {
 //------------------------------------------------------------------------------
 // getAdler32
 //------------------------------------------------------------------------------
-uint32_t getAdler32(const uint8_t *buf, const uint32_t len)
-{
+uint32_t getAdler32(const uint8_t* buf, const uint32_t len) {
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
-  return adler32(checksum, (const Bytef*)buf, len);
+  return adler32(checksum, (const Bytef*) buf, len);
 }
 
 //------------------------------------------------------------------------------
@@ -938,7 +938,7 @@ uint32_t getAdler32(const uint8_t *buf, const uint32_t len)
 //------------------------------------------------------------------------------
 std::string getShortHostname() {
   struct utsname un;
-  exception::Errnum::throwOnMinusOne(uname (&un));
+  exception::Errnum::throwOnMinusOne(uname(&un));
   std::vector<std::string> snn;
   splitString(un.nodename, '.', snn);
   return snn.at(0);
@@ -949,24 +949,24 @@ std::string getShortHostname() {
 //------------------------------------------------------------------------------
 bool getDumpableProcessAttribute() {
   const int rc = prctl(PR_GET_DUMPABLE);
-  switch(rc) {
-  case -1:
-    {
+  switch (rc) {
+    case -1: {
       const std::string errStr = errnoToString(errno);
       cta::exception::Exception ex;
-      ex.getMessage() <<
-        "Failed to get the dumpable attribute of the process: " << errStr;
+      ex.getMessage() << "Failed to get the dumpable attribute of the process: " << errStr;
       throw ex;
     }
-  case 0: return false;
-  case 1: return true;
-  case 2: return true;
-  default:
-    {
+    case 0:
+      return false;
+    case 1:
+      return true;
+    case 2:
+      return true;
+    default: {
       cta::exception::Exception ex;
-      ex.getMessage() <<
-        "Failed to get the dumpable attribute of the process"
-        ": Unknown value returned by prctl(): rc=" << rc;
+      ex.getMessage() << "Failed to get the dumpable attribute of the process"
+                         ": Unknown value returned by prctl(): rc="
+                      << rc;
       throw ex;
     }
   }
@@ -977,22 +977,20 @@ bool getDumpableProcessAttribute() {
 //------------------------------------------------------------------------------
 void setDumpableProcessAttribute(const bool dumpable) {
   const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
-  switch(rc) {
-  case -1:
-    {
+  switch (rc) {
+    case -1: {
       const std::string errStr = errnoToString(errno);
       cta::exception::Exception ex;
-      ex.getMessage() <<
-        "Failed to set the dumpable attribute of the process: " << errStr;
+      ex.getMessage() << "Failed to set the dumpable attribute of the process: " << errStr;
       throw ex;
     }
-  case 0: return;
-  default:
-    {
+    case 0:
+      return;
+    default: {
       cta::exception::Exception ex;
-      ex.getMessage() <<
-        "Failed to set the dumpable attribute of the process"
-        ": Unknown value returned by prctl(): rc=" << rc;
+      ex.getMessage() << "Failed to set the dumpable attribute of the process"
+                         ": Unknown value returned by prctl(): rc="
+                      << rc;
       throw ex;
     }
   }
@@ -1001,16 +999,14 @@ void setDumpableProcessAttribute(const bool dumpable) {
 //-----------------------------------------------------------------------------
 // hexDump
 //-----------------------------------------------------------------------------
-std::string hexDump(const void * mem, unsigned int n ){
+std::string hexDump(const void* mem, unsigned int n) {
   std::ostringstream out;
-  const unsigned char * p = reinterpret_cast< const unsigned char *>( mem );
-  for ( unsigned int i = 0; i < n; i++ ) {
-     if (0 != i) {
-       out << " ";
-     }
-     out << std::uppercase << std::hex << std::setw(2) <<
-       std::setfill( out.widen('0') ) << int(p[i]);
-
+  const unsigned char* p = reinterpret_cast<const unsigned char*>(mem);
+  for (unsigned int i = 0; i < n; i++) {
+    if (0 != i) {
+      out << " ";
+    }
+    out << std::uppercase << std::hex << std::setw(2) << std::setfill(out.widen('0')) << int(p[i]);
   }
   return out.str();
 }
@@ -1018,28 +1014,26 @@ std::string hexDump(const void * mem, unsigned int n ){
 //-----------------------------------------------------------------------------
 // copyString
 //-----------------------------------------------------------------------------
-void copyString(char *const dst, const size_t dstSize, const std::string &src) {
-  if(dst == nullptr) {
+void copyString(char* const dst, const size_t dstSize, const std::string& src) {
+  if (dst == nullptr) {
     cta::exception::Exception ex;
 
-    ex.getMessage() << __FUNCTION__
-      << ": Pointer to destination string is nullptr";
+    ex.getMessage() << __FUNCTION__ << ": Pointer to destination string is nullptr";
 
     throw ex;
   }
 
-  if(src.length() >= dstSize) {
+  if (src.length() >= dstSize) {
     cta::exception::Exception ex;
 
-    ex.getMessage() << __FUNCTION__
-      << ": Source string is longer than destination.  Source length: "
-      << src.length() << " Max destination length: " << (dstSize - 1);
+    ex.getMessage() << __FUNCTION__ << ": Source string is longer than destination.  Source length: " << src.length()
+                    << " Max destination length: " << (dstSize - 1);
 
     throw ex;
   }
 
   strncpy(dst, src.c_str(), dstSize);
-  *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
+  *(dst + dstSize - 1) = '\0';  // Ensure destination string is null terminated
 }
 
 //-----------------------------------------------------------------------------
@@ -1048,13 +1042,13 @@ void copyString(char *const dst, const size_t dstSize, const std::string &src) {
 std::string getCurrentLocalTime() {
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
-  ::time_t now = (::time_t)tv.tv_sec;
-  struct ::tm * localNow;
+  ::time_t now = (::time_t) tv.tv_sec;
+  struct ::tm* localNow;
   ::time(&now);
   localNow = ::localtime(&now);
   char buff[80];
   char buff2[10];
-  ::strftime(buff,sizeof(buff), "%b %e %H:%M:%S.", localNow);
+  ::strftime(buff, sizeof(buff), "%b %e %H:%M:%S.", localNow);
   ::snprintf(buff2, sizeof(buff2), "%06ld", tv.tv_usec);
   return std::string(buff) + std::string(buff2);
 }
@@ -1062,19 +1056,19 @@ std::string getCurrentLocalTime() {
 //-----------------------------------------------------------------------------
 // getCurrentLocalTime
 //-----------------------------------------------------------------------------
-std::string getCurrentLocalTime(const std::string & format){
+std::string getCurrentLocalTime(const std::string& format) {
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
-  ::time_t now = (::time_t)tv.tv_sec;
-  struct ::tm * localNow;
+  ::time_t now = (::time_t) tv.tv_sec;
+  struct ::tm* localNow;
   ::time(&now);
   localNow = ::localtime(&now);
   char buff[80];
-  ::strftime(buff,sizeof(buff), format.c_str(), localNow);
+  ::strftime(buff, sizeof(buff), format.c_str(), localNow);
   return std::string(buff);
 }
 
-std::string extractPathFromXrootdPath(const std::string& path){
+std::string extractPathFromXrootdPath(const std::string& path) {
   XrdCl::URL urlInfo(path.c_str());
   return urlInfo.GetPath();
 }
@@ -1082,10 +1076,10 @@ std::string extractPathFromXrootdPath(const std::string& path){
 //------------------------------------------------------------------------------
 // searchAndReplace
 //------------------------------------------------------------------------------
-int searchAndReplace(std::string &str, const std::string &search, const std::string& replacement) {
+int searchAndReplace(std::string& str, const std::string& search, const std::string& replacement) {
   std::string::size_type pos = 0;
   int num_replacements = 0;
-  while(std::string::npos != (pos = str.find(search, pos))) {
+  while (std::string::npos != (pos = str.find(search, pos))) {
     str.replace(pos, search.length(), replacement);
     pos += replacement.length();
     ++num_replacements;
@@ -1097,41 +1091,42 @@ int searchAndReplace(std::string &str, const std::string &search, const std::str
 // segfault
 //------------------------------------------------------------------------------
 void segfault() {
-  *((int *)nullptr) = 0;
+  *((int*) nullptr) = 0;
 }
 
 //------------------------------------------------------------------------------
 // appendParameterXRootFileURL
 //------------------------------------------------------------------------------
-void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value){
+void appendParameterXRootFileURL(std::string& fileURL, const std::string& parameterName, const std::string& value) {
   cta::utils::Regex regexXrootFile("^(root://.*)$");
-  if(regexXrootFile.exec(fileURL).size()){
-    std::string parameterToAppend = parameterName+"="+value;
-    if(fileURL.find("?") == std::string::npos){
+  if (regexXrootFile.exec(fileURL).size()) {
+    std::string parameterToAppend = parameterName + "=" + value;
+    if (fileURL.find("?") == std::string::npos) {
       //No parameter at the end of the XRootd fileURL
-      fileURL.append("?"+parameterToAppend);
+      fileURL.append("?" + parameterToAppend);
       return;
     }
     //There are parameters in the fileURL, check if the parameter is
     //there or not
-    if(fileURL.find("&"+parameterName) == std::string::npos){
-      fileURL.append("&"+parameterToAppend);
+    if (fileURL.find("&" + parameterName) == std::string::npos) {
+      fileURL.append("&" + parameterToAppend);
     }
   }
 }
 
-std::string removePrefix(const std::string& input, char prefixChar){
+std::string removePrefix(const std::string& input, char prefixChar) {
   size_t position = input.find_first_not_of(prefixChar);
-  if(position == std::string::npos){
+  if (position == std::string::npos) {
     return input;
-  } else {
-    return input.substr(position,input.size());
+  }
+  else {
+    return input.substr(position, input.size());
   }
 }
 
-std::string getEnv(const std::string& variableName){
-  const char * envVarC = std::getenv(variableName.c_str());
-  if(envVarC == nullptr){
+std::string getEnv(const std::string& variableName) {
+  const char* envVarC = std::getenv(variableName.c_str());
+  if (envVarC == nullptr) {
     return "";
   }
   return std::string(envVarC);
@@ -1165,14 +1160,14 @@ std::string listToCommaSeparatedString(const std::list<std::string>& list) {
   return oss.str();
 }
 
-std::string decimalToHexadecimal(const std::string &decimalNumber) {
+std::string decimalToHexadecimal(const std::string& decimalNumber) {
   std::stringstream fxIdStream;
   fxIdStream << std::hex << decimalNumber;
   return fxIdStream.str();
 }
 
-// Check if uuid is correct 
-bool isValidUUID(const std::string &uuid) {
+// Check if uuid is correct
+bool isValidUUID(const std::string& uuid) {
   if (uuid.empty()) {
     return false;
   }
@@ -1182,21 +1177,23 @@ bool isValidUUID(const std::string &uuid) {
 }
 
 // Check if Hexadecimal is correct
-bool isValidHex(const std::string &hex) {
-    if (hex.empty()) return false;
+bool isValidHex(const std::string& hex) {
+  if (hex.empty()) {
+    return false;
+  }
 
-    size_t start = 0;
-    if (hex.length() > 2 && hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X')) {
-      start = 2;
+  size_t start = 0;
+  if (hex.length() > 2 && hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X')) {
+    start = 2;
+  }
+
+  for (size_t i = start; i < hex.length(); i++) {
+    if (!std::isxdigit(hex[i])) {
+      return false;
     }
+  }
 
-    for (size_t i = start; i < hex.length(); i++) {
-      if (!std::isxdigit(hex[i])) {
-        return false;
-      }
-    }
-
-    return true;
+  return true;
 }
 
 bool isValidID(const std::string& id) {
@@ -1209,8 +1206,8 @@ bool isValidID(const std::string& id) {
   return true;
 }
 
-std::time_t getCurrentEpochTime(){
+std::time_t getCurrentEpochTime() {
   return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 }
 
-} // namespace cta::utils
+}  // namespace cta::utils

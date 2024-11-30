@@ -25,9 +25,8 @@ namespace cta::schedulerdb {
 /**
  * Command-line tool for creating the scheduler schema.
  */
-class CreateSchemaCmd: public CmdLineTool {
+class CreateSchemaCmd : public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -35,7 +34,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  CreateSchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   /**
    * Destructor.
@@ -43,7 +42,6 @@ public:
   ~CreateSchemaCmd() override;
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -51,14 +49,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 
   /**
    * Returns true if the table with the specified name exists in the database
@@ -68,7 +66,7 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string &tableName, rdbms::Conn &conn) const;
+  bool tableExists(const std::string& tableName, rdbms::Conn& conn) const;
 
   /**
    * Parses the specified string of multiple SQL statements separated by
@@ -81,8 +79,8 @@ private:
    * @param sqlStmts Multiple SQL statements separated by semicolons.
    * Statements that themselves contain one more semicolons are not supported.
    */
-  void executeNonQueries(rdbms::Conn &conn, std::string_view sqlStmts) const;
+  void executeNonQueries(rdbms::Conn& conn, std::string_view sqlStmts) const;
 
-}; // class CreateSchemaCmd
+};  // class CreateSchemaCmd
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

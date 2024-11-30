@@ -31,9 +31,8 @@ namespace cta::schedulerdb {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateSchemaCmd::CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
-CmdLineTool(inStream, outStream, errStream) {
-}
+CreateSchemaCmd::CreateSchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream)
+    : CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -43,10 +42,10 @@ CreateSchemaCmd::~CreateSchemaCmd() = default;
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const CreateSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -56,26 +55,24 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();
 
-  if(tableExists("CTA_SCHEDULER", conn)) {
+  if (tableExists("CTA_SCHEDULER", conn)) {
     std::cerr << "Cannot create the database schema because the CTA_SCHEDULER table already exists" << std::endl;
     return 1;
   }
 
-  switch(login.dbType) {
-  case rdbms::Login::DBTYPE_POSTGRESQL:
-    {
+  switch (login.dbType) {
+    case rdbms::Login::DBTYPE_POSTGRESQL: {
       if (cmdLineArgs.schedulerdbVersion) {
         throw exception::Exception("Not implemented: create a schedulerdb of given version");
-      } else {
+      }
+      else {
         PostgresSchedulerSchema schema;
         executeNonQueries(conn, schema.sql);
       }
-    }
-    break;
-  case rdbms::Login::DBTYPE_NONE:
-    throw exception::Exception("Cannot create a schedulerdb without a database type");
-  default:
-    {
+    } break;
+    case rdbms::Login::DBTYPE_NONE:
+      throw exception::Exception("Cannot create a schedulerdb without a database type");
+    default: {
       exception::Exception ex;
       ex.getMessage() << "Unknown database type: value=" << login.dbType;
       throw ex;
@@ -88,43 +85,42 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool CreateSchemaCmd::tableExists(const std::string &tableName, rdbms::Conn &conn) const {
+bool CreateSchemaCmd::tableExists(const std::string& tableName, rdbms::Conn& conn) const {
   const auto names = conn.getTableNames();
   conn.commit();
-  return std::any_of(std::begin(names), std::end(names), [&tableName](const std::string& str) {
-    return str == tableName;
-  });
+  return std::any_of(std::begin(names), std::end(names),
+                     [&tableName](const std::string& str) { return str == tableName; });
 }
 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::printUsage(std::ostream &os) {
+void CreateSchemaCmd::printUsage(std::ostream& os) {
   CreateSchemaCmdLineArgs::printUsage(os);
 }
 
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, std::string_view sqlStmts) const {
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn& conn, std::string_view sqlStmts) const {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
 
-    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
+      if (0 < sqlStmt.size()) {  // Ignore empty statements
         conn.executeNonQuery(sqlStmt);
       }
     }
-
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

@@ -43,6 +43,7 @@ CTA_GENERATE_EXCEPTION_CLASS(RecoverableMigrationErrorException);
 class MigrationReportPacker;
 class Memblock;
 class TapeSessionStats;
+
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -57,7 +58,9 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(uint64_t blockCount, cta::ArchiveJob* archiveJob, MigrationMemoryManager& mm,
+  TapeWriteTask(uint64_t blockCount,
+                cta::ArchiveJob* archiveJob,
+                MigrationMemoryManager& mm,
                 cta::threading::AtomicFlag& errorFlag);
 
   /**
@@ -73,7 +76,9 @@ public:
    * @param timer
    */
   virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
-                       MigrationReportPacker& reportPacker, MigrationWatchDog& watchdog, cta::log::LogContext& lc,
+                       MigrationReportPacker& reportPacker,
+                       MigrationWatchDog& watchdog,
+                       cta::log::LogContext& lc,
                        cta::utils::Timer& timer);
 
 private:
@@ -114,7 +119,7 @@ public:
    */
   const TapeSessionStats getTaskStats() const;
 
-   /**
+  /**
     * Return ArchiveJob reference
     * This is important to report failure in case of failed session
     * for all jobs which were not processed in the queued task pipeline.
@@ -122,7 +127,7 @@ public:
     *
     * @return
     */
-   cta::ArchiveJob& getArchiveJob() const;
+  cta::ArchiveJob& getArchiveJob() const;
 
 private:
   /**
@@ -148,7 +153,7 @@ private:
    * @return the FileWriter if everything went well
    */
   std::unique_ptr<castor::tape::tapeFile::FileWriter>
-    openFileWriter(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
+  openFileWriter(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating
@@ -207,4 +212,4 @@ private:
   std::string m_srcURL;
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

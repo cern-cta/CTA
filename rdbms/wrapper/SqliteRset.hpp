@@ -34,9 +34,8 @@ class SqliteStmt;
 /**
  * The result set of an sql query.
  */
-class SqliteRset: public RsetWrapper {
+class SqliteRset : public RsetWrapper {
 public:
-
   /**
    * Constructor
    *
@@ -54,7 +53,7 @@ public:
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const override;
+  const std::string& getSql() const override;
 
   /**
    * Attempts to get the next row of the result set.
@@ -75,20 +74,27 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string &colName) const { return 0; };
-  uint16_t columnUint16NoOpt(const std::string &colName) const { return 0; };
-  uint32_t columnUint32NoOpt(const std::string &colName) const { return 0; };
-  uint64_t columnUint64NoOpt(const std::string &colName) const { return 0; };
-  std::string columnStringNoOpt(const std::string &colName) const { return std::string(); };
-  double  columnDoubleNoOpt(const std::string& colName) const { return 0; };
-  bool columnBoolNoOpt(const std::string &colName) const { return false; };
+  uint8_t columnUint8NoOpt(const std::string& colName) const { return 0; };
+
+  uint16_t columnUint16NoOpt(const std::string& colName) const { return 0; };
+
+  uint32_t columnUint32NoOpt(const std::string& colName) const { return 0; };
+
+  uint64_t columnUint64NoOpt(const std::string& colName) const { return 0; };
+
+  std::string columnStringNoOpt(const std::string& colName) const { return std::string(); };
+
+  double columnDoubleNoOpt(const std::string& colName) const { return 0; };
+
+  bool columnBoolNoOpt(const std::string& colName) const { return false; };
+
   /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  bool columnIsNull(const std::string &colName) const override;
+  bool columnIsNull(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
@@ -96,7 +102,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::string columnBlob(const std::string &colName) const override;
+  std::string columnBlob(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a string.
@@ -106,7 +112,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::optional<std::string> columnOptionalString(const std::string &colName) const override;
+  std::optional<std::string> columnOptionalString(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -116,7 +122,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const override;
+  std::optional<uint8_t> columnOptionalUint8(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -126,7 +132,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const override;
+  std::optional<uint16_t> columnOptionalUint16(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -136,7 +142,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const override;
+  std::optional<uint32_t> columnOptionalUint32(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -146,7 +152,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  std::optional<uint64_t> columnOptionalUint64(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a double.
@@ -156,14 +162,13 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<double> columnOptionalDouble(const std::string &colName) const override;
+  std::optional<double> columnOptionalDouble(const std::string& colName) const override;
 
 private:
-
   /**
    * The prepared statement.
    */
-  SqliteStmt &m_stmt;
+  SqliteStmt& m_stmt;
 
   /**
    * Map from column name to column index and type.
@@ -175,6 +180,6 @@ private:
    */
   void clearAndPopulateColNameToIdxAndTypeMap();
 
-}; // class SqlLiteRset
+};  // class SqlLiteRset
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

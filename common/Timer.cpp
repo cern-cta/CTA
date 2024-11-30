@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "Timer.hpp"
 
 namespace cta::utils {
@@ -53,4 +52,4 @@ void Timer::reset() {
   m_reference = std::chrono::steady_clock::now();
 }
 
-} // namespace cta::utils
+}  // namespace cta::utils

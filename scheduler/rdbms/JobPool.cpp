@@ -19,5 +19,5 @@
 #include "ArchiveRdbJob.hpp"
 
 namespace cta::schedulerdb {
-  template class JobPool<ArchiveRdbJob>;  // Explicit instantiation
+template class JobPool<ArchiveRdbJob>;  // Explicit instantiation
 }  // namespace cta::schedulerdb

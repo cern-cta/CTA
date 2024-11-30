@@ -20,17 +20,20 @@
 namespace cta::schedulerdb {
 
 Transaction::Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection)
-        : m_conn(std::move(conn)), m_ownConnection(ownConnection) {
+    : m_conn(std::move(conn)),
+      m_ownConnection(ownConnection) {
   start();
 }
 
 Transaction::Transaction(cta::rdbms::ConnPool& connPool)
-        : m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())), m_ownConnection(true) {
+    : m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())),
+      m_ownConnection(true) {
   start();
 }
 
 Transaction::Transaction(Transaction&& other) noexcept
-: m_conn(std::move(other.m_conn)), m_ownConnection(other.m_ownConnection) {
+    : m_conn(std::move(other.m_conn)),
+      m_ownConnection(other.m_ownConnection) {
   start();
 }
 
@@ -42,7 +45,7 @@ Transaction& Transaction::operator=(Transaction&& other) noexcept {
   return *this;
 }
 
-Transaction::~Transaction() { 
+Transaction::~Transaction() {
   if (m_begin) {
     m_conn->rollback();
   }
@@ -57,7 +60,7 @@ void Transaction::lockGlobal() {
   // for anyone trying to acquire the same lock
   std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID::bigint)";
   auto stmt = m_conn->createStmt(sql);
-  stmt.bindUint64(":LOCK_ID",0);
+  stmt.bindUint64(":LOCK_ID", 0);
   stmt.executeQuery();
 }
 
@@ -71,7 +74,7 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
   //std::cout << "Hash value (64-bit): " << hash64 << std::endl;
   std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
   auto stmt = m_conn->createStmt(sql);
-  stmt.bindUint64(":HASH32",hash32);
+  stmt.bindUint64(":HASH32", hash32);
   stmt.executeQuery();
 }
 
@@ -106,4 +109,4 @@ void Transaction::abort() {
   m_begin = false;
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb
