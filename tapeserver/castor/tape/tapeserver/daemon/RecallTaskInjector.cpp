@@ -348,6 +348,40 @@ void RecallTaskInjector::deleteAllTasks(){
   }
 }
 
+//------------------------------------------------------------------------------
+//WorkerThread::popRecalls
+//------------------------------------------------------------------------------
+void RecallTaskInjector::WorkerThread::popRecalls(){
+  while (1) {
+    Request req = m_parent.m_queue.pop();
+    if (req.end) {
+      m_parent.m_lc.log(cta::log::INFO,"Received an end notification from tape thread: triggering the end of session.");
+      m_parent.signalEndDataMovement();
+      return;
+    }
+    m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
+    LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
+
+    if (!m_parent.m_diskSpaceReservationFailed) {
+      bool noFilesToRecall;
+      m_parent.synchronousFetch(noFilesToRecall);
+      m_parent.injectBulkRecalls();
+      if (m_parent.m_diskSpaceReservationFailed) {
+        m_parent.signalEndDataMovement();
+      }
+    }
+
+    if (m_parent.m_jobs.empty()) {
+      if (req.lastCall) {
+        m_parent.m_lc.log(cta::log::INFO,"No more file to recall: triggering the end of session.");
+        m_parent.signalEndDataMovement();
+        return;
+      } else {
+        m_parent.m_lc.log(cta::log::DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
+      }
+    }
+  }
+}
 
 //------------------------------------------------------------------------------
 //WorkerThread::run
@@ -383,42 +417,13 @@ void RecallTaskInjector::WorkerThread::run()
     }
   }
 
-
   m_parent.injectBulkRecalls(); //do an initial injection before entering loop
   if (m_parent.m_diskSpaceReservationFailed) {
     m_parent.signalEndDataMovement();
     m_parent.setFirstTasksInjectedPromise();
   } else {
-    try{
-      while (1) {
-        Request req = m_parent.m_queue.pop();
-        if (req.end) {
-          m_parent.m_lc.log(cta::log::INFO,"Received a end notification from tape thread: triggering the end of session.");
-          m_parent.signalEndDataMovement();
-          break;
-        }
-        m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
-        LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
-
-        if (!m_parent.m_diskSpaceReservationFailed) {
-          bool noFilesToRecall;
-          m_parent.synchronousFetch(noFilesToRecall);
-          m_parent.injectBulkRecalls();
-          if (m_parent.m_diskSpaceReservationFailed) {
-            m_parent.signalEndDataMovement();
-          }
-        }
-
-        if (m_parent.m_jobs.empty()) {
-          if (req.lastCall) {
-            m_parent.m_lc.log(cta::log::INFO,"No more file to recall: triggering the end of session.");
-            m_parent.signalEndDataMovement();
-            break;
-          } else {
-            m_parent.m_lc.log(cta::log::DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
-          }
-        }
-      } // end of while(1)
+    try {
+      popRecalls();
     } catch(const cta::exception::Exception& ex){
       //we end up there because we could not talk to the client
       cta::log::ScopedParamContainer container( m_parent.m_lc);

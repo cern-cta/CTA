@@ -128,11 +128,10 @@ int rmc_main(const char *const robot)
 		const int max_nb_attempts = 3;
 		int attempt_nb = 1;
 		for(attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
-      rmc_logit (func, "Trying to get geometry of tape library"
-              ": attempt_nb=%d\n", attempt_nb);
+      rmc_logit (func, "Trying to get geometry of tape library: attempt_nb=%d\n", attempt_nb);
 			c = smc_get_geometry (g_extended_robot_info.smc_fd,
-				g_extended_robot_info.smc_ldr,
-				&g_extended_robot_info.robot_info);
+                            g_extended_robot_info.smc_ldr,
+                            &g_extended_robot_info.robot_info);
 
 			if(0 == c) {
         rmc_logit (func, "Got geometry of tape library\n");
@@ -267,8 +266,7 @@ int main(const int argc, char **argv)
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-    int maxfds = Cinitdaemon("rmcd", NULL);
-		if(maxfds < 0) {
+		if(Cinitdaemon("rmcd", NULL) < 0) {
 			exit(SYERR);
 		}
 	}

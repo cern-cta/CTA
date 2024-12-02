@@ -218,6 +218,7 @@ private:
     virtual void run();
   private:
     RecallTaskInjector & m_parent;
+    void popRecalls();
   } m_thread;
   ///The memory manager for accessing memory blocks.
   RecallMemoryManager & m_memManager;
