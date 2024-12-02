@@ -156,10 +156,9 @@ static void find_sgpath(char *const sgpath, const int maj, const int min) {
                           /* Buffer overflow */
                           exit(ENOBUFS);
                         }
-                        goto out;
+                        break;
                 }
         }
- out:
         closedir(dir_gen);
         return;
 }

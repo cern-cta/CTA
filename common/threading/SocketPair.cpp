@@ -118,23 +118,24 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
 //------------------------------------------------------------------------------
 int SocketPair::getFdForAccess(Side sourceOrDestination) {
   // First, make sure the source to access makes sense.
-  // There is a double inversion here. If our current side is parent, we should 
+  // There is a double inversion here. If our current side is parent, we should
   // read from the child and vice versa. And then then talking to parent, we use
   // the child socket, and vice-versa.
   Side sideForThisPair = sourceOrDestination;
   switch (sideForThisPair) {
   case Side::current:
     switch(m_currentSide) {
-    case Side::child:
-      // We are child: we talk to parent
-      sideForThisPair = Side::parent;
-      goto done;
-    case Side::parent:
-      sideForThisPair = Side::child;
-      goto done;
-    default:
-      throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid side (current)");
+      case Side::child:
+        // We are child: we talk to parent
+        sideForThisPair = Side::parent;
+        break;
+      case Side::parent:
+        sideForThisPair = Side::child;
+        break;
+      default:
+        throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid side (current)");
     }
+    break;
   case Side::child:
   case Side::parent:
     // User wants to talk to child/parent. We just record the fact.
@@ -143,7 +144,6 @@ int SocketPair::getFdForAccess(Side sourceOrDestination) {
   default:
     throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid side (both)");
   }
-  done:
   // Now make sure the file descriptor is valid.
   int fd;
   switch (sideForThisPair) {

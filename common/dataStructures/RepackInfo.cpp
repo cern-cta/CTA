@@ -61,9 +61,8 @@ RepackQueueType RepackInfo::getQueueType(){
     case RepackInfo::Status::Running:
     case RepackInfo::Status::Starting:
       if(!isExpandFinished) return RepackQueueType::ToExpand;
-      goto explicit_default;
+      throw cta::exception::Exception("The status "+toString(status)+" has no corresponding queue type.");
     default:
-    explicit_default:
       throw cta::exception::Exception("The status "+toString(status)+" has no corresponding queue type.");
   }
 }
