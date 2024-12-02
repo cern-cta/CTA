@@ -36,7 +36,7 @@ build-cta-srpm:
                                                        --scheduler-type ${SCHED_TYPE}
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                                       --jobs $(nproc --ignore=1)
+                                                       --jobs $(nproc)
                                                        --install
 
 build-cta-rpm:
@@ -79,7 +79,7 @@ build-cta-rpm:
                                                       --scheduler-type ${SCHED_TYPE}
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                                      --jobs $(nproc --ignore=1)
+                                                      --jobs $(nproc)
                                                       --install
 
 # Documentation export

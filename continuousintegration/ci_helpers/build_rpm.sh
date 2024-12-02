@@ -57,7 +57,7 @@ build_rpm() {
 
   local enable_ccache=false
   local install=false
-  local num_jobs=1
+  local num_jobs=$(nproc)
   local cmake_build_type=""
   local clean_build_dir=false
   local create_build_dir=false
@@ -336,12 +336,12 @@ build_rpm() {
       cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE";
     else
       # unset it
-      cmake_options+=" -U CTA_USE_PGSCHED";
+      cmake_options+=" -D CTA_USE_PGSCHED:BOOL=FALSE";
     fi
 
     cd "${build_dir}"
     echo "Executing cmake..."
-    (set -x; cmake3 ${cmake_options} -G "${build_generator}" "${repo_root}")
+    (set -x; cmake3 ${cmake_options} -D JOBS_COUNT:INT=${num_jobs} -G "${build_generator}" "${repo_root}")
   else
     echo "Skipping cmake..."
     if [ ! -d "${build_dir}" ]; then

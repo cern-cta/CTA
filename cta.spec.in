@@ -35,7 +35,7 @@
 %if %{enableCCache}
 %define ccacheFlags -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
 %else
-%define ccacheFlags ""
+%define ccacheFlags -UCMAKE_CXX_COMPILER_LAUNCHER -UCMAKE_C_COMPILER_LAUNCHER
 %endif
 
 # Utility for reloading systemctl when needed
@@ -98,7 +98,7 @@ mkdir -p build
 cd build
 # ccacheFlags will be empty if ccache is not enabled
 CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
-cmake --build . %{_smp_mflags}
+cmake --build . -j@JOBS_COUNT@
 
 %install
 %{__rm} -rf ${RPM_BUILD_ROOT}

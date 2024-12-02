@@ -105,6 +105,16 @@ else (NOT DEFINED ENABLE_CCACHE)
   message (STATUS "Already set: ENABLE_CCACHE=${ENABLE_CCACHE}")
 endif (NOT DEFINED ENABLE_CCACHE)
 
+# Initialize JOBS_COUNT for use in cta.spec.in
+if(DEFINED JOBS_COUNT)
+    MESSAGE(STATUS "Using provided ${JOBS_COUNT} concurrent build jobs")
+else()
+    include(ProcessorCount)
+    ProcessorCount(PROCESSOR_COUNT)
+    set(JOBS_COUNT ${PROCESSOR_COUNT})
+    MESSAGE(STATUS "Using default ${JOBS_COUNT} concurrent build jobs")
+endif()
+
 # Load additional CMake modules:
 # Version information
 include(cmake/CTAVersions.cmake)
