@@ -276,16 +276,20 @@ int main(const int argc, char **argv)
 static void rmc_doit(const int rpfd)
 {
 	int c;
-	char *clienthost;
+	char *clienthost = NULL;
 	char req_data[REQ_DATA_SIZE];
 	int req_type = 0;
 
-	if ((c = rmc_getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
+	if ((c = rmc_getreq (rpfd, &req_type, req_data, &clienthost)) == 0) {
 		rmc_procreq (rpfd, req_type, req_data, clienthost);
-	else if (c > 0)
+		if (clienthost != NULL) {
+			free(clienthost);
+		}
+	} else if (c > 0) {
 		rmc_sendrep (rpfd, RMC_RC, c);
-	else
+	} else {
 		close (rpfd);
+	}
 }
 
 static int rmc_getreq(
@@ -324,12 +328,18 @@ static int rmc_getreq(
 		struct hostent hbuf;
     struct hostent* hp;
     char buffer[1024];
+		char client_ip[INET6_ADDRSTRLEN];
     int h_err;
     if (gethostbyaddr_r((void*)(&from.sin_addr), sizeof(struct in_addr), from.sin_family,
                         &hbuf, buffer, sizeof(buffer), &hp, &h_err) != 0 || hp == NULL) {
-      *clienthost = inet_ntoa(from.sin_addr);
+      if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == NULL) {
+        	perror("inet_ntop");
+      	  return ERMCUNREC;
+    	}
+			// Duplicate the strings to prevent undefined behaviour after exiting function
+      *clienthost = strdup(client_ip);
     } else {
-      *clienthost = hp->h_name;
+      *clienthost = strdup(hp->h_name);
     }
     return 0;
 	} else {
@@ -337,7 +347,7 @@ static int rmc_getreq(
 			rmc_logit (func, RMC04, l);
 		} else if (l < 0) {
 			rmc_logit (func, RMC02, "netread", sstrerror(serrno));
-                }
+    }
 		return (ERMCUNREC);
 	}
 }
