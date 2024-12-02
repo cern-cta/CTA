@@ -87,6 +87,8 @@ private:
   const DriveConfigEntry& m_driveConfig;
   // The log context
   cta::log::LogContext& m_lc;
+  // Log parameter reported using the watchdog
+  std::set<std::string> m_watchdogLogParams;
   // Representation of the outcome of the previous session/child process
   PreviousSession m_previousSession = PreviousSession::Initiating;
   // Representation of the last know state of the previous session (useful for crashes)
@@ -142,6 +144,9 @@ private:
 
   // Computation of the next timeout (depending on the state)
   decltype(SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout();
+
+  // Reset log parameters both on child and parent process
+  void resetLogParams(cta::tape::daemon::TapedProxy* driveHandlerProxy);
 
   // Helper function accumulating logs
   void processLogs(serializers::WatchdogMessage& message);

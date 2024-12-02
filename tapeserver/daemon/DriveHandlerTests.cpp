@@ -78,8 +78,9 @@ public:
   MOCK_METHOD3(reportState,
     void(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid));
   MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));
-  MOCK_METHOD2(addLogParams, void(const std::string& unitName, const std::list<cta::log::Param>& params));
-  MOCK_METHOD2(deleteLogParams, void(const std::string& unitName, const std::list<std::string>& paramNames));
+  MOCK_METHOD1(addLogParams, void(const std::list<cta::log::Param>& params));
+  MOCK_METHOD1(deleteLogParams, void(const std::list<std::string>& paramNames));
+  MOCK_METHOD0(resetLogParams, void());
   MOCK_METHOD2(labelError, void(const std::string& unitName, const std::string& message));
 };
 
@@ -156,8 +157,9 @@ public:
     m_tapedProxy = std::make_shared<NiceMock<cta::tape::daemon::TapedProxyMock>>();
     ON_CALL(*m_tapedProxy, reportState(_, _, _)).WillByDefault(Return());
     ON_CALL(*m_tapedProxy, reportHeartbeat(_, _)).WillByDefault(Return());
-    ON_CALL(*m_tapedProxy, addLogParams(_, _)).WillByDefault(Return());
-    ON_CALL(*m_tapedProxy, deleteLogParams(_, _)).WillByDefault(Return());
+    ON_CALL(*m_tapedProxy, addLogParams(_)).WillByDefault(Return());
+    ON_CALL(*m_tapedProxy, deleteLogParams(_)).WillByDefault(Return());
+    ON_CALL(*m_tapedProxy, resetLogParams()).WillByDefault(Return());
     ON_CALL(*m_tapedProxy, labelError(_, _)).WillByDefault(Return());
   }
 

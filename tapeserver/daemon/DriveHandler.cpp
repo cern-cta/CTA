@@ -364,12 +364,21 @@ void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
 // DriveHandler::processLogs
 //------------------------------------------------------------------------------
 void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
+  // Start by checking if there is a request to delete all log parameters
+  if (message.resetlogparams()) {
+    m_lc.log(log::DEBUG, "In DriveHandler::processLogs(): Received message to clear watchdog log parameters.");
+    m_lc.erase(m_watchdogLogParams);
+    m_watchdogLogParams.clear();
+    m_lc.log(log::INFO, "In DriveHandler::processLogs(): Watchdog log parameters cleared in parent process.");
+  }
   // Accumulate the logs added (if any)
   for (auto& log: message.addedlogparams()) {
+    m_watchdogLogParams.insert(log.name());
     m_lc.pushOrReplace({log.name(), log.value()});
   }
-  for (auto& log: message.deletedlogparams()) {
-    m_lc.erase(log);
+  for (auto& logName: message.deletedlogparams()) {
+    m_watchdogLogParams.erase(logName);
+    m_lc.erase({logName});
   }
 }
 
@@ -722,7 +731,19 @@ int DriveHandler::runChild() {
     }
   }
 
+  resetLogParams(driveHandlerProxy.get());
   return executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::resetLogParams
+//------------------------------------------------------------------------------
+void DriveHandler::resetLogParams(cta::tape::daemon::TapedProxy* driveHandlerProxy) {
+  m_lc.log(log::DEBUG, "In DriveHandler::resetLogParams(): Will clear watchdog log parameters in child and parent processes.");
+  driveHandlerProxy->resetLogParams();
+  m_lc.erase(m_watchdogLogParams);
+  m_watchdogLogParams.clear();
+  m_lc.log(log::INFO, "In DriveHandler::resetLogParams(): Watchdog log parameters cleared in child process.");
 }
 
 //------------------------------------------------------------------------------

@@ -22,6 +22,7 @@ data:
     taped DriveLogicalLibrary {{ $drive.name }}
     taped DriveDevice /dev/{{ $drive.device }}
     taped DriveControlPath smc{{ $driveSlot }}
+    taped LogMask {{ $.Values.conf.taped.logMask }}
     # Decrease schedulerDB cache timeout for tests
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}

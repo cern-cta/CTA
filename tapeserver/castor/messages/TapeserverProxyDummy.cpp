@@ -32,16 +32,21 @@ void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeB
 // addLogParams
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::
-addLogParams(const std::string &unitName,
-  const std::list<cta::log::Param> & params) {
+addLogParams(const std::list<cta::log::Param> &params) {
 }
 
 //------------------------------------------------------------------------------
 // deleteLogParans
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::
-deleteLogParams(const std::string &unitName,
-  const std::list<std::string> & paramNames) {
+deleteLogParams(const std::list<std::string> &paramNames) {
+}
+
+//------------------------------------------------------------------------------
+// resetLogParams
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::
+resetLogParams() {
 }
 
 //------------------------------------------------------------------------------

@@ -381,7 +381,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         watchDog.reportParams();
         std::list<cta::log::Param> paramList {errorMessageParam, mountIdParam, mountTypeParam, statusParam,
                                               mountAttemptedParam};
-        m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
+        m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(logContext,
                                                cta::log::Param("errorMessage", "Aborted: empty recall mount"));
@@ -511,7 +511,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         watchDog.reportParams();
         std::list<cta::log::Param> paramList {errorMessageParam, mountIdParam, mountTypeParam, statusParam,
                                               mountAttemptedParam};
-        m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
+        m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {

@@ -208,7 +208,7 @@ protected:
 	paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
       }
       // Ship the logs to the initial process
-      m_initialProcess.addLogParams(m_driveUnitName, paramList);
+      m_initialProcess.addLogParams(paramList);
     }
   }
 
@@ -224,7 +224,7 @@ protected:
     while (m_toAddParamsQueue.size())
       params.push_back(m_toAddParamsQueue.pop());
     if (params.size()) {
-      m_initialProcess.addLogParams(m_driveUnitName, params);
+      m_initialProcess.addLogParams(params);
     }
 
     std::list<std::string> paramsToDelete;
@@ -232,7 +232,7 @@ protected:
     while (m_toDeleteParamsQueue.size())
       paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
     if (params.size()) {
-      m_initialProcess.deleteLogParams(m_driveUnitName, paramsToDelete);
+      m_initialProcess.deleteLogParams(paramsToDelete);
     }
   }
   

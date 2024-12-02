@@ -26,7 +26,7 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
 
 // TODO: me might want to group the messages to reduce the rate.
 
-void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) {
+void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);
@@ -43,7 +43,7 @@ void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::lis
   m_socketPair.send(buffer);
 }
 
-void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) {
+void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);
@@ -55,6 +55,19 @@ void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::
   if (!watchdogMessage.SerializeToString(&buffer)) {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
+  }
+  m_socketPair.send(buffer);
+}
+
+void DriveHandlerProxy::resetLogParams() {
+  serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_reportingstate(false);
+  watchdogMessage.set_reportingbytes(false);
+  watchdogMessage.set_resetlogparams(true);
+  std::string buffer;
+  if (!watchdogMessage.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")+
+                                    watchdogMessage.InitializationErrorString());
   }
   m_socketPair.send(buffer);
 }

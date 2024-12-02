@@ -20,6 +20,7 @@
 #include "common/log/Logger.hpp"
 
 #include <ostream>
+#include <set>
 
 namespace cta::log {
 
@@ -66,9 +67,9 @@ public:
 
   /**
    * Removes a parameter from the list.
-   * @param paramName value of param.getName();
+   * @param paramNames list of values of param.getName();
    */
-  void erase(std::string_view paramName) noexcept;
+  void erase(const std::set<std::string>& paramNames) noexcept;
 
   /**
    * Clears the context content.
@@ -110,10 +111,10 @@ public:
    */
   class ParamNameMatcher {
   public:
-    explicit ParamNameMatcher(std::string_view name) noexcept : m_name(name) {}
-    bool operator() (const Param& p) const noexcept { return m_name == p.getName(); }
+    explicit ParamNameMatcher(const std::set<std::string_view>& names) noexcept : m_names(names) {}
+    bool operator() (const Param& p) const noexcept { return m_names.find(p.getName()) != m_names.end(); }
   private:
-    std::string m_name;
+    const std::set<std::string_view> & m_names;
   };
   
   /**
@@ -137,15 +138,13 @@ class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
   ~ScopedParamContainer() {
-    for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
-      m_context.erase(*it);
-    }
+    m_context.erase(m_names);
   }
 
   template <class T>
   ScopedParamContainer& add(const std::string& s, const T& t) {
     m_context.pushOrReplace(Param(s,t));
-    m_names.push_back(s);
+    m_names.insert(s);
     return *this;
   }
 
@@ -155,7 +154,7 @@ public:
 
 private:
   LogContext& m_context;
-  std::list<std::string> m_names;
+  std::set<std::string> m_names;
 };
 
 std::ostream& operator << (std::ostream& os, const LogContext& lc);

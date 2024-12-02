@@ -46,7 +46,7 @@ namespace unitTests {
     }
     ASSERT_EQ(1U, lc.size());
     lc.log(DEBUG, "One param message");
-    lc.erase("MigrationRequestId");
+    lc.erase({"MigrationRequestId"});
     ASSERT_EQ(0U, lc.size());
   }
   

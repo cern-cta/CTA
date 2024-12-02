@@ -29,7 +29,7 @@ LogContext::LogContext(Logger& logger) noexcept:
 m_log(logger) {}
 
 void LogContext::pushOrReplace(const Param& param) noexcept {
-  ParamNameMatcher match(param.getName());
+  ParamNameMatcher match({param.getName()});
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
   if (i != m_params.end()) {
@@ -40,7 +40,7 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
 }
 
 void LogContext::moveToTheEndIfPresent(std::string_view paramName) noexcept {
-  ParamNameMatcher match(paramName);
+  ParamNameMatcher match({paramName});
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
   if (i != m_params.end()) {    
@@ -50,8 +50,9 @@ void LogContext::moveToTheEndIfPresent(std::string_view paramName) noexcept {
   }
 }
 
-void LogContext::erase(std::string_view paramName) noexcept {
-  ParamNameMatcher match(paramName);
+void LogContext::erase(const std::set<std::string>& paramNames) noexcept {
+  std::set<std::string_view> paramNamesSet = {paramNames.begin(), paramNames.end()};
+  ParamNameMatcher match(paramNamesSet);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
 
@@ -100,7 +101,7 @@ LogContext::ScopedParam::ScopedParam(
 }
 
 LogContext::ScopedParam::~ScopedParam() noexcept {
-   m_context.erase(m_name);
+   m_context.erase({m_name});
 }
 
 std::ostream & operator << (std::ostream & os, 

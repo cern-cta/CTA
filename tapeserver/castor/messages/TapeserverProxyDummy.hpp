@@ -33,14 +33,14 @@ public:
 
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
   
-  void addLogParams(const std::string &unitName,
-    const std::list<cta::log::Param> & params) override;
+  void addLogParams(const std::list<cta::log::Param> &params) override;
   
-  void deleteLogParams(const std::string &unitName,
-    const std::list<std::string> & paramNames) override;
+  void deleteLogParams(const std::list<std::string> &paramNames) override;
   
   void labelError(const std::string &unitName,
     const std::string &message) override;
+
+  void resetLogParams() override;
 
 }; // class TapeserverProxyDummy
 

@@ -34,4 +34,5 @@ message WatchdogMessage {
   optional uint64 totaltapebytesmoved = 20016;
   repeated LogParam addedlogparams = 20017;
   repeated string deletedlogparams = 20018;
+  optional bool resetLogParams = 20019;
 }
