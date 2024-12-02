@@ -56,7 +56,24 @@ usage() {
   exit 1
 }
 
-compile_deploy() {
+print_header() {
+  local term_width=${COLUMNS:-$(tput cols)}  # Get terminal width (default to tput)
+  local msg="$1"
+  local border_char="="
+  local separator=$(printf "%-${term_width}s" | tr ' ' "${border_char}")
+  # Calculate padding for centering
+  local msg_length=${#msg}
+  local padding=$(( (term_width - msg_length) / 2 ))
+  [[ $padding -lt 0 ]] && padding=0  # Avoid negative padding for small terminals
+  echo
+  echo "${separator}"
+  printf "%*s%s\n" $padding "" "$msg"  # Print message centered
+  echo "${separator}"
+  echo
+}
+
+
+build_deploy() {
 
   # Input args
   local clean_build_dir=false
@@ -80,10 +97,9 @@ compile_deploy() {
   local extra_spawn_options=""
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
 
   # Defaults
-  local num_jobs=8
+  local num_jobs=$(nproc)
   local restarted=false
   local build_namespace="build"
   local deploy_namespace="dev"
@@ -221,6 +237,7 @@ compile_deploy() {
   # Build binaries/RPMs
   #####################################################################################################################
   if [ ${skip_build} = false ]; then
+    print_header "BUILDING RPMS"
     # Check if namespace exists
     if kubectl get namespace "${build_namespace}" &>/dev/null; then
       echo "Found existing build namespace ${build_namespace}"
@@ -272,7 +289,7 @@ compile_deploy() {
 
     echo "Compiling the CTA project from source directory"
 
-    local build_rpm_flags="--jobs ${num_jobs}"
+    local build_rpm_flags=""
 
     if [ ${restarted} = true ] || [ ${force_install} = true ]; then
       # Only install if it is the first time running this or if the install is forced
@@ -308,6 +325,7 @@ compile_deploy() {
       --scheduler-type ${scheduler_type} \
       --oracle-support ${oracle_support} \
       --cmake-build-type "${cmake_build_type}" \
+      --jobs ${num_jobs} \
       ${build_rpm_flags}
 
     echo "Build successful"
@@ -321,6 +339,7 @@ compile_deploy() {
   #####################################################################################################################
   build_iteration_file=/tmp/.build_iteration
   if [ "$skip_image_reload" == "false" ]; then
+    print_header "BUILDING CONTAINER IMAGE"
     if [ "$upgrade" == "false" ]; then
       # Start with the tag dev-0
       local current_build_id=0
@@ -370,6 +389,7 @@ compile_deploy() {
   # Deploy CTA instance
   #####################################################################################################################
   if [ ${skip_deploy} = false ]; then
+    print_header "DEPLOYING CTA INSTANCE"
     if [ "$upgrade" == "false" ]; then
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
@@ -377,6 +397,14 @@ compile_deploy() {
 
       if [ -n "${tapeservers_config}" ]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
+      fi
+
+      if [ -z "${scheduler_config}" ]; then
+        if [ "${scheduler_type}" == "pgsched" ]; then
+          scheduler_config="presets/dev-scheduler-postgres-values.yaml"
+        else
+          scheduler_config="presets/dev-scheduler-vfs-values.yaml"
+        fi
       fi
 
       echo "Deploying CTA instance"
@@ -404,6 +432,7 @@ compile_deploy() {
 
     fi
   fi
+  print_header "DONE"
 }
 
-compile_deploy "$@"
+build_deploy "$@"
