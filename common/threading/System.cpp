@@ -123,24 +123,25 @@ void cta::System::setUserAndGroup(const std::string &userName, const std::string
   struct group  *grp = nullptr; // group structure pointer
   struct group grp_buf;
   struct passwd pwd_buf;
-  char buffer[1024];
+  char pw_buffer[1024];
+  char gr_buffer[1024];
 
   // Get information on generic stage account from password file
-  int getpwnamRet = getpwnam_r(userName.c_str(), &pwd_buf, buffer, sizeof(buffer), &pwd);
+  int getpwnamRet = getpwnam_r(userName.c_str(), &pwd_buf, pw_buffer, sizeof(pw_buffer), &pwd);
   if (getpwnamRet != 0 || pwd == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User name not found in password file";
     throw e;
   }
   // Verify existence of its primary group id
-  int getgrgidRet = getgrgid_r(pwd->pw_gid, &grp_buf, buffer, sizeof(buffer), &grp);
+  int getgrgidRet = getgrgid_r(pwd->pw_gid, &grp_buf, gr_buffer, sizeof(gr_buffer), &grp);
   if (getgrgidRet != 0 || grp == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User does not have a primary group";
     throw e;
   }
   // Get information about group name from group file
-  int getgrnam = getgrnam_r(groupName.c_str(), &grp_buf, buffer, sizeof(buffer), &grp);
+  int getgrnam = getgrnam_r(groupName.c_str(), &grp_buf, gr_buffer, sizeof(gr_buffer), &grp);
   if (getgrnam != 0 || grp == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": Group name not found in group file";
