@@ -3848,6 +3848,9 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
   const std::string& externalFreeDiskSpaceScript, log::LogContext& logContext) {
 
+  cta::log::ScopedParamContainer(logContext)
+      .log(cta::log::INFO,
+          "In OStoreDB::RetrieveMount::testReserveDiskSpace(), konskov");
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -3928,6 +3931,9 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
 bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
   const std::string& externalFreeDiskSpaceScript, log::LogContext& logContext) {
 
+  cta::log::ScopedParamContainer(logContext)
+      .log(cta::log::INFO,
+          "In OStoreDB::RetrieveMount::reserveDiskSpace(), konskov");
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
