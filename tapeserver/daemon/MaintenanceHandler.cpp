@@ -219,7 +219,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::processRefreshLoggerRequest
+// MaintenanceHandler::processRefreshLoggerRequest
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processRefreshLoggerRequest() {
   // This subclass does not need to do refresh logger requests.
@@ -228,7 +228,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processRefreshLoggerRequ
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::refreshLogger
+// MaintenanceHandler::refreshLogger
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::refreshLogger() {
   m_socketPair->send(REFRESH_LOGGER_MSG);

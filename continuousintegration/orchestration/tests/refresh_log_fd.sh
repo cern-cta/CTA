@@ -30,9 +30,10 @@ echo "Installing missing RPMs in ${tape_server}... "
 dnf -y install strace lsof
 
 # Get PID of all taped processes
-tpd_master_pid=$(ps -e -o pid,comm | grep "cta-tpd-master" | awk '{print $1}')
-tpd_maint_pid=$(ps -e -o pid,comm | grep "cta-tpd-maint" | awk '{print $1}')
-tpd_srv_pid=$(ps -e -o pid,comm | grep "cta-tpd" | grep -v "cta-tpd-master" | grep -v "cta-tpd-maint" | awk '{print $1}')
+tpd_master_pid=$(pgrep "cta-tpd-master")
+tpd_maint_pid=$(pgrep "cta-tpd-maint")
+drive_name=$(ls /etc/cta | grep -E "cta-taped-.*\.conf" | xargs -I{} cat /etc/cta/{} | grep "DriveName" | awk '{print $NF}')
+tpd_srv_pid=$(pgrep ${drive_name})
 
 if [ -z "${tpd_master_pid}" ]; then
     echo "ERROR: No 'cta-tpd-master' process found."
