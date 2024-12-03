@@ -36,7 +36,7 @@ echo "Trying to archive a 0-length"
 
 touch /etc/${TEST_FILE_NAME}
 echo "xrdcp /etc/${TEST_FILE_NAME} root://${EOSINSTANCE}/${TEST_DIR}/${TEST_FILE_NAME}"
-xrdcp /etc/${TEST_FILE_NAME} root://${EOSINSTANCE}/${TEST_DIR}$/{TEST_FILE_NAME}
+xrdcp /etc/${TEST_FILE_NAME} root://${EOSINSTANCE}/${TEST_DIR}/${TEST_FILE_NAME}
 if [ $? -eq 0 ]
 then
   echo "xrdcp command succeeded where it should have failed"
