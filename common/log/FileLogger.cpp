@@ -69,7 +69,7 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
 //------------------------------------------------------------------------------
 void FileLogger::refresh() {
   // In the case of FileLogger this means getting a new fd (to rotate the log file).
-  operator()(INFO, "Refreshing log file descriptor...");
+  operator()(INFO, "Refreshing log file descriptor");
   {
     threading::MutexLocker lock(m_mutex);
     if (-1 != m_fd) {
