@@ -57,7 +57,7 @@ if [[ ${PREPARE} -eq 1 ]]; then
 fi
 
 EOSINSTANCE=ctaeos
-TPSRV01=tpsrv01
+TPSRV01=tpsrv01-0
 # EOSINSTANCE=cta-mgm-0
 
 echo

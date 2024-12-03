@@ -499,7 +499,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::processRefreshLoggerRequest
+// DriveHandler::processRefreshLoggerRequest
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() {
   // This subclass does not need to do refresh logger requests.
@@ -508,7 +508,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() 
 }
 
 //------------------------------------------------------------------------------
-// SignalHandler::refreshLogger
+// DriveHandler::refreshLogger
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::refreshLogger() {
   m_socketPair->send("refresh_logger", server::SocketPair::Side::child);

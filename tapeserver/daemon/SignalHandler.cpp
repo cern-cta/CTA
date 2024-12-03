@@ -140,7 +140,6 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     m_processManager.logContext().log(log::INFO, "In signal handler, received SIGUSR1 to request a logger refresh");
     break;
   }
-  //SubprocessHandler::ProcessingStatus ret;
   // If the shutdown was not acknowledged (by receiving it ourselves), we ask
   // for it
   m_processingStatus.shutdownRequested = m_shutdownRequested && !m_shutdownAcknowlegded;
