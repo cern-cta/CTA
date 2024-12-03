@@ -231,7 +231,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processRefreshLoggerRequ
 // MaintenanceHandler::refreshLogger
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::refreshLogger() {
-  m_socketPair->send(REFRESH_LOGGER_MSG);
+  m_socketPair->send(REFRESH_LOGGER_MSG, server::SocketPair::Side::child);
   return m_processingStatus;
 }
 
@@ -400,7 +400,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::shutdown(): no socket pair");
   } else {
     m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
-    m_socketPair->send(SHUTDOWN_MSG);
+    m_socketPair->send(SHUTDOWN_MSG, server::SocketPair::Side::child);
   }
   return m_processingStatus;
 }
