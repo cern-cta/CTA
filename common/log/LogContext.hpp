@@ -63,13 +63,13 @@ public:
    * 
    * @param paramName  The name of the parameter to check and move.
    */
-  void moveToTheEndIfPresent(std::string_view paramName) noexcept;
+  void moveToTheEndIfPresent(const std::string& paramName) noexcept;
 
   /**
    * Removes a parameter from the list.
-   * @param paramNames list of values of param.getName();
+   * @param paramNamesSet set of values of param.getName();
    */
-  void erase(const std::set<std::string>& paramNames) noexcept;
+  void erase(const std::set<std::string>& paramNamesSet) noexcept;
 
   /**
    * Clears the context content.
@@ -111,10 +111,12 @@ public:
    */
   class ParamNameMatcher {
   public:
-    explicit ParamNameMatcher(const std::set<std::string_view>& names) noexcept : m_names(names) {}
+    template <typename T, std::enable_if_t<std::is_same_v<std::decay_t<T>, std::set<std::string>>, int> = 0>
+    explicit ParamNameMatcher(T&& names) noexcept : m_names(std::forward<T>(names)) {}
+    explicit ParamNameMatcher(const std::string& name) noexcept : m_names({name}) {}
     bool operator() (const Param& p) const noexcept { return m_names.find(p.getName()) != m_names.end(); }
   private:
-    const std::set<std::string_view> & m_names;
+    const std::set<std::string> m_names;
   };
   
   /**
