@@ -236,17 +236,10 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
                                  std::to_string(storageClass.vo.maxFileSize) + " bytes)");
     }
     // Check that the file is not 0-length
-    if (m_zeroLengthFilesDisallowed) {
-      if (!m_zeroLengthFilesDisallowedExceptions.count(storageClass.vo.name)) {
+    if (m_event.file().size() == 0) {
+      if (m_zeroLengthFilesDisallowed && !m_zeroLengthFilesDisallowedExceptions.count(storageClass.vo.name)) {
         throw exception::UserError("Archival of 0-length files not allowed.");
       }
-    }
-  }
-
-  // Check that the file is not 0-length
-  if (m_zeroLengthFilesDisallowed) {
-    if (!m_zeroLengthFilesDisallowedExceptions.count(storageClassStr)) {
-      throw exception::UserError("Archival of zero-length files not allowed.");
     }
   }
 
