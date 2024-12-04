@@ -754,10 +754,6 @@ int DriveHandler::runChild() {
   resetLogParams(driveHandlerProxy.get());
   auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 
-  // Stop thread that is looking for broadcast
-  terminateThreadPromise.set_value();
-  recvBroadcastThreadFut.wait();
-
   return ret;
 }
 
