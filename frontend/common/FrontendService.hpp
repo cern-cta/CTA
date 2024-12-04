@@ -78,12 +78,12 @@ public:
   /*!
    * Check if 0-length files are disallowed
    */
-  bool getDisallowZeroLengthFiles() const { return m_disallowZeroLengthFiles; };
+  bool getDisallowZeroLengthFiles() const { return m_zeroLengthFilesForbidden; };
 
   /*!
    * If 0-length files are disallowed, get the tape pools that are exempt from this restriction
    */
-  const std::vector<std::string>& getDisallowZeroLengthFilesExemptions() const { return m_disallowZeroLengthFiles_exceptionStorageClasses; };
+  const std::vector<std::string>& getDisallowZeroLengthFilesExemptions() const { return m_zeroLengthFilesForbidden_voExceptions; };
 
   /*!
    * Get the repack buffer URL
@@ -167,8 +167,8 @@ private:
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
-  bool                                          m_disallowZeroLengthFiles; //!< Flag to explicitly reject the 0-length files by default
-  std::vector<std::string>                      m_disallowZeroLengthFiles_exceptionStorageClasses; //!< If 0-length files are rejected by default, do not apply check to these tapepools
+  bool                                          m_zeroLengthFilesForbidden; //!< Flag to explicitly reject the 0-length files by default
+  std::vector<std::string>                      m_zeroLengthFilesForbidden_voExceptions; //!< If 0-length files are rejected by default, do not apply check to these VOs
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;  //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests

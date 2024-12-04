@@ -20,7 +20,7 @@
 # DESCRIPTION
 #
 #   - This script checks that the archival of a 0-length file fails.
-#   - For it to work, the configuration 'cta.archivefile.disallow_zero_length'
+#   - For it to work, the configuration 'cta.archivefile.zero_length_files_forbidden'
 #   must be set to 'on'.
 #
 ################################################################################

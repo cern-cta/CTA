@@ -15,8 +15,8 @@ conf:
   frontend:
     instanceName: "CI"
     archiveFileMaxSizeGb: 1000
-    archiveFileDisallowZeroLength: "on"
-    archiveFileDisallowZeroLengthExemptVoList: ""
+    zeroLengthFilesForbidden: "on"
+    zeroLengthFilesForbiddenVoExceptionList: ""
     logUrl: "file:/var/log/cta/cta-frontend.log"
     # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
 

@@ -223,27 +223,27 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, "Configuration entry", params);
   }
 
-  m_disallowZeroLengthFiles = config.getOptionValueStr("cta.archivefile.disallow_zero_length").value_or("off") == "on" ? true : false;
+  m_zeroLengthFilesForbidden = config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off") == "on" ? true : false;
   {
-    // Log cta.archivefile.disallow_zero_length
+    // Log cta.archivefile.zero_length_files_forbidden
     std::list<log::Param> params;
-    params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("source", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
-    params.push_back(log::Param("key", "disallow_zero_length"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.archivefile.disallow_zero_length").value_or("off")));
+    params.push_back(log::Param("key", "zero_length_files_forbidden"));
+    params.push_back(log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off")));
     log(log::INFO, "Configuration entry", params);
   }
 
-  m_disallowZeroLengthFiles_exceptionStorageClasses = config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_vo_list");
-  if (!m_disallowZeroLengthFiles_exceptionStorageClasses.empty()) {
-    // Log cta.archivefile.disallow_zero_length_exempt_vo_list
+  m_zeroLengthFilesForbidden_voExceptions = config.getOptionValueStrVector("cta.archivefile.zero_length_files_forbidden_vo_exception_list");
+  {
+    // Log cta.archivefile.zero_length_files_forbidden_vo_exception_list
     std::list<log::Param> params;
-    params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("source", m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename));
     params.push_back(log::Param("category", "cta.archivefile"));
-    params.push_back(log::Param("key", "disallow_zero_length_exempt_vo_list"));
+    params.push_back(log::Param("key", "zero_length_files_forbidden_vo_exception_list"));
     std::ostringstream oss;
     bool is_first = true;
-    for (auto & val : config.getOptionValueStrVector("cta.archivefile.disallow_zero_length_exempt_vo_list")) {
+    for (auto & val : m_zeroLengthFilesForbidden_voExceptions) {
       if (!is_first) {
         oss << ",";
       }
