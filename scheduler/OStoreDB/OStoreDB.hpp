@@ -373,7 +373,6 @@ class OStoreDB: public SchedulerDatabase {
       m_oStoreDB(oStoreDB),
       m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
       m_retrieveMount(rm) { }
-    void setJobOwned(bool b = true) { m_jobOwned = b; }
 
    private:
     bool m_jobOwned;
