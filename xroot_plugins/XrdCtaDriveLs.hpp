@@ -152,42 +152,20 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
 
     switch (dr.driveStatus) {
       using cta::common::dataStructures::DriveStatus;
-
-      case DriveStatus::Probing:
-        drive_time -= dr.probeStartTime.value();
-        break;
-      case DriveStatus::Up:
-        drive_time -= dr.downOrUpStartTime.value();
-        break;
-      case DriveStatus::Down:
-        drive_time -= dr.downOrUpStartTime.value();
-        break;
-      case DriveStatus::Starting:
-        drive_time -= dr.startStartTime.value();
-        break;
-      case DriveStatus::Mounting:
-        drive_time -= dr.mountStartTime.value();
-        break;
-      case DriveStatus::Transferring:
-        drive_time -= dr.transferStartTime.value();
-        break;
-      case DriveStatus::CleaningUp:
-        drive_time -= dr.cleanupStartTime.value();
-        break;
-      case DriveStatus::Unloading:
-        drive_time -= dr.unloadStartTime.value();
-        break;
-      case DriveStatus::Unmounting:
-        drive_time -= dr.unmountStartTime.value();
-        break;
-      case DriveStatus::DrainingToDisk:
-        drive_time -= dr.drainingStartTime.value();
-        break;
-      case DriveStatus::Shutdown:
-        drive_time -= dr.shutdownTime.value();
-        break;
-      case DriveStatus::Unknown:
-        break;
+      // clang-format off
+      case DriveStatus::Probing:           drive_time -= dr.probeStartTime.value();    break;
+      case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime.value(); break;
+      case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime.value(); break;
+      case DriveStatus::Starting:          drive_time -= dr.startStartTime.value();    break;
+      case DriveStatus::Mounting:          drive_time -= dr.mountStartTime.value();    break;
+      case DriveStatus::Transferring:      drive_time -= dr.transferStartTime.value(); break;
+      case DriveStatus::CleaningUp:        drive_time -= dr.cleanupStartTime.value();  break;
+      case DriveStatus::Unloading:         drive_time -= dr.unloadStartTime.value();   break;
+      case DriveStatus::Unmounting:        drive_time -= dr.unmountStartTime.value();  break;
+      case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime.value(); break;
+      case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime.value();      break;
+      case DriveStatus::Unknown:                                                       break;
+      // clang-format on
     }
     dr_item->set_drive_status_since(drive_time);
 
