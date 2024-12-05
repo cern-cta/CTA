@@ -86,8 +86,7 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
     for (auto dr_it = m_tapeDrives.begin(); dr_it != m_tapeDrives.end();) {
       if (driveRegex.has_match(dr_it->driveName)) {
         ++dr_it;
-      }
-      else {
+      } else {
         auto erase_it = dr_it;
         ++dr_it;
         m_tapeDrives.erase(erase_it);

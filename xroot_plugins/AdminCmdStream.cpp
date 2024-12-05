@@ -145,20 +145,16 @@ xrd::Response AdminCmdStream::process() {
 
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
-  }
-  catch (exception::PbException& ex) {
+  } catch (exception::PbException& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
-  }
-  catch (exception::UserError& ex) {
+  } catch (exception::UserError& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.getMessageValue(), t);
     throw ex;
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
-  }
-  catch (std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   }

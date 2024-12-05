@@ -30,8 +30,7 @@ namespace cta::admin {
 TextFormatter::~TextFormatter() {
   try {
     flush();
-  }
-  catch (std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     std::cerr << ex.what() << std::endl;
   }
 }
@@ -175,15 +174,30 @@ void TextFormatter::flush() {
 
 void TextFormatter::printActivityMountRuleLsHeader() {
   push_back("HEADER");
-  push_back("instance", "username", "policy", "activity", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time",
+  push_back("instance",
+            "username",
+            "policy",
+            "activity",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
             "comment");
 }
 
 void TextFormatter::print(const ActivityMountRuleLsItem& amrls_item) {
-  push_back(amrls_item.disk_instance(), amrls_item.activity_mount_rule(), amrls_item.mount_policy(),
-            amrls_item.activity_regex(), amrls_item.creation_log().username(), amrls_item.creation_log().host(),
-            timeToStr(amrls_item.creation_log().time()), amrls_item.last_modification_log().username(),
-            amrls_item.last_modification_log().host(), timeToStr(amrls_item.last_modification_log().time()),
+  push_back(amrls_item.disk_instance(),
+            amrls_item.activity_mount_rule(),
+            amrls_item.mount_policy(),
+            amrls_item.activity_regex(),
+            amrls_item.creation_log().username(),
+            amrls_item.creation_log().host(),
+            timeToStr(amrls_item.creation_log().time()),
+            amrls_item.last_modification_log().username(),
+            amrls_item.last_modification_log().host(),
+            timeToStr(amrls_item.last_modification_log().time()),
             amrls_item.comment());
 }
 
@@ -193,30 +207,65 @@ void TextFormatter::printAdminLsHeader() {
 }
 
 void TextFormatter::print(const AdminLsItem& adls_item) {
-  push_back(adls_item.user(), adls_item.creation_log().username(), adls_item.creation_log().host(),
-            timeToStr(adls_item.creation_log().time()), adls_item.last_modification_log().username(),
-            adls_item.last_modification_log().host(), timeToStr(adls_item.last_modification_log().time()),
+  push_back(adls_item.user(),
+            adls_item.creation_log().username(),
+            adls_item.creation_log().host(),
+            timeToStr(adls_item.creation_log().time()),
+            adls_item.last_modification_log().username(),
+            adls_item.last_modification_log().host(),
+            timeToStr(adls_item.last_modification_log().time()),
             adls_item.comment());
 }
 
 void TextFormatter::printArchiveRouteLsHeader() {
   push_back("HEADER");
-  push_back("storage class", "copy number", "type", "tapepool", "c.user", "c.host", "c.time", "m.user", "m.host",
-            "m.time", "comment");
+  push_back("storage class",
+            "copy number",
+            "type",
+            "tapepool",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const ArchiveRouteLsItem& arls_item) {
-  push_back(arls_item.storage_class(), arls_item.copy_number(), arls_item.archive_route_type(), arls_item.tapepool(),
-            arls_item.creation_log().username(), arls_item.creation_log().host(),
-            timeToStr(arls_item.creation_log().time()), arls_item.last_modification_log().username(),
-            arls_item.last_modification_log().host(), timeToStr(arls_item.last_modification_log().time()),
+  push_back(arls_item.storage_class(),
+            arls_item.copy_number(),
+            arls_item.archive_route_type(),
+            arls_item.tapepool(),
+            arls_item.creation_log().username(),
+            arls_item.creation_log().host(),
+            timeToStr(arls_item.creation_log().time()),
+            arls_item.last_modification_log().username(),
+            arls_item.last_modification_log().host(),
+            timeToStr(arls_item.last_modification_log().time()),
             arls_item.comment());
 }
 
 void TextFormatter::printDriveLsHeader() {
   push_back("HEADER");
-  push_back("library", "drive", "host", "desired", "request", "status", "since", "vid", "tapepool", "vo", "files",
-            "data", "MB/s", "session", "priority", "activity", "age", "reason");
+  push_back("library",
+            "drive",
+            "host",
+            "desired",
+            "request",
+            "status",
+            "since",
+            "vid",
+            "tapepool",
+            "vo",
+            "files",
+            "data",
+            "MB/s",
+            "session",
+            "priority",
+            "activity",
+            "age",
+            "reason");
 }
 
 void TextFormatter::print(const DriveLsItem& drls_item) {
@@ -239,8 +288,7 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
       // Calculate average bandwidth for the session in MB/s (reported to 1 decimal place)
       double bandwidth = drls_item.bytes_transferred_in_session() / drls_item.session_elapsed_time();
       averageBandwidth = doubleToStr(bandwidth / 1000000.0, '\0');
-    }
-    else {
+    } else {
       averageBandwidth = "0.0";
     }
   }
@@ -259,13 +307,24 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
   //If there is a reason, we only want to display the beginning
   std::string reason = cta::utils::postEllipsis(drls_item.reason(), NB_CHAR_REASON);
 
-  push_back(reportedLogicalLibrary, drls_item.drive_name(), drls_item.host(),
+  push_back(reportedLogicalLibrary,
+            drls_item.drive_name(),
+            drls_item.host(),
             (drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down"),
             toCamelCaseString(ProtobufToMountType(drls_item.mount_type())),
-            toString(ProtobufToDriveStatus(drls_item.drive_status())), driveStatusSince, drls_item.vid(),
-            drls_item.tapepool(), drls_item.vo(), filesTransferredInSession, bytesTransferredInSession,
-            averageBandwidth, sessionId, drls_item.current_priority(), drls_item.current_activity(),
-            timeSinceLastUpdate, reason);
+            toString(ProtobufToDriveStatus(drls_item.drive_status())),
+            driveStatusSince,
+            drls_item.vid(),
+            drls_item.tapepool(),
+            drls_item.vo(),
+            filesTransferredInSession,
+            bytesTransferredInSession,
+            averageBandwidth,
+            sessionId,
+            drls_item.current_priority(),
+            drls_item.current_activity(),
+            timeSinceLastUpdate,
+            reason);
 }
 
 void TextFormatter::printFailedRequestLsHeader() {
@@ -290,8 +349,13 @@ void TextFormatter::print(const FailedRequestLsItem& frls_item) {
       throw std::runtime_error("Unrecognised request type: " + std::to_string(frls_item.request_type()));
   }
 
-  push_back(frls_item.object_id(), request_type, frls_item.copy_nb(), tapepool_vid, frls_item.requester().username(),
-            frls_item.requester().groupname(), frls_item.af().df().path());
+  push_back(frls_item.object_id(),
+            request_type,
+            frls_item.copy_nb(),
+            tapepool_vid,
+            frls_item.requester().username(),
+            frls_item.requester().groupname(),
+            frls_item.af().df().path());
 
   // Note: failure log messages are available in frls_item.failurelogs(). These are not currently
   //       displayed in the text output, only in JSON.
@@ -316,17 +380,32 @@ void TextFormatter::printGroupMountRuleLsHeader() {
 }
 
 void TextFormatter::print(const GroupMountRuleLsItem& gmrls_item) {
-  push_back(gmrls_item.disk_instance(), gmrls_item.group_mount_rule(), gmrls_item.mount_policy(),
-            gmrls_item.creation_log().username(), gmrls_item.creation_log().host(),
-            timeToStr(gmrls_item.creation_log().time()), gmrls_item.last_modification_log().username(),
-            gmrls_item.last_modification_log().host(), timeToStr(gmrls_item.last_modification_log().time()),
+  push_back(gmrls_item.disk_instance(),
+            gmrls_item.group_mount_rule(),
+            gmrls_item.mount_policy(),
+            gmrls_item.creation_log().username(),
+            gmrls_item.creation_log().host(),
+            timeToStr(gmrls_item.creation_log().time()),
+            gmrls_item.last_modification_log().username(),
+            gmrls_item.last_modification_log().host(),
+            timeToStr(gmrls_item.last_modification_log().time()),
             gmrls_item.comment());
 }
 
 void TextFormatter::printListPendingArchivesHeader() {
   push_back("HEADER");
-  push_back("tapepool", "archive id", "storage class", "copy no", "disk id", "instance", "checksum type",
-            "checksum value", "size", "user", "group", "path");
+  push_back("tapepool",
+            "archive id",
+            "storage class",
+            "copy no",
+            "disk id",
+            "instance",
+            "checksum type",
+            "checksum value",
+            "size",
+            "user",
+            "group",
+            "path");
 }
 
 void TextFormatter::print(const ListPendingArchivesItem& lpa_item) {
@@ -346,10 +425,18 @@ void TextFormatter::print(const ListPendingArchivesItem& lpa_item) {
     checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
   }
 
-  push_back(lpa_item.tapepool(), lpa_item.af().archive_id(), lpa_item.af().storage_class(), lpa_item.copy_nb(),
-            lpa_item.af().disk_id(), lpa_item.af().disk_instance(), checksumType, checksumValue,
-            dataSizeToStr(lpa_item.af().size()), lpa_item.af().df().owner_id().uid(),
-            lpa_item.af().df().owner_id().gid(), lpa_item.af().df().path());
+  push_back(lpa_item.tapepool(),
+            lpa_item.af().archive_id(),
+            lpa_item.af().storage_class(),
+            lpa_item.copy_nb(),
+            lpa_item.af().disk_id(),
+            lpa_item.af().disk_instance(),
+            checksumType,
+            checksumValue,
+            dataSizeToStr(lpa_item.af().size()),
+            lpa_item.af().df().owner_id().uid(),
+            lpa_item.af().df().owner_id().gid(),
+            lpa_item.af().df().path());
 }
 
 void TextFormatter::printListPendingArchivesSummaryHeader() {
@@ -367,9 +454,15 @@ void TextFormatter::printListPendingRetrievesHeader() {
 }
 
 void TextFormatter::print(const ListPendingRetrievesItem& lpr_item) {
-  push_back(lpr_item.tf().vid(), lpr_item.af().archive_id(), lpr_item.copy_nb(), lpr_item.tf().f_seq(),
-            lpr_item.tf().block_id(), dataSizeToStr(lpr_item.af().size()), lpr_item.af().df().owner_id().uid(),
-            lpr_item.af().df().owner_id().gid(), lpr_item.af().df().path());
+  push_back(lpr_item.tf().vid(),
+            lpr_item.af().archive_id(),
+            lpr_item.copy_nb(),
+            lpr_item.tf().f_seq(),
+            lpr_item.tf().block_id(),
+            dataSizeToStr(lpr_item.af().size()),
+            lpr_item.af().df().owner_id().uid(),
+            lpr_item.af().df().owner_id().gid(),
+            lpr_item.af().df().path());
 }
 
 void TextFormatter::printListPendingRetrievesSummaryHeader() {
@@ -383,51 +476,116 @@ void TextFormatter::print(const ListPendingRetrievesSummary& lpr_summary) {
 
 void TextFormatter::printLogicalLibraryLsHeader() {
   push_back("HEADER");
-  push_back("library", "disabled", "phys.lib", "reason", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time",
+  push_back("library",
+            "disabled",
+            "phys.lib",
+            "reason",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
             "comment");
 }
 
 void TextFormatter::print(const LogicalLibraryLsItem& llls_item) {
-  push_back(llls_item.name(), llls_item.is_disabled(), llls_item.physical_library(), llls_item.disabled_reason(),
-            llls_item.creation_log().username(), llls_item.creation_log().host(),
-            timeToStr(llls_item.creation_log().time()), llls_item.last_modification_log().username(),
-            llls_item.last_modification_log().host(), timeToStr(llls_item.last_modification_log().time()),
+  push_back(llls_item.name(),
+            llls_item.is_disabled(),
+            llls_item.physical_library(),
+            llls_item.disabled_reason(),
+            llls_item.creation_log().username(),
+            llls_item.creation_log().host(),
+            timeToStr(llls_item.creation_log().time()),
+            llls_item.last_modification_log().username(),
+            llls_item.last_modification_log().host(),
+            timeToStr(llls_item.last_modification_log().time()),
             llls_item.comment());
 }
 
 void TextFormatter::printMediaTypeLsHeader() {
   push_back("HEADER");
-  push_back("media type", "cartridge", "capacity", "primary density code", "secondary density code", "number of wraps",
-            "min LPos", "max LPos", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("media type",
+            "cartridge",
+            "capacity",
+            "primary density code",
+            "secondary density code",
+            "number of wraps",
+            "min LPos",
+            "max LPos",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const MediaTypeLsItem& mtls_item) {
-  push_back(mtls_item.name(), mtls_item.cartridge(), mtls_item.capacity(), mtls_item.primary_density_code(),
-            mtls_item.secondary_density_code(), mtls_item.number_of_wraps(), mtls_item.min_lpos(), mtls_item.max_lpos(),
-            mtls_item.creation_log().username(), mtls_item.creation_log().host(),
-            timeToStr(mtls_item.creation_log().time()), mtls_item.last_modification_log().username(),
-            mtls_item.last_modification_log().host(), timeToStr(mtls_item.last_modification_log().time()),
+  push_back(mtls_item.name(),
+            mtls_item.cartridge(),
+            mtls_item.capacity(),
+            mtls_item.primary_density_code(),
+            mtls_item.secondary_density_code(),
+            mtls_item.number_of_wraps(),
+            mtls_item.min_lpos(),
+            mtls_item.max_lpos(),
+            mtls_item.creation_log().username(),
+            mtls_item.creation_log().host(),
+            timeToStr(mtls_item.creation_log().time()),
+            mtls_item.last_modification_log().username(),
+            mtls_item.last_modification_log().host(),
+            timeToStr(mtls_item.last_modification_log().time()),
             mtls_item.comment());
 }
 
 void TextFormatter::printMountPolicyLsHeader() {
   push_back("HEADER");
-  push_back("mount policy", "a.priority", "a.minAge", "r.priority", "r.minAge", "c.user", "c.host", "c.time", "m.user",
-            "m.host", "m.time", "comment");
+  push_back("mount policy",
+            "a.priority",
+            "a.minAge",
+            "r.priority",
+            "r.minAge",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const MountPolicyLsItem& mpls_item) {
-  push_back(mpls_item.name(), mpls_item.archive_priority(), mpls_item.archive_min_request_age(),
-            mpls_item.retrieve_priority(), mpls_item.retrieve_min_request_age(), mpls_item.creation_log().username(),
-            mpls_item.creation_log().host(), timeToStr(mpls_item.creation_log().time()),
-            mpls_item.last_modification_log().username(), mpls_item.last_modification_log().host(),
-            timeToStr(mpls_item.last_modification_log().time()), mpls_item.comment());
+  push_back(mpls_item.name(),
+            mpls_item.archive_priority(),
+            mpls_item.archive_min_request_age(),
+            mpls_item.retrieve_priority(),
+            mpls_item.retrieve_min_request_age(),
+            mpls_item.creation_log().username(),
+            mpls_item.creation_log().host(),
+            timeToStr(mpls_item.creation_log().time()),
+            mpls_item.last_modification_log().username(),
+            mpls_item.last_modification_log().host(),
+            timeToStr(mpls_item.last_modification_log().time()),
+            mpls_item.comment());
 }
 
 void TextFormatter::printRepackLsHeader() {
   push_back("HEADER");
-  push_back("c.time", "repackTime", "c.user", "vid", "tapepool", "providedFiles", "totalFiles", "totalBytes",
-            "selectedFiles", "filesToRetrieve", "filesToArchive", "failed", "status");
+  push_back("c.time",
+            "repackTime",
+            "c.user",
+            "vid",
+            "tapepool",
+            "providedFiles",
+            "totalFiles",
+            "totalBytes",
+            "selectedFiles",
+            "filesToRetrieve",
+            "filesToArchive",
+            "failed",
+            "status");
 }
 
 void TextFormatter::print(const RepackLsItem& rels_item) {
@@ -436,8 +594,12 @@ void TextFormatter::print(const RepackLsItem& rels_item) {
     selectedFiles += "*";
   }
   push_back(
-    timeToStr(rels_item.creation_log().time()), secondsToDayHoursMinSec(rels_item.repack_time()),
-    rels_item.creation_log().username(), rels_item.vid(), rels_item.tapepool(), rels_item.user_provided_files(),
+    timeToStr(rels_item.creation_log().time()),
+    secondsToDayHoursMinSec(rels_item.repack_time()),
+    rels_item.creation_log().username(),
+    rels_item.vid(),
+    rels_item.tapepool(),
+    rels_item.user_provided_files(),
     rels_item.total_files_on_tape_at_start(),                 //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
     dataSizeToStr(rels_item.total_bytes_on_tape_at_start()),  //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
     selectedFiles,                                            //https://gitlab.cern.ch/cta/CTA/-/issues/546#note_7357851
@@ -453,18 +615,41 @@ void TextFormatter::printRequesterMountRuleLsHeader() {
 }
 
 void TextFormatter::print(const RequesterMountRuleLsItem& rmrls_item) {
-  push_back(rmrls_item.disk_instance(), rmrls_item.requester_mount_rule(), rmrls_item.mount_policy(),
-            rmrls_item.creation_log().username(), rmrls_item.creation_log().host(),
-            timeToStr(rmrls_item.creation_log().time()), rmrls_item.last_modification_log().username(),
-            rmrls_item.last_modification_log().host(), timeToStr(rmrls_item.last_modification_log().time()),
+  push_back(rmrls_item.disk_instance(),
+            rmrls_item.requester_mount_rule(),
+            rmrls_item.mount_policy(),
+            rmrls_item.creation_log().username(),
+            rmrls_item.creation_log().host(),
+            timeToStr(rmrls_item.creation_log().time()),
+            rmrls_item.last_modification_log().username(),
+            rmrls_item.last_modification_log().host(),
+            timeToStr(rmrls_item.last_modification_log().time()),
             rmrls_item.comment());
 }
 
 void TextFormatter::printShowQueuesHeader() {
   push_back("HEADER");
-  push_back("type", "tapepool", "vo", "library", "vid", "files queued", "data queued", "oldest", "youngest", "priority",
-            "min age", "read max drives", "write max drives", "cur. mounts", "cur. files", "cur. data",
-            "tapes capacity", "files on tapes", "data on tapes", "full tapes", "writable tapes");
+  push_back("type",
+            "tapepool",
+            "vo",
+            "library",
+            "vid",
+            "files queued",
+            "data queued",
+            "oldest",
+            "youngest",
+            "priority",
+            "min age",
+            "read max drives",
+            "write max drives",
+            "cur. mounts",
+            "cur. files",
+            "cur. data",
+            "tapes capacity",
+            "files on tapes",
+            "data on tapes",
+            "full tapes",
+            "writable tapes");
 }
 
 void TextFormatter::print(const ShowQueuesItem& sq_item) {
@@ -481,57 +666,140 @@ void TextFormatter::print(const ShowQueuesItem& sq_item) {
     writeMaxDrives = std::to_string(sq_item.write_max_drives());
   }
 
-  push_back(toCamelCaseString(ProtobufToMountType(sq_item.mount_type())), sq_item.tapepool(), sq_item.vo(),
-            sq_item.logical_library(), sq_item.vid(), sq_item.queued_files(), dataSizeToStr(sq_item.queued_bytes()),
-            sq_item.oldest_age(), sq_item.youngest_age(), priority, minAge, readMaxDrives, writeMaxDrives,
-            sq_item.cur_mounts(), sq_item.cur_files(), dataSizeToStr(sq_item.cur_bytes()),
-            dataSizeToStr(sq_item.tapes_capacity()), sq_item.tapes_files(), dataSizeToStr(sq_item.tapes_bytes()),
-            sq_item.full_tapes(), sq_item.writable_tapes());
+  push_back(toCamelCaseString(ProtobufToMountType(sq_item.mount_type())),
+            sq_item.tapepool(),
+            sq_item.vo(),
+            sq_item.logical_library(),
+            sq_item.vid(),
+            sq_item.queued_files(),
+            dataSizeToStr(sq_item.queued_bytes()),
+            sq_item.oldest_age(),
+            sq_item.youngest_age(),
+            priority,
+            minAge,
+            readMaxDrives,
+            writeMaxDrives,
+            sq_item.cur_mounts(),
+            sq_item.cur_files(),
+            dataSizeToStr(sq_item.cur_bytes()),
+            dataSizeToStr(sq_item.tapes_capacity()),
+            sq_item.tapes_files(),
+            dataSizeToStr(sq_item.tapes_bytes()),
+            sq_item.full_tapes(),
+            sq_item.writable_tapes());
 }
 
 void TextFormatter::printStorageClassLsHeader() {
   push_back("HEADER");
-  push_back("storage class", "number of copies", "vo", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time",
+  push_back("storage class",
+            "number of copies",
+            "vo",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
             "comment");
 }
 
 void TextFormatter::print(const StorageClassLsItem& scls_item) {
-  push_back(scls_item.name(), scls_item.nb_copies(), scls_item.vo(), scls_item.creation_log().username(),
-            scls_item.creation_log().host(), timeToStr(scls_item.creation_log().time()),
-            scls_item.last_modification_log().username(), scls_item.last_modification_log().host(),
-            timeToStr(scls_item.last_modification_log().time()), scls_item.comment());
+  push_back(scls_item.name(),
+            scls_item.nb_copies(),
+            scls_item.vo(),
+            scls_item.creation_log().username(),
+            scls_item.creation_log().host(),
+            timeToStr(scls_item.creation_log().time()),
+            scls_item.last_modification_log().username(),
+            scls_item.last_modification_log().host(),
+            timeToStr(scls_item.last_modification_log().time()),
+            scls_item.comment());
 }
 
 void TextFormatter::printTapeLsHeader() {
   push_back("HEADER");
-  push_back("vid", "media type", "vendor", "library", "order", "tapepool", "vo", "encryption key name", "capacity",
-            "occupancy", "last fseq", "full", "from castor", "state", "state reason", "label drive", "label time",
-            "last w drive", "last w time", "w mounts", "last r drive", "last r time", "r mounts", "c.user", "c.host",
-            "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("vid",
+            "media type",
+            "vendor",
+            "library",
+            "order",
+            "tapepool",
+            "vo",
+            "encryption key name",
+            "capacity",
+            "occupancy",
+            "last fseq",
+            "full",
+            "from castor",
+            "state",
+            "state reason",
+            "label drive",
+            "label time",
+            "last w drive",
+            "last w time",
+            "w mounts",
+            "last r drive",
+            "last r time",
+            "r mounts",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const TapeLsItem& tals_item) {
   std::string state_reason = cta::utils::postEllipsis(tals_item.state_reason(), NB_CHAR_REASON);
-  push_back(tals_item.vid(), tals_item.media_type(), tals_item.vendor(), tals_item.logical_library(),
-            tals_item.purchase_order(), tals_item.tapepool(), tals_item.vo(), tals_item.encryption_key_name(),
-            dataSizeToStr(tals_item.capacity()), dataSizeToStr(tals_item.occupancy()), tals_item.last_fseq(),
-            tals_item.full(), tals_item.from_castor(), tals_item.state(), state_reason,
+  push_back(tals_item.vid(),
+            tals_item.media_type(),
+            tals_item.vendor(),
+            tals_item.logical_library(),
+            tals_item.purchase_order(),
+            tals_item.tapepool(),
+            tals_item.vo(),
+            tals_item.encryption_key_name(),
+            dataSizeToStr(tals_item.capacity()),
+            dataSizeToStr(tals_item.occupancy()),
+            tals_item.last_fseq(),
+            tals_item.full(),
+            tals_item.from_castor(),
+            tals_item.state(),
+            state_reason,
             tals_item.has_label_log() ? tals_item.label_log().drive() : "",
             tals_item.has_label_log() ? timeToStr(tals_item.label_log().time()) : "",
             tals_item.has_last_written_log() ? tals_item.last_written_log().drive() : "",
             tals_item.has_last_written_log() ? timeToStr(tals_item.last_written_log().time()) : "",
-            tals_item.write_mount_count(), tals_item.has_last_read_log() ? tals_item.last_read_log().drive() : "",
+            tals_item.write_mount_count(),
+            tals_item.has_last_read_log() ? tals_item.last_read_log().drive() : "",
             tals_item.has_last_read_log() ? timeToStr(tals_item.last_read_log().time()) : "",
-            tals_item.read_mount_count(), tals_item.creation_log().username(), tals_item.creation_log().host(),
-            timeToStr(tals_item.creation_log().time()), tals_item.last_modification_log().username(),
-            tals_item.last_modification_log().host(), timeToStr(tals_item.last_modification_log().time()),
+            tals_item.read_mount_count(),
+            tals_item.creation_log().username(),
+            tals_item.creation_log().host(),
+            timeToStr(tals_item.creation_log().time()),
+            tals_item.last_modification_log().username(),
+            tals_item.last_modification_log().host(),
+            timeToStr(tals_item.last_modification_log().time()),
             tals_item.comment());
 }
 
 void TextFormatter::printTapeFileLsHeader() {
   push_back("HEADER");
-  push_back("archive id", "copy no", "vid", "fseq", "block id", "instance", "disk fxid", "size", "checksum type",
-            "checksum value", "storage class", "owner", "group", "creation time");
+  push_back("archive id",
+            "copy no",
+            "vid",
+            "fseq",
+            "block id",
+            "instance",
+            "disk fxid",
+            "size",
+            "checksum type",
+            "checksum value",
+            "storage class",
+            "owner",
+            "group",
+            "creation time");
 }
 
 void TextFormatter::print(const TapeFileLsItem& tfls_item) {
@@ -546,17 +814,42 @@ void TextFormatter::print(const TapeFileLsItem& tfls_item) {
     checksumValue = tfls_item.af().checksum().begin()->value();
   }
 
-  push_back(tfls_item.af().archive_id(), tfls_item.tf().copy_nb(), tfls_item.tf().vid(), tfls_item.tf().f_seq(),
-            tfls_item.tf().block_id(), tfls_item.df().disk_instance(), tfls_item.df().disk_id(),
-            dataSizeToStr(tfls_item.af().size()), checksumType, checksumValue, tfls_item.af().storage_class(),
-            tfls_item.df().owner_id().uid(), tfls_item.df().owner_id().gid(),
+  push_back(tfls_item.af().archive_id(),
+            tfls_item.tf().copy_nb(),
+            tfls_item.tf().vid(),
+            tfls_item.tf().f_seq(),
+            tfls_item.tf().block_id(),
+            tfls_item.df().disk_instance(),
+            tfls_item.df().disk_id(),
+            dataSizeToStr(tfls_item.af().size()),
+            checksumType,
+            checksumValue,
+            tfls_item.af().storage_class(),
+            tfls_item.df().owner_id().uid(),
+            tfls_item.df().owner_id().gid(),
             timeToStr(tfls_item.af().creation_time()));
 }
 
 void TextFormatter::printTapePoolLsHeader() {
   push_back("HEADER");
-  push_back("name", "vo", "#tapes", "#partial", "#phys files", "size", "used", "avail", "use%", "encrypt", "supply",
-            "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("name",
+            "vo",
+            "#tapes",
+            "#partial",
+            "#phys files",
+            "size",
+            "used",
+            "avail",
+            "use%",
+            "encrypt",
+            "supply",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const TapePoolLsItem& tpls_item) {
@@ -579,18 +872,41 @@ void TextFormatter::print(const TapePoolLsItem& tpls_item) {
     is_first_value = false;
   }
 
-  push_back(tpls_item.name(), tpls_item.vo(), tpls_item.num_tapes(), tpls_item.num_partial_tapes(),
-            tpls_item.num_physical_files(), dataSizeToStr(tpls_item.capacity_bytes()),
-            dataSizeToStr(tpls_item.data_bytes()), dataSizeToStr(avail), doubleToStr(use_percent, '%'),
-            tpls_item.encrypt(), supply_source_oss.str(), tpls_item.created().username(), tpls_item.created().host(),
-            timeToStr(tpls_item.created().time()), tpls_item.modified().username(), tpls_item.modified().host(),
-            timeToStr(tpls_item.modified().time()), tpls_item.comment());
+  push_back(tpls_item.name(),
+            tpls_item.vo(),
+            tpls_item.num_tapes(),
+            tpls_item.num_partial_tapes(),
+            tpls_item.num_physical_files(),
+            dataSizeToStr(tpls_item.capacity_bytes()),
+            dataSizeToStr(tpls_item.data_bytes()),
+            dataSizeToStr(avail),
+            doubleToStr(use_percent, '%'),
+            tpls_item.encrypt(),
+            supply_source_oss.str(),
+            tpls_item.created().username(),
+            tpls_item.created().host(),
+            timeToStr(tpls_item.created().time()),
+            tpls_item.modified().username(),
+            tpls_item.modified().host(),
+            timeToStr(tpls_item.modified().time()),
+            tpls_item.comment());
 }
 
 void TextFormatter::printDiskSystemLsHeader() {
   push_back("HEADER");
-  push_back("name", "instance", "diskspace", "regexp", "space", "sleep", "c.user", "c.host", "c.time", "m.user",
-            "m.host", "m.time", "comment");
+  push_back("name",
+            "instance",
+            "diskspace",
+            "regexp",
+            "space",
+            "sleep",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::printDiskInstanceLsHeader() {
@@ -600,67 +916,136 @@ void TextFormatter::printDiskInstanceLsHeader() {
 
 void TextFormatter::printDiskInstanceSpaceLsHeader() {
   push_back("HEADER");
-  push_back("name", "instance", "url", "interval", "last refresh", "space", "c.user", "c.host", "c.time", "m.user",
-            "m.host", "m.time", "comment");
+  push_back("name",
+            "instance",
+            "url",
+            "interval",
+            "last refresh",
+            "space",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const DiskInstanceSpaceLsItem& disls_item) {
-  push_back(disls_item.name(), disls_item.disk_instance(), disls_item.free_space_query_url(),
-            disls_item.refresh_interval(), disls_item.last_refresh_time(), disls_item.free_space(),
-            disls_item.creation_log().username(), disls_item.creation_log().host(),
-            timeToStr(disls_item.creation_log().time()), disls_item.last_modification_log().username(),
-            disls_item.last_modification_log().host(), timeToStr(disls_item.last_modification_log().time()),
+  push_back(disls_item.name(),
+            disls_item.disk_instance(),
+            disls_item.free_space_query_url(),
+            disls_item.refresh_interval(),
+            disls_item.last_refresh_time(),
+            disls_item.free_space(),
+            disls_item.creation_log().username(),
+            disls_item.creation_log().host(),
+            timeToStr(disls_item.creation_log().time()),
+            disls_item.last_modification_log().username(),
+            disls_item.last_modification_log().host(),
+            timeToStr(disls_item.last_modification_log().time()),
             disls_item.comment());
 }
 
 void TextFormatter::print(const DiskInstanceLsItem& dils_item) {
-  push_back(dils_item.name(), dils_item.creation_log().username(), dils_item.creation_log().host(),
-            timeToStr(dils_item.creation_log().time()), dils_item.last_modification_log().username(),
-            dils_item.last_modification_log().host(), timeToStr(dils_item.last_modification_log().time()),
+  push_back(dils_item.name(),
+            dils_item.creation_log().username(),
+            dils_item.creation_log().host(),
+            timeToStr(dils_item.creation_log().time()),
+            dils_item.last_modification_log().username(),
+            dils_item.last_modification_log().host(),
+            timeToStr(dils_item.last_modification_log().time()),
             dils_item.comment());
 }
 
 void TextFormatter::print(const DiskSystemLsItem& dsls_item) {
-  push_back(dsls_item.name(), dsls_item.disk_instance(), dsls_item.disk_instance_space(), dsls_item.file_regexp(),
-            dsls_item.targeted_free_space(), dsls_item.sleep_time(), dsls_item.creation_log().username(),
-            dsls_item.creation_log().host(), timeToStr(dsls_item.creation_log().time()),
-            dsls_item.last_modification_log().username(), dsls_item.last_modification_log().host(),
-            timeToStr(dsls_item.last_modification_log().time()), dsls_item.comment());
+  push_back(dsls_item.name(),
+            dsls_item.disk_instance(),
+            dsls_item.disk_instance_space(),
+            dsls_item.file_regexp(),
+            dsls_item.targeted_free_space(),
+            dsls_item.sleep_time(),
+            dsls_item.creation_log().username(),
+            dsls_item.creation_log().host(),
+            timeToStr(dsls_item.creation_log().time()),
+            dsls_item.last_modification_log().username(),
+            dsls_item.last_modification_log().host(),
+            timeToStr(dsls_item.last_modification_log().time()),
+            dsls_item.comment());
 }
 
 void TextFormatter::printVirtualOrganizationLsHeader() {
   push_back("HEADER");
-  push_back("name", "read max drives", "write max drives", "max file size", "disk instance", "is repack vo", "c.user",
-            "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("name",
+            "read max drives",
+            "write max drives",
+            "max file size",
+            "disk instance",
+            "is repack vo",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const VirtualOrganizationLsItem& vols_item) {
-  push_back(vols_item.name(), vols_item.read_max_drives(), vols_item.write_max_drives(),
-            dataSizeToStr(vols_item.max_file_size()), vols_item.diskinstance(), vols_item.is_repack_vo(),
-            vols_item.creation_log().username(), vols_item.creation_log().host(),
-            timeToStr(vols_item.creation_log().time()), vols_item.last_modification_log().username(),
-            vols_item.last_modification_log().host(), timeToStr(vols_item.last_modification_log().time()),
+  push_back(vols_item.name(),
+            vols_item.read_max_drives(),
+            vols_item.write_max_drives(),
+            dataSizeToStr(vols_item.max_file_size()),
+            vols_item.diskinstance(),
+            vols_item.is_repack_vo(),
+            vols_item.creation_log().username(),
+            vols_item.creation_log().host(),
+            timeToStr(vols_item.creation_log().time()),
+            vols_item.last_modification_log().username(),
+            vols_item.last_modification_log().host(),
+            timeToStr(vols_item.last_modification_log().time()),
             vols_item.comment());
 }
 
 void TextFormatter::printVersionHeader() {
   push_back("HEADER");
-  push_back("CTA Admin", "Client xrd-ssi-protobuf", "CTA Frontend", "Server xrd-ssi-protobuf", "Catalogue schema",
-            "DB connection string", "Status");
+  push_back("CTA Admin",
+            "Client xrd-ssi-protobuf",
+            "CTA Frontend",
+            "Server xrd-ssi-protobuf",
+            "Catalogue schema",
+            "DB connection string",
+            "Status");
 }
 
 void TextFormatter::print(const VersionItem& version_item) {
   push_back(version_item.client_version().cta_version(),
             version_item.client_version().xrootd_ssi_protobuf_interface_version(),
             version_item.server_version().cta_version(),
-            version_item.server_version().xrootd_ssi_protobuf_interface_version(), version_item.catalogue_version(),
-            version_item.catalogue_connection_string(), version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION");
+            version_item.server_version().xrootd_ssi_protobuf_interface_version(),
+            version_item.catalogue_version(),
+            version_item.catalogue_connection_string(),
+            version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION");
 }
 
 void TextFormatter::printRecycleTapeFileLsHeader() {
   push_back("HEADER");
-  push_back("archive id", "copy no", "vid", "fseq", "block id", "instance", "disk fxid", "size", "checksum type",
-            "checksum value", "storage class", "owner", "group", "deletion time", "path when deleted", "reason");
+  push_back("archive id",
+            "copy no",
+            "vid",
+            "fseq",
+            "block id",
+            "instance",
+            "disk fxid",
+            "size",
+            "checksum type",
+            "checksum value",
+            "storage class",
+            "owner",
+            "group",
+            "deletion time",
+            "path when deleted",
+            "reason");
 }
 
 void TextFormatter::print(const RecycleTapeFileLsItem& rtfls_item) {
@@ -675,27 +1060,64 @@ void TextFormatter::print(const RecycleTapeFileLsItem& rtfls_item) {
     checksumValue = rtfls_item.checksum().begin()->value();
   }
 
-  push_back(rtfls_item.archive_file_id(), rtfls_item.copy_nb(), rtfls_item.vid(), rtfls_item.fseq(),
-            rtfls_item.block_id(), rtfls_item.disk_instance(), rtfls_item.disk_file_id(),
-            dataSizeToStr(rtfls_item.size_in_bytes()), checksumType, checksumValue, rtfls_item.storage_class(),
-            rtfls_item.disk_file_uid(), rtfls_item.disk_file_gid(), timeToStr(rtfls_item.recycle_log_time()),
-            rtfls_item.disk_file_path(), rtfls_item.reason_log());
+  push_back(rtfls_item.archive_file_id(),
+            rtfls_item.copy_nb(),
+            rtfls_item.vid(),
+            rtfls_item.fseq(),
+            rtfls_item.block_id(),
+            rtfls_item.disk_instance(),
+            rtfls_item.disk_file_id(),
+            dataSizeToStr(rtfls_item.size_in_bytes()),
+            checksumType,
+            checksumValue,
+            rtfls_item.storage_class(),
+            rtfls_item.disk_file_uid(),
+            rtfls_item.disk_file_gid(),
+            timeToStr(rtfls_item.recycle_log_time()),
+            rtfls_item.disk_file_path(),
+            rtfls_item.reason_log());
 }
 
 void TextFormatter::printPhysicalLibraryLsHeader() {
   push_back("HEADER");
-  push_back("name", "manufacturer", "model", "type", "gui url", "webcam url", "location", "physical cartridge slots",
-            "available cartridge slots", "physical drive slots", "disabled", "c.user", "c.host", "c.time", "m.user",
-            "m.host", "m.time", "comment");
+  push_back("name",
+            "manufacturer",
+            "model",
+            "type",
+            "gui url",
+            "webcam url",
+            "location",
+            "physical cartridge slots",
+            "available cartridge slots",
+            "physical drive slots",
+            "disabled",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment");
 }
 
 void TextFormatter::print(const PhysicalLibraryLsItem& plls_item) {
-  push_back(plls_item.name(), plls_item.manufacturer(), plls_item.model(), plls_item.type(), plls_item.gui_url(),
-            plls_item.webcam_url(), plls_item.location(), plls_item.nb_physical_cartridge_slots(),
-            plls_item.nb_available_cartridge_slots(), plls_item.nb_physical_drive_slots(), plls_item.is_disabled(),
-            plls_item.creation_log().username(), plls_item.creation_log().host(),
-            timeToStr(plls_item.creation_log().time()), plls_item.last_modification_log().username(),
-            plls_item.last_modification_log().host(), timeToStr(plls_item.last_modification_log().time()),
+  push_back(plls_item.name(),
+            plls_item.manufacturer(),
+            plls_item.model(),
+            plls_item.type(),
+            plls_item.gui_url(),
+            plls_item.webcam_url(),
+            plls_item.location(),
+            plls_item.nb_physical_cartridge_slots(),
+            plls_item.nb_available_cartridge_slots(),
+            plls_item.nb_physical_drive_slots(),
+            plls_item.is_disabled(),
+            plls_item.creation_log().username(),
+            plls_item.creation_log().host(),
+            timeToStr(plls_item.creation_log().time()),
+            plls_item.last_modification_log().username(),
+            plls_item.last_modification_log().host(),
+            timeToStr(plls_item.last_modification_log().time()),
             plls_item.comment());
 }
 

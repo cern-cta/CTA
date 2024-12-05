@@ -63,13 +63,11 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     if (loggerURL.value() == "stdout:") {
       m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend", shortHeader);
       logToStdout = 1;
-    }
-    else if (loggerURL.value().substr(0, 5) == "file:") {
+    } else if (loggerURL.value().substr(0, 5) == "file:") {
       logtoFile = 1;
       logFilePath = loggerURL.value().substr(5);
       m_log = std::make_unique<log::FileLogger>(shortHostname, "cta-frontend", logFilePath, loggerLevel);
-    }
-    else {
+    } else {
       throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.value());
     }
 
@@ -78,8 +76,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     if (loggerFormat.has_value()) {
       m_log->setLogFormat(loggerFormat.value());
     }
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     std::string ex_str("Failed to instantiate object representing CTA logging system: ");
     throw exception::Exception(ex_str + ex.getMessage().str());
   }
@@ -145,13 +142,14 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
 
   {
-    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(
-      *m_log, catalogueLogin, catalogue_numberofconnections.value(), nbArchiveFileListingConns);
+    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(*m_log,
+                                                                       catalogueLogin,
+                                                                       catalogue_numberofconnections.value(),
+                                                                       nbArchiveFileListingConns);
     m_catalogue = catalogueFactory->create();
     try {
       m_catalogue->Schema()->ping();
-    }
-    catch (cta::exception::Exception& ex) {
+    } catch (cta::exception::Exception& ex) {
       auto lc = getLogContext();
       lc.log(cta::log::CRIT, ex.getMessageValue());
       throw ex;
@@ -238,10 +236,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   {
     // Log cta.archivefile.zero_length_files_forbidden
     std::list<log::Param> params;
-    params.push_back(
-      log::Param("source", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").has_value() ?
-                             configFilename :
-                             "Compile time default"));
+    params.push_back(log::Param("source",
+                                config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").has_value() ?
+                                  configFilename :
+                                  "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "zero_length_files_forbidden"));
     params.push_back(
@@ -304,8 +302,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   auto nsConf = config.getOptionValueStr("cta.ns.config");
   if (nsConf.has_value()) {
     setNamespaceMap(nsConf.value());
-  }
-  else {
+  } else {
     log(log::WARNING, "'cta.ns.config' not specified; namespace queries are disabled");
   }
 

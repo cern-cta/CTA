@@ -90,8 +90,9 @@ std::string CmdHelp::help() const {
 
   // Find the length of the longest subcommand (if there is one)
   auto max_sub_cmd =
-    std::max_element(m_sub_cmd.begin(), m_sub_cmd.end(),
-                     [](const std::string& lhs, const std::string& rhs) { return lhs.size() < rhs.size(); });
+    std::max_element(m_sub_cmd.begin(), m_sub_cmd.end(), [](const std::string& lhs, const std::string& rhs) {
+      return lhs.size() < rhs.size();
+    });
 
   // Terminate with a colon if there are subcommands to follow
   m_help_full += (max_sub_cmd != m_sub_cmd.end()) ? cmd_line + ":\n" : "\n";

@@ -458,7 +458,9 @@ const Option opt_object_id {Option::OPT_STR, "--objectid", "-o", " <objectId>"};
 const Option opt_read_max_drives {Option::OPT_UINT, "--readmaxdrives", "--rmd", " <read_max_drives>"};
 const Option opt_write_max_drives {Option::OPT_UINT, "--writemaxdrives", "--wmd", " <write_max_drives>"};
 const Option opt_state {
-  Option::OPT_STR, "--state", "-s",
+  Option::OPT_STR,
+  "--state",
+  "-s",
   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) + "\"" + " or \"" + Tape::stateToString(Tape::DISABLED) +
     "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::EXPORTED) + "\" or \"" +
     Tape::stateToString(Tape::REPACKING) + "\" or \"" + Tape::stateToString(Tape::REPACKING_DISABLED) + "\">"};
@@ -466,14 +468,23 @@ const Option opt_activityregex {Option::OPT_STR, "--activityregex", "--ar", " <a
 const Option opt_diskinstance {Option::OPT_STR, "--diskinstance", "--di", " <disk_instance_name>"};
 const Option opt_diskinstance_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_name>", "--diskinstance"};
 const Option opt_diskinstancespace {Option::OPT_STR, "--diskinstancespace", "--dis", " <disk_instance_space_name>"};
-const Option opt_diskinstancespace_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_space_name>",
+const Option opt_diskinstancespace_alias {Option::OPT_STR,
+                                          "--name",
+                                          "-n",
+                                          " <disk_instance_space_name>",
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
 const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--id", "-I", " <archive_file_id>"};
-const Option opt_physical_library_alias {Option::OPT_STR, "--name", "-n", " <physical_library_name>",
+const Option opt_physical_library_alias {Option::OPT_STR,
+                                         "--name",
+                                         "-n",
+                                         " <physical_library_name>",
                                          "--physicallibrary"};
-const Option opt_physical_library {Option::OPT_STR, "--physicallibrary", "--pl", " <physical_library_name>",
+const Option opt_physical_library {Option::OPT_STR,
+                                   "--physicallibrary",
+                                   "--pl",
+                                   " <physical_library_name>",
                                    "--physicallibrary"};
 const Option opt_manufacturer {Option::OPT_STR, "--manufacturer", "--ma", " <manufacturer>"};
 const Option opt_model {Option::OPT_STR, "--model", "--mo", " <model>"};
@@ -481,17 +492,25 @@ const Option opt_type {Option::OPT_STR, "--type", "-t", " <type>"};
 const Option opt_gui_url {Option::OPT_STR, "--guiurl", "-g", " <gui_url>"};
 const Option opt_webcam_url {Option::OPT_STR, "--webcamurl", "-w", " <webcam_url>"};
 const Option opt_location {Option::OPT_STR, "--location", "-l", " <location>"};
-const Option opt_nb_physical_cartridge_slots {Option::OPT_UINT, "--nbphysicalcartridgeslots", "--npcs",
+const Option opt_nb_physical_cartridge_slots {Option::OPT_UINT,
+                                              "--nbphysicalcartridgeslots",
+                                              "--npcs",
                                               " <nb_physical_cartridge_slots>"};
-const Option opt_nb_available_cartridge_slots {Option::OPT_UINT, "--nbavailablecartridgeslots", "--nacs",
+const Option opt_nb_available_cartridge_slots {Option::OPT_UINT,
+                                               "--nbavailablecartridgeslots",
+                                               "--nacs",
                                                " <nb_available_cartridge_slots>"};
-const Option opt_nb_physical_drive_slots {Option::OPT_UINT, "--nbphysicaldriveslots", "--npds",
+const Option opt_nb_physical_drive_slots {Option::OPT_UINT,
+                                          "--nbphysicaldriveslots",
+                                          "--npds",
                                           " <nb_physical_drive_slots >"};
 const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", R"( <"true" or "false">)"};
 const Option opt_max_files_to_select {Option::OPT_UINT, "--maxfilestoselect", "--mfts", " <max_files_to_select>"};
 const Option opt_log_unixtime_min {Option::OPT_UINT, "--logunixtimemin", "--ltmin", " <min_recycle_log_unixtime>"};
 const Option opt_log_unixtime_max {Option::OPT_UINT, "--logunixtimemax", "--ltmax", " <max_recycle_log_unixtime>"};
-const Option opt_archive_route_type {Option::OPT_STR, "--archiveroutetype", "--art",
+const Option opt_archive_route_type {Option::OPT_STR,
+                                     "--archiveroutetype",
+                                     "--art",
                                      std::string(R"( <")") +
                                        cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
                                        cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
@@ -627,7 +646,10 @@ diskinstancespace (dis)
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_ADD},
    {opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment}              },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_CH},
-   {opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(),
+   {opt_diskinstancespace_alias,
+    opt_diskinstance,
+    opt_comment.optional(),
+    opt_free_space_query_url.optional(),
     opt_refresh_interval.optional()}                                                                                         },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM},    {opt_diskinstancespace_alias, opt_diskinstance}                },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS},    {}                                                             },
@@ -672,10 +694,18 @@ disksystem (ds)
     space, before retrying the retrieve mount.
   */
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD},
-   {opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
+   {opt_disksystem,
+    opt_file_regexp,
+    opt_diskinstance,
+    opt_diskinstancespace,
+    opt_targeted_free_space,
+    opt_sleep_time,
     opt_comment}                                                                                                             },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH},
-   {opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(),
+   {opt_disksystem,
+    opt_file_regexp.optional(),
+    opt_targeted_free_space.optional(),
+    opt_sleep_time.optional(),
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM},           {opt_disksystem}                                               },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS},           {}                                                             },
@@ -717,8 +747,12 @@ failedrequest (fr)
 :   List and remove requests which failed and for which all retry attempts failed.
   */
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS},
-   {opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(), opt_vid.optional(),
-    opt_log.optional(), opt_summary.optional()}                                                                              },
+   {opt_justarchive.optional(),
+    opt_justretrieve.optional(),
+    opt_tapepool.optional(),
+    opt_vid.optional(),
+    opt_log.optional(),
+    opt_summary.optional()}                                                                                                  },
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM},        {opt_object_id}                                                },
 
   /**md
@@ -746,7 +780,10 @@ logicallibrary (ll)
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD},
    {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment}                         },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH},
-   {opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(),
+   {opt_logicallibrary_alias,
+    opt_disabled.optional(),
+    opt_physical_library.optional(),
+    opt_comment.optional(),
     opt_disabledreason.optional()}                                                                                           },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM},       {opt_logicallibrary_alias}                                     },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS},       {opt_logicallibrary_disabled.optional()}                       },
@@ -761,12 +798,23 @@ mediatype (mt)
     technology only). See **cta-taped(1cta)** for details.
   */
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},
-   {opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(),
-    opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
+   {opt_mediatype_alias,
+    opt_cartridge,
+    opt_capacity,
+    opt_primarydensitycode.optional(),
+    opt_secondarydensitycode.optional(),
+    opt_number_of_wraps.optional(),
+    opt_minlpos.optional(),
+    opt_maxlpos.optional(),
     opt_comment}                                                                                                             },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH},
-   {opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(),
-    opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),
+   {opt_mediatype_alias,
+    opt_cartridge.optional(),
+    opt_primarydensitycode.optional(),
+    opt_secondarydensitycode.optional(),
+    opt_number_of_wraps.optional(),
+    opt_minlpos.optional(),
+    opt_maxlpos.optional(),
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            {opt_mediatype_alias}                                          },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS},            {}                                                             },
@@ -777,11 +825,19 @@ mountpolicy (mp)
 :   Add, change, remove or list the mount policies.
   */
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD},
-   {opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
-    opt_minretrieverequestage, opt_comment}                                                                                  },
+   {opt_mountpolicy_alias,
+    opt_archivepriority,
+    opt_minarchiverequestage,
+    opt_retrievepriority,
+    opt_minretrieverequestage,
+    opt_comment}                                                                                                             },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH},
-   {opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(),
-    opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_comment.optional()}                           },
+   {opt_mountpolicy_alias,
+    opt_archivepriority.optional(),
+    opt_minarchiverequestage.optional(),
+    opt_retrievepriority.optional(),
+    opt_minretrieverequestage.optional(),
+    opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          {opt_mountpolicy_alias}                                        },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS},          {}                                                             },
 
@@ -791,13 +847,27 @@ physicallibrary (pl)
 :   Add, change, remove or list the physical tape libraries.
   */
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_ADD},
-   {opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(),
-    opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
-    opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots, opt_comment.optional()}                        },
+   {opt_physical_library_alias,
+    opt_manufacturer,
+    opt_model,
+    opt_type.optional(),
+    opt_gui_url.optional(),
+    opt_webcam_url.optional(),
+    opt_location.optional(),
+    opt_nb_physical_cartridge_slots,
+    opt_nb_available_cartridge_slots.optional(),
+    opt_nb_physical_drive_slots,
+    opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
-   {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(),
-    opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(),
-    opt_nb_physical_drive_slots.optional(), opt_comment.optional(), opt_disabled.optional(),
+   {opt_physical_library_alias,
+    opt_gui_url.optional(),
+    opt_webcam_url.optional(),
+    opt_location.optional(),
+    opt_nb_physical_cartridge_slots.optional(),
+    opt_nb_available_cartridge_slots.optional(),
+    opt_nb_physical_drive_slots.optional(),
+    opt_comment.optional(),
+    opt_disabled.optional(),
     opt_disabledreason.optional()}                                                                                           },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
@@ -811,8 +881,15 @@ recycletf (rtf)
     ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).
   */
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(),
-    opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}            },
+   {opt_vid.optional(),
+    opt_fid.optional(),
+    opt_fidfile.optional(),
+    opt_copynb.optional(),
+    opt_archivefileid.optional(),
+    opt_instance.optional(),
+    opt_log_unixtime_min.optional(),
+    opt_log_unixtime_max.optional(),
+    opt_vo.optional()}                                                                                                       },
 
   /**md
 repack (re)
@@ -859,8 +936,13 @@ repack (re)
     **err** displays any repack errors.
   */
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},
-   {opt_mountpolicy, opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(),
-    opt_max_files_to_select.optional(), opt_no_recall.optional(), opt_justmove.optional(),
+   {opt_mountpolicy,
+    opt_vid.optional(),
+    opt_vidfile.optional(),
+    opt_bufferurl.optional(),
+    opt_max_files_to_select.optional(),
+    opt_no_recall.optional(),
+    opt_justmove.optional(),
     opt_justaddcopies.optional()}                                                                                            },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               {opt_vid}                                                      },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
@@ -909,18 +991,46 @@ tape (ta)
     tape cartridges in each library.
   */
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
-   {opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_state.optional(),
-    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional()}                                            },
+   {opt_vid,
+    opt_mediatype,
+    opt_vendor,
+    opt_logicallibrary,
+    opt_tapepool,
+    opt_full,
+    opt_state.optional(),
+    opt_purchase_order.optional(),
+    opt_reason.optional(),
+    opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH},
-   {opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(), opt_tapepool.optional(),
-    opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(), opt_state.optional(),
-    opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional()}                   },
+   {opt_vid,
+    opt_mediatype.optional(),
+    opt_vendor.optional(),
+    opt_logicallibrary.optional(),
+    opt_tapepool.optional(),
+    opt_encryptionkeyname.optional(),
+    opt_full.optional(),
+    opt_verificationstatus.optional(),
+    opt_state.optional(),
+    opt_purchase_order.optional(),
+    opt_reason.optional(),
+    opt_comment.optional(),
+    opt_dirtybit.optional()}                                                                                                 },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM},                 {opt_vid}                                                      },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM},            {opt_vid}                                                      },
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-    opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(), opt_full.optional(), opt_fidfile.optional(),
-    opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(),
+   {opt_vid.optional(),
+    opt_mediatype.optional(),
+    opt_vendor.optional(),
+    opt_logicallibrary.optional(),
+    opt_tapepool.optional(),
+    opt_vo.optional(),
+    opt_capacity.optional(),
+    opt_full.optional(),
+    opt_fidfile.optional(),
+    opt_all.optional(),
+    opt_state.optional(),
+    opt_fromcastor.optional(),
+    opt_purchase_order.optional(),
     opt_physical_library.optional()}                                                                                         },
 
   /**md
@@ -947,7 +1057,10 @@ tapefile (tf)
     **rm** deletes a single tape file. Note that some disk files have more than one associated tape file.
   */
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
+   {opt_vid.optional(),
+    opt_instance.optional(),
+    opt_fid.optional(),
+    opt_fidfile.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
    {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason}                          },
@@ -974,7 +1087,11 @@ tapepool (tp)
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD},
    {opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment}                         },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},
-   {opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_supply.optional(),
+   {opt_tapepool_alias,
+    opt_vo.optional(),
+    opt_partialtapes.optional(),
+    opt_encrypted.optional(),
+    opt_supply.optional(),
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
@@ -1010,11 +1127,21 @@ virtualorganization (vo)
     it can only be used for repack operations.
   */
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD},
-   {opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(),
+   {opt_vo,
+    opt_read_max_drives,
+    opt_write_max_drives,
+    opt_comment,
+    opt_diskinstance,
+    opt_maxfilesize.optional(),
     opt_isrepackvo.optional()}                                                                                               },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH},
-   {opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(),
-    opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional()}                                      },
+   {opt_vo,
+    opt_comment.optional(),
+    opt_read_max_drives.optional(),
+    opt_write_max_drives.optional(),
+    opt_maxfilesize.optional(),
+    opt_diskinstance.optional(),
+    opt_isrepackvo.optional()}                                                                                               },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM},  {opt_vo}                                                       },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
 

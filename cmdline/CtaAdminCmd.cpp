@@ -309,8 +309,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char* const* const argv) : m_execname(a
 
   if (argc <= argno || (cmd_it = cmdLookup.find(argv[argno++])) == cmdLookup.end()) {
     throwUsage();
-  }
-  else {
+  } else {
     admincmd.set_cmd(cmd_it->second);
   }
 
@@ -329,11 +328,9 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char* const* const argv) : m_execname(a
 
     if (argc <= argno) {
       throwUsage("Missing subcommand");
-    }
-    else if ((subcmd_it = subcmdLookup.find(argv[argno])) == subcmdLookup.end()) {
+    } else if ((subcmd_it = subcmdLookup.find(argv[argno])) == subcmdLookup.end()) {
       throwUsage(std::string("Invalid subcommand: ") + argv[argno]);
-    }
-    else {
+    } else {
       admincmd.set_subcmd(subcmd_it->second);
     }
   }
@@ -369,8 +366,7 @@ void CtaAdminCmd::send() const {
   // Validate the Protocol Buffer
   try {
     validateCmd(m_request.admincmd());
-  }
-  catch (std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     throwUsage(ex.what());
   }
 
@@ -402,8 +398,7 @@ void CtaAdminCmd::send() const {
   if (driveTimeoutConfigExists) {
     if (driveTimeoutVal > 0) {
       formattedText.setDriveTimeout(driveTimeoutVal);
-    }
-    else {
+    } else {
       throw std::runtime_error("Configuration error: cta.drive_timeout not a positive value in " +
                                config_file.string());
     }
@@ -582,13 +577,11 @@ void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
       if (option == opt_drivename_cmd && value == "first") {
         try {
           new_opt->set_value(cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
-        }
-        catch (cta::exception::Exception& ex) {
+        } catch (cta::exception::Exception& ex) {
           throw std::runtime_error(
             "Could not find a taped configuration file. This option should only be run from a tapeserver.");
         }
-      }
-      else {
+      } else {
         new_opt->set_value(value);
       }
       break;
@@ -607,11 +600,9 @@ void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
       new_opt->set_key(key);
       if (option.get_type() == Option::OPT_FLAG || value == "true") {
         new_opt->set_value(true);
-      }
-      else if (value == "false") {
+      } else if (value == "false") {
         new_opt->set_value(false);
-      }
-      else {
+      } else {
         throw std::runtime_error(value + " is not a boolean value: " + option.help());
       }
       break;
@@ -627,11 +618,9 @@ void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
         new_opt->set_key(key);
         new_opt->set_value(val_int);
         break;
-      }
-      catch (std::invalid_argument&) {
+      } catch (std::invalid_argument&) {
         throw std::runtime_error(value + " is not a valid uint64: " + option.help());
-      }
-      catch (std::out_of_range&) {
+      } catch (std::out_of_range&) {
         throw std::runtime_error(value + " is out of range: " + option.help());
       }
   }
@@ -675,8 +664,7 @@ void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList& str_list, const st
           throw std::runtime_error(fid + " is not a valid file ID");
         }
         str_list.add_item(fid);
-      }
-      else {
+      } else {
         // default case: add all items
         str_list.add_item(item);
       }
@@ -715,8 +703,7 @@ void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
     for (auto& helpItem : helpSet) {
       help << "  " << m_execname << ' ' << helpItem << std::endl;
     }
-  }
-  else {
+  } else {
     // Command has been set: show command-specific help
     help << m_execname << ' ' << cmdHelp.at(admincmd).help();
   }
@@ -747,27 +734,21 @@ int main(int argc, const char** argv) {
     google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
-  }
-  catch (XrdSsiPb::PbException& ex) {
+  } catch (XrdSsiPb::PbException& ex) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
-  }
-  catch (XrdSsiPb::XrdSsiException& ex) {
+  } catch (XrdSsiPb::XrdSsiException& ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
-  }
-  catch (XrdSsiPb::UserException& ex) {
+  } catch (XrdSsiPb::UserException& ex) {
     if (CtaAdminCmd::isJson()) {
       std::cout << CtaAdminCmd::jsonCloseDelim();
     }
     std::cerr << ex.what() << std::endl;
     return 2;
-  }
-  catch (std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     std::cerr << ex.what() << std::endl;
-  }
-  catch (std::exception& ex) {
+  } catch (std::exception& ex) {
     std::cerr << "Caught exception: " << ex.what() << std::endl;
-  }
-  catch (...) {
+  } catch (...) {
     std::cerr << "Caught an unknown exception" << std::endl;
   }
 
