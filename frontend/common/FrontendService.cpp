@@ -213,7 +213,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
   m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1000 * 1000 * 1000 : 0;
-
   {
     // Log cta.archivefile.max_size_gb
     std::list<log::Param> params;
@@ -221,6 +220,37 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "max_size_gb"));
     params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() : 0)));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_zeroLengthFilesForbidden = config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off") == "on" ? true : false;
+  {
+    // Log cta.archivefile.zero_length_files_forbidden
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("category", "cta.archivefile"));
+    params.push_back(log::Param("key", "zero_length_files_forbidden"));
+    params.push_back(log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off")));
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  m_zeroLengthFilesForbidden_voExceptions = config.getOptionValueStrVector("cta.archivefile.zero_length_files_forbidden_vo_exception_list");
+  {
+    // Log cta.archivefile.zero_length_files_forbidden_vo_exception_list
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename));
+    params.push_back(log::Param("category", "cta.archivefile"));
+    params.push_back(log::Param("key", "zero_length_files_forbidden_vo_exception_list"));
+    std::ostringstream oss;
+    bool is_first = true;
+    for (auto & val : m_zeroLengthFilesForbidden_voExceptions) {
+      if (!is_first) {
+        oss << ",";
+      }
+      oss << val;
+      is_first = false;
+    }
+    params.push_back(log::Param("value", oss.str()));
     log(log::INFO, "Configuration entry", params);
   }
 

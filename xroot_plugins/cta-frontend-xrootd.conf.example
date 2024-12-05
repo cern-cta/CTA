@@ -32,6 +32,11 @@ cta.catalogue.numberofconnections 10
 # Maximum file size (in GB) that the CTA Frontend will accept for archiving
 cta.archivefile.max_size_gb 1000
 
+# Disallow 0-length files
+cta.archivefile.zero_length_files_forbidden on
+# Tapepools exempted from this check (if enabled)
+cta.archivefile.zero_length_files_forbidden_vo_exception_list vo1 vo2 vo3
+
 # CTA Frontend log URL
 cta.log.url file:/var/log/cta/cta-frontend.log
 

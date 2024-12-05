@@ -30,7 +30,9 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   m_catalogue(frontendService.getCatalogue()),
   m_scheduler(frontendService.getScheduler()),
   m_lc(frontendService.getLogContext()),
-  m_verificationMountPolicy(frontendService.getVerificationMountPolicy())
+  m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
+  m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
+  m_zeroLengthFilesDisallowedExceptions{frontendService.getDisallowZeroLengthFilesExemptions().begin(), frontendService.getDisallowZeroLengthFilesExemptions().end()}
 {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
@@ -210,9 +212,6 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   // check storage class attribute in the first-class attributes, then fall back to checking the xattrs
   // if it is not set
   std::string storageClassStr = m_event.file().storage_class();
-  if (storageClassStr == "fail_on_closew_test") {
-    throw exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
-  }
   if (storageClassStr.empty()) {
     // Unpack message
     const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
@@ -220,20 +219,28 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
       throw exception::PbException(std::string(__FUNCTION__) +
                                    ": Failed to find the extended attribute named sys.archive.storage_class");
     }
+    storageClassStr = storageClassItor->second;
+  }
 
-    // For testing: this storage class will always fail
-    if (storageClassItor->second == "fail_on_closew_test") {
-      throw exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
-    }
+  // For testing: this storage class will always fail
+  if (storageClassStr == "fail_on_closew_test") {
+    throw exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
+  }
 
+  {
+    auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassStr);
     // Disallow archival of files above the specified limit
-    if (auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
-        storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
+    if (storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
       throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
                                  " bytes) exceeds maximum allowed size (" +
                                  std::to_string(storageClass.vo.maxFileSize) + " bytes)");
     }
-    storageClassStr = storageClassItor->second;
+    // Check that the file is not 0-length
+    if (m_event.file().size() == 0) {
+      if (m_zeroLengthFilesDisallowed && !m_zeroLengthFilesDisallowedExceptions.count(storageClass.vo.name)) {
+        throw exception::UserError("Archival of 0-length files not allowed.");
+      }
+    }
   }
 
   common::dataStructures::ArchiveRequest request;

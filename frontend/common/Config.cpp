@@ -49,6 +49,10 @@ const optionlist_t& Config::getOptionList(const std::string& key) const {
   return it == m_configuration.end() ? m_nulloptionlist : it->second;
 }
 
+std::vector<std::string> Config::getOptionValueStrVector(const std::string &key) const {
+  return getOptionList(key);
+}
+
 std::optional<std::string> Config::getOptionValueStr(const std::string &key) const {
   auto optionlist = getOptionList(key);
 
