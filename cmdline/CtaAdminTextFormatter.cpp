@@ -30,8 +30,7 @@ namespace cta::admin {
 TextFormatter::~TextFormatter() {
   try {
     flush();
-  }
-  catch (std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     std::cerr << ex.what() << std::endl;
   }
 }
@@ -289,8 +288,7 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
       // Calculate average bandwidth for the session in MB/s (reported to 1 decimal place)
       double bandwidth = drls_item.bytes_transferred_in_session() / drls_item.session_elapsed_time();
       averageBandwidth = doubleToStr(bandwidth / 1000000.0, '\0');
-    }
-    else {
+    } else {
       averageBandwidth = "0.0";
     }
   }
