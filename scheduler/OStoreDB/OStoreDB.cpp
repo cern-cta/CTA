@@ -2306,7 +2306,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
     rj->errorReportURL = j.errorReportURL;
     rj->reportType = j.reportType;
     rj->m_repackInfo = j.repackInfo;
-    rj->setJobOwned();
+    rj->m_jobOwned = true;
     ret.emplace_back(std::move(rj));
   }
   return ret;
@@ -3458,7 +3458,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
       rj->errorReportURL = j.errorReportURL;
       rj->reportType = j.reportType;
       rj->m_repackInfo = j.repackInfo;
-      rj->setJobOwned();
+      rj->m_jobOwned = true;
       ret.emplace_back(std::move(rj));
     }
     return ret;
@@ -3518,7 +3518,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
       rj->archiveFile = j.archiveFile;
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
-      rj->setJobOwned();
+      rj->m_jobOwned = true;
       ret.emplace_back(std::move(rj));
     }
     return ret;
@@ -3836,8 +3836,8 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
-  for (auto & j: jobBatch) {
-    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob *>(j.get());
+  for (const auto & j: jobBatch) {
+    auto job = dynamic_cast<OStoreDB::RetrieveJob*>(j.get());
     job->m_jobOwned = false;
   }
 }
