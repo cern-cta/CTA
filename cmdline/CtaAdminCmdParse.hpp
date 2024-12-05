@@ -32,334 +32,318 @@ using namespace common::dataStructures;
 /*!
  * Command line option class
  */
-class Option
-{
+class Option {
 public:
-   enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_UINT, OPT_STR, OPT_STR_LIST };
+  enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_UINT, OPT_STR, OPT_STR_LIST };
 
-   /*!
+  /*!
     * Constructor
     */
-   Option(option_t type,
-          const std::string& long_opt,
-          const std::string& short_opt,
-          const std::string& help_txt,
-          const std::string& alias = "")
-       : m_type(type),
-         m_lookup_key(alias.empty() ? long_opt : alias),
-         m_long_opt(long_opt),
-         m_short_opt(short_opt),
-         m_help_txt(help_txt) {}
+  Option(option_t type,
+         const std::string& long_opt,
+         const std::string& short_opt,
+         const std::string& help_txt,
+         const std::string& alias = "")
+      : m_type(type),
+        m_lookup_key(alias.empty() ? long_opt : alias),
+        m_long_opt(long_opt),
+        m_short_opt(short_opt),
+        m_help_txt(help_txt) {}
 
-   /*!
+  /*!
     * Copy-construct an optional version of this option
     */
-   Option optional() const {
-      Option option(*this);
-      option.m_is_optional = true;
-      return option;
-   }
+  Option optional() const {
+    Option option(*this);
+    option.m_is_optional = true;
+    return option;
+  }
 
-   /*!
+  /*!
     * Check if the supplied key matches the option
     */
-   bool operator==(std::string_view option) const { return option == m_short_opt || option == m_long_opt; }
+  bool operator==(std::string_view option) const { return option == m_short_opt || option == m_long_opt; }
 
-   /*!
+  /*!
     * Check if the supplied option matches the option
     */
-   bool operator==(const Option &option) const {
-      return option == m_short_opt || option == m_long_opt;
-   }
+  bool operator==(const Option& option) const { return option == m_short_opt || option == m_long_opt; }
 
-   /*!
+  /*!
     * Return the type of this option
     */
-   option_t get_type() const { return m_type; }
+  option_t get_type() const { return m_type; }
 
-   /*!
+  /*!
     * Return the number of parameters expected after this option
     */
-   int num_params() const { return m_type == OPT_CMD || m_type == OPT_FLAG ? 0 : 1; }
+  int num_params() const { return m_type == OPT_CMD || m_type == OPT_FLAG ? 0 : 1; }
 
-   /*!
+  /*!
     * Return the key for this option
     */
-   const std::string &get_key() const { return m_lookup_key; }
+  const std::string& get_key() const { return m_lookup_key; }
 
-   /*!
+  /*!
     * Return whether the option is optional
     */
-   bool is_optional() const { return m_is_optional; }
+  bool is_optional() const { return m_is_optional; }
 
-   /*!
+  /*!
     * Validate the command protocol buffer against this option
     *
     * If the option is compulsory and is not present, throws an exception
     */
-   void validateCmd(const cta::admin::AdminCmd &admincmd) const;
+  void validateCmd(const cta::admin::AdminCmd& admincmd) const;
 
-   /*!
+  /*!
     * Return the help text for this option
     */
-   const std::string& get_help_text() const { return m_help_txt; }
+  const std::string& get_help_text() const { return m_help_txt; }
 
-   /*!
+  /*!
     * Return per-option help string
     */
-   std::string help() const {
-      std::string help = m_is_optional ? " [" : " ";
-      help += (m_type == OPT_CMD) ? "" : m_long_opt + '/' + m_short_opt;
-      help += m_help_txt;
-      help += m_is_optional ? "]" : "";
-      return help;
-   }
+  std::string help() const {
+    std::string help = m_is_optional ? " [" : " ";
+    help += (m_type == OPT_CMD) ? "" : m_long_opt + '/' + m_short_opt;
+    help += m_help_txt;
+    help += m_is_optional ? "]" : "";
+    return help;
+  }
 
 private:
-   option_t    m_type;          //!< Option type
-   std::string m_lookup_key;    //!< Key to map option string to Protocol Buffer enum
-   std::string m_long_opt;      //!< Long command option
-   std::string m_short_opt;     //!< Short command option
-   std::string m_help_txt;      //!< Option help text
-   bool m_is_optional = false;  //!< Option is optional or compulsory
+  option_t m_type;             //!< Option type
+  std::string m_lookup_key;    //!< Key to map option string to Protocol Buffer enum
+  std::string m_long_opt;      //!< Long command option
+  std::string m_short_opt;     //!< Short command option
+  std::string m_help_txt;      //!< Option help text
+  bool m_is_optional = false;  //!< Option is optional or compulsory
 };
-
-
 
 /*
  * Type aliases
  */
-using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
+using cmdLookup_t = std::map<std::string, AdminCmd::Cmd>;
 using subcmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
-using cmd_key_t      = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
-using cmd_val_t      = std::vector<Option>;
-
-
+using cmd_key_t = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
+using cmd_val_t = std::vector<Option>;
 
 /*!
  * Command/subcommand help class
  */
-class CmdHelp
-{
+class CmdHelp {
 public:
-   /*!
+  /*!
     * Constructor
     */
-   CmdHelp(const std::string &cmd_long, const std::string &cmd_short,
-           const std::vector<std::string> &sub_cmd, const std::string &help_txt = "") :
-      m_cmd_long(cmd_long),
-      m_cmd_short(cmd_short),
-      m_sub_cmd(sub_cmd),
-      m_help_extra(help_txt) {}
+  CmdHelp(const std::string& cmd_long,
+          const std::string& cmd_short,
+          const std::vector<std::string>& sub_cmd,
+          const std::string& help_txt = "")
+      : m_cmd_long(cmd_long),
+        m_cmd_short(cmd_short),
+        m_sub_cmd(sub_cmd),
+        m_help_extra(help_txt) {}
 
-   /*!
+  /*!
     * Can we parse subcommands for this command?
     */
-   bool has_subcommand() const { return !m_sub_cmd.empty(); }
+  bool has_subcommand() const { return !m_sub_cmd.empty(); }
 
-   /*!
+  /*!
     * Return the short help message
     */
-   std::string short_help() const;
+  std::string short_help() const;
 
-   /*!
+  /*!
     * Return the detailed help message
     */
-   std::string help() const;
+  std::string help() const;
 
 private:
-   /*!
+  /*!
     * Called by help() to add command line options to the full help text
     */
-   void add_options(std::string &cmd_line, cmd_key_t &key, unsigned int indent) const;
+  void add_options(std::string& cmd_line, cmd_key_t& key, unsigned int indent) const;
 
-   const unsigned int INDENT      = 4;      //!< Number of spaces to indent when listing subcommands
-   const unsigned int WRAP_MARGIN = 80;     //!< Number of characters per line before word wrapping
+  const unsigned int INDENT = 4;        //!< Number of spaces to indent when listing subcommands
+  const unsigned int WRAP_MARGIN = 80;  //!< Number of characters per line before word wrapping
 
-   std::string              m_cmd_long;     //!< Command string (long version)
-   std::string              m_cmd_short;    //!< Command string (short version)
-   std::vector<std::string> m_sub_cmd;      //!< Subcommands which are valid for this command, in the
-                                            //!< same order that they should be displayed in the help
-   std::string              m_help_extra;   //!< Optional extra help text above the options
-   mutable std::string      m_help_full;    //!< The full text of the detailed help for this command.
-                                            //!< Mutable because it is lazy evaluated when we call help()
+  std::string m_cmd_long;              //!< Command string (long version)
+  std::string m_cmd_short;             //!< Command string (short version)
+  std::vector<std::string> m_sub_cmd;  //!< Subcommands which are valid for this command, in the
+                                       //!< same order that they should be displayed in the help
+  std::string m_help_extra;            //!< Optional extra help text above the options
+  mutable std::string m_help_full;     //!< The full text of the detailed help for this command.
+                                       //!< Mutable because it is lazy evaluated when we call help()
 };
-
-
 
 /*!
  * Map short and long command names to Protocol Buffer enum values
  */
 const cmdLookup_t cmdLookup = {
-   { "admin",                   AdminCmd::CMD_ADMIN },
-   { "ad",                      AdminCmd::CMD_ADMIN },
-   { "archiveroute",            AdminCmd::CMD_ARCHIVEROUTE },
-   { "ar",                      AdminCmd::CMD_ARCHIVEROUTE },
-   { "drive",                   AdminCmd::CMD_DRIVE },
-   { "dr",                      AdminCmd::CMD_DRIVE },
-   { "failedrequest",           AdminCmd::CMD_FAILEDREQUEST },
-   { "fr",                      AdminCmd::CMD_FAILEDREQUEST },
-   { "groupmountrule",          AdminCmd::CMD_GROUPMOUNTRULE },
-   { "gmr",                     AdminCmd::CMD_GROUPMOUNTRULE },
-   { "logicallibrary",          AdminCmd::CMD_LOGICALLIBRARY },
-   { "ll",                      AdminCmd::CMD_LOGICALLIBRARY },
-   { "mediatype",               AdminCmd::CMD_MEDIATYPE },
-   { "mt",                      AdminCmd::CMD_MEDIATYPE },
-   { "mountpolicy",             AdminCmd::CMD_MOUNTPOLICY },
-   { "mp",                      AdminCmd::CMD_MOUNTPOLICY },
-   { "repack",                  AdminCmd::CMD_REPACK },
-   { "re",                      AdminCmd::CMD_REPACK },
-   { "requestermountrule",      AdminCmd::CMD_REQUESTERMOUNTRULE },
-   { "rmr",                     AdminCmd::CMD_REQUESTERMOUNTRULE },
-   { "showqueues",              AdminCmd::CMD_SHOWQUEUES },
-   { "sq",                      AdminCmd::CMD_SHOWQUEUES },
-   { "storageclass",            AdminCmd::CMD_STORAGECLASS },
-   { "sc",                      AdminCmd::CMD_STORAGECLASS },
-   { "tape",                    AdminCmd::CMD_TAPE },
-   { "ta",                      AdminCmd::CMD_TAPE },
-   { "tapefile",                AdminCmd::CMD_TAPEFILE },
-   { "tf",                      AdminCmd::CMD_TAPEFILE },
-   { "tapepool",                AdminCmd::CMD_TAPEPOOL },
-   { "tp",                      AdminCmd::CMD_TAPEPOOL },
-   { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
-   { "ds",                      AdminCmd::CMD_DISKSYSTEM },
-   { "virtualorganization",     AdminCmd::CMD_VIRTUALORGANIZATION },
-   { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION },
-   { "version",                 AdminCmd::CMD_VERSION},
-   { "v",                       AdminCmd::CMD_VERSION},
-   { "recycletf",               AdminCmd::CMD_RECYCLETAPEFILE},
-   { "rtf",                     AdminCmd::CMD_RECYCLETAPEFILE},
-   { "activitymountrule",       AdminCmd::CMD_ACTIVITYMOUNTRULE },
-   { "amr",                     AdminCmd::CMD_ACTIVITYMOUNTRULE },
-   { "diskinstance",            AdminCmd::CMD_DISKINSTANCE },
-   { "di",                      AdminCmd::CMD_DISKINSTANCE }, 
-   { "diskinstancespace",       AdminCmd::CMD_DISKINSTANCESPACE },
-   { "dis",                     AdminCmd::CMD_DISKINSTANCESPACE },
-   { "physicallibrary",         AdminCmd::CMD_PHYSICALLIBRARY },
-   { "pl",                      AdminCmd::CMD_PHYSICALLIBRARY }
+  {"admin",               AdminCmd::CMD_ADMIN              },
+  {"ad",                  AdminCmd::CMD_ADMIN              },
+  {"archiveroute",        AdminCmd::CMD_ARCHIVEROUTE       },
+  {"ar",                  AdminCmd::CMD_ARCHIVEROUTE       },
+  {"drive",               AdminCmd::CMD_DRIVE              },
+  {"dr",                  AdminCmd::CMD_DRIVE              },
+  {"failedrequest",       AdminCmd::CMD_FAILEDREQUEST      },
+  {"fr",                  AdminCmd::CMD_FAILEDREQUEST      },
+  {"groupmountrule",      AdminCmd::CMD_GROUPMOUNTRULE     },
+  {"gmr",                 AdminCmd::CMD_GROUPMOUNTRULE     },
+  {"logicallibrary",      AdminCmd::CMD_LOGICALLIBRARY     },
+  {"ll",                  AdminCmd::CMD_LOGICALLIBRARY     },
+  {"mediatype",           AdminCmd::CMD_MEDIATYPE          },
+  {"mt",                  AdminCmd::CMD_MEDIATYPE          },
+  {"mountpolicy",         AdminCmd::CMD_MOUNTPOLICY        },
+  {"mp",                  AdminCmd::CMD_MOUNTPOLICY        },
+  {"repack",              AdminCmd::CMD_REPACK             },
+  {"re",                  AdminCmd::CMD_REPACK             },
+  {"requestermountrule",  AdminCmd::CMD_REQUESTERMOUNTRULE },
+  {"rmr",                 AdminCmd::CMD_REQUESTERMOUNTRULE },
+  {"showqueues",          AdminCmd::CMD_SHOWQUEUES         },
+  {"sq",                  AdminCmd::CMD_SHOWQUEUES         },
+  {"storageclass",        AdminCmd::CMD_STORAGECLASS       },
+  {"sc",                  AdminCmd::CMD_STORAGECLASS       },
+  {"tape",                AdminCmd::CMD_TAPE               },
+  {"ta",                  AdminCmd::CMD_TAPE               },
+  {"tapefile",            AdminCmd::CMD_TAPEFILE           },
+  {"tf",                  AdminCmd::CMD_TAPEFILE           },
+  {"tapepool",            AdminCmd::CMD_TAPEPOOL           },
+  {"tp",                  AdminCmd::CMD_TAPEPOOL           },
+  {"disksystem",          AdminCmd::CMD_DISKSYSTEM         },
+  {"ds",                  AdminCmd::CMD_DISKSYSTEM         },
+  {"virtualorganization", AdminCmd::CMD_VIRTUALORGANIZATION},
+  {"vo",                  AdminCmd::CMD_VIRTUALORGANIZATION},
+  {"version",             AdminCmd::CMD_VERSION            },
+  {"v",                   AdminCmd::CMD_VERSION            },
+  {"recycletf",           AdminCmd::CMD_RECYCLETAPEFILE    },
+  {"rtf",                 AdminCmd::CMD_RECYCLETAPEFILE    },
+  {"activitymountrule",   AdminCmd::CMD_ACTIVITYMOUNTRULE  },
+  {"amr",                 AdminCmd::CMD_ACTIVITYMOUNTRULE  },
+  {"diskinstance",        AdminCmd::CMD_DISKINSTANCE       },
+  {"di",                  AdminCmd::CMD_DISKINSTANCE       },
+  {"diskinstancespace",   AdminCmd::CMD_DISKINSTANCESPACE  },
+  {"dis",                 AdminCmd::CMD_DISKINSTANCESPACE  },
+  {"physicallibrary",     AdminCmd::CMD_PHYSICALLIBRARY    },
+  {"pl",                  AdminCmd::CMD_PHYSICALLIBRARY    }
 };
-
-
 
 /*!
  * Map subcommand names to Protocol Buffer enum values
  */
 const subcmdLookup_t subcmdLookup = {
-   { "add",                     AdminCmd::SUBCMD_ADD },
-   { "ch",                      AdminCmd::SUBCMD_CH },
-   { "err",                     AdminCmd::SUBCMD_ERR },
-   { "ls",                      AdminCmd::SUBCMD_LS },
-   { "reclaim",                 AdminCmd::SUBCMD_RECLAIM },
-   { "retry",                   AdminCmd::SUBCMD_RETRY },
-   { "rm",                      AdminCmd::SUBCMD_RM },
-   { "up",                      AdminCmd::SUBCMD_UP },
-   { "down",                    AdminCmd::SUBCMD_DOWN },
+  {"add",     AdminCmd::SUBCMD_ADD    },
+  {"ch",      AdminCmd::SUBCMD_CH     },
+  {"err",     AdminCmd::SUBCMD_ERR    },
+  {"ls",      AdminCmd::SUBCMD_LS     },
+  {"reclaim", AdminCmd::SUBCMD_RECLAIM},
+  {"retry",   AdminCmd::SUBCMD_RETRY  },
+  {"rm",      AdminCmd::SUBCMD_RM     },
+  {"up",      AdminCmd::SUBCMD_UP     },
+  {"down",    AdminCmd::SUBCMD_DOWN   },
 };
-
-
 
 /*!
  * Map boolean options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
-   // Boolean options
-   { "--all",                   OptionBoolean::ALL },
-   { "--disabled",              OptionBoolean::DISABLED },
-   { "--encrypted",             OptionBoolean::ENCRYPTED },
-   { "--force",                 OptionBoolean::FORCE },
-   { "--full",                  OptionBoolean::FULL },
-   {"--fromcastor",             OptionBoolean::FROM_CASTOR },
+  // Boolean options
+  {"--all",             OptionBoolean::ALL             },
+  {"--disabled",        OptionBoolean::DISABLED        },
+  {"--encrypted",       OptionBoolean::ENCRYPTED       },
+  {"--force",           OptionBoolean::FORCE           },
+  {"--full",            OptionBoolean::FULL            },
+  {"--fromcastor",      OptionBoolean::FROM_CASTOR     },
 
-   // hasOption options
-   { "--disabledtape",          OptionBoolean::DISABLED },
-   { "--justarchive",           OptionBoolean::JUSTARCHIVE },
-   { "--justmove",              OptionBoolean::JUSTMOVE },
-   { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
-   { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
-   { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
-   { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
-   { "--summary",               OptionBoolean::SUMMARY },
-   { "--no-recall",             OptionBoolean::NO_RECALL },
-   { "--dirtybit",              OptionBoolean::DIRTY_BIT },
-   { "--isrepackvo",            OptionBoolean::IS_REPACK_VO }
+  // hasOption options
+  {"--disabledtape",    OptionBoolean::DISABLED        },
+  {"--justarchive",     OptionBoolean::JUSTARCHIVE     },
+  {"--justmove",        OptionBoolean::JUSTMOVE        },
+  {"--justaddcopies",   OptionBoolean::JUSTADDCOPIES   },
+  {"--justretrieve",    OptionBoolean::JUSTRETRIEVE    },
+  {"--log",             OptionBoolean::SHOW_LOG_ENTRIES},
+  {"--lookupnamespace", OptionBoolean::LOOKUP_NAMESPACE},
+  {"--summary",         OptionBoolean::SUMMARY         },
+  {"--no-recall",       OptionBoolean::NO_RECALL       },
+  {"--dirtybit",        OptionBoolean::DIRTY_BIT       },
+  {"--isrepackvo",      OptionBoolean::IS_REPACK_VO    }
 };
-
-
 
 /*!
  * Map integer options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionUInt64::Key> uint64Options = {
-   { "--archivepriority",           OptionUInt64::ARCHIVE_PRIORITY },
-   { "--capacity",                  OptionUInt64::CAPACITY },
-   { "--copynb",                    OptionUInt64::COPY_NUMBER },
-   { "--id",                        OptionUInt64::ARCHIVE_FILE_ID },
-   { "--maxfilesize",               OptionUInt64::MAX_FILE_SIZE},
-   { "--maxlpos",                   OptionUInt64::MAX_LPOS },
-   { "--minarchiverequestage",      OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
-   { "--minlpos",                   OptionUInt64::MIN_LPOS },
-   { "--minretrieverequestage",     OptionUInt64::MIN_RETRIEVE_REQUEST_AGE },
-   { "--nbwraps",                   OptionUInt64::NUMBER_OF_WRAPS },
-   { "--partialtapesnumber",        OptionUInt64::PARTIAL_TAPES_NUMBER },
-   { "--primarydensitycode",        OptionUInt64::PRIMARY_DENSITY_CODE },
-   { "--retrievepriority",          OptionUInt64::RETRIEVE_PRIORITY },
-   { "--secondarydensitycode",      OptionUInt64::SECONDARY_DENSITY_CODE },
-   { "--refreshinterval",           OptionUInt64::REFRESH_INTERVAL },
-   { "--targetedfreespace",         OptionUInt64::TARGETED_FREE_SPACE },
-   { "--sleeptime",                 OptionUInt64::SLEEP_TIME },
-   { "--readmaxdrives",             OptionUInt64::READ_MAX_DRIVES },
-   { "--writemaxdrives",            OptionUInt64::WRITE_MAX_DRIVES },
-   { "--nbphysicalcartridgeslots",  OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS },
-   { "--nbavailablecartridgeslots", OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS },
-   { "--nbphysicaldriveslots",      OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS },
-   { "--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND },
-   { "--logunixtimemin",            OptionUInt64::LOG_UNIXTIME_MIN },
-   { "--logunixtimemax",            OptionUInt64::LOG_UNIXTIME_MAX },
+  {"--archivepriority",           OptionUInt64::ARCHIVE_PRIORITY            },
+  {"--capacity",                  OptionUInt64::CAPACITY                    },
+  {"--copynb",                    OptionUInt64::COPY_NUMBER                 },
+  {"--id",                        OptionUInt64::ARCHIVE_FILE_ID             },
+  {"--maxfilesize",               OptionUInt64::MAX_FILE_SIZE               },
+  {"--maxlpos",                   OptionUInt64::MAX_LPOS                    },
+  {"--minarchiverequestage",      OptionUInt64::MIN_ARCHIVE_REQUEST_AGE     },
+  {"--minlpos",                   OptionUInt64::MIN_LPOS                    },
+  {"--minretrieverequestage",     OptionUInt64::MIN_RETRIEVE_REQUEST_AGE    },
+  {"--nbwraps",                   OptionUInt64::NUMBER_OF_WRAPS             },
+  {"--partialtapesnumber",        OptionUInt64::PARTIAL_TAPES_NUMBER        },
+  {"--primarydensitycode",        OptionUInt64::PRIMARY_DENSITY_CODE        },
+  {"--retrievepriority",          OptionUInt64::RETRIEVE_PRIORITY           },
+  {"--secondarydensitycode",      OptionUInt64::SECONDARY_DENSITY_CODE      },
+  {"--refreshinterval",           OptionUInt64::REFRESH_INTERVAL            },
+  {"--targetedfreespace",         OptionUInt64::TARGETED_FREE_SPACE         },
+  {"--sleeptime",                 OptionUInt64::SLEEP_TIME                  },
+  {"--readmaxdrives",             OptionUInt64::READ_MAX_DRIVES             },
+  {"--writemaxdrives",            OptionUInt64::WRITE_MAX_DRIVES            },
+  {"--nbphysicalcartridgeslots",  OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS },
+  {"--nbavailablecartridgeslots", OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS},
+  {"--nbphysicaldriveslots",      OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS     },
+  {"--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND         },
+  {"--logunixtimemin",            OptionUInt64::LOG_UNIXTIME_MIN            },
+  {"--logunixtimemax",            OptionUInt64::LOG_UNIXTIME_MAX            },
 };
-
-
 
 /*!
  * Map string options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionString::Key> strOptions = {
-   { "--bufferurl",             OptionString::BUFFERURL },
-   { "--cartridge",             OptionString::CARTRIDGE },
-   { "--comment",               OptionString::COMMENT },
-   { "--drive",                 OptionString::DRIVE },
-   { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY_NAME },
-   { "--fxid",                  OptionString::FXID },
-   { "--instance",              OptionString::INSTANCE },
-   { "--logicallibrary",        OptionString::LOGICAL_LIBRARY },
-   { "--mediatype",             OptionString::MEDIA_TYPE },
-   { "--mountpolicy",           OptionString::MOUNT_POLICY },
-   { "--objectid",              OptionString::OBJECTID },
-   { "--storageclass",          OptionString::STORAGE_CLASS },
-   { "--supply",                OptionString::SUPPLY },
-   { "--tapepool",              OptionString::TAPE_POOL },
-   { "--username",              OptionString::USERNAME },
-   { "--vendor",                OptionString::VENDOR },
-   { "--vid",                   OptionString::VID },
-   { "--virtualorganisation",   OptionString::VO },
-   { "--disksystem",            OptionString::DISK_SYSTEM },
-   { "--fileregexp",            OptionString::FILE_REGEXP },
-   { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL },
-   { "--reason",                OptionString::REASON },
-   { "--state",                 OptionString::STATE },
-   { "--activityregex",         OptionString::ACTIVITY_REGEX},
-   { "--diskinstance",          OptionString::DISK_INSTANCE },
-   { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
-   { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
-   { "--disabledreason",        OptionString::DISABLED_REASON },
-   { "--purchaseorder",         OptionString::MEDIA_PURCHASE_ORDER_NUMBER },
-   { "--physicallibrary",       OptionString::PHYSICAL_LIBRARY },
-   { "--manufacturer",          OptionString::MANUFACTURER },
-   { "--model",                 OptionString::LIBRARY_MODEL },
-   { "--type",                  OptionString::LIBRARY_TYPE },
-   { "--guiurl",                OptionString::GUI_URL },
-   { "--webcamurl",             OptionString::WEBCAM_URL },
-   { "--location",              OptionString::LIBRARY_LOCATION },
-   { "--archiveroutetype",      OptionString::ARCHIVE_ROUTE_TYPE }
+  {"--bufferurl",           OptionString::BUFFERURL                  },
+  {"--cartridge",           OptionString::CARTRIDGE                  },
+  {"--comment",             OptionString::COMMENT                    },
+  {"--drive",               OptionString::DRIVE                      },
+  {"--encryptionkeyname",   OptionString::ENCRYPTION_KEY_NAME        },
+  {"--fxid",                OptionString::FXID                       },
+  {"--instance",            OptionString::INSTANCE                   },
+  {"--logicallibrary",      OptionString::LOGICAL_LIBRARY            },
+  {"--mediatype",           OptionString::MEDIA_TYPE                 },
+  {"--mountpolicy",         OptionString::MOUNT_POLICY               },
+  {"--objectid",            OptionString::OBJECTID                   },
+  {"--storageclass",        OptionString::STORAGE_CLASS              },
+  {"--supply",              OptionString::SUPPLY                     },
+  {"--tapepool",            OptionString::TAPE_POOL                  },
+  {"--username",            OptionString::USERNAME                   },
+  {"--vendor",              OptionString::VENDOR                     },
+  {"--vid",                 OptionString::VID                        },
+  {"--virtualorganisation", OptionString::VO                         },
+  {"--disksystem",          OptionString::DISK_SYSTEM                },
+  {"--fileregexp",          OptionString::FILE_REGEXP                },
+  {"--freespacequeryurl",   OptionString::FREE_SPACE_QUERY_URL       },
+  {"--reason",              OptionString::REASON                     },
+  {"--state",               OptionString::STATE                      },
+  {"--activityregex",       OptionString::ACTIVITY_REGEX             },
+  {"--diskinstance",        OptionString::DISK_INSTANCE              },
+  {"--diskinstancespace",   OptionString::DISK_INSTANCE_SPACE        },
+  {"--verificationstatus",  OptionString::VERIFICATION_STATUS        },
+  {"--disabledreason",      OptionString::DISABLED_REASON            },
+  {"--purchaseorder",       OptionString::MEDIA_PURCHASE_ORDER_NUMBER},
+  {"--physicallibrary",     OptionString::PHYSICAL_LIBRARY           },
+  {"--manufacturer",        OptionString::MANUFACTURER               },
+  {"--model",               OptionString::LIBRARY_MODEL              },
+  {"--type",                OptionString::LIBRARY_TYPE               },
+  {"--guiurl",              OptionString::GUI_URL                    },
+  {"--webcamurl",           OptionString::WEBCAM_URL                 },
+  {"--location",            OptionString::LIBRARY_LOCATION           },
+  {"--archiveroutetype",    OptionString::ARCHIVE_ROUTE_TYPE         }
 };
 
 /*!
@@ -507,11 +491,10 @@ const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", R"( <"t
 const Option opt_max_files_to_select {Option::OPT_UINT, "--maxfilestoselect", "--mfts", " <max_files_to_select>"};
 const Option opt_log_unixtime_min {Option::OPT_UINT, "--logunixtimemin", "--ltmin", " <min_recycle_log_unixtime>"};
 const Option opt_log_unixtime_max {Option::OPT_UINT, "--logunixtimemax", "--ltmax", " <max_recycle_log_unixtime>"};
-const Option opt_archive_route_type {
-  Option::OPT_STR, "--archiveroutetype", "--art",
-  std::string(R"( <")") + cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) +
-    R"(" or ")" + cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"
-};
+const Option opt_archive_route_type {Option::OPT_STR, "--archiveroutetype", "--art",
+                                     std::string(R"( <")") +
+                                       cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
+                                       cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
 
 /*!
  * Subset of commands that return streaming output
@@ -576,7 +559,7 @@ activitymountrule (amr)
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM},    {opt_instance, opt_username_alias, opt_activityregex}          },
   {{AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS},    {}                                                             },
 
- /**md
+  /**md
 admin (ad)
 
 :   Add, change, remove or list the administrators of the system. In order to use **cta-admin**,
@@ -587,7 +570,7 @@ admin (ad)
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM},                {opt_username}                                                 },
   {{AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS},                {}                                                             },
 
- /**md
+  /**md
 archiveroute (ar)
 
 :   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
@@ -600,7 +583,7 @@ archiveroute (ar)
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb, opt_archive_route_type}         },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
 
- /**md
+  /**md
 diskinstance (di)
 
 :   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
@@ -615,7 +598,7 @@ diskinstance (di)
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_RM},         {opt_diskinstance_alias}                                       },
   {{AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_LS},         {}                                                             },
 
- /**md
+  /**md
 diskinstancespace (dis)
 
 :   Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
@@ -649,7 +632,7 @@ diskinstancespace (dis)
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM},    {opt_diskinstancespace_alias, opt_diskinstance}                },
   {{AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS},    {}                                                             },
 
- /**md
+  /**md
 disksystem (ds)
 
 :   Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
@@ -697,7 +680,7 @@ disksystem (ds)
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM},           {opt_disksystem}                                               },
   {{AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS},           {}                                                             },
 
- /**md
+  /**md
 drive (dr)
 
 :   Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
@@ -728,7 +711,7 @@ drive (dr)
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM},                {opt_drivename_cmd, opt_force_flag.optional()}                 },
   {{AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_CH},                {opt_drivename_cmd, opt_comment}                               },
 
- /**md
+  /**md
 failedrequest (fr)
 
 :   List and remove requests which failed and for which all retry attempts failed.
@@ -738,7 +721,7 @@ failedrequest (fr)
     opt_log.optional(), opt_summary.optional()}                                                                              },
   {{AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM},        {opt_object_id}                                                },
 
- /**md
+  /**md
 groupmountrule (gmr)
 
 :   Add, change, remove or list the group mount rules.
@@ -750,7 +733,7 @@ groupmountrule (gmr)
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM},       {opt_instance, opt_groupname_alias}                            },
   {{AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS},       {}                                                             },
 
- /**md
+  /**md
 logicallibrary (ll)
 
 :   Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
@@ -768,7 +751,7 @@ logicallibrary (ll)
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM},       {opt_logicallibrary_alias}                                     },
   {{AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS},       {opt_logicallibrary_disabled.optional()}                       },
 
- /**md
+  /**md
 mediatype (mt)
 
 :   Add, change, remove or list the tape cartridge media types. This command is used to specify the
@@ -788,7 +771,7 @@ mediatype (mt)
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            {opt_mediatype_alias}                                          },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS},            {}                                                             },
 
- /**md
+  /**md
 mountpolicy (mp)
 
 :   Add, change, remove or list the mount policies.
@@ -802,7 +785,7 @@ mountpolicy (mp)
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          {opt_mountpolicy_alias}                                        },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS},          {}                                                             },
 
- /**md
+  /**md
 physicallibrary (pl)
 
 :   Add, change, remove or list the physical tape libraries.
@@ -814,11 +797,12 @@ physicallibrary (pl)
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
    {opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(),
     opt_nb_physical_cartridge_slots.optional(), opt_nb_available_cartridge_slots.optional(),
-    opt_nb_physical_drive_slots.optional(), opt_comment.optional(), opt_disabled.optional(), opt_disabledreason.optional()}  },
+    opt_nb_physical_drive_slots.optional(), opt_comment.optional(), opt_disabled.optional(),
+    opt_disabledreason.optional()}                                                                                           },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_RM},      {opt_physical_library_alias}                                   },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_LS},      {}                                                             },
 
- /**md
+  /**md
 recycletf (rtf)
 
 :   List tape files in the recycle log.
@@ -830,7 +814,7 @@ recycletf (rtf)
    {opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(),
     opt_instance.optional(), opt_log_unixtime_min.optional(), opt_log_unixtime_max.optional(), opt_vo.optional()}            },
 
- /**md
+  /**md
 repack (re)
 
 :   Add or remove a request to repack one or more tapes, list repack requests in progress, display
@@ -882,7 +866,7 @@ repack (re)
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS},               {opt_vid.optional()}                                           },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              {opt_vid}                                                      },
 
- /**md
+  /**md
 requestermountrule (rmr)
 
 :   Add, change, remove or list the requester mount rules.
@@ -894,7 +878,7 @@ requestermountrule (rmr)
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   {opt_instance, opt_username_alias}                             },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS},   {}                                                             },
 
- /**md
+  /**md
 showqueues (sq)
 
 :   Show the status of all active queues. The bottom section shows requests already being serviced by
@@ -902,7 +886,7 @@ showqueues (sq)
   */
   {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},         {}                                                             },
 
- /**md
+  /**md
 storageclass (sc)
 
 :   Add, change, remove or list the storage classes. The storage class of a file specifies its
@@ -918,7 +902,7 @@ storageclass (sc)
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM},         {opt_storageclass_alias}                                       },
   {{AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS},         {opt_storageclass_alias.optional()}                            },
 
- /**md
+  /**md
 tape (ta)
 
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
@@ -939,7 +923,7 @@ tape (ta)
     opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional(),
     opt_physical_library.optional()}                                                                                         },
 
- /**md
+  /**md
 tapefile (tf)
 
 :   List files on a specified tape or delete a tape file.
@@ -968,7 +952,7 @@ tapefile (tf)
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
    {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason}                          },
 
- /**md
+  /**md
 tapepool (tp)
 
 :   Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
@@ -996,7 +980,7 @@ tapepool (tp)
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
    {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                              },
 
- /**md
+  /**md
 version (v)
 
 :   Display the version of **cta-admin**, the CTA Frontend, the protocol buffer used for client/server
@@ -1004,7 +988,7 @@ version (v)
   */
   {{AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE},            {}                                                             },
 
- /**md
+  /**md
 virtualorganization (vo)
 
 :   Add, change, remove or list the Virtual Organisations (VOs). A VO corresponds to an entity whose
@@ -1034,17 +1018,17 @@ virtualorganization (vo)
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM},  {opt_vo}                                                       },
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
 
- /*-------------------------------------------------------------------------------------------------------------------------
+  /*-------------------------------------------------------------------------------------------------------------------------
    COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
 
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional()}                      },
- // Used by cta-restore-deleted-files
+  // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
- /*-------------------------------------------------------------------------------------------------------------------------*/
+  /*-------------------------------------------------------------------------------------------------------------------------*/
 };
 
 /*!
@@ -1053,5 +1037,5 @@ virtualorganization (vo)
  * Throws a std::runtime_error if the command is invalid
  * This function is used on the server side
  */
-void validateCmd(const cta::admin::AdminCmd &admincmd);
-} // namespace cta::admin
+void validateCmd(const cta::admin::AdminCmd& admincmd);
+}  // namespace cta::admin
