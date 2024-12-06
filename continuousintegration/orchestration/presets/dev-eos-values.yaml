@@ -1,10 +1,22 @@
 fst:
   replicaCount: 1
 
+fusex:
+  kerberos:
+    enabled: true
+    clientConfig:
+      configMap: krb5-config
+
+
 qdb:
   replicaCount: 1
 
 mgm:
+  kerberos:
+    enabled: true
+    clientConfig:
+      configMap: krb5-config
+    defaultRealm: TEST.CTA
   extraEnv:
   - name: LD_PRELOAD
     value: ""
