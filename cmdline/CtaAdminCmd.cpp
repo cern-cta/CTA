@@ -537,10 +537,10 @@ void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
 
  throw std::runtime_error(help.str());
 }
+
 } // namespace cta::admin
 
 
-}  // namespace XrdSsiPb
 
 /*!
 * Start here

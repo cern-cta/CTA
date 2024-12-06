@@ -200,7 +200,7 @@ void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::stri
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  m_serviceProviderPtr->Send(request, response);
+  m_serviceProviderPtr->Send(request, response, false);
 
   // Handle responses
   switch(response.type()) {
