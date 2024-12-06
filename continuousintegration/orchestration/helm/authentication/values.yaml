@@ -4,13 +4,11 @@ component: kdc
 partOf: kdc
 
 image:
-  registry: gitlab-registry.cern.ch/cta
-  repository: ctageneric
-  tag: ""
+  registry: gitlab-registry.cern.ch/linuxsupport
+  repository: alma9-base
+  tag: latest
   pullPolicy: IfNotPresent
-  pullSecrets:
-  - ctaregsecret
-  - reg-ctageneric
+  pullSecrets: []
 
 # Additional environment variables
 env: []

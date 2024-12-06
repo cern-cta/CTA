@@ -26,6 +26,7 @@ usage() {
   echo "  -h, --help:                     Show help output."
   echo "  -m|--mgm-name <mgm-name>:       The name of the mgm pod to configure."
   echo "  -n|--namespace <namespace>:     The kubernetes namespace the pod lives in."
+  echo "  -d|--destination-dir <dir>:     The kubernetes namespace the pod lives in."
   exit 1
 }
 
@@ -56,11 +57,5 @@ if [ -z "$namespace" ]; then
   exit 1
 fi
 
-# Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
-# files from tape and deleting files.
-echo "Setting workflows in namespace ${namespace} for mgm ${mgm_name}:"
-cta_workflow_dir=/eos/${mgm_name}/proc/cta/workflow
-for workflow in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default; do
-  echo "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-  kubectl --namespace ${namespace} exec ${mgm_name} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-done
+kubectl cp ./configure_eoscta_tape.sh ${mgm_name}:/tmp -c eos-mgm --namespace ${namespace}
+kubectl exec -it ${mgm_name} -c eos-mgm --namespace ${namespace} -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"

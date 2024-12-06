@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-kdc
+data:
+  kdc.sh: |
+    {{ .Files.Get "scripts/kdc.sh" | nindent 4 }}

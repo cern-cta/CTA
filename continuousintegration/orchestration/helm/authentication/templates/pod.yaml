@@ -15,7 +15,7 @@ spec:
     image: {{ include "kdc.image" . }}
     imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
     stdin: true
-    command: ['/opt/run/bin/kdc.sh']
+    command: ["bash", "/scripts/kdc.sh"]
     args: []
     readinessProbe:
       exec:
@@ -47,6 +47,8 @@ spec:
         {{- .Values.env | toYaml | nindent 4}}
     {{- end }}
     volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
     - name: krb5-config-volume
       mountPath: /etc/krb5.conf
       subPath: krb5.conf
@@ -54,6 +56,10 @@ spec:
       mountPath: /tmp/keytabs-names.json
       subPath: keytabs-names.json
   volumes:
+  - name: scripts-volume
+    configMap:
+      name: scripts-kdc
+      defaultMode: 0777
   - name: keytabs-names
     configMap:
       name: keytabs-names-conf

@@ -5,71 +5,10 @@ qdb:
   replicaCount: 1
 
 mgm:
-  preRun:
-    enabled: true
-    script: |
-      #!/usr/bin/bash
+  extraEnv:
+  - name: LD_PRELOAD
+    value: ""
 
-      eos vid enable unix
-      eos space set default on
-      eos attr -r set default=replica /eos
-      eos attr -r set sys.forced.nstripes=1 /eos
-      eos space config default space.wfe=on
-      eos space config default space.wfe.ntx=200
-      eos space config default space.filearchivedgc=on
-      # TODO: move to specific test
-      eos space config default space.token.generation=1
-
-      # Users
-      groupadd --gid 1100 eosusers
-      groupadd --gid 1200 powerusers
-      groupadd --gid 1300 ctaadmins
-      groupadd --gid 1400 eosadmins
-      useradd --uid 11001 --gid 1100 user1
-      useradd --uid 11002 --gid 1100 user2
-      useradd --uid 12001 --gid 1200 poweruser1
-      useradd --uid 12002 --gid 1200 poweruser2
-      useradd --uid 13001 --gid 1300 ctaadmin1
-      useradd --uid 13002 --gid 1300 ctaadmin2
-      useradd --uid 14001 --gid 1400 eosadmin1
-      useradd --uid 14002 --gid 1400 eosadmin2
-
-      eos vid set membership $(id -u eosadmin1) +sudo
-      eos vid set membership $(id -u eosadmin2) +sudo
-
-      # Configure preprod workflows
-      CTAEOS_INSTANCE_NAME=ctaeos
-      PREPROD_DIR=/eos/${CTAEOS_INSTANCE_NAME}/preprod
-      eos mkdir ${PREPROD_DIR}
-      eos chmod 555 ${PREPROD_DIR}
-      eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${PREPROD_DIR}
-
-      eos attr set sys.archive.storage_class=ctaStorageClass ${PREPROD_DIR}
-
-      eos attr set sys.workflow.sync::create.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::closew.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::archived.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::archive_failed.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::prepare.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::abort_prepare.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::evict_prepare.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::closew.retrieve_written="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::retrieve_failed.default="proto" ${PREPROD_DIR}
-      eos attr set sys.workflow.sync::delete.default="proto" ${PREPROD_DIR}
-
-      # Configure CTA workflows
-      cta_workflow_dir=/eos/${CTAEOS_INSTANCE_NAME}/proc/cta/workflow
-      eos mkdir /eos/${CTAEOS_INSTANCE_NAME}/proc/cta
-      eos mkdir /eos/${CTAEOS_INSTANCE_NAME}/proc/cta/workflow
-
-
-      eos attr set sys.workflow.sync::create.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::closew.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::archived.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::archive_failed.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::prepare.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::abort_prepare.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::evict_prepare.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::closew.retrieve_written="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::retrieve_failed.default="proto" ${cta_workflow_dir}
-      eos attr set sys.workflow.sync::delete.default="proto" ${cta_workflow_dir}
+global:
+  sssKeytab:
+    secret: eos-sss-keytab

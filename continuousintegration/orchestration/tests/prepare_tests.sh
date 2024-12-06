@@ -38,12 +38,12 @@ if [ -z "${NAMESPACE}" ]; then
 fi
 
 # eos instance identified by SSS username
-# EOSINSTANCE=cta-mgm-0
 EOSINSTANCE=ctaeos
+EOS_MGM=eos-dev-mgm-0 # TODO: this doesn't work for other namespaces
 
-MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
-MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
-MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
+MULTICOPY_DIR_1=/eos/${EOSINSTANCE}/preprod/dir_1_copy
+MULTICOPY_DIR_2=/eos/${EOSINSTANCE}/preprod/dir_2_copy
+MULTICOPY_DIR_3=/eos/${EOSINSTANCE}/preprod/dir_3_copy
 
 # Set the TAPES and DRIVE_NAME based on the config in tpsrv01-0
 echo "Reading library configuration from tpsrv01-0"
@@ -66,8 +66,7 @@ NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
 echo "Preparing CTA configuration for tests"
 # verify the catalogue DB schema
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-if [ $? -ne 0 ]; then
+if ! kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf; then
   echo "ERROR: failed to verify the catalogue DB schema"
   exit 1
 fi
@@ -77,12 +76,12 @@ echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version |
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
 
 echo "Cleaning up leftovers from potential previous runs."
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm /eos/ctaeos/cta/*
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_1}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_2}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_3}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf {}
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf /eos/${EOSINSTANCE}/cta/fail_on_closew_test/
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm /eos/${EOSINSTANCE}/cta/*
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_1}/
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_2}/
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_3}/
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos find -f /eos/${EOSINSTANCE}/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf {}
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
   jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
   cta-admin tape rm -v {}
@@ -338,7 +337,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting
 echo "EOS server version is used:"
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- rpm -qa|grep eos-server
+kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- rpm -qa|grep eos-server
 
 
 # Super client capabilities
@@ -353,13 +352,13 @@ setup_tapes_for_multicopy_test() {
 
   echo "Setting up tapes and tapepools for multi-copy test..."
 
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_3}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_3}
 
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
 
   # Find 3 non-full tapes and assign them to each one of the 3 tapepools
   mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
