@@ -113,7 +113,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   } else {
     // Format results in a tabular format for a human
     switch (record.data_case()) {
-      // clang-format off
+        // clang-format off
       case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
       case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
       case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
@@ -288,7 +288,7 @@ void CtaAdminCmd::send() const
 
  // Send the Request to the Service and get a Response
  cta::xrd::Response response;
- auto stream_future = cta_service.SendAsync(m_request, response);
+ auto stream_future = cta_service.SendAsync(m_request, response, false);
 
  // Handle responses
  switch(response.type())
@@ -483,9 +483,7 @@ void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList& str_list, const st
       if (item.empty()) {
         continue;
       }
-    }
 
-    if (str_list.key() == OptionStrList::FILE_ID) {
       if (str_list.key() == OptionStrList::FILE_ID) {
         // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
         //   path=/path fid=<fid>
