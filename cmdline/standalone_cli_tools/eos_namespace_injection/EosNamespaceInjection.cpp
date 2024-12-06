@@ -260,7 +260,7 @@ bool EosNamespaceInjection::getMetaDataFromCatalogue(const uint64_t &archiveId) 
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   bool ret = false;
 
