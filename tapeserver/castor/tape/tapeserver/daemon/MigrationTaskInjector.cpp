@@ -29,19 +29,26 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm, DiskReadThreadPool& diskReader,
+MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
+                                             DiskReadThreadPool& diskReader,
                                              TapeSingleThreadInterface<TapeWriteTask>& tapeWriter,
-                                             cta::ArchiveMount& archiveMount, uint64_t maxFiles,
-                                             uint64_t byteSizeThreshold, const cta::log::LogContext& lc) :
-m_thread(*this),
-m_memManager(mm), m_tapeWriter(tapeWriter), m_diskReader(diskReader), m_archiveMount(archiveMount), m_lc(lc),
-m_maxFiles(maxFiles), m_maxBytes(byteSizeThreshold) {}
+                                             cta::ArchiveMount& archiveMount,
+                                             uint64_t maxFiles,
+                                             uint64_t byteSizeThreshold,
+                                             const cta::log::LogContext& lc)
+    : m_thread(*this),
+      m_memManager(mm),
+      m_tapeWriter(tapeWriter),
+      m_diskReader(diskReader),
+      m_archiveMount(archiveMount),
+      m_lc(lc),
+      m_maxFiles(maxFiles),
+      m_maxBytes(byteSizeThreshold) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
 //------------------------------------------------------------------------------
 void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs) {
-
   const size_t blockCapacity = m_memManager.blockCapacity();
   for (auto& job : jobs) {
     const uint64_t fileSize = job->archiveFile.fileSize;
@@ -68,8 +75,7 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
     m_lc.log(cta::log::INFO, "Created tasks for migrating a file");
     if (fileSize) {
       m_diskReader.push(drt.release());
-    }
-    else {
+    } else {
       m_lc.log(cta::log::WARNING, "Skipped disk read task creation for zero-length file.");
     }
   }
@@ -126,8 +132,7 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
     noFilesToMigrate = true;
     m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
     return false;
-  }
-  else {
+  } else {
     m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;
     injectBulkMigrations(jobs);
     return true;
@@ -164,24 +169,25 @@ void MigrationTaskInjector::WorkerThread::run() {
         throw castor::tape::tapeserver::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
-      m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive Mount");
+      m_parent.m_lc.log(cta::log::DEBUG,
+                        "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive Mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
       uint64_t files = jobs.size();
       uint64_t bytes = 0;
-      for (auto& j : jobs) bytes += j->archiveFile.fileSize;
+      for (auto& j : jobs) {
+        bytes += j->archiveFile.fileSize;
+      }
       if (jobs.empty()) {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): No jobs were found");
         if (req.lastCall) {
           m_parent.m_lc.log(cta::log::INFO, "No more file to migrate: triggering the end of session.");
           m_parent.signalEndDataMovement();
           break;
-        }
-        else {
+        } else {
           m_parent.m_lc.log(cta::log::INFO,
                             "In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
         }
-      }
-      else {
+      } else {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
         m_parent.injectBulkMigrations(jobs);
@@ -203,8 +209,9 @@ void MigrationTaskInjector::WorkerThread::run() {
     }  //end of while(1)
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     //we end up there because a task screw up somewhere
-    m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
-                                      "indicating finish of run");
+    m_parent.m_lc.log(cta::log::INFO,
+                      "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
+                      "indicating finish of run");
 
     m_parent.signalEndDataMovement();
   } catch (const cta::exception::Exception& ex) {
@@ -213,8 +220,9 @@ void MigrationTaskInjector::WorkerThread::run() {
     cta::log::ScopedParamContainer container(m_parent.m_lc);
     container.add("exception message", ex.getMessageValue());
     m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
-    m_parent.m_lc.log(cta::log::ERR, "In MigrationTaskInjector::WorkerThread::run(): "
-                                     "could not retrieve a list of file to migrate, indicating finish of run");
+    m_parent.m_lc.log(cta::log::ERR,
+                      "In MigrationTaskInjector::WorkerThread::run(): "
+                      "could not retrieve a list of file to migrate, indicating finish of run");
 
     m_parent.signalEndDataMovement();
   }
@@ -228,7 +236,9 @@ void MigrationTaskInjector::WorkerThread::run() {
   bool stillReading = true;
   while (stillReading) {
     Request req = m_parent.m_queue.pop();
-    if (req.end) stillReading = false;
+    if (req.end) {
+      stillReading = false;
+    }
     LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
     m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): popping extra request");
   }
@@ -238,4 +248,4 @@ uint64_t MigrationTaskInjector::firstFseqToWrite() const {
   return m_firstFseqToWrite;
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

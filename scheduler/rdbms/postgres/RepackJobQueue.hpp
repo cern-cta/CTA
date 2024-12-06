@@ -67,53 +67,50 @@ struct RepackJobQueueRow {
    *
    * @param row  A single row from the current row of the rset
    */
-  explicit RepackJobQueueRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  explicit RepackJobQueueRow(const rdbms::Rset& rset) { *this = rset; }
 
-  RepackJobQueueRow& operator=(const rdbms::Rset &rset) {
-    repackReqId               = rset.columnUint64("REPACK_REQID");
-    vid                       = rset.columnString("VID");
-    bufferUrl                 = rset.columnString("BUFFER_URL");
-    status                    = from_string<RepackJobStatus>(
-                                rset.columnString("STATUS") );
-    isAddCopies               = rset.columnBool("IS_ADD_COPIES");
-    isMove                    = rset.columnBool("IS_MOVE");
-    totalFilesOnTapeAtStart   = rset.columnUint64("TOTAL_FILES_ON_TAPE_AT_START");
-    totalBytesOnTapeAtStart   = rset.columnUint64("TOTAL_BYTES_ON_TAPE_AT_START");
-    allFilesSelectedAtStart   = rset.columnBool("ALL_FILES_SELECTED_AT_START");
-    totalFilesToRetrieve      = rset.columnUint64("TOTAL_FILES_TO_RETRIEVE");
-    totalBytesToRetrieve      = rset.columnUint64("TOTAL_BYTES_TO_RETRIEVE");
-    totalFilesToArchive       = rset.columnUint64("TOTAL_FILES_TO_ARCHIVE");
-    totalBytesToArchive       = rset.columnUint64("TOTAL_BYTES_TO_ARCHIVE");
-    userProvidedFiles         = rset.columnUint64("USER_PROVIDED_FILES");
-    userProvidedBytes         = rset.columnUint64("USER_PROVIDED_BYTES");
-    retrievedFiles            = rset.columnUint64("RETRIEVED_FILES");
-    retrievedBytes            = rset.columnUint64("RETRIEVED_BYTES");
-    archivedFiles             = rset.columnUint64("ARCHIVED_FILES");
-    archivedBytes             = rset.columnUint64("ARCHIVED_BYTES");
-    failedToRetrieveFiles     = rset.columnUint64("FAILED_TO_RETRIEVE_FILES");
-    failedToRetrieveBytes     = rset.columnUint64("FAILED_TO_RETRIEVE_BYTES");
-    failedToCreateArchiveReq  = rset.columnUint64("FAILED_TO_CREATE_ARCHIVE_REQ");
-    failedToArchiveFiles      = rset.columnUint64("FAILED_TO_ARCHIVE_FILES");
-    failedToArchiveBytes      = rset.columnUint64("FAILED_TO_ARCHIVE_BYTES");
-    lastExpandedFseq          = rset.columnUint64("LAST_EXPANDED_FSEQ");
-    isExpandFinished          = rset.columnBool("IS_EXPAND_FINISHED");
-    isExpandStarted           = rset.columnBool("IS_EXPAND_STARTED");
-    mountPolicyName           = rset.columnString("MOUNT_POLICY");
-    isComplete                = rset.columnBool("IS_COMPLETE");
-    isNoRecall                = rset.columnBool("IS_NO_RECALL");
-    subReqProtoBuf            = rset.columnBlob("SUBREQ_PB");
-    destInfoProtoBuf          = rset.columnBlob("DESTINFO_PB");
-    createLog.username        = rset.columnString("CREATE_USERNAME");
-    createLog.host            = rset.columnString("CREATE_HOST");
-    createLog.time            = rset.columnUint64("CREATE_TIME");
-    repackFinishedTime        = rset.columnUint64("REPACK_FINIHSED_TIME");
+  RepackJobQueueRow& operator=(const rdbms::Rset& rset) {
+    repackReqId = rset.columnUint64("REPACK_REQID");
+    vid = rset.columnString("VID");
+    bufferUrl = rset.columnString("BUFFER_URL");
+    status = from_string<RepackJobStatus>(rset.columnString("STATUS"));
+    isAddCopies = rset.columnBool("IS_ADD_COPIES");
+    isMove = rset.columnBool("IS_MOVE");
+    totalFilesOnTapeAtStart = rset.columnUint64("TOTAL_FILES_ON_TAPE_AT_START");
+    totalBytesOnTapeAtStart = rset.columnUint64("TOTAL_BYTES_ON_TAPE_AT_START");
+    allFilesSelectedAtStart = rset.columnBool("ALL_FILES_SELECTED_AT_START");
+    totalFilesToRetrieve = rset.columnUint64("TOTAL_FILES_TO_RETRIEVE");
+    totalBytesToRetrieve = rset.columnUint64("TOTAL_BYTES_TO_RETRIEVE");
+    totalFilesToArchive = rset.columnUint64("TOTAL_FILES_TO_ARCHIVE");
+    totalBytesToArchive = rset.columnUint64("TOTAL_BYTES_TO_ARCHIVE");
+    userProvidedFiles = rset.columnUint64("USER_PROVIDED_FILES");
+    userProvidedBytes = rset.columnUint64("USER_PROVIDED_BYTES");
+    retrievedFiles = rset.columnUint64("RETRIEVED_FILES");
+    retrievedBytes = rset.columnUint64("RETRIEVED_BYTES");
+    archivedFiles = rset.columnUint64("ARCHIVED_FILES");
+    archivedBytes = rset.columnUint64("ARCHIVED_BYTES");
+    failedToRetrieveFiles = rset.columnUint64("FAILED_TO_RETRIEVE_FILES");
+    failedToRetrieveBytes = rset.columnUint64("FAILED_TO_RETRIEVE_BYTES");
+    failedToCreateArchiveReq = rset.columnUint64("FAILED_TO_CREATE_ARCHIVE_REQ");
+    failedToArchiveFiles = rset.columnUint64("FAILED_TO_ARCHIVE_FILES");
+    failedToArchiveBytes = rset.columnUint64("FAILED_TO_ARCHIVE_BYTES");
+    lastExpandedFseq = rset.columnUint64("LAST_EXPANDED_FSEQ");
+    isExpandFinished = rset.columnBool("IS_EXPAND_FINISHED");
+    isExpandStarted = rset.columnBool("IS_EXPAND_STARTED");
+    mountPolicyName = rset.columnString("MOUNT_POLICY");
+    isComplete = rset.columnBool("IS_COMPLETE");
+    isNoRecall = rset.columnBool("IS_NO_RECALL");
+    subReqProtoBuf = rset.columnBlob("SUBREQ_PB");
+    destInfoProtoBuf = rset.columnBlob("DESTINFO_PB");
+    createLog.username = rset.columnString("CREATE_USERNAME");
+    createLog.host = rset.columnString("CREATE_HOST");
+    createLog.time = rset.columnUint64("CREATE_TIME");
+    repackFinishedTime = rset.columnUint64("REPACK_FINIHSED_TIME");
 
     return *this;
   }
 
-  void insert(Transaction &txn) const {
+  void insert(Transaction& txn) const {
     // setting repackReqId; todo
     const char* const sql = R"SQL(
       INSERT INTO REPACK_JOB_QUEUE(
@@ -281,7 +278,7 @@ struct RepackJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, RepackJobStatus status, uint32_t limit) {
+  static rdbms::Rset select(Transaction& txn, RepackJobStatus status, uint32_t limit) {
     const char* const sql = R"SQL(
       SELECT 
         REPACK_REQID AS REPACK_REQID,
@@ -333,7 +330,6 @@ struct RepackJobQueueRow {
 
     return stmt.executeQuery();
   }
-
 };
 
-} // namespace cta::schedulerdb::postgres
+}  // namespace cta::schedulerdb::postgres

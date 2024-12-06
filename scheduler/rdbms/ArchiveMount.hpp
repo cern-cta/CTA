@@ -29,37 +29,74 @@
 #include <cstdint>
 #include <time.h>
 
-
 namespace cta::schedulerdb {
 
 class TapeMountDecisionInfo;
 
 class ArchiveMount : public SchedulerDatabase::ArchiveMount {
- friend class cta::RelationalDB;
- friend class TapeMountDecisionInfo;
- public:
+  friend class cta::RelationalDB;
+  friend class TapeMountDecisionInfo;
 
-   ArchiveMount(RelationalDB &pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType) :
-                m_RelationalDB(pdb), m_ownerId(ownerId), m_queueType(queueType) { }
+public:
+  ArchiveMount(RelationalDB& pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType)
+      : m_RelationalDB(pdb),
+        m_ownerId(ownerId),
+        m_queueType(queueType) {}
 
-   const MountInfo & getMountInfo() override;
+  const MountInfo& getMountInfo() override;
 
-   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext) override;
+  /*
+   * Fetch next bach of jobs from the Scheduler DB backend
+   *
+   * @param filesRequested  The maximum number of jobs to fetch
+   * @param bytesRequested  The maximum number of bytes the files in these jobs can sum up to
+   * @param logContext      The logging context
+   *
+   * @return list of pointers to SchedulerDatabase::ArchiveJob objects
+   */
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
+  getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-   void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                       time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
+  /*
+   * Set the status of the drive
+   *
+   * @param status           The drive status
+   * @param mountType       The type of the mount
+   * @param completionTime  The time the operation took it took
+   * @param reason          An optional parameter containing the reason fo the drive status change
+   *
+   * @return void
+   */
+  void setDriveStatus(common::dataStructures::DriveStatus status,
+                      common::dataStructures::MountType mountType,
+                      time_t completionTime,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
-   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  /*
+   * Set Tape session statistics summary
+   *
+   * @param stats       The TapeSessionStats object
+   *
+   * @return void
+   */
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
-   void setJobBatchTransferred(
-      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) override;
+  /*
+   * Setting a batch of jobs to state which informs
+   * the Scheduler that they are ready for reporting
+   *
+   * @param jobsBatch  The list of SchedulerDatabase::ArchiveJob objects
+   * @param lc         The log context
+   *
+   * @return void
+   */
+  void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                              log::LogContext& lc) override;
 
 private:
-
-   cta::RelationalDB& m_RelationalDB;
-   const std::string& m_ownerId;
-   common::dataStructures::JobQueueType m_queueType;
+  cta::RelationalDB& m_RelationalDB;
+  const std::string& m_ownerId;
+  common::dataStructures::JobQueueType m_queueType;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

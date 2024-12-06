@@ -22,7 +22,9 @@
 #include <sstream>
 
 namespace cta::schedulerdb::postgres {
-
+/*
+ * Archive job table summary object
+ */
 struct ArchiveJobSummaryRow {
   std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
@@ -43,23 +45,20 @@ struct ArchiveJobSummaryRow {
    *
    * @param row  A single row from the result of a query
    */
-  explicit ArchiveJobSummaryRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  explicit ArchiveJobSummaryRow(const rdbms::Rset& rset) { *this = rset; }
 
-  ArchiveJobSummaryRow& operator=(const rdbms::Rset &rset) {
+  ArchiveJobSummaryRow& operator=(const rdbms::Rset& rset) {
     mountId = rset.columnOptionalUint64("MOUNT_ID");
-    status               = from_string<ArchiveJobStatus>(
-                           rset.columnString("STATUS") );
-    tapePool             = rset.columnString("TAPE_POOL");
-    mountPolicy          = rset.columnString("MOUNT_POLICY");
-    jobsCount            = rset.columnUint64("JOBS_COUNT");
-    jobsTotalSize        = rset.columnUint64("JOBS_TOTAL_SIZE");
-    oldestJobStartTime   = rset.columnUint64("OLDEST_JOB_START_TIME");
-    archivePriority      = rset.columnUint16("ARCHIVE_PRIORITY");
+    status = from_string<ArchiveJobStatus>(rset.columnString("STATUS"));
+    tapePool = rset.columnString("TAPE_POOL");
+    mountPolicy = rset.columnString("MOUNT_POLICY");
+    jobsCount = rset.columnUint64("JOBS_COUNT");
+    jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
+    oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
+    archivePriority = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
-    lastUpdateTime     = rset.columnUint32("LAST_UPDATE_TIME");
-    lastJobUpdateTime  = rset.columnUint32("LAST_JOB_UPDATE_TIME");
+    lastUpdateTime = rset.columnUint32("LAST_UPDATE_TIME");
+    lastJobUpdateTime = rset.columnUint32("LAST_JOB_UPDATE_TIME");
     return *this;
   }
 
@@ -82,7 +81,7 @@ struct ArchiveJobSummaryRow {
    *
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectNotOwned(Transaction &txn) {
+  static rdbms::Rset selectNotOwned(Transaction& txn) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
     const char* const lock_sql = R"SQL(
@@ -112,7 +111,6 @@ struct ArchiveJobSummaryRow {
     stmt = txn.conn().createStmt(sql);
     return stmt.executeQuery();
   }
-
 };
 
-} // namespace cta::schedulerdb::postgres
+}  // namespace cta::schedulerdb::postgres

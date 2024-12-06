@@ -34,8 +34,10 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc) :
-  ReportPackerInterface<detail::Migration>(lc), m_workerThread(*this), m_archiveMount(archiveMount) { }
+MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc)
+    : ReportPackerInterface<detail::Migration>(lc),
+      m_workerThread(*this),
+      m_archiveMount(archiveMount) {}
 
 //------------------------------------------------------------------------------
 //Destructor
@@ -47,8 +49,8 @@ MigrationReportPacker::~MigrationReportPacker() {
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportCompletedJob(
-  std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc) {
+void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
+                                               cta::log::LogContext& lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
@@ -61,9 +63,9 @@ void MigrationReportPacker::reportCompletedJob(
 //reportSkippedJob
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
-  const std::string& failure, cta::log::LogContext& lc) {
-  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
-                           " " + failure;
+                                             const std::string& failure,
+                                             cta::log::LogContext& lc) {
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failure;
   std::unique_ptr<Report> rep(new ReportSkipped(std::move(skippedArchiveJob), failureLog));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReporSkipped");
@@ -76,9 +78,10 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
 //reportFailedJob
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
-                                            const cta::exception::Exception& ex, cta::log::LogContext& lc) {
-  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
-                           " " + ex.getMessageValue();
+                                            const cta::exception::Exception& ex,
+                                            cta::log::LogContext& lc) {
+  std::string failureLog =
+    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
   std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob), failureLog));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
@@ -113,7 +116,7 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
 
 //------------------------------------------------------------------------------
 //reportEndOfSession
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSession");
@@ -125,8 +128,10 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
 
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
-//------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext& lc) {
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportEndOfSessionWithErrors(const std::string& msg,
+                                                         bool isTapeFull,
+                                                         cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
@@ -162,26 +167,27 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog)
-          .add("fileSize", m_skippedArchiveJob->archiveFile.fileSize)
-          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+      .add("fileSize", m_skippedArchiveJob->archiveFile.fileSize)
+      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     m_skippedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
 
-    reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
+    reportPacker.m_lc.log(cta::log::DEBUG,
+                          "In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
   }
   try {
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (cta::exception::NoSuchObject & ex){
+  } catch (cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue())
-          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
-                          "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
+                          "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), "
+                          "job does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue())
-          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR,
-                          "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(
+      cta::log::ERR,
+      "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
   reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
@@ -194,11 +200,11 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason,
+void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                              const std::optional<std::string>& reason,
                                               cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportDriveStatus")
-        .add("Status", cta::common::dataStructures::toString(status));
+  params.add("type", "ReportDriveStatus").add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportDriveStatus(status, reason));
@@ -224,73 +230,77 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // right before the end of session (which triggers also a flush)
     // We refrain from sending an empty report to the client in this case.
     if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
-      reportPacker.m_lc.log(cta::log::INFO, "Received a flush report from tape, but had no file to report to client. Doing nothing.");
+      reportPacker.m_lc.log(cta::log::INFO,
+                            "Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
-    try{
+    try {
       cta::utils::Timer t;
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("successfulBatchSize", reportPacker.m_successfulArchiveJobs.size());
-      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs,
-        reportPacker.m_lc);
-      params.add("reportJobsBatchTime", t.secs())
-            .add("failedToReportBatchSize", failedToReportArchiveJobs.size());
-      reportPacker.m_lc.log(cta::log::INFO,
-                            "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
-    } catch(const cta::ArchiveMount::FailedReportCatalogueUpdate &ex){
-      while(!failedToReportArchiveJobs.empty()){
+      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs,
+                                                              reportPacker.m_skippedFiles,
+                                                              failedToReportArchiveJobs,
+                                                              reportPacker.m_lc);
+      params.add("reportJobsBatchTime", t.secs()).add("failedToReportBatchSize", failedToReportArchiveJobs.size());
+      reportPacker.m_lc.log(
+        cta::log::INFO,
+        "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
+    } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
+      while (!failedToReportArchiveJobs.empty()) {
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
           archiveJob->failTransfer(ex.getMessageValue(), reportPacker.m_lc);
-        }
-        catch (const cta::exception::NoSuchObject& nso_ex) {
+        } catch (const cta::exception::NoSuchObject& nso_ex) {
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
-                .add("latestError", archiveJob->latestError)
-                .add("exceptionMSG", ex.getMessageValue());
+            .add("latestError", archiveJob->latestError)
+            .add("exceptionMSG", ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the archive job because it does not exist in the objectstore.");
-        }
-        catch (const cta::exception::Exception& cta_ex) {
+                                "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
+                                "archive job because it does not exist in the objectstore.");
+        } catch (const cta::exception::Exception& cta_ex) {
           //If the failTransfer method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
-                .add("latestError", archiveJob->latestError)
-                .add("exceptionMSG", ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING, "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the archive job because of CTA exception.");
+            .add("latestError", archiveJob->latestError)
+            .add("exceptionMSG", ex.getMessageValue());
+          reportPacker.m_lc.log(cta::log::WARNING,
+                                "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
+                                "archive job because of CTA exception.");
         }
         failedToReportArchiveJobs.pop();
       }
       throw;
-    } catch(const cta::ArchiveMount::FailedReportMoveToQueue &ex){
-      while(!failedToReportArchiveJobs.empty()){
+    } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
+      while (!failedToReportArchiveJobs.empty()) {
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
-        try{
-          archiveJob->failReport(ex.getMessageValue(),reportPacker.m_lc);
-        }
-        catch (const cta::exception::NoSuchObject& nso_ex) {
+        try {
+          archiveJob->failReport(ex.getMessageValue(), reportPacker.m_lc);
+        } catch (const cta::exception::NoSuchObject& nso_ex) {
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
-                .add("latestError", archiveJob->latestError)
-                .add("exceptionMSG", ex.getMessageValue());
+            .add("latestError", archiveJob->latestError)
+            .add("exceptionMSG", ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the archive job because it does not exist in the objectstore.");
-        }
-        catch(const cta::exception::Exception& cta_ex) {
+                                "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
+                                "archive job because it does not exist in the objectstore.");
+        } catch (const cta::exception::Exception& cta_ex) {
           //If the failReport method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
-                .add("latestError", archiveJob->latestError)
-                .add("exceptionMSG", ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING, "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the archive job because of CTA exception.");
+            .add("latestError", archiveJob->latestError)
+            .add("exceptionMSG", ex.getMessageValue());
+          reportPacker.m_lc.log(cta::log::WARNING,
+                                "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
+                                "archive job because of CTA exception.");
         }
         failedToReportArchiveJobs.pop();
       }
       throw;
     }
-  }
-  else {
+  } else {
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT, "Received a flush after an error: sending file errors to client");
   }
@@ -308,7 +318,8 @@ void MigrationReportPacker::ReportTapeFull::execute(MigrationReportPacker& repor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& reportPacker) {
   reportPacker.m_continue = false;
-  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
+  reportPacker.m_lc.log(cta::log::DEBUG,
+                        "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if (!reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -320,8 +331,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       // by the end our process. To delay the latter, we sleep half a second here.
       usleep(500 * 1000);
     }
-  }
-  else {
+  } else {
     // We have some errors
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", "Previous file errors");
@@ -341,15 +351,15 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker) {
   reportPacker.m_continue = false;
-  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
+  reportPacker.m_lc.log(
+    cta::log::DEBUG,
+    "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if (reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
-    sp.add("errorMessage", m_message)
-      .add("isTapeFull", m_isTapeFull);
+    sp.add("errorMessage", m_message).add("isTapeFull", m_isTapeFull);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
-  }
-  else {
+  } else {
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client");
   }
   if (reportPacker.m_watchdog) {
@@ -368,24 +378,24 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
   reportPacker.m_errorHappened = true;
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("failureLog", m_failureLog)
-          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR, "In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
+    params.add("failureLog", m_failureLog).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,
+                          "In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
   }
   try {
     m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (cta::exception::NoSuchObject & ex){
+  } catch (cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue())
-          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
-                          "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
+                          "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job "
+                          "does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue())
-          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR,
-                          "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(
+      cta::log::ERR,
+      "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
 }
@@ -393,9 +403,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
 //------------------------------------------------------------------------------
-MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent) :
-  m_parent(parent) {
-}
+MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent) : m_parent(parent) {}
 
 //------------------------------------------------------------------------------
 //WorkerThread::run
@@ -410,11 +418,10 @@ void MigrationReportPacker::WorkerThread::run() {
       {
         cta::log::ScopedParamContainer params(lc);
         int demangleStatus;
-        char *demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+        char* demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
         if (!demangleStatus) {
           params.add("typeId", demangledReportType);
-        }
-        else {
+        } else {
           params.add("typeId", typeid(*rep.get()).name());
         }
         free(demangledReportType);
@@ -427,7 +434,9 @@ void MigrationReportPacker::WorkerThread::run() {
     //either from the catch a few lines above or directly from rep->execute
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMSG", e.getMessageValue());
-    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
+    lc.log(
+      cta::log::ERR,
+      "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -438,14 +447,15 @@ void MigrationReportPacker::WorkerThread::run() {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMSG", e.what());
     int demangleStatus;
-    char *demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
+    char* demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
     if (!demangleStatus) {
       params.add("exceptionType", demangleExceptionType);
-    }
-    else {
+    } else {
       params.add("exceptionType", typeid(e).name());
     }
-    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount results.");
+    lc.log(cta::log::ERR,
+           "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount "
+           "results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -453,7 +463,9 @@ void MigrationReportPacker::WorkerThread::run() {
   } catch (...) {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received an unknown exception while reporting archive mount results.");
+    lc.log(cta::log::ERR,
+           "In MigrationReportPacker::WorkerThread::run(): Received an unknown exception while reporting archive mount "
+           "results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -466,11 +478,10 @@ void MigrationReportPacker::WorkerThread::run() {
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
     cta::log::ScopedParamContainer params(lc);
     int demangleStatus;
-    char *demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+    char* demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
     if (!demangleStatus) {
       params.add("typeId", demangledReportType);
-    }
-    else {
+    } else {
       params.add("typeId", typeid(*rep.get()).name());
     }
     free(demangledReportType);
@@ -478,4 +489,4 @@ void MigrationReportPacker::WorkerThread::run() {
   }
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

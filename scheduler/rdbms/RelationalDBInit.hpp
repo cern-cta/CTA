@@ -31,27 +31,27 @@ class Catalogue;
 namespace cta {
 
 class RelationalDBQCR {
-// QueueCleanupRunner
+  // QueueCleanupRunner
 public:
+  RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) {}
 
-  RelationalDBQCR(catalogue::Catalogue &catalogue, RelationalDB &pgs) { }
-  void runOnePass(log::LogContext & lc) { }
+  void runOnePass(log::LogContext& lc) {}
 };
 
 class RelationalDBGC {
-// GarbageCollector
+  // GarbageCollector
 public:
+  RelationalDBGC(void* pgstuff, catalogue::Catalogue& catalogue) {}
 
-  RelationalDBGC(void *pgstuff, catalogue::Catalogue& catalogue) { }
-  void runOnePass(log::LogContext & lc) { }
+  void runOnePass(log::LogContext& lc) {}
 };
 
-class RelationalDBInit
-{
+class RelationalDBInit {
 public:
-  RelationalDBInit(const std::string& client_process, const std::string& db_conn_str, log::Logger& log,
-    bool leaveNonEmptyAgentsBehind = false)
-  {
+  RelationalDBInit(const std::string& client_process,
+                   const std::string& db_conn_str,
+                   log::Logger& log,
+                   bool leaveNonEmptyAgentsBehind = false) {
     connStr = db_conn_str;
     clientProc = client_process;
     login = rdbms::Login::parseString(connStr);
@@ -62,14 +62,12 @@ public:
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
     const uint64_t nbConns = 2;
-    return std::make_unique<RelationalDB>( clientProc, log, catalogue, login, nbConns);
+    return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, nbConns);
   }
 
-  RelationalDBGC getGarbageCollector(catalogue::Catalogue& catalogue) {
-    return RelationalDBGC(nullptr, catalogue);
-  }
+  RelationalDBGC getGarbageCollector(catalogue::Catalogue& catalogue) { return RelationalDBGC(nullptr, catalogue); }
 
-  RelationalDBQCR getQueueCleanupRunner(catalogue::Catalogue& catalogue, RelationalDB &pgs) {
+  RelationalDBQCR getQueueCleanupRunner(catalogue::Catalogue& catalogue, RelationalDB& pgs) {
     return RelationalDBQCR(catalogue, pgs);
   }
 
@@ -79,7 +77,7 @@ private:
   rdbms::Login login;
 };
 
-typedef RelationalDBInit      SchedulerDBInit_t;
-typedef RelationalDB          SchedulerDB_t;
+typedef RelationalDBInit SchedulerDBInit_t;
+typedef RelationalDB SchedulerDB_t;
 
-} // namespace cta
+}  // namespace cta

@@ -32,39 +32,44 @@
 #define TAPEMOUNTDECISIONINFO_H
 #endif /* TAPEMOUNTDECISIONINFO_H */
 
-
 namespace cta::schedulerdb {
 
 class ArchiveMount;
 
 class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
- friend class cta::RelationalDB;
- public:
-   explicit TapeMountDecisionInfo(RelationalDB &pdb, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
+  friend class cta::RelationalDB;
 
-   std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
-                                                                       const catalogue::TapeForWriting& tape,
-                                                                       const std::string& driveName,
-                                                                       const std::string& logicalLibrary,
-                                                                       const std::string& hostName) override;
+public:
+  explicit TapeMountDecisionInfo(RelationalDB& pdb,
+                                 const std::string& ownerId,
+                                 TapeDrivesCatalogueState* drivesState,
+                                 log::Logger& logger);
 
-   std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
-                                                                         const std::string& driveName,
-                                                                         const std::string& logicalLibrary,
-                                                                         const std::string& hostName) override;
+  std::unique_ptr<SchedulerDatabase::ArchiveMount>
+  createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                     const catalogue::TapeForWriting& tape,
+                     const std::string& driveName,
+                     const std::string& logicalLibrary,
+                     const std::string& hostName) override;
 
-  private:
-    /** Acquire scheduler global lock */
-    void lock();
-    /** Commit decision and release scheduler global lock */
-    void commit();
+  std::unique_ptr<SchedulerDatabase::RetrieveMount>
+  createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                      const std::string& driveName,
+                      const std::string& logicalLibrary,
+                      const std::string& hostName) override;
 
-    cta::RelationalDB& m_RelationalDB;
-    schedulerdb::Transaction m_txn;
-    std::string m_ownerId;
-    bool m_lockTaken = false;
-    log::Logger&           m_logger;
-    TapeDrivesCatalogueState *m_tapeDrivesState = nullptr;
+private:
+  /** Acquire scheduler global lock */
+  void lock();
+  /** Commit decision and release scheduler global lock */
+  void commit();
+
+  cta::RelationalDB& m_RelationalDB;
+  schedulerdb::Transaction m_txn;
+  std::string m_ownerId;
+  bool m_lockTaken = false;
+  log::Logger& m_logger;
+  TapeDrivesCatalogueState* m_tapeDrivesState = nullptr;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

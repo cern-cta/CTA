@@ -32,18 +32,16 @@ struct MountsRow {
    *
    * @param row  A single row from the result of a query
    */
-  explicit MountsRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  explicit MountsRow(const rdbms::Rset& rset) { *this = rset; }
 
-  MountsRow &operator=(const rdbms::Rset &rset) {
+  MountsRow& operator=(const rdbms::Rset& rset) {
     mountId = rset.columnUint64("MOUNT_ID");
     creationTime = rset.columnUint64("CREATION_TIMESTAMP");
     owner = rset.columnString("OWNER");
     return *this;
   }
 
-  void addParamsToLogContext(log::ScopedParamContainer &params) const {
+  void addParamsToLogContext(log::ScopedParamContainer& params) const {
     params.add("mountId", mountId);
     params.add("creationTime", creationTime);
     params.add("owner", owner);
@@ -56,7 +54,7 @@ struct MountsRow {
    *
    * @return     Mount ID number
    */
-  static uint64_t getNextMountID(Transaction &txn) {
+  static uint64_t getNextMountID(Transaction& txn) {
     try {
       const char* const sql = R"SQL(
         SELECT NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID
@@ -68,14 +66,14 @@ struct MountsRow {
         throw exception::Exception("Result set is unexpectedly empty");
       }
       return rset.columnUint64("MOUNT_ID");
-    } catch (exception::UserError &ex) {
+    } catch (exception::UserError& ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
-    } catch (exception::Exception &ex) {
+    } catch (exception::Exception& ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
     }
   };
 };
 
-} // namespace cta::schedulerdb::postgres
+}  // namespace cta::schedulerdb::postgres

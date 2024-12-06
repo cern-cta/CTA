@@ -29,7 +29,6 @@ namespace cta::rdbms::wrapper {
  */
 class RsetWrapper {
 public:
-
   /**
    * Destructor.
    */
@@ -40,7 +39,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const = 0;
+  virtual const std::string& getSql() const = 0;
 
   /**
    * Attempts to get the next row of the result set.
@@ -56,7 +55,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  virtual bool columnIsNull(const std::string &colName) const = 0;
+  virtual bool columnIsNull(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
@@ -64,7 +63,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual std::string columnBlob(const std::string &colName) const = 0;
+  virtual std::string columnBlob(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as a string.
@@ -74,7 +73,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual std::optional<std::string> columnOptionalString(const std::string &colName) const = 0;
+  virtual std::optional<std::string> columnOptionalString(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -84,7 +83,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const = 0;
+  virtual std::optional<uint8_t> columnOptionalUint8(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -94,7 +93,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const = 0;
+  virtual std::optional<uint16_t> columnOptionalUint16(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -104,7 +103,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const = 0;
+  virtual std::optional<uint32_t> columnOptionalUint32(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -114,7 +113,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
+  virtual std::optional<uint64_t> columnOptionalUint64(const std::string& colName) const = 0;
 
   /**
    * Returns the value of the specified column as a double.
@@ -124,8 +123,8 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual std::optional<double> columnOptionalDouble(const std::string &colName) const = 0;
+  virtual std::optional<double> columnOptionalDouble(const std::string& colName) const = 0;
 
-}; // class RsetWrapper
+};  // class RsetWrapper
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

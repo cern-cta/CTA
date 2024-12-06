@@ -19,13 +19,11 @@
 
 namespace cta::schedulerdb {
 
-Transaction::Transaction(rdbms::ConnPool &connPool) :
-  m_conn(connPool.getConn())
-{
+Transaction::Transaction(rdbms::ConnPool& connPool) : m_conn(connPool.getConn()) {
   start();
 }
 
-Transaction::~Transaction() { 
+Transaction::~Transaction() {
   if (m_begin) {
     m_conn.rollback();
   }
@@ -54,7 +52,7 @@ void Transaction::abort() {
   m_begin = false;
 }
 
-rdbms::Conn &Transaction::getNonTxnConn() {
+rdbms::Conn& Transaction::getNonTxnConn() {
   if (!m_begin) {
     return m_conn;
   } else {
@@ -63,10 +61,10 @@ rdbms::Conn &Transaction::getNonTxnConn() {
   }
 }
 
-rdbms::Conn &Transaction::conn() {
+rdbms::Conn& Transaction::conn() {
   if (!m_begin) {
     throw SQLError(std::string("No transaction"));
   }
   return m_conn;
 }
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

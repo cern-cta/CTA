@@ -29,9 +29,12 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresRset::PostgresRset(PostgresConn &conn, PostgresStmt &stmt, std::unique_ptr<Postgres::ResultItr> resItr)
-  : m_conn(conn), m_stmt(stmt), m_resItr(std::move(resItr)), m_asyncCleared(false), m_nfetched(0) {
-
+PostgresRset::PostgresRset(PostgresConn& conn, PostgresStmt& stmt, std::unique_ptr<Postgres::ResultItr> resItr)
+    : m_conn(conn),
+      m_stmt(stmt),
+      m_resItr(std::move(resItr)),
+      m_asyncCleared(false),
+      m_nfetched(0) {
   // assumes statement and connection locks have already been taken
   if (!m_conn.isAsyncInProgress()) {
     throw exception::Exception(std::string(__FUNCTION__) + " unexpected: async flag not set");
@@ -42,13 +45,12 @@ PostgresRset::PostgresRset(PostgresConn &conn, PostgresStmt &stmt, std::unique_p
 // destructor.
 //------------------------------------------------------------------------------
 PostgresRset::~PostgresRset() {
-
   try {
     threading::RWLockWrLocker locker(m_conn.m_lock);
 
     m_resItr->clear();
     doClearAsync();
-  } catch(...) {
+  } catch (...) {
     // Destructor should not throw any exceptions
   }
 }
@@ -56,8 +58,7 @@ PostgresRset::~PostgresRset() {
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool PostgresRset::columnIsNull(const std::string &colName) const {
-
+bool PostgresRset::columnIsNull(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -70,12 +71,12 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }
 
-std::string PostgresRset::columnBlob(const std::string &colName) const {
+std::string PostgresRset::columnBlob(const std::string& colName) const {
   auto blob = columnOptionalString(colName);
-  if(blob) {
+  if (blob) {
     size_t blob_len;
-    unsigned char *blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
-    if(blob_ptr != nullptr) {
+    unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
+    if (blob_ptr != nullptr) {
       std::string blob_str(reinterpret_cast<const char*>(blob_ptr), blob_len);
       PQfreemem(blob_ptr);
       return blob_str;
@@ -87,8 +88,7 @@ std::string PostgresRset::columnBlob(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-std::optional<std::string> PostgresRset::columnOptionalString(const std::string &colName) const {
-
+std::optional<std::string> PostgresRset::columnOptionalString(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -109,8 +109,7 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string 
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
-std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colName) const {
-
+std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -127,7 +126,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidUInt(stringValue)) {
+  if (!utils::isValidUInt(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                " which is not a valid unsigned integer");
   }
@@ -138,8 +137,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string &colN
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
-std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &colName) const {
-
+std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -156,7 +154,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidUInt(stringValue)) {
+  if (!utils::isValidUInt(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                " which is not a valid unsigned integer");
   }
@@ -167,8 +165,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string &co
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
-std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &colName) const {
-
+std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -185,7 +182,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidUInt(stringValue)) {
+  if (!utils::isValidUInt(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                " which is not a valid unsigned integer");
   }
@@ -196,8 +193,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string &co
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &colName) const {
-
+std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -214,9 +210,9 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &co
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidUInt(stringValue)) {
+  if (!utils::isValidUInt(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-      " which is not a valid unsigned integer");
+                               " which is not a valid unsigned integer");
   }
 
   return utils::toUint64(stringValue);
@@ -225,7 +221,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &co
 //------------------------------------------------------------------------------
 // columnOptionalDouble
 //------------------------------------------------------------------------------
-std::optional<double> PostgresRset::columnOptionalDouble(const std::string &colName) const {
+std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
@@ -242,9 +238,9 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string &colN
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidDecimal(stringValue)) {
+  if (!utils::isValidDecimal(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-      " which is not a valid decimal");
+                               " which is not a valid decimal");
   }
 
   return utils::toDouble(stringValue);
@@ -253,7 +249,7 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string &colN
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &PostgresRset::getSql() const {
+const std::string& PostgresRset::getSql() const {
   return m_stmt.getSql();
 }
 
@@ -261,13 +257,11 @@ const std::string &PostgresRset::getSql() const {
 // next
 //------------------------------------------------------------------------------
 bool PostgresRset::next() {
-
   // always locks in order statement and then connection
   threading::RWLockWrLocker locker2(m_stmt.m_lock);
   threading::RWLockWrLocker locker(m_conn.m_lock);
 
   if (m_resItr->next()) {
-
     // For queries expect rcode PGRES_SINGLE_TUPLE with ntuples=1 for each row,
     // followed by PGRES_TUPLES_OK and ntuples=0 at the end.
     // A non query would give PGRES_COMMAND_OK but we don't accept this here
@@ -307,5 +301,4 @@ void PostgresRset::doClearAsync() {
   }
 }
 
-
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

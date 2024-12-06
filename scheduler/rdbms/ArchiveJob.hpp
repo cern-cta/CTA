@@ -30,23 +30,40 @@
 namespace cta::schedulerdb {
 
 class ArchiveJob : public SchedulerDatabase::ArchiveJob {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
 
- public:
+public:
+  ArchiveJob();
+  ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
 
-   ArchiveJob();
-   ArchiveJob(bool jobOwned, uint64_t jid, uint64_t mountID, std::string_view tapePool);
+  /*
+   * Sets the status of the job as failed in the Scheduler DB
+   *
+   * @param failureReason  The reason of the failure as string
+   * @param lc             The log context
+   *
+   * @return void
+   */
+  void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
+  /*
+   * Sets the status of the report of the archive job to failed in Scheduler DB
+   *
+   * @param failureReason   The failure reason as string
+   * @param lc              The log context
+   *
+   * @return void
+   */
+  void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failReport(const std::string & failureReason, log::LogContext & lc) override;
+  /*
+   * Currently unused function throwing an exception
+   */
+  void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
-   void bumpUpTapeFileCount(uint64_t newFileCount) override;
-
-   bool m_jobOwned = false;
-   uint64_t m_mountId = 0;
-   std::string m_tapePool;
-
+  bool m_jobOwned = false;
+  uint64_t m_mountId = 0;
+  std::string m_tapePool;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb
