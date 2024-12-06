@@ -326,7 +326,7 @@ static int rmc_getreq(
 			return (ERMCUNREC);
 		}
 		struct hostent hbuf;
-    struct hostent* hp;
+    struct hostent* hp = NULL;
     char buffer[1024];
 		char client_ip[INET6_ADDRSTRLEN];
     int h_err;
