@@ -368,7 +368,8 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const arg
 
     for (opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
       // Special case of OPT_CMD type has an implicit key
-      if (opt_num-- == 0 && opt_it->get_type() == Option::OPT_CMD) {  // Check if the value is '--all'
+      if (opt_num-- == 0 && opt_it->get_type() == Option::OPT_CMD) {
+        // Check if the value is '--all'
         if (std::string(argv[i]) == "--all" || std::string(argv[i]) == "-a") {
           // Find the OPT_FLAG type --all option explicitly
           auto flag_it = std::find_if(options.begin(), options.end(), [](const Option& opt) {
@@ -380,7 +381,8 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const arg
           }
           throwUsage("Invalid use of '--all'");
         }
-        break;  // Normal implicit key handling for CMD
+        // Normal implicit key handling for CMD
+        break;
       }
       // Regular matching
       if (*opt_it == argv[i]) {
