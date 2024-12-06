@@ -5,7 +5,7 @@ catalogueDestinationVersion: ""
 image:
   registry: gitlab-registry.cern.ch/cta
   repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
-  tag: "80fb6f05"
+  tag: "alma9-base.1"
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret
