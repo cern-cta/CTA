@@ -75,45 +75,45 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   if (CtaAdminCmd::isJson()) {
     std::cout << CtaAdminCmd::jsonDelim();
     // clang-format off
-   switch(record.data_case()) {
-     case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
-     case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
-     case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
-     case Data::kArlsItem:      std::cout << Log::DumpProtobuf(&record.arls_item());    break;
-     case Data::kDrlsItem:      std::cout << Log::DumpProtobuf(&record.drls_item());    break;
-     case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
-     case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
-     case Data::kGmrlsItem:     std::cout << Log::DumpProtobuf(&record.gmrls_item());   break;
-     case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
-     case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
-     case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
-     case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
-     case Data::kLllsItem:      std::cout << Log::DumpProtobuf(&record.llls_item());    break;
-     case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
-     case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
-     case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
-     case Data::kAmrlsItem:     std::cout << Log::DumpProtobuf(&record.amrls_item());   break;
-     case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
-     case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
-     case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
-     case Data::kTflsItem:      std::cout << Log::DumpProtobuf(&record.tfls_item());    break;
-     case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
-     case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
-     case Data::kDilsItem:      std::cout << Log::DumpProtobuf(&record.dils_item());    break;
-     case Data::kDislsItem:     std::cout << Log::DumpProtobuf(&record.disls_item());   break;
-     case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());    break;
-     case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
-     case Data::kMtlsItem:      std::cout << Log::DumpProtobuf(&record.mtls_item());    break;
-     case Data::kRtflsItem:     std::cout << Log::DumpProtobuf(&record.rtfls_item());   break;
-     case Data::kPllsItem:      std::cout << Log::DumpProtobuf(&record.plls_item());    break;
-     default:
-       throw std::runtime_error("Received invalid stream data from CTA Frontend.");
-   }
+    switch(record.data_case()) {
+      case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
+      case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
+      case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
+      case Data::kArlsItem:      std::cout << Log::DumpProtobuf(&record.arls_item());    break;
+      case Data::kDrlsItem:      std::cout << Log::DumpProtobuf(&record.drls_item());    break;
+      case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
+      case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
+      case Data::kGmrlsItem:     std::cout << Log::DumpProtobuf(&record.gmrls_item());   break;
+      case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
+      case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
+      case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
+      case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
+      case Data::kLllsItem:      std::cout << Log::DumpProtobuf(&record.llls_item());    break;
+      case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
+      case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
+      case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
+      case Data::kAmrlsItem:     std::cout << Log::DumpProtobuf(&record.amrls_item());   break;
+      case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
+      case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
+      case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+      case Data::kTflsItem:      std::cout << Log::DumpProtobuf(&record.tfls_item());    break;
+      case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
+      case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
+      case Data::kDilsItem:      std::cout << Log::DumpProtobuf(&record.dils_item());    break;
+      case Data::kDislsItem:     std::cout << Log::DumpProtobuf(&record.disls_item());   break;
+      case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());    break;
+      case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
+      case Data::kMtlsItem:      std::cout << Log::DumpProtobuf(&record.mtls_item());    break;
+      case Data::kRtflsItem:     std::cout << Log::DumpProtobuf(&record.rtfls_item());   break;
+      case Data::kPllsItem:      std::cout << Log::DumpProtobuf(&record.plls_item());    break;
+      default:
+        throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+    }
     // clang-format on
   } else {
     // Format results in a tabular format for a human
     switch (record.data_case()) {
-        // clang-format off
+      // clang-format off
       case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
       case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
       case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
@@ -145,9 +145,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
       default:
         throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       // clang-format oon
-   }
+    }
+  }
 }
-
 }  // namespace XrdSsiPb
 
 namespace cta::admin {

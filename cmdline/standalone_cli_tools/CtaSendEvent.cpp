@@ -226,7 +226,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  cta_service.Send(request, response);
+  cta_service.Send(request, response, false);
 
   // Handle responses
   switch(response.type())
