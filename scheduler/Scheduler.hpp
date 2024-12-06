@@ -120,7 +120,7 @@ public:
   /*
    * Set scheduler backend instance name
    */
-  void setSchedulerBackendName(std::string scheddbName) {
+  void setSchedulerBackendName(const std::string& scheddbName) {
     m_schedulerBackendName = scheddbName;
   }
   /**
