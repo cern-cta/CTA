@@ -54,8 +54,6 @@ spec:
     - name: cta-conf-volume
       mountPath: /etc/cta/cta-cli.conf
       subPath: cta-cli.conf
-    - mountPath: /etc/config/eos
-      name: eosconfig
     - mountPath: /tmp/eos.keytab
       name: sss-keytab
       subPath: eos.keytab
@@ -79,9 +77,6 @@ spec:
   - name: cta-conf-volume
     configMap:
       name: etc-cta-client
-  - name: eosconfig
-    configMap:
-      name: eos-config-base
   - name: sss-keytab
     secret:
       secretName: eos-sss-keytab

@@ -226,7 +226,6 @@ build_srpm() {
       exit 1
     fi
   fi
-  return
 
   # Cmake
   export CTA_VERSION=${cta_version}

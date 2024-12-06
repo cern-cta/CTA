@@ -18,7 +18,6 @@ conf:
     zeroLengthFilesForbidden: "on"
     zeroLengthFilesForbiddenVoExceptionList: ""
     logUrl: "file:/var/log/cta/cta-frontend.log"
-    # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
 
   schedulerdb:
     numberOfThreads: 500
@@ -46,8 +45,7 @@ conf:
 
   security:
     krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"
-    sss: "/etc/cta/eos.sss.keytab"
-    allowedProtocols: "sss krb5"
+    allowedProtocols: "krb5"
 
 # Additional environment variables
 env: []

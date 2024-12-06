@@ -24,8 +24,6 @@ spec:
     command: ["/bin/sh", "-c"]
     args:
     - |
-      cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
-      chmod 400 /etc/cta/eos.sss.keytab;
       /opt/run/bin/ctafrontend.sh;
     readinessProbe:
       exec:
@@ -94,9 +92,6 @@ spec:
     - mountPath: /etc/cta/cta-frontend.krb5.keytab
       name: keytab
       subPath: cta-frontend.krb5.keytab
-    - mountPath: /etc/cta/eos-tmp.sss.keytab
-      name: sss-keytab
-      subPath: eos-tmp.sss.keytab
     - mountPath: /etc/krb5.conf
       name: krb5-config-volume
       subPath: krb5.conf
@@ -128,9 +123,6 @@ spec:
   - name: keytab
     secret:
       secretName: cta-frontend-keytab
-  - name: sss-keytab
-    secret:
-      secretName: frontend-sss-keytab
   - name: krb5-config-volume
     configMap:
       name: krb5-config

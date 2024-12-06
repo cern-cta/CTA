@@ -62,7 +62,7 @@ update_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "kdc"
+    "authentication"
     "catalogue"
     "scheduler"
     "cta/"
@@ -210,7 +210,7 @@ create_instance() {
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
-    # kubectl create namespace ${namespace}
+    kubectl create namespace ${namespace}
     echo "Copying secrets into ${namespace} namespace"
     for secret_name in ${registry_secrets}; do
       # If the secret exists...
@@ -227,16 +227,13 @@ create_instance() {
   # This sets up the key distribution center and the necessary SSS secrets for communication with eos
   log_run helm ${helm_command} authentication-${namespace} helm/authentication \
                                 --namespace ${namespace} \
-                                --set image.registry="${registry_host}" \
-                                --set image.tag="${image_tag}" \
                                 --wait --wait-for-jobs --timeout 2m
 
   log_run helm install eos-${namespace} oci://registry.cern.ch/eos/charts/server \
                                 --namespace ${namespace}\
-                                -f presets/dev-eos-values.yaml
-
-
-  exit
+                                -f presets/dev-eos-values.yaml \
+                                --wait --wait-for-jobs --timeout 4m &
+  eos_pid=$!
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing kdc, catalogue and scheduler charts..."
@@ -261,6 +258,7 @@ create_instance() {
 
 
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
+  # TODO: instead of doing it like this, the relevant containers should have init pods that wait for the relevant resources to be up/available
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
   wait $eos_pid || exit 1

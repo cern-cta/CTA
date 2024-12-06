@@ -132,11 +132,9 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - mountPath: /etc/config/eos
-          name: eosconfig
         - name: tpsrv-sss-keytab
           mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
-          subPath: cta-tpsrv.sss.keytab
+          subPath: eos.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -162,9 +160,6 @@ spec:
         configMap:
           name: cta-objectstore-conf
       {{- end }}
-      - name: eosconfig
-        configMap:
-          name: eos-config-base
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:
@@ -177,7 +172,7 @@ spec:
       {{- end }} # End of drive-specific configmaps loop
       - name: tpsrv-sss-keytab
         secret:
-          secretName: tpsrv-sss-keytab
+          secretName: eos-sss-keytab
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
