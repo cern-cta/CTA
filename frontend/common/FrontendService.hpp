@@ -65,7 +65,7 @@ public:
    *
    * @return value of cta.schedulerdb.scheduler_backend_name from the CTA frontend config file
    */
-  std::string getSchedulerBackendName() const {
+  const std::string& getSchedulerBackendName() const {
       return m_schedulerBackendName;
   }
 

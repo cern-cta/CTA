@@ -114,37 +114,37 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
     // Format results in a tabular format for a human
     switch (record.data_case()) {
         // clang-format off
-   case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
-   case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
-   case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
-   case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
-   case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
-   case Data::kGmrlsItem:     formattedText.print(record.gmrls_item());   break;
-   case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
-   case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
-   case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
-   case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
-   case Data::kLllsItem:      formattedText.print(record.llls_item());    break;
-   case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
-   case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
-   case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
-   case Data::kAmrlsItem:     formattedText.print(record.amrls_item());   break;
-   case Data::kSqItem:        formattedText.print(record.sq_item());      break;
-   case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
-   case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
-   case Data::kTflsItem:      formattedText.print(record.tfls_item());    break;
-   case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
-   case Data::kDslsItem:      formattedText.print(record.dsls_item());    break;
-   case Data::kDilsItem:      formattedText.print(record.dils_item());    break;
-   case Data::kDislsItem:     formattedText.print(record.disls_item());   break;
-   case Data::kVolsItem:      formattedText.print(record.vols_item());    break;
-   case Data::kVersionItem:   formattedText.print(record.version_item()); break;
-   case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
-   case Data::kRtflsItem:     formattedText.print(record.rtfls_item());   break;
-   case Data::kPllsItem:      formattedText.print(record.plls_item());    break;
-   default:
-     throw std::runtime_error("Received invalid stream data from CTA Frontend.");
-   // clang-format oon
+      case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
+      case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
+      case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
+      case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
+      case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
+      case Data::kGmrlsItem:     formattedText.print(record.gmrls_item());   break;
+      case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
+      case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
+      case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
+      case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
+      case Data::kLllsItem:      formattedText.print(record.llls_item());    break;
+      case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
+      case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
+      case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
+      case Data::kAmrlsItem:     formattedText.print(record.amrls_item());   break;
+      case Data::kSqItem:        formattedText.print(record.sq_item());      break;
+      case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
+      case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
+      case Data::kTflsItem:      formattedText.print(record.tfls_item());    break;
+      case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
+      case Data::kDslsItem:      formattedText.print(record.dsls_item());    break;
+      case Data::kDilsItem:      formattedText.print(record.dils_item());    break;
+      case Data::kDislsItem:     formattedText.print(record.disls_item());   break;
+      case Data::kVolsItem:      formattedText.print(record.vols_item());    break;
+      case Data::kVersionItem:   formattedText.print(record.version_item()); break;
+      case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
+      case Data::kRtflsItem:     formattedText.print(record.rtfls_item());   break;
+      case Data::kPllsItem:      formattedText.print(record.plls_item());    break;
+      default:
+        throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+      // clang-format oon
    }
 }
 
@@ -334,29 +334,28 @@ void CtaAdminCmd::send() const
        default:                                       break;
             // clang-format on
         }
+      // Allow stream processing to commence
+      isHeaderSent = true;
+      break;
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw XrdSsiPb::UserException(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
-  // Allow stream processing to commence
-  isHeaderSent = true;
-  break;
-  case Response::RSP_ERR_PROTOBUF:
-    throw XrdSsiPb::PbException(response.message_txt());
-  case Response::RSP_ERR_USER:
-    throw XrdSsiPb::UserException(response.message_txt());
-  case Response::RSP_ERR_CTA:
-    throw std::runtime_error(response.message_txt());
-  default:
-    throw XrdSsiPb::PbException("Invalid response type.");
-}
 
-// clang-format on
+  // clang-format on
 
-// If there is a Data/Stream payload, wait until it has been processed before exiting
-stream_future.wait();
+  // If there is a Data/Stream payload, wait until it has been processed before exiting
+  stream_future.wait();
 
-// JSON output is an array of structs, close bracket
-if (isJson()) {
-  std::cout << jsonCloseDelim();
-}
+  // JSON output is an array of structs, close bracket
+  if (isJson()) {
+    std::cout << jsonCloseDelim();
+  }
 }  // namespace cta::admin
 
 void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
@@ -540,6 +539,8 @@ void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
 
  throw std::runtime_error(help.str());
 }
+} // namespace cta::admin
+
 
 }  // namespace XrdSsiPb
 

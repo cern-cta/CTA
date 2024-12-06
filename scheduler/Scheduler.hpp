@@ -115,13 +115,14 @@ public:
    *
    * @return name of the scheduler backend instance name specified by the operator in the cfg file
    */
-  std::string getSchedulerBackendName() { return m_schedulerBackendName; };
+  const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
   /*
    * Set scheduler backend instance name
    */
-  void setSchedulerBackendName(std::string scheddbName) { m_schedulerBackendName = scheddbName; };
-
+  void setSchedulerBackendName(std::string scheddbName) {
+    m_schedulerBackendName = scheddbName;
+  }
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
    */

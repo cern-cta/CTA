@@ -83,11 +83,11 @@ private:
   void processVirtualOrganization_Ls (cta::xrd::Response& response);
   void processVersion                (cta::xrd::Response& response);
   void processRecycleTapeFile_Ls     (cta::xrd::Response& response);
-  // clang-format on
   XrdSsiStream*&         m_stream;                 //!< XRootD SSI stream for responses
   cta::SchedulerDB_t&    m_schedDb;                //!< Reference to CTA SchedulerDB
   const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
   const std::string      m_schedulerBackendName;    //!< CTA Frontend Scheduler Backend Name
+  // clang-format on
 };
 
 }  // namespace cta::frontend
