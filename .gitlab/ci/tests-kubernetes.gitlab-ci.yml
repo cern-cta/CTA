@@ -118,8 +118,10 @@ k8s-test-cta-admin:
       when: manual
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
+      allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
+      allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
 
