@@ -31,7 +31,7 @@ class FrontendService {
 public:
   explicit FrontendService(const std::string& configFilename);
 
-  FrontendService(const FrontendService &) = delete;
+  FrontendService(const FrontendService&) = delete;
 
   ~FrontendService() = default;
 
@@ -83,7 +83,9 @@ public:
   /*!
    * If 0-length files are disallowed, get the tape pools that are exempt from this restriction
    */
-  const std::vector<std::string>& getDisallowZeroLengthFilesExemptions() const { return m_zeroLengthFilesForbidden_voExceptions; };
+  const std::vector<std::string>& getDisallowZeroLengthFilesExemptions() const {
+    return m_zeroLengthFilesForbidden_voExceptions;
+  };
 
   /*!
    * Get the repack buffer URL
@@ -115,31 +117,25 @@ public:
    */
   const std::optional<std::string> getTlsKey() const { return m_TlsKey; }
 
-
   /*
    * Get the TlsCert
    */
   const std::optional<std::string> getTlsCert() const { return m_TlsCert; }
-
 
   /*
    * Get the TlsChain
    */
   const std::optional<std::string> getTlsChain() const { return m_TlsChain; }
 
-
   /*
    * Get the gRPC server port
    */
   const std::optional<std::string> getPort() const { return m_port; }
 
-
   /*
    * Get the number of threads
    */
   const std::optional<int> getThreads() const { return m_threads; }
-
-
 
 private:
   /*!
@@ -155,31 +151,32 @@ private:
   void setNamespaceMap(const std::string& keytab_file);
 
   // Member variables
-  std::unique_ptr<cta::log::Logger>             m_log;                     //!< The logger
-  std::unique_ptr<cta::catalogue::Catalogue>    m_catalogue;               //!< Catalogue of tapes and tape files
-  std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;             //!< Persistent initialiser object for Scheduler DB
-  std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                 //!< Scheduler DB for persistent objects (queues and requests)
-  std::unique_ptr<cta::Scheduler>               m_scheduler;               //!< The scheduler
+  // clang-format off
+  std::unique_ptr<cta::log::Logger>             m_log;                          //!< The logger
+  std::unique_ptr<cta::catalogue::Catalogue>    m_catalogue;                    //!< Catalogue of tapes and tape files
+  std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
+  std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
+  std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
 
-  bool                                          m_acceptRepackRequests;    //!< Flag to allow the processing of repack requests
-  bool                                          m_acceptUserRequests;      //!< Flag to allow the processing of user requests
+  bool                                          m_acceptRepackRequests;         //!< Flag to allow the processing of repack requests
+  bool                                          m_acceptUserRequests;           //!< Flag to allow the processing of user requests
   std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
-  std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
-  uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
-  bool                                          m_zeroLengthFilesForbidden; //!< Flag to explicitly reject the 0-length files by default
+  std::string                                   m_catalogue_conn_string;        //!< The catalogue connection string (without the password)
+  uint64_t                                      m_archiveFileMaxSize;           //!< Maximum allowed file size for archive requests
+  bool                                          m_zeroLengthFilesForbidden;     //!< Flag to explicitly reject the 0-length files by default
   std::vector<std::string>                      m_zeroLengthFilesForbidden_voExceptions; //!< If 0-length files are rejected by default, do not apply check to these VOs
-  std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
-  std::optional<uint64_t>                       m_repackMaxFilesToSelect;  //!< The max number of files to expand during a repack
-  std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests
-  cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
-  // gRPC-frontend specific variables
-  std::optional<std::string>                    m_port;                    //!< The port for the gRPC server
-  std::optional<int>                            m_threads;                 //!< The number of threads used by the gRPC server
-  bool                                          m_Tls;                     //!< Use TLS encryption for gRPC
-  std::optional<std::string>                    m_TlsKey;                  //!< The TLS service key file
-  std::optional<std::string>                    m_TlsCert;                 //!< The TLS service certificate file
-  std::optional<std::string>                    m_TlsChain;                //!< The TLS CA chain file
+  std::optional<std::string>                    m_repackBufferURL;              //!< The repack buffer URL
+  std::optional<uint64_t>                       m_repackMaxFilesToSelect;       //!< The max number of files to expand during a repack
+  std::string                                   m_verificationMountPolicy;      //!< The mount policy for verification requests
+  cta::NamespaceMap_t                           m_namespaceMap;                 //!< Endpoints for namespace queries  // gRPC-frontend specific variables
+  std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
+  std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
+  bool                                          m_Tls;                          //!< Use TLS encryption for gRPC
+  std::optional<std::string>                    m_TlsKey;                       //!< The TLS service key file
+  std::optional<std::string>                    m_TlsCert;                      //!< The TLS service certificate file
+  std::optional<std::string>                    m_TlsChain;                     //!< The TLS CA chain file
+  // clang-format on
 };
 
-} // namespace cta::frontend
+}  // namespace cta::frontend

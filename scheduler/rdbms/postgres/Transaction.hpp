@@ -25,7 +25,7 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  explicit Transaction(rdbms::ConnPool &connPool);
+  explicit Transaction(rdbms::ConnPool& connPool);
 
   /**
    * Prohibit copy construction
@@ -35,14 +35,14 @@ public:
   /**
    * Prohibit copy assignment
    */
-  Transaction &operator=(const Transaction &) = delete;
+  Transaction& operator=(const Transaction&) = delete;
 
   /**
    * Get the transactional connection
    *
    * @return txn connection
    */
-  rdbms::Conn &conn();
+  rdbms::Conn& conn();
 
   /**
    * Commit any pending transactions
@@ -50,7 +50,7 @@ public:
    *
    * @return connection
    */
-  rdbms::Conn &getNonTxnConn();
+  rdbms::Conn& getNonTxnConn();
   /**
    * Take out a global advisory transaction lock
    *
@@ -84,9 +84,8 @@ public:
   ~Transaction() noexcept;
 
 private:
-
   rdbms::Conn m_conn;
   bool m_begin = false;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

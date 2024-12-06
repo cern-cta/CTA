@@ -26,10 +26,9 @@ cta::SchedulerDatabase::~SchedulerDatabase() = default;
 
 SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
   typedef common::dataStructures::RepackInfo::Status Status;
-  for(auto& s: {
-    Status::Complete, Status::Failed, Status::Pending, Status::Running, Status::Starting, Status::ToExpand
-  }) {
-    operator [](s) = 0;
+  for (auto& s :
+       {Status::Complete, Status::Failed, Status::Pending, Status::Running, Status::Starting, Status::ToExpand}) {
+    operator[](s) = 0;
   }
 }
 
@@ -41,4 +40,4 @@ void SchedulerDatabase::DiskSpaceReservationRequest::addRequest(const std::strin
   }
 }
 
-} //namespace cta
+}  //namespace cta

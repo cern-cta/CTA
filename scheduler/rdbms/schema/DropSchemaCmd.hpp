@@ -26,9 +26,8 @@ namespace cta::schedulerdb {
 /**
  * Command-line tool that drops the schema of the scheduler database.
  */
-class DropSchemaCmd: public CmdLineTool {
+class DropSchemaCmd : public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -36,7 +35,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  DropSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  DropSchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   /**
    * Destructor.
@@ -47,10 +46,9 @@ public:
    * Checks if the IS_PRODUCTION bit is set on the CTA_SCHEDULER table
    * @return true if the IS_PRODUCTION bit is set, false otherwise
    */
-  static bool isProductionSet(rdbms::Conn & conn);
+  static bool isProductionSet(rdbms::Conn& conn);
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -58,14 +56,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 
   /**
    * Asks the user to confirm that they want to drop the schema of the scheduler
@@ -74,7 +72,7 @@ private:
    * @param dbLogin The database login.
    * @return True if the user confirmed.
    */
-  bool userConfirmsDropOfSchema(const rdbms::Login &dbLogin);
+  bool userConfirmsDropOfSchema(const rdbms::Login& dbLogin);
 
   /**
    * Unconditionally drops the schema of the scheduler database associated with
@@ -83,35 +81,35 @@ private:
    * @param dbType The database type.
    * @param conn The database connection.
    */
-  void dropSchedulerSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn);
+  void dropSchedulerSchema(const rdbms::Login::DbType& dbType, rdbms::Conn& conn);
 
   /**
    * Drops the database tables with the specified names.
    *
    * @param conn The database connection.
    */
-  void dropDatabaseTables(rdbms::Conn &conn);
+  void dropDatabaseTables(rdbms::Conn& conn);
 
   /**
    * Drops all database views
    *
    * @param conn The database connection.
    */
-  void dropDatabaseViews(rdbms::Conn &conn);
+  void dropDatabaseViews(rdbms::Conn& conn);
 
   /**
    * Drops all database types.
    *
    * @param conn The database connection.
    */
-  void dropDatabaseTypes(rdbms::Conn &conn);
+  void dropDatabaseTypes(rdbms::Conn& conn);
 
   /**
    * Drops the database sequences with the specified names.
    *
    * @param conn The database connection.
    */
-  void dropDatabaseSequences(rdbms::Conn &conn);
+  void dropDatabaseSequences(rdbms::Conn& conn);
 
   /**
    * Checks if we can check the IS_PRODUCTION bit. This allows the backward-compatibility of
@@ -120,8 +118,8 @@ private:
    * @param dbType the type of the Scheduler database
    * @return true if the production bit is set, false otherwise
    */
-  bool isProductionProtectionCheckable(rdbms::Conn & conn, const cta::rdbms::Login::DbType dbType);
+  bool isProductionProtectionCheckable(rdbms::Conn& conn, const cta::rdbms::Login::DbType dbType);
 
-}; // class DropSchemaCmd
+};  // class DropSchemaCmd
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

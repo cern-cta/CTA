@@ -35,9 +35,8 @@ class OcciStmt;
 /**
  * A convenience wrapper around an OCCI result set.
  */
-class OcciRset: public RsetWrapper {
+class OcciRset : public RsetWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -47,7 +46,7 @@ public:
    * @param stmt The OCCI statement.
    * @param rset The OCCI result set.
    */
-  OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset);
+  OcciRset(OcciStmt& stmt, oracle::occi::ResultSet* const rset);
 
   /**
    * Destructor.
@@ -59,7 +58,7 @@ public:
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const override;
+  const std::string& getSql() const override;
 
   /**
    * Attempts to get the next row of the result set.
@@ -75,7 +74,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  bool columnIsNull(const std::string &colName) const override;
+  bool columnIsNull(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
@@ -83,7 +82,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::string columnBlob(const std::string &colName) const override;
+  std::string columnBlob(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a string.
@@ -93,7 +92,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::optional<std::string> columnOptionalString(const std::string &colName) const override;
+  std::optional<std::string> columnOptionalString(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -103,7 +102,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const override;
+  std::optional<uint8_t> columnOptionalUint8(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -113,7 +112,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const override;
+  std::optional<uint16_t> columnOptionalUint16(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -123,7 +122,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const override;
+  std::optional<uint32_t> columnOptionalUint32(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -133,7 +132,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  std::optional<uint64_t> columnOptionalUint64(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a double.
@@ -143,10 +142,9 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<double> columnOptionalDouble(const std::string &colName) const override;
+  std::optional<double> columnOptionalDouble(const std::string& colName) const override;
 
 private:
-
   /**
    * Mutex used to serialize access to this object.
    */
@@ -155,12 +153,12 @@ private:
   /**
    * The OCCI statement.
    */
-  OcciStmt &m_stmt;
+  OcciStmt& m_stmt;
 
   /**
    * The OCCI result set.
    */
-  oracle::occi::ResultSet *m_rset;
+  oracle::occi::ResultSet* m_rset;
 
   /**
    * Map from column name to column index.
@@ -177,6 +175,6 @@ private:
    */
   void populateColNameToIdxMap();
 
-}; // class OcciRset
+};  // class OcciRset
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

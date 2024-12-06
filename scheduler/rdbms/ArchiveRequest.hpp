@@ -30,52 +30,161 @@
 namespace cta::schedulerdb {
 
 CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
-  
+
 class ArchiveRequest {
 public:
-  ArchiveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) { }
+  ArchiveRequest(rdbms::ConnPool& pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) {}
 
   void insert();
   [[noreturn]] void update() const;
   void commit();
 
   // ============================== Job management =============================
-  void addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
-    uint16_t maxReportRetries);
+  /*
+   * Add a job object to the ArchiveRequest object
+   *
+   * @param copyNumber               The number of the file copy representing the added job
+   * @param tapepool                 The tape pool this job belongs to
+   * @param maxRetriesWithinMount    The maximum number of retries within the same mount for this job
+   * @param maxTotalRetries          The maximum number of total retries for this job
+   * @param maxReportRetries         The maximum number of report retries for this job
+   *
+   * @return void
+   */
+  void addJob(uint8_t copyNumber,
+              std::string_view tapepool,
+              uint16_t maxRetriesWithinMount,
+              uint16_t maxTotalRetries,
+              uint16_t maxReportRetries);
 
+  /*
+   * Set the archive file of this archive request to the file object provided
+   *
+   * @param archiveFile  The archive file to link this request to
+   *
+   * @return void
+   */
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
   common::dataStructures::ArchiveFile getArchiveFile() const;
-  
+
+  /*
+   * Set the archive file report URL for this archive request
+   *
+   * @param URL  The report URL provided
+   *
+   * @return void
+   */
   void setArchiveReportURL(std::string_view URL);
+
+  /*
+   * Get the archive file report URL
+   *
+   * @return The archive report URL as a string
+   */
   std::string getArchiveReportURL() const;
-  
+
+  /*
+   * Set the archive file error report URL for this archive request
+   *
+   * @param URL  The error report URL provided
+   *
+   * @return void
+   */
   void setArchiveErrorReportURL(std::string_view URL);
+
+  /*
+   * Get the archive file error report URL
+   *
+   * @return The archive error report URL as a string
+   */
   std::string getArchiveErrorReportURL() const;
 
-  void setRequester(const common::dataStructures::RequesterIdentity &requester);
+  /*
+   * Set this archive request's requestor identity
+   *
+   * @param requester  The RequesterIdentity object
+   *
+   * @return void
+   */
+  void setRequester(const common::dataStructures::RequesterIdentity& requester);
+
+  /*
+   * Get the archive request's requestor identity
+   *
+   * @return The RequesterIdentity object
+   */
   common::dataStructures::RequesterIdentity getRequester() const;
 
+  /*
+   * Set the archive file source URL for this archive request
+   *
+   * @param srcURL  The source URL of the file provided
+   *
+   * @return void
+   */
   void setSrcURL(std::string_view srcURL);
+
+  /*
+   * Get the archive file source URL
+   *
+   * @return The archive file source URL as a string
+   */
   std::string getSrcURL() const;
 
-  void setEntryLog(const common::dataStructures::EntryLog &creationLog);
+  /*
+   * Set the entry log for this archive request
+   *
+   * @param creationLog  The EntryLog data object
+   *
+   * @return void
+   */
+  void setEntryLog(const common::dataStructures::EntryLog& creationLog);
+
+  /*
+   * Get the entry log object
+   *
+   * @return The EntryLog object
+   */
   common::dataStructures::EntryLog getEntryLog() const;
-  
-  void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
+
+  /*
+   * Set the mount policy for this Archive request
+   *
+   * @param mountPolicy  The MountPolicy data object
+   *
+   * @return void
+   */
+  void setMountPolicy(const common::dataStructures::MountPolicy& mountPolicy);
+
+  /*
+   * Get the mount policy object for this archive  request
+   *
+   * @return The MountPolicy object
+   */
   common::dataStructures::MountPolicy getMountPolicy() const;
 
-  /* 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID
+  /* OStoreDB compatibility function returning a archvie request ID as string
+   *
+   * 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID
    * We do not need a unique ID for Archive Request anymore to lookup the backend,
    * using Relational DB, we can use archive file ID and instance name for the lookup.
+   *
+   * @return 'bogus'
    */
   std::string getIdStr() const { return "bogus"; }
-  
+
   struct JobDump {
     uint32_t copyNb;
     std::string tapePool;
     ArchiveJobStatus status;
   };
-  
+
+  /*
+   * Get a job dump from this archive request
+   *
+   * @return list of JobDump objects, currently not implemented
+   *         throwing an exception
+   */
   [[noreturn]] std::list<JobDump> dumpJobs() const;
 
 private:
@@ -98,22 +207,22 @@ private:
   std::unique_ptr<schedulerdb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool &m_connPool;
-  log::LogContext&  m_lc;
+  rdbms::ConnPool& m_connPool;
+  log::LogContext& m_lc;
 
   // ArchiveRequest state
   bool m_isReportDecided = false;
   bool m_isRepack = false;
 
   // ArchiveRequest metadata
-  common::dataStructures::ArchiveFile        m_archiveFile;
-  std::string                                m_archiveReportURL;
-  std::string                                m_archiveErrorReportURL;
-  common::dataStructures::RequesterIdentity  m_requesterIdentity;
-  std::string                                m_srcURL;
-  common::dataStructures::EntryLog           m_entryLog;
-  common::dataStructures::MountPolicy        m_mountPolicy;
-  std::list<Job>                             m_jobs;
+  common::dataStructures::ArchiveFile m_archiveFile;
+  std::string m_archiveReportURL;
+  std::string m_archiveErrorReportURL;
+  common::dataStructures::RequesterIdentity m_requesterIdentity;
+  std::string m_srcURL;
+  common::dataStructures::EntryLog m_entryLog;
+  common::dataStructures::MountPolicy m_mountPolicy;
+  std::list<Job> m_jobs;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

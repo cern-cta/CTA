@@ -21,7 +21,12 @@
 
 namespace cta::schedulerdb::postgres {
 
-rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStatus status, const std::string& tapepool, uint64_t mountId, const std::string& vid, uint64_t limit){
+rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
+                                                ArchiveJobStatus status,
+                                                const std::string& tapepool,
+                                                uint64_t mountId,
+                                                const std::string& vid,
+                                                uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
@@ -49,13 +54,19 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction &txn, ArchiveJobStat
   return stmt.executeQuery();
 }
 
-void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
-  if(jobIDs.empty()) {
+void ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
+                                         ArchiveJobStatus status,
+                                         const std::list<std::string>& jobIDs) {
+  if (jobIDs.empty()) {
     return;
   }
   std::string sqlpart;
-  for (const auto &piece : jobIDs) sqlpart += piece + ",";
-  if (!sqlpart.empty()) { sqlpart.pop_back(); }
+  for (const auto& piece : jobIDs) {
+    sqlpart += piece + ",";
+  }
+  if (!sqlpart.empty()) {
+    sqlpart.pop_back();
+  }
   std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt = txn.conn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
@@ -63,7 +74,9 @@ void ArchiveJobQueueRow::updateJobStatus(Transaction &txn, ArchiveJobStatus stat
   return;
 };
 
-rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std::list<ArchiveJobStatus> statusList, uint64_t limit) {
+rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
+                                                          std::list<ArchiveJobStatus> statusList,
+                                                          uint64_t limit) {
   std::string sql = R"SQL(
     WITH SET_SELECTION AS ( 
       SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE 
@@ -73,7 +86,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
   std::vector<std::string> statusVec;
   std::vector<std::string> placeholderVec;
   size_t j = 1;
-  for (const auto &jstatus : statusList) {
+  for (const auto& jstatus : statusList) {
     statusVec.push_back(to_string(jstatus));
     std::string plch = std::string(":STATUS") + std::to_string(j);
     placeholderVec.push_back(plch);
@@ -103,4 +116,4 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction &txn, std:
   return stmt.executeQuery();
 }
 
-} // namespace cta::schedulerdb::postgres
+}  // namespace cta::schedulerdb::postgres

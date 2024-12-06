@@ -30,9 +30,9 @@ class AdminCmd;
 class AdminCmdStream : public AdminCmd {
 public:
   AdminCmdStream(const frontend::FrontendService& frontendService,
-    const common::dataStructures::SecurityIdentity& clientIdentity,
-    const admin::AdminCmd& adminCmd,
-    XrdSsiStream*& stream);
+                 const common::dataStructures::SecurityIdentity& clientIdentity,
+                 const admin::AdminCmd& adminCmd,
+                 XrdSsiStream*& stream);
 
   ~AdminCmdStream() = default;
 
@@ -59,6 +59,7 @@ private:
    *
    * @param[out]    response    CTA Admin Command response protocol buffer. This returns the status of the request.
    */
+  // clang-format off
   void processAdmin_Ls               (cta::xrd::Response& response);
   void processArchiveRoute_Ls        (cta::xrd::Response& response);
   void processDrive_Ls               (cta::xrd::Response& response);
@@ -82,10 +83,10 @@ private:
   void processVirtualOrganization_Ls (cta::xrd::Response& response);
   void processVersion                (cta::xrd::Response& response);
   void processRecycleTapeFile_Ls     (cta::xrd::Response& response);
-
-  XrdSsiStream*&         m_stream;                 //!< XRootD SSI stream for responses
-  cta::SchedulerDB_t&    m_schedDb;                //!< Reference to CTA SchedulerDB
-  const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
+  // clang-format on
+  XrdSsiStream*& m_stream;                  //!< XRootD SSI stream for responses
+  cta::SchedulerDB_t& m_schedDb;            //!< Reference to CTA SchedulerDB
+  const std::string m_catalogueConnString;  //!< CTA Catalogue DB connection string
 };
 
-} // namespace cta::frontend
+}  // namespace cta::frontend

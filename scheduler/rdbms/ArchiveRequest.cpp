@@ -28,7 +28,7 @@ namespace cta::schedulerdb {
 void ArchiveRequest::insert() {
   m_txn.reset(new schedulerdb::Transaction(m_connPool));
 
-  for(const auto &aj : m_jobs) {
+  for (const auto& aj : m_jobs) {
     cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
 
     ajr.tapePool = aj.tapepool;
@@ -36,9 +36,9 @@ void ArchiveRequest::insert() {
     ajr.priority = m_mountPolicy.archivePriority;
     ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
     ajr.archiveFile = m_archiveFile;
-    ajr.archiveFile.creationTime = m_entryLog.time; // Time the job was received by the CTA Frontend
+    ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
     ajr.copyNb = aj.copyNb;
-    ajr.startTime = time(nullptr); // Time the job was queued in the DB
+    ajr.startTime = time(nullptr);  // Time the job was queued in the DB
     ajr.archiveReportUrl = m_archiveReportURL;
     ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
     ajr.requesterName = m_requesterIdentity.name;
@@ -55,7 +55,7 @@ void ArchiveRequest::insert() {
 
     try {
       ajr.insert(*m_txn);
-    } catch(exception::Exception &ex) {
+    } catch (exception::Exception& ex) {
       params.add("exeptionMessage", ex.getMessageValue());
       m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
       throw;
@@ -72,7 +72,11 @@ void ArchiveRequest::commit() {
   m_txn.reset();
 }
 
-void ArchiveRequest::addJob(uint8_t copyNumber, std::string_view tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
+void ArchiveRequest::addJob(uint8_t copyNumber,
+                            std::string_view tapepool,
+                            uint16_t maxRetriesWithinMount,
+                            uint16_t maxTotalRetries,
+                            uint16_t maxReportRetries) {
   Job newJob;
   newJob.copyNb = copyNumber;
   newJob.status = ArchiveJobStatus::AJS_ToTransferForUser;
@@ -147,4 +151,4 @@ common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() const {
   throw std::runtime_error("dumpJobs not implemented.");
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

@@ -26,71 +26,68 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *const *const argv) {
+CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    { "comment",  required_argument, nullptr, 'm' },
-    { "help",           no_argument, nullptr, 'h' },
-    { "username", required_argument, nullptr, 'u' },
-    { nullptr,                    0, nullptr, 0 }
+    {"comment",  required_argument, nullptr, 'm'},
+    {"help",     no_argument,       nullptr, 'h'},
+    {"username", required_argument, nullptr, 'u'},
+    {nullptr,    0,                 nullptr, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize an option character
   opterr = 0;
 
-  for(int opt = 0; (opt = getopt_long(argc, argv, ":m:hu:", longopts, nullptr)) != -1; ) {
-    switch(opt) {
-    case 'm':
-      comment = optarg ? optarg : "";
-      break;
-    case 'h':
-      help = true;
-      break;
-    case 'u':
-      adminUsername = optarg ? optarg : "";
-      break;
-    case ':': // Missing parameter
+  for (int opt = 0; (opt = getopt_long(argc, argv, ":m:hu:", longopts, nullptr)) != -1;) {
+    switch (opt) {
+      case 'm':
+        comment = optarg ? optarg : "";
+        break;
+      case 'h':
+        help = true;
+        break;
+      case 'u':
+        adminUsername = optarg ? optarg : "";
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
+        ex.getMessage() << "The -" << (char) opt << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << (char) optopt;
         }
         throw ex;
       }
-    default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << opt;
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << opt;
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }  // while getopt_long()
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if (help) {
     return;
   }
 
-  if(adminUsername.empty()) {
+  if (adminUsername.empty()) {
     throw exception::CommandLineNotParsed("The username option must be specified with a non-empty string");
   }
 
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw exception::CommandLineNotParsed("The comment option must be specified with a non-empty string");
   }
 
   // Calculate the number of non-option ARGV-elements
   // Check the number of arguments
-  if(const int nbArgs = argc - optind; nbArgs != 1) {
+  if (const int nbArgs = argc - optind; nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
@@ -102,22 +99,21 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void CreateAdminUserCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "    cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]" << std::endl <<
-    "Where:" << std::endl <<
-    "    databaseConnectionFile" << std::endl <<
-    "        The path to the file containing the connection details of the CTA" << std::endl <<
-    "        catalogue database" << std::endl <<
-    "Options:" << std::endl <<
-    "    -u,--username <username>" << std::endl <<
-    "        The name of the admin user to be created" << std::endl <<
-    "    -m,--comment <comment>" << std::endl <<
-    "        Comment to describe the creation of the admin user" << std::endl <<
-    "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl <<
-    "" << std::endl;
+void CreateAdminUserCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "    cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]" << std::endl
+     << "Where:" << std::endl
+     << "    databaseConnectionFile" << std::endl
+     << "        The path to the file containing the connection details of the CTA" << std::endl
+     << "        catalogue database" << std::endl
+     << "Options:" << std::endl
+     << "    -u,--username <username>" << std::endl
+     << "        The name of the admin user to be created" << std::endl
+     << "    -m,--comment <comment>" << std::endl
+     << "        Comment to describe the creation of the admin user" << std::endl
+     << "    -h,--help" << std::endl
+     << "        Prints this usage message" << std::endl
+     << "" << std::endl;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue
