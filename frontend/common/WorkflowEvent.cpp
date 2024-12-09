@@ -487,19 +487,17 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   request.diskFileId        = m_event.file().disk_file_id().empty() ?
                                 std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
   request.diskInstance      = m_cliIdentity.username;
-  // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
-  // must be converted to a valid uint64_t
-  // First check if the first-class citizen attribute is set (for the dCache/gRPC frontend it should be)
-  // If not, fall back to the xattrs
-  auto archiveFileIdInt = m_event.file().archive_file_id();
-  // not set or invalid (default for numerical unset protobuf fields is 0)
-  if (archiveFileIdInt) {
+  // If the archive_file_id atrribute is set, it takes priority over the extended attributes
+  const auto& archiveFileIdInt = m_event.file().archive_file_id();
+  if (archiveFileIdInt != 0) {
     request.archiveFileID = archiveFileIdInt;
   }
+  // not set or invalid (default for numerical unset protobuf fields is 0), fall back to the old xattr format
   else {
+    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
+    // must be converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
     if(m_event.file().xattr().end() == archiveFileIdItor) {
-      // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
         throw exception::PbException(std::string(__FUNCTION__) +

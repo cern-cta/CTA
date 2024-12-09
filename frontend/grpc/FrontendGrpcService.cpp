@@ -15,7 +15,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "FrontendGRpcSvc.h"
+#include "FrontendGrpcService.h"
 
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
@@ -106,16 +106,6 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
-  if (!request->notification().file().owner().uid()) {
-    m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
-  }
-
-  if (!request->notification().file().owner().gid()) {
-    m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
-  }
-
   // done with validation, now do the workflow processing
   return GenericRequest(context, request, response);
 }
@@ -140,16 +130,6 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   if (request->notification().file().archive_file_id() == 0) {
     m_lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
-  }
-
-  if (!request->notification().file().owner().uid()) {
-    m_lc.log(cta::log::WARNING, "File's owner uid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
-  }
-
-  if (!request->notification().file().owner().gid()) {
-    m_lc.log(cta::log::WARNING, "File's owner gid can't be zero");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
   }
 
   auto instance = request->notification().wf().instance().name();
