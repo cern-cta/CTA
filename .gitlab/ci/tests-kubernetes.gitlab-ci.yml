@@ -9,6 +9,8 @@
       optional: true
     - job: build-ctageneric-from-repos
       optional: true
+    - job: modify-catalogue-version
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -55,12 +57,8 @@
       fi
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - |
-      if [ $PIPELINE_TYPE == "EOSREG_CTATAG" ]; then
-        echo "Checking out CatalogueSchemaVersion to ${P_TYPE_EOSREG_CTA_TAG} branch"
-        git checkout $P_TYPE_EOSREG_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
-        CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F')' '{ print $1}')
-
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version $CATALOGUE_VERSION.0"
+      if [ -n "${CATALOGUE_VERSION}" ]; then
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi
     - |
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
