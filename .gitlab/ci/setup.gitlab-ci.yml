@@ -56,18 +56,3 @@ modify-versionlock:
       - cta.spec.in
   when: on_success
 
-
-modify-catalogue-version:
-  stage: setup
-  rules:
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
-  script:
-    - git fetch
-    - echo "Checking out CatalogueSchemaVersion to ${CTA_TAG} branch"
-    - git checkout $CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
-    - CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
-    - echo "CATALOGUE_VERSION=${CATALOGUE_VERSION}" >> CATALOGUE_VERSION.env
-  artifacts:
-    reports:
-      dotenv: CATALOGUE_VERSION.env
-  when: on_success
