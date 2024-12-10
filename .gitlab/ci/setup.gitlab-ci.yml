@@ -5,6 +5,7 @@ modify-versionlock:
     - if: $PIPELINE_TYPE == "EOREG_CTAMAIN"
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
+    - git fetch
     - versionlock_path_main="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/"
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
@@ -61,6 +62,7 @@ modify-catalogue-version:
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
+    - git fetch
     - echo "Checking out CatalogueSchemaVersion to ${P_TYPE_EOSREG_CTA_TAG} branch"
     - git checkout $P_TYPE_EOSREG_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
     - CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
