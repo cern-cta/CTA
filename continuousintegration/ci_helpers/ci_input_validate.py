@@ -49,11 +49,10 @@ def run_cmd(cmd):
                                   stderr = subprocess.PIPE,
                                   text = True,
                                   check = True,
-                                  timeout = 10)
+                                  timeout = 120)
     except subprocess.TimeoutExpired as e:
         sys.exit(f"ERROR: Timeout reached for command: {cmd}")
     except subprocess.CalledProcessError as e:
-        print(cmd_call.stdout.strip())
         sys.exit(f"ERROR: Command failed: {e.stderr}")
 
 
