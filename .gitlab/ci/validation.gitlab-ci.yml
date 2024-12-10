@@ -1,7 +1,7 @@
 pipeline-variable-check:
   stage: validation
   rules: # To be removed when cta#962 is merged into main
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: $PIPELINE_TYPE != "COMMIT"
   script:
     # Transform input to sciprt as JSON to simplify life
     - input_json="{"

@@ -28,7 +28,7 @@ variables:
   BASH_LOGGING_ENABLED: 1 # For the k8s test scripts
 
   # Custom Pipelines
-  PIPELINE_TYPE: "DEFAULT"
+  PIPELINE_TYPE: "COMMIT"
   XRD_TAG: ""
   EOS_TAG: ""
   CTA_TAG: ""
