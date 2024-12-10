@@ -26,7 +26,7 @@ import json
 
 # Dictionary containing the supported config of the different variables.
 SUPPORTED = {
-    "PIPELINE_TYPE": ["DEFAULT",
+    "PIPELINE_TYPE": ["COMMIT",
                       "EOSREG_CTAMAIN",
                       "EOSREG_CTATAG"],
     "XRD_TAG_REGEX": re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$"),
