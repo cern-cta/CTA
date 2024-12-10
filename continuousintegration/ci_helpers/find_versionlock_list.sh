@@ -48,7 +48,7 @@ done
 
 working_branch=$(git branch --show-current)
 # Checkout target branch.
-git checkout tags/"${tag}"
+git checkout tags/"${tag}" --quiet
 
 # Should match for version >= 5.11.1.0-1
 if [ -d "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/" ]; then
@@ -61,4 +61,4 @@ else
 fi
 
 # Go back to commit branch.
-git checkout "${CI_COMMIT_SHORT_SHA}"
+git checkout "${CI_COMMIT_SHORT_SHA}" --quiet
