@@ -33,7 +33,7 @@ SUPPORTED = {
     "PIPELINE_TYPE": ["DEFAULT",
                       "EOSREG_CTAMAIN",
                       "EOSREG_CTATAG"],
-    "XRD_TAG_REGEX": re.compile("^\d+:\d+\.\d+\.\d+-\d+$"),
+    "XRD_TAG_REGEX": re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$"),
     "EOS_TAG_REGEX": re.compile("^\d+\.\d+\.\d+$"),
     "CTA_TAG_REGEX": re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$")
     # "SCHED_TYPE": ["objecstore",
@@ -155,8 +155,6 @@ def validate_eosreg_ctatag(ci_input_vars):
                       ["cta", "https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/"],
                       "cta-frontend",
                       ci_input_vars["P_TYPE_EOSREG_CTA_TAG"][1:])
-    print("CTA validation passed")
-
 
     # Check that the XRootD version specified in the variables matches the
     # XRootD version that the RPMs where compiled against.
@@ -165,6 +163,7 @@ def validate_eosreg_ctatag(ci_input_vars):
     # `Requires: xrootd >= %{some_ver}` instead of `Requires: xrootd = %{some_ver}`
     # This way we could avoid this conflict. For now fail the pipeline if the versions
     # do not match.
+    print("Checking CTA and EOS were compiled against the same XRootD version...")
     run_cmd(f"git fetch")
     cta_xrd_ver =run_cmd(f"git checkout tags/{ci_input_vars['P_TYPE_EOSREG_CTA_TAG']} -- cta.spec.in && "
                          "grep 'xrootdVersion 1:5' cta.spec.in | awk '{print $3}' | "
@@ -172,7 +171,7 @@ def validate_eosreg_ctatag(ci_input_vars):
 
     if cta_xrd_ver != ci_input_vars["P_TYPE_EOSREG_XRD_TAG"]:
         sys.exit(f"ERROR: CTA was compiled for {cta_xrd_ver} while EOS requires {ci_input_vars['P_TYPE_EOSREG_XRD_TAG']}")
-
+    print("CTA validation passed")
 
 def main():
     """
