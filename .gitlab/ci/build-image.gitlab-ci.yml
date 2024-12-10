@@ -53,7 +53,7 @@ build-ctageneric-from-repos:
       optional: true
       artifacts: true
   rules:
-    - if: $PIPELINE_TYPE != "EOS_CTATAG"
+    - if: $PIPELINE_TYPE != "EOSREG_CTATAG"
       when: never
     - !reference [.build-ctageneric, rules]
   script:
