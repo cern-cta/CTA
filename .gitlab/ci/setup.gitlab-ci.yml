@@ -10,8 +10,10 @@ modify-versionlock:
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
       if [ -n "${P_TYPE_EOSREG_CTA_TAG}" ]; then
+        echo "In condition"
         versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${P_TYPE_EOSREG_CTA_TAG}")
       fi
+    - echo "Version lock file ${versionlock_file}"
     - git checkout ${P_TYPE_EOSREG_CTA_TAG} -- "${versionlock_file}"
     - |
       echo "Extracting the currently version locked EOS version from the file..."
