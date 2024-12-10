@@ -55,7 +55,7 @@
       else
         IMAGE_TAG=$CTA_BUILD_ID
       fi
-    # Set up the additional arguments array to pass to the run_systemtest.sh script
+    # If we are testing from a CTA tag, get the Catalogue version for that tag
     - |
       if [ -n "${CTA_TAG}" ]; then
         git fetch
@@ -63,6 +63,7 @@
         CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi
+    # Set up the additional arguments array to pass to the run_systemtest.sh script
     - |
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
         extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")

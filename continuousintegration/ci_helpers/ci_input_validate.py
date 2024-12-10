@@ -18,10 +18,6 @@
 #               Intergovernmental Organization or submit itself to any
 #               jurisdiction.
 
-"""
-
-"""
-
 import re
 import subprocess
 import sys
@@ -41,7 +37,14 @@ SUPPORTED = {
     #  ...
 }
 
+
 def run_cmd(cmd):
+    """
+    Run a command in console. The function checks that the commands succeds.
+    If the command fails the error will be printed and the script will exit.
+    :param cmd: String representing the command to execute.
+    :return: Stripped stdout of the command execution.
+    """
     try:
         cmd_call = subprocess.run(cmd,
                                   shell = True,
@@ -55,17 +58,20 @@ def run_cmd(cmd):
     except subprocess.CalledProcessError as e:
         sys.exit(f"ERROR: Command failed: {e.stderr}")
 
-
     return cmd_call.stdout.strip()
 
-def help():
-    """
-    """
-    pass
 
 def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_repo, rpm_name, rpm_ver):
     """"
-
+    Internal function to check that the version of an RPM we are looking for is
+    avaiable in the specified repo. It checks the needed variables are set and
+    that the version matches a regex. If the command fails the program will exit.
+    :param ci_input_vars: CI input variables dictionary received by the program.
+    :param ci_var_tag_name: the key that contains the desired tag in `ci_input_vars`
+    :param version_regex: the key that contains the desired tag in `ci_input_vars`
+    :param remote_rpm_repo: list containing a representative name of the repository and the URL to the repository.
+    :param rpm_name: RPM name to look for
+    :param rpm_ver: RPM version to look for
     """
     # Check tag is supported
     if ci_var_tag_name not in ci_input_vars.keys():
@@ -75,7 +81,6 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
     if not SUPPORTED[version_regex].match(ci_input_vars[ci_var_tag_name]):
         sys.exit(f"ERROR: specified XRootD tag {ci_input_vars[ci_var_tag_name]} "
               f"does not match regex {SUPPORTED['XRD_TAG_REGEX'].pattern}")
-
 
     # Check tag is available
     print(run_cmd(
@@ -92,16 +97,23 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
         sys.exit(f"ERROR: Could not find {rpm_name} version ")
 
 
-    
 def validate_default(ci_input_vars):
     """
+    Validation for the default pipeline type.
+    To be implemented by cta#962
     """
     pass
 
 
 def validate_eosreg_ctamain(ci_input_vars):
     """
-
+    Validation for the pipeline type `EOSREG_CTAMAIN`. Checks the XRootD and EOS
+    RPM packages.
+      - XRootD is fetched from the stable repo.
+      - EOS version should be available in the testing repo as it comes from
+        their latest tag.
+   
+    :param ci_input_vars: CI input variables dictionary received by the program.
     """
     print("Validating XRootD...")
     _check_remote_rpm(ci_input_vars,
@@ -126,7 +138,15 @@ def validate_eosreg_ctamain(ci_input_vars):
 
 def validate_eosreg_ctatag(ci_input_vars):
     """
+    Validation for the pipeline type `EOSREG_CTATAG`. Checks the XRootD, EOS
+    and CTA RPM packages.
+      - XRootD is fetched from the stable repo.
+      - EOS version should be available in the testing repo as it comes from
+        their latest tag.
+      - CTA should be available in the testing public repository as the latest
+        available version in there should match the latest version in production.
 
+    :param ci_input_vars: CI input variables dictionary received by the program.
     """
     print("Validating XRootD...")
     _check_remote_rpm(ci_input_vars,
@@ -173,16 +193,17 @@ def validate_eosreg_ctatag(ci_input_vars):
         sys.exit(f"ERROR: CTA was compiled for {cta_xrd_ver} while EOS requires {ci_input_vars['XRD_TAG']}")
     print("CTA validation passed")
 
+
 def main():
     """
-    Execute the input validation logic
-
-    $1: env variable containing the input dictionary
+    Validate the varaibles received by the GitLab CI pipeline
+    $1: env variable containing the input as a json string
     """
     # Check specified pipeline type is supported
     if sys.argv[1] not in os.environ.keys():
         sys.exit("ERROR: json input variable not found in environment")
 
+    # Convert the input json string to a dictionary
     ci_input_vars = json.loads(os.environ[sys.argv[1]])
 
     if ci_input_vars["PIPELINE_TYPE"] not in SUPPORTED["PIPELINE_TYPE"]:
