@@ -139,21 +139,12 @@ catalogue-schema-version-check:
       allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
-    # Any merge requests into main
-    #- if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-    #  when: on_success
-    #  allow_failure: false
-    #  variables:
-    #    CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
     # For all other scenarios, manual run only
     - when: on_success
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   image: $IMAGE_EL9
-  before_script:
-    - yum install -y git
-    - git submodule update --init --recursive
   script:
     - yum install -y git
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .

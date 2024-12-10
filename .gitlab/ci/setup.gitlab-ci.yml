@@ -2,17 +2,17 @@
 modify-versionlock:
   stage: setup
   rules:
-    - if: $PIPELINE_TYPE == "EOREG_CTAMAIN"
+    - if: $PIPELINE_TYPE == "EOSREG_CTAMAIN"
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
     - git fetch
     - versionlock_path_main="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/"
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
-      if [ -n "${P_TYPE_EOSREG_CTA_TAG}" ]; then
-        versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${P_TYPE_EOSREG_CTA_TAG}")
+      if [ -n "${CTA_TAG}" ]; then
+        versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CTA_TAG}")
       fi
-    - git checkout ${P_TYPE_EOSREG_CTA_TAG} -- "${versionlock_file}"
+    - git checkout ${CTA_TAG} -- "${versionlock_file}"
     - |
       echo "Extracting the currently version locked EOS version from the file..."
       current_eos_version=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "${versionlock_file}" | awk -F '-' '{print $3}' | head -1)
@@ -21,26 +21,26 @@ modify-versionlock:
         echo "Version not found! Exiting.";
         exit 1;
       fi
-      echo "Replacing $current_eos_version with $P_TYPE_EOSREG_EOS_TAG in the file..."
-      sed -i "s/$current_eos_version/$P_TYPE_EOSREG_EOS_TAG/g" ${versionlock_file}
+      echo "Replacing $current_eos_version with $EOS_TAG in the file..."
+      sed -i "s/$current_eos_version/$EOS_TAG/g" ${versionlock_file}
       # Check if XROOTD_VERSION is provided and not just whitespace
-      trimmed_xrootd_version=$(echo "$P_TYPE_EOSREG_XRD_TAG" | xargs)
-      # Check if P_TYPE_EOSREG_XRD_TAG is provided
+      trimmed_xrootd_version=$(echo "$XRD_TAG" | xargs)
+      # Check if XRD_TAG is provided
       if [ -n "$trimmed_xrootd_version" ]; then
         echo "Extracting the currently version locked XRootD version from the file..."
         current_xrootd_version=$(grep -o 'xrootd-server-\([0-9]:\)*[0-9]\+\.[0-9]\+\.[0-9]\+' "${versionlock_file}" | awk -F '-' '{print $3}' | head -1)
         echo "Current XRootD version found: $current_xrootd_version"
 
         if [ -n "$current_xrootd_version" ]; then
-          echo "Replacing $current_xrootd_version with $P_TYPE_EOSREG_XRD_TAG in the file..."
-          sed -i "s/$current_xrootd_version/$P_TYPE_EOSREG_XRD_TAG/g" "${versionlock_file}"
+          echo "Replacing $current_xrootd_version with $XRD_TAG in the file..."
+          sed -i "s/$current_xrootd_version/$XRD_TAG/g" "${versionlock_file}"
         else
           echo "XRootD version not found in the file."
         fi
         # Replace xrootd version in spec file
-        sed -i "s/^%define xrootdVersion $current_xrootd_version/%define xrootdVersion $P_TYPE_EOSREG_XRD_TAG/" cta.spec.in
+        sed -i "s/^%define xrootdVersion $current_xrootd_version/%define xrootdVersion $XRD_TAG/" cta.spec.in
       else
-        echo "P_TYPE_EOSREG_XRD_TAG is not provided. Skipping XRootD version replacement."
+        echo "XRD_TAG is not provided. Skipping XRootD version replacement."
       fi
 
     - echo "File content after replacement:"
@@ -63,8 +63,8 @@ modify-catalogue-version:
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
     - git fetch
-    - echo "Checking out CatalogueSchemaVersion to ${P_TYPE_EOSREG_CTA_TAG} branch"
-    - git checkout $P_TYPE_EOSREG_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
+    - echo "Checking out CatalogueSchemaVersion to ${CTA_TAG} branch"
+    - git checkout $CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
     - CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
     - echo "CATALOGUE_VERSION=${CATALOGUE_VERSION}" >> CATALOGUE_VERSION.env
   artifacts:
