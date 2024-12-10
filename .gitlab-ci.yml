@@ -36,6 +36,8 @@ variables:
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
+
+  # Git CI Configuration
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
