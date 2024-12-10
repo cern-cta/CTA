@@ -30,6 +30,20 @@
 namespace cta::xrd {
 
 /*!
+ * Converts list of drive configuration entries of all drives into searchable structure
+ */
+std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
+convertToMap(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigs) {
+  std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>> driveConfigMap;
+
+  for (const auto& config : driveConfigs) {
+    driveConfigMap[config.tapeDriveName].emplace_back(config);
+  }
+
+  return driveConfigMap;
+}
+
+/*!
  * Stream object which implements "tapepool ls" command
  */
 class DriveLsStream : public XrdCtaStream {
@@ -56,13 +70,15 @@ private:
    * Fill the buffer
    */
   int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
-
+  bool listAllDrives = false;
+  std::optional<std::string> m_schedulerBackendName;
   cta::log::LogContext m_lc;
 
   static constexpr const char* const LOG_SUFFIX = "DriveLsStream";  //!< Identifier for log messages
 
   std::list<common::dataStructures::TapeDrive> m_tapeDrives;
-  std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> m_tapeDrivesConfigs;
+  std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
+    m_tapeDriveNameConfigMap;
 };
 
 DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
@@ -72,8 +88,18 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
     : XrdCtaStream(catalogue, scheduler),
       m_lc(lc),
       m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),
-      m_tapeDrivesConfigs(m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+      m_tapeDriveNameConfigMap(convertToMap(m_catalogue.DriveConfig()->getTapeDriveConfigs())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
+
+  // Check if --all is specified
+  listAllDrives = requestMsg.has_flag(cta::admin::OptionBoolean::ALL);
+  m_schedulerBackendName = scheduler.getSchedulerBackendName();
+  if (!m_schedulerBackendName) {
+    XrdSsiPb::Log::Msg(
+      XrdSsiPb::Log::ERROR,
+      LOG_SUFFIX,
+      "DriveLsStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
+  }
 
   auto driveRegexOpt = requestMsg.getOptional(cta::admin::OptionString::DRIVE);
 
@@ -104,11 +130,37 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
     Data record;
 
     const auto dr = m_tapeDrives.front();
+    const auto& driveConfigs = m_tapeDriveNameConfigMap[dr.driveName];
+
+    // Extract the SchedulerBackendName configuration if it exists
+    std::string driveSchedulerBackendName = "unknown";
+    auto it =
+      std::find_if(driveConfigs.begin(),
+                   driveConfigs.end(),
+                   [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
+                     if (config.keyName == "SchedulerBackendName") {
+                       driveSchedulerBackendName = config.value;
+                       return true;
+                     }
+                     return false;
+                   });
+
+    if (it == driveConfigs.end()) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR,
+                         LOG_SUFFIX,
+                         "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive" +
+                           dr.driveName);
+    }
+
+    if (!listAllDrives && m_schedulerBackendName.value() != driveSchedulerBackendName) {
+      continue;
+    }
     auto dr_item = record.mutable_drls_item();
 
     dr_item->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);
+    dr_item->set_scheduler_backend_name(driveSchedulerBackendName);
     dr_item->set_host(dr.host);
     dr_item->set_logical_library_disabled(dr.logicalLibraryDisabled ? dr.logicalLibraryDisabled.value() : false);
     dr_item->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
@@ -135,24 +187,23 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
       dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);
     }
     dr_item->set_session_elapsed_time(dr.sessionElapsedTime ? dr.sessionElapsedTime.value() : 0);
+
     auto driveConfig = dr_item->mutable_drive_config();
 
-    for (const auto& storedDriveConfig : m_tapeDrivesConfigs) {
-      if (storedDriveConfig.tapeDriveName != dr.driveName) {
-        continue;
-      }
+    for (const auto& config : driveConfigs) {
       auto driveConfigItemProto = driveConfig->Add();
-      driveConfigItemProto->set_category(storedDriveConfig.category);
-      driveConfigItemProto->set_key(storedDriveConfig.keyName);
-      driveConfigItemProto->set_value(storedDriveConfig.value);
-      driveConfigItemProto->set_source(storedDriveConfig.source);
+      driveConfigItemProto->set_key(config.keyName);
+      driveConfigItemProto->set_category(config.category);
+      driveConfigItemProto->set_value(config.value);
+      driveConfigItemProto->set_source(config.source);
     }
+
     // set the time spent in the current state
     uint64_t drive_time = time(nullptr);
 
     switch (dr.driveStatus) {
       using cta::common::dataStructures::DriveStatus;
-      // clang-format off
+        // clang-format off
       case DriveStatus::Probing:           drive_time -= dr.probeStartTime.value();    break;
       case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime.value(); break;
       case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime.value(); break;
@@ -165,7 +216,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
       case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime.value(); break;
       case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime.value();      break;
       case DriveStatus::Unknown:                                                       break;
-      // clang-format on
+        // clang-format on
     }
     dr_item->set_drive_status_since(drive_time);
 
