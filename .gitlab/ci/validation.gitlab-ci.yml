@@ -1,14 +1,6 @@
-# If the CTA tagged branch contains a locked EOS version that is different than
-# the one in the main brach, it is possible that some of the system tests fail
-# due to a change in an interface. This failure is expected, but does not have
-# to be always the case, as an upgrade of the locked EOS version might happen
-# for performance issues and not a interface change.
-#
-# The pupose of this job is to alert the person reviewing why a triggered pipeline
-# that the version locked EOS versions differ.
 pipeline-variable-check:
   stage: validation
-  rules:
+  rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "DEFAULT"
   script:
     # Transform input to sciprt as JSON to simplify life
@@ -23,7 +15,15 @@ pipeline-variable-check:
     # input argument might be too long.
     - export input_json
     - python3 ./continuousintegration/ci_helpers/ci_input_validate.py input_json
-
+   
+# If the CTA tagged branch contains a locked EOS version that is different than
+# the one in the main brach, it is possible that some of the system tests fail
+# due to a change in an interface. This failure is expected, but does not have
+# to be always the case, as an upgrade of the locked EOS version might happen
+# for performance issues and not a interface change.
+#
+# The pupose of this job is to alert the person reviewing why a triggered pipeline
+# that the version locked EOS versions differ.
 check-versionlock-diff:
   stage: validation
   allow_failure: true
