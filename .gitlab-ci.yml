@@ -16,17 +16,18 @@ variables:
   # Will be finalized with https://gitlab.cern.ch/cta/CTA/-/issues/962
   # Types:
   #   - DEFAULT
-  #   - EOSREG_CTAMAIN: used to test new tagged EOS versions against latest changes in main.
-  #   - EOSREG_CTATAG: used to test EOS regressions. It will confifure the
-  #              pipeline to run a specific version of EOS/XRD and,
-  #              optionally, a specific tagged CTA release that must
-  #              be available in the public testing repo.
+  #   - EOSREG_CTAMAIN
+  #   - EOSREG_CTATAG
   PIPELINE_TYPE: "DEFAULT"
-  P_TYPE_EOSREG_XRD_TAG: ""
-  P_TYPE_EOSREG_EOS_TAG: ""
-  P_TYPE_EOSREG_CTA_TAG: ""
+
+  #
+  # -----
+  XRD_TAG: ""
+  EOS_TAG: ""
+  CTA_TAG: ""
   # -----
 
+  CATALOGUE_VERSION: ""
 
   # CTA related
   # -----
