@@ -1,3 +1,53 @@
+## v5.11.2.0-1
+
+### Features
+
+- cta/#943 - Resolve "Handling of 0-length files on CTA dev side"
+- cta/#950 - Introduce build_deploy.sh --upgrade and refactor of underlying workflow in build_deploy
+- cta/#968 - Add support to build_deploy.sh to handle --upgrade and --skip-image-reload simultaneously
+- cta/#977 - Resolve "Add support for separate repack scheduler DB to `cta-admin dr ls` output"
+
+### Bug Fixes
+
+- cta/#311 - Resolve "Remove wrong 'job owned after destruction' INFO message after request is requeued"
+- cta/#776 - Fix gfal2 coredumping on eviction step using http due to `double free or corruption`
+- cta/#914 - Resolve "Log when a file cannot be deleted from the Catalogue"
+- cta/#947 - Resolve "Handle new protobuf fields in all workflow events"
+- cta/#952 - Fix docs path in GitLab issue template
+- cta/#957 - Resolve "Clear outdated log parameters when starting a new tape session"
+- cta/#965 - Fix pipeline triggering on no changes when branch created through web UI
+- cta/#966 - Fix liquibase-test failing due to CTA not supporting previous catalogue version
+- cta/#969 - Fix select() always timing out in rmc_serv
+- cta/#970 - Deleted duplicated shift from build_deploy.sh
+- cta/#971 - Ensure git fetch has proper depth for submodules
+- cta/#974 - Fix incorrect scheduler type in build scripts and fix bug with incorrect postgres connection URLs
+- cta/#976 - Add install of 'which' to ensure gdb-add-index functions correctly on latest alma9 release
+- cta/#978 - Resolve "Add log param `mountAttempted` to DataTransferSession"
+- cta/#983 - Fix bugs in build_deploy.sh script for postgres scheduler workflows and cached cmake variables
+- cta/#987 - Fix incorrect localhost for rmcd
+
+### Maintenance
+
+- cta/#729 - Resolve "Remove external dependecy on cpp-check CI test"
+- cta/#932 - Move latest ReleaseNotes.md entries to CHANGELOG.md and remove ReleaseNotes.md
+- cta/#937 - Increase default resource limits on Helm setup
+- cta/#945 - Adding template for CTA log parameter issues
+- cta/#948 - Update delete_instance.sh so that it does not rely on a central log mount
+- cta/#954 - Further clean-up and performance improvements to the Helm setup 
+- cta/#956 - Resolve "Add missing documentation on `archiveroutetype`"
+- cta/#961 - Replace usage of strlen in CmdLineTool.cpp
+- cta/#963 - Replace leftover yum-plugin-versionlock with python3-dnf-plugin-versionlock
+- cta/#964 - Improve CI pipeline performance by relying on shallow clones
+- cta/#972 - Make the cmake build type explicit in the CI
+- cta/#973 - List clang-format issues in job output and remove tag fetching
+- cta/#980 - Fix failing valgrind tests due to EAGAIN error
+- cta/#982 - Fix some low-hanging fruit SonarCloud issues
+- cta/#984 - Add CI test to ensure creation timestamps and modification timestamps are the same through tape workflow
+- cta/#992 - clang format changes for MR 719 (cta-admin drive ls)
+- cta/#993 - Resolve "Adjusting clang format configuration to prevent grouping all parameters into a single line for long lists"
+- cta/#994 - Fix initialization of hp in rmc to ensure SonarCloud quality gate passes
+
+
 ## v5.11.1.0-1
 
 ### Features
@@ -118,6 +168,7 @@
 ### Continuous Integration
 
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
+
 
 ## 4.10.11.0-1 / 5.10.11.0-1
 
