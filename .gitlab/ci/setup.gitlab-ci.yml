@@ -5,6 +5,7 @@ modify-versionlock:
     - if: $PIPELINE_TYPE == "EOSREG_CTAMAIN"
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
+    - cp ./continuousintegration/ci_helpers/find_versionlock_list.sh find_versionlock_list.sh
     - git fetch
     - git checkout v5.10.10.0-1
     - git fetch
@@ -12,7 +13,7 @@ modify-versionlock:
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
       if [ -n "${CTA_TAG}" ]; then
-        versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CTA_TAG}")
+        versionlock_file=$(./find_versionlock_list.sh --tag "${CTA_TAG}")
       fi
     - git checkout ${CTA_TAG} -- "${versionlock_file}"
     - |
