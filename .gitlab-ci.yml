@@ -38,9 +38,9 @@ variables:
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
 
   # Git CI Configuration
-  GIT_STRATEGY: fetch
+  GIT_STRATEGY: clone
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
+  GIT_DEPTH: 0 # Enforce a shallow clone of the main repo
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
   # Images
