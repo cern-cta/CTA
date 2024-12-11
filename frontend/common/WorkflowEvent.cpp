@@ -488,8 +488,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
                                 std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
   request.diskInstance      = m_cliIdentity.username;
   // If the archive_file_id atrribute is set, it takes priority over the extended attributes
-  const auto& archiveFileIdInt = m_event.file().archive_file_id();
-  if (archiveFileIdInt != 0) {
+  if (const auto& archiveFileIdInt = m_event.file().archive_file_id(); archiveFileIdInt != 0) {
     request.archiveFileID = archiveFileIdInt;
   }
   // not set or invalid (default for numerical unset protobuf fields is 0), fall back to the old xattr format
