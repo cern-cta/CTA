@@ -3,6 +3,7 @@ pipeline-variable-check:
   rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
+    - git fetch
     # Transform input to sciprt as JSON to simplify life
     - input_json="{"
     - |
