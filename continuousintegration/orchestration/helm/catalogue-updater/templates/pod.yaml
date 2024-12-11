@@ -8,6 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ $name }}
 spec:
+  automountServiceAccountToken: false
   restartPolicy: Never
   imagePullSecrets:
   {{- range .Values.image.pullSecrets }}
@@ -15,8 +16,7 @@ spec:
   {{- end }}
   containers:
   - name: {{ $name }}
-    # TODO: this image name/tag only works with sha for now. Once we start tagging the container properly, this should be updated
-    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ .Values.image.tag }}"
+    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
     imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
     resources:
@@ -39,9 +39,9 @@ spec:
     command: ["/bin/bash", "-c"]
     args:
       - |
-        echo "#!/bin/bash" > /launch_liquibase.sh && \
-        echo "COMMAND=\$1" >> /launch_liquibase.sh && \
-        echo "/entrypoint.sh -d -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -i '{{ .Values.catalogueCommitId }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh && \
+        echo "#!/bin/bash" > /launch_liquibase.sh
+        echo "COMMAND=\$1" >> /launch_liquibase.sh
+        echo "/entrypoint.sh --disable-schema-verify -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh
         chmod +x /launch_liquibase.sh
         sleep infinity
     volumeMounts:
