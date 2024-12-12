@@ -29,14 +29,6 @@ RUN set -ex; \
     dnf -y install git vim rsync cmake3 dnf-utils ccache pandoc openssh-server; \
     dnf -y group install "Development Tools";
 
-# TODO: Remove this when Oracle dependency is updated to 23 (installed directly from Oracle public repo)
-RUN set -ex; \
-    dnf -y install wget; \
-    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-    yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-    yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;
-
 RUN set -ex; \
     git clone https://gitlab.cern.ch/cta/CTA.git cta; \
     cd cta; \

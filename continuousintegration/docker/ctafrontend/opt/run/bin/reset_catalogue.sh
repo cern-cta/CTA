@@ -47,9 +47,7 @@ if [ "$CATALOGUE_BACKEND" == "sqlite" ]; then
   cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   chmod -R 777 $(dirname $(echo ${CATALOGUE_URL} | cut -d: -f2)) # needed?
 elif [ "$CATALOGUE_BACKEND" == "oracle" ]; then
-  # yum install -y wget
-  # wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-sqlplus-21.12.0.0.0-1.el9.x86_64.rpm
-  # yum install -y oracle-instantclient-sqlplus-21.12.0.0.0-1.el9.x86_64.rpm
+  # yum install -y oracle-instantclient-sqlplus
   # echo "Purging Oracle recycle bin"
   # ORACLE_SQLPLUS="/usr/bin/sqlplus64"
   # test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
