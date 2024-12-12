@@ -26,12 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           dnf -y update
-          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock wget
+          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
           dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build pandoc
-          wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
-          wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
-          dnf install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm
-          dnf install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
 
       - name: Download CTA
         uses: actions/checkout@v4
