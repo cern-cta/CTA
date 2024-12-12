@@ -57,5 +57,6 @@ if [ -z "$namespace" ]; then
   exit 1
 fi
 
+cd "$(dirname "$0")"
 kubectl cp ./configure_eoscta_tape.sh ${mgm_name}:/tmp -c eos-mgm --namespace ${namespace}
 kubectl exec -it ${mgm_name} -c eos-mgm --namespace ${namespace} -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"

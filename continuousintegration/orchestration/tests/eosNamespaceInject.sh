@@ -53,10 +53,11 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 TMP_DIR=$(mktemp -d)
-FILE_1=`uuidgen`
-FILE_2=`uuidgen`
+FILE_1=$(uuidgen)
+FILE_2=$(uuidgen)
 echo
 echo "Creating files: ${FILE_1} ${FILE_2}"
 
@@ -102,8 +103,8 @@ kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.podIP | tr -d '"')
-echo "kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"

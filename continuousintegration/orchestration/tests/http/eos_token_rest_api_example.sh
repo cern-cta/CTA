@@ -1,5 +1,6 @@
 #!/bin/bash
-EOSINSTANCE=ctaeos
+# This is the service name; not the pod name
+EOSINSTANCE=eos-mgm
 PORT=9000
 EXPIRE=`date +%s`; let LATER=$EXPIRE+64000
 token=`eos token --path /eos/ctaeos/tape/ --expires $LATER --tree --owner owner_username --group owner_group_name`

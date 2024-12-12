@@ -16,3 +16,9 @@ spec:
   - name: kdc-udp
     port: 88
     protocol: UDP
+  - name: kadmind-tcp
+    port: 749
+    protocol: TCP
+  - name: kadmind-udp
+    port: 749
+    protocol: UDP

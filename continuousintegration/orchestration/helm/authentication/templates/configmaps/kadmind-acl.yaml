@@ -1,0 +1,12 @@
+{{- $svcName := include "kdc.name" .}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kadmind-acl
+  namespace: {{ .Release.Namespace }}
+data:
+  kadmind.acl: |
+    kadmin/admin@TEST.CTA all
+    kadmin/changepw@TEST.CTA all
+
+

@@ -159,7 +159,8 @@ touch ${log_file}
 
 . /root/client_helper.sh
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
@@ -628,7 +629,7 @@ done
 
 # Repack should fail as system is not correctly configured.
 test_command "Adding repack request" "${command}" "add" "-v ${vids[0]} -m -u repack_ctasystest -b root://${EOSINSTANCE}//eos/ctaeos/cta"\
-  "select(.vid==\"${vids[0]}\" and .repackBufferUrl=\"root://ctaeos//eos/ctaeos/cta\") | .vid"\
+  "select(.vid==\"${vids[0]}\" and .repackBufferUrl=\"root://eos-mgm//eos/ctaeos/cta\") | .vid"\
   "1" "adding repack request" || exit 1
 test_command "Deleting repack request" "${command}" "rm" "-v ${vids[0]}" || exit 1
 

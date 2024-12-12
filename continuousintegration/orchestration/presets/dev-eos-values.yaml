@@ -1,3 +1,31 @@
+
+global:
+  repository: gitlab-registry.cern.ch/dss/eos/eos-ci
+  tag: 5.3.0.el9
+
+  sssKeytab:
+    secret: eos-sss-keytab
+
+  eos:
+    instancename: ctaeos
+
+  http:
+    enabled: false
+
+mgm:
+  kerberos:
+    enabled: true
+    clientConfig:
+      configMap: krb5-conf-client
+    defaultRealm: TEST.CTA
+    keytab: eos-server-keytab
+  extraEnv:
+  # - name: LD_PRELOAD
+  #   value: "/usr/lib64/libjemalloc.so.1"
+  - name: LD_PRELOAD
+    value: ""
+
+
 fst:
   replicaCount: 1
 
@@ -5,22 +33,8 @@ fusex:
   kerberos:
     enabled: true
     clientConfig:
-      configMap: krb5-config
-
+      configMap: krb5-conf-client
 
 qdb:
   replicaCount: 1
 
-mgm:
-  kerberos:
-    enabled: true
-    clientConfig:
-      configMap: krb5-config
-    defaultRealm: TEST.CTA
-  extraEnv:
-  - name: LD_PRELOAD
-    value: ""
-
-global:
-  sssKeytab:
-    secret: eos-sss-keytab

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 PORT=9000
 
 json='
@@ -9,7 +10,7 @@ json='
     {
       "path":"/eos/ctaeos/tape/test.txt"
     }
-  ] 
+  ]
 }
 '
 

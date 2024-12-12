@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krb5-conf-server
+  namespace: {{ .Release.Namespace }}
+data:
+  krb5.conf: |
+    [libdefaults]
+      default_realm = {{ .Values.realm }}
+      dns_lookup_realm = false
+      dns_lookup_kdc = false
+      ticket_lifetime = 24h
+      renew_lifetime = 7d
+      forwardable = true
+
+    [realms]
+      {{ .Values.realm }} = {
+        kdc = localhost
+        admin_server = localhost
+      }
+
+    [logging]
+      default = FILE:/var/log/krb5lib.log
+      kdc = FILE:/var/log/kdc.log
+      admin_server = FILE:/var/log/kadmind.log
+

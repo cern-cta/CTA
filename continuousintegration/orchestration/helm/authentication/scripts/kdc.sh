@@ -17,14 +17,22 @@
 
 set -e
 
+# There are a few things that can be improved here:
+# - have separate init containers for the instantiation of the kubernetes secrets. Use an empty dir to generate keytabs and then an official image containing kubectl to create the secrets
+
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 yum -y install epel-release
 yum -y install heimdal-server heimdal-workstation xrootd
 
+
 echo "Initialising key distribution center... "
 /usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited $KRB5_REALM
-/usr/libexec/kdc &
+/usr/libexec/kdc --detach
+
+# Readiness container should check if the kdcare reachable
+
+# TODO: this should be done in an init container
 
 # We need to access the Kubernetes API to generate secrets in the current namespace
 k8s_namespace=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)

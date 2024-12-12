@@ -15,8 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-#default CI EOS instance
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
 

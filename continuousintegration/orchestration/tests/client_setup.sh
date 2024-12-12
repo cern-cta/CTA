@@ -16,12 +16,11 @@
 #               submit itself to any jurisdiction.
 
 set -a
+set -x
 
 touch /tmp/RC
-# EOSINSTANCE=cta-mgm-0
-# its actually service name
-# EOSINSTANCE=cta-mgm
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 DATA_SOURCE=/dev/urandom

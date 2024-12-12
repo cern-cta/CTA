@@ -36,7 +36,7 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
-EOSINSTANCE=root://ctaeos
+EOSINSTANCE=root://eos-mgm
 
 ENDPOINT=https://ctaeos:8444/${FILE_LOCATION}
 METADATA="$1"

@@ -15,9 +15,10 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
 
 usage() { cat <<EOF 1>&2
@@ -51,12 +52,12 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ctaeos -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} vid ls
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos root://${EOSINSTANCE} vid ls
 
 echo
 echo "Launching restore_files_client.sh on client pod"

@@ -38,12 +38,12 @@ if [ -z "${NAMESPACE}" ]; then
 fi
 
 # eos instance identified by SSS username
-EOSINSTANCE=ctaeos
-EOS_MGM=eos-dev-mgm-0 # TODO: this doesn't work for other namespaces
+EOSINSTANCE=eos-mgm-0
+DISKINSTANCE=ctaeos # TODO: define this in a single place, perhaps a config file parsed at the start of every test?
 
-MULTICOPY_DIR_1=/eos/${EOSINSTANCE}/preprod/dir_1_copy
-MULTICOPY_DIR_2=/eos/${EOSINSTANCE}/preprod/dir_2_copy
-MULTICOPY_DIR_3=/eos/${EOSINSTANCE}/preprod/dir_3_copy
+MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
+MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
+MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
 # Set the TAPES and DRIVE_NAME based on the config in tpsrv01-0
 echo "Reading library configuration from tpsrv01-0"
@@ -76,12 +76,12 @@ echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version |
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
 
 echo "Cleaning up leftovers from potential previous runs."
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf /eos/${EOSINSTANCE}/cta/fail_on_closew_test/
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm /eos/${EOSINSTANCE}/cta/*
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_1}/
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_2}/
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_3}/
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos find -f /eos/${EOSINSTANCE}/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf {}
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos rm /eos/ctaeos/cta/*
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_1}/
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_2}/
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_3}/
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf {}
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
   jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
   cta-admin tape rm -v {}
@@ -110,21 +110,21 @@ for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
 done
 
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin diskinstance add  \
-  --name ${EOSINSTANCE}                                                    \
+  --name ${DISKINSTANCE}                                                    \
   --comment "di"
 
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
   --vo vo                                                                          \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOSINSTANCE}                                                    \
+  --diskinstance ${DISKINSTANCE}                                                    \
   --comment "vo"
 
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
   --vo vo_repack                                                                   \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOSINSTANCE}                                                    \
+  --diskinstance ${DISKINSTANCE}                                                    \
   --comment "vo_repack"                                                            \
   --isrepackvo true
 
@@ -275,20 +275,20 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
   --minretrieverequestage 1                                         \
   --comment "ctasystest"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add \
-    --instance ${EOSINSTANCE}                                        \
+    --instance ${DISKINSTANCE}                                        \
     --name adm                                                       \
     --mountpolicy ctasystest --comment "ctasystest"
 
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-    --instance ${EOSINSTANCE}                                        \
+    --instance ${DISKINSTANCE}                                        \
     --name eosusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-    --instance ${EOSINSTANCE}                                        \
+    --instance ${DISKINSTANCE}                                        \
     --name powerusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
@@ -304,7 +304,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
 ###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
-    --instance ${EOSINSTANCE}                                        \
+    --instance ${DISKINSTANCE}                                        \
     --name powerusers                                                \
     --activityregex ^T0Reprocess$                                    \
     --mountpolicy ctasystest --comment "ctasystest"
@@ -337,7 +337,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting
 echo "EOS server version is used:"
-kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- rpm -qa|grep eos-server
+kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- rpm -qa|grep eos-server
 
 
 # Super client capabilities
@@ -352,13 +352,13 @@ setup_tapes_for_multicopy_test() {
 
   echo "Setting up tapes and tapepools for multi-copy test..."
 
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_3}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_3}
 
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOS_MGM -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -c eos-mgm -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
 
   # Find 3 non-full tapes and assign them to each one of the 3 tapepools
   mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )

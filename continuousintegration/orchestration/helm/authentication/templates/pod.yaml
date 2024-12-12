@@ -42,16 +42,23 @@ spec:
     - name: TERM
       value: "xterm"
     - name: KRB5_REALM
-      value: {{ .Values.realm }}
+      value: {{ .Values.kerberos.defaultRealm }}
+    - name: KRB5_KDC_PROFILE
+      value: /etc/krb5.conf
+    - name: KRB5_ADMIN_PRINC_PWD
+      value: {{ .Values.kerberos.adminPrinc.password }}
     {{- if (.Values.env) }}
         {{- .Values.env | toYaml | nindent 4}}
     {{- end }}
     volumeMounts:
     - name: scripts-volume
       mountPath: /scripts
-    - name: krb5-config-volume
+    - name: krb5-conf-server
       mountPath: /etc/krb5.conf
       subPath: krb5.conf
+    - name: kadmind-acl
+      mountPath: /var/heimdal/kadmind.acl
+      subPath: kadmind.acl
     - name: keytabs-names
       mountPath: /tmp/keytabs-names.json
       subPath: keytabs-names.json
@@ -63,8 +70,11 @@ spec:
   - name: keytabs-names
     configMap:
       name: keytabs-names-conf
-  - name: krb5-config-volume
+  - name: krb5-conf-server
     configMap:
-      name: krb5-config
+      name: krb5-conf-server
+  - name: kadmind-acl
+    configMap:
+      name: kadmind-acl
   imagePullSecrets:
   {{- include "kdc.imagePullSecrets" . | nindent 2 }}

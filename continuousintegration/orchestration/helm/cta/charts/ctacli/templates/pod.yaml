@@ -77,5 +77,5 @@ spec:
       secretName: eos-sss-keytab
   - name: krb5-config-volume
     configMap:
-      name: krb5-config
+      name: krb5-conf-client
   {{include "ctacli.volumes" . | nindent 2}}

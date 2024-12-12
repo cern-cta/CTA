@@ -29,7 +29,8 @@
 ################################################################################
 
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 CTA_TEST_DIR=/eos/ctaeos/cta
 
 cleanup()

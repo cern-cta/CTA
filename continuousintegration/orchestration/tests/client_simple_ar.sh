@@ -15,7 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta/
 

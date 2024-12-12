@@ -94,7 +94,7 @@ echo
 echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Archiving files: xrdcp as user1"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
@@ -105,19 +105,19 @@ echo
 echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Retrieving files with gfal-bringonline via root protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Evicting files with gfal-evict via root protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Deleting files with gfal-rm via root protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 
 echo "$(date +%s): Waiting for tracker process to finish. "
@@ -151,7 +151,7 @@ echo
 echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
 echo " Archiving files: gfal-copy as user1 via https"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
@@ -162,19 +162,19 @@ echo
 echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Retrieving files with gfal-bringonline via https protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Evicting files with gfal-evict as poweruser via https protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Deleting files with gfal-rm as user1 via https protocol"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
@@ -196,6 +196,6 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/xrootd_a
 
 echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ctaeos:/root/
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh || exit 1
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
 exit 0

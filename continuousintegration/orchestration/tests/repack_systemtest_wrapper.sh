@@ -90,8 +90,8 @@ kubectl -n ${NAMESPACE} cp . client:/root/
 
 REPACK_BUFFER_URL=/eos/ctaeos/repack
 echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${REPACK_BUFFER_URL}
-kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}
+kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}
 
 source ./repack_helper.sh
 kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
@@ -567,8 +567,8 @@ repackTapeRepair() {
     echo "Will inject $nbFileToInject files into the repack buffer directory"
     bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir $bufferDirectory
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 $bufferDirectory
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos mkdir $bufferDirectory
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos chmod 1777 $bufferDirectory
 
     echo "Retrieving files from the tape"
     allPid=()
@@ -579,7 +579,7 @@ repackTapeRepair() {
     do
       diskId=`echo $tfls | jq -r ". [$i] | .df.diskId"` || break
       diskIds[$i]=$diskId
-      pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
+      pathFileToInject=`kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
@@ -590,7 +590,7 @@ repackTapeRepair() {
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
-      kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
+      kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -670,8 +670,8 @@ repackTapeRepairNoRecall() {
     echo "Will inject $nbFileToInject files into the repack buffer directory"
     bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir $bufferDirectory
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 $bufferDirectory
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos mkdir $bufferDirectory
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos chmod 1777 $bufferDirectory
 
     echo "Retrieving files from the tape"
     allPid=()
@@ -688,7 +688,7 @@ repackTapeRepairNoRecall() {
     do
       diskId=`echo $tfls | jq -r ". [${filesIndices[$i]}] | .df.diskId"` || break
       diskIds[$i]=$diskId
-      pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
+      pathFileToInject=`kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
@@ -699,7 +699,7 @@ repackTapeRepairNoRecall() {
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
-      kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
+      kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"

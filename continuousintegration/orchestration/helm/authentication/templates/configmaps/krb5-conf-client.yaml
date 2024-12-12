@@ -1,0 +1,22 @@
+{{- $svcName := include "kdc.name" .}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krb5-conf-client
+  namespace: {{ .Release.Namespace }}
+data:
+  krb5.conf: |
+    [libdefaults]
+      default_realm = {{ .Values.realm }}
+      dns_lookup_realm = true
+      dns_lookup_kdc = true
+      ticket_lifetime = 24h
+      renew_lifetime = 7d
+      forwardable = true
+
+    [realms]
+      {{ .Values.realm }} = {
+        kdc = {{ $svcName }}
+        admin_server = {{ $svcName }}
+      }
+

@@ -27,7 +27,8 @@ if [ -n "${error}" ]; then
     exit 1
 fi
 
-EOSINSTANCE=ctaeos
+# This should be the service name; not the pod name
+EOSINSTANCE=eos-mgm
 NEW_STORAGE_CLASS_NAME=newStorageClassName
 
 FILE_1=$(uuidgen)

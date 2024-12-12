@@ -45,7 +45,8 @@ conf:
 
   security:
     krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"
-    allowedProtocols: "krb5"
+    sss: "/etc/cta/eos.sss.keytab"
+    allowedProtocols: "sss krb5"
 
 # Additional environment variables
 env: []

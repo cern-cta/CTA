@@ -225,11 +225,11 @@ create_instance() {
   update_chart_dependencies
 
   # This sets up the key distribution center and the necessary SSS secrets for communication with eos
-  log_run helm ${helm_command} authentication-${namespace} helm/authentication \
+  log_run helm ${helm_command} authentication helm/authentication \
                                 --namespace ${namespace} \
                                 --wait --wait-for-jobs --timeout 2m
 
-  log_run helm install eos-${namespace} oci://registry.cern.ch/eos/charts/server \
+  log_run helm install eos ../../../eos-charts/server \
                                 --namespace ${namespace}\
                                 -f presets/dev-eos-values.yaml \
                                 --wait --wait-for-jobs --timeout 4m &
@@ -237,7 +237,7 @@ create_instance() {
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing kdc, catalogue and scheduler charts..."
-  log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
+  log_run helm ${helm_command} catalogue helm/catalogue \
                                 --namespace ${namespace} \
                                 --set resetImage.registry="${registry_host}" \
                                 --set resetImage.tag="${image_tag}" \
@@ -247,7 +247,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   catalogue_pid=$!
 
-  log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
+  log_run helm ${helm_command} scheduler helm/scheduler \
                                 --namespace ${namespace} \
                                 --set resetImage.registry="${registry_host}" \
                                 --set resetImage.tag="${image_tag}" \
@@ -266,7 +266,7 @@ create_instance() {
   # TODO: can we do all of this at the same time?
 
   echo "Installing cta chart..."
-  log_run helm ${helm_command} cta-${namespace} helm/cta \
+  log_run helm ${helm_command} cta helm/cta \
                                 --namespace ${namespace} \
                                 --set global.image.registry="${registry_host}" \
                                 --set global.image.tag="${image_tag}" \
@@ -283,6 +283,7 @@ create_instance() {
 setup_system() {
   ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
+  ./setup/configure_eos.sh -n ${namespace} --mgm-name eos-mgm-0
 }
 
 check_helm_installed

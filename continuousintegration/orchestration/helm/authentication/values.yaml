@@ -13,6 +13,11 @@ image:
 # Additional environment variables
 env: []
 
+kerberos:
+  defaultRealm: TEST.CTA
+  adminPrinc:
+    password: "dummyeospwd"
+
 resources:
   requests:
     memory: "256Mi"
@@ -36,5 +41,5 @@ keytabs:
   - user: "cta/cta-frontend"
     keytab: "cta-frontend.krb5.keytab"
   - user: "eos/eos-server"
-    keytab: "eos-server.krb5.keytab"
+    keytab: "eos.krb5.keytab"
 

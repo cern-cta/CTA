@@ -56,11 +56,10 @@ if [[ ${PREPARE} -eq 1 ]]; then
   fi
 fi
 
-EOSINSTANCE=ctaeos
-# EOSINSTANCE=cta-mgm-0
+EOSINSTANCE=eos-mgm-0
 
 echo
-echo "Copying test scripts to client pod."
+echo "Copying test scripts to client and eos mgm pods."
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOSINSTANCE}:/root/"
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOSINSTANCE}:/root/"
@@ -92,7 +91,7 @@ fi
 
 
 echo "Setting up client pod for HTTPs REST API test"
-echo " Copying CA certificates to client pod from ctaeos pod."
+echo " Copying CA certificates to client pod from ${EOSINSTANCE} pod."
 kubectl -n ${NAMESPACE} cp "${EOSINSTANCE}:etc/grid-security/certificates/" /tmp/certificates/
 kubectl -n ${NAMESPACE} cp /tmp/certificates client:/etc/grid-security/
 # rm -rf /tmp/certificates
@@ -107,12 +106,12 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
 TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
 echo " Launching client_archive_metadata.sh on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
-echo " Launching grep_eosreport_for_archive_metadata.sh on ctaeos pod"
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
+echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOSINSTANCE} pod"
+kubectl -n ${NAMESPACE} exec ${EOSINSTANCE} -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
 
 echo
 echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://\${EOSINSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://eos-mgm/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
 
 echo
 echo "Launching client_simple_ar.sh on client pod"

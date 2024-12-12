@@ -69,8 +69,8 @@ executeRepack() {
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
     kubectl -n ${NAMESPACE} exec ctacli -- rm -rf root://ctaeos//eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos mkdir /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec eos-mgm-0 -c eos-mgm -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"

@@ -40,7 +40,6 @@ CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow$(echo ${DESTDIR} | sed -e 's%/%_%g')
 CTA_DEST_DIR=/eos/${EOS_INSTANCE}/${DESTDIR}
 
-eos rmdir ${CTA_WF_DIR}
 eos mkdir -p ${CTA_PROC_DIR}
 eos mkdir -p ${CTA_WF_DIR}
 
