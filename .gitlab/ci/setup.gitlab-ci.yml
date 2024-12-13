@@ -2,7 +2,6 @@
 modify-versionlock:
   stage: setup
   variables:
-    GIT_STRATEGY: clone
     GIT_DEPTH: 0
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTAMAIN"
@@ -16,19 +15,20 @@ modify-versionlock:
         versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CTA_TAG}")
       fi
     - git checkout ${CTA_TAG} -- "${versionlock_file}"
+    - echo "Extracting the currently version locked EOS version from the file..."
+    - current_eos_version=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "${versionlock_file}" | awk -F '-' '{print $3}' | head -1)
+    - echo "Current version found $current_eos_version"
     - |
-      echo "Extracting the currently version locked EOS version from the file..."
-      current_eos_version=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "${versionlock_file}" | awk -F '-' '{print $3}' | head -1)
-      echo "Current version found: $current_eos_version"
       if [ -z "$current_eos_version" ]; then
         echo "Version not found! Exiting.";
         exit 1;
       fi
-      echo "Replacing $current_eos_version with $EOS_TAG in the file..."
-      sed -i "s/$current_eos_version/$EOS_TAG/g" ${versionlock_file}
+    - echo "Replacing $current_eos_version with $EOS_TAG in the file..."
+    - sed -i "s/$current_eos_version/$EOS_TAG/g" ${versionlock_file}
       # Check if XROOTD_VERSION is provided and not just whitespace
-      trimmed_xrootd_version=$(echo "$XRD_TAG" | xargs)
+    - trimmed_xrootd_version=$(echo "$XRD_TAG" | xargs)
       # Check if XRD_TAG is provided
+    - |
       if [ -n "$trimmed_xrootd_version" ]; then
         echo "Extracting the currently version locked XRootD version from the file..."
         current_xrootd_version=$(grep -o 'xrootd-server-\([0-9]:\)*[0-9]\+\.[0-9]\+\.[0-9]\+' "${versionlock_file}" | awk -F '-' '{print $3}' | head -1)
@@ -45,8 +45,7 @@ modify-versionlock:
       else
         echo "XRD_TAG is not provided. Skipping XRootD version replacement."
       fi
-
-    - echo "File content after replacement:"
+    - echo "File content after replacement"
     - cat "${versionlock_file}"
     - |
       if [ "${versionlock_path_main}versionlock.list" != "${versionlock_file}" ]; then
