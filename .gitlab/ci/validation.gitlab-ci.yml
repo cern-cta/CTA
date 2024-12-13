@@ -1,19 +1,17 @@
 pipeline-variable-check:
   stage: validation
   variables:
-    GIT_STRATEGY: clone
     GIT_DEPTH: 0
   rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
-    # Transform input to sciprt as JSON to simplify life
+    # Transform project defined CI variables as JSON to simplify life
     - input_json="{"
     - |
       for var_name in $(cat .gitlab-ci.yml | egrep '^  ([A-Z0-9]|_)+: .*$' | awk -F ':' '{print $1}'); do
         input_json=${input_json}"\"${var_name}\":\"${!var_name}\","
       done
     - input_json="${input_json::-1}}" # Remove trailing ',' and add }
-    - echo ${input_json} | jq
     # Put it as an env variable to be fetched by the pythons script as
     # input argument might be too long.
     - export input_json
@@ -30,7 +28,6 @@ pipeline-variable-check:
 check-versionlock-diff:
   stage: validation
   variables:
-    GIT_STRATEGY: clone
     GIT_DEPTH: 0
   allow_failure: true
   rules:

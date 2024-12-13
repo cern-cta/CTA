@@ -60,7 +60,7 @@
     # If we are testing from a CTA tag, get the Catalogue version for that tag
     - |
       if [ -n "${CTA_TAG}" ]; then
-        git fetch
+        git fetch --tags
         git checkout tags/$CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
         CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
@@ -117,6 +117,8 @@ k8s-test-cta-admin:
   extends:
     - .kubernetes-test
   rules:
+    # Skip this test for EOS regressions as it does not test nothing new
+    # with respect to the other tests we run.
     - if:  $PIPELINE_TYPE == "EOSREG_CTATAG"
       when: never
   variables:
