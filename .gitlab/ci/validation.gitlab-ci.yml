@@ -1,6 +1,7 @@
 pipeline-variable-check:
   stage: validation
   variables:
+    GIT_STRATEGY: clone
     GIT_DEPTH: 0
   rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "COMMIT"
