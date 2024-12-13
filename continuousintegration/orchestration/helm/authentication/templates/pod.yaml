@@ -45,6 +45,8 @@ spec:
       value: {{ .Values.kerberos.defaultRealm }}
     - name: KRB5_KDC_PROFILE
       value: /etc/krb5.conf
+    - name: KRB5_ADMIN_PRINC_NAME
+      value: {{ .Values.kerberos.adminPrinc.name }}
     - name: KRB5_ADMIN_PRINC_PWD
       value: {{ .Values.kerberos.adminPrinc.password }}
     {{- if (.Values.env) }}
@@ -56,9 +58,9 @@ spec:
     - name: krb5-conf-server
       mountPath: /etc/krb5.conf
       subPath: krb5.conf
-    - name: kadmind-acl
-      mountPath: /var/heimdal/kadmind.acl
-      subPath: kadmind.acl
+    - name: kadm5-acl
+      mountPath: /var/kerberos/krb5kdc/kadm5.acl
+      subPath: kadm5.acl
     - name: keytabs-names
       mountPath: /tmp/keytabs-names.json
       subPath: keytabs-names.json
@@ -73,8 +75,8 @@ spec:
   - name: krb5-conf-server
     configMap:
       name: krb5-conf-server
-  - name: kadmind-acl
+  - name: kadm5-acl
     configMap:
-      name: kadmind-acl
+      name: kadm5-acl
   imagePullSecrets:
   {{- include "kdc.imagePullSecrets" . | nindent 2 }}

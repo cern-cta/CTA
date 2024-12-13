@@ -261,7 +261,6 @@ create_instance() {
   # TODO: instead of doing it like this, the relevant containers should have init pods that wait for the relevant resources to be up/available
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
-  wait $eos_pid || exit 1
 
   # TODO: can we do all of this at the same time?
 
@@ -275,6 +274,7 @@ create_instance() {
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 8m
 
+  wait $eos_pid || exit 1
   if [ $dry_run == 1 ]; then
     exit 0
   fi

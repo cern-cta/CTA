@@ -7,16 +7,17 @@ data:
   krb5.conf: |
     [libdefaults]
       default_realm = {{ .Values.realm }}
-      dns_lookup_realm = false
-      dns_lookup_kdc = false
+      dns_lookup_realm = true
+      dns_lookup_kdc = true
       ticket_lifetime = 24h
       renew_lifetime = 7d
       forwardable = true
+      dns_canonicalize_hostname = false
 
     [realms]
       {{ .Values.realm }} = {
-        kdc = localhost
-        admin_server = localhost
+        kdc = kdc
+        admin_server = kdc
       }
 
     [logging]

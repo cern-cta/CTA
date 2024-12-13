@@ -1,4 +1,3 @@
-{{- $svcName := include "kdc.name" .}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,10 +12,10 @@ data:
       ticket_lifetime = 24h
       renew_lifetime = 7d
       forwardable = true
+      dns_canonicalize_hostname = false
 
     [realms]
       {{ .Values.realm }} = {
-        kdc = {{ $svcName }}
-        admin_server = {{ $svcName }}
+        kdc = kdc
+        admin_server = kdc
       }
-

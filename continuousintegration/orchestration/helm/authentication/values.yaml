@@ -16,7 +16,8 @@ env: []
 kerberos:
   defaultRealm: TEST.CTA
   adminPrinc:
-    password: "dummyeospwd"
+    name: root
+    password: "defaultcipassword"
 
 resources:
   requests:
@@ -40,6 +41,3 @@ keytabs:
     keytab: "eosadmin1.keytab"
   - user: "cta/cta-frontend"
     keytab: "cta-frontend.krb5.keytab"
-  - user: "eos/eos-server"
-    keytab: "eos.krb5.keytab"
-

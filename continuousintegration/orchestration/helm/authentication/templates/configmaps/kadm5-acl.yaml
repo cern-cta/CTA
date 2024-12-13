@@ -2,11 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kadmind-acl
+  name: kadm5-acl
   namespace: {{ .Release.Namespace }}
 data:
-  kadmind.acl: |
-    kadmin/admin@TEST.CTA all
-    kadmin/changepw@TEST.CTA all
+  kadm5.acl: |
+    */admin@{{ .Values.realm }}  *
 
 

@@ -25,8 +25,9 @@ if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum -y install ceph-common
 fi
 
+# TODO: this should be done in an init container
 # The cta user only exists after the install
-# chown cta /etc/cta/eos.sss.keytab
+chown cta /etc/cta/eos.sss.keytab
 
 touch /CTAFRONTEND_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"

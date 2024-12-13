@@ -3,8 +3,8 @@ global:
   repository: gitlab-registry.cern.ch/dss/eos/eos-ci
   tag: 5.3.0.el9
 
-  sssKeytab:
-    secret: eos-sss-keytab
+  # sssKeytab:
+  #   secret: eos-sss-keytab
 
   eos:
     instancename: ctaeos
@@ -18,7 +18,9 @@ mgm:
     clientConfig:
       configMap: krb5-conf-client
     defaultRealm: TEST.CTA
-    keytab: eos-server-keytab
+    adminPrinc:
+      name: root
+      password: "defaultcipassword"
   extraEnv:
   # - name: LD_PRELOAD
   #   value: "/usr/lib64/libjemalloc.so.1"

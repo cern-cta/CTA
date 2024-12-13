@@ -16,21 +16,30 @@
 #               submit itself to any jurisdiction.
 
 set -e
+set -x
 
 # There are a few things that can be improved here:
 # - have separate init containers for the instantiation of the kubernetes secrets. Use an empty dir to generate keytabs and then an official image containing kubectl to create the secrets
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-yum -y install epel-release
-yum -y install heimdal-server heimdal-workstation xrootd
 
+# See: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/configuring_a_kerberos_5_server
+yum -y install epel-release
+yum -y install krb5-libs krb5-server krb5-workstation
 
 echo "Initialising key distribution center... "
-/usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited $KRB5_REALM
-/usr/libexec/kdc --detach
+KRB5_DB_MASTER_KEY=$(openssl rand -base64 32)
+# Create DB
+kdb5_util create -s -r $KRB5_REALM -P $KRB5_DB_MASTER_KEY
+# Add main principal
+kadmin.local addprinc -pw $KRB5_ADMIN_PRINC_PWD $KRB5_ADMIN_PRINC_NAME/admin
+# Start kdc
+krb5kdc
+# Start kadmind to receive requests to add principals
+kadmind
 
-# Readiness container should check if the kdcare reachable
+# Readiness container should check if the kdc is reachable
 
 # TODO: this should be done in an init container
 
@@ -50,8 +59,8 @@ echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
 
   # Populate KDC and generate keytab file
   echo "Generating $keytab_path for $user... "
-  /usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM add --random-password --use-defaults "$user" > /dev/null # Otherwise this command outputs the password
-  /usr/lib/heimdal/bin/kadmin -l -r $KRB5_REALM ext_keytab --keytab="$keytab_path" "$user"
+  kadmin.local -q "addprinc -randkey $user"
+  kadmin.local -q "ktadd -k $keytab_path $user"
 
   content=$(base64 "$keytab_path")
   secret_json=$(
@@ -76,30 +85,6 @@ echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
 
   echo "Created Kubernetes secret: ${user}-keytab in namespace $k8s_namespace"
 done
-
-echo "Generating EOS SSS secret..."
-echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add eos.keytab
-content=$(base64 eos.keytab)
-secret_json=$(
-  jq -n \
-    --arg name "eos-sss-keytab" \
-    --arg filename "eos.keytab" \
-    --arg content "$content" \
-    '{
-      apiVersion: "v1",
-      kind: "Secret",
-      metadata: { name: $name },
-      type: "Opaque",
-      data: { ($filename): $content }
-    }'
-)
-curl -s --cacert "${k8s_sa_ca_cert}" \
-        -H "Authorization: Bearer ${k8s_sa_token}" \
-        -H "Content-Type: application/json" \
-        -X POST \
-        -d "${secret_json}" \
-        "${k8s_api_server}/api/v1/namespaces/${k8s_namespace}/secrets"
-echo "Created Kubernetes secret: eos-sss-keytab in namespace $k8s_namespace"
 
 touch /KDC_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
