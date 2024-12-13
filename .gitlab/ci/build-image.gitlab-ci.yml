@@ -26,7 +26,6 @@ build-ctageneric-from-artifacts:
     - job: build-cta-rpm
     - job: modify-versionlock
       optional: true
-      artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
@@ -51,7 +50,6 @@ build-ctageneric-from-repos:
       optional: true
     - job: modify-versionlock
       optional: true
-      artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
