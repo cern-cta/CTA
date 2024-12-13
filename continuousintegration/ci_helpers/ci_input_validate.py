@@ -200,7 +200,7 @@ def validate_eosreg_ctatag(ci_input_vars):
 
 def validate_ctageneric_image(ci_input_vars):
     """
-    Validation for the pipeline type `CTAGENERIC_IMAGE`. Checks taht the desired
+    Validation for the pipeline type `CTAGENERIC_IMAGE`. Checks that the desired
     XRootD, EOS and CTA RPM packages are available.
     """
     print("Validating XRootD...")
