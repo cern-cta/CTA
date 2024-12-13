@@ -1,14 +1,13 @@
 # Job to modify the version lock list file for external triggers
 modify-versionlock:
   stage: setup
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTAMAIN"
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   script:
-    - cp ./continuousintegration/ci_helpers/find_versionlock_list.sh find_versionlock_list.sh
-    - git fetch
-    - git checkout v5.10.10.0-1
-    - git fetch
     - versionlock_path_main="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/"
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |

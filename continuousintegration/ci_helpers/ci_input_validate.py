@@ -184,8 +184,7 @@ def validate_eosreg_ctatag(ci_input_vars):
     # This way we could avoid this conflict. For now fail the pipeline if the versions
     # do not match.
     print("Checking CTA and EOS were compiled against the same XRootD version...")
-    run_cmd(f"git fetch")
-    cta_xrd_ver =run_cmd(f"git checkout tags/{ci_input_vars['CTA_TAG']} -- cta.spec.in && "
+    cta_xrd_ver = run_cmd(f"git checkout tags/{ci_input_vars['CTA_TAG']} -- cta.spec.in && "
                          "grep 'xrootdVersion 1:5' cta.spec.in | awk '{print $3}' | "
                          "awk -F'-' '{print $1}'")
 
