@@ -28,10 +28,13 @@ import json
 SUPPORTED = {
     "PIPELINE_TYPE": ["COMMIT",
                       "EOSREG_CTAMAIN",
-                      "EOSREG_CTATAG"],
-    "XRD_TAG_REGEX": re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$"),
-    "EOS_TAG_REGEX": re.compile("^\d+\.\d+\.\d+$"),
-    "CTA_TAG_REGEX": re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$")
+                      "EOSREG_CTATAG",
+                      "CTAGENERIC_IMAGE"],
+    "XRD_TAG_REGEX": [ re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$") ],
+    "EOS_TAG_REGEX": [ re.compile("^\d+\.\d+\.\d+$") ],
+    "CTA_TAG_REGEX": [ re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$"),
+                       re.compile("^v\d+\.\d+\.\d+\.\d+-\d+\.el9$") # EL9 Transition format
+                     ]
     # "SCHED_TYPE": ["objecstore",
     #                "pgsched"]
     #  ...
@@ -77,8 +80,14 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
     if ci_var_tag_name not in ci_input_vars.keys():
         sys.exit(f"ERROR: tag version variable ${ci_var_tag_name} is not set")
 
-    # Check specified RPM version is valid with what we expect.
-    if not SUPPORTED[version_regex].match(ci_input_vars[ci_var_tag_name]):
+    # Check specified RPM version matches any of the possible regexes.
+    regex_matched = False
+    for regex in SUPPORTED[verion_regex]:
+        if regex.match(ci_input_vars[ci_var_tag_name]):
+            regex_matched = True
+            break
+
+    if not regex_matched:
         sys.exit(f"ERROR: specified tag {ci_input_vars[ci_var_tag_name]} "
                  f"does not match regex {SUPPORTED['XRD_TAG_REGEX'].pattern}")
 
@@ -102,7 +111,31 @@ def validate_default(ci_input_vars):
     Validation for the default pipeline type.
     To be implemented by cta#962
     """
-    pass
+    print("Validating XRootD...")
+    _check_remote_rpm(ci_input_vars,
+                      "XRD_TAG",
+                      "XRD_TAG_REGEX",
+                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
+                      "xrootd-server",
+                      ci_input_vars["XRD_TAG"])
+    print("XRootD validation passed")
+
+    print("Validating EOS...")
+    _check_remote_rpm(ci_input_vars,
+                      "EOS_TAG",
+                      "EOS_TAG_REGEX",
+                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
+                      "eos-server",
+                      ci_input_vars["EOS_TAG"])
+    print("EOS validation passed")
+
+    print("Validating CTA...")
+    _check_remote_rpm(ci_input_vars,
+                      "CTA_TAG",
+                      "CTA_TAG_REGEX",
+                      ["cta", "https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/"],
+                      "cta-frontend",
+                      ci_input_vars["CTA_TAG"][1:])
 
 
 def validate_eosreg_ctamain(ci_input_vars):
@@ -124,7 +157,6 @@ def validate_eosreg_ctamain(ci_input_vars):
                       ci_input_vars["XRD_TAG"])
     print("XRootD validation passed")
 
-
     print("Validating EOS...")
     _check_remote_rpm(ci_input_vars,
                       "EOS_TAG",
@@ -133,7 +165,6 @@ def validate_eosreg_ctamain(ci_input_vars):
                       "eos-server",
                       ci_input_vars["EOS_TAG"])
     print("EOS validation passed")
-
 
 
 def validate_eosreg_ctatag(ci_input_vars):
@@ -157,7 +188,6 @@ def validate_eosreg_ctatag(ci_input_vars):
                       ci_input_vars["XRD_TAG"])
     print("XRootD validation passed")
 
-
     print("Validating EOS...")
     _check_remote_rpm(ci_input_vars,
                       "EOS_TAG",
@@ -166,7 +196,6 @@ def validate_eosreg_ctatag(ci_input_vars):
                       "eos-server",
                       ci_input_vars["EOS_TAG"])
     print("EOS validation passed")
-
 
     print("Validating CTA...")
     _check_remote_rpm(ci_input_vars,
@@ -192,6 +221,9 @@ def validate_eosreg_ctatag(ci_input_vars):
         sys.exit(f"ERROR: CTA was compiled for {cta_xrd_ver} while EOS requires {ci_input_vars['XRD_TAG']}")
     print("CTA validation passed")
 
+
+def validate_ctageneric_image(ci_input_vars):
+    pass
 
 def main():
     """

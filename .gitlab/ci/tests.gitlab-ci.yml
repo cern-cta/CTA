@@ -16,7 +16,7 @@ test-cta-valgrind:
   rules:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -50,7 +50,7 @@ system-test-cta:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "EOSREG_CTAMAIN"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
   image: $IMAGE_EL9
@@ -72,7 +72,7 @@ unit-test-postgresql:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "EOSREG_CTAMAIN"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
   image: $IMAGE_EL9
@@ -120,7 +120,7 @@ unit-test-oracle:
       when: never
     - if: $ORACLE_SUPPORT == "OFF"
       when: never
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "EOSREG_CTAMAIN"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
   image: $IMAGE_EL9
@@ -155,7 +155,7 @@ test-cta-release:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "EOSREG_CTAMAIN"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
   image: $IMAGE_EL9

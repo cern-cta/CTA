@@ -7,6 +7,8 @@
       when: never
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
       when: never
+    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+      when: never
   image: $IMAGE_EL9
   artifacts:
     expire_in: 30 days
