@@ -82,7 +82,7 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
 
     # Check specified RPM version matches any of the possible regexes.
     regex_matched = False
-    for regex in SUPPORTED[verion_regex]:
+    for regex in SUPPORTED[version_regex]:
         if regex.match(ci_input_vars[ci_var_tag_name]):
             regex_matched = True
             break
@@ -111,31 +111,7 @@ def validate_default(ci_input_vars):
     Validation for the default pipeline type.
     To be implemented by cta#962
     """
-    print("Validating XRootD...")
-    _check_remote_rpm(ci_input_vars,
-                      "XRD_TAG",
-                      "XRD_TAG_REGEX",
-                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
-                      "xrootd-server",
-                      ci_input_vars["XRD_TAG"])
-    print("XRootD validation passed")
-
-    print("Validating EOS...")
-    _check_remote_rpm(ci_input_vars,
-                      "EOS_TAG",
-                      "EOS_TAG_REGEX",
-                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
-                      "eos-server",
-                      ci_input_vars["EOS_TAG"])
-    print("EOS validation passed")
-
-    print("Validating CTA...")
-    _check_remote_rpm(ci_input_vars,
-                      "CTA_TAG",
-                      "CTA_TAG_REGEX",
-                      ["cta", "https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/"],
-                      "cta-frontend",
-                      ci_input_vars["CTA_TAG"][1:])
+    pass
 
 
 def validate_eosreg_ctamain(ci_input_vars):
@@ -223,7 +199,37 @@ def validate_eosreg_ctatag(ci_input_vars):
 
 
 def validate_ctageneric_image(ci_input_vars):
-    pass
+    """
+    Validation for the pipeline type `CTAGENERIC_IMAGE`. Checks taht the desired
+    XRootD, EOS and CTA RPM packages are available.
+    """
+    print("Validating XRootD...")
+    _check_remote_rpm(ci_input_vars,
+                      "XRD_TAG",
+                      "XRD_TAG_REGEX",
+                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
+                      "xrootd-server",
+                      ci_input_vars["XRD_TAG"])
+    print("XRootD validation passed")
+
+    print("Validating EOS...")
+    _check_remote_rpm(ci_input_vars,
+                      "EOS_TAG",
+                      "EOS_TAG_REGEX",
+                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
+                      "eos-server",
+                      ci_input_vars["EOS_TAG"])
+    print("EOS validation passed")
+
+    print("Validating CTA...")
+    _check_remote_rpm(ci_input_vars,
+                      "CTA_TAG",
+                      "CTA_TAG_REGEX",
+                      ["cta", "https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/"],
+                      "cta-frontend",
+                      ci_input_vars["CTA_TAG"][1:])
+
+
 
 def main():
     """
