@@ -1,10 +1,11 @@
 pipeline-variable-check:
   stage: validation
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
   rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
-    - exit 0
-    - git fetch
     # Transform input to sciprt as JSON to simplify life
     - input_json="{"
     - |
@@ -28,13 +29,15 @@ pipeline-variable-check:
 # that the version locked EOS versions differ.
 check-versionlock-diff:
   stage: validation
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
   allow_failure: true
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
   needs:
     - pipeline-variable-check
   script:
-    - exit 0
     - echo "Checking if EOS locked versions match for tag and main."
     - eos_main_v=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list" | awk -F '-' '{print $3}' | head -1)
     - echo "Locked version for main branch $eos_main_v"
