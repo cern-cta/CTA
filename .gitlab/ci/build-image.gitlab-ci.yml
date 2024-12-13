@@ -28,7 +28,7 @@ build-ctageneric-from-artifacts:
       optional: true
       artifacts: true
   rules:
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
     - !reference [.build-ctageneric, rules]
   script:
@@ -53,8 +53,9 @@ build-ctageneric-from-repos:
       optional: true
       artifacts: true
   rules:
-    - if: $PIPELINE_TYPE != "EOSREG_CTATAG"
-      when: never
+    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - when: never
     - !reference [.build-ctageneric, rules]
   script:
     - echo "Building image with CTA ${CTA_TAG} RPMs and EOS ${EOS_TAG} RPMs"

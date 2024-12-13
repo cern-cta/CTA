@@ -47,7 +47,7 @@ clang-format-report:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: always
   image: $IMAGE_EL9
@@ -88,7 +88,7 @@ clang-format-apply:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       when: never
@@ -117,7 +117,7 @@ catalogue-schema-version-check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never

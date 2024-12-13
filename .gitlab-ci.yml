@@ -27,8 +27,10 @@ variables:
   SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
   BASH_LOGGING_ENABLED: 1 # For the k8s test scripts
 
-  # Custom Pipelines
+  # Pipeline Type
   PIPELINE_TYPE: "COMMIT"
+
+  # Image building. Used by EOS Regression and Image build pipeline types
   XRD_TAG: ""
   EOS_TAG: ""
   CTA_TAG: ""

@@ -7,12 +7,13 @@ modify-versionlock:
   rules:
     - if: $PIPELINE_TYPE == "EOSREG_CTAMAIN"
     - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
   script:
     - versionlock_path_main="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/"
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
       if [ -n "${CTA_TAG}" ]; then
-        versionlock_file=$(./find_versionlock_list.sh --tag "${CTA_TAG}")
+        versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CTA_TAG}")
       fi
     - git checkout ${CTA_TAG} -- "${versionlock_file}"
     - |
