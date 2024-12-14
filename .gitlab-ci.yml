@@ -53,6 +53,19 @@ variables:
   GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
+  # CTA related
+  CMAKE_BUILD_TYPE: "Debug"
+  CTA_VERSION: 5
+  SCHED_TYPE: "objectstore"
+  ORACLE_SUPPORT: "ON"
+  SYSTEMTESTS_ONLY: "FALSE"
+  SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
+  SKIP_UNIT_TEST: "FALSE"
+  BUILD_GENERATOR: "Unix Makefiles"
+  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
+  VALGRIND_DB_UNIT_TESTS: false
+  BASH_LOGGING_ENABLED: 1 # For the cirunner scripts
   # Images
   IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-analysis:2025-02-11-10282675
   IMAGE_CPPCHECK: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0

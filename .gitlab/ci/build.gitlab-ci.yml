@@ -70,18 +70,23 @@ build-cta-rpm:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
-    - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
-                                                 --build-generator "${BUILD_GENERATOR}"
-                                                 --create-build-dir
-                                                 --srpm-dir build_srpm/RPM/SRPMS
-                                                 --cta-version ${CTA_VERSION}
-                                                 --vcs-version ${VCS_VERSION}
-                                                 --xrootd-ssi-version ${XRD_SSI_VERSION}
-                                                 --scheduler-type ${SCHED_TYPE}
-                                                 --oracle-support ${ORACLE_SUPPORT}
-                                                 --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                                 --jobs $(nproc)
-                                                 --install-srpms
+    - |
+      UNIT_TEST_OPTION=""
+      if [ "${SKIP_UNIT_TEST}" == "TRUE" ]; then
+        UNIT_TEST_OPTION="--skip-unit-tests"
+      fi
+    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
+                                                      --build-generator "${BUILD_GENERATOR}"
+                                                      --create-build-dir
+                                                      --srpm-dir build_srpm/RPM/SRPMS
+                                                      --cta-version ${CTA_VERSION}
+                                                      --vcs-version ${VCS_VERSION}
+                                                      --xrootd-ssi-version ${XRD_SSI_VERSION}
+                                                      --scheduler-type ${SCHED_TYPE}
+                                                      --oracle-support ${ORACLE_SUPPORT}
+                                                      --cmake-build-type "${CMAKE_BUILD_TYPE}"
+                                                      --jobs $(nproc)
+                                                      --install ${UNIT_TEST_OPTION}
 
 # Documentation export
 
