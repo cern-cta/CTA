@@ -306,8 +306,7 @@ uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(rdbms::Conn& conn) {
       throw exception::Exception("Result set is unexpectedly empty");
     }
     return rset.columnUint64("ARCHIVE_REQUEST_ID");
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

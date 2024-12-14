@@ -126,7 +126,7 @@ void ChecksumBlob::deserialize(std::string&& bytearray) {
   ProtobufToChecksumBlob(p_csb, *this);
 }
 
-void ChecksumBlob::deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32) {
+void ChecksumBlob::deserializeOrSetAdler32(const std::string& bytearray, uint32_t adler32) {
   common::ChecksumBlob p_csb;
   // A nullptr value in the CHECKSUM_BLOB column will return an empty bytearray. If the bytearray is empty
   // or otherwise invalid, default to using the contents of the CHECKSUM_ADLER32 column.
