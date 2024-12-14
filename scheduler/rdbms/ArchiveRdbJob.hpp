@@ -44,10 +44,29 @@ public:
   // Constructor to create empty ArchiveJob object with a reference to the connection pool
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
 
+  /*
+   * Sets the status of the job as failed in the Scheduler DB
+   *
+   * @param failureReason  The reason of the failure as string
+   * @param lc             The log context
+   *
+   * @return void
+   */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
+  /*
+   * Sets the status of the report of the archive job to failed in Scheduler DB
+   *
+   * @param failureReason   The failure reason as string
+   * @param lc              The log context
+   *
+   * @return void
+   */
   void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
+  /*
+   * Currently unused function throwing an exception
+   */
   void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
   /**
