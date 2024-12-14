@@ -346,12 +346,12 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-     * Select any jobs from the queue by job ID
-     *
-     * @param conn       Connection to the DB backend
-     * @param jobIDs     List of jobID strings to select
-     * @return  result set
-     */
+   * Select any jobs from the queue by job ID
+   *
+   * @param conn       Connection to the DB backend
+   * @param jobIDs     List of jobID strings to select
+   * @return  result set
+   */
   static rdbms::Rset selectJobsByJobID(rdbms::Conn& conn, const std::list<std::string>& jobIDs) {
     if (jobIDs.empty()) {
       rdbms::Rset ret;
@@ -419,15 +419,15 @@ struct ArchiveJobQueueRow {
   }
 
   /**
-     * When CTA received the deleteArchive request from the disk buffer,
-     * this ensures removal from the queue
-     *
-     * @param txn           Transaction handling the connection to the backend database
-     * @param diskInstance  Name of the disk instance where the archive request was issued from
-     * @param archiveFileID The archive file ID assigned originally
-     *
-     * @return  The number of affected jobs
-     */
+   * When CTA received the deleteArchive request from the disk buffer,
+   * this ensures removal from the queue
+   *
+   * @param txn           Transaction handling the connection to the backend database
+   * @param diskInstance  Name of the disk instance where the archive request was issued from
+   * @param archiveFileID The archive file ID assigned originally
+   *
+   * @return  The number of affected jobs
+   */
   static uint64_t cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
   /**
      * Select any jobs with specified status(es) from the report,
@@ -445,16 +445,16 @@ struct ArchiveJobQueueRow {
                                                uint64_t limit);
 
   /**
-     * Assign a mount ID and VID to a selection of rows
-     *
-     * @param txn        Transaction to use for this query
-     * @param status     Archive Job Status to select on
-     * @param mountInfo  mountInfo object
-     * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
-     * @param limit      Maximum number of rows to return
-     *
-     * @return  result set containing job IDs of the rows which were updated
-     */
+   * Assign a mount ID and VID to a selection of rows
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param mountInfo  mountInfo object
+   * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
+   * @param limit      Maximum number of rows to return
+   *
+   * @return  result set containing job IDs of the rows which were updated
+   */
   static rdbms::Rset updateMountInfo(Transaction& txn,
                                      ArchiveJobStatus status,
                                      const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
@@ -462,67 +462,67 @@ struct ArchiveJobQueueRow {
                                      uint64_t limit);
 
   /**
-     * Update job status
-     *
-     * @param txn        Transaction to use for this query
-     * @param status     Archive Job Status to select on
-     * @param jobIDs     List of jobID strings to select
-     * @return           Number of updated rows
-     */
+   * Update job status
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param jobIDs     List of jobID strings to select
+   * @return           Number of updated rows
+   */
   static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs);
 
   /**
-     * Update failed job status
-     *
-     * @param txn                  Transaction to use for this query
-     * @param status               Archive Job Status to select on
-     * @param jobID                jobID to select the job for update
-     * @return                     Number of updated rows
-     */
+   * Update failed job status
+   *
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   * @param jobID                jobID to select the job for update
+   * @return                     Number of updated rows
+   */
   uint64_t
   updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status, std::optional<uint64_t> mountId = std::nullopt);
 
   /**
-     * Update job status for a batch of failed jobs (task queue failure use-case, e.g. tape full)
-     *
-     * @param txn        Transaction to use for this query
-     * @param status     Archive Job Status to select on
-     * @param jobIDs     List of jobID strings to select
-     * @return           Number of updated rows
-     */
+   * Update job status for a batch of failed jobs (task queue failure use-case, e.g. tape full)
+   *
+   * @param txn        Transaction to use for this query
+   * @param status     Archive Job Status to select on
+   * @param jobIDs     List of jobID strings to select
+   * @return           Number of updated rows
+   */
   static uint64_t
   updateFailedTaskQueueJobStatus(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
 
   /**
-     * Update job status when job report failed
-     *
-     * @param txn                  Transaction to use for this query
-     * @param status               Archive Job Status to select on
-     * @return                     Number of updated rows
-      */
+   * Update job status when job report failed
+   *
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   * @return                     Number of updated rows
+   */
   uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status);
 
   /**
-     * Copy the job row to the ARCHIVE FAILED JOB TABLE
-     *
-     * @param txn                  Transaction to use for this query
-     */
+   * Copy the job row to the ARCHIVE FAILED JOB TABLE
+   *
+   * @param txn                  Transaction to use for this query
+   */
   void copyToFailedJobTable(Transaction& txn);
 
   /**
-     * Copy the job row to the ARCHIVE FAILED JOB TABLE (static alternative)
-     *
-     * @param txn                  Transaction to use for this query
-     */
+   * Copy the job row to the ARCHIVE FAILED JOB TABLE (static alternative)
+   *
+   * @param txn                  Transaction to use for this query
+   */
   static void copyToFailedJobTable(Transaction& txn, const std::vector<std::string>& jobIDs);
 
   /**
-     * Increment Archive Request ID and return the new value
-     *
-     * @param conn  DB connection to use for this query
-     *
-     * @return     Archive Request ID
-     */
+   * Increment Archive Request ID and return the new value
+   *
+   * @param conn  DB connection to use for this query
+   *
+   * @return     Archive Request ID
+   */
   static uint64_t getNextArchiveRequestID(rdbms::Conn& conn);
 };
 };  // namespace cta::schedulerdb::postgres
