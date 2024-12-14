@@ -321,9 +321,6 @@ void PostgresStmt::executeCopyInsert(const size_t rows) {
   } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
-  } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
   }
 }
 
