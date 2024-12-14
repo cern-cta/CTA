@@ -68,8 +68,7 @@ void ArchiveRequest::insert() {
       //}
       //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
       ajr.insert(m_conn);
-    }
-    catch (exception::Exception& ex) {
+    } catch (exception::Exception& ex) {
       log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
       //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
@@ -81,8 +80,7 @@ void ArchiveRequest::insert() {
     //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
     m_conn.commit();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");

@@ -84,15 +84,16 @@ enum class RetrieveJobStatus : uint8_t {
 
 constexpr const std::array<const char*, 5> StringsRetrieveJobStatus = {"RJS_ToTransfer"
                                                                        "RJS_ToReportToUserForFailure",
-                                                                       "RJS_Failed", "RJS_ToReportToRepackForSuccess",
+                                                                       "RJS_Failed",
+                                                                       "RJS_ToReportToRepackForSuccess",
                                                                        "RJS_ToReportToRepackForFailure"};
 
 // ============================== Repack Job Status ===========================
 
 enum class RepackJobStatus : uint8_t { RRS_Pending, RRS_ToExpand, RRS_Starting, RRS_Running, RRS_Complete, RRS_Failed };
 
-constexpr const std::array<const char*, 6> StringsRepackJobStatus = {"RRS_Pending", "RRS_ToExpand", "RRS_Starting",
-                                                                     "RRS_Running", "RRS_Complete", "RRS_Failed"};
+constexpr const std::array<const char*, 6> StringsRepackJobStatus =
+  {"RRS_Pending", "RRS_ToExpand", "RRS_Starting", "RRS_Running", "RRS_Complete", "RRS_Failed"};
 }  // namespace cta::schedulerdb
 
 // Define to_string and from_string in cta namespace

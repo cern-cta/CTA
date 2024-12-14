@@ -67,8 +67,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     //logContext.log(cta::log::DEBUG,
     //               "Successfully finished to update Mount ID: " + std::to_string(mountInfo.mountId) + " for JOB IDs: " +
     //               jobIDsString);
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     //logContext.log(cta::log::DEBUG,
     //               "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
     //               ex.getMessageValue());
@@ -173,11 +172,11 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows = postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser,
+    nrows = postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(txn,
+                                                                         ArchiveJobStatus::AJS_ToTransferForUser,
                                                                          jobIDsList);
     txn.commit();
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
                    "In schedulerdb::ArchiveMount::failJobBatch(): failed to update job status for failed task queue." +
                      ex.getMessageValue());
@@ -189,8 +188,9 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
 
 void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
-  lc.log(log::WARNING, "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation "
-                       "valid only for AJS_ToReportToUserForTransfer !");
+  lc.log(log::WARNING,
+         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation "
+         "valid only for AJS_ToReportToUserForTransfer !");
   std::vector<std::string> jobIDsList;
   jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
@@ -215,8 +215,9 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       log::ScopedParamContainer(lc)
         .add("updatedRows", nrows)
         .add("jobListSize", jobIDsList.size())
-        .log(log::ERR, "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
-                       "entire job list provided.");
+        .log(log::ERR,
+             "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
+             "entire job list provided.");
     }
     // After processing, return the job object to the job pool for re-use
     for (auto& job : jobsBatch) {
@@ -226,18 +227,18 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
         std::unique_ptr<ArchiveRdbJob> castedJob(static_cast<ArchiveRdbJob*>(job.release()));
         // Return the casted job to the pool
         m_jobPool.releaseJob(std::move(castedJob));
-      }
-      else {
-        lc.log(cta::log::ERR, "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to cast ArchiveJob to "
-                              "ArchiveRdbJob and return the object to the pool for reuse.");
+      } else {
+        lc.log(cta::log::ERR,
+               "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to cast ArchiveJob to "
+               "ArchiveRdbJob and return the object to the pool for reuse.");
       }
     }
     jobsBatch.clear();
-  }
-  catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR, "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
-                          "reporting. Aborting the transaction." +
-                            ex.getMessageValue());
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
+           "reporting. Aborting the transaction." +
+             ex.getMessageValue());
     txn.abort();
   }
 }
