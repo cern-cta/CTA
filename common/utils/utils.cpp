@@ -1019,7 +1019,6 @@ std::string getCurrentLocalTime() {
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
   ::time_t now = (::time_t) tv.tv_sec;
-  struct ::tm* localNow;
   ::time(&now);
   struct tm localNowBuf;
   struct tm* localNow = ::localtime_r(&now, &localNowBuf);
@@ -1037,7 +1036,6 @@ std::string getCurrentLocalTime(const std::string& format) {
   ::timeval tv;
   ::gettimeofday(&tv, nullptr);
   ::time_t now = (::time_t) tv.tv_sec;
-  struct ::tm* localNow;
   ::time(&now);
   struct tm localNowBuf;
   struct tm* localNow = ::localtime_r(&now, &localNowBuf);
