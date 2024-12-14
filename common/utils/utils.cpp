@@ -177,8 +177,7 @@ std::string getEnclosedName(const std::string& path) {
   } else {
     if (path.length() == 1) {
       return "";
-    }
-    else {
+    } else {
       return path.substr(last_slash_idx + 1);
     }
   }
@@ -206,8 +205,7 @@ std::string trimSlashes(const std::string& s) {
   std::string::const_iterator it1;
   if (std::string::npos != beginpos) {
     it1 = beginpos + s.begin();
-  }
-  else {
+  } else {
     it1 = s.begin();
   }
 
@@ -216,8 +214,7 @@ std::string trimSlashes(const std::string& s) {
   size_t endpos = s.find_last_not_of("/");
   if (std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
-  }
-  else {
+  } else {
     it2 = s.end();
   }
 
@@ -233,8 +230,7 @@ std::string trimFinalSlashes(const std::string& s) {
   size_t endpos = s.find_last_not_of("/");
   if (std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
-  }
-  else {
+  } else {
     it2 = s.end();
   }
 
@@ -390,8 +386,7 @@ std::string generateUuid() {
 bool endsWith(const std::string& str, const char c) {
   if (str.empty()) {
     return false;
-  }
-  else {
+  } else {
     return c == str.at(str.length() - 1);
   }
 }
@@ -446,8 +441,7 @@ std::string errnoToString(const int errnoValue) {
 
   if (!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
     return buf;
-  }
-  else {
+  } else {
     const int errnoSetByStrerror_r_wrapper = errno;
     std::ostringstream oss;
 
@@ -495,13 +489,11 @@ uint8_t toPGUint8(std::string_view str) {
     }
 
     return static_cast<uint8_t>(value);
-  }
-  catch (const std::invalid_argument&) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Invalid number format";
     throw exception::Exception(msg.str());
-  }
-  catch (const std::out_of_range&) {
+  } catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -528,13 +520,11 @@ uint16_t toPGUint16(std::string_view str) {
     }
 
     return static_cast<uint16_t>(value);
-  }
-  catch (const std::invalid_argument&) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint16_t: Invalid number format";
     throw exception::Exception(msg.str());
-  }
-  catch (const std::out_of_range&) {
+  } catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint16_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -558,13 +548,11 @@ uint32_t toPGUint32(std::string_view str) {
     }
 
     return static_cast<uint32_t>(value);
-  }
-  catch (const std::invalid_argument&) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Invalid number format";
     throw exception::Exception(msg.str());
-  }
-  catch (const std::out_of_range&) {
+  } catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -588,13 +576,11 @@ uint64_t toPGUint64(std::string_view str) {
     }
 
     return static_cast<uint64_t>(value);
-  }
-  catch (const std::invalid_argument&) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Invalid number format";
     throw exception::Exception(msg.str());
-  }
-  catch (const std::out_of_range&) {
+  } catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Value out of range";
     throw exception::Exception(msg.str());
@@ -609,13 +595,11 @@ double toPGDouble(std::string_view str) {
   }
   try {
     return std::stod(std::string(str));
-  }
-  catch (const std::invalid_argument&) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Invalid number format";
     throw exception::Exception(msg.str());
-  }
-  catch (const std::out_of_range&) {
+  } catch (const std::out_of_range&) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Value out of range";
     throw exception::Exception(msg.str());
@@ -734,18 +718,14 @@ uint64_t toUint64(const std::string& str) {
   try {
     try {
       return std::stoul(str);
-    }
-    catch (std::invalid_argument&) {
+    } catch (std::invalid_argument&) {
       throw exception::Exception("Invalid uint64");
-    }
-    catch (std::out_of_range&) {
+    } catch (std::out_of_range&) {
       throw exception::Exception("Out of range");
-    }
-    catch (std::exception& se) {
+    } catch (std::exception& se) {
       throw exception::Exception(se.what());
     }
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string("Failed to parse ") + str +
                                " as an unsigned 64-bit integer: " + ex.getMessage().str());
   }
@@ -758,18 +738,14 @@ double toDouble(const std::string& str) {
   try {
     try {
       return std::stod(str);
-    }
-    catch (std::invalid_argument&) {
+    } catch (std::invalid_argument&) {
       throw exception::Exception("Invalid double");
-    }
-    catch (std::out_of_range&) {
+    } catch (std::out_of_range&) {
       throw exception::Exception("Out of range");
-    }
-    catch (std::exception& se) {
+    } catch (std::exception& se) {
       throw exception::Exception(se.what());
     }
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " + ex.getMessage().str());
   }
 }
