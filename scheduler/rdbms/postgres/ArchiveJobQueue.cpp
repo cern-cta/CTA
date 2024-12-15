@@ -43,7 +43,7 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
     CUMULATIVE_SELECTION AS (
         SELECT JOB_ID,
                SIZE_IN_BYTES,
-               SUM(SIZE_IN_BYTES) OVER (ORDER BY JOB_ID) AS CUMULATIVE_SIZE
+               SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
         FROM SET_SELECTION
     )
     UPDATE ARCHIVE_JOB_QUEUE SET

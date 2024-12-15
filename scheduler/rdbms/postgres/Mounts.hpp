@@ -59,7 +59,6 @@ struct MountsRow {
       const char* const sql = R"SQL(
         SELECT NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID
       )SQL";
-      txn.start();
       auto stmt = txn.getConn().createStmt(sql);
       auto rset = stmt.executeQuery();
       if (!rset.next()) {

@@ -52,9 +52,9 @@ void RelationalDB::waitSubthreadsComplete() {
 }
 
 void RelationalDB::ping() {
+  auto conn = m_connPool.getConn();
   try {
     // TO-DO: we might prefer to check schema version instead
-    auto conn = m_connPool.getConn();
     const auto names = conn.getTableNames();
     bool found_scheddb = false;
     for (auto& name : names) {
@@ -62,12 +62,13 @@ void RelationalDB::ping() {
         found_scheddb = true;
       }
     }
-    conn.commit();
+    conn.reset();
     if (!found_scheddb) {
       throw cta::exception::Exception("Did not find CTA_SCHEDULER table in the Postgres Scheduler DB.");
     }
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    conn.rollback();
     throw;
   }
 }
@@ -190,7 +191,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     timings.insertAndReset("fetchedAllArchiveJobColumns", t);
     // this is not query commit, but conn commit returning
     // the connection to the pool !
-    sqlconn.commit();
+    sqlconn.reset();
   } catch (cta::exception::Exception& e) {
     timings.addToLog(logParams);
     std::string bt = e.backtrace();

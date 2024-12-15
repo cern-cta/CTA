@@ -100,7 +100,7 @@ void Transaction::start() {
 }
 
 void Transaction::commit() {
-  m_conn->commit();
+  m_conn->reset();
   m_begin = false;
 }
 
