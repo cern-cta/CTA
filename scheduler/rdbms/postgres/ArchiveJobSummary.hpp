@@ -86,7 +86,7 @@ struct ArchiveJobSummaryRow {
    *                   default is 1 hours
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectJobsExceptDriveQueue(Transaction& txn, uint64_t gc_delay = 3600) {
+  static rdbms::Rset selectJobsExceptDriveQueue(Transaction& txn, uint64_t gc_delay = 10800) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
     const char* const lock_sql = R"SQL(
@@ -97,6 +97,9 @@ struct ArchiveJobSummaryRow {
     //update archive_job_queue set in_drive_queue='f',mount_id=NULL; for all which
     // are pending since a defined period of time
     // gc_delay logic and liberating stuck mounts should be later moved elsewhere !
+    // this is currently responsible for reprocessing of tasks which were sent to task queue
+    // but not picked up yet but the drive - if they were not updated during the gc_delay they will get assigned agan !
+    // we could make a queue cleaner doing something much smarter than this
     uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
     const char* const update_sql = R"SQL(
     UPDATE ARCHIVE_JOB_QUEUE SET
@@ -126,8 +129,8 @@ struct ArchiveJobSummaryRow {
       FROM 
         ARCHIVE_JOB_SUMMARY 
       WHERE 
-        IN_DRIVE_QUEUE IS FALSE
-        AND MOUNT_ID IS NULL
+        MOUNT_ID IS NULL
+        AND IN_DRIVE_QUEUE IS FALSE
     )SQL";
 
     stmt = txn.getConn().createStmt(sql);

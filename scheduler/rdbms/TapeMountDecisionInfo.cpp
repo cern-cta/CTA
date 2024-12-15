@@ -70,7 +70,20 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
 
   // Get the next Mount Id
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
-  commit();
+  // release the named lock on the DB,
+  // so that other tape servers can query the job summary
+  try {
+    commit();
+  } catch (exception::Exception& ex) {
+    log::LogContext lc(m_logger);
+    lc.log(cta::log::ERR,
+           "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
+           "DB and release the named DB lock on the logical library." +
+             ex.getMessageValue());
+    m_txn->abort();
+    m_lockTaken = false;
+    throw;
+  }
   am.nbFilesCurrentlyOnTape = tape.lastFSeq;
   // Fill up the mount info
   am.mountInfo.mountType = mount.type;
@@ -87,19 +100,6 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
   am.mountInfo.capacityInBytes = tape.capacityInBytes;
   am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
-  // release the named lock on the DB,
-  // so that other tape servers can query the job summary
-  try {
-    m_txn->commit();
-  } catch (exception::Exception& ex) {
-    log::LogContext lc(m_logger);
-    lc.log(cta::log::ERR,
-           "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
-           "DB and release the named DB lock on the logical library." +
-             ex.getMessageValue());
-    m_txn->abort();
-    throw;
-  }
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
   return ret;
@@ -121,8 +121,18 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
 
   // Get the next Mount Id
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
-  commit();
-
+  try {
+    commit();
+  } catch (exception::Exception& ex) {
+    log::LogContext lc(m_logger);
+    lc.log(cta::log::ERR,
+           "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to "
+           "the DB and release the named DB lock on the logical library." +
+             ex.getMessageValue());
+    m_txn->abort();
+    m_lockTaken = false;
+    throw;
+  }
   // Fill up the mount info
   rm.mountInfo.vid = mount.vid;
   rm.mountInfo.vo = mount.vo;
@@ -140,17 +150,6 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());
-  try {
-    m_txn->commit();
-  } catch (exception::Exception& ex) {
-    log::LogContext lc(m_logger);
-    lc.log(cta::log::ERR,
-           "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to "
-           "the DB and release the named DB lock on the logical library." +
-             ex.getMessageValue());
-    m_txn->abort();
-    throw;
-  }
   return ret;
 }
 
