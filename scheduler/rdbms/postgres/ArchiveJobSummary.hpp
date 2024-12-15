@@ -89,18 +89,18 @@ struct ArchiveJobSummaryRow {
   static rdbms::Rset selectJobsExceptDriveQueue(Transaction& txn, uint64_t gc_delay = 10800) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
-    const char* const lock_sql = R"SQL(
-    LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
-    )SQL";
-    auto stmt = txn.getConn().createStmt(lock_sql);
-    stmt.executeNonQuery();
+    //const char* const lock_sql = R"SQL(
+    //LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
+    //)SQL";
+    //auto stmt = txn.getConn().createStmt(lock_sql);
+    //stmt.executeNonQuery();
     //update archive_job_queue set in_drive_queue='f',mount_id=NULL; for all which
     // are pending since a defined period of time
     // gc_delay logic and liberating stuck mounts should be later moved elsewhere !
     // this is currently responsible for reprocessing of tasks which were sent to task queue
     // but not picked up yet but the drive - if they were not updated during the gc_delay they will get assigned agan !
     // we could make a queue cleaner doing something much smarter than this
-    uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
+    /* uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
     const char* const update_sql = R"SQL(
     UPDATE ARCHIVE_JOB_QUEUE SET
       MOUNT_ID = NULL,
@@ -111,7 +111,7 @@ struct ArchiveJobSummaryRow {
     ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
-    stmt.executeNonQuery();
+    stmt.executeNonQuery(); */
 
     const char* const sql = R"SQL(
       SELECT 
@@ -133,7 +133,7 @@ struct ArchiveJobSummaryRow {
         AND IN_DRIVE_QUEUE IS FALSE
     )SQL";
 
-    stmt = txn.getConn().createStmt(sql);
+    auto stmt = txn.getConn().createStmt(sql);
     return stmt.executeQuery();
   }
 

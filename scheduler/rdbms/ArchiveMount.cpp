@@ -111,7 +111,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       //timings.insOrIncAndReset("mountFetchBatchRestOpsTime", t2);
       //timings.insertAndReset("mountFetchBatchRowTime", ta);
     }
-    selconn.commit();
+    selconn.reset();
   }
   // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
