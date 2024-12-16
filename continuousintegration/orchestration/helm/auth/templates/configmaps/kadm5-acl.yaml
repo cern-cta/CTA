@@ -6,6 +6,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   kadm5.acl: |
-    */admin@{{ .Values.realm }}  *
+    */admin@{{ .Values.kerberos.defaultRealm }}  *
 
 

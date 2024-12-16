@@ -55,7 +55,7 @@ spec:
     volumeMounts:
     - name: scripts-volume
       mountPath: /scripts
-    - name: krb5-conf-server
+    - name: krb5-conf
       mountPath: /etc/krb5.conf
       subPath: krb5.conf
     - name: kadm5-acl
@@ -72,9 +72,9 @@ spec:
   - name: keytabs-names
     configMap:
       name: keytabs-names-conf
-  - name: krb5-conf-server
+  - name: krb5-conf
     configMap:
-      name: krb5-conf-server
+      name: krb5-conf
   - name: kadm5-acl
     configMap:
       name: kadm5-acl

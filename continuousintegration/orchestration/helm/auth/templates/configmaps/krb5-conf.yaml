@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krb5-conf
+  namespace: {{ .Release.Namespace }}
+data:
+  krb5.conf: |
+    [libdefaults]
+      default_realm = {{ .Values.kerberos.defaultRealm }}
+      ticket_lifetime = 24h
+      renew_lifetime = 7d
+      forwardable = true
+      dns_lookup_realm = false
+      dns_lookup_kdc = true
+      rdns = false
+      udp_preference_limit = 0
+
+    [realms]
+      {{ .Values.kerberos.defaultRealm }} = {
+        kdc = kdc.{{ .Release.Namespace }}.svc.cluster.local:88
+        master_kdc = kdc.{{ .Release.Namespace }}.svc.cluster.local:88
+        admin_server = kdc.{{ $.Release.Namespace }}.svc.cluster.local:749
+        default_domain = cluster.local
+      }
+
+    [logging]
+      default = CONSOLE
+      kdc = CONSOLE
+      admin_server = CONSOLE
+
+    [domain_realm]
+      .cluster.local = {{ .Values.kerberos.defaultRealm }}

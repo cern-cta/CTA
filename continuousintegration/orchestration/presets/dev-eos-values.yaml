@@ -2,13 +2,10 @@
 global:
   repository: gitlab-registry.cern.ch/dss/eos/eos-ci
   tag: 5.3.0.el9
-
-  # sssKeytab:
-  #   secret: eos-sss-keytab
-
   eos:
     instancename: ctaeos
 
+# TODO: http fails because it needs TLS certificates
   http:
     enabled: false
 
@@ -16,26 +13,32 @@ mgm:
   kerberos:
     enabled: true
     clientConfig:
-      configMap: krb5-conf-client
+      configMap: krb5-conf
     defaultRealm: TEST.CTA
     adminPrinc:
       name: root
       password: "defaultcipassword"
-  extraEnv:
-  # - name: LD_PRELOAD
-  #   value: "/usr/lib64/libjemalloc.so.1"
-  - name: LD_PRELOAD
-    value: ""
+  http:
+    enabled: false
+  env:
+    - name: LD_PRELOAD
+      value: "/usr/lib64/libjemalloc.so"
+  tape:
+    enabled: false
+    wfe:
+      endpoint: ctafrontend:10955
+      resource: /ctafrontend
+    taperestapi:
+      sitename: cern-cta-eos
+  preRun:
+    enabled: false
+    script: |
+      #!/usr/bin/bash
+      # General settings
 
 
 fst:
   replicaCount: 1
-
-fusex:
-  kerberos:
-    enabled: true
-    clientConfig:
-      configMap: krb5-conf-client
 
 qdb:
   replicaCount: 1

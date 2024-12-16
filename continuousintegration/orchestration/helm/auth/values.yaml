@@ -27,7 +27,6 @@ resources:
     memory: "2Gi"
     ephemeral-storage: "5Gi"
 
-realm: "TEST.CTA"
 keytabs:
   - user: "user1"
     keytab: "user1.keytab"

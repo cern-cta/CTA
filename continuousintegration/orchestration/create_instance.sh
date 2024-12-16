@@ -62,7 +62,7 @@ update_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "authentication"
+    "auth"
     "catalogue"
     "scheduler"
     "cta/"
@@ -225,7 +225,7 @@ create_instance() {
   update_chart_dependencies
 
   # This sets up the key distribution center and the necessary SSS secrets for communication with eos
-  log_run helm ${helm_command} authentication helm/authentication \
+  log_run helm ${helm_command} auth helm/auth \
                                 --namespace ${namespace} \
                                 --wait --wait-for-jobs --timeout 2m
 

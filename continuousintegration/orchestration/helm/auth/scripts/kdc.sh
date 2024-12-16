@@ -18,30 +18,25 @@
 set -e
 set -x
 
-# There are a few things that can be improved here:
-# - have separate init containers for the instantiation of the kubernetes secrets. Use an empty dir to generate keytabs and then an official image containing kubectl to create the secrets
-
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
-
+# TODO: this should be a custom image
 # See: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/configuring_a_kerberos_5_server
 yum -y install epel-release
 yum -y install krb5-libs krb5-server krb5-workstation
 
 echo "Initialising key distribution center... "
 KRB5_DB_MASTER_KEY=$(openssl rand -base64 32)
-# Create DB
+# TODO: should be done in an init container with the database in a shared volume
 kdb5_util create -s -r $KRB5_REALM -P $KRB5_DB_MASTER_KEY
 # Add main principal
-kadmin.local addprinc -pw $KRB5_ADMIN_PRINC_PWD $KRB5_ADMIN_PRINC_NAME/admin
-# Start kdc
+kadmin.local -r $KRB5_REALM addprinc -pw $KRB5_ADMIN_PRINC_PWD $KRB5_ADMIN_PRINC_NAME/admin
+# TODO: should run in a separate container within the pod
 krb5kdc
-# Start kadmind to receive requests to add principals
+# TODO: should run in a separate container within the pod
 kadmind
 
-# Readiness container should check if the kdc is reachable
-
-# TODO: this should be done in an init container
+# TODO: this should be done in a similar way to how EOS requests keytabs, i.e. not hardcoded in the kdc
 
 # We need to access the Kubernetes API to generate secrets in the current namespace
 k8s_namespace=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
@@ -59,7 +54,7 @@ echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
 
   # Populate KDC and generate keytab file
   echo "Generating $keytab_path for $user... "
-  kadmin.local -q "addprinc -randkey $user"
+  kadmin.local -r $KRB5_REALM addprinc -randkey $user
   kadmin.local -q "ktadd -k $keytab_path $user"
 
   content=$(base64 "$keytab_path")
@@ -86,6 +81,7 @@ echo "$keytabs" | jq -c '.[]' | while read -r keytab; do
   echo "Created Kubernetes secret: ${user}-keytab in namespace $k8s_namespace"
 done
 
+# TODO: Readiness container should check if the kdc is reachable
 touch /KDC_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 # sleep forever but exit immediately when pod is deleted

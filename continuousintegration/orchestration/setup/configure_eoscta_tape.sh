@@ -5,12 +5,12 @@
 # General settings
 eos vid enable unix
 eos space set default on
+eos space config default space.filearchivedgc=off
 eos attr -r set default=replica /eos
 eos attr -r set sys.forced.nstripes=1 /eos
 eos space config default space.wfe=on
-eos space config default space.wfe.ntx=200
+eos space config default space.wfe.ntx=20
 eos space config default space.filearchivedgc=on
-# TODO: move to specific test
 eos space config default space.token.generation=1
 
 # Users
@@ -35,7 +35,6 @@ eos vid set membership $(id -u eosadmin2) +sudo
 DESTDIR=preprod
 CTA_STORAGE_CLASS=ctaStorageClass
 EOS_INSTANCE=ctaeos
-
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow$(echo ${DESTDIR} | sed -e 's%/%_%g')
 CTA_DEST_DIR=/eos/${EOS_INSTANCE}/${DESTDIR}
