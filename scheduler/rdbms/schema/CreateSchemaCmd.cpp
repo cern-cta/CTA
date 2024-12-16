@@ -67,6 +67,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const ar
       } else {
         PostgresSchedulerSchema schema;
         executeNonQueries(conn, schema.sql);
+        conn.reset();
       }
     } break;
     case rdbms::Login::DBTYPE_NONE:
