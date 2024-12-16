@@ -15,7 +15,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
 
@@ -23,30 +22,36 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
-                                                ArchiveJobStatus status,
-                                                const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                                uint64_t maxBytesRequested,
-                                                uint64_t limit) {
+std::pair<rdbms::Rset, uint64_t>
+ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
+                                    ArchiveJobStatus status,
+                                    const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                    uint64_t maxBytesRequested,
+                                    uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
   /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
   const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
-      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES FROM ARCHIVE_JOB_QUEUE
-    WHERE TAPE_POOL = :TAPE_POOL
-    AND STATUS = :STATUS
-    AND (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
-    ORDER BY PRIORITY DESC, JOB_ID
-    LIMIT :LIMIT FOR UPDATE ),
+      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES,
+        SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
+      FROM ARCHIVE_JOB_QUEUE
+        WHERE TAPE_POOL = :TAPE_POOL
+        AND STATUS = :STATUS
+        AND (( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID ) AND IN_DRIVE_QUEUE IS FALSE )
+    ),
     CUMULATIVE_SELECTION AS (
-        SELECT JOB_ID,
-               SIZE_IN_BYTES,
-               SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
-        FROM SET_SELECTION
-    )
-    UPDATE ARCHIVE_JOB_QUEUE SET
+      SELECT JOB_ID,
+             PRIORITY,
+             SIZE_IN_BYTES,
+             CUMULATIVE_SIZE
+      FROM SET_SELECTION WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
+      ORDER BY PRIORITY DESC, JOB_ID
+      LIMIT :LIMIT
+    ),
+    UPDATED_JOBS AS (
+      UPDATE ARCHIVE_JOB_QUEUE SET
       MOUNT_ID = :MOUNT_ID,
       VID = :VID,
       DRIVE = :DRIVE,
@@ -54,10 +59,11 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
       MOUNT_TYPE = :MOUNT_TYPE,
       LOGICAL_LIBRARY = :LOGICAL_LIB,
       IN_DRIVE_QUEUE = TRUE
-    FROM CUMULATIVE_SELECTION
-    WHERE ARCHIVE_JOB_QUEUE.JOB_ID = CUMULATIVE_SELECTION.JOB_ID
-      AND CUMULATIVE_SIZE <= :BYTES_REQUESTED
-    RETURNING CUMULATIVE_SELECTION.JOB_ID;
+      FROM CUMULATIVE_SELECTION
+      WHERE ARCHIVE_JOB_QUEUE.JOB_ID = CUMULATIVE_SELECTION.JOB_ID
+      RETURNING *
+    )
+    SELECT * FROM UPDATED_JOBS;
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -72,7 +78,9 @@ rdbms::Rset ArchiveJobQueueRow::updateMountInfo(Transaction& txn,
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  return stmt.executeQuery();
+  auto result = stmt.executeQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  return std::make_pair(std::move(result), nrows);
 }
 
 uint64_t

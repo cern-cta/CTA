@@ -52,6 +52,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   txn.takeNamedLock(mountInfo.tapePool);
   cta::log::TimingList timings;
   cta::utils::Timer t;
+  /* UPDATE THEN SELECT METHOD TEST START
   try {
     updatedJobIDset =
       postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
@@ -113,6 +114,87 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     }
     selconn.reset();
   }
+  UPDATE THEN SELECT METHOD END */
+  // TRYING TO GET THE UPDATE RESULT DIRECTLY FROM THE UPDATE QUERY WITHOUT ADDITIONAL SELECT
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
+  try {
+    auto [resultSet, nrows] =
+      postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+    timings.insertAndReset("mountUpdateBatchTime", t);
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("updateMountInfoRowCount", nrows);
+    logContext.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Returned result.");
+    if (nrows == 0) {
+      logContext.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Did not update any rows.");
+    }
+    // we need to extract the JOB_IDs which were updated before we release the lock
+    retVector.reserve(nrows);
+    // Construct the return value
+    // Precompute the maximum value before the loop
+    common::dataStructures::TapeFile tpfile;
+    auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+    while (resultSet.next()) {
+      auto job = m_jobPool.acquireJob();
+      //timings.insOrIncAndReset("mountFetchBatchAquireJobTime", t2);
+
+      job->initialize(resultSet, logContext);
+      //timings.insOrIncAndReset("mountFetchBatchinitializeJobTime", t2);
+      //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
+      retVector.emplace_back(std::move(job));
+      //timings.insOrIncAndReset("mountFetchBatchinitializeEmplaceTime", t2);
+      auto& tapeFile = retVector.back()->tapeFile;
+      tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      tapeFile.blockId = maxBlockId;
+      //timings.insOrIncAndReset("mountFetchBatchRestOpsTime", t2);
+      //timings.insertAndReset("mountFetchBatchRowTime", ta);
+    }
+    txn.commit();
+
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
+                   ex.getMessageValue());
+    txn.abort();
+  }
+  /* UPDATE THEN SELECT METHOD TEST START
+  // Fetch job info only in case there were jobs found and updated
+  if (!jobIDsList.empty()) {
+    rdbms::Rset resultSet;
+    // retrieve more job information about the updated batch
+    auto selconn = m_connPool.getConn();
+    resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
+    timings.insertAndReset("mountFetchBatchTime", t);
+
+    // Construct the return value
+    // Precompute the maximum value before the loop
+    common::dataStructures::TapeFile tpfile;
+    auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+    while (true) {
+      //cta::utils::Timer ta;
+      //cta::utils::Timer t2;
+      bool hasNext = resultSet.next();  // Call to next
+      //timings.insOrIncAndReset("mountFetchBatchCallNextTime", t2);
+      if (!hasNext) {
+        break;  // Exit if no more rows
+      }
+      auto job = m_jobPool.acquireJob();
+      //timings.insOrIncAndReset("mountFetchBatchAquireJobTime", t2);
+
+      job->initialize(resultSet, logContext);
+      //timings.insOrIncAndReset("mountFetchBatchinitializeJobTime", t2);
+      //auto job = std::make_unique<schedulerdb::ArchiveRdbJob>(m_RelationalDB.m_connPool, resultSet);
+      retVector.emplace_back(std::move(job));
+      //timings.insOrIncAndReset("mountFetchBatchinitializeEmplaceTime", t2);
+      auto& tapeFile = retVector.back()->tapeFile;
+      tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      tapeFile.blockId = maxBlockId;
+      //timings.insOrIncAndReset("mountFetchBatchRestOpsTime", t2);
+      //timings.insertAndReset("mountFetchBatchRowTime", ta);
+    }
+    selconn.reset();
+  }
+  UPDATE THEN SELECT METHOD END */
   // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   cta::log::ScopedParamContainer logParams(logContext);

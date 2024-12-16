@@ -78,7 +78,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const ar
       throw ex;
     }
   }
-
+  conn.reset();
   return 0;
 }
 

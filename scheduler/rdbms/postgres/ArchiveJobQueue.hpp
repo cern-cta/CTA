@@ -20,6 +20,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
@@ -27,6 +28,7 @@
 #include "rdbms/Conn.hpp"
 
 #include <vector>
+#include <utility>
 
 namespace cta::schedulerdb::postgres {
 
@@ -455,7 +457,7 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset updateMountInfo(Transaction& txn,
+  static std::pair<rdbms::Rset, uint64_t> updateMountInfo(Transaction& txn,
                                      ArchiveJobStatus status,
                                      const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                      uint64_t maxBytesRequested,

@@ -71,6 +71,7 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv
   } else {
     m_out << "Aborting" << std::endl;
   }
+  conn.reset();
   return 0;
 }
 
@@ -108,8 +109,8 @@ void DropSchemaCmd::dropSchedulerSchema(const rdbms::Login::DbType& dbType, rdbm
       default:
         dropDatabaseSequences(conn);
         dropDatabaseTables(conn);
-        dropDatabaseTypes(conn);
         dropDatabaseViews(conn);
+        dropDatabaseTypes(conn);
     }
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
