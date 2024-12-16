@@ -53,7 +53,6 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv
 
   // Abort if the schema is already dropped
   if (conn.getTableNames().empty() && conn.getSequenceNames().empty()) {
-    conn.reset();
     m_out << "Database contains no tables and no sequences." << std::endl
           << "Assuming the schema has already been dropped." << std::endl;
     return 0;
