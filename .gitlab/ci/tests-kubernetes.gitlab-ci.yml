@@ -59,9 +59,9 @@
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
     - |
-      if [ -n "${CTA_TAG}" ]; then
+      if [ -n "${CUSTOM_CTA_TAG}" ]; then
         git fetch --tags
-        git checkout tags/$CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
+        git checkout tags/$CUSTOM_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
         CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi

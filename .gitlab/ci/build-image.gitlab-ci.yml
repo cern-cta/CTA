@@ -56,7 +56,7 @@ build-ctageneric-from-repos:
     - when: never
     - !reference [.build-ctageneric, rules]
   script:
-    - echo "Building image with CTA ${CTA_TAG} RPMs and EOS ${EOS_TAG} RPMs"
+    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/tag.Dockerfile
