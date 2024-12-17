@@ -21,7 +21,7 @@ check-versionlock-diff:
     GIT_DEPTH: 0
   allow_failure: true
   rules:
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
   needs:
     - pipeline-variable-check
   script:

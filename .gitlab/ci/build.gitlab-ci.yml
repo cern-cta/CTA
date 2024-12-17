@@ -5,7 +5,7 @@
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
       when: never
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never

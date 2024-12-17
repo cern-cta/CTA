@@ -27,7 +27,7 @@ build-ctageneric-from-artifacts:
     - job: modify-versionlock
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
     - !reference [.build-ctageneric, rules]
   script:
@@ -51,7 +51,7 @@ build-ctageneric-from-repos:
     - job: modify-versionlock
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
     - when: never
     - !reference [.build-ctageneric, rules]

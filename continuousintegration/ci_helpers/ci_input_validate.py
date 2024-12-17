@@ -27,8 +27,8 @@ import json
 # Dictionary containing the supported config of the different variables.
 SUPPORTED = {
     "PIPELINE_TYPE": ["COMMIT",
-                      "EOSREG_CTAMAIN",
-                      "EOSREG_CTATAG",
+                      "EOS_REGR_AGAINST_CTA_MAIN",
+                      "EOS_REGR_AGAINST_CTA_TAG",
                       "CTAGENERIC_IMAGE"],
     "CUSTOM_XRD_TAG_REGEX": [ re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$") ],
     "CUSTOM_EOS_TAG_REGEX": [ re.compile("^\d+\.\d+\.\d+$") ],
@@ -125,9 +125,9 @@ def validate_default(ci_input_vars):
     pass
 
 
-def validate_eosreg_ctamain(ci_input_vars):
+def validate_eos_regr_against_cta_main(ci_input_vars):
     """
-    Validation for the pipeline type `EOSREG_CTAMAIN`. Checks the XRootD and EOS
+    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_MAIN`. Checks the XRootD and EOS
     RPM packages.
       - XRootD is fetched from the stable repo.
       - EOS version should be available in the testing repo as it comes from
@@ -154,9 +154,9 @@ def validate_eosreg_ctamain(ci_input_vars):
     print("EOS validation passed")
 
 
-def validate_eosreg_ctatag(ci_input_vars):
+def validate_eos_regr_against_cta_tag(ci_input_vars):
     """
-    Validation for the pipeline type `EOSREG_CTATAG`. Checks the XRootD, EOS
+    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_TAG`. Checks the XRootD, EOS
     and CTA RPM packages.
       - XRootD is fetched from the stable repo.
       - EOS version should be available in the testing repo as it comes from

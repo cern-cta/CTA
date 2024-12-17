@@ -119,7 +119,7 @@ k8s-test-cta-admin:
   rules:
     # Skip this test for EOS regressions as it does not test nothing new
     # with respect to the other tests we run.
-    - if:  $PIPELINE_TYPE == "EOSREG_CTATAG"
+    - if:  $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
       when: never
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
