@@ -35,9 +35,9 @@ variables:
   PIPELINE_TYPE: "COMMIT"
 
   # Image building. Used by EOS Regression and Image build pipeline types
-  XRD_TAG: ""
-  EOS_TAG: ""
-  CTA_TAG: ""
+  CUSTOM_XRD_TAG: ""
+  CUSTOM_EOS_TAG: ""
+  CUSTOM_CTA_TAG: ""
 
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
