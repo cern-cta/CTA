@@ -4058,6 +4058,7 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::testReserveDiskSpace(co
             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
             "for disk system using external script, backpressure will not be applied");
     }
+    cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning Script_Error");
     return SCRIPT_ERROR;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
@@ -4099,9 +4100,11 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::testReserveDiskSpace(co
 
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
+      cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning INSUFFICIENT_SPACE");
       return INSUFFICIENT_SPACE;
     }
   }
+  cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning SUCCESS");
   return SUCCESS;
 }
 
