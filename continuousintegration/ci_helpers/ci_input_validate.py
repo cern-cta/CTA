@@ -40,6 +40,17 @@ SUPPORTED = {
     #  ...
 }
 
+DEFINED_INPUT_VARS = [
+    "BUILD_GENERATOR", "CMAKE_BUILD_TYPE", "CTA_VERSION",
+    "SCHED_TYPE", "ORACLE_SUPPORT", "VALGRIND_DB_UNIT_TESTS",
+    "SYSTEMTESTS_ONLY", "SYSTEMTESTS_IMAGETAG",
+    "BASH_LOGGING_ENABLED", "PIPELINE_TYPE", "CUSTOM_XRD_TAG",
+    "CUSTOM_EOS_TAG", "CUSTOM_CTA_TAG", "CTA_BUILD_ID",
+    "CTA_PIPELINE_NAME", "GIT_STRATEGY", "GIT_SUBMODULE_STRATEGY",
+    "GIT_DEPTH", "GIT_SUBMODULE_DEPTH", "IMAGE_EL9", "IMAGE_PYTHON3",
+    "IMAGE_DOCKER_IMAGE_BUILDER", "IMAGE_CPPCHECK",
+    "IMAGE_GITLAB_RELEASE_CLI"
+]
 
 def run_cmd(cmd):
     """
@@ -234,14 +245,14 @@ def validate_ctageneric_image(ci_input_vars):
 def main():
     """
     Validate the varaibles received by the GitLab CI pipeline
-    $1: env variable containing the input as a json string
     """
-    # Check specified pipeline type is supported
-    if sys.argv[1] not in os.environ.keys():
-        sys.exit("ERROR: json input variable not found in environment")
 
-    # Convert the input json string to a dictionary
-    ci_input_vars = json.loads(os.environ[sys.argv[1]])
+    # Get project defined CI variables from environment
+    ci_input_vars = {}
+    for var in DEFINED_INPUT_VARS:
+        ci_input_vars[var] = os.environ[var]
+
+    print(ci_input_vars)
 
     if ci_input_vars["PIPELINE_TYPE"] not in SUPPORTED["PIPELINE_TYPE"]:
         sys.exit(f"ERROR: Pipeline type {ci_input_vars['PIPELINE_TYPE']} not supported")
