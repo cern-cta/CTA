@@ -100,7 +100,7 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
 
     if not regex_matched:
         sys.exit(f"ERROR: specified tag {ci_input_vars[ci_var_tag_name]} "
-                 f"does not match regex {SUPPORTED['CUSTOM_XRD_TAG_REGEX'].pattern}")
+                 f"does not match regex {SUPPORTED['CUSTOM_XRD_TAG_REGEX']} pattern")
 
     # Check tag is available
     print(run_cmd(
