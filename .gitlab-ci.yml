@@ -29,8 +29,8 @@ variables:
 
   # Pipeline Type. Supported types:
   #   - COMMIT: default pipelite type, Runs static analysis, compiles the software and tests it.
-  #   - EOSREG_CTAMAIN: test a new tagged EOS version against CTA main.
-  #   - EOSREG_CTATAG: test a new tagged EOS version against the latest tagged CTA version.
+  #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
+  #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
   #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
   PIPELINE_TYPE: "COMMIT"
 
