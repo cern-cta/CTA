@@ -21,6 +21,8 @@ ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
+COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum/yum.repos.d/
+
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
@@ -40,8 +42,9 @@ RUN yum install -y \
     # .rpmnew files are ignored %config (no replace)
     chmod 0644 /etc/logrotate.d/*
 
+
 # Install cta-release
-RUN yum install -y --repofrompath cta,https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/ cta-release-${PUBLIC_REPO_VER}.el9 \
+RUN yum install -y cta-release-${PUBLIC_REPO_VER}.el9 \
   && \
     yum clean all \
   && \
