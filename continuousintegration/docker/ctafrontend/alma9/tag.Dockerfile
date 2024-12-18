@@ -24,7 +24,8 @@ COPY ${BASEDIR}/../opt /opt
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
-ARG PUBLIC_REPO_VER=FALSE
+ARG PUBLIC_REPO_VER
+ARG VERSIONLOCK_PATH
 
 # Install necessary packages
 RUN yum install -y \
@@ -41,6 +42,8 @@ RUN yum install -y \
 
 # Install cta-release
 RUN yum install cta-release-${PUBLIC_REPO_VER} \
+  && \
+    cp ${VERSIONLOCK_PATH} /etc/yum/pluginconf.d/versionlock.cta \
   && \
     yum clean all \
   && \

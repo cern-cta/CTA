@@ -61,4 +61,5 @@ build-ctageneric-from-repos:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/tag.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg "PUBLIC_REPO_VER=${CTA_TAG:1}"
+                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
+                       --build-arg "VERSIONLOCK_PATH=$(./continuousintegration/ci_helpers/find_versionlock_list.sh)"
