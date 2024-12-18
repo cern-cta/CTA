@@ -41,9 +41,7 @@ RUN yum install -y \
     chmod 0644 /etc/logrotate.d/*
 
 # Install cta-release
-RUN yum install cta-release-${PUBLIC_REPO_VER} \
-  && \
-    cp ${VERSIONLOCK_PATH} /etc/yum/pluginconf.d/versionlock.cta \
+RUN yum install -y --repofrompath cta,https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/ cta-release-${PUBLIC_REPO_VER}.el9 \
   && \
     yum clean all \
   && \
