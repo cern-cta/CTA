@@ -48,9 +48,12 @@ RUN  yum-config-manager --enable cta-public-testing \
   && \
     yum install -y cta-release-${PUBLIC_REPO_VER}.el9 \
   && \
+    rm /etc/yum/pluginconf.d/versionlock.cta \
+  && \
     yum clean all \
   && \
     rm -rf /var/cache/yum \
   ; \
     rm -f /etc/rc.d/rc.local
 
+COPY ${VERSIONLOCK_PATH} /etc/yum/plugins/versionlock.list
