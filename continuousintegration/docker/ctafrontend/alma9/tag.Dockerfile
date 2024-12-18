@@ -45,7 +45,9 @@ RUN yum install -y \
 
 
 # Install cta-release
-RUN  yum-config-manager --enable cta-public-testing \
+RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
+  && \
+    yum-config-manager --enable cta-public-testing \
   && \
     yum install -y cta-release-${PUBLIC_REPO_VER}.el9 \
   && \
@@ -57,4 +59,4 @@ RUN  yum-config-manager --enable cta-public-testing \
   ; \
     rm -f /etc/rc.d/rc.local
 
-COPY ${YUM_VERSIONLOCK_FILE} /etc/yum/plugins/versionlock.list
+COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
