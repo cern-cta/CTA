@@ -27,7 +27,8 @@ COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER
-ARG VERSIONLOCK_PATH
+ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+
 
 # Install necessary packages
 RUN yum install -y \
@@ -56,4 +57,4 @@ RUN  yum-config-manager --enable cta-public-testing \
   ; \
     rm -f /etc/rc.d/rc.local
 
-COPY ${VERSIONLOCK_PATH} /etc/yum/plugins/versionlock.list
+COPY ${YUM_VERSIONLOCK_FILE} /etc/yum/plugins/versionlock.list

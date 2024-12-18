@@ -58,9 +58,7 @@ build-ctageneric-from-repos:
   script:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
-    - VERSIONLOCK_PATH=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CUSTOM_CTA_TAG}")
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/tag.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
-                       --build-arg "VERSIONLOCK_PATH=${VERSIONLOCK_PATH}"
