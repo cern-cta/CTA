@@ -26,15 +26,7 @@ COPY ${BASEDIR}/../opt /opt
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER=FALSE
 
-# Custom Yum repo setup
-ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
-
-COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
-
 # Install necessary packages
-# Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
 RUN yum install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
@@ -45,26 +37,10 @@ RUN yum install -y \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)
-    chmod 0644 /etc/logrotate.d/* \
-  && \
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64 \
-  && \
-    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm && \
-    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm && \
-      yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm && \
-      yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm
+    chmod 0644 /etc/logrotate.d/*
 
-# Download RPMs into local repository and enable it
-RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
-   && \
-     yum download \
-        --destdir ${CTAREPODIR}/RPMS/x86_64/ \
-        --repofrompath cta-public-testing,https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/ \
-        cta-*-${PUBLIC_REPO_VER}.*.x86_64 \
-  && \
-    createrepo ${CTAREPODIR} \
-  && \
-    echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
+# Install cta-release
+RUN yum install cta-release-${PUBLIC_REPO_VER} \
   && \
     yum clean all \
   && \
@@ -72,7 +48,3 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   ; \
     rm -f /etc/rc.d/rc.local
 
-# Check that CTA packages are in container (from previous artifacts)
-RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present" || (echo "cta-taped RPM was not found after an attempt to download from CTA Public repository. Please investigate." 1>&2; exit 1)
-
-RUN yum-config-manager --enable cta-artifacts
