@@ -57,12 +57,12 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     updatedJobIDset =
       postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
+    txn.commit();
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
     }
-    txn.commit();
     logContext.log(cta::log::INFO,
-                   "Successfully assigned in DB Mount ID: " + std::to_string(mountInfo.mountId) + " to " +
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully assigned in DB Mount ID: " + std::to_string(mountInfo.mountId) + " to " +
                      std::to_string(jobIDsList.size()) + " jobs.");
     retVector.reserve(jobIDsList.size());
     // Fetch job info only in case there were jobs found and updated
@@ -73,6 +73,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       try {
         resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
         timings.insertAndReset("mountFetchBatchTime", t);
+        logContext.log(cta::log::INFO,
+                       "In postgres::ArchiveJobQueueRow::updateMountInfo: starting to prepare jobs for queueing.");
         // Construct the return value
         // Precompute the maximum value before the loop
         common::dataStructures::TapeFile tpfile;
@@ -85,8 +87,9 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           tapeFile.blockId = maxBlockId;
         }
+        timings.insertAndReset("mountJobInitBatchTime", t);
         logContext.log(cta::log::INFO,
-                       "Successfully prepared queueing for " + std::to_string(retVector.size()) + " jobs.");
+                       "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully prepared queueing for " + std::to_string(retVector.size()) + " jobs.");
       } catch (exception::Exception& ex) {
         // we will roll back the previous update operation by calling ArchiveJobQueueRow::updateFailedTaskQueueJobStatus
         logContext.log(cta::log::ERR,
@@ -101,7 +104,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           txn.commit();
           if (nrows != !jobIDsList.size()) {
             logContext.log(cta::log::ERR,
-                           "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
+                           "In postgres::ArchiveJobQueueRow::updateMountInfo: failed, reverting by "
                            "updateFailedTaskQueueJobStatus failed as well !");
           } else {
             logContext.log(cta::log::INFO,
@@ -110,13 +113,19 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           }
         } catch (exception::Exception& ex) {
           logContext.log(cta::log::ERR,
-                         "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
+                         "In postgres::ArchiveJobQueueRow::updateMountInfo: failed, reverting by "
                          "updateFailedTaskQueueJobStatus failed as well !  " +
                            ex.getMessageValue());
           txn.abort();
+          throw;
         }
         return ret;
       }
+    } else {
+      logContext.log(cta::log::WARNING,
+                     "In postgres::ArchiveJobQueueRow::updateMountInfo: no DB jobs updated for Mount ID: " +
+                       std::to_string(mountInfo.mountId));
+      return ret;
     }
   } catch (exception::Exception& ex) {
     logContext.log(
@@ -124,10 +133,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
         ex.getMessageValue());
     txn.abort();
-    // returning empty list
-    return ret;
+    throw;
   }
-
   // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   cta::log::ScopedParamContainer logParams(logContext);
