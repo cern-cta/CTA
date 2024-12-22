@@ -69,7 +69,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     if (!jobIDsList.empty()) {
       rdbms::Rset resultSet;
       // retrieve more job information about the updated batch
-      auto selconn = txn.getConn();
+      auto& selconn = txn.getConn();
       try {
         resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
         timings.insertAndReset("mountFetchBatchTime", t);
