@@ -102,7 +102,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           if (nrows != !jobIDsList.size()) {
             logContext.log(cta::log::ERR,
                            "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
-                           "updateFailedTaskQueueJobStatus failed as well ! ");
+                           "updateFailedTaskQueueJobStatus failed as well !");
           } else {
             logContext.log(cta::log::INFO,
                            "Successfully reverted back the previous DB update for Mount ID: " +
