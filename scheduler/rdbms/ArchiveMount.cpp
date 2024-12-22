@@ -64,6 +64,60 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     logContext.log(cta::log::INFO,
                    "Successfully assigned in DB Mount ID: " + std::to_string(mountInfo.mountId) + " to " +
                      std::to_string(jobIDsList.size()) + " jobs.");
+    retVector.reserve(jobIDsList.size());
+    // Fetch job info only in case there were jobs found and updated
+    if (!jobIDsList.empty()) {
+      rdbms::Rset resultSet;
+      // retrieve more job information about the updated batch
+      auto selconn = txn.getConn();
+      try {
+        resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
+        timings.insertAndReset("mountFetchBatchTime", t);
+        // Construct the return value
+        // Precompute the maximum value before the loop
+        common::dataStructures::TapeFile tpfile;
+        auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+        while (resultSet.next()) {
+          auto job = m_jobPool.acquireJob();
+          job->initialize(resultSet, logContext);
+          retVector.emplace_back(std::move(job));
+          auto& tapeFile = retVector.back()->tapeFile;
+          tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+          tapeFile.blockId = maxBlockId;
+        }
+        logContext.log(cta::log::INFO,
+                       "Successfully prepared queueing for " + std::to_string(retVector.size()) + " jobs.");
+      } catch (exception::Exception& ex) {
+        // we will roll back the previous update operation by calling ArchiveJobQueueRow::updateFailedTaskQueueJobStatus
+        logContext.log(cta::log::ERR,
+                       "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to select jobs after update: " +
+                         ex.getMessageValue());
+        try {
+          txn.start();
+          auto nrows = cta::schedulerdb::postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(
+            txn,
+            ArchiveJobStatus::AJS_ToTransferForUser,
+            jobIDsList);
+          txn.commit();
+          if (nrows != !jobIDsList.size()) {
+            logContext.log(cta::log::ERR,
+                           "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
+                           "updateFailedTaskQueueJobStatus failed as well ! ");
+          } else {
+            logContext.log(cta::log::INFO,
+                           "Successfully reverted back the previous DB update for Mount ID: " +
+                             std::to_string(mountInfo.mountId) + " for " + std::to_string(nrows) + " jobs.");
+          }
+        } catch (exception::Exception& ex) {
+          logContext.log(cta::log::ERR,
+                         "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
+                         "updateFailedTaskQueueJobStatus failed as well !  " +
+                           ex.getMessageValue());
+          txn.abort();
+        }
+        return ret;
+      }
+    }
   } catch (exception::Exception& ex) {
     logContext.log(
       cta::log::ERR,
@@ -73,61 +127,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     // returning empty list
     return ret;
   }
-  retVector.reserve(jobIDsList.size());
-  // Fetch job info only in case there were jobs found and updated
-  if (!jobIDsList.empty()) {
-    rdbms::Rset resultSet;
-    // retrieve more job information about the updated batch
-    auto selconn = m_connPool.getConn();
-    try {
-      resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
-      timings.insertAndReset("mountFetchBatchTime", t);
-      // Construct the return value
-      // Precompute the maximum value before the loop
-      common::dataStructures::TapeFile tpfile;
-      auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
-      while (resultSet.next()) {
-        auto job = m_jobPool.acquireJob();
-        job->initialize(resultSet, logContext);
-        retVector.emplace_back(std::move(job));
-        auto& tapeFile = retVector.back()->tapeFile;
-        tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-        tapeFile.blockId = maxBlockId;
-      }
-      logContext.log(cta::log::INFO,
-                     "Successfully prepared queueing for " + std::to_string(retVector.size()) + " jobs.");
-    } catch (exception::Exception& ex) {
-      // we will roll back the previous update operation by calling ArchiveJobQueueRow::updateFailedTaskQueueJobStatus
-      logContext.log(cta::log::ERR,
-                     "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to select jobs after update: " +
-                       ex.getMessageValue());
-      txn.abort();
-      try {
-        txn.start();
-        auto nrows = cta::schedulerdb::postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(
-          txn,
-          ArchiveJobStatus::AJS_ToTransferForUser,
-          jobIDsList);
-        txn.commit();
-        if (nrows != !jobIDsList.size()) {
-          logContext.log(cta::log::ERR,
-                         "In postgres::ArchiveJobQueueRow::updateMountInfo failed, reverting by "
-                         "updateFailedTaskQueueJobStatus failed as well ! ");
-        } else {
-          logContext.log(cta::log::INFO,
-                         "Successfully reverted back the previous DB update for Mount ID: " +
-                           std::to_string(mountInfo.mountId) + " for " + std::to_string(nrows) + " jobs.");
-        }
-      } catch (exception::Exception& ex) {
-        logContext.log(cta::log::ERR,
-                       "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to select jobs after update: " +
-                         ex.getMessageValue());
-        txn.abort();
-      }
-      return ret;
-    }
-    selconn.reset();
-  }
+
   // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   cta::log::ScopedParamContainer logParams(logContext);
