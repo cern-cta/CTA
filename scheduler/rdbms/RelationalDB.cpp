@@ -170,6 +170,27 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     }
     timings.insertAndReset("fetchedArchiveJobs", t);
     txn.commit();
+    logContext.log(cta::log::INFO,
+                   "Successfully flagged jobs for reporting.");
+    if (jobIDsList.empty()) {
+      timings.addToLog(logParams);
+      logContext.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
+      return ret;
+    }
+    auto& sqlconn = txn.getConn();
+    auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
+    try {
+      while (resultSet.next()) {
+        ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet));
+      }
+      timings.insertAndReset("fetchedAllArchiveJobColumns", t);
+      // this is not query commit, but conn commit returning
+      // the connection to the pool !
+    } catch (cta::exception::Exception& e) {
+      timings.addToLog(logParams);
+      std::string bt = e.backtrace();
+      logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    }
   } catch (exception::Exception& ex) {
     timings.addToLog(logParams);
     logContext.log(cta::log::ERR,
@@ -178,26 +199,6 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     txn.abort();
     return ret;
   }
-  if (jobIDsList.empty()) {
-    timings.addToLog(logParams);
-    logContext.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
-    return ret;
-  }
-  auto sqlconn = m_connPool.getConn();
-  auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
-  try {
-    while (resultSet.next()) {
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet));
-    }
-    timings.insertAndReset("fetchedAllArchiveJobColumns", t);
-    // this is not query commit, but conn commit returning
-    // the connection to the pool !
-  } catch (cta::exception::Exception& e) {
-    timings.addToLog(logParams);
-    std::string bt = e.backtrace();
-    logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
-  }
-  sqlconn.reset();
   timings.addToLog(logParams);
   logContext.log(log::INFO,
                  "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
