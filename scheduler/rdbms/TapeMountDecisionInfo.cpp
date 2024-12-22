@@ -68,12 +68,30 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
       "createArchiveMount: cannot create mount without holding scheduling lock");
   }
 
-  // Get the next Mount Id
-  auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
-  // release the named lock on the DB,
-  // so that other tape servers can query the job summary
   try {
+    // Get the next Mount Id
+    auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
+    am.nbFilesCurrentlyOnTape = tape.lastFSeq;
+    // Fill up the mount info
+    am.mountInfo.mountType = mount.type;
+    am.mountInfo.drive = driveName;
+    am.mountInfo.host = hostName;
+    am.mountInfo.mountId = newMountId;
+    am.mountInfo.tapePool = tape.tapePool;
+    am.mountInfo.logicalLibrary = logicalLibrary;
+    am.mountInfo.vid = tape.vid;
+    am.mountInfo.vo = tape.vo;
+    am.mountInfo.mediaType = tape.mediaType;
+    am.mountInfo.labelFormat = tape.labelFormat;
+    am.mountInfo.vendor = tape.vendor;
+    am.mountInfo.capacityInBytes = tape.capacityInBytes;
+    am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
+    // release the named lock on the DB,
+    // so that other tape servers can query the job summary
     commit();
+    // Return the mount session object to the user
+    std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
+    return ret;
   } catch (exception::Exception& ex) {
     log::LogContext lc(m_logger);
     lc.log(cta::log::ERR,
@@ -84,25 +102,6 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     m_lockTaken = false;
     throw;
   }
-  am.nbFilesCurrentlyOnTape = tape.lastFSeq;
-  // Fill up the mount info
-  am.mountInfo.mountType = mount.type;
-  am.mountInfo.drive = driveName;
-  am.mountInfo.host = hostName;
-  am.mountInfo.mountId = newMountId;
-  am.mountInfo.tapePool = tape.tapePool;
-  am.mountInfo.logicalLibrary = logicalLibrary;
-  am.mountInfo.vid = tape.vid;
-  am.mountInfo.vo = tape.vo;
-  am.mountInfo.mediaType = tape.mediaType;
-  am.mountInfo.labelFormat = tape.labelFormat;
-  am.mountInfo.vendor = tape.vendor;
-  am.mountInfo.capacityInBytes = tape.capacityInBytes;
-  am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
-
-  // Return the mount session object to the user
-  std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
-  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::RetrieveMount>
