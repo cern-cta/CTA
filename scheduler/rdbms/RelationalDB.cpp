@@ -170,8 +170,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     }
     timings.insertAndReset("fetchedArchiveJobs", t);
     txn.commit();
-    logContext.log(cta::log::INFO,
-                   "Successfully flagged jobs for reporting.");
+    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
     if (jobIDsList.empty()) {
       timings.addToLog(logParams);
       logContext.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
