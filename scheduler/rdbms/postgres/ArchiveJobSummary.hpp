@@ -26,7 +26,6 @@ namespace cta::schedulerdb::postgres {
  * Archive job table summary object
  */
 struct ArchiveJobSummaryRow {
-  std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
   std::string tapePool;
   std::string mountPolicy;
@@ -35,7 +34,6 @@ struct ArchiveJobSummaryRow {
   time_t oldestJobStartTime = std::numeric_limits<time_t>::max();
   uint16_t archivePriority = 0;
   uint32_t archiveMinRequestAge = 0;
-  uint32_t lastUpdateTime = 0;
   uint32_t lastJobUpdateTime = 0;
 
   ArchiveJobSummaryRow() = default;
@@ -48,7 +46,6 @@ struct ArchiveJobSummaryRow {
   explicit ArchiveJobSummaryRow(const rdbms::Rset& rset) { *this = rset; }
 
   ArchiveJobSummaryRow& operator=(const rdbms::Rset& rset) {
-    mountId = rset.columnOptionalUint64("MOUNT_ID");
     status = from_string<ArchiveJobStatus>(rset.columnString("STATUS"));
     tapePool = rset.columnString("TAPE_POOL");
     mountPolicy = rset.columnString("MOUNT_POLICY");
@@ -57,13 +54,11 @@ struct ArchiveJobSummaryRow {
     oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
     archivePriority = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
-    lastUpdateTime = rset.columnUint32("LAST_SUMMARY_UPDATE_TIME");
     lastJobUpdateTime = rset.columnUint32("LAST_JOB_UPDATE_TIME");
     return *this;
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
-    params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
     params.add("mountPolicy", mountPolicy);
@@ -72,7 +67,6 @@ struct ArchiveJobSummaryRow {
     params.add("oldestJobStartTime", oldestJobStartTime);
     params.add("archivePriority", archivePriority);
     params.add("archiveMinRequestAge", archiveMinRequestAge);
-    params.add("lastUpdateTime", lastUpdateTime);
     params.add("lastJobUpdateTime", lastJobUpdateTime);
   }
 
@@ -115,7 +109,6 @@ struct ArchiveJobSummaryRow {
 
     const char* const sql = R"SQL(
       SELECT 
-        MOUNT_ID,
         STATUS,
         TAPE_POOL,
         MOUNT_POLICY,
@@ -124,13 +117,9 @@ struct ArchiveJobSummaryRow {
         OLDEST_JOB_START_TIME,
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE, 
-        LAST_JOB_UPDATE_TIME, 
-        LAST_SUMMARY_UPDATE_TIME
+        LAST_JOB_UPDATE_TIME
       FROM 
-        ARCHIVE_JOB_SUMMARY 
-      WHERE 
-        MOUNT_ID IS NULL
-        AND IN_DRIVE_QUEUE IS FALSE
+        ARCHIVE_JOB_SUMMARY
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
