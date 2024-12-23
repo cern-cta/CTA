@@ -57,10 +57,10 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     updatedJobIDset =
       postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
-    txn.commit();
     while (updatedJobIDset.next()) {
       jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
     }
+    txn.commit();
     logContext.log(cta::log::INFO,
                    "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully assigned in DB Mount ID: " + std::to_string(mountInfo.mountId) + " to " +
                      std::to_string(jobIDsList.size()) + " jobs.");
