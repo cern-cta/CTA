@@ -80,9 +80,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
         common::dataStructures::TapeFile tpfile;
         auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
         while (resultSet.next()) {
-          auto job = m_jobPool.acquireJob();
-          job->initialize(resultSet, logContext);
-          retVector.emplace_back(std::move(job));
+          retVector.emplace_back(m_jobPool.acquireJob());
+          retVector.back()->initialize(resultSet, logContext);
           auto& tapeFile = retVector.back()->tapeFile;
           tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           tapeFile.blockId = maxBlockId;
