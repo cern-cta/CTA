@@ -48,6 +48,7 @@ Transaction& Transaction::operator=(Transaction&& other) noexcept {
 Transaction::~Transaction() {
   if (m_begin) {
     m_conn->rollback();
+    m_conn.reset();
   }
   m_conn.reset();  // Release the connection
 }
