@@ -227,6 +227,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_errorFlag.set();
 
     // If we reached the end of tape, this is not an error (ENOSPC)
+    bool doReportJobError = true;
     try {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
@@ -234,6 +235,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
       if (en.errorNumber() != ENOSPC) {
         throw;
+      } else {
+        doReportJobError = false;
       }
       // This is indeed the end of the tape. Not an error.
       watchdog.setErrorCount("Info_tapeFilledUp", 1);
@@ -254,14 +257,9 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // This is how we communicate the fact that a tape is full to the client.
     // We also change the log level to INFO for the case of end of tape.
     int errorLevel = cta::log::ERR;
-    bool doReportJobError = true;
-    try {
-      const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
-      if (ENOSPC == errnum.errorNumber()) {
-        errorLevel = cta::log::INFO;
-        doReportJobError = false;
-      }
-    } catch (...) {}
+    if(!doReportJobError){
+      errorLevel = cta::log::INFO;
+    };
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
