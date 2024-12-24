@@ -29,7 +29,7 @@ template<typename T>
 class JobPool {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
-  explicit JobPool(rdbms::ConnPool& connPool, size_t initialPoolSize = 4000);
+  explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 4000);
 
   // Acquire a job from the pool (or create a new one if the pool is empty)
   std::unique_ptr<T> acquireJob();
@@ -41,12 +41,13 @@ private:
   std::stack<std::unique_ptr<T>> m_pool;  // Stack to store reusable jobs
   size_t m_poolSize;                      // Initial pool size
   rdbms::ConnPool& m_connPool;
+  std::mutex m_poolMutex;  // Mutex to protect access to m_pool
 };
 
 // Constructor to initialize the job pool
 template<typename T>
-JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t initialPoolSize)
-    : m_poolSize(initialPoolSize),
+JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
+    : m_poolSize(poolSize),
       m_connPool(connPool) {
   // Optionally, pre-fill the pool with some job objects
   for (size_t i = 0; i < m_poolSize; ++i) {
@@ -57,6 +58,7 @@ JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t initialPoolSize)
 // Acquire a job from the pool
 template<typename T>
 std::unique_ptr<T> JobPool<T>::acquireJob() {
+  std::lock_guard<std::mutex> lock(m_poolMutex);
   if (!m_pool.empty()) {
     // Get a job from the pool if available
     auto job = std::move(m_pool.top());
@@ -71,8 +73,12 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
 // Release a job back into the pool
 template<typename T>
 void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
+  std::lock_guard<std::mutex> lock(m_poolMutex);
   // Reset the job's state as needed before reusing
-  job->reset();
-  m_pool.push(std::move(job));
+  if (m_pool.size() < m_poolSize) {
+    job->reset();
+    // Only push the job back into the pool if there is space
+    m_pool.push(std::move(job));
+  }
 }
 }  // namespace cta::schedulerdb
