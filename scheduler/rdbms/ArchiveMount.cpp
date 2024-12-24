@@ -62,8 +62,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     }
     txn.commit();
     logContext.log(cta::log::INFO,
-                   "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully assigned in DB Mount ID: " + std::to_string(mountInfo.mountId) + " to " +
-                     std::to_string(jobIDsList.size()) + " jobs.");
+                   "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully assigned in DB Mount ID: " +
+                     std::to_string(mountInfo.mountId) + " to " + std::to_string(jobIDsList.size()) + " jobs.");
     retVector.reserve(jobIDsList.size());
     // Fetch job info only in case there were jobs found and updated
     if (!jobIDsList.empty()) {
@@ -88,7 +88,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
         }
         timings.insertAndReset("mountJobInitBatchTime", t);
         logContext.log(cta::log::INFO,
-                       "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully prepared queueing for " + std::to_string(retVector.size()) + " jobs.");
+                       "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully prepared queueing for " +
+                         std::to_string(retVector.size()) + " jobs.");
       } catch (exception::Exception& ex) {
         // we will roll back the previous update operation by calling ArchiveJobQueueRow::updateFailedTaskQueueJobStatus
         logContext.log(cta::log::ERR,
@@ -240,20 +241,25 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "entire job list provided.");
     }
     // After processing, return the job object to the job pool for re-use
-    for (auto& job : jobsBatch) {
-      // check we can downcast (runtime check)
-      if (dynamic_cast<ArchiveRdbJob*>(job.get())) {
-        // Downcast to ArchiveRdbJob before returning it to the pool
-        std::unique_ptr<ArchiveRdbJob> castedJob(static_cast<ArchiveRdbJob*>(job.release()));
-        // Return the casted job to the pool
+    try {
+      for (auto& job : jobsBatch) {
+        // Attempt to release the job back to the pool
+        auto castedJob = std::unique_ptr<ArchiveRdbJob>(static_cast<ArchiveRdbJob*>(job.release()));
         m_jobPool.releaseJob(std::move(castedJob));
-      } else {
-        lc.log(cta::log::ERR,
-               "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to cast ArchiveJob to "
-               "ArchiveRdbJob and return the object to the pool for reuse.");
       }
+      jobsBatch.clear();  // Clear the container after all jobs are successfully processed
+    } catch (const exception::Exception& ex) {
+      lc.log(cta::log::ERR,
+             "In ArchiveMount::setJobBatchTransferred(): Failed to recycle all job objects for the job pool: " +
+               ex.getMessageValue());
+
+      // Destroy all remaining jobs in case of failure
+      for (auto& job : jobsBatch) {
+        // Release the unique_ptr ownership and delete the underlying object
+        delete job.release();
+      }
+      jobsBatch.clear();  // Ensure the container is emptied
     }
-    jobsBatch.clear();
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
