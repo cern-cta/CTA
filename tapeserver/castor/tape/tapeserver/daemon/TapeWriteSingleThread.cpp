@@ -494,6 +494,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
 
     // If we reached the end of tape, this is not an error (ENOSPC)
+    bool isTapeFull = false;
     try {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
@@ -501,6 +502,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
       if (en.errorNumber() != ENOSPC) {
         throw 0;
+      } else {
+        isTapeFull = true;
       }
       // This is indeed the end of the tape. Not an error.
       m_watchdog.setErrorCount("Info_tapeFilledUp", 1);
@@ -559,7 +562,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;
-    bool isTapeFull = false;
     // Override if we got en ENOSPC error (end of tape)
     try {
       const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
