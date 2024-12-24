@@ -29,7 +29,7 @@ template<typename T>
 class JobPool {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
-  explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 4000);
+  explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 100000);
 
   // Acquire a job from the pool (or create a new one if the pool is empty)
   std::unique_ptr<T> acquireJob();
@@ -74,10 +74,9 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
 template<typename T>
 void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
   std::lock_guard<std::mutex> lock(m_poolMutex);
-  // Reset the job's state as needed before reusing
   if (m_pool.size() < m_poolSize) {
+    // Reset the job's state as needed before reusing
     job->reset();
-    // Only push the job back into the pool if there is space
     m_pool.push(std::move(job));
   }
 }
