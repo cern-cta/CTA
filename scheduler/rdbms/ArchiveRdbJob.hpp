@@ -76,7 +76,7 @@ public:
    * @param connPool
    * @param rset
    */
-  void initialize(const rdbms::Rset& rset, log::LogContext& lc);
+  void initialize(const rdbms::Rset& rset, log::LogContext& lc) override;
   /**
    * Reset all data members to return the job object to the pool
    */
