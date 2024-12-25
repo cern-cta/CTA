@@ -311,7 +311,7 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
-    void initialize(const rdbms::Rset& resultSet, LogContext& logContext) override {};
+    void initialize(const rdbms::Rset& resultSet, log::LogContext& logContext) override {};
 
   private:
     void asyncSucceedTransfer();
