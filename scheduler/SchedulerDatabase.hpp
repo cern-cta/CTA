@@ -55,6 +55,7 @@
 #include "disk/DiskSystem.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "rdbms/Rset.hpp"
 
 namespace cta {
 
