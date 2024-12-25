@@ -310,6 +310,8 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
+    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    void initialize(const rdbms::Rset& resultSet, LogContext& logContext) override {};
 
   private:
     void asyncSucceedTransfer();
