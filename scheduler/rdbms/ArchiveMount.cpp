@@ -51,15 +51,18 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   txn.takeNamedLock(mountInfo.tapePool);
   cta::log::TimingList timings;
   cta::utils::Timer t;
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
   try {
-    rdbms::Rset queuedJobs =
+    auto [queuedJobs, nrows] =
       postgres::ArchiveJobQueueRow::moveJobsToDbQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("updateMountInfoRowCount", nrows);
+    params.add("MountID", mountInfo.mountId);
     txn.commit();
     logContext.log(cta::log::INFO,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID: " +
-                     std::to_string(mountInfo.mountId) + " to " + std::to_string(queuedJobs.size()) + " DB jobs.");
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(queuedJobs.size());
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -93,7 +96,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     throw;
   }
   // Convert vector to list (which is expected as return type)
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   cta::log::ScopedParamContainer logParams(logContext);
   timings.insertAndReset("mountTransformBatchTime", t);
@@ -153,6 +155,13 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   try {
     nrows =
       postgres::ArchiveJobQueueRow::requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false, jobIDsList);
+    if (nrows != jobIDsList.size()){
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("jobCountToRequeue", jobIDsList.size());
+      params.add("jobCountRequeued", nrows);
+      logContext.log(cta::log::ERR,
+                     "In schedulerdb::ArchiveMount::failJobBatch(): requeueFailedJob failed to requeue all jobs !");
+    }
     txn.commit();
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,

@@ -454,11 +454,11 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset moveJobsToDbQueue(Transaction& txn,
-                                       ArchiveJobStatus status,
-                                       const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                       uint64_t maxBytesRequested,
-                                       uint64_t limit);
+  static std::pair<rdbms::Rset, uint64_t> moveJobsToDbQueue(Transaction& txn,
+                                                            ArchiveJobStatus status,
+                                                            const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                                            uint64_t maxBytesRequested,
+                                                            uint64_t limit);
 
   /**
    * Update job status

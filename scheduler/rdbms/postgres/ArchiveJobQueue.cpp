@@ -23,7 +23,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-rdbms::Rset ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
+std::pair<rdbms::Rset, uint64_t> ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                                                   ArchiveJobStatus status,
                                                   const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                                   uint64_t maxBytesRequested,
@@ -144,7 +144,10 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  return stmt.executeQuery();
+  auto result = stmt.executeQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  return std::make_pair(std::move(result), nrows);
+
 }
 
 uint64_t
@@ -529,6 +532,20 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
 
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  uint64_t nrows = stmt.getNbAffectedRows();
+  if (nrows < 0){
+    sql = R"SQL(
+      DELETE FROM ARCHIVE_INSERT_QUEUE
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
+    stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+    stmt.executeNonQuery();
+    nrows = stmt.getNbAffectedRows();
+  }
+  return nrows;
 }
 }  // namespace cta::schedulerdb::postgres
