@@ -209,7 +209,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
       try {
         // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
         m_jobRow.retriesWithinMount = 0;
-        uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser, 0);
+        uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false);
         txn.commit();
         if (nrows != 1) {
           log::ScopedParamContainer(lc)
@@ -219,7 +219,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
             .add("tapePool", m_tapePool)
             .add("failureReason", m_jobRow.failureLogs.value_or(""))
             .log(log::WARNING,
-                 "In schedulerdb::ArchiveJobQueueRow::updateFailedJobStatus(): requeue job to a new mount failed, no "
+                 "In schedulerdb::ArchiveJobQueueRow::requeueFailedJob(): requeue job to a new mount failed, no "
                  "job found in DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
         }
         // since requeueing, we do not report and we do not
@@ -234,7 +234,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
     } else {
       try {
         // requeue to the same mount simply by changing IN_DRIVE_QUEUE to False and updating all other stat fields
-        uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToTransferForUser);
+        uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true);
         txn.commit();
         if (nrows != 1) {
           log::ScopedParamContainer(lc)
@@ -244,7 +244,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
             .add("tapePool", m_tapePool)
             .add("failureReason", m_jobRow.failureLogs.value_or(""))
             .log(log::WARNING,
-                 "In schedulerdb::ArchiveJobQueueRow::updateFailedJobStatus(): requeue job on the same mount failed, "
+                 "In schedulerdb::ArchiveJobQueueRow::requeueFailedJob(): requeue job on the same mount failed, "
                  "no job found in DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
         }
         // since requeueing, we do not report and we do not

@@ -54,84 +54,44 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
   try {
-    updatedJobIDset =
-      postgres::ArchiveJobQueueRow::updateMountInfo(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+    auto [queuedJobs, nrows] =
+      postgres::ArchiveJobQueueRow::moveJobsToDbQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
-    while (updatedJobIDset.next()) {
-      jobIDsList.emplace_back(std::to_string(updatedJobIDset.columnUint64("JOB_ID")));
-    }
-    txn.commit();
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("updateMountInfoRowCount", nrows);
+    params.add("MountID", mountInfo.mountId);
     logContext.log(cta::log::INFO,
-                   "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully assigned in DB Mount ID: " +
-                     std::to_string(mountInfo.mountId) + " to " + std::to_string(jobIDsList.size()) + " jobs.");
-    retVector.reserve(jobIDsList.size());
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
+    retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
-    if (!jobIDsList.empty()) {
-      rdbms::Rset resultSet;
-      // retrieve more job information about the updated batch
-      auto& selconn = txn.getConn();
-      try {
-        resultSet = cta::schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(selconn, jobIDsList);
-        timings.insertAndReset("mountFetchBatchTime", t);
-        logContext.log(cta::log::INFO,
-                       "In postgres::ArchiveJobQueueRow::updateMountInfo: starting to prepare jobs for queueing.");
-        // Construct the return value
-        // Precompute the maximum value before the loop
-        common::dataStructures::TapeFile tpfile;
-        auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
-        while (resultSet.next()) {
-          retVector.emplace_back(m_jobPool.acquireJob());
-          retVector.back()->initialize(resultSet, logContext);
-          auto& tapeFile = retVector.back()->tapeFile;
-          tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-          tapeFile.blockId = maxBlockId;
-        }
-        timings.insertAndReset("mountJobInitBatchTime", t);
-        logContext.log(cta::log::INFO,
-                       "In postgres::ArchiveJobQueueRow::updateMountInfo: successfully prepared queueing for " +
-                         std::to_string(retVector.size()) + " jobs.");
-      } catch (exception::Exception& ex) {
-        // we will roll back the previous update operation by calling ArchiveJobQueueRow::updateFailedTaskQueueJobStatus
-        logContext.log(cta::log::ERR,
-                       "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to select jobs after update: " +
-                         ex.getMessageValue());
-        try {
-          txn.start();
-          auto nrows = cta::schedulerdb::postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(
-            txn,
-            ArchiveJobStatus::AJS_ToTransferForUser,
-            jobIDsList);
-          txn.commit();
-          if (nrows != !jobIDsList.size()) {
-            logContext.log(cta::log::ERR,
-                           "In postgres::ArchiveJobQueueRow::updateMountInfo: failed, reverting by "
-                           "updateFailedTaskQueueJobStatus failed as well !");
-          } else {
-            logContext.log(cta::log::INFO,
-                           "Successfully reverted back the previous DB update for Mount ID: " +
-                             std::to_string(mountInfo.mountId) + " for " + std::to_string(nrows) + " jobs.");
-          }
-        } catch (exception::Exception& ex) {
-          logContext.log(cta::log::ERR,
-                         "In postgres::ArchiveJobQueueRow::updateMountInfo: failed, reverting by "
-                         "updateFailedTaskQueueJobStatus failed as well !  " +
-                           ex.getMessageValue());
-          txn.abort();
-          throw;
-        }
-        return ret;
+    if (!queuedJobs.isEmpty()) {
+      // Construct the return value
+      // Precompute the maximum value before the loop
+      common::dataStructures::TapeFile tpfile;
+      auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+      while (queuedJobs.next()) {
+        retVector.emplace_back(m_jobPool.acquireJob());
+        retVector.back()->initialize(queuedJobs, logContext);
+        auto& tapeFile = retVector.back()->tapeFile;
+        tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+        tapeFile.blockId = maxBlockId;
       }
+      timings.insertAndReset("mountJobInitBatchTime", t);
+      logContext.log(cta::log::INFO,
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully prepared queueing for " +
+                       std::to_string(retVector.size()) + " jobs.");
     } else {
       logContext.log(cta::log::WARNING,
-                     "In postgres::ArchiveJobQueueRow::updateMountInfo: no DB jobs updated for Mount ID: " +
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no DB jobs queued for Mount ID: " +
                        std::to_string(mountInfo.mountId));
       return ret;
     }
+    txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(
-      cta::log::ERR,
-      "In postgres::ArchiveJobQueueRow::updateMountInfo: failed to update Mount ID. Aborting the transaction." +
-        ex.getMessageValue());
+    logContext.log(cta::log::ERR,
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs for given Mount ID. "
+                   "Aborting the transaction." +
+                     ex.getMessageValue());
     txn.abort();
     throw;
   }
@@ -193,9 +153,15 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows = postgres::ArchiveJobQueueRow::updateFailedTaskQueueJobStatus(txn,
-                                                                         ArchiveJobStatus::AJS_ToTransferForUser,
-                                                                         jobIDsList);
+    nrows =
+      postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
+    if (nrows != jobIDsList.size()){
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("jobCountToRequeue", jobIDsList.size());
+      params.add("jobCountRequeued", nrows);
+      logContext.log(cta::log::ERR,
+                     "In schedulerdb::ArchiveMount::failJobBatch(): requeueFailedJob failed to requeue all jobs !");
+    }
     txn.commit();
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
