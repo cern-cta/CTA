@@ -533,19 +533,17 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
 
   stmt.executeNonQuery();
   uint64_t nrows = stmt.getNbAffectedRows();
-  if (nrows < 0){
-    sql = R"SQL(
-      DELETE FROM ARCHIVE_INSERT_QUEUE
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
-    )SQL";
-    stmt = txn.getConn().createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE", diskInstance);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-    stmt.executeNonQuery();
-    nrows = stmt.getNbAffectedRows();
-  }
+  sql = R"SQL(
+    DELETE FROM ARCHIVE_INSERT_QUEUE
+    WHERE
+      DISK_INSTANCE = :DISK_INSTANCE AND
+      ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+  )SQL";
+  stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":DISK_INSTANCE", diskInstance);
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+  stmt.executeNonQuery();
+  nrows += stmt.getNbAffectedRows();
   return nrows;
 }
 }  // namespace cta::schedulerdb::postgres
