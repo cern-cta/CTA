@@ -488,7 +488,7 @@ struct ArchiveJobQueueRow {
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
-  uint64_t requeueFailedJob(Transaction& txn,
+  static uint64_t requeueFailedJob(Transaction& txn,
                             ArchiveJobStatus status,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
