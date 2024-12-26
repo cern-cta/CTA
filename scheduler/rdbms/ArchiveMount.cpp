@@ -60,7 +60,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     cta::log::ScopedParamContainer params(logContext);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    txn.commit();
     logContext.log(cta::log::INFO,
                    "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
@@ -87,6 +86,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                        std::to_string(mountInfo.mountId));
       return ret;
     }
+    txn.commit();
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
                    "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs for given Mount ID. "
