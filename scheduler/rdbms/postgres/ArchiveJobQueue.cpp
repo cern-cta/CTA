@@ -358,7 +358,7 @@ uint64_t requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::l
   )SQL";
   if (!jobIDs.empty()) {
     std::string sqlpart;
-    for (const auto& jid : jobIDs.value()) {
+    for (const auto& jid : jobIDs) {
       sqlpart += jid + ",";
     }
     if (!sqlpart.empty()) {
