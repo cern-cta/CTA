@@ -58,7 +58,6 @@ struct ArchiveJobQueueRow {
   std::optional<std::string> reportFailureLogs = std::nullopt;
   bool is_repack = false;
   bool is_reporting = false;
-  bool in_drive_queue = false;
   uint64_t repackId = 0;
   std::string repackFilebufUrl = "";
   uint64_t repackFseq = 0;
@@ -146,7 +145,6 @@ struct ArchiveJobQueueRow {
     reportFailureLogs.reset();  // Resetting optional value
     is_repack = false;
     is_reporting = false;
-    in_drive_queue = false;
     repackId = 0;
     repackFilebufUrl.clear();
     repackFseq = 0;
@@ -189,7 +187,6 @@ struct ArchiveJobQueueRow {
     srcUrl = rset.columnStringNoOpt("SRC_URL");
     archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
     is_reporting = rset.columnBoolNoOpt("IS_REPORTING");
-    in_drive_queue = rset.columnBoolNoOpt("IN_DRIVE_QUEUE");
     vid = rset.columnStringNoOpt("VID");
     drive = rset.columnStringNoOpt("DRIVE");
     host = rset.columnStringNoOpt("HOST");
@@ -210,7 +207,7 @@ struct ArchiveJobQueueRow {
   void insert(rdbms::Conn& conn) const {
     // does not set mountId or jobId
     const char* const sql = R"SQL(
-      INSERT INTO ARCHIVE_JOB_QUEUE(
+      INSERT INTO ARCHIVE_INSERT_QUEUE(
         ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
@@ -403,7 +400,6 @@ struct ArchiveJobQueueRow {
         MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
         MAX_REPORT_RETRIES AS MAX_REPORT_RETRIES,
         IS_REPORTING AS IS_REPORTING,
-        IN_DRIVE_QUEUE AS IN_DRIVE_QUEUE,
         DRIVE AS DRIVE,
         HOST AS HOST,
         MOUNT_TYPE AS MOUNT_TYPE,
@@ -446,6 +442,9 @@ struct ArchiveJobQueueRow {
 
   /**
    * Assign a mount ID and VID to a selection of rows
+   * which will be moved from Insert queue
+   * to Job queue table in the DB
+   *
    *
    * @param txn        Transaction to use for this query
    * @param status     Archive Job Status to select on
@@ -455,11 +454,11 @@ struct ArchiveJobQueueRow {
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static rdbms::Rset updateMountInfo(Transaction& txn,
-                                     ArchiveJobStatus status,
-                                     const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                     uint64_t maxBytesRequested,
-                                     uint64_t limit);
+  static rdbms::Rset moveJobsToDbQueue(Transaction& txn,
+                                       ArchiveJobStatus status,
+                                       const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                       uint64_t maxBytesRequested,
+                                       uint64_t limit);
 
   /**
    * Update job status
@@ -476,22 +475,23 @@ struct ArchiveJobQueueRow {
    *
    * @param txn                  Transaction to use for this query
    * @param status               Archive Job Status to select on
-   * @param jobID                jobID to select the job for update
    * @return                     Number of updated rows
    */
-  uint64_t
-  updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status, std::optional<uint64_t> mountId = std::nullopt);
+  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status);
 
   /**
-   * Update job status for a batch of failed jobs (task queue failure use-case, e.g. tape full)
+   * Requeue (move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE)
+   * a failed job so that it can be requeued
    *
-   * @param txn        Transaction to use for this query
-   * @param status     Archive Job Status to select on
-   * @param jobIDs     List of jobID strings to select
-   * @return           Number of updated rows
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   * @param keepMountId          true or false
+   * @return                     Number of updated rows
    */
-  static uint64_t
-  updateFailedTaskQueueJobStatus(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
+  uint64_t requeueFailedJob(Transaction& txn,
+                            ArchiveJobStatus status,
+                            bool keepMountId,
+                            std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
    * Update job status when job report failed
