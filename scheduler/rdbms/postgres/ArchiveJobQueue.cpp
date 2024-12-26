@@ -23,11 +23,12 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::schedulerdb::postgres {
-std::pair<rdbms::Rset, uint64_t> ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
-                                                  ArchiveJobStatus status,
-                                                  const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                                  uint64_t maxBytesRequested,
-                                                  uint64_t limit) {
+std::pair<rdbms::Rset, uint64_t>
+ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
+                                      ArchiveJobStatus status,
+                                      const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                      uint64_t maxBytesRequested,
+                                      uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    */
@@ -147,7 +148,6 @@ std::pair<rdbms::Rset, uint64_t> ArchiveJobQueueRow::moveJobsToDbQueue(Transacti
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
   return std::make_pair(std::move(result), nrows);
-
 }
 
 uint64_t
@@ -350,6 +350,120 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
 };
+
+uint64_t requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM ARCHIVE_JOB_QUEUE
+  )SQL";
+  if (!jobIDs.empty()) {
+    keeprowjid = false;
+    std::string sqlpart;
+    for (const auto& jid : jobIDs.value()) {
+      sqlpart += jid + ",";
+    }
+    if (!sqlpart.empty()) {
+      sqlpart.pop_back();
+    }
+    sql += R"SQL(
+      WHERE JOB_ID IN (
+    )SQL";
+    sql += sqlpart + std::string(")");
+  } else {
+    return 0;
+  }
+  sql += R"SQL(
+        RETURNING *
+    )
+    INSERT INTO ARCHIVE_INSERT_QUEUE (
+    ARCHIVE_REQUEST_ID,
+    REQUEST_JOB_COUNT,
+    TAPE_POOL,
+    MOUNT_POLICY,
+    PRIORITY,
+    MIN_ARCHIVE_REQUEST_AGE,
+    ARCHIVE_FILE_ID,
+    SIZE_IN_BYTES,
+    COPY_NB,
+    START_TIME,
+    CHECKSUMBLOB,
+    CREATION_TIME,
+    DISK_INSTANCE,
+    DISK_FILE_ID,
+    DISK_FILE_OWNER_UID,
+    DISK_FILE_GID,
+    DISK_FILE_PATH,
+    ARCHIVE_REPORT_URL,
+    ARCHIVE_ERROR_REPORT_URL,
+    REQUESTER_NAME,
+    REQUESTER_GROUP,
+    SRC_URL,
+    STORAGE_CLASS,
+    MAX_RETRIES_WITHIN_MOUNT,
+    MAX_TOTAL_RETRIES,
+    TOTAL_REPORT_RETRIES,
+    MAX_REPORT_RETRIES,
+    MOUNT_ID,
+    VID,
+    DRIVE,
+    HOST,
+    MOUNT_TYPE,
+    LOGICAL_LIBRARY,
+    STATUS,
+    TOTAL_RETRIES,
+    RETRIES_WITHIN_MOUNT,
+    LAST_MOUNT_WITH_FAILURE,
+    FAILURE_LOG)
+        SELECT
+            M.ARCHIVE_REQUEST_ID,
+            M.REQUEST_JOB_COUNT,
+            M.TAPE_POOL,
+            M.MOUNT_POLICY,
+            M.PRIORITY,
+            M.MIN_ARCHIVE_REQUEST_AGE,
+            M.ARCHIVE_FILE_ID,
+            M.SIZE_IN_BYTES,
+            M.COPY_NB,
+            M.START_TIME,
+            M.CHECKSUMBLOB,
+            M.CREATION_TIME,
+            M.DISK_INSTANCE,
+            M.DISK_FILE_ID,
+            M.DISK_FILE_OWNER_UID,
+            M.DISK_FILE_GID,
+            M.DISK_FILE_PATH,
+            M.ARCHIVE_REPORT_URL,
+            M.ARCHIVE_ERROR_REPORT_URL,
+            M.REQUESTER_NAME,
+            M.REQUESTER_GROUP,
+            M.SRC_URL,
+            M.STORAGE_CLASS,
+            M.RETRIES_WITHIN_MOUNT,
+            M.MAX_RETRIES_WITHIN_MOUNT,
+            M.TOTAL_RETRIES,
+            M.LAST_MOUNT_WITH_FAILURE,
+            M.MAX_TOTAL_RETRIES,
+            M.TOTAL_REPORT_RETRIES,
+            M.MAX_REPORT_RETRIES,
+            M.VID AS VID,
+            M.DRIVE AS DRIVE,
+            M.HOST AS HOST,
+            M.MOUNT_TYPE AS MOUNT_TYPE,
+            M.LOGICAL_LIB AS LOGICAL_LIBRARY,
+            M.TOTAL_RETRIES AS TOTAL_RETRIES,
+            M.RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+            M.LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
+            :STATUS AS STATUS,
+            NULL AS MOUNT_ID,
+            FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG
+        FROM MOVED_ROWS M;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
 
 void ArchiveJobQueueRow::copyToFailedJobTable(Transaction& txn) {
   std::string sql = R"SQL(

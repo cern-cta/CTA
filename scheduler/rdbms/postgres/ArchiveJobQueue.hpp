@@ -480,18 +480,35 @@ struct ArchiveJobQueueRow {
   uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status);
 
   /**
-   * Requeue (move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE)
-   * a failed job so that it can be requeued
+   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * a failed job so that it can be to drive queues requeued.
+   * This method updates also the retry statistics
    *
    * @param txn                  Transaction to use for this query
    * @param status               Archive Job Status to select on
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
-  static uint64_t requeueFailedJob(Transaction& txn,
+  uint64_t requeueFailedJob(Transaction& txn,
                             ArchiveJobStatus status,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
+
+  /**
+   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * a batch of jobs so that they can be requeued to drive queues later
+   * This methos is static and does not udate any retry statistics
+   * It is used for batch of jobs not processed, returning from the task queue
+   * (e.g. in case of a full tape)
+   *
+   * @param txn                  Transaction to use for this query
+   * @param status               Archive Job Status to select on
+   * @param keepMountId          true or false
+   * @return                     Number of updated rows
+   */
+  static uint64_t requeueJobBatch(Transaction& txn,
+                                  ArchiveJobStatus status,
+                                  const std::list<std::string>& jobIDs);
 
   /**
    * Update job status when job report failed

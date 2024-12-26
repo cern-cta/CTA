@@ -154,7 +154,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   uint64_t nrows = 0;
   try {
     nrows =
-      postgres::ArchiveJobQueueRow::requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false, jobIDsList);
+      postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
     if (nrows != jobIDsList.size()){
       cta::log::ScopedParamContainer params(logContext);
       params.add("jobCountToRequeue", jobIDsList.size());
