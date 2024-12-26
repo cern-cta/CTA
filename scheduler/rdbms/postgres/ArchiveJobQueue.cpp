@@ -357,7 +357,6 @@ uint64_t requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::l
         DELETE FROM ARCHIVE_JOB_QUEUE
   )SQL";
   if (!jobIDs.empty()) {
-    keeprowjid = false;
     std::string sqlpart;
     for (const auto& jid : jobIDs.value()) {
       sqlpart += jid + ",";
