@@ -158,47 +158,30 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
   std::list<schedulerdb::ArchiveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
-  rdbms::Rset jobIDresultSet;
-  std::list<std::string> jobIDsList;
+  rdbms::Rset resultSet;
   try {
     // gc_delay 3h delay for each report, if not reported, requeue for reporting
     uint64_t gc_delay = 10800;
-    jobIDresultSet =
+    resultSet =
       schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
-    while (jobIDresultSet.next()) {
-      jobIDsList.emplace_back(std::to_string(jobIDresultSet.columnUint64("JOB_ID")));
-    }
-    timings.insertAndReset("fetchedArchiveJobs", t);
-    txn.commit();
-    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
-    if (jobIDsList.empty()) {
-      timings.addToLog(logParams);
+    if (resultSet.isEmpty()) {
       logContext.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
       return ret;
     }
-    auto& sqlconn = txn.getConn();
-    auto resultSet = schedulerdb::postgres::ArchiveJobQueueRow::selectJobsByJobID(sqlconn, jobIDsList);
-    try {
-      while (resultSet.next()) {
-        ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet));
-      }
-      timings.insertAndReset("fetchedAllArchiveJobColumns", t);
-      // this is not query commit, but conn commit returning
-      // the connection to the pool !
-    } catch (cta::exception::Exception& e) {
-      timings.addToLog(logParams);
-      std::string bt = e.backtrace();
-      logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    while (resultSet.next()) {
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet));
     }
-  } catch (exception::Exception& ex) {
+    txn.commit();
+    timings.insertAndReset("fetchedArchiveJobs", t);
     timings.addToLog(logParams);
+    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+  } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
                    "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
                      ex.getMessageValue());
     txn.abort();
     return ret;
   }
-  timings.addToLog(logParams);
   logContext.log(log::INFO,
                  "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
   return ret;
@@ -347,49 +330,55 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                             const std::optional<std::string> diskSystemName,
                             log::LogContext& logContext) {
-  schedulerdb::Transaction txn(m_connPool);
-
-  // Get the best vid from the cache
-  std::set<std::string, std::less<>> candidateVids;
-  for (auto& tf : criteria.archiveFile.tapeFiles) {
-    candidateVids.insert(tf.vid);
-  }
-
   SchedulerDatabase::RetrieveRequestInfo ret;
-  ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, txn, false);
+  try {
+    schedulerdb::Transaction txn(m_connPool);
 
-  uint8_t bestCopyNb = 0;
-  for (auto& tf : criteria.archiveFile.tapeFiles) {
-    if (tf.vid == ret.selectedVid) {
-      bestCopyNb = tf.copyNb;
-      // Appending the file size to the dstURL so that
-      // XrootD will fail to retrieve if there is not enough free space
-      // in the eos disk
-      rqst.appendFileSizeToDstURL(tf.fileSize);
-      break;
+    // Get the best vid from the cache
+    std::set<std::string, std::less<>> candidateVids;
+    for (auto& tf : criteria.archiveFile.tapeFiles) {
+      candidateVids.insert(tf.vid);
     }
+
+    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, txn, false);
+
+    uint8_t bestCopyNb = 0;
+    for (auto& tf : criteria.archiveFile.tapeFiles) {
+      if (tf.vid == ret.selectedVid) {
+        bestCopyNb = tf.copyNb;
+        // Appending the file size to the dstURL so that
+        // XrootD will fail to retrieve if there is not enough free space
+        // in the eos disk
+        rqst.appendFileSizeToDstURL(tf.fileSize);
+        break;
+      }
+    }
+    // In order to post the job, construct it first in memory.
+    auto sqlconn = m_connPool.getConn();
+    auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    ret.requestId = rReq->getIdStr();
+    rReq->setSchedulerRequest(rqst);
+    rReq->setRetrieveFileQueueCriteria(criteria);
+    rReq->setActivityIfNeeded(rqst, criteria);
+    rReq->setCreationTime(rqst.creationLog.time);
+    rReq->setIsVerifyOnly(rqst.isVerifyOnly);
+    if (diskSystemName) {
+      rReq->setDiskSystemName(diskSystemName.value());
+    }
+
+    rReq->setActiveCopyNumber(bestCopyNb);
+    rReq->insert();
+
+    // Commit the transaction
+    rReq->commit();
+    sqlconn.reset();
+
+    return ret;
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve. " + ex.getMessageValue());
+    return ret;
   }
-  // In order to post the job, construct it first in memory.
-  auto sqlconn = m_connPool.getConn();
-  auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(sqlconn, logContext);
-  ret.requestId = rReq->getIdStr();
-  rReq->setSchedulerRequest(rqst);
-  rReq->setRetrieveFileQueueCriteria(criteria);
-  rReq->setActivityIfNeeded(rqst, criteria);
-  rReq->setCreationTime(rqst.creationLog.time);
-  rReq->setIsVerifyOnly(rqst.isVerifyOnly);
-  if (diskSystemName) {
-    rReq->setDiskSystemName(diskSystemName.value());
-  }
-
-  rReq->setActiveCopyNumber(bestCopyNb);
-  rReq->insert();
-
-  // Commit the transaction
-  rReq->commit();
-  sqlconn.reset();
-
-  return ret;
 }
 
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
