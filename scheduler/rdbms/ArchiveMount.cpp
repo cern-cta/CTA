@@ -63,7 +63,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     txn.commit();
     logContext.log(cta::log::INFO,
                    "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
-    retVector.reserve(queuedJobs.size());
+    retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
       // Construct the return value
