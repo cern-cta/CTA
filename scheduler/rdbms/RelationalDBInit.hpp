@@ -32,9 +32,18 @@ class Catalogue;
 }
 
 namespace cta {
-
+/**
+ * The RelationalDBQCR or RelationalDBGC (TO BE DECIDED) should regularly look at the ARCHIVE_INSERT_QUEUE for
+ * any jobs with assigned MOUNT_ID for which there are no active MOUNTS and sets their
+ * MOUNT_ID to NULL  freeing them to be requeued to new drive queues.
+ * In addition, it checks the ARCHIVE_JOB_QUEUE table where the drive queues are
+ * and checks if there are any jobs for which there was no update since a very long period of time.
+ * In that case, it looks up the status of the mount and if active, does nothing,
+ * if dead then it cleans the task queue
+ * and moved the jobs back to ARCHIVE_INSERT_QUEUE so that they can be queued again.
+ */
 class RelationalDBQCR {
-  // QueueCleanupRunner
+  // DatabaseQueueCleanupRunner
 public:
   RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
