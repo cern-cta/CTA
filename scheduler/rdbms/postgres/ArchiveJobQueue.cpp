@@ -351,7 +351,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   return stmt.getNbAffectedRows();
 };
 
-uint64_t requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
+uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_JOB_QUEUE
