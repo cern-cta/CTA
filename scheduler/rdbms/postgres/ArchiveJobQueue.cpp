@@ -271,11 +271,11 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     REQUESTER_GROUP,
     SRC_URL,
     STORAGE_CLASS,
+    RETRIES_WITHIN_MOUNT,
     MAX_RETRIES_WITHIN_MOUNT,
     MAX_TOTAL_RETRIES,
     TOTAL_REPORT_RETRIES,
     MAX_REPORT_RETRIES,
-    MOUNT_ID,
     VID,
     DRIVE,
     HOST,
@@ -285,7 +285,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     TOTAL_RETRIES,
     RETRIES_WITHIN_MOUNT,
     LAST_MOUNT_WITH_FAILURE,
-    FAILURE_LOG)
+    FAILURE_LOG,
+    MOUNT_ID)
         SELECT
             M.ARCHIVE_REQUEST_ID,
             M.REQUEST_JOB_COUNT,
@@ -312,16 +313,14 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
             M.STORAGE_CLASS,
             M.RETRIES_WITHIN_MOUNT,
             M.MAX_RETRIES_WITHIN_MOUNT,
-            M.TOTAL_RETRIES,
-            M.LAST_MOUNT_WITH_FAILURE,
             M.MAX_TOTAL_RETRIES,
-            M.TOTAL_REPORT_RETRIES,
+            M.TOTAL_REPORT_RETRIES
             M.MAX_REPORT_RETRIES,
             M.VID AS VID,
             M.DRIVE AS DRIVE,
             M.HOST AS HOST,
             M.MOUNT_TYPE AS MOUNT_TYPE,
-            M.LOGICAL_LIB AS LOGICAL_LIBRARY,
+            M.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
             :STATUS AS STATUS,
             :TOTAL_RETRIES AS TOTAL_RETRIES,
             :RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
@@ -351,7 +350,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   return stmt.getNbAffectedRows();
 };
 
-uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs){
+uint64_t
+ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_JOB_QUEUE
@@ -375,7 +375,7 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus 
         RETURNING *
     )
     INSERT INTO ARCHIVE_INSERT_QUEUE (
-    ARCHIVE_REQUEST_ID,
+                ARCHIVE_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
     MOUNT_POLICY,
@@ -398,20 +398,20 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus 
     REQUESTER_GROUP,
     SRC_URL,
     STORAGE_CLASS,
+    RETRIES_WITHIN_MOUNT,
     MAX_RETRIES_WITHIN_MOUNT,
+    TOTAL_RETRIES,
     MAX_TOTAL_RETRIES,
     TOTAL_REPORT_RETRIES,
     MAX_REPORT_RETRIES,
-    MOUNT_ID,
+    LAST_MOUNT_WITH_FAILURE,
     VID,
     DRIVE,
     HOST,
     MOUNT_TYPE,
     LOGICAL_LIBRARY,
     STATUS,
-    TOTAL_RETRIES,
-    RETRIES_WITHIN_MOUNT,
-    LAST_MOUNT_WITH_FAILURE,
+    MOUNT_ID,
     FAILURE_LOG)
         SELECT
             M.ARCHIVE_REQUEST_ID,
@@ -440,18 +440,15 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus 
             M.RETRIES_WITHIN_MOUNT,
             M.MAX_RETRIES_WITHIN_MOUNT,
             M.TOTAL_RETRIES,
-            M.LAST_MOUNT_WITH_FAILURE,
             M.MAX_TOTAL_RETRIES,
             M.TOTAL_REPORT_RETRIES,
             M.MAX_REPORT_RETRIES,
-            M.VID AS VID,
-            M.DRIVE AS DRIVE,
-            M.HOST AS HOST,
-            M.MOUNT_TYPE AS MOUNT_TYPE,
-            M.LOGICAL_LIB AS LOGICAL_LIBRARY,
-            M.TOTAL_RETRIES AS TOTAL_RETRIES,
-            M.RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
-            M.LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
+            M.LAST_MOUNT_WITH_FAILURE,
+            M.VID,
+            M.DRIVE,
+            M.HOST,
+            M.MOUNT_TYPE,
+            M.LOGICAL_LIBRARY,
             :STATUS AS STATUS,
             NULL AS MOUNT_ID,
             FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG

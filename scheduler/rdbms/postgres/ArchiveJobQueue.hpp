@@ -203,7 +203,6 @@ struct ArchiveJobQueueRow {
     totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
     return *this;
   }
-
   void insert(rdbms::Conn& conn) const {
     // does not set mountId or jobId
     const char* const sql = R"SQL(
