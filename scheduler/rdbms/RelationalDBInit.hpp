@@ -33,7 +33,7 @@ class Catalogue;
 
 namespace cta {
 /**
- * The RelationalDBQCR regularly looks at the ARCHIVE_INSERT_QUEUE for
+ * The RelationalDBQCR or RelationalDBGC (TO BE DECIDED) should regularly look at the ARCHIVE_INSERT_QUEUE for
  * any jobs with assigned MOUNT_ID for which there are no active MOUNTS and sets their
  * MOUNT_ID to NULL  freeing them to be requeued to new drive queues.
  * In addition, it checks the ARCHIVE_JOB_QUEUE table where the drive queues are

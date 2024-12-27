@@ -519,18 +519,20 @@ struct ArchiveJobQueueRow {
   uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status);
 
   /**
-   * Copy the job row to the ARCHIVE FAILED JOB TABLE
+   * Move the job row to the ARCHIVE FAILED JOB TABLE
    *
    * @param txn                  Transaction to use for this query
+   * @return nrows               The number of rows moved.
    */
-  void copyToFailedJobTable(Transaction& txn);
+  uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
   /**
-   * Copy the job row to the ARCHIVE FAILED JOB TABLE (static alternative)
+   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternative for multiple jobs)
    *
    * @param txn                  Transaction to use for this query
+   * @return nrows               The number of rows moved.
    */
-  static void copyToFailedJobTable(Transaction& txn, const std::vector<std::string>& jobIDs);
+  static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
 
   /**
    * Increment Archive Request ID and return the new value

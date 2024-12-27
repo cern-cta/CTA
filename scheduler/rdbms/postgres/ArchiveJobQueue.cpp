@@ -33,27 +33,37 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
    * since it is the same lock used for UPDATE
    */
   /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
+  /* below I first apply the LIMIT on the selection to limit
+   * the number of rows and only after calculate the running cumulative sun of bytes in the consequent step */
   const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
-      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES,
-             SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
+      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
       FROM ARCHIVE_INSERT_QUEUE
       WHERE TAPE_POOL = :TAPE_POOL
       AND STATUS = :STATUS
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
+      ORDER BY PRIORITY DESC, JOB_ID
+      LIMIT :LIMIT
+      FOR UPDATE SKIP LOCKED
+    ),
+    SELECTION_WITH_CUMULATIVE_SUMS AS (
+      SELECT JOB_ID, PRIORITY,
+             SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
+      FROM SET_SELECTION
     ),
     CUMULATIVE_SELECTION AS (
         SELECT JOB_ID, PRIORITY, CUMULATIVE_SIZE
-        FROM SET_SELECTION WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
-        ORDER BY PRIORITY DESC, JOB_ID
-        LIMIT :LIMIT
+        FROM SELECTION_WITH_CUMULATIVE_SUMS
+        WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_INSERT_QUEUE
-        WHERE JOB_ID IN (SELECT JOB_ID FROM CUMULATIVE_SELECTION)
-        RETURNING *
+        DELETE FROM ARCHIVE_INSERT_QUEUE AIQ
+        USING CUMULATIVE_SELECTION CSEL
+        WHERE AIQ.JOB_ID = CSEL.JOB_ID
+        RETURNING AIQ.*;
     )
     INSERT INTO ARCHIVE_JOB_QUEUE (
+        JOB_ID,
         ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
@@ -92,6 +102,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
         MOUNT_TYPE,
         LOGICAL_LIBRARY)
             SELECT
+                M.JOB_ID,
                 M.ARCHIVE_REQUEST_ID,
                 M.REQUEST_JOB_COUNT,
                 M.STATUS,
@@ -166,17 +177,18 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus status, c
   if (status == ArchiveJobStatus::AJS_Complete || status == ArchiveJobStatus::AJS_Failed ||
       status == ArchiveJobStatus::ReadyForDeletion) {
     if (status == ArchiveJobStatus::AJS_Failed) {
-      ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+      return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
+    } else {
+      std::string sql = R"SQL(
+        DELETE FROM ARCHIVE_JOB_QUEUE
+        WHERE
+          JOB_ID IN (
+        )SQL";
+      sql += sqlpart + std::string(")");
+      auto stmt2 = txn.getConn().createStmt(sql);
+      stmt2.executeNonQuery();
+      return stmt2.getNbAffectedRows();
     }
-    std::string sql = R"SQL(
-      DELETE FROM ARCHIVE_JOB_QUEUE
-      WHERE
-        JOB_ID IN (
-      )SQL";
-    sql += sqlpart + std::string(")");
-    auto stmt2 = txn.getConn().createStmt(sql);
-    stmt2.executeNonQuery();
-    return stmt2.getNbAffectedRows();
   }
   // END OF DISABLE DELETION FOR DEBUGGING
   // the following is here for debugging purposes (row deletion gets disabled)
@@ -235,13 +247,10 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     if (!sqlpart.empty()) {
       sqlpart.pop_back();
     }
-    sql += R"SQL(
-      WHERE JOB_ID IN (
-    )SQL";
-    sql += sqlpart + std::string(")");
+    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
   } else {
     sql += R"SQL(
-        WHERE JOB_ID IN = :JOB_ID
+        WHERE JOB_ID = :JOB_ID
     )SQL";
   }
   sql += R"SQL(
@@ -364,10 +373,7 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
     if (!sqlpart.empty()) {
       sqlpart.pop_back();
     }
-    sql += R"SQL(
-      WHERE JOB_ID IN (
-    )SQL";
-    sql += sqlpart + std::string(")");
+    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
   } else {
     return 0;
   }
@@ -461,21 +467,22 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
   return stmt.getNbAffectedRows();
 }
 
-void ArchiveJobQueueRow::copyToFailedJobTable(Transaction& txn) {
+uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
+  // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
-    INSERT INTO ARCHIVE_FAILED_JOB_QUEUE
-        SELECT *
-    FROM ARCHIVE_JOB_QUEUE
-    WHERE JOB_ID = :JOB_ID
-    )SQL";
+    WITH MOVED_ROWS AS (
+        DELETE FROM ARCHIVE_JOB_QUEUE
+          WHERE JOB_ID = :JOB_ID
+        RETURNING *
+    ) INSERT INTO ARCHIVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
   stmt.bindUint64(":JOB_ID", jobId);
-  stmt.executeNonQuery();
-  return;
+  stmt.executeQuery();
+  return stmt.getNbAffectedRows();
 }
 
-void ArchiveJobQueueRow::copyToFailedJobTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
+uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
   std::string sqlpart;
   for (const auto& piece : jobIDs) {
     sqlpart += piece + ",";
@@ -484,33 +491,26 @@ void ArchiveJobQueueRow::copyToFailedJobTable(Transaction& txn, const std::vecto
     sqlpart.pop_back();
   }
   std::string sql = R"SQL(
-    INSERT INTO ARCHIVE_FAILED_JOB_QUEUE
-        SELECT *
-    FROM ARCHIVE_JOB_QUEUE
-    WHERE JOB_ID IN (
-    )SQL";
+    WITH MOVED_ROWS AS (
+        DELETE FROM ARCHIVE_JOB_QUEUE
+          WHERE JOB_ID IN (
+  )SQL";
   sql += sqlpart + ")";
+  sql += R"SQL(
+        RETURNING *
+    ) INSERT INTO ARCHIVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
   stmt.executeNonQuery();
-  return;
+  return stmt.getNbAffectedRows();;
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status) {
   // if this was the final reporting failure,
   // move the row to failed jobs and delete the entry from the queue
   if (status == ArchiveJobStatus::ReadyForDeletion) {
-    ArchiveJobQueueRow::copyToFailedJobTable(txn);
-    // DISABLE DELETION FOR DEBUGGING
-    std::string sql = R"SQL(
-      DELETE FROM ARCHIVE_JOB_QUEUE
-      WHERE
-        JOB_ID = :JOB_ID
-      )SQL";
-    auto stmt = txn.getConn().createStmt(sql);
-    stmt.bindUint64(":JOB_ID", jobId);
-    stmt.executeNonQuery();
-    return stmt.getNbAffectedRows();
+    return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
     // END OF DISABLING DELETION FOR DEBUGGING
   }
   // otherwise update the statistics and requeue the job
@@ -561,12 +561,12 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
         ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
         OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
         ORDER BY PRIORITY DESC, JOB_ID
-        LIMIT :LIMIT FOR UPDATE)
+        LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE ARCHIVE_JOB_QUEUE SET
         IS_REPORTING = TRUE
       FROM SET_SELECTION
       WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
-      RETURNING SET_SELECTION.JOB_ID
+      RETURNING ARCHIVE_JOB_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
