@@ -330,6 +330,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                             const std::optional<std::string> diskSystemName,
                             log::LogContext& logContext) {
+  SchedulerDatabase::RetrieveRequestInfo ret;
   try {
     schedulerdb::Transaction txn(m_connPool);
 
@@ -339,7 +340,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       candidateVids.insert(tf.vid);
     }
 
-    SchedulerDatabase::RetrieveRequestInfo ret;
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, txn, false);
 
     uint8_t bestCopyNb = 0;
@@ -377,6 +377,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
                    "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve. " + ex.getMessageValue());
+    return ret;
   }
 }
 
