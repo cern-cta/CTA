@@ -60,7 +60,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
         DELETE FROM ARCHIVE_INSERT_QUEUE AIQ
         USING CUMULATIVE_SELECTION CSEL
         WHERE AIQ.JOB_ID = CSEL.JOB_ID
-        RETURNING AIQ.*;
+        RETURNING AIQ.*
     )
     INSERT INTO ARCHIVE_JOB_QUEUE (
         JOB_ID,
