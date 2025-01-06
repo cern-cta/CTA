@@ -38,8 +38,8 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file."
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file."
-  echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
-  echo "  -r, --registry-host <host>:         Provide the Docker registry host."
+  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
   exit 1
@@ -85,11 +85,11 @@ upgrade_instance() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -r|--registry-host)
-        registry_host="$2"
+      -r|--cta-image-repository)
+        cta_image_repository="$2"
         shift ;;
-      -i|--image-tag)
-        image_tag="$2"
+      -i|--cta-image-tag)
+        cta_image_tag="$2"
         shift ;;
       -c|--catalogue-version)
         catalogue_schema_version="$2"
@@ -119,11 +119,11 @@ upgrade_instance() {
   if [ $force == 1 ]; then
     helm_flags+=" --force"
   fi
-  if [ -n "$registry_host" ]; then
-    helm_flags+=" --set global.image.registry=${registry_host}"
+  if [ -n "$cta_image_repository" ]; then
+    helm_flags+=" --set global.image.repository=${cta_image_repository}"
   fi
-  if [ -n "$image_tag" ]; then
-    helm_flags+=" --set global.image.tag=${image_tag}"
+  if [ -n "$cta_image_tag" ]; then
+    helm_flags+=" --set global.image.tag=${cta_image_tag}"
   fi
   if [ -n "$catalogue_schema_version" ]; then
     helm_flags+=" --set global.catalogueSchemaVersion=${catalogue_schema_version}"
@@ -132,7 +132,6 @@ upgrade_instance() {
     helm_flags+=" --set-file global.configuration.scheduler=${scheduler_config}"
   fi
   if [ -n "$tapeservers_config" ]; then
-    devices_all=$(./../ci_helpers/tape/list_all_libraries.sh)
     devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
     # Check that all devices in the provided config are already in use
     for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do

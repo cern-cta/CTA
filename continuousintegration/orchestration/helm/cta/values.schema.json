@@ -8,10 +8,6 @@
         "image": {
           "type": "object",
           "properties": {
-            "registry": {
-              "type": "string",
-              "description": "Docker registry for the image."
-            },
             "repository": {
               "type": "string",
               "description": "Image repository."
@@ -33,7 +29,6 @@
             }
           },
           "required": [
-            "registry",
             "repository",
             "tag",
             "pullPolicy",
@@ -199,7 +194,6 @@
       },
       "required": [
         "image",
-        "useSystemd",
         "catalogueSchemaVersion",
         "configuration"
       ]

@@ -17,12 +17,12 @@
 {{- define "common.images.image" -}}
   {{- $imageRoot := .imageRoot -}}
   {{- $global := .global -}}
-  {{- if and $global.registry $global.repository $global.tag -}}
-    {{- printf "%s/%s:%s" $global.registry $global.repository ( $global.tag | toString ) | quote -}}
-  {{- else if and $imageRoot.registry $imageRoot.repository $imageRoot.tag -}}
-    {{- printf "%s/%s:%s" $imageRoot.registry $imageRoot.repository ( $imageRoot.tag | toString ) | quote -}}
+  {{- if and $global.repository $global.tag -}}
+    {{- printf "%s:%s" $global.repository ( $global.tag | toString ) | quote -}}
+  {{- else if and $imageRoot.repository $imageRoot.tag -}}
+    {{- printf "%s:%s" $imageRoot.repository ( $imageRoot.tag | toString ) | quote -}}
   {{- else }}
-    {{- fail "You must provide registry, repository, and tag for the image in either .Values.global.image or .Values.image." -}}
+    {{- fail "You must provide repository, and tag for the image in either .Values.global.image or .Values.image." -}}
   {{- end }}
 {{- end }}
 

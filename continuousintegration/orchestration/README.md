@@ -40,7 +40,7 @@ The first chart that will be installed is the `init` chart. This chart sets up t
 
 The `init` chart expects the following required parameters:
 - `global.image.tag`: the tag for the `ctageneric` image to use. This is used by the `kdc` pod.
-- `global.image.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `global.image.repository`: while not technically required, this can be provided to change the image repository. Defaults to `gitlab-registry.cern.ch/cta/ctageneric` otherwise.
 - `tapeServers`: this contains the tape servers configuration. This details which tape servers should be spawned. For each tape server, it details the library type, library device, library name, and all the drives that this tape server is reponsible for. In this init stage, this configuration is only used to determine which library devices need to be cleaned up by the tape reset job.
 
 The tapeservers configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The tapeservers configuration can be provided explicitly to `create_instance.sh` using `--tapeservers-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
@@ -79,7 +79,7 @@ For the sake of repeatable tests, it is therefore important to always wipe the c
 
 The `catalogue` chart expects the following required parameters:
 - `wipeImage.tag`: the tag for the `ctageneric` image to use. Used by the wipe catalogue job.
-- `wipeImage.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `wipeImage.repository`: while not technically required, this can be provided to change the image repository. Defaults to `gitlab-registry.cern.ch/cta/ctageneric` otherwise.
 - `schemaVersion`: the catalogue schema version to deploy.
 - `wipeCatalogue`: whether to wipe the catalogue or not.
 - `configuration`: the catalogue configuration.
@@ -113,7 +113,7 @@ The `scheduler` chart can also be installed as soon as the `init` chart is ready
 
 The `scheduler` chart expects the following required parameters:
 - `wipeImage.tag`: the tag for the `ctageneric` image to use. Used by the wipe scheduler job.
-- `wipeImage.registry`: while not technically required, it is typically desirable to provide this, as it will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `wipeImage.repository`: while not technically required, this can be provided to change the image repository. Defaults to `gitlab-registry.cern.ch/cta/ctageneric` otherwise.
 - `wipeScheduler`: whether to wipe the scheduler or not.
 - `configuration`: the scheduler configuration.
 
@@ -166,7 +166,7 @@ Finally, we have the `cta` chart. This chart spawns the different components req
 
 The `cta` chart expects the following required parameters:
 - `global.image.tag`: the tag for the `ctageneric` image to use. Used by all the pods in the subcharts.
-- `global.image.registry`: while not technically required, it is typically desirable to provide `global.image.registry`, as this will default to `gitlab-registry.cern.ch/cta` otherwise.
+- `global.image.repository`: while not technically required, this can be provided to change the image repository. Defaults to `gitlab-registry.cern.ch/cta/ctageneric` otherwise.
 - `tapeConfig`: this is the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
 - `global.catalogueSchemaVersion`: The schema version of the catalogue. This is not currently used, but once all the charts use Kubernetes deployments, this can be used to automatically redeploy the relevant pods when this version changes (the frontend and tape servers).
 - `global.configuration.scheduler`: The scheduler configuration (same as detailed above). This is required as some pods need to mount specific volumes to specific places when CEPH is used as a backend.
@@ -203,28 +203,27 @@ The deletion of an instance is relatively straightforward and can be done throug
   # Note that build_deploy.sh resides in ci_runner/
   ./build-deploy.sh --skip-build --skip-image-reload
   ```
-- Spawning a test instance from a tagged `ctageneric` image in the `gitlab-registry.cern.ch/cta` registry (Postgres catalogue + VFS scheduler):
+- Spawning a test instance from a tagged `ctageneric` image `gitlab-registry.cern.ch/cta/ctageneric` (Postgres catalogue + VFS scheduler):
 
   ```sh
-  ./create_instance.sh -n dev --image-tag <some-tag>
+  ./create_instance.sh -n dev --cta-image-tag <some-tag>
   ```
 
-- Running a system test locally from a tagged `ctageneric` image in the `gitlab-registry.cern.ch/cta` registry (Postgres catalogue + VFS scheduler):
+- Running a system test locally from a tagged `ctageneric` image `gitlab-registry.cern.ch/cta/ctageneric` (Postgres catalogue + VFS scheduler):
 
   ```sh
-  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --image-tag <some-tag>
+  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --cta-image-tag <some-tag>
   ```
 
 - Running a system test locally from a local image (Postgres catalogue + VFS scheduler):
 
   ```sh
-  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --image-tag <some-tag> --registry-host localhost
+  ./run_systemtest.sh -n dev --test-script tests/test_client.sh --scheduler-config presets/dev-scheduler-vfs-values.yaml --catalogue-config presets/dev-catalogue-postgres-values.yaml --cta-image-tag <some-tag> --cta-image-repository localhost/ctageneric
   ```
 
 Of course, once an instance is spawned, you can also run some simple tests manually instead of relying on `run_systemtest.sh`:
 
 ```sh
-./tests/prepare_tests.sh -n dev
 ./tests/test_client.sh -n dev
 ```
 

@@ -3,8 +3,7 @@ nameOverride: catalogue-updater
 catalogueSourceVersion: ""
 catalogueDestinationVersion: ""
 image:
-  registry: gitlab-registry.cern.ch/cta
-  repository: eoscta-operations/registry/container_registry/cta-catalogue-updater
+  repository: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater
   tag: "alma9-base.1"
   pullPolicy: IfNotPresent
   pullSecrets:

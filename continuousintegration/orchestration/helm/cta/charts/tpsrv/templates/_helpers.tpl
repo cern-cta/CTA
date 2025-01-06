@@ -38,15 +38,6 @@
   {{- $schedulerConfig -}}
 {{- end }}
 
-{{/* Check if systemd is enabled. Use global if available, otherwise fallback to local value. */}}
-{{- define "tpsrv.useSystemd" -}}
-{{- if .Values.global.useSystemd }}
-  {{- .Values.global.useSystemd }}
-{{- else }}
-  {{- .Values.useSystemd }}
-{{- end }}
-{{- end }}
-
 {{/*
     Helper to validate unique names and unique drives across tapeServers
 */}}
