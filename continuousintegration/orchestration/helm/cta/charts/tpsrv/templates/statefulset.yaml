@@ -36,6 +36,7 @@ spec:
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
       - name: fix-sss-keytab-ownership
         image: busybox:latest
+        imagePullPolicy: IfNotPresent
         command: ["sh", "-c"]
         args:
           - |
