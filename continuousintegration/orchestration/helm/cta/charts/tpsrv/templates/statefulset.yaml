@@ -44,9 +44,9 @@ spec:
         args: []
         readinessProbe:
           exec:
-            command: ["test", "-f", "/RMCD_READY"]
+            command: ["sh", "-c", "pgrep -f /usr/bin/cta-rmcd > /dev/null"]
           initialDelaySeconds: 5
-          periodSeconds: 1
+          periodSeconds: 2
           failureThreshold: 60
         resources:
           requests:
@@ -88,9 +88,9 @@ spec:
 
         readinessProbe:
           exec:
-            command: ["test", "-f", "/TAPED_READY"]
+            command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]
           initialDelaySeconds: 5
-          periodSeconds: 1
+          periodSeconds: 2
           failureThreshold: 60
         stdin: true
         env:

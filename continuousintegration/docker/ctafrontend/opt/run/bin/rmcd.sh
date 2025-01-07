@@ -19,7 +19,6 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Note that this sets the symbolic link for ALL containers, as /dev/ is shared
-# Eventually this will move to a Daemonset to ensure this happens at the node-level
 # Consequently, that means that having multiple library devices is currently not supported
 ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
@@ -29,5 +28,4 @@ yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 # to get rmcd logs to stdout
 tail -F /var/log/cta/cta-rmcd.log &
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-touch /RMCD_READY
 runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc

@@ -17,9 +17,9 @@
 
 COREFILE=$(ls /var/log/tmp/ctafrontend-*.core | head -n 1)
 
-test -z ${COREFILE} && { echo "NO COREFILE FOUND, EXITING"; exit 1; }
+test -z ${COREFILE} && { echo "No core dumps found, exiting"; exit 1; }
 
-echo "PROCESSING COREFILE: ${COREFILE}"
+echo "Processing corefile: ${COREFILE}"
 
 yum install -y xrootd-debuginfo cta-debuginfo gdb
 
@@ -32,5 +32,5 @@ EOF
 
 gdb -x /tmp/ctabt.gdb > ${COREFILE}.bt
 
-echo "BACKTRACE AVAILABLE IN ${COREFILE}.bt"
+echo "Backtrace available in ${COREFILE}.bt"
 exit 0

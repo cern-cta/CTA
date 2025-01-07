@@ -25,10 +25,8 @@ if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum -y install ceph-common
 fi
 
-touch /CTAFRONTEND_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
-rm /CTAFRONTEND_READY
 
 echo "ctafrontend died"
 echo "analysing core file if any"

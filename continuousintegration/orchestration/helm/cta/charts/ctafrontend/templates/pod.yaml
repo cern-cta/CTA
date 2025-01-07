@@ -28,10 +28,12 @@ spec:
       chmod 400 /etc/cta/eos.sss.keytab;
       /opt/run/bin/ctafrontend.sh;
     readinessProbe:
-      exec:
-        command: ["test", "-f", "/CTAFRONTEND_READY"]
-      initialDelaySeconds: 2
-      periodSeconds: 1
+      tcpSocket:
+        port: {{ .Values.frontendPort }}
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
       failureThreshold: 60
     securityContext:
       privileged: {{ .Values.isPriviliged }}

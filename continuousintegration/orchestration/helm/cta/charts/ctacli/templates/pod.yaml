@@ -25,9 +25,9 @@ spec:
       /opt/run/bin/ctacli.sh
     readinessProbe:
       exec:
-        command: ["test", "-f", "/CTACLI_READY"]
-      initialDelaySeconds: 2
-      periodSeconds: 1
+        command: ["sh", "-c", "rpm -q cta-cli cta-debuginfo"]
+      initialDelaySeconds: 5
+      periodSeconds: 2
       failureThreshold: 60
     securityContext:
       privileged: {{ .Values.isPriviliged }}
