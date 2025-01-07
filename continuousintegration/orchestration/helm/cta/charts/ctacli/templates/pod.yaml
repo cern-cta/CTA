@@ -22,7 +22,7 @@ spec:
     - |
       cat /tmp/eos.keytab > /etc/eos.keytab;
       chmod 600 /etc/eos.keytab;
-      /opt/run/bin/ctacli.sh
+      bash /scripts/ctacli.sh
     readinessProbe:
       exec:
         command: ["sh", "-c", "rpm -q cta-cli cta-debuginfo"]
@@ -51,6 +51,8 @@ spec:
         {{- .Values.env | toYaml | nindent 4}}
     {{- end}}
     volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
     - name: cta-conf-volume
       mountPath: /etc/cta/cta-cli.conf
       subPath: cta-cli.conf
@@ -65,6 +67,10 @@ spec:
       subPath: krb5.conf
     {{ include "ctacli.volumeMounts" . | nindent 4 }}
   volumes:
+  - name: scripts-volume
+    configMap:
+      name: scripts-ctacli
+      defaultMode: 0777
   - name: cta-conf-volume
     configMap:
       name: etc-cta-ctacli

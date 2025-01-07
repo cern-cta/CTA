@@ -23,7 +23,7 @@ spec:
         - name: {{ $name }}
           image: {{ include "schedulerReset.image" . }}
           imagePullPolicy: {{ include "schedulerReset.imagePullPolicy" . }}
-          command: ['/opt/run/bin/reset_scheduler.sh']
+          command: ["bash", "/scripts/reset_scheduler.sh"]
           args: []
           securityContext:
             privileged: true
@@ -58,6 +58,8 @@ spec:
             {{ .Values.env | toYaml | nindent 12 }}
             {{- end }}
           volumeMounts:
+            - name: scripts-volume
+              mountPath: /scripts
           {{- if eq $schedulerConfig.backend "postgres" }}
             - name: scheduler-config
               mountPath: /etc/cta/cta-scheduler.conf
@@ -78,6 +80,10 @@ spec:
               subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
             {{- end }}
       volumes:
+        - name: scripts-volume
+          configMap:
+            name: scripts-scheduler
+            defaultMode: 0777
         {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           configMap:

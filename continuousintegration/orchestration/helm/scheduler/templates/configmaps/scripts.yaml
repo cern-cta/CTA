@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-scheduler
+data:
+  reset_scheduler.sh: |
+    {{ .Files.Get "scripts/reset_scheduler.sh" | nindent 4 }}

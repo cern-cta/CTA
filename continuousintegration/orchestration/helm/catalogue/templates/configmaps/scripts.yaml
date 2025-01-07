@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-catalogue
+data:
+  reset_catalogue.sh: |
+    {{ .Files.Get "scripts/reset_catalogue.sh" | nindent 4 }}
