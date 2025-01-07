@@ -43,7 +43,7 @@ data:
     ###########################################################
 
     # Set the endpoint and resources for EOS/CTA Workflows
-    fstofs.protowfendpoint ctafrontend:10955
+    fstofs.protowfendpoint cta-frontend:10955
     fstofs.protowfresource /ctafrontend
     xrd.protocol  XrdHttp:1140 libXrdHttp.so
     http.exthandler  EosFstHttp /usr/lib64/libEosFstHttp.so none
