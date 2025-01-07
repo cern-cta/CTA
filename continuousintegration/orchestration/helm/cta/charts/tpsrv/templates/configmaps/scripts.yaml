@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-tpsrv
+data:
+  rmcd.sh: |
+    {{ .Files.Get "scripts/rmcd.sh" | nindent 4 }}
+  taped.sh: |
+    {{ .Files.Get "scripts/taped.sh" | nindent 4 }}
