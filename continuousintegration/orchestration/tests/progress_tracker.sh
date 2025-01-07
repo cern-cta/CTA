@@ -25,7 +25,7 @@ trackArchive() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
-      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
+      tmp=$(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d0::t1" | awk '{print $10}')
       ts=$(date +%s)
 
@@ -68,7 +68,7 @@ trackPrepare() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
-      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
+      tmp=$(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d[1-9][0-9]*::t1" | awk '{print $10}')
       ts=$(date +%s)
 
@@ -116,7 +116,7 @@ trackEvict() {
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
       count=0
       transaction="${QUERY_PRAGMAS} BEGIN TRANSACTION;"
-      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} |
+      tmp=$(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} |
               grep "^d${on_disk}::t1" | awk '{print $10}')
       ts=$(date +%s)
 
@@ -174,7 +174,7 @@ trackDelete() {
     sqlite3 "${DB_NAME}" <<< "${transaction}" > /dev/null 2>&1
 
     for subdir in $(seq 0 $((NB_DIRS - 1))); do
-      tmp=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
+      tmp=$(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} | awk '{print $10}')
       ts=$(date +%s)
 
       # If the stat was null we have ended.

@@ -41,8 +41,8 @@ CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 CTA_FRONTEND_POD="cta-frontend"
 # eos instance identified by SSS username
-# EOSINSTANCE=cta-mgm-0
-EOSINSTANCE=ctaeos
+EOS_MGM_POD="ctaeos"
+EOS_INSTANCE="ctaeos"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
@@ -71,48 +71,6 @@ NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
 echo "Preparing CTA configuration for tests"
 # verify the catalogue DB schema
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-if [ $? -ne 0 ]; then
-  echo "ERROR: failed to verify the catalogue DB schema"
-  exit 1
-fi
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
-
-echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq'
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
-
-echo "Cleaning up leftovers from potential previous runs."
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm /eos/ctaeos/cta/*
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_1}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_2}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf ${MULTICOPY_DIR_3}/
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos rm -rf {}
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
-  jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
-  cta-admin tape rm -v {}
-
-kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json archiveroute ls |           \
-  jq '.[] |  " -s " + .storageClass + " -c " + (.copyNumber|tostring) + " --art " + .archiveRouteType' | \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute rm {}"
-
-kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
-  jq -r '.[] | .name' |                                                                       \
-  xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {}
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls  |           \
-  jq -r '.[] | " -n  " + .name'  |                                    \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass rm {}"
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json vo ls  |           \
-  jq -r '.[] | " --vo  " + .name'  |                                    \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin vo rm {}"
-
-
-for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
-=======
 if ! kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf; then
   echo "ERROR: failed to verify the catalogue DB schema"
   exit 1
@@ -152,98 +110,61 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
 
 for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
->>>>>>> Stashed changes
     --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
     --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
 done
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin diskinstance add  \
-  --name ${EOSINSTANCE}                                                    \
-  --comment "di"
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin diskinstance add  \
   --name ${DISKINSTANCE}                                                    \
   --comment "di"
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin virtualorganization add  \
->>>>>>> Stashed changes
   --vo vo                                                                          \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOSINSTANCE}                                                    \
+  --diskinstance ${EOS_INSTANCE}                                                    \
   --comment "vo"
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin virtualorganization add  \
->>>>>>> Stashed changes
   --vo vo_repack                                                                   \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOSINSTANCE}                                                    \
+  --diskinstance ${EOS_INSTANCE}                                                    \
   --comment "vo_repack"                                                            \
   --isrepackvo true
 
 # add the media types of the tapes in production
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name T10K500G  \
   --capacity 500000000000 \
   --primarydensitycode 74 \
   --cartridge "T10000" \
   --comment "Oracle T10000 cartridge formated at 500 GB (for developers only)"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name 3592JC7T \
   --capacity 7000000000000 \
   --primarydensitycode 84 \
   --cartridge "3592JC" \
   --comment "IBM 3592JC cartridge formated at 7 TB"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name 3592JD15T \
   --capacity 15000000000000 \
   --primarydensitycode 85 \
   --cartridge "3592JD" \
   --comment "IBM 3592JD cartridge formated at 15 TB"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name 3592JE20T \
   --capacity 20000000000000 \
   --primarydensitycode 87 \
   --cartridge "3592JE" \
   --comment "IBM 3592JE cartridge formated at 20 TB"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name LTO7M \
   --capacity 9000000000000 \
   --primarydensitycode 93 \
   --cartridge "LTO-7" \
   --comment "LTO-7 M8 cartridge formated at 9 TB"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
->>>>>>> Stashed changes
   --name LTO8 \
   --capacity 12000000000000 \
   --primarydensitycode 94 \
@@ -251,147 +172,87 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin med
   --comment "LTO-8 cartridge formated at 12 TB"
 
 # Setup default tapepool and storage class
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
->>>>>>> Stashed changes
   --name ctasystest                                                    \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
   --encrypted false                                                    \
   --comment "ctasystest"
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
->>>>>>> Stashed changes
   --name ctaStorageClass                                                   \
   --numberofcopies 1                                                       \
   --vo vo                                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass                                           \
   --copynb 1                                                               \
   --tapepool ctasystest                                                    \
   --comment "ctasystest"
 
 # Setup tapepools and storage classes for multiple tape copies
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
->>>>>>> Stashed changes
   --name ctasystest_A                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
   --encrypted false                                                    \
   --comment "ctasystest_A"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
->>>>>>> Stashed changes
   --name ctasystest_B                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
   --encrypted false                                                    \
   --comment "ctasystest_B"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
->>>>>>> Stashed changes
   --name ctasystest_C                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
   --encrypted false                                                    \
   --comment "ctasystest_C"
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
->>>>>>> Stashed changes
   --name ctaStorageClass_1_copy                                            \
   --numberofcopies 1                                                       \
   --vo vo                                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_1_copy                                    \
   --copynb 1                                                               \
   --tapepool ctasystest_A                                                  \
   --comment "ctasystest"
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
->>>>>>> Stashed changes
   --name ctaStorageClass_2_copy                                            \
   --numberofcopies 2                                                       \
   --vo vo                                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_2_copy                                    \
   --copynb 1                                                               \
   --tapepool ctasystest_A                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_2_copy                                    \
   --copynb 2                                                               \
   --tapepool ctasystest_B                                                  \
   --comment "ctasystest"
 
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
->>>>>>> Stashed changes
   --name ctaStorageClass_3_copy                                            \
   --numberofcopies 1                                                       \
   --vo vo                                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_3_copy                                    \
   --copynb 1                                                               \
   --tapepool ctasystest_A                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_3_copy                                    \
   --copynb 2                                                               \
   --tapepool ctasystest_B                                                  \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
->>>>>>> Stashed changes
   --storageclass ctaStorageClass_3_copy                                    \
   --copynb 3                                                               \
   --tapepool ctasystest_C                                                  \
@@ -400,11 +261,7 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin arc
 # add all tapes to default tape pool
 for ((i=0; i<${#TAPES[@]}; i++)); do
   VID=${TAPES[${i}]}
-<<<<<<< Updated upstream
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
-=======
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape add     \
->>>>>>> Stashed changes
     --mediatype "LTO8"                                                   \
     --purchaseorder "order"                                              \
     --vendor vendor                                                      \
@@ -415,56 +272,33 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --full false                                                         \
     --comment "ctasystest"
 done
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mountpolicy add    \
->>>>>>> Stashed changes
   --name ctasystest                                                 \
   --archivepriority 1                                               \
   --minarchiverequestage 1                                          \
   --retrievepriority 1                                              \
   --minretrieverequestage 1                                         \
   --comment "ctasystest"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add \
-    --instance ${EOSINSTANCE}                                        \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin requestermountrule add \
     --instance ${DISKINSTANCE}                                        \
->>>>>>> Stashed changes
     --name adm                                                       \
     --mountpolicy ctasystest --comment "ctasystest"
 
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-    --instance ${EOSINSTANCE}                                        \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin groupmountrule add \
     --instance ${DISKINSTANCE}                                        \
->>>>>>> Stashed changes
     --name eosusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-    --instance ${EOSINSTANCE}                                        \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin groupmountrule add \
     --instance ${DISKINSTANCE}                                        \
->>>>>>> Stashed changes
     --name powerusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mountpolicy add    \
->>>>>>> Stashed changes
     --name repack_ctasystest                                                 \
     --archivepriority 2                                               \
     --minarchiverequestage 1                                          \
@@ -474,13 +308,8 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mou
 
 ###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
-    --instance ${EOSINSTANCE}                                        \
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin activitymountrule add \
     --instance ${DISKINSTANCE}                                        \
->>>>>>> Stashed changes
     --name powerusers                                                \
     --activityregex ^T0Reprocess$                                    \
     --mountpolicy ctasystest --comment "ctasystest"
@@ -507,15 +336,6 @@ for VID in "${TAPES[@]}"; do
 done
 
 echo "Setting drive up: ${DRIVE_NAME}"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVE_NAME}
-sleep 5
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
-
-# A bit of reporting
-echo "EOS server version is used:"
-kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- rpm -qa|grep eos-server
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up ${DRIVE_NAME}
 sleep 5
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive ls
@@ -523,41 +343,20 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dri
 # A bit of reporting
 echo "EOS server version is used:"
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- rpm -qa|grep eos-server
->>>>>>> Stashed changes
 
 
 # Super client capabilities
 echo "Adding super client capabilities"
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
-
-kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/ctaadmin2
-kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/poweruser1
-kubectl --namespace ${NAMESPACE} exec client -- mkdir -p /tmp/eosadmin1
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- mkdir -p /tmp/ctaadmin2
 kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- mkdir -p /tmp/poweruser1
 kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- mkdir -p /tmp/eosadmin1
->>>>>>> Stashed changes
 
 setup_tapes_for_multicopy_test() {
 
   echo "Setting up tapes and tapepools for multi-copy test..."
 
-<<<<<<< Updated upstream
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos mkdir ${MULTICOPY_DIR_3}
-
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
-  kubectl --namespace ${NAMESPACE} exec $EOSINSTANCE -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
-
-  # Find 3 non-full tapes and assign them to each one of the 3 tapepools
-  mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
-=======
   kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_1}
   kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_2}
   kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${MULTICOPY_DIR_3}
@@ -568,20 +367,13 @@ setup_tapes_for_multicopy_test() {
 
   # Find 3 non-full tapes and assign them to each one of the 3 tapepools
   mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
->>>>>>> Stashed changes
   if ((${#nonFullTapes[@]} < 3)); then
     echo "Not enought non-full tapes"
     return 1
   fi
 
-<<<<<<< Updated upstream
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[0]} --tapepool ctasystest_A
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[1]} --tapepool ctasystest_B
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[2]} --tapepool ctasystest_C
-=======
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${nonFullTapes[0]} --tapepool ctasystest_A
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${nonFullTapes[1]} --tapepool ctasystest_B
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${nonFullTapes[2]} --tapepool ctasystest_C
->>>>>>> Stashed changes
 
 }

@@ -18,11 +18,11 @@
 
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
 
-eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}."
+eos root://${EOS_INSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_INSTANCE}."
 
 echo
 echo "Listing the EOS extended attributes of ${EOS_DIR}"
-eos root://${EOSINSTANCE} attr ls ${EOS_DIR}
+eos root://${EOS_INSTANCE} attr ls ${EOS_DIR}
 echo
 
 # As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
@@ -31,7 +31,7 @@ dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}
 
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
+  eos root://${EOS_INSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_INSTANCE}."
 
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
@@ -66,8 +66,8 @@ fi
 COPIED=0
 COPIED_EMPTY=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  COPIED=$(( ${COPIED} + $(eos root://${EOSINSTANCE} find -f ${EOS_DIR}/${subdir} | wc -l) ))
-  COPIED_EMPTY=$(( ${COPIED_EMPTY} + $(eos root://${EOSINSTANCE} find -0 ${EOS_DIR}/${subdir} | wc -l) ))
+  COPIED=$(( ${COPIED} + $(eos root://${EOS_INSTANCE} find -f ${EOS_DIR}/${subdir} | wc -l) ))
+  COPIED_EMPTY=$(( ${COPIED_EMPTY} + $(eos root://${EOS_INSTANCE} find -0 ${EOS_DIR}/${subdir} | wc -l) ))
 done
 
 # Only not empty files are archived by CTA
@@ -90,7 +90,7 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
 
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
+    ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
     sleep 1 # do not hammer eos too hard
     let SECONDS_PASSED=SECONDS_PASSED+1
   done

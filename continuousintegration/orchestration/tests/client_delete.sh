@@ -20,7 +20,7 @@
 INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
 
 echo "$(date +%s): Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-#XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+#XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} rm -Fr ${EOS_DIR} &
 eval $delete
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...
@@ -50,7 +50,7 @@ while test 0 != ${FILESONTAPE}; do
 
   FILESONTAPE=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-      FILESONTAPE=$((${FILESONTAPE} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[0-9]+::t1' | wc -l)))
+      FILESONTAPE=$((${FILESONTAPE} + $(eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[0-9]+::t1' | wc -l)))
   done
 
   DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))

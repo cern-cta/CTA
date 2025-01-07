@@ -18,19 +18,19 @@
 
 
 TEST_DIR=${EOS_BASEDIR}
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen)
 
 #
 # Check we can copy zero-length files into the namespace by touch and copy
 #
-echo "eos root://${EOSINSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero
-echo "eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero
+echo "eos root://${EOS_INSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch"
+eos root://${EOS_INSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch
+echo "eos root://${EOS_INSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch"
+eos root://${EOS_INSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch
+echo "eos root://${EOS_INSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero"
+eos root://${EOS_INSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero
+echo "eos root://${EOS_INSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero"
+eos root://${EOS_INSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero
 
 if [ -f /tmp/${TEST_FILE_NAME}.touch -a ! -s /tmp/${TEST_FILE_NAME}.touch -a -f /tmp/${TEST_FILE_NAME}.zero -a ! -s /tmp/${TEST_FILE_NAME}.zero ]; then
   echo "Zero-length file copy succeeded"
@@ -41,10 +41,10 @@ else
 fi
 
 # Clean up
-echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero
+echo "eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch"
+eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch
+echo "eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero"
+eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero
 rm -f /tmp/${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.zero
 
 # Report results

@@ -53,11 +53,7 @@ fi
 CLIENT_POD="client"
 echo
 echo "Copying test scripts to pods..."
-<<<<<<< Updated upstream
-kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
-=======
 kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
->>>>>>> Stashed changes
 
 # Wait for script to rm the drive and restore it.
 # TODO: This is not working correctly on CI but it works for buildtree. Not needed at the moment but when grpc frontend is ready we will need to restart restart tpsrv01-0 pod.
@@ -146,11 +142,7 @@ kubectl -n "${NAMESPACE}" exec ${CLIENT_POD} -- bash +x /root/cta_admin.sh  || e
 
 
 # Add log file to Ci artifcats.
-<<<<<<< Updated upstream
-kubectl -n "${NAMESPACE}" cp client:/root/log ../../../pod_logs/"${NAMESPACE}"/cta-admin_xrd.log
-=======
 kubectl -n "${NAMESPACE}" cp ${CLIENT_POD}:/root/log -c client ../../../pod_logs/"${NAMESPACE}"/cta-admin_xrd.log
->>>>>>> Stashed changes
 
 
 # TODO: Create grpc cta frontend

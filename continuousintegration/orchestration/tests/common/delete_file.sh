@@ -24,7 +24,7 @@ exit 1
 while getopts "i:f:" o; do
   case "${o}" in
     i)
-      EOSINSTANCE=${OPTARG}
+      EOS_INSTANCE=${OPTARG}
       ;;
     f)
       TEST_FILE_NAME=${OPTARG}
@@ -41,12 +41,12 @@ if [ ! -z "${error}" ]; then
   exit 1
 fi
 
-echo "bash eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}"
-eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
+echo "bash eos root://${EOS_INSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}"
+eos root://${EOS_INSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while test true = $(xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
+while test true = $(xrdfs root://${EOS_INSTANCE} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1

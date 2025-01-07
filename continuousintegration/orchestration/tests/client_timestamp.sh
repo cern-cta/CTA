@@ -39,7 +39,7 @@ compare_timestamps() {
 }
 
 
-EOSINSTANCE=ctaeos
+EOS_INSTANCE=ctaeos
 TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta/
 
@@ -48,14 +48,14 @@ eospower_kdestroy
 eospower_kinit
 
 # Archive a file
-echo "xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
-xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
+echo "xrdcp /etc/group root://${EOS_INSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
+xrdcp /etc/group root://${EOS_INSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
 
-fileInfoBeforeArchive=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
+fileInfoBeforeArchive=$(eos root://${EOS_INSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
-wait_for_archive ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
+wait_for_archive ${EOS_INSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
-fileInfoAfterArchive=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
+fileInfoAfterArchive=$(eos root://${EOS_INSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
 echo "Comparing modify/birth timestampts before archival and after archival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterArchive"; then
@@ -70,11 +70,11 @@ sleep 0.1
 echo
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${TEST_DIR}${TEST_FILE_NAME}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEST_DIR}${TEST_FILE_NAME}
 # Wait for the copy to appear on disk
-wait_for_retrieve ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
+wait_for_retrieve ${EOS_INSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
-fileInfoAfterRetrieve=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
+fileInfoAfterRetrieve=$(eos root://${EOS_INSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
 echo "Comparing modify/birth timestampts before archival and after retrival"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterRetrieve"; then
@@ -87,10 +87,10 @@ sleep 0.1
 
 # Evict again
 echo "Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
-wait_for_evict ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -e ${TEST_DIR}${TEST_FILE_NAME}
+wait_for_evict ${EOS_INSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
-fileInfoAfterEvict=$(eos root://${EOSINSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
+fileInfoAfterEvict=$(eos root://${EOS_INSTANCE} fileinfo ${TEST_DIR}${TEST_FILE_NAME})
 
 echo "Comparing modify/birth timestampts before archival and after final evict"
 if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterEvict"; then
@@ -99,5 +99,5 @@ if ! compare_timestamps "$fileInfoBeforeArchive" "$fileInfoAfterEvict"; then
 fi
 
 # Delete the file so it doesn't interfere with tests in client_ar.sh
-echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}"
-eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}
+echo "eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}"
+eos root://${EOS_INSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}

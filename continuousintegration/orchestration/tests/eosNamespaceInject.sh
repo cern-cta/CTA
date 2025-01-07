@@ -53,42 +53,27 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-<<<<<<< Updated upstream
-EOSINSTANCE=ctaeos
-=======
 CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 CTA_FRONTEND_POD="cta-frontend"
-EOS_MGM_POD="eos-mgm-0"
+EOS_MGM_POD="ctaeos"
 # This should be the service name; not the pod name
-EOSINSTANCE=eos-mgm
->>>>>>> Stashed changes
+EOS_INSTANCE="ctaeos"
 TMP_DIR=$(mktemp -d)
-FILE_1=`uuidgen`
-FILE_2=`uuidgen`
+FILE_1=$(uuidgen)
+FILE_2=$(uuidgen)
 echo
 echo "Creating files: ${FILE_1} ${FILE_2}"
 
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} cp common/archive_file.sh client:/usr/bin/
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/
-kubectl -n ${NAMESPACE} exec client -- bash /usr/bin/archive_file.sh -f ${FILE_1} || exit 1
-kubectl -n ${NAMESPACE} exec client -- bash /usr/bin/archive_file.sh -f ${FILE_2} || exit 1
-=======
 kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:/usr/bin/ -c client
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /usr/bin/archive_file.sh -f ${FILE_1} || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /usr/bin/archive_file.sh -f ${FILE_2} || exit 1
->>>>>>> Stashed changes
 
 EOS_METADATA_PATH_1=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_1}"
 touch ${EOS_METADATA_PATH_1}
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
-=======
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
 EOS_ARCHIVE_ID_1=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_1})
 EOS_CHECKSUM_1=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_1})
 EOS_SIZE_1=$(jq -r '.size' ${EOS_METADATA_PATH_1})
@@ -96,11 +81,7 @@ EOS_SIZE_1=$(jq -r '.size' ${EOS_METADATA_PATH_1})
 EOS_METADATA_PATH_2=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_2}"
 touch ${EOS_METADATA_PATH_2}
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
-=======
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
 EOS_ARCHIVE_ID_2=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_2})
 EOS_CHECKSUM_2=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_2})
 EOS_SIZE_2=$(jq -r '.size' ${EOS_METADATA_PATH_2})
@@ -111,13 +92,8 @@ FILE_PATH_1=$(uuidgen)
 FILE_PATH_2=$(uuidgen)
 echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_1}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_1}', "size": "'${EOS_SIZE_1}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_1}'"}' >> ${TMP_DIR}/metaData
 echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_2}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_2}', "size": "'${EOS_SIZE_2}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_2}'"}' >> ${TMP_DIR}/metaData
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
-kubectl cp ${TMP_DIR}/metaData ${NAMESPACE}/ctafrontend:${TMP_DIR}/
-=======
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c "mkdir -p ${TMP_DIR}"
 kubectl cp ${TMP_DIR}/metaData ${NAMESPACE}/cta-frontend:${TMP_DIR}/
->>>>>>> Stashed changes
 
 echo
 echo "ENABLE cta-frontend TO EXECUTE CTA ADMIN COMMANDS"
@@ -125,25 +101,14 @@ kubectl --namespace ${NAMESPACE} exec auth-kdc -- cat /root/ctaadmin2.keytab | k
 kubectl -n ${NAMESPACE} cp client_helper.sh cta-frontend:${TMP_DIR}/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. '${TMP_DIR}'/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
-
-echo
-echo "ADD FRONTEND GATEWAY TO EOS"
-FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.podIP | tr -d '"')
-echo "kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
-=======
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh cta-frontend:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
->>>>>>> Stashed changes
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"
@@ -153,10 +118,5 @@ kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.
 kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta/cta-cli.conf
 
 echo
-<<<<<<< Updated upstream
-echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c cta-eos-namespace-inject --json ${TMP_DIR}/metaData"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-eos-namespace-inject --json ${TMP_DIR}/metaData"
-=======
 echo "kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c cta-eos-namespace-inject --json ${TMP_DIR}/metaData"
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-eos-namespace-inject --json ${TMP_DIR}/metaData"
->>>>>>> Stashed changes

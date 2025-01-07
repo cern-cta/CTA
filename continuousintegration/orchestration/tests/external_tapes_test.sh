@@ -22,7 +22,7 @@ exit 1
 }
 
 NAMESPACE=""
-CTA_TPSRV_POD='cta-tpsrv01-0'
+CTA_TPSRV_POD="cta-tpsrv01-0"
 
 while getopts "n:" o; do
   case "${o}" in

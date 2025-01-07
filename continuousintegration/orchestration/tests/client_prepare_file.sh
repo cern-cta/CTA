@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOSINSTANCE=ctaeos
+EOS_INSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 
 die() {
@@ -25,7 +25,7 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-e EOSINSTANCE]
+Usage: $0 [-e EOS_INSTANCE]
 EOF
 exit 1
 }
@@ -38,7 +38,7 @@ while getopts "e:f:" o; do
             FILES_LOCATION+=( "$OPTARG" )
             ;;
         e)
-            EOSINSTANCE=${OPTARG}
+            EOS_INSTANCE=${OPTARG}
             ;;
     esac
 done
@@ -55,7 +55,7 @@ nbFilesToRetrieve=${#FILES_LOCATION[@]}
 
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0
 
-echo ${FILES_LOCATION[@]} | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -s
+echo ${FILES_LOCATION[@]} | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOS_INSTANCE} prepare -s
 
 nbFilesRetrieved=0
 SECONDS_PASSED=0
@@ -72,7 +72,7 @@ do
   nbFilesRetrieved=0
   for directory in ${!directoriesNbFiles[@]}
   do
-    nbFilesRetrieved=$((nbFilesRetrieved + $(eos root://${EOSINSTANCE} ls -y ${directory} | grep -E '^d[1-9][0-9]*::t1' | wc -l)))
+    nbFilesRetrieved=$((nbFilesRetrieved + $(eos root://${EOS_INSTANCE} ls -y ${directory} | grep -E '^d[1-9][0-9]*::t1' | wc -l)))
   done
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -87,7 +87,7 @@ done
 #WAIT_FOR_RETRIEVED_FILE_TIMEOUT=50
 #while [[ $fileRetrieved != 1 ]]
 #do
-#  fileRetrieved=`eos root://${EOSINSTANCE} ls -y ${FILE_LOCATION} | egrep '^d[1-9][0-9]*::t1' | wc -l`
+#  fileRetrieved=`eos root://${EOS_INSTANCE} ls -y ${FILE_LOCATION} | egrep '^d[1-9][0-9]*::t1' | wc -l`
 #  sleep 1
 #  let SECONDS_PASSED=SECONDS_PASSED+1
 #  echo "Waiting for file to be retrieved. Seconds passed = $SECONDS_PASSED"

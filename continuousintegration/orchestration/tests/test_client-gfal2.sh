@@ -51,19 +51,9 @@ if [ $? -ne 0 ]; then
 fi
 
 CLIENT_POD="client"
-EOS_MGM_POD="eos-mgm-0"
+EOS_MGM_POD="ctaeos"
 
 echo "Installing gfal2 utility"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install python3-gfal2-util" || exit 1
-
-echo
-echo "Copying test scripts to client pod"
-kubectl -n ${NAMESPACE} cp . client:/root/
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
-
-kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_helper.sh && admin_kinit"
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install python3-gfal2-util" || exit 1
 
 echo
@@ -72,7 +62,6 @@ kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/
 
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_helper.sh && admin_kinit"
->>>>>>> Stashed changes
 
 NB_FILES=5000
 FILE_SIZE_KB=15
@@ -93,16 +82,6 @@ clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ct
 
 GFAL2_PROTOCOL='root'
 echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-xrootd"
-
-echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
-kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
-
-echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install gfal2-plugin-xrootd"
 
 echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
@@ -111,20 +90,14 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 echo
 echo "Track progress of test"
 (kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
->>>>>>> Stashed changes
 )&
 TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Archiving files: xrdcp as user1"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
@@ -134,46 +107,27 @@ echo "###"
 echo
 echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Retrieving files with gfal-bringonline via root protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo
 echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Evicting files with gfal-evict via root protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo
 echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Deleting files with gfal-rm via root protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 
 echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
 if [[ $? == 1 ]]; then
   echo "Some files were lost during tape workflow."
-<<<<<<< Updated upstream
-  kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
-=======
   kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/root/trackerdb.db -c client ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
->>>>>>> Stashed changes
 exit 1
 fi
 
@@ -181,20 +135,6 @@ fi
 
 echo "Uninstall gfal2-plugin-xrootd before continuing with http tests"
 # The presence of the xrootd package seems to be causing double free/corruption errors in the http plugin
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y remove gfal2-plugin-xrootd"
-echo "Installing gfal2-plugin-http for http gfal test."
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
-echo "Enable insecure certs for gfal2"
-kubectl -n ${NAMESPACE} exec client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
-echo "Setting up environment for gfal-https tests"
-GFAL2_PROTOCOL='https'
-kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
-
-echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y remove gfal2-plugin-xrootd"
 echo "Installing gfal2-plugin-http for http gfal test."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
@@ -207,20 +147,14 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 echo
 echo "Track progress of test"
 (kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
->>>>>>> Stashed changes
 )&
 TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
 echo " Archiving files: gfal-copy as user1 via https"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
@@ -230,35 +164,20 @@ echo "###"
 echo
 echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Retrieving files with gfal-bringonline via https protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo
 echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Evicting files with gfal-evict as poweruser via https protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo
 echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Deleting files with gfal-rm as user1 via https protocol"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
->>>>>>> Stashed changes
 
 echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
@@ -272,17 +191,6 @@ TEST_PRERUN=". /root/client_env "
 
 echo
 echo "Launching gfal_activity_check.sh on client pod"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/gfal_activity_check.sh"  || exit 1
-
-echo
-echo "Launching xrootd_activity_check.sh on client pod"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/xrootd_activity_check.sh" || exit 1
-
-echo "Checking activity was set..."
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ctaeos:/root/
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_activity.sh || exit 1
-=======
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/gfal_activity_check.sh"  || exit 1
 
 echo
@@ -292,6 +200,5 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} 
 echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
->>>>>>> Stashed changes
 
 exit 0

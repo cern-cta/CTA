@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EOSINSTANCE=ctaeos
+EOS_INSTANCE=ctaeos
 PORT=9000
 
 json='
@@ -9,7 +9,7 @@ json='
     {
       "path":"/eos/ctaeos/tape/test.txt"
     }
-  ] 
+  ]
 }
 '
 

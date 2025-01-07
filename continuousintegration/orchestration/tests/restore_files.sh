@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOSINSTANCE=ctaeos
+EOS_INSTANCE=ctaeos
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
 TEST_FILE_NAME=`uuidgen`
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
@@ -50,50 +50,31 @@ fi
 CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 CTA_FRONTEND_POD="cta-frontend"
-EOS_MGM_POD="eos-mgm-0"
+EOS_MGM_POD="ctaeos"
 
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-<<<<<<< Updated upstream
-echo "kubectl -n ${NAMESPACE} exec ctaeos -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
-
-echo
-echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} vid ls
-=======
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOSINSTANCE} vid ls
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOS_INSTANCE} vid ls
 
 echo
 echo "Launching restore_files_client.sh on client pod"
 echo " Archiving file: xrdcp as user1"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} cp common/archive_file.sh client:/root/archive_file.sh
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/archive_file.sh -f ${TEST_FILE_NAME} || exit 1
-=======
 kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:/root/archive_file.sh -c client
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_file.sh -f ${TEST_FILE_NAME} || exit 1
->>>>>>> Stashed changes
 
 echo
 METADATA_FILE_PATH=$(mktemp -d).json
 echo "SEND FILE METADATA TO JSON FILE: ${METADATA_FILE_PATH}"
 touch ${METADATA_FILE_PATH}
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . > ${METADATA_FILE_PATH}
-=======
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . > ${METADATA_FILE_PATH}
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . > ${METADATA_FILE_PATH}
 
 # Extract values from the meta data used for restoring and testing
 FXID=$(jq -r '.fxid' ${METADATA_FILE_PATH})
@@ -103,36 +84,20 @@ CHECKSUM=$(jq -r '.checksumvalue' ${METADATA_FILE_PATH})
 
 echo
 echo "DELETE ARCHIVED FILE"
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} cp common/delete_file.sh client:/root/delete_file.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/delete_file.sh -i ${EOSINSTANCE} -f ${TEST_FILE_NAME}
-
-echo
-echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
-echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin rtf ls --fxid ${FXID} || exit 1"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin rtf ls --fxid ${FXID} || exit 1
-=======
 kubectl -n ${NAMESPACE} cp common/delete_file.sh ${CLIENT_POD}:/root/delete_file.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.sh -i ${EOSINSTANCE} -f ${TEST_FILE_NAME}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.sh -i ${EOS_INSTANCE} -f ${TEST_FILE_NAME}
 
 echo
 echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
 echo "kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1"
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1
->>>>>>> Stashed changes
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"
 TMP_DIR=$(mktemp -d)
-<<<<<<< Updated upstream
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
-echo "kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
-echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta-cli.conf"
-=======
 kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c "mkdir -p ${TMP_DIR}"
 echo "kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
 echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta-cli.conf"
->>>>>>> Stashed changes
 
 kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
 kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta/cta-cli.conf
@@ -146,16 +111,6 @@ kubectl --namespace ${NAMESPACE} exec auth-kdc -- cat /root/ctaadmin2.keytab | k
 kubectl -n ${NAMESPACE} cp client_helper.sh cta-frontend:/root/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
-# install cta-cli that provides `cta-restore-deleted-files`
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c 'rpm -q cta-cli || yum install -y cta-cli'
-
-echo
-echo "RESTORE FILES"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-restore-deleted-files --id ${ARCHIVE_FILE_ID} --copynb 1 --debug"
-=======
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh cta-frontend:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 # install cta-cli that provides `cta-restore-deleted-files`
@@ -164,17 +119,12 @@ kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm
 echo
 echo "RESTORE FILES"
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-restore-deleted-files --id ${ARCHIVE_FILE_ID} --copynb 1 --debug"
->>>>>>> Stashed changes
 # End of *movable* section
 ##
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-<<<<<<< Updated upstream
-while kubectl -n ${NAMESPACE} exec client -- test $(false = xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
-=======
-while kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- test $(false = xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
->>>>>>> Stashed changes
+while kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- test $(false = xrdfs root://${EOS_INSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file with name:${TEST_FILE_NAME} to be restored on EOS side: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -189,13 +139,8 @@ echo
 METADATA_FILE_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND FILE METADATA TO JSON FILE: ${METADATA_FILE_AFTER_RESTORE_PATH}"
 touch ${METADATA_FILE_AFTER_RESTORE_PATH}
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' | tee -a ${LOGFILE_PATH}
-=======
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' | tee -a ${LOGFILE_PATH}
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE} | jq '.[0]' | tee -a ${LOGFILE_PATH}
 
 # Extract values from the meta data from the restored file
 FILE_SIZE_AFTER_RESTORE=$(jq -r '.af | .["size"]' ${METADATA_FILE_AFTER_RESTORE_PATH})
@@ -206,13 +151,8 @@ FXID_AFTER_RESTORE=$(jq -r '.df | .["diskId"]' ${METADATA_FILE_AFTER_RESTORE_PAT
 EOS_METADATA_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_AFTER_RESTORE_PATH}"
 touch ${EOS_METADATA_AFTER_RESTORE_PATH}
-<<<<<<< Updated upstream
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
-=======
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
->>>>>>> Stashed changes
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
 
 EOS_NS_FXID_AFTER_RESTORE=$(jq -r '.fxid' ${EOS_METADATA_AFTER_RESTORE_PATH})
 EOS_NS_FXID_AFTER_RESTORE_DEC=$(( 16#$EOS_NS_FXID_AFTER_RESTORE ))
