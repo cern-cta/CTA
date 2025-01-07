@@ -7,7 +7,7 @@ isPriviliged: true
 
 conf:
   cta:
-    endpoint: ctafrontend:10955
+    endpoint: cta-frontend:10955
 
 # Additional environment variables
 env: []

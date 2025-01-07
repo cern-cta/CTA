@@ -1,8 +1,8 @@
 # If required, the user can specify a custom image here
 image:
-component: ctafrontend
+component: cta-frontend
 partOf: cta
-nameOverride: ctafrontend
+nameOverride: cta-frontend
 isPriviliged: true
 
 frontendPort: 10955

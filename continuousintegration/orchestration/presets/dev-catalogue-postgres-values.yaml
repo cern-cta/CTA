@@ -5,4 +5,4 @@ postgresConfig:
   password: cta
   database: cta
   path: /var/lib/postgresql/data/pgdata
-  server: postgres-catalogue
+  server: cta-catalogue-postgres

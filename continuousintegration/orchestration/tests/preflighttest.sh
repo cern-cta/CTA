@@ -50,7 +50,11 @@ FLIGHTTEST_RC=0 # flighttest return code
 EOSINSTANCE="ctaeos"
 
 echo "Running preflight checks on the following eos version:"
+<<<<<<< Updated upstream
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- eos version
+=======
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos version
+>>>>>>> Stashed changes
 echo
 
 
@@ -73,7 +77,15 @@ echo
 FLIGHTTEST_TPC_RC=0
 TEST_LOG="${TMPDIR}/tpc_cap.log"
 echo "Checking xrootd TPC capabilities on FSTs:"
+<<<<<<< Updated upstream
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- eos node ls -m | grep status=online | sed -e 's/.*hostport=//;s/ .*//' | xargs -ifoo bash -o pipefail -c "kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- xrdfs root://foo query config tpc | grep -q 1 && echo foo: OK|| echo foo: KO" | tee ${TEST_LOG}
+=======
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos node ls -m \
+  | grep status=online \
+  | sed -e 's/.*hostport=//;s/ .*//' \
+  | xargs -ifoo bash -o pipefail -c "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- xrdfs root://foo query config tpc | grep -q 1 && echo foo: OK|| echo foo: KO" \
+  | tee ${TEST_LOG}
+>>>>>>> Stashed changes
 
 if $(cat ${TEST_LOG} | grep -q KO); then
   echo "TPC capabilities: FAILED"
@@ -93,6 +105,7 @@ echo
 
 FLIGHTTEST_XROOTD_API_RC=0
 TESTDIR="/eos/ctaeos/tmp"
+<<<<<<< Updated upstream
 FILES_JSON=$(for path in 3 2 1 3; do echo "{\"path\": \"${TESTDIR}/${path}\"}"; done | jq --slurp . )
 echo "Checking xrootd API FTS compliance"
 for TESTFILE in $(echo $FILES_JSON | jq -r '.[].path' | sort -u); do
@@ -100,6 +113,16 @@ for TESTFILE in $(echo $FILES_JSON | jq -r '.[].path' | sort -u); do
 done
 echo ${FILES_JSON} > ${TMPDIR}/xrootd_API_src.json
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- xrdfs root://localhost query prepare 0 $(echo $FILES_JSON | jq -r '. | map(.path) | join(" ")') > ${TMPDIR}/xrootd_API_query_prepare_result.json
+=======
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash -c "eos mkdir ${TESTDIR} && eos chmod 777 ${TESTDIR}"
+FILES_JSON=$(for path in 3 2 1 3; do echo "{\"path\": \"${TESTDIR}/${path}\"}"; done | jq --slurp . )
+echo "Checking xrootd API FTS compliance"
+for TESTFILE in $(echo $FILES_JSON | jq -r '.[].path' | sort -u); do
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos touch ${TESTFILE}
+done
+echo ${FILES_JSON} > ${TMPDIR}/xrootd_API_src.json
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- xrdfs root://localhost query prepare 0 $(echo $FILES_JSON | jq -r '. | map(.path) | join(" ")') > ${TMPDIR}/xrootd_API_query_prepare_result.json
+>>>>>>> Stashed changes
 
 INPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_src.json | jq -r '. | map(.path) | join(" ")')"
 OUTPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_query_prepare_result.json | jq -r '.responses| map(.path) | join(" ")')"

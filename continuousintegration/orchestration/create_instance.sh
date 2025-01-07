@@ -227,7 +227,7 @@ create_instance() {
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing kdc, catalogue and scheduler charts..."
-  log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
+  log_run helm ${helm_command} catalogue helm/catalogue \
                                 --namespace ${namespace} \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -237,7 +237,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   catalogue_pid=$!
 
-  log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
+  log_run helm ${helm_command} scheduler helm/scheduler \
                                 --namespace ${namespace} \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -246,7 +246,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  log_run helm ${helm_command} kdc-${namespace} helm/kdc \
+  log_run helm ${helm_command} kdc helm/kdc \
                                 --namespace ${namespace} \
                                 --set image.repository="${cta_image_repository}" \
                                 --set image.tag="${cta_image_tag}" \
@@ -259,7 +259,7 @@ create_instance() {
   wait $kdc_pid || exit 1
 
   echo "Installing cta chart..."
-  log_run helm ${helm_command} cta-${namespace} helm/cta \
+  log_run helm ${helm_command} cta helm/cta \
                                 --namespace ${namespace} \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
