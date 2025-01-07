@@ -19,10 +19,8 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client python3
+yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client
 
-touch /CLIENT_READY
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-
 # sleep forever but exit immediately when pod is deleted
 exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

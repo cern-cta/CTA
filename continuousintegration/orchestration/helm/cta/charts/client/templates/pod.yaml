@@ -25,9 +25,9 @@ spec:
       /opt/run/bin/client.sh;
     readinessProbe:
       exec:
-        command: ["test", "-f", "/CLIENT_READY"]
-      initialDelaySeconds: 2
-      periodSeconds: 1
+        command: ["sh", "-c", "rpm -q cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client"]
+      initialDelaySeconds: 5
+      periodSeconds: 2
       failureThreshold: 60
     securityContext:
       privileged: {{ .Values.isPriviliged }}
