@@ -42,13 +42,13 @@ CTA_CLI_POD="cta-cli"
 CTA_FRONTEND_POD="cta-frontend"
 # eos instance identified by SSS username
 EOS_MGM_POD="ctaeos"
-EOS_INSTANCE="ctaeos"
+DISK_INSTANCE_NAME="ctaeos"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-CTA_TPSRV_POD='cta-tpsrv01-0'
+CTA_TPSRV_POD="cta-tpsrv01-0"
 
 # Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
 echo "Reading library configuration from ${CTA_TPSRV_POD}"
@@ -115,21 +115,21 @@ for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
 done
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin diskinstance add  \
-  --name ${DISKINSTANCE}                                                    \
+  --name ${DISK_INSTANCE_NAME}                                                    \
   --comment "di"
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin virtualorganization add  \
   --vo vo                                                                          \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOS_INSTANCE}                                                    \
+  --diskinstance ${DISK_INSTANCE_NAME}                                                    \
   --comment "vo"
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin virtualorganization add  \
   --vo vo_repack                                                                   \
   --readmaxdrives 1                                                                \
   --writemaxdrives 1                                                               \
-  --diskinstance ${EOS_INSTANCE}                                                    \
+  --diskinstance ${DISK_INSTANCE_NAME}                                                    \
   --comment "vo_repack"                                                            \
   --isrepackvo true
 
@@ -280,20 +280,20 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mou
   --minretrieverequestage 1                                         \
   --comment "ctasystest"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin requestermountrule add \
-    --instance ${DISKINSTANCE}                                        \
+    --instance ${DISK_INSTANCE_NAME}                                        \
     --name adm                                                       \
     --mountpolicy ctasystest --comment "ctasystest"
 
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin groupmountrule add \
-    --instance ${DISKINSTANCE}                                        \
+    --instance ${DISK_INSTANCE_NAME}                                        \
     --name eosusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin groupmountrule add \
-    --instance ${DISKINSTANCE}                                        \
+    --instance ${DISK_INSTANCE_NAME}                                        \
     --name powerusers                                                  \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
@@ -309,7 +309,7 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mou
 ###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin activitymountrule add \
-    --instance ${DISKINSTANCE}                                        \
+    --instance ${DISK_INSTANCE_NAME}                                        \
     --name powerusers                                                \
     --activityregex ^T0Reprocess$                                    \
     --mountpolicy ctasystest --comment "ctasystest"

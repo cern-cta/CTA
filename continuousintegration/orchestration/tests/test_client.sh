@@ -63,8 +63,8 @@ EOS_INSTANCE="ctaeos"
 echo
 echo "Copying test scripts to client and eos mgm pods."
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/"
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/"
 
 NB_FILES=10000
 FILE_SIZE_KB=15
@@ -94,7 +94,7 @@ fi
 
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
-kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
+kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/
 kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
 rm -rf /tmp/certificates
 
