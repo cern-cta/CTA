@@ -26,17 +26,29 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
+      - name: fix-sss-keytab-ownership
+        image: busybox:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.sss.keytab;
+            chmod 400 /root/sss_keytab/output/eos.sss.keytab;
+            # Make CTA user owner
+            chown -R 1000:33 /root/sss_keytab/output/eos.sss.keytab
+        volumeMounts:
+          - name: eos-sss-keytab
+            mountPath: /root/sss_keytab/input/eos.keytab
+            subPath: eos.keytab
+          - name: eos-sss-keytab-fixedownership
+            mountPath: /root/sss_keytab/output
       containers:
       - name: {{ $name }}
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          cat /etc/cta/eos-tmp.sss.keytab > /etc/cta/eos.sss.keytab;
-          chmod 400 /etc/cta/eos.sss.keytab;
-          bash /scripts/ctafrontend.sh;
+        command: ["bash", "/scripts/ctafrontend.sh"]
         readinessProbe:
           tcpSocket:
             port: {{ .Values.frontendPort }}
@@ -108,9 +120,9 @@ spec:
         - mountPath: /etc/cta/cta-frontend.krb5.keytab
           name: keytab
           subPath: cta-frontend.krb5.keytab
-        - mountPath: /etc/cta/eos-tmp.sss.keytab
-          name: sss-keytab
-          subPath: eos-tmp.sss.keytab
+        - mountPath: /etc/cta/eos.sss.keytab
+          name: eos-sss-keytab-fixedownership
+          subPath: eos.sss.keytab
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
           subPath: krb5.conf
@@ -146,9 +158,11 @@ spec:
       - name: keytab
         secret:
           secretName: cta-frontend-keytab
-      - name: sss-keytab
+      - name: eos-sss-keytab
         secret:
-          secretName: frontend-sss-keytab
+          secretName: frontend-sss-keytab # Note that this is a different keytab from eos-sss-keytab
+      - name: eos-sss-keytab-fixedownership
+        emptyDir: {}
       - name: krb5-config-volume
         configMap:
           name: krb5-config

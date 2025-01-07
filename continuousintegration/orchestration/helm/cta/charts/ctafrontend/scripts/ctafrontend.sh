@@ -26,7 +26,7 @@ if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
 fi
 
 # The cta user only exists after the install
-chown cta /etc/cta/eos.sss.keytab
+# chown cta /etc/cta/eos.sss.keytab
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 

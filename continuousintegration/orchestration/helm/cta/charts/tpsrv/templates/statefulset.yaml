@@ -32,6 +32,23 @@ spec:
       terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
+      initContainers:
+      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
+      - name: fix-sss-keytab-ownership
+        image: busybox:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
+            chmod 600 /root/sss_keytab/output/cta-taped.sss.keytab;
+            # Make CTA user owner
+            chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
+        volumeMounts:
+          - name: eos-sss-keytab
+            mountPath: /root/sss_keytab/input/eos.keytab
+            subPath: eos.keytab
+          - name: eos-sss-keytab-fixedownership
+            mountPath: /root/sss_keytab/output
       containers:
       # RMCD container
       - name: rmcd
@@ -82,12 +99,7 @@ spec:
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
         securityContext:
           privileged: true
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          cat /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab > /etc/cta/cta-taped.sss.keytab;
-          chmod 600 /etc/cta/cta-taped.sss.keytab;
-          bash /scripts/taped.sh;
+        command: ["bash", "/scripts/taped.sh"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]
@@ -139,9 +151,9 @@ spec:
         {{- end }}
         - mountPath: /etc/config/eos
           name: eosconfig
-        - name: tpsrv-sss-keytab
-          mountPath: /tmp/dump/cta/cta-tpsrv-tmp.sss.keytab
-          subPath: cta-tpsrv.sss.keytab
+        - name: eos-sss-keytab-fixedownership
+          mountPath: /etc/cta/cta-taped.sss.keytab
+          subPath: cta-taped.sss.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -184,9 +196,11 @@ spec:
         configMap:
           name: cta-taped-{{ lower $drive.name }}-conf
       {{- end }} # End of drive-specific configmaps loop
-      - name: tpsrv-sss-keytab
+      - name: eos-sss-keytab
         secret:
           secretName: tpsrv-sss-keytab
+      - name: eos-sss-keytab-fixedownership
+        emptyDir: {}
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
