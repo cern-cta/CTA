@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -i <eosinstance> -f <filename>
+Usage: $0 -i <eosMgmHost> -f <filename>
 EOF
 exit 1
 }

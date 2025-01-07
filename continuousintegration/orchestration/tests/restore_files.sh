@@ -108,7 +108,7 @@ kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta/cta-cli.co
 # there is no reason to install cta-cli rpm on the frontend pod as it is just meant to run the cta-frontend with minimal requirements
 echo
 echo "ENABLE cta-frontend TO EXECUTE CTA ADMIN COMMANDS"
-kubectl --namespace ${NAMESPACE} exec auth-kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i cta-frontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl --namespace ${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i cta-frontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl -n ${NAMESPACE} cp client_helper.sh cta-frontend:/root/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh

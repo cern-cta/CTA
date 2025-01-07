@@ -59,7 +59,7 @@ eosadmin_kinit
 #   event to be automatically triggered when a file is written to that directory.
 # This can be used to test the 'delete-on-close' event.
 
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen)
 
 # Create a subdirectory with a different storage class for the delete on CLOSEW test
 

@@ -96,7 +96,7 @@ kubectl cp ${TMP_DIR}/metaData ${NAMESPACE}/cta-frontend:${TMP_DIR}/
 
 echo
 echo "ENABLE cta-frontend TO EXECUTE CTA ADMIN COMMANDS"
-kubectl --namespace ${NAMESPACE} exec auth-kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i cta-frontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl --namespace ${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i cta-frontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl -n ${NAMESPACE} cp client_helper.sh cta-frontend:${TMP_DIR}/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. '${TMP_DIR}'/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh

@@ -38,7 +38,7 @@ eospower_kinit &>/dev/null
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
 EOS_MGM_HOST="ctaeos"
 
-ENDPOINT=https://ctaeos:8444/${FILE_LOCATION}
+ENDPOINT=https://${EOS_MGM_HOST}:8444/${FILE_LOCATION}
 METADATA="$1"
 
 NOW=$(date +%s)

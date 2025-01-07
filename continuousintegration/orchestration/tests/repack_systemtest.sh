@@ -30,10 +30,10 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
+Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosMgmHost>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
 (bufferURL example : /eos/ctaeos/repack)
 mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
-eosinstance : the name of the ctaeos instance to be used (default : $EOS_MGM_HOST)
+eosMgmHost : the name of the ctaeos instance to be used (default : $EOS_MGM_HOST)
 timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
