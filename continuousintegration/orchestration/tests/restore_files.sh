@@ -15,9 +15,10 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOS_INSTANCE=ctaeos
+EOS_INSTANCE_NAME="ctaeos"
+EOS_MGM_HOST="ctaeos"
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
 
 usage() { cat <<EOF 1>&2
@@ -56,12 +57,12 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_INSTANCE} vid ls
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_MGM_HOST} vid ls
 
 echo
 echo "Launching restore_files_client.sh on client pod"
@@ -74,7 +75,7 @@ echo
 METADATA_FILE_PATH=$(mktemp -d).json
 echo "SEND FILE METADATA TO JSON FILE: ${METADATA_FILE_PATH}"
 touch ${METADATA_FILE_PATH}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . > ${METADATA_FILE_PATH}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . > ${METADATA_FILE_PATH}
 
 # Extract values from the meta data used for restoring and testing
 FXID=$(jq -r '.fxid' ${METADATA_FILE_PATH})
@@ -85,7 +86,7 @@ CHECKSUM=$(jq -r '.checksumvalue' ${METADATA_FILE_PATH})
 echo
 echo "DELETE ARCHIVED FILE"
 kubectl -n ${NAMESPACE} cp common/delete_file.sh ${CLIENT_POD}:/root/delete_file.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.sh -i ${EOS_INSTANCE} -f ${TEST_FILE_NAME}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.sh -i ${EOS_MGM_HOST} -f ${TEST_FILE_NAME}
 
 echo
 echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
@@ -124,7 +125,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c "Xrd
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- test $(false = xrdfs root://${EOS_INSTANCE} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
+while kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- test $(false = xrdfs root://${EOS_MGM_HOST} query prepare 0 /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file with name:${TEST_FILE_NAME} to be restored on EOS side: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -139,8 +140,8 @@ echo
 METADATA_FILE_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND FILE METADATA TO JSON FILE: ${METADATA_FILE_AFTER_RESTORE_PATH}"
 touch ${METADATA_FILE_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE} | jq '.[0]' | tee -a ${LOGFILE_PATH}
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE_NAME} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOS_INSTANCE_NAME} | jq '.[0]' | tee -a ${LOGFILE_PATH}
 
 # Extract values from the meta data from the restored file
 FILE_SIZE_AFTER_RESTORE=$(jq -r '.af | .["size"]' ${METADATA_FILE_AFTER_RESTORE_PATH})
@@ -151,8 +152,8 @@ FXID_AFTER_RESTORE=$(jq -r '.df | .["diskId"]' ${METADATA_FILE_AFTER_RESTORE_PAT
 EOS_METADATA_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_AFTER_RESTORE_PATH}"
 touch ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
 
 EOS_NS_FXID_AFTER_RESTORE=$(jq -r '.fxid' ${EOS_METADATA_AFTER_RESTORE_PATH})
 EOS_NS_FXID_AFTER_RESTORE_DEC=$(( 16#$EOS_NS_FXID_AFTER_RESTORE ))

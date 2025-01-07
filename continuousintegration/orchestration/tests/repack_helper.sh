@@ -44,7 +44,7 @@ fi
 
 CTA_CLI_POD="cta-cli"
 EOS_MGM_POD="ctaeos"
-EOS_INSTANCE="ctaeos"
+EOS_MGM_HOST="ctaeos"
 
 executeReclaim() {
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta reclaim -v $1
@@ -72,13 +72,13 @@ executeRepack() {
     echo "Changing the tape $1 to FULL status"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
-    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- rm -rf root://${EOS_INSTANCE}//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- rm -rf root://${EOS_MGM_HOST}//eos/ctaeos/repack
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos mkdir /eos/ctaeos/repack
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"
-    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re add -v $1 -m -b root://${EOS_INSTANCE}//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re add -v $1 -m -b root://${EOS_MGM_HOST}//eos/ctaeos/repack
     SECONDS_PASSED=0
     while test 0 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l); do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"

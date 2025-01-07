@@ -43,8 +43,8 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # - Errors for EOS 5.2.8 - CTA#615
   # Broken if eos >= 5.2.8
   # default to xrootd 5 call tested with eos >= 5.2.17
-  xrdfs4_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_INSTANCE} query opaquefile ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
-  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_INSTANCE} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
+  xrdfs4_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} query opaquefile ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
+  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
 
   (/opt/eos/xrootd/bin/xrdcp -V 2>&1 | grep -q -e '^v*4\.') && xrdfs_call=${xrdfs4_call}
 
@@ -82,7 +82,7 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    RETRIEVED=$(( ${RETRIEVED} + $( eos root://${EOS_INSTANCE} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
+    RETRIEVED=$(( ${RETRIEVED} + $( eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
 
     sleep 1 # do not hammer eos too hard
   done

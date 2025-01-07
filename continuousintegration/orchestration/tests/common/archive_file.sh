@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -f <filename>
@@ -50,12 +50,12 @@ fi
 eospower_kdestroy
 eospower_kinit
 
-echo "xrdcp /etc/group root://${EOS_INSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}"
-xrdcp /etc/group root://${EOS_INSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}
+echo "xrdcp /etc/group root://${EOS_MGM_HOST}//eos/ctaeos/cta/${TEST_FILE_NAME}"
+xrdcp /etc/group root://${EOS_MGM_HOST}//eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
-while test 0 == $(eos root://${EOS_INSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME} | awk '{print $4;}' | grep tape | wc -l); do
+while test 0 == $(eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME} | awk '{print $4;}' | grep tape | wc -l); do
   echo "Waiting for file to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -69,19 +69,19 @@ done
 echo
 echo "FILE ARCHIVED TO TAPE"
 echo
-eos root://${EOS_INSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Information about the testing file:"
 echo "********"
-  eos root://${EOS_INSTANCE} attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
-  eos root://${EOS_INSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
-  eos root://${EOS_INSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
 
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
 echo
 echo "Information about the testing file without disk replica"
-  eos root://${EOS_INSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
-  eos root://${EOS_INSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo

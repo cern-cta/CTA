@@ -30,7 +30,8 @@ fi
 CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 # This should be the service name; not the pod name
-EOS_INSTANCE=ctaeos
+EOS_INSTANCE_NAME="ctaeos"
+EOS_MGM_HOST="ctaeos"
 NEW_STORAGE_CLASS_NAME=newStorageClassName
 
 FILE_1=$(uuidgen)
@@ -63,22 +64,22 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash ${TMP_DIR}/archive_
 EOS_METADATA_PATH_1=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH}"
 touch ${EOS_METADATA_PATH_1}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
 EOS_ARCHIVE_ID_1=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_1})
 EOS_FILE_ID_1=$(jq -r '.id' ${EOS_METADATA_PATH_1})
 
 EOS_METADATA_PATH_2=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_2}"
 touch ${EOS_METADATA_PATH_2}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
 EOS_ARCHIVE_ID_2=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_2})
 EOS_FILE_ID_2=$(jq -r '.id' ${EOS_METADATA_PATH_2})
 
 ############## CREATE INPUT FILE TO USE FOR TOOL ##############
 IDS_FILEPATH=${TMP_DIR}/archiveFileIds.txt
 touch ${IDS_FILEPATH}
-echo '{"archiveFileId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "instance": "'${EOS_INSTANCE}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
-echo '{"archiveFileId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOS_INSTANCE}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
+echo '{"archiveFileId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "instance": "'${EOS_INSTANCE_NAME}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
+echo '{"archiveFileId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOS_INSTANCE_NAME}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
 
 ############## RUN TOOL ##############
 kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/${CTA_CLI_POD}:${IDS_FILEPATH}

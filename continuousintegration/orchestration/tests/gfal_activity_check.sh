@@ -17,11 +17,11 @@
 
 # Archive some files.
 dd if=/dev/urandom of=/root/test_act_gfal bs=15K count=1
-xrdcp /root/test_act_gfal root://${EOS_INSTANCE}/${EOS_DIR}/test_valid_instance
-xrdcp /root/test_act_gfal root://${EOS_INSTANCE}/${EOS_DIR}/test_invalid_instance
+xrdcp /root/test_act_gfal root://${EOS_MGM_HOST}/${EOS_DIR}/test_valid_instance
+xrdcp /root/test_act_gfal root://${EOS_MGM_HOST}/${EOS_DIR}/test_invalid_instance
 
 # Wait for files to be on tape
-wait_for_archive ${EOS_INSTANCE} ${EOS_DIR}/test_valid_instance ${EOS_DIR}/test_invalid_instance
+wait_for_archive ${EOS_MGM_HOST} ${EOS_DIR}/test_valid_instance ${EOS_DIR}/test_invalid_instance
 
 # Query .well-known tape rest api endpoint to get the sitename
 site_name=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
@@ -31,16 +31,16 @@ valid_metadata="{${site_name}: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-p
 echo "Metadata contents: ${valid_metadata}"
 
 # Bring online with valid activity
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${valid_metadata}" "davs://${EOS_INSTANCE}:8444/${EOS_DIR}/test_valid_instance"
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${valid_metadata}" "davs://${EOS_MGM_HOST}:8444/${EOS_DIR}/test_valid_instance"
 
 # Evict
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_INSTANCE}:8444/${EOS_DIR}/test_valid_instance
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_MGM_HOST}:8444/${EOS_DIR}/test_valid_instance
 
 # Bring online for different instance: No activity should be logged in xrdmgm.log or eosreport
 invalid_metadata="{\"NotTheSiteName\": {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"
 echo "Wrong instance metadata: ${invalid_metadata}"
 
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${invalid_metadata}" "davs://${EOS_INSTANCE}:8444/${EOS_DIR}/test_invalid_instance"
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${invalid_metadata}" "davs://${EOS_MGM_HOST}:8444/${EOS_DIR}/test_invalid_instance"
 
 # Evict the retrieved file
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_INSTANCE}:8444/${EOS_DIR}/test_invalid_instance
+BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_MGM_HOST}:8444/${EOS_DIR}/test_invalid_instance

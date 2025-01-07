@@ -49,7 +49,7 @@
 #
 ################################################################################
 
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 
 NB_FILES_TAPE=4
 NB_FILES_NO_P=4
@@ -83,16 +83,16 @@ echo "Testing normal 'prepare -s' request..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_OK}..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_OK}
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_OK}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_OK}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_OK}
 put_all_drives_down
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_OK})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK})
 
 echo "Checking 'query prepare' for retrieved file..."
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${TEMP_FILE_OK})
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE_OK})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
@@ -127,7 +127,7 @@ echo "NOT uploading test filei ${TEMP_FILE_FAIL}."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_FAIL})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL})
 
 if [ $? -eq 0 ]; then
   echo "ERROR: Preparing a single file that does not exist (all files failec) should return an error."
@@ -150,12 +150,12 @@ TEMP_FILE=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 1 file with prepare permissions (reusing ${TEMP_FILE_OK}) and 1 files without prepare permissions (${TEMP_FILE})..."
 
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 echo "File ${TEMP_FILE} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Unexpected error returned by prepare command."
@@ -166,7 +166,7 @@ fi
 # 'error_text' of failed file should contain an error message
 
 echo "Checking 'query prepare' for failed to prepare file ${TEMP_FILE}..."
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${TEMP_FILE_OK} ${TEMP_FILE})
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE_OK} ${TEMP_FILE})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
@@ -187,7 +187,7 @@ then
 fi
 
 # Cleanup
-eos root://${EOS_INSTANCE} rm ${TEMP_FILE}
+eos root://${EOS_MGM_HOST} rm ${TEMP_FILE}
 
 echo "Test completed successfully"
 
@@ -205,13 +205,13 @@ TEMP_FILE_2=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 2 file without prepare permissions (${TEMP_FILE_1}, ${TEMP_FILE_2})..."
 
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_1}
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_2}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_1}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_2}
 echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
 
 if [ $? -eq 0 ]; then
   echo "ERROR: Preparing command where no single file has prepare permissions (all files failed) should return an error."
@@ -219,8 +219,8 @@ if [ $? -eq 0 ]; then
 fi
 
 # Cleanup
-eos root://${EOS_INSTANCE} rm ${TEMP_FILE_1}
-eos root://${EOS_INSTANCE} rm ${TEMP_FILE_2}
+eos root://${EOS_MGM_HOST} rm ${TEMP_FILE_1}
+eos root://${EOS_MGM_HOST} rm ${TEMP_FILE_2}
 
 echo "Test completed successfully"
 
@@ -242,7 +242,7 @@ echo "NOT uploading test file ${TEMP_FILE}."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Unexpected error returned by prepare command."
@@ -253,7 +253,7 @@ fi
 # 'error_text' of failed file should contain an error message
 
 echo "Checking 'query prepare' for failed to prepare file ${TEMP_FILE}..."
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${TEMP_FILE_OK} ${TEMP_FILE})
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE_OK} ${TEMP_FILE})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
@@ -292,7 +292,7 @@ echo "NOT uploading test files ${TEMP_FILE_1} ${TEMP_FILE_2}."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
 
 if [ $? -eq 0 ]; then
   echo "ERROR: Preparing command where no single file exists (all files failed) should return an error."
@@ -324,14 +324,14 @@ for ((file_idx=0; file_idx < ${NB_FILES_TAPE}; file_idx++)); do
 done
 
 put_all_drives_up
-cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
-wait_for_archive ${EOS_INSTANCE} $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
+cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
+wait_for_archive ${EOS_MGM_HOST} $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
 
 echo "Files to be written to directory with no prepare/evict permission:"
 for ((file_idx=0; file_idx < ${NB_FILES_NO_P}; file_idx++)); do
   echo "${EOS_NO_P_BASEDIR}/$(uuidgen)" | tee -a ${TEST_FILES_NO_P_LIST}
 done
-cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
+cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
 
 echo "Files without copy on disk/tape (missing files):"
 for ((file_idx=0; file_idx < ${NB_FILES_MISS}; file_idx++)); do
@@ -340,7 +340,7 @@ done
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} prepare -s)
+REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_MGM_HOST} prepare -s)
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Unexpected error returned by prepare command."
@@ -348,7 +348,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking 'query prepare' for request status..."
-QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID})
+QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID})
 
 # Check that a request ID was produced
 
@@ -412,8 +412,8 @@ fi
 # Cleanup
 
 echo "Cleaning up test files..."
-cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} rm FILE_PATH
-cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} rm FILE_PATH
+cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} rm FILE_PATH
+cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} rm FILE_PATH
 
 echo "Test completed successfully"
 rm ${tmpjsonfile}
@@ -431,17 +431,17 @@ echo "Testing 'prepare -a' request for file ${TEMP_FILE}..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 echo "Disabling tape drives..."
 put_all_drives_down
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE})
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE}
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Prepare abort command should not have failed."
@@ -449,7 +449,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking 'query prepare' for aborted file..."
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${TEMP_FILE})
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
@@ -485,18 +485,18 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_TAPE}
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 echo "Disabling tape drives..."
 put_all_drives_down
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_TAPE})
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE})
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE} (should succeed) and ${TEMP_FILE_NONE} (should fail)..."
 echo "Error expected"
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
 if [ $? -eq 0 ]; then
   echo "ERROR: Prepare abort command should have returned an error."
@@ -504,7 +504,7 @@ if [ $? -eq 0 ]; then
 fi
 
 echo "Checking 'query prepare' for aborted file..."
-QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${TEMP_FILE_TAPE})
+QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE_TAPE})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").requested")
@@ -536,24 +536,24 @@ echo "Testing 'prepare -e' request for existing file ${TEMP_FILE}..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 echo "Disabling tape drives..."
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE})
-wait_for_retrieve ${EOS_INSTANCE} ${TEMP_FILE}
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE})
+wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS evict workflow as poweruser1:powerusers..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -e ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE}
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Prepare evict command should not have failed."
   exit 1
 fi
 
-wait_for_evict ${EOS_INSTANCE} ${TEMP_FILE}
+wait_for_evict ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Test completed successfully"
 
@@ -574,24 +574,24 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_TAPE}
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_TAPE})
-wait_for_retrieve ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE})
+wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
 echo "Error expected"
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -e ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
 if [ $? -eq 0 ]; then
   echo "ERROR: Prepare evict command should have returned an error."
   exit 1
 fi
 
-wait_for_evict ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
+wait_for_evict ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Test completed successfully"
 

@@ -49,7 +49,7 @@
 #
 ################################################################################
 
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
@@ -66,9 +66,9 @@ admin_kinit &>/dev/null
 
 # Find tapes and tape pools
 
-STORAGECLASS_1=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_1} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
-STORAGECLASS_2=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_2} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
-STORAGECLASS_3=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_3} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
+STORAGECLASS_1=$( eos root://${EOS_MGM_HOST} attr get sys.archive.storage_class ${MULTICOPY_DIR_1} | sed -n -e 's/.*="\(.*\)"/\1/p' )
+STORAGECLASS_2=$( eos root://${EOS_MGM_HOST} attr get sys.archive.storage_class ${MULTICOPY_DIR_2} | sed -n -e 's/.*="\(.*\)"/\1/p' )
+STORAGECLASS_3=$( eos root://${EOS_MGM_HOST} attr get sys.archive.storage_class ${MULTICOPY_DIR_3} | sed -n -e 's/.*="\(.*\)"/\1/p' )
 
 mapfile -t TAPEPOOL_LIST_1 < <( admin_cta --json archiveroute ls | jq -r --arg STORAGECLASS "$STORAGECLASS_1" '.[] | select( .storageClass == $STORAGECLASS) | .tapepool' )
 mapfile -t TAPEPOOL_LIST_2 < <( admin_cta --json archiveroute ls | jq -r --arg STORAGECLASS "$STORAGECLASS_2" '.[] | select( .storageClass == $STORAGECLASS) | .tapepool' )
@@ -98,11 +98,11 @@ FILE_2_COPY=${MULTICOPY_DIR_2}/$(uuidgen)
 FILE_3_COPY=${MULTICOPY_DIR_3}/$(uuidgen)
 
 put_all_drives_up
-xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_1_COPY}
-xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_2_COPY}
-xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_3_COPY}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_1_COPY}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_2_COPY}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_3_COPY}
 
-wait_for_archive ${EOS_INSTANCE} ${FILE_1_COPY} ${FILE_2_COPY} ${FILE_3_COPY}
+wait_for_archive ${EOS_MGM_HOST} ${FILE_1_COPY} ${FILE_2_COPY} ${FILE_3_COPY}
 put_all_drives_down
 
 trigger_queue_cleanup() {
@@ -130,27 +130,27 @@ wait_for_request_cancel_report() {
   SECONDS_PASSED=0
   WAIT_TIMEOUT=90
   REQUEST_ID=$1
-  FILE_PATH=$2  
+  FILE_PATH=$2
 
   echo "Waiting for request to be reported as canceled..."
   while true; do
-    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
     REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
 
     # Check if request has finally been canceled
     if [[ "false" == "${REQUESTED}" ]]; then
       break
     fi
-   
+
     if test ${SECONDS_PASSED} == ${WAIT_TIMEOUT}; then
       echo "Timed out after ${WAIT_TIMEOUT} seconds"
       break
-    fi 
+    fi
 
     echo "Waiting for request to be reported as canceled: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
-  
+
   done
 }
 
@@ -180,7 +180,7 @@ change_tape_state() {
 ################################################################################
 
 test_tape_state_queueing_priority() {
-  
+
   TEST_NR=$1
   TAPE_STATE_LIST=("$2" "$3" "$4")
   EXPECTED_SELECTED_QUEUE=$5
@@ -194,7 +194,7 @@ test_tape_state_queueing_priority() {
   echo " ${TEST_NR}. Testing 'Tape state priority between ${TAPE_STATE_LIST[@]}'"
   echo "########################################################################################################"
   echo "Setting up queue ${TAPE_LIST_3[0]} as ${TAPE_STATE_LIST[0]}, ${TAPE_LIST_3[1]} as ${TAPE_STATE_LIST[1]}, ${TAPE_LIST_3[2]} as ${TAPE_STATE_LIST[2]}..."
- 
+
   change_tape_state ${TAPE_LIST_3[0]} ${TAPE_STATE_LIST[0]} & pid[0]=$!
   change_tape_state ${TAPE_LIST_3[1]} ${TAPE_STATE_LIST[1]} & pid[1]=$!
   change_tape_state ${TAPE_LIST_3[2]} ${TAPE_STATE_LIST[2]} & pid[2]=$!
@@ -202,7 +202,7 @@ test_tape_state_queueing_priority() {
   wait ${pid[0]}; ret[0]=$?
   wait ${pid[1]}; ret[1]=$?
   wait ${pid[2]}; ret[2]=$?
- 
+
   if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ] || [ ${ret[2]} -ne 0 ]
   then
     echo "Failed to change tape state"
@@ -210,7 +210,7 @@ test_tape_state_queueing_priority() {
   fi
 
   echo "Requesting file prepare -s..."
-  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${FILE_PATH})
 
   echo "Checking if request went to ${TAPE_STATE_LIST[$EXPECTED_SELECTED_QUEUE]} queue ${TAPE_LIST_3[$EXPECTED_SELECTED_QUEUE]}..."
 
@@ -232,9 +232,9 @@ test_tape_state_queueing_priority() {
       fi
     fi
   done
-  
+
   echo "Cleaning up request and queues..."
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${FILE_PATH}
   trigger_queue_cleanup > /dev/null
 
   echo "OK"
@@ -252,25 +252,25 @@ test_tape_state_change_queue_removed() {
   STATE_END=$3
 
   # Using $FILE_1_COPY, which has 1 replica in the following tape
-  
+
   FILE_PATH=$FILE_1_COPY
-  
+
   TAPE_0=${TAPE_LIST_1[0]}
-  
+
   echo
   echo "########################################################################################################"
   echo " ${TEST_NR}. Testing 'Tape state change from $STATE_START to $STATE_END - queue removed (1 copy only)"
   echo "########################################################################################################"
   echo "Setting up $TAPE_0 queue as ${STATE_START}..."
-  
+
   change_tape_state $TAPE_0 $STATE_START
-  
+
   echo "Requesting file prepare -s..."
-  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${FILE_PATH})
 
   echo "Checking that the request was queued..."
 
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
   HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -291,14 +291,14 @@ test_tape_state_change_queue_removed() {
   fi
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
-  
+
   change_tape_state $TAPE_0 $STATE_END
-   
+
   echo "Checking that the request was canceled and the error reported to the user..."
-  
+
   wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
 
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
   HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -319,9 +319,9 @@ test_tape_state_change_queue_removed() {
   fi
 
   echo "Request removed and error reported back to user, as expected."
-  
+
   echo "Cleaning up request and queues..."
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${FILE_PATH}
   trigger_queue_cleanup > /dev/null
 
   echo "OK"
@@ -339,25 +339,25 @@ test_tape_state_change_queue_preserved() {
   STATE_END=$3
 
   # Using $FILE_1_COPY, which has 1 replica in the following tape
-  
+
   FILE_PATH=$FILE_1_COPY
-  
+
   TAPE_0=${TAPE_LIST_1[0]}
-  
+
   echo
   echo "########################################################################################################"
   echo " ${TEST_NR}. Testing 'Tape state change from $STATE_START to $STATE_END - queue preserved (1 copy only)"
   echo "########################################################################################################"
   echo "Setting up $TAPE_0 queue as ${STATE_START}..."
-  
+
   change_tape_state $TAPE_0 $STATE_START
-  
+
   echo "Requesting file prepare -s..."
-  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
-  
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${FILE_PATH})
+
   echo "Checking that the request was queued..."
 
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
   HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -378,12 +378,12 @@ test_tape_state_change_queue_preserved() {
   fi
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
-  
+
   change_tape_state $TAPE_0 $STATE_END
-   
+
   echo "Checking that the request was not modified on the queue..."
 
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
   HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -404,9 +404,9 @@ test_tape_state_change_queue_preserved() {
   fi
 
   echo "Queue preserved, as expected."
-  
+
   echo "Cleaning up request and queues..."
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${FILE_PATH}
   trigger_queue_cleanup > /dev/null
 
   echo "OK"
@@ -428,44 +428,44 @@ test_tape_state_change_queue_moved() {
   EXPECTED_QUEUE_END=$7
 
   # Using $FILE_1_COPY, which has 1 replica in the following tape
-  
+
   FILE_PATH=$FILE_2_COPY
-  
+
   TAPE_0=${TAPE_LIST_2[0]}
   TAPE_1=${TAPE_LIST_2[1]}
- 
+
   pid=()
   ret=()
- 
+
   echo
   echo "########################################################################################################"
   echo " ${TEST_NR}. Testing 'Queue moved on tape state changes from ($TAPE_0_STATE_START, $TAPE_1_STATE_START) to ($TAPE_0_STATE_END, $TAPE_1_STATE_END)"
   echo "########################################################################################################"
   echo "Setting up ${TAPE_0} queue as ${TAPE_0_STATE_START} and ${TAPE_1} queue as ${TAPE_1_STATE_START}..."
-  
+
   if [[ "0" != "${EXPECTED_QUEUE_START}" && "1" != "${EXPECTED_QUEUE_START}" ]]; then
     echo "Initial request should be put on queue 0 or 1."
     exit 1
-  fi 
-  
+  fi
+
   change_tape_state $TAPE_0 $TAPE_0_STATE_START & pid[0]=$!
   change_tape_state $TAPE_1 $TAPE_1_STATE_START & pid[1]=$!
 
   wait ${pid[0]}; ret[0]=$?
   wait ${pid[1]}; ret[1]=$?
- 
+
   if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ]
   then
     echo "Failed to change tape state"
     exit 1
   fi
-  
+
   echo "Requesting file prepare -s..."
-  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
-  
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${FILE_PATH})
+
   echo "Checking that the request was queued..."
 
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
   HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -515,9 +515,9 @@ test_tape_state_change_queue_moved() {
   fi
 
   if [[ "0" == "${EXPECTED_QUEUE_END}" || "1" == "${EXPECTED_QUEUE_END}" ]]; then
-  
+
     echo "Checking that the request was moved from the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} to the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_END]}..."
-    
+
     if test "0" == "${EXPECTED_QUEUE_END}"; then
       if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
         echo "ERROR: Request non found on $TAPE_0 queue."
@@ -543,10 +543,10 @@ test_tape_state_change_queue_moved() {
   else
 
     echo "Checking that the request queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} was canceled and the error reported to the user..."
-  
+
     wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
 
-    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${FILE_PATH})
     PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
     REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
     HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
@@ -572,9 +572,9 @@ test_tape_state_change_queue_moved() {
 
     echo "Request removed and error reported back to user, as expected."
   fi
- 
+
   echo "Cleaning up request and queues..."
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${FILE_PATH}
   trigger_queue_cleanup > /dev/null
 
   echo "OK"

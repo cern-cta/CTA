@@ -58,7 +58,7 @@ CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 
 # Set up kerberos
-echo "Running kinit for cta-cli and client"
+echo "Running kinit for ${CTA_CLI_POD} and ${CLIENT_POD}"
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i ${CLIENT_POD} -- bash -c "cat >> /etc/xrootd/client.conf"
 kubectl --namespace ${namespace} exec ${CTA_CLI_POD} -c cta-cli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${krb5_realm}
 kubectl --namespace ${namespace} exec ${CTA_CLI_POD} -c cta-cli -- klist

@@ -57,8 +57,7 @@ CLIENT_POD="client"
 CTA_CLI_POD="cta-cli"
 CTA_FRONTEND_POD="cta-frontend"
 EOS_MGM_POD="ctaeos"
-# This should be the service name; not the pod name
-EOS_INSTANCE="ctaeos"
+EOS_MGM_HOST="ctaeos"
 TMP_DIR=$(mktemp -d)
 FILE_1=$(uuidgen)
 FILE_2=$(uuidgen)
@@ -73,7 +72,7 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /usr/bin/archive_fi
 EOS_METADATA_PATH_1=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_1}"
 touch ${EOS_METADATA_PATH_1}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
 EOS_ARCHIVE_ID_1=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_1})
 EOS_CHECKSUM_1=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_1})
 EOS_SIZE_1=$(jq -r '.size' ${EOS_METADATA_PATH_1})
@@ -81,7 +80,7 @@ EOS_SIZE_1=$(jq -r '.size' ${EOS_METADATA_PATH_1})
 EOS_METADATA_PATH_2=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_2}"
 touch ${EOS_METADATA_PATH_2}
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_INSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -j root://${EOS_MGM_HOST} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
 EOS_ARCHIVE_ID_2=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_2})
 EOS_CHECKSUM_2=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_2})
 EOS_SIZE_2=$(jq -r '.size' ${EOS_METADATA_PATH_2})
@@ -107,7 +106,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_D
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo

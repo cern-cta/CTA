@@ -16,7 +16,8 @@
 #               submit itself to any jurisdiction.
 
 #default CI EOS instance
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
+EOS_INSTANCE_NAME="ctaeos"
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
 
@@ -32,7 +33,7 @@ usage() { cat <<EOF 1>&2
 Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
 (bufferURL example : /eos/ctaeos/repack)
 mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
-eosinstance : the name of the ctaeos instance to be used (default : $EOS_INSTANCE)
+eosinstance : the name of the ctaeos instance to be used (default : $EOS_MGM_HOST)
 timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
@@ -44,15 +45,15 @@ exit 1
 }
 
 testRepackBufferURL(){
-  echo "Testing the repack buffer URL at root://${EOS_INSTANCE}/${REPACK_BUFFER_BASEDIR}"
-  eos root://${EOS_INSTANCE} ls -d ${REPACK_BUFFER_BASEDIR} 1> /dev/null || die "Repack bufferURL directory does not exist"
+  echo "Testing the repack buffer URL at root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}"
+  eos root://${EOS_MGM_HOST} ls -d ${REPACK_BUFFER_BASEDIR} 1> /dev/null || die "Repack bufferURL directory does not exist"
   echo "Testing the insertion of a test file in the buffer URL"
   tempFilePath=$(mktemp /tmp/testFile.XXXX)
   tempFileName=${tempFilePath##*/}
   xrdcp ${tempFilePath} ${FULL_REPACK_BUFFER_URL}/${tempFileName} || die "Unable to write a file into the repack buffer directory"
   echo "File ${tempFilePath} written in ${FULL_REPACK_BUFFER_URL}/${tempFileName}"
   echo "Deleting test file from the test directory"
-  eos root://${EOS_INSTANCE} rm ${REPACK_BUFFER_BASEDIR}/${tempFileName} || die "Unable to delete the testing file"
+  eos root://${EOS_MGM_HOST} rm ${REPACK_BUFFER_BASEDIR}/${tempFileName} || die "Unable to delete the testing file"
   echo "Test repack buffer URL OK"
 }
 
@@ -70,7 +71,7 @@ while getopts "v:f:e:b:t:r:n:ampu" o; do
       MAX_FILES_TO_SELECT=${OPTARG}
       ;;
     e)
-      EOS_INSTANCE=${OPTARG}
+      EOS_MGM_HOST=${OPTARG}
       ;;
     b)
       REPACK_BUFFER_BASEDIR=${OPTARG}
@@ -137,7 +138,7 @@ fi
 admin_kinit
 admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${USER}"
 
-FULL_REPACK_BUFFER_URL=root://${EOS_INSTANCE}/${REPACK_BUFFER_BASEDIR}
+FULL_REPACK_BUFFER_URL=root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
@@ -150,9 +151,9 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: setting too high free space requirements"
   # This should be idempotent as we will be called several times
   if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
-    admin_cta di add -n ${EOS_INSTANCE} -m toto
-    admin_cta dis add -n repackDiskInstanceSpace --di ${EOS_INSTANCE} -u "eosSpace:default" -i 5 -m toto
-    admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE} --dis repackDiskInstanceSpace -r "root://${EOS_INSTANCE}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
+    admin_cta di add -n ${EOS_INSTANCE_NAME} -m toto
+    admin_cta dis add -n repackDiskInstanceSpace --di ${EOS_INSTANCE_NAME} -u "eosSpace:default" -i 5 -m toto
+    admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE_NAME} --dis repackDiskInstanceSpace -r "root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
   else
     echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
     admin_cta ds ch -n repackBuffer -f 111222333444555

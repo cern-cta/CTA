@@ -58,10 +58,10 @@ fi
 
 CLIENT_POD="client"
 EOS_MGM_POD="ctaeos"
-EOS_INSTANCE="ctaeos"
+EOS_MGM_HOST="ctaeos"
 
 echo
-echo "Copying test scripts to client and eos mgm pods."
+echo "Copying test scripts to ${CLIENT_POD} and ${EOS_MGM_POD} pods."
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/"
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/"
@@ -113,7 +113,7 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_eosreport_for_arc
 
 echo
 echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_INSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
 
 echo
 echo "Launching client_simple_ar.sh on client pod"
