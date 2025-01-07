@@ -1,14 +1,12 @@
 # These settings are available to all the subcharts
 global:
   image:
-    registry: gitlab-registry.cern.ch/cta
-    repository: ctageneric
+    repository: gitlab-registry.cern.ch/cta/ctageneric
     tag: ""
     pullPolicy: IfNotPresent
     pullSecrets:
     - ctaregsecret
     - reg-ctageneric
-  useSystemd: false
 
   # This is not directly used by the pod yet. Once we have converted the pods into deployments,
   # the relevant pods can automatically redeploy on a schema version change.

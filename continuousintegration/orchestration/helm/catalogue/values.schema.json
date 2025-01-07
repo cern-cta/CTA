@@ -21,10 +21,6 @@
     "resetImage": {
       "type": "object",
       "properties": {
-        "registry": {
-          "type": "string",
-          "description": "The Docker registry for the reset image."
-        },
         "repository": {
           "type": "string",
           "description": "The repository for the reset image."
@@ -46,7 +42,6 @@
         }
       },
       "required": [
-        "registry",
         "repository",
         "tag"
       ],

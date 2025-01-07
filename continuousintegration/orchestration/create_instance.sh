@@ -39,8 +39,8 @@ usage() {
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
-  echo "  -i, --image-tag <tag>:              Docker image tag for the deployment."
-  echo "  -r, --registry-host <host>:         Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
+  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
@@ -88,7 +88,7 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
-  registry_host="gitlab-registry.cern.ch/cta" # Used for the ctageneric pod image(s)
+  cta_image_repository="gitlab-registry.cern.ch/cta/ctageneric" # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
@@ -112,11 +112,11 @@ create_instance() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -r|--registry-host)
-        registry_host="$2"
+      -r|--cta-image-repository)
+        cta_image_repository="$2"
         shift ;;
-      -i|--image-tag)
-        image_tag="$2"
+      -i|--cta-image-tag)
+        cta_image_tag="$2"
         shift ;;
       -c|--catalogue-version)
         catalogue_schema_version="$2"
@@ -146,8 +146,8 @@ create_instance() {
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
-  if [ -z "${image_tag}" ]; then
-    echo "Missing mandatory argument: -i | --image-tag"
+  if [ -z "${cta_image_tag}" ]; then
+    echo "Missing mandatory argument: -i | --cta-image-tag"
     usage
   fi
   if [ -z "${catalogue_schema_version}" ]; then
@@ -229,8 +229,8 @@ create_instance() {
   echo "Installing kdc, catalogue and scheduler charts..."
   log_run helm ${helm_command} catalogue-${namespace} helm/catalogue \
                                 --namespace ${namespace} \
-                                --set resetImage.registry="${registry_host}" \
-                                --set resetImage.tag="${image_tag}" \
+                                --set resetImage.repository="${cta_image_repository}" \
+                                --set resetImage.tag="${cta_image_tag}" \
                                 --set schemaVersion="${catalogue_schema_version}" \
                                 --set resetCatalogue=${reset_catalogue} \
                                 --set-file configuration=${catalogue_config} \
@@ -239,8 +239,8 @@ create_instance() {
 
   log_run helm ${helm_command} scheduler-${namespace} helm/scheduler \
                                 --namespace ${namespace} \
-                                --set resetImage.registry="${registry_host}" \
-                                --set resetImage.tag="${image_tag}" \
+                                --set resetImage.repository="${cta_image_repository}" \
+                                --set resetImage.tag="${cta_image_tag}" \
                                 --set resetScheduler=${reset_scheduler} \
                                 --set-file configuration=${scheduler_config} \
                                 --wait --wait-for-jobs --timeout 4m &
@@ -248,8 +248,8 @@ create_instance() {
 
   log_run helm ${helm_command} kdc-${namespace} helm/kdc \
                                 --namespace ${namespace} \
-                                --set image.registry="${registry_host}" \
-                                --set image.tag="${image_tag}" \
+                                --set image.repository="${cta_image_repository}" \
+                                --set image.tag="${cta_image_tag}" \
                                 --wait --wait-for-jobs --timeout 2m &
   kdc_pid=$!
 
@@ -261,8 +261,8 @@ create_instance() {
   echo "Installing cta chart..."
   log_run helm ${helm_command} cta-${namespace} helm/cta \
                                 --namespace ${namespace} \
-                                --set global.image.registry="${registry_host}" \
-                                --set global.image.tag="${image_tag}" \
+                                --set global.image.repository="${cta_image_repository}" \
+                                --set global.image.tag="${cta_image_tag}" \
                                 --set global.catalogueSchemaVersion=${catalogue_schema_version} \
                                 --set-file global.configuration.scheduler=${scheduler_config} \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \

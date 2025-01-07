@@ -410,8 +410,8 @@ build_deploy() {
       echo "Deploying CTA instance"
       cd continuousintegration/orchestration
       ./create_instance.sh --namespace ${deploy_namespace} \
-                          --registry-host localhost \
-                          --image-tag ${image_tag} \
+                          --cta-image-repository localhost/ctageneric \
+                          --cta-image-tag ${image_tag} \
                           --catalogue-config ${catalogue_config} \
                           --scheduler-config ${scheduler_config} \
                           --reset-catalogue \
@@ -423,7 +423,7 @@ build_deploy() {
 
       upgrade_options=""
       if [ "$skip_image_reload" == "false" ]; then
-        upgrade_options+=" --registry-host localhost --image-tag ${image_tag}"
+        upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
 
       # For now we only support changing the image tag on an upgrade

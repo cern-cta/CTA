@@ -5,8 +5,7 @@ component: catalogue
 partOf: cta
 
 resetImage:
-  registry: gitlab-registry.cern.ch/cta
-  repository: ctageneric
+  repository: gitlab-registry.cern.ch/cta/ctageneric
   tag: ""
   pullPolicy: IfNotPresent
   pullSecrets:

@@ -16,7 +16,7 @@ spec:
   {{- end }}
   containers:
   - name: {{ $name }}
-    image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
     imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
     resources:

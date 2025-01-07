@@ -32,18 +32,18 @@ usage() {
   echo "Usage: $0 -n <namespace> -s <systemtest_script> -o <scheduler_config> -d <catalogue_config> -i <image_tag> [options]"
   echo ""
   echo "options:"
-  echo "  -h, --help:                     Shows help output."
-  echo "  -n, --namespace <namespace>:    Specify the Kubernetes namespace (mandatory)."
-  echo "  -s, --test-script <script>:     Path to the system test script (mandatory)."
-  echo "  -o, --scheduler-config <file>:  Path to the scheduler config file (mandatory)."
-  echo "  -d, --catalogue-config <file>:  Path to the catalogue config file (mandatory)."
-  echo "  -i, --image-tag <tag>:          Docker image tag for the deployment (mandatory)."
-  echo "  -r, --registry-host <host>:     Provide the Docker registry host. Defaults to \"gitlab-registry.cern.ch/cta\"."
-  echo "  -t, --test-timeout <seconds>:   Timeout for the system test in seconds."
-  echo "      --spawn-options <options>:  Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
-  echo "      --test-options <options>:   Additional options to pass verbatim to the test script."
-  echo "  -K, --keep-namespace:           Keep the namespace after the system test script run if successful."
-  echo "  -C, --cleanup-namespaces:       Clean up leftover Kubernetes namespaces."
+  echo "  -h, --help:                         Shows help output."
+  echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
+  echo "  -s, --test-script <script>:         Path to the system test script."
+  echo "  -o, --scheduler-config <file>:      Path to the scheduler config file."
+  echo "  -d, --catalogue-config <file>:      Path to the catalogue config file."
+  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
+  echo "  -t, --test-timeout <seconds>:       Timeout for the system test in seconds."
+  echo "      --spawn-options <options>:      Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
+  echo "      --test-options <options>:       Additional options to pass verbatim to the test script."
+  echo "  -K, --keep-namespace:               Keep the namespace after the system test script run if successful."
+  echo "  -C, --cleanup-namespaces:           Clean up leftover Kubernetes namespaces."
   exit 1
 }
 
@@ -114,13 +114,12 @@ run_systemtest() {
       -t|--test-timeout)
         systemtestscript_timeout="$2"
         shift ;;
-      -r|--registry-host)
-        registry_host="$2"
-        spawn_options+=" --registry-host ${registry_host}"
+      -r|--cta-image-repository)
+        spawn_options+=" --cta-image-repository $2"
         shift ;;
-      -i|--image-tag)
-        image_tag="$2"
-        spawn_options+=" --image-tag ${image_tag}"
+      -i|--cta-image-tag)
+        cta_image_tag="$2"
+        spawn_options+=" --cta-image-tag ${cta_image_tag}"
         shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"
@@ -157,8 +156,8 @@ run_systemtest() {
     echo "Missing mandatory argument: -s | --test-script"
     usage
   fi
-  if [ -z "${image_tag}" ]; then
-    echo "Missing mandatory argument: -i | --image-tag"
+  if [ -z "${cta_image_tag}" ]; then
+    echo "Missing mandatory argument: -i | --cta-image-tag"
     usage
   fi
   if [ -z "${scheduler_config}" ]; then
