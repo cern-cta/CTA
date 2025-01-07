@@ -56,12 +56,12 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash eos root://${EOS_INSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOS_INSTANCE} vid ls
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_INSTANCE} vid ls
 
 echo
 echo "Launching restore_files_client.sh on client pod"

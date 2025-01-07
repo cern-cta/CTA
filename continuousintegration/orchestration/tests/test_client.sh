@@ -109,7 +109,7 @@ TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
 echo " Launching client_archive_metadata.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
 echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
 
 echo
 echo "Launching immutable file test on client pod"
@@ -120,7 +120,7 @@ echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo " Launching client_timestamp.sh on client pod"
@@ -171,7 +171,7 @@ echo
 echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
@@ -185,33 +185,33 @@ echo "Launching client_multiple_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_multiple_retrieve.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching idempotent_prepare.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/idempotent_prepare.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching delete_on_closew_error.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_on_closew_error.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching archive_zero_length_file.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_zero_length_file.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching try_evict_before_archive_completed.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/try_evict_before_archive_completed.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 # TODO: Remove the stagerrm tests once the command is removed from EOS
 echo
@@ -219,7 +219,7 @@ echo "Launching stagerrm_tests.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/stagerrm_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 # Get EOS version
 EOS_V=$(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos -v 2>&1 | grep EOS | awk '{print $2}' | awk -F. '{print $1}')
@@ -229,7 +229,7 @@ if [[ $EOS_V == 5 ]]; then
   echo " Archiving file: xrdcp as user1"
   echo " Retrieving it as poweruser1"
   kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/evict_tests.sh || exit 1
-  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 fi
 
@@ -240,6 +240,6 @@ echo "Launching retrieve_queue_cleanup.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/retrieve_queue_cleanup.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 exit 0
