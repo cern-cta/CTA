@@ -16,6 +16,20 @@ spec:
   - name: {{ $name }}
     image: docker.io/postgres:14.10
     stdin: true
+    command: []
+    args: []
+    readinessProbe:
+      exec:
+        command:
+        - sh
+        - -c
+        - >
+          pg_isready -U {{ $schedulerConfig.postgresConfig.username }} -d {{ $schedulerConfig.postgresConfig.database }} -h 127.0.0.1 -p 5433
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 5
     env:
     - name: MY_NAME
       value: {{ $name }}
@@ -31,8 +45,6 @@ spec:
       value: {{ $schedulerConfig.postgresConfig.password }}
     - name: POSTGRES_DB
       value: {{ $schedulerConfig.postgresConfig.database }}
-    command: []
-    args: []
     resources:
       requests:
         memory: {{ .Values.resources.requests.memory | quote }}
