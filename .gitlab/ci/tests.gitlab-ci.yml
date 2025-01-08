@@ -92,7 +92,7 @@ unit-test-postgresql:
     - mkdir -p ${POSTGRESQL_LOG_DIR}
     - chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
     - runuser -u postgres -- initdb -D ${POSTGRESQL_DATA_DIR}
-    - runuser -u postgres -- pg_ctl start -w -t 60 -D ${POSTGRESQL_DATA_DIR}
+    - runuser -u postgres -- pg_ctl start -w -t 500 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
     - runuser -u postgres -- createdb cta
     - runuser -u postgres -- createuser -E cta
     - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
