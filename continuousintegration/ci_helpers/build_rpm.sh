@@ -283,6 +283,7 @@ build_rpm() {
     fi
   fi
   if [ "${install_srpms}" = true ] && [ "${install}" = false ]; then
+      yum clean all
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
   fi
 
