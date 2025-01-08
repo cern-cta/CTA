@@ -50,7 +50,7 @@ clang-format-report:
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: always
-  image: $IMAGE_EL9
+  image: $IMAGE_ANALYSIS
   script:
     - yum install -y epel-release
     - yum install -y git-clang-format bat
@@ -93,7 +93,7 @@ clang-format-apply:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       when: never
     - when: manual
-  image: $IMAGE_EL9
+  image: $IMAGE_ANALYSIS
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
     CLANG_FORMAT_REPORT: clang-format.diff
@@ -144,7 +144,7 @@ catalogue-schema-version-check:
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $IMAGE_EL9
+  image: $IMAGE_ANALYSIS
   script:
     - yum install -y git
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .

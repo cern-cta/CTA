@@ -31,7 +31,7 @@ test-cta-valgrind:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
       allow_failure: false
-  image: $IMAGE_EL9
+  image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
@@ -53,7 +53,7 @@ system-test-cta:
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
-  image: $IMAGE_EL9
+  image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
@@ -75,7 +75,7 @@ unit-test-postgresql:
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
-  image: $IMAGE_EL9
+  image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
@@ -125,7 +125,7 @@ unit-test-oracle:
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
-  image: $IMAGE_EL9
+  image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
@@ -160,7 +160,7 @@ test-cta-release:
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: on_success
-  image: $IMAGE_EL9
+  image: $IMAGE_TEST
   variables:
     GIT_STRATEGY: none # We don't need the repo clone here
     CTAREPODIR: /tmp/repo

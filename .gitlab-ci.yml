@@ -51,7 +51,10 @@ variables:
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
   # Images
-  IMAGE_EL9: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_RELEASE: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_ANALYSIS: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_BUILD: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_TEST: gitlab-registry.cern.ch/linuxsupport/alma9-base
   IMAGE_PYTHON3: python:3-alpine
   IMAGE_DOCKER_IMAGE_BUILDER: gitlab-registry.cern.ch/ci-tools/docker-image-builder
   IMAGE_CPPCHECK: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
