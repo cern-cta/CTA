@@ -106,6 +106,8 @@ unit-test-postgresql:
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+  after_script:
+    - cat /var/log/postgres/cta_test_postgres.log
   artifacts:
     expire_in: 5 days
     paths:
