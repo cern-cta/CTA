@@ -144,7 +144,7 @@ upgrade_instance() {
 
   update_chart_dependencies
   echo "Upgrading cta chart..."
-  log_run helm upgrade cta-${namespace} helm/cta \
+  log_run helm upgrade cta helm/cta \
                       --namespace ${namespace} \
                       --wait --timeout 8m \
                       --reuse-values \

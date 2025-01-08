@@ -1,5 +1,5 @@
 {{- $namespace := .Release.Namespace }}
-{{- $name := include "ctacli.name" . }}
+{{- $name := include "client.name" . }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -20,21 +20,21 @@ spec:
     spec:
       restartPolicy: Always
       imagePullSecrets:
-      {{ include "ctacli.imagePullSecrets" . | nindent 6 }}
+      {{ include "client.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: {{ $name }}
-        image: {{ include "ctacli.image" . }}
-        imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
+        image: {{ include "client.image" . }}
+        imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/sh", "-c"]
         args:
         - |
           cat /tmp/eos.keytab > /etc/eos.keytab;
           chmod 600 /etc/eos.keytab;
-          bash /scripts/ctacli.sh
+          bash /scripts/client.sh;
         readinessProbe:
           exec:
-            command: ["sh", "-c", "rpm -q cta-cli cta-debuginfo"]
+            command: ["sh", "-c", "rpm -q cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client"]
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
@@ -65,32 +65,54 @@ spec:
         - name: cta-conf-volume
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        - name: keytab
-          mountPath: /root/ctaadmin1.keytab
-          subPath: ctaadmin1.keytab
-        - name: sss-keytab
-          mountPath: /tmp/eos.keytab
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /tmp/eos.keytab
+          name: sss-keytab
           subPath: eos.keytab
-        - name: krb5-config-volume
-          mountPath: /etc/krb5.conf
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
           subPath: krb5.conf
-        {{ include "ctacli.volumeMounts" . | nindent 8 }}
+        - mountPath: /root/user1.keytab
+          name: user1-keytab
+          subPath: user1.keytab
+        - mountPath: /root/eosadmin1.keytab
+          name: eosadmin1-keytab
+          subPath: eosadmin1.keytab
+        - mountPath: /root/poweruser1.keytab
+          name: poweruser1-keytab
+          subPath: poweruser1.keytab
+        - mountPath: /root/ctaadmin2.keytab
+          name: ctaadmin2-keytab
+          subPath: ctaadmin2.keytab
+        {{ include "client.volumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
-          name: scripts-ctacli
+          name: scripts-client
           defaultMode: 0777
       - name: cta-conf-volume
         configMap:
-          name: etc-cta-ctacli
-      - name: keytab
-        secret:
-          secretName: ctaadmin1-keytab
+          name: etc-cta-client
+      - name: eosconfig
+        configMap:
+          name: eos-config-base
       - name: sss-keytab
         secret:
-          defaultMode: 400
           secretName: eos-sss-keytab
       - name: krb5-config-volume
         configMap:
           name: krb5-config
-      {{include "ctacli.volumes" . | nindent 6 }}
+      - name: user1-keytab
+        secret:
+          secretName: user1-keytab
+      - name: eosadmin1-keytab
+        secret:
+          secretName: eosadmin1-keytab
+      - name: poweruser1-keytab
+        secret:
+          secretName: poweruser1-keytab
+      - name: ctaadmin2-keytab
+        secret:
+          secretName: ctaadmin2-keytab
+      {{ include "client.volumes" . | nindent 6 }}
