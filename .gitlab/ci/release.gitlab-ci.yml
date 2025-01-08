@@ -8,7 +8,7 @@ changelog-preview:
       when: manual
       allow_failure: true
     - when: never
-  image: $IMAGE_PYTHON3
+  image: $IMAGE_RELEASE
   variables:
     GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
     TO_COMMIT: "HEAD"
@@ -20,12 +20,10 @@ changelog-preview:
         echo "Release version cannot be empty. Please set the RELEASE_VERSION variable manually in the CI."
         exit 1
       fi
-    - pip install requests
   script:
     # If no from reference (commit hash or tag) is provided, grab the latest tag before the current commit
     - |
       if [ -z "${FROM_REF}" ]; then
-        apk add git
         FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT})
       fi
     - python3 continuousintegration/ci_helpers/release/check_commits.py --api-url ${CI_SERVER_URL}
@@ -57,11 +55,9 @@ changelog-update:
       when: manual
       allow_failure: true
     - when: never
-  image: $IMAGE_PYTHON3
+  image: $IMAGE_RELEASE
   variables:
     SOURCE_BRANCH: ""
-  before_script:
-    - pip install requests
   script:
     - TO_COMMIT=${ENV_TO_COMMIT}
     - FROM_REF=${ENV_FROM_REF}

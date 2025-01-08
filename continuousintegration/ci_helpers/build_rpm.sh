@@ -31,7 +31,8 @@ usage() {
   echo "  --cmake-build-type <type>:                    Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo ""
   echo "options:"
-  echo "  -i, --install:                                Installs the required packages. Supported operating systems: [alma9]."
+  echo "  -i, --install:                                Installs the required packages. Also installs the SRPMs. Supported operating systems: [alma9]."
+  echo "      --install-srpms:                          Installs only the SRPMS."
   echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
   echo "      --clean-build-dir:                        Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                        Creates the build directory if it does not exist."
@@ -57,6 +58,7 @@ build_rpm() {
 
   local enable_ccache=false
   local install=false
+  local install_srpms=false
   local num_jobs=$(nproc)
   local cmake_build_type=""
   local clean_build_dir=false
@@ -145,6 +147,7 @@ build_rpm() {
         fi
         ;;
       -i | --install) install=true ;;
+      --install-srpms) install_srpms=true ;;
       -j | --jobs)
         if [[ $# -gt 1 ]]; then
           num_jobs="$2"
@@ -279,6 +282,10 @@ build_rpm() {
       exit 1
     fi
   fi
+  if [ "${install_srpms}" = true ] && [ "${install}" = false ]; then
+      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
+  fi
+
 
   # Cmake
   export CTA_VERSION=${cta_version}

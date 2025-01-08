@@ -52,8 +52,6 @@ clang-format-report:
     - when: always
   image: $IMAGE_ANALYSIS
   script:
-    - yum install -y epel-release
-    - yum install -y git-clang-format bat
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
@@ -98,7 +96,6 @@ clang-format-apply:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
     CLANG_FORMAT_REPORT: clang-format.diff
   before_script:
-    - yum install -y git git-clang-format patch
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_LOGIN
   script:
@@ -146,5 +143,4 @@ catalogue-schema-version-check:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   image: $IMAGE_ANALYSIS
   script:
-    - yum install -y git
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
