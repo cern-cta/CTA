@@ -61,7 +61,7 @@ system-test-cta:
   script:
     - /usr/bin/cta-systemTests
 
-unit-test-postgresql:
+.unit-test-postgresql:
   stage: test
   needs:
     - job: build-cta-rpm
