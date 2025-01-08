@@ -42,7 +42,7 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-CTA_CLI_POD="cta-cli"
+CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="ctaeos"
 EOS_MGM_HOST="ctaeos"
 

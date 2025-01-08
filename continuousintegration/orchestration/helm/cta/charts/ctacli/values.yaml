@@ -5,6 +5,8 @@ partOf: cta
 nameOverride: cta-cli
 isPriviliged: true
 
+replicas: 1
+
 conf:
   cta:
     endpoint: cta-frontend:10955
