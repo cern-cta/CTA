@@ -89,7 +89,7 @@
 # Tests
 
 k8s-test-client:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   variables:
@@ -97,7 +97,7 @@ k8s-test-client:
     EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-client-gfal2:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   variables:
@@ -105,7 +105,7 @@ k8s-test-client-gfal2:
     EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-repack:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   variables:
@@ -113,7 +113,7 @@ k8s-test-repack:
     EXTRA_ARGS: "--test-timeout 2400"
 
 k8s-test-cta-admin:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   rules:
@@ -145,7 +145,7 @@ k8s-test-cta-admin:
       when: on_success
 
 k8s-test-liquibase-update:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   rules:
@@ -168,7 +168,7 @@ k8s-test-liquibase-update:
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
 k8s-test-external-tape-formats:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   rules:
@@ -178,7 +178,7 @@ k8s-test-external-tape-formats:
     EXTRA_OPTIONS: "--test-timeout 2400"
 
 k8s-test-regression-dCache:
-  stage: test
+  stage: system-test
   extends:
     - .kubernetes-test
   rules:

@@ -34,10 +34,9 @@ ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/
 RUN yum install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
-      createrepo epel-release \
+      epel-release \
       jq bc \
       sqlite \
-      wget \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)

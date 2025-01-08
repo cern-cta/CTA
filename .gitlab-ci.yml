@@ -5,6 +5,7 @@ stages:
   - build
   - build:image
   - test
+  - system-test
   - release:changelog
   - release:internal
   - release:external
@@ -28,7 +29,7 @@ variables:
   BASH_LOGGING_ENABLED: 1 # For the k8s test scripts
 
   # Pipeline Type. Supported types:
-  #   - COMMIT: default pipelite type, Runs static analysis, compiles the software and tests it.
+  #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
   #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
   #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
   #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
