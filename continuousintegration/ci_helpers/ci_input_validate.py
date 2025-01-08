@@ -47,9 +47,10 @@ DEFINED_INPUT_VARS = [
     "BASH_LOGGING_ENABLED", "PIPELINE_TYPE", "CUSTOM_XRD_TAG",
     "CUSTOM_EOS_TAG", "CUSTOM_CTA_TAG", "CTA_BUILD_ID",
     "CTA_PIPELINE_NAME", "GIT_STRATEGY", "GIT_SUBMODULE_STRATEGY",
-    "GIT_DEPTH", "GIT_SUBMODULE_DEPTH", "IMAGE_EL9", "IMAGE_PYTHON3",
+    "GIT_DEPTH", "GIT_SUBMODULE_DEPTH", "IMAGE_PYTHON3",
     "IMAGE_DOCKER_IMAGE_BUILDER", "IMAGE_CPPCHECK",
-    "IMAGE_GITLAB_RELEASE_CLI"
+    "IMAGE_GITLAB_RELEASE_CLI", "IMAGE_BUILD", "IMAGE_TEST",
+    "IMAGE_RELEASE", "IMAGE_ANALYSIS"
 ]
 
 def run_cmd(cmd):
@@ -132,7 +133,7 @@ def validate_eos_regr_against_cta_main(ci_input_vars):
       - XRootD is fetched from the stable repo.
       - EOS version should be available in the testing repo as it comes from
         their latest tag.
-   
+
     :param ci_input_vars: CI input variables dictionary received by the program.
     """
     print("Validating XRootD...")

@@ -9,7 +9,7 @@
       when: never
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
-  image: $IMAGE_EL9
+  image: $IMAGE_BUILD
   artifacts:
     expire_in: 30 days
     paths:
