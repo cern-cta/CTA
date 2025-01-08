@@ -283,6 +283,8 @@ build_rpm() {
     fi
   fi
   if [ "${install_srpms}" = true ] && [ "${install}" = false ]; then
+      cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+      cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum clean all
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
   fi
