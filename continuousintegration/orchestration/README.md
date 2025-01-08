@@ -151,13 +151,13 @@ Finally, we have the `cta` chart. This chart spawns the different components req
   * The EOS Simple Shared Secret (SSS) to be used by the EOS mgm and EOS fst to authenticate each other.
   * The CTA SSS to be used by the cta command-line tool to authenticate itself and therefore the EOS instance with the CTA front end.
   * The tape server SSS to be used by the EOS mgm to authenticate file transfer requests from the tape servers.
-- `ctacli`
+- `cta-cli`
   * The cta command-line tool to be used by tape operators.
   * This pod has the keytab of `ctaadmin1` who is allowed to type `cta` admin commands.
-- `ctafrontend`
+- `cta-frontend`
   * One CTA front-end.
   * The CTA SSS of the EOS instance that will be used by the CTA front end to authenticate the cta command-line run by the workflow engine of the EOS instance.
-- `tpsrvxx-0`
+- `cta-tpsrvxx-0`
   * One `cta-taped` daemon running in a `taped` container. Each pod will have as many `taped` containers as drives specified in the tapeservers config.
   * One `rmcd` daemon running in `rmcd` container of `tpsrvxx-0` pod.
   * The tape server SSS to be used by cta-taped to authenticate its file transfer requests with the EOS mgm (all tape servers will use the same SSS).
@@ -181,10 +181,10 @@ To summarise, the `create_instance.sh` script does the following:
 3. Install the `init` chart, which cleans MHVTL, sets up the common storage space for the logs and sets up the authentication centre.
 4. Install the `catalogue` chart, which produces a configmap containing `cta-catalogue.conf` and spawns a job that wipes the catalogue. If Postgres is the provided backend, will also spawn a local Postgres DB.
 5. Install the `scheduler` chart, generating a configmap `cta-objectstore-tools.conf` and spawning a job to wipe the scheduler.
-6. Install the `cta` chart, spawning all the different CTA pods: a number of tape servers, an EOS MGM, a frontend, a client to communicate with the frontend, and an admin client (`ctacli`).
-7. Perform some simple initialization of the EOS workflow rules and kerberos tickets on the client/ctacli pods.
+6. Install the `cta` chart, spawning all the different CTA pods: a number of tape servers, an EOS MGM, a frontend, a client to communicate with the frontend, and an admin client (`cta-cli`).
+7. Perform some simple initialization of the EOS workflow rules and kerberos tickets on the client/cta-cli pods.
 
-Note that once this is done, the instance is still relatively barebones. For example, you won't be able to execute any `cta-admin` commands on the `ctacli` yet. To get something to play with, you are advised to run `tests/prepare_tests.sh`, which will setup some basic resources.
+Note that once this is done, the instance is still relatively barebones. For example, you won't be able to execute any `cta-admin` commands on the `cta-cli` yet. To get something to play with, you are advised to run `tests/prepare_tests.sh`, which will setup some basic resources.
 
 ## Deleting a CTA instance
 
@@ -236,34 +236,34 @@ When something goes wrong, start by looking at the logs:
 
 ### Dump the objectstore content
 
-Connect to a pod where the objectstore is configured, like `ctafrontend`:
+Connect to a pod where the objectstore is configured, like `cta-frontend`:
 
 ```sh
-kubectl --namespace $NAMESPACE exec ctafrontend -it bash
+kubectl --namespace $NAMESPACE exec cta-frontend -it bash
 ```
 
 From there, you need to install the missing `protocolbuffer` tools like `protoc` binary, and then dump all the objects you want.
 
 ```sh
-[root@ctafrontend /]# yum install -y  protobuf-compiler
+[root@cta-frontend /]# yum install -y  protobuf-compiler
 ...
 Installed:
   protobuf-compiler.x86_64 0:2.5.0-7.el7
 
 Complete!
 
-[root@ctafrontend /]# rados ls -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE
+[root@cta-frontend /]# rados ls -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE
 OStoreDBFactory-tpsrv-340-20161216-14:17:51
-OStoreDBFactory-ctafrontend-188-20161216-14:15:35
+OStoreDBFactory-cta-frontend-188-20161216-14:15:35
 schedulerGlobalLock-makeMinimalVFS-init-624-20161216-14:14:17-2
 driveRegister-makeMinimalVFS-init-624-20161216-14:14:17-1
 makeMinimalVFS-init-624-20161216-14:14:17
 agentRegister-makeMinimalVFS-init-624-20161216-14:14:17-0
 root
-RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
+RetrieveQueue-OStoreDBFactory-cta-frontend-188-20161216-14:15:35-3
 
-[root@ctafrontend /]# rados get -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID \
- --namespace $SCHEDULER_CEPH_NAMESPACE RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3 \
+[root@cta-frontend /]# rados get -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID \
+ --namespace $SCHEDULER_CEPH_NAMESPACE RetrieveQueue-OStoreDBFactory-cta-frontend-188-20161216-14:15:35-3 \
  - | protoc --decode_raw
 1: 10
 2: 0
@@ -293,7 +293,7 @@ RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
 If some tests run for long, the kerberos token in the cli pod should be renewed with:
 
 ```sh
-kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
+kubectl --namespace ${namespace} exec cta-cli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
 ```
 
 ## Gitlab CI integration

@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -i <eosinstance> -f <filename>
+Usage: $0 -i <eosMgmHost> -f <filename>
 EOF
 exit 1
 }
@@ -24,7 +24,7 @@ exit 1
 while getopts "i:f:" o; do
   case "${o}" in
     i)
-      EOSINSTANCE=${OPTARG}
+      EOS_MGM_HOST=${OPTARG}
       ;;
     f)
       TEST_FILE_NAME=${OPTARG}
@@ -41,12 +41,12 @@ if [ ! -z "${error}" ]; then
   exit 1
 fi
 
-echo "bash eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}"
-eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
+echo "bash eos root://${EOS_MGM_HOST} rm /eos/ctaeos/cta/${TEST_FILE_NAME}"
+eos root://${EOS_MGM_HOST} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while test true = $(xrdfs root://${EOSINSTANCE} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
+while test true = $(xrdfs root://${EOS_MGM_HOST} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
   echo "Waiting for file to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1

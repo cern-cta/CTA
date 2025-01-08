@@ -3,6 +3,6 @@ postgresConfig:
   remote: false
   username: cta
   password: cta
-  database: postgres-scheduler
+  database: cta-scheduler-postgres
   path: /var/lib/postgresql/data/scheddata
-  server: postgres-scheduler
+  server: cta-scheduler-postgres

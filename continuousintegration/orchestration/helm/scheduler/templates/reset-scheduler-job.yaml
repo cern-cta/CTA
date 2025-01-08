@@ -1,6 +1,6 @@
 {{- if .Values.resetScheduler -}}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "reset-scheduler" }}
+{{- $name := "cta-scheduler-reset" }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 apiVersion: batch/v1
 kind: Job

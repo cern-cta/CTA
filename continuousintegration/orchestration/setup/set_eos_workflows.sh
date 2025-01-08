@@ -50,10 +50,10 @@ fi
 
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
-eos_instance=ctaeos
-echo "Setting workflows in namespace ${namespace} pod ${eos_instance}:"
-cta_workflow_dir=/eos/${eos_instance}/proc/cta/workflow
+EOS_MGM_POD="ctaeos"
+echo "Setting workflows in namespace ${namespace} pod ${EOS_MGM_POD}:"
+cta_workflow_dir=/eos/ctaeos/proc/cta/workflow
 for workflow in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::abort_prepare.default sync::evict_prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default; do
   echo "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
-  kubectl --namespace ${namespace} exec ${eos_instance} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
+  kubectl --namespace ${namespace} exec ${EOS_MGM_POD} -- bash -c "eos attr set sys.workflow.${workflow}=\"proto\" ${cta_workflow_dir}"
 done

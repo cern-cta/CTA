@@ -1,7 +1,7 @@
 {{- if .Values.resetCatalogue -}}
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
 {{- $namespace := .Release.Namespace }}
-{{- $name := "reset-catalogue" }}
+{{- $name := "cta-catalogue-reset" }}
 apiVersion: batch/v1
 kind: Job
 metadata:

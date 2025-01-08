@@ -50,9 +50,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+CLIENT_POD="client"
 echo
 echo "Copying test scripts to pods..."
-kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
+kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
 
 # Wait for script to rm the drive and restore it.
 # TODO: This is not working correctly on CI but it works for buildtree. Not needed at the moment but when grpc frontend is ready we will need to restart restart tpsrv01-0 pod.
@@ -65,7 +66,7 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 #     exit 1
 #   fi
 #
-#   MESSAGE=$(kubectl -n ${NAMESPACE} exec client ls /root | grep deleted.txt)
+#   MESSAGE=$(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} ls /root | grep deleted.txt)
 #   SECS=$(( ${SECS} + 1 ))
 # done
 #
@@ -100,11 +101,11 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 #  fi
 
 #  sleep 1
-#  MESSAGE=$(kubectl -n ${NAMESPACE} exec client ls /root/ | grep message.txt)
+#  MESSAGE=$(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} ls /root/ | grep message.txt)
 #  SECONDS_PASSED=$(( ${SECONDS_PASSED} + 1 ))
 #done
 
-#vid=$(kubectl -n ${NAMESPACE} exec client -- cat /root/message.txt)
+#vid=$(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -- cat /root/message.txt)
 # Backup tape.
 #echo "HOST: Creating tape ${vid}TA backup."
 #echo "HOST: $(ls /opt/mhvtl/)"
@@ -115,7 +116,7 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 #echo "1234" | dd of=/opt/mhvtl/${vid}TA/data seek=1 obs=50
 
 # Inform the pod that the tape has been corrupted.
-#kubectl -n ${NAMESPACE} exec client -- bash -c 'echo "1" > /root/response.txt'
+#kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -- bash -c 'echo "1" > /root/response.txt'
 
 # Restore tape
 #SECONDS_PASSED=0
@@ -126,7 +127,7 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 #  fi
 
 #  sleep 1
-#  TEST_DONE=$(kubectl -n ${NAMESPACE} exec client ls /root/ | grep done.txt)
+#  TEST_DONE=$(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} ls /root/ | grep done.txt)
 #  SECONDS_PASSED=$(( ${SECONDS_PASSED} + 1 ))
 #done
 
@@ -137,11 +138,11 @@ kubectl -n "${NAMESPACE}" cp . client:/root/ || exit 1
 
 echo
 echo "Launching cta_admin.sh on client pod..."
-kubectl -n "${NAMESPACE}" exec client -- bash +x /root/cta_admin.sh  || exit 1
+kubectl -n "${NAMESPACE}" exec ${CLIENT_POD} -- bash +x /root/cta_admin.sh  || exit 1
 
 
 # Add log file to Ci artifcats.
-kubectl -n "${NAMESPACE}" cp client:/root/log ../../../pod_logs/"${NAMESPACE}"/cta-admin_xrd.log
+kubectl -n "${NAMESPACE}" cp ${CLIENT_POD}:/root/log -c client ../../../pod_logs/"${NAMESPACE}"/cta-admin_xrd.log
 
 
 # TODO: Create grpc cta frontend

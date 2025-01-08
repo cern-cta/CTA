@@ -1,7 +1,7 @@
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
 {{- if and (eq $catalogueConfig.backend "postgres") (not $catalogueConfig.postgresConfig.remote) }}
 {{- $namespace := .Release.Namespace -}}
-{{- $name := "postgres-catalogue" -}}
+{{- $name := "cta-catalogue-postgres" -}}
 apiVersion: v1
 kind: Pod
 metadata:

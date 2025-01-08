@@ -1,13 +1,13 @@
 # If required, the user can specify a custom image here
 image:
-component: ctacli
+component: cli
 partOf: cta
-nameOverride: ctacli
+nameOverride: cta-cli
 isPriviliged: true
 
 conf:
   cta:
-    endpoint: ctafrontend:10955
+    endpoint: cta-frontend:10955
   eos:
     instance: ctaeos
     requester:

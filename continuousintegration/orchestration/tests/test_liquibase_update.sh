@@ -29,9 +29,10 @@ die() { echo "$@" 1>&2 ; exit 1; }
 
 # Define a function to check the current schema version
 check_schema_version() {
+  CTA_FRONTEND_POD="cta-frontend"
   DESIRED_SCHEMA_VERSION=$1
   # Get the current schema version
-  CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
+  CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
     | grep -o -E '[0-9]+\.[0-9]')
 
   # Check if the current schema version is the same as the previous one
@@ -58,6 +59,7 @@ shift $((OPTIND-1))
 if [ -z "${NAMESPACE}" ]; then
   usage
 fi
+
 
 # Note that this assumes the setup was spawned with the previous catalogue version
 

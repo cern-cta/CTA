@@ -18,10 +18,7 @@
 set -a
 
 touch /tmp/RC
-# EOSINSTANCE=cta-mgm-0
-# its actually service name
-# EOSINSTANCE=cta-mgm
-EOSINSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 DATA_SOURCE=/dev/urandom
@@ -83,7 +80,7 @@ while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:c:" o; do
             CLI_TARGET=${OPTARG}
             ;;
         e)
-            EOSINSTANCE=${OPTARG}
+            EOS_MGM_HOST=${OPTARG}
             ;;
         d)
             EOS_BASEDIR=${OPTARG}
@@ -171,12 +168,12 @@ if [[ $DONOTARCHIVE == 1 ]]; then
       echo "You must provide a target directory to run a test and skip archival"
       exit 1
     fi
-    eos root://${EOSINSTANCE} ls -d ${EOS_BASEDIR}/${TARGETDIR} || die "target directory does not exist and there is no archive phase to create it."
+    eos root://${EOS_MGM_HOST} ls -d ${EOS_BASEDIR}/${TARGETDIR} || die "target directory does not exist and there is no archive phase to create it."
 fi
 
 if [[ $TAPEAWAREGC == 1 ]]; then
     echo "Enabling tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
+    ssh ${SSH_OPTIONS} -l root ${EOS_MGM_HOST} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
 fi
 
 EOS_DIR=''
@@ -214,9 +211,9 @@ eospower_kinit
 
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+${TOKEN_TIMEOUT}"  | bc)
-TOKEN=$(eos "root://${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
+TOKEN=$(eos "root://${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
 
-TOKEN_EOSPOWER=$(eospower_eos root://"${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
+TOKEN_EOSPOWER=$(eospower_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
 
 echo "Starting test ${TESTID}: ${COMMENT}"
 

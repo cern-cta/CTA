@@ -36,24 +36,24 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
-EOSINSTANCE=root://ctaeos
+EOS_MGM_HOST="ctaeos"
 
-ENDPOINT=https://ctaeos:8444/${FILE_LOCATION}
+ENDPOINT=https://${EOS_MGM_HOST}:8444/${FILE_LOCATION}
 METADATA="$1"
 
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
-TOKEN_EOSUSER=$(eos "${EOSINSTANCE}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
+TOKEN_EOSUSER=$(eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
 
 echo "Printing eosuser token dump"
-eos "${EOSINSTANCE}" token --token "${TOKEN_EOSUSER}" | jq .
+eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER}" | jq .
 echo
 
 # Delete the file in case it exists
 echo "Removing potentially existing file"
-eos ${EOSINSTANCE} rm ${FILE_LOCATION} 2>/dev/null
+eos root://${EOS_MGM_HOST} rm ${FILE_LOCATION} 2>/dev/null
 
 # Do a curl request
 TMP_FILE=$(mktemp)

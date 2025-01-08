@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 
 EOS_BASEDIR=/eos/ctaeos
 EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta
@@ -64,11 +64,11 @@ put_all_drives_down
 
 # 2.1. Write a file to EOSCTA for archiving
 echo "Write file ${TEMP_FILE} for archival..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 
 # 3.1. Check that stagerrm fails when there is no tape replica
-echo "Testing 'eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}
+echo "Testing 'eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}'..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}
 if [ $? -eq 0 ]; then
   error "'eos stagerrm' command succeeded where it should have failed"
 else
@@ -77,7 +77,7 @@ fi
 
 # 4. Check that disk replica still exists
 echo "Checking that ${TEMP_FILE} replica still exists on disk..."
-if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
+if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
   error "'eos stagerrm' removed disk replica, when it should have failed"
 else
   echo "'eos stagerrm' did not remove disk replica, as expected"
@@ -88,11 +88,11 @@ echo "Putting all drives up. File will finally be written to tape and removed fr
 put_all_drives_up
 
 echo "Waiting for archival of ${TEMP_FILE}..."
-wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 # 6.1 Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."
-if test 0 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
+if test 0 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
   error "Disk replica not removed, when it should have been done after archival"
 else
   echo "Disk replica was removed, as expected"
@@ -100,7 +100,7 @@ fi
 
 # 6.2 Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica exists on tape..."
-if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
+if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
   error "Tape replica does not exist, when it should have been created after archival"
 else
   echo "Tape replica created, as expected"
@@ -108,22 +108,22 @@ fi
 
 # 7. Setting up dummy spaces and file systems for testing
 echo "Setting up dummy spaces and file systems (${FSID_DUMMY_1_NAME}=${FSID_DUMMY_1_VALUE}, ${FSID_DUMMY_2_NAME} =${FSID_DUMMY_2_VALUE}, ${FSID_DUMMY_3_NAME}=${FSID_DUMMY_3_VALUE}) for testing..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space define ${FSID_DUMMY_1_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space define ${FSID_DUMMY_2_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} space define ${FSID_DUMMY_3_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs add -m ${FSID_DUMMY_1_VALUE} ${FSID_DUMMY_1_NAME} localhost:1234 /does_not_exist_1 ${FSID_DUMMY_1_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs add -m ${FSID_DUMMY_2_VALUE} ${FSID_DUMMY_2_NAME} localhost:1234 /does_not_exist_2 ${FSID_DUMMY_2_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs add -m ${FSID_DUMMY_3_VALUE} ${FSID_DUMMY_3_NAME} localhost:1234 /does_not_exist_3 ${FSID_DUMMY_3_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_1_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_2_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_3_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_1_VALUE} ${FSID_DUMMY_1_NAME} localhost:1234 /does_not_exist_1 ${FSID_DUMMY_1_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_2_VALUE} ${FSID_DUMMY_2_NAME} localhost:1234 /does_not_exist_2 ${FSID_DUMMY_2_NAME}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_3_VALUE} ${FSID_DUMMY_3_NAME} localhost:1234 /does_not_exist_3 ${FSID_DUMMY_3_NAME}
 
 # 8. Adding dummy file systems to namespace
 echo "Adding dummy filesystems ${FSID_DUMMY_1_NAME}, ${FSID_DUMMY_2_NAME} and ${FSID_DUMMY_3_NAME} to ${TEMP_FILE} ..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} file tag "${TEMP_FILE}" +${FSID_DUMMY_1_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} file tag "${TEMP_FILE}" +${FSID_DUMMY_2_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} file tag "${TEMP_FILE}" +${FSID_DUMMY_3_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_1_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_2_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_3_VALUE}
 
 # 9. Check that there are 4 replicas advertised on the namespace now
 echo "Checking that ${TEMP_FILE} has 4 replicas advertised on the namespace..."
-if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -131,18 +131,18 @@ fi
 
 # 10. Test removing all remaining replicas
 echo "Trying to remove all disk replicas..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}
 if [ $? -ne 0 ]; then
   error "'eos stagerrm' command failed where it should have succeeded"
 else
   echo "'eos stagerrm' command succeeded as expected"
 fi
-if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
 fi
-if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
+if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
   error "The tape replica was removed, when it should have not"
 else
   echo "Tape replica was preserved"
@@ -150,12 +150,12 @@ fi
 
 # 11. Cleanup dummy spaces and file systems
 echo "Cleaning up dummy spaces and filesystems ${FSID_DUMMY_1_NAME}, ${FSID_DUMMY_2_NAME} and ${FSID_DUMMY_3_NAME}..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs config ${FSID_DUMMY_1_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs config ${FSID_DUMMY_2_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs config ${FSID_DUMMY_3_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_1_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_2_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_INSTANCE} fs rm ${FSID_DUMMY_3_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_1_VALUE} configstatus=empty
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_2_VALUE} configstatus=empty
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_3_VALUE} configstatus=empty
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_1_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_2_VALUE}
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_3_VALUE}
 
 ################################################################
 # Finalize

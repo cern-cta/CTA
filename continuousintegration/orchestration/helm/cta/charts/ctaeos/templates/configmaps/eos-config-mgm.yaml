@@ -83,7 +83,7 @@ data:
 
     # Enable tape support
     mgmofs.tapeenabled true
-    mgmofs.protowfendpoint ctafrontend:10955
+    mgmofs.protowfendpoint cta-frontend:10955
     mgmofs.protowfresource /ctafrontend
     mgmofs.tapeenabled true
     mgmofs.nslib /usr/lib64/libEosNsQuarkdb.so

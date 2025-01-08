@@ -18,7 +18,7 @@
 set -e
 
 usage() {
-  echo "Initialises kerberos for the ctacli and client pods in the provided namespace."
+  echo "Initialises kerberos for the cta-cli and client pods in the provided namespace."
   echo ""
   echo "Usage: $0 [options] -n <namespace>"
   echo ""
@@ -54,13 +54,13 @@ if [ -z "$namespace" ]; then
   exit 1
 fi
 
-# Set up kerberos
-echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-echo "Using kinit for ctacli and client"
-kubectl --namespace ${namespace} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${krb5_realm}
-kubectl --namespace ${namespace} exec client -- kinit -kt /root/user1.keytab user1@${krb5_realm}
+CLIENT_POD="client"
+CTA_CLI_POD="cta-cli"
 
-echo "klist for client:"
-kubectl --namespace ${namespace} exec client -- klist
-echo "klist for ctacli:"
-kubectl --namespace ${namespace} exec ctacli -- klist
+# Set up kerberos
+echo "Running kinit for ${CTA_CLI_POD} and ${CLIENT_POD}"
+echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace ${namespace} exec -i ${CLIENT_POD} -- bash -c "cat >> /etc/xrootd/client.conf"
+kubectl --namespace ${namespace} exec ${CTA_CLI_POD} -c cta-cli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${krb5_realm}
+kubectl --namespace ${namespace} exec ${CTA_CLI_POD} -c cta-cli -- klist
+kubectl --namespace ${namespace} exec ${CLIENT_POD} -c client -- kinit -kt /root/user1.keytab user1@${krb5_realm}
+kubectl --namespace ${namespace} exec ${CLIENT_POD} -c client -- klist

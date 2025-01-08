@@ -42,41 +42,45 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+CTA_CLI_POD="cta-cli"
+EOS_MGM_POD="ctaeos"
+EOS_MGM_HOST="ctaeos"
+
 executeReclaim() {
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta reclaim -v $1
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta reclaim -v $1
     echo "Tape $1 reclaimed"
 }
 
 getFirstVidContainingFiles() {
-  vidToRepack=$(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls --all | jq -r '[.[] | select(.occupancy != "0") | select(.lastFseq != "0") | .vid] | .[0]')
+  vidToRepack=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json ta ls --all | jq -r '[.[] | select(.occupancy != "0") | select(.lastFseq != "0") | .vid] | .[0]')
   echo $vidToRepack
 }
 
 getNumberOfFilesOnTape() {
-  numberOfFiles=$(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --vid $1 | jq -r '. | length')
+  numberOfFiles=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --vid $1 | jq -r '. | length')
   echo $numberOfFiles
 }
 
 writeTapeSummary(){
   echo "Summary of the content of the tape $1"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls -v $1 | jq .
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json ta ls -v $1 | jq .
 }
 
 executeRepack() {
     WAIT_FOR_REPACK_FILE_TIMEOUT=300
     echo
     echo "Changing the tape $1 to FULL status"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $1 -f true
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
-    kubectl -n ${NAMESPACE} exec ctacli -- rm -rf root://ctaeos//eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- rm -rf root://${EOS_MGM_HOST}//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos mkdir /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re rm -v $1
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re add -v $1 -m -b root://ctaeos//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re add -v $1 -m -b root://${EOS_MGM_HOST}//eos/ctaeos/repack
     SECONDS_PASSED=0
-    while test 0 = $(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l); do
+    while test 0 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l); do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"
       sleep 1
       let SECONDS_PASSED=SECONDS_PASSED+1
@@ -86,7 +90,7 @@ executeRepack() {
         exit 1
       fi
     done
-    if test 1 = $(kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l); then
+    if test 1 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l); then
         echo "Repack failed for tape $1"
         exit 1
     fi

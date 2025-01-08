@@ -29,13 +29,13 @@
 ################################################################################
 
 
-EOSINSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 CTA_TEST_DIR=/eos/ctaeos/cta
 
 cleanup()
 {
   echo "Deleting ${CTA_TEST_DIR}/fail_on_closew_test"
-  eosadmin_eos root://${EOSINSTANCE} rm -rf ${CTA_TEST_DIR}/fail_on_closew_test
+  eosadmin_eos root://${EOS_MGM_HOST} rm -rf ${CTA_TEST_DIR}/fail_on_closew_test
 }
 
 error()
@@ -59,16 +59,16 @@ eosadmin_kinit
 #   event to be automatically triggered when a file is written to that directory.
 # This can be used to test the 'delete-on-close' event.
 
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen)
 
 # Create a subdirectory with a different storage class for the delete on CLOSEW test
 
 echo "Creating ${CTA_TEST_DIR}/fail_on_closew_test event"
-eosadmin_eos root://${EOSINSTANCE} mkdir ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to create directory ${CTA_TEST_DIR}/fail_on_closew_test"
-eosadmin_eos root://${EOSINSTANCE} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to set sys.archive.storage_class=fail_on_closew_test on ${CTA_TEST_DIR}/fail_on_closew_test"
+eosadmin_eos root://${EOS_MGM_HOST} mkdir ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to create directory ${CTA_TEST_DIR}/fail_on_closew_test"
+eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to set sys.archive.storage_class=fail_on_closew_test on ${CTA_TEST_DIR}/fail_on_closew_test"
 
-echo "xrdcp /etc/group root://${EOSINSTANCE}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
-xrdcp /etc/group root://${EOSINSTANCE}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
+echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
+xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
 if [ $? -eq 0 ]
 then
   error "xrdcp command succeeded where it should have failed"
@@ -81,7 +81,7 @@ fi
 # Check that the EOS namespace entry has been removed
 # This means all replicas are deleted from tape and disks
 
-eos root://${EOSINSTANCE} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
 if [ $? -eq 2 ]
 then
   echo "Success: EOS namespace entry was removed"

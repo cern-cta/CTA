@@ -1,7 +1,7 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 {{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
 {{- $namespace := .Release.Namespace -}}
-{{- $name := "postgres-scheduler" -}}
+{{- $name := "cta-scheduler-postgres" -}}
 apiVersion: v1
 kind: Pod
 metadata:

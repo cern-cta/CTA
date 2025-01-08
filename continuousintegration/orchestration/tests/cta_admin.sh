@@ -159,7 +159,8 @@ touch ${log_file}
 
 . /root/client_helper.sh
 
-EOSINSTANCE=ctaeos
+EOS_INSTANCE_NAME="ctaeos"
+EOS_MGM_HOST="ctaeos"
 
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
@@ -248,22 +249,22 @@ test_assert || exit 1
 
 # Disk Instance Space (dis)
 test_start "disk instance space" "dis" || exit 1
-test_and_check_cmd "Adding dis 'ctaeos_dis'" "${command}" "add" "-n ctaeos_dis --di ${EOSINSTANCE} -i 10 -u eosSpace:default -m 'Add dis ctaeos_dis'"\
+test_and_check_cmd "Adding dis 'ctaeos_dis'" "${command}" "add" "-n ctaeos_dis --di ${EOS_INSTANCE_NAME} -i 10 -u eosSpace:default -m 'Add dis ctaeos_dis'"\
   'select(.name=="ctaeos_dis" and .refreshInterval=="10" and .freeSpaceQueryUrl=="eosSpace:default") | .comment'\
   "1" "adding disk instance space 'ctaeos_dis'" || exit 1
-test_and_check_cmd "Changing dis 'ctaeos_dis'" "${command}" "ch" "-n ctaeos_dis --di ${EOSINSTANCE} -i 100 -m 'Change dis ctaeos_dis'"\
+test_and_check_cmd "Changing dis 'ctaeos_dis'" "${command}" "ch" "-n ctaeos_dis --di ${EOS_INSTANCE_NAME} -i 100 -m 'Change dis ctaeos_dis'"\
   'select(.name=="ctaeos_dis" and .refreshInterval=="100" and .comment=="Change dis ctaeos_dis") | .comment'\
   "1" "changing disk instance space 'ctaeos_dis'" || exit 1
-test_command "Deleting dis 'ctaeos_dis'" "${command}" "rm" "-n ctaeos_dis --di ${EOSINSTANCE}" || exit 1
+test_command "Deleting dis 'ctaeos_dis'" "${command}" "rm" "-n ctaeos_dis --di ${EOS_INSTANCE_NAME}" || exit 1
 test_assert || exit 1
 
 
 # Disk System (ds)
 test_start "disk system" "ds"
 
-admin_cta dis add  -n ctaeos_dis --di ${EOSINSTANCE} -i 10 -u eosSpace:default -m 'Add dis ctaeos_dis' || { log_message "Error creating disk instance space for disk system test."; exit 1; }
+admin_cta dis add  -n ctaeos_dis --di ${EOS_INSTANCE_NAME} -i 10 -u eosSpace:default -m 'Add dis ctaeos_dis' || { log_message "Error creating disk instance space for disk system test."; exit 1; }
 
-test_and_check_cmd "Adding ds 'ctaeos_ds'" "${command}" "add" "-n ctaeos_ds --di ${EOSINSTANCE} --dis ctaeos_dis -r root://${EOSINSTANCE}//eos/ctaeos/cta/ -f 10000 -s 10 -m 'Adding ds ctaeos_ds'"\
+test_and_check_cmd "Adding ds 'ctaeos_ds'" "${command}" "add" "-n ctaeos_ds --di ${EOS_INSTANCE_NAME} --dis ctaeos_dis -r root://${EOS_MGM_HOST}//eos/ctaeos/cta/ -f 10000 -s 10 -m 'Adding ds ctaeos_ds'"\
   'select(.name=="ctaeos_ds" and .targetedFreeSpace=="10000" and .sleepTime=="10" and .comment=="Adding ds ctaeos_ds") | .name '\
   "1" "adding disk system 'ctaeos_ds'" || exit 1
 test_and_check_cmd "Changing ds 'ctaeos_ds'" "${command}" "ch" "-n ctaeos_ds -s 100"\
@@ -272,7 +273,7 @@ test_and_check_cmd "Changing ds 'ctaeos_ds'" "${command}" "ch" "-n ctaeos_ds -s 
 test_command "Removing ds 'ctaeos_ds'" "${command}" "rm" "-n ctaeos_ds" || exit 1
 test_assert || exit 1
 
-admin_cta dis rm -n ctaeos_dis --di ${EOSINSTANCE}
+admin_cta dis rm -n ctaeos_dis --di ${EOS_INSTANCE_NAME}
 
 ########################################
 # Tape - ta, tf, tp, dr, ll, mt, rtf ###
@@ -308,7 +309,7 @@ test_start "tape file" "tf" "-v ${vids[0]}"
 log_message "Archiving 1 file."
 
 echo "foo" > /root/testfile
-xrdcp /root/testfile root://${EOSINSTANCE}//eos/ctaeos/cta/testfile
+xrdcp /root/testfile root://${EOS_MGM_HOST}//eos/ctaeos/cta/testfile
 sleep 15
 
 # Get the actual tape we are working with.
@@ -328,7 +329,7 @@ if test "${res}" -eq 1; then log_message "Succesfully listed tapefile"; else { l
 a_id=$(admin_cta --json "${command}" ls ${ls_extra} | jq -r '.[] | .af | .archiveId')
 ( test_command "Removing tape file" "${command}" "rm" "-v ${vid} -i ctaeos -I ${a_id} -r Test" && log_message "Error, removed the file." && exit 1; ) || log_message "Can't remove the file as there is only one copy of it. As expected."
 
-eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/testfile
+eos root://${EOS_MGM_HOST} rm /eos/ctaeos/cta/testfile
 sleep 1
 test_assert || exit 1
 
@@ -525,7 +526,7 @@ for drive in "${dr_names[@]}"; do
   sleep 3
 done
 #admin_cta dr down VDSTK11 -r "cta-admin sq test"
-xrdcp /root/testfile root://${EOSINSTANCE}//eos/ctaeos/cta/testfile
+xrdcp /root/testfile root://${EOS_MGM_HOST}//eos/ctaeos/cta/testfile
 
 sleep 10
 
@@ -566,7 +567,7 @@ echo
 #  sleep 1
 #done
 
-#KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s /eos/ctaeos/cta/testfile
+#KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s /eos/ctaeos/cta/testfile
 
 # Wait for fr to fail.
 #TIMEOUT=90
@@ -627,7 +628,7 @@ while true; do
 done
 
 # Repack should fail as system is not correctly configured.
-test_command "Adding repack request" "${command}" "add" "-v ${vids[0]} -m -u repack_ctasystest -b root://${EOSINSTANCE}//eos/ctaeos/cta"\
+test_command "Adding repack request" "${command}" "add" "-v ${vids[0]} -m -u repack_ctasystest -b root://${EOS_MGM_HOST}//eos/ctaeos/cta"\
   "select(.vid==\"${vids[0]}\" and .repackBufferUrl=\"root://ctaeos//eos/ctaeos/cta\") | .vid"\
   "1" "adding repack request" || exit 1
 test_command "Deleting repack request" "${command}" "rm" "-v ${vids[0]}" || exit 1

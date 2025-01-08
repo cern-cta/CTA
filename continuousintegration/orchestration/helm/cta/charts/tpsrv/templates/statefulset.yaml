@@ -3,7 +3,7 @@
 {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
 {{ include "validate.tapeServers" . }}
 {{ range $name,$tapeServerConfig := $tapeServers }}
-{{- $tpsrvName := $name -}}
+{{- $tpsrvName := printf "cta-%s" $name -}}
 {{- $libraryDevice := .libraryDevice -}}
 apiVersion: apps/v1
 kind: StatefulSet # StatefulSets enforce at most x pods semantics (in our case x=1)

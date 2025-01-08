@@ -38,7 +38,7 @@
 #
 ################################################################################
 
-EOS_INSTANCE=ctaeos
+EOS_MGM_HOST="ctaeos"
 
 EOS_BASEDIR=/eos/ctaeos
 EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta
@@ -63,7 +63,7 @@ wait_for_archive () {
   SECONDS_PASSED=0
   WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
 
-  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep tape | wc -l); do
+  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep tape | wc -l); do
     echo "Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -82,7 +82,7 @@ wait_for_retrieve () {
 
   SECONDS_PASSED=0
   WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -101,7 +101,7 @@ wait_for_evict () {
 
   SECONDS_PASSED=0
   WAIT_FOR_EVICTED_FILE_TIMEOUT=90
-  while test 0 != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  while test 0 != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -193,11 +193,11 @@ put_all_drives_down
 
 # 2. Write a file to EOSCTA for archiving
 echo "Write file ${TEMP_FILE} for archival..."
-xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
+xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 
 # 3/4. Check that stagerrm fails
-echo "Testing 'eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}
+echo "Testing 'eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}'..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}
 if [ $? -eq 0 ]; then
   error "eos stagerrm command succeeded where it should have failed"
 else
@@ -206,15 +206,15 @@ fi
 
 # 5. Check that disk replica still exists
 echo "Checking that ${TEMP_FILE} replica still exists on disk..."
-if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
+if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
   error "eos stagerrm removed disk replica, when it should have failed"
 else
   echo "eos stagerrm did not remove disk replica, as expected"
 fi
 
 # 6/7. Check that prepare -e fails
-echo "Testing 'xrdfs root://${EOS_INSTANCE} prepare -e ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs root://${EOS_INSTANCE} prepare -e ${TEMP_FILE}
+echo "Testing 'xrdfs root://${EOS_MGM_HOST} prepare -e ${TEMP_FILE}'..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs root://${EOS_MGM_HOST} prepare -e ${TEMP_FILE}
 if [ $? -eq 0 ]; then
   #error "prepare -e command succeeded where it should have failed"
   # 'prepare -e' will not return an error because WFE errors are not propagated to the user. Therefore, we ignore this check.
@@ -225,7 +225,7 @@ fi
 
 # 8. Check that disk replica still exists
 echo "Checking that ${TEMP_FILE} replica still exists on disk..."
-if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
+if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
   error "prepare -e removed disk replica, when it should have failed"
 else
   echo "prepare -e did not remove disk replica, as expected"
@@ -240,14 +240,14 @@ wait_for_archive ${TEMP_FILE}
 
 # 10. Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."
-if test 0 != $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
+if test 0 != $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} info ${TEMP_FILE} | grep -F "default.0" | wc -l); then
   error "Disk replica not removed, when it should have been done after archival"
 else
   echo "Disk replica was removed, as expected"
 fi
 
 echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."
-if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} info ${TEMP_FILE} | grep -F "tape" | wc -l); then
+if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} info ${TEMP_FILE} | grep -F "tape" | wc -l); then
   error "Tape replica does not exist, when it should have been created after archival"
 else
   echo "Tape replica creted, as expected"

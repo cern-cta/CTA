@@ -111,11 +111,11 @@ eosadmin_kdestroy() {
 # This sciprt fails if there are files stored in the target directory as it just counts the lines.
 wait_for_archive () {
 
-  EOS_INSTANCE=$1
+  EOS_MGM_HOST=$1
   SECONDS_PASSED=0
   WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
 
-  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep tape | wc -l); do
+  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep tape | wc -l); do
     echo "$(date +%s) Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -132,10 +132,10 @@ wait_for_archive () {
 
 wait_for_retrieve () {
 
-  EOS_INSTANCE=$1
+  EOS_MGM_HOST=$1
   SECONDS_PASSED=0
   WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "$(date +%s) Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -152,10 +152,10 @@ wait_for_retrieve () {
 
 wait_for_evict () {
 
-  EOS_INSTANCE=$1
+  EOS_MGM_HOST=$1
   SECONDS_PASSED=0
   WAIT_FOR_EVICTED_FILE_TIMEOUT=90
-  while test 0 != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  while test 0 != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "$(date +%s) Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1

@@ -10,6 +10,6 @@ spec:
     app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
-  - name: ctafrontend
+  - name: {{ $name }}
     port: {{ .Values.frontendPort }}
     protocol: TCP
