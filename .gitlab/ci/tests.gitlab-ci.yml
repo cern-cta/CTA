@@ -108,11 +108,13 @@ unit-test-postgresql:
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
   after_script:
     - cat /var/log/postgres/cta_test_postgres.log
+    - cp -r /var/log ./
+    - cat /var/log/messages
   artifacts:
     expire_in: 5 days
     when: always
     paths:
-      - /var/log/postgres
+      - log
 
 unit-test-oracle:
   stage: test
