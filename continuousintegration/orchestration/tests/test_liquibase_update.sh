@@ -29,7 +29,7 @@ die() { echo "$@" 1>&2 ; exit 1; }
 
 # Define a function to check the current schema version
 check_schema_version() {
-  CTA_FRONTEND_POD="cta-frontend"
+  CTA_FRONTEND_POD="cta-frontend-0"
   DESIRED_SCHEMA_VERSION=$1
   # Get the current schema version
   CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \

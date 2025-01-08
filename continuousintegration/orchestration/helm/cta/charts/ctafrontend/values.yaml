@@ -7,6 +7,9 @@ isPriviliged: true
 
 frontendPort: 10955
 terminationGracePeriodSeconds: 0 # This is low on purpose as the current process has no gracefull shutdown process
+# Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
+# Increasing this will most likely not work as expected
+replicase: 1
 
 conf:
   catalogue:

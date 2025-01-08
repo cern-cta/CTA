@@ -104,7 +104,7 @@ save_logs() {
     # Note that this directory must be in the repository so that they can be properly saved as artifacts
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
-    local client_pod="client"
+    local CLIENT_POD="client-0"
     kubectl -n "${namespace}" cp ${client_pod}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
     # Prevent polluting the runner by cleaning up the original dir in /tmp
     rm -rf ${tmpdir}

@@ -42,9 +42,9 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-CLIENT_POD="client"
-CTA_CLI_POD="cta-cli"
-CTA_FRONTEND_POD="cta-frontend"
+CLIENT_POD="client-0"
+CTA_CLI_POD="cta-cli-0"
+CTA_FRONTEND_POD="cta-frontend-0"
 EOS_MGM_POD="ctaeos"
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client

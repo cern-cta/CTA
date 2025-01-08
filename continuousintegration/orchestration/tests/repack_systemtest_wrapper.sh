@@ -44,8 +44,8 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-CLIENT_POD="client"
-CTA_CLI_POD="cta-cli"
+CLIENT_POD="client-0"
+CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="ctaeos"
 
 echo "Preparing namespace for the tests"

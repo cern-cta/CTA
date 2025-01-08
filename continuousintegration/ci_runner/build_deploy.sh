@@ -427,7 +427,7 @@ build_deploy() {
       fi
 
       # For now we only support changing the image tag on an upgrade
-      ./upgrade_instance.sh --namespace ${deploy_namespace} \
+      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} \
                             ${upgrade_options} ${extra_spawn_options}
 
     fi

@@ -54,8 +54,8 @@ if [ -z "$namespace" ]; then
   exit 1
 fi
 
-CLIENT_POD="client"
-CTA_CLI_POD="cta-cli"
+CLIENT_POD="client-0"
+CTA_CLI_POD="cta-cli-0"
 
 # Set up kerberos
 echo "Running kinit for ${CTA_CLI_POD} and ${CLIENT_POD}"

@@ -1,0 +1,118 @@
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "client.name" . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        collect-varlog: "true"
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+      {{ include "client.imagePullSecrets" . | nindent 6 }}
+      containers:
+      - name: {{ $name }}
+        image: {{ include "client.image" . }}
+        imagePullPolicy: {{ include "client.imagePullPolicy" . }}
+        stdin: true
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat /tmp/eos.keytab > /etc/eos.keytab;
+          chmod 600 /etc/eos.keytab;
+          bash /scripts/client.sh;
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "rpm -q cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 60
+        securityContext:
+          privileged: {{ .Values.isPriviliged }}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote }}
+            ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote }}
+            ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+        env:
+        - name: MY_NAME
+          value: {{ $name }}
+        - name: MY_NAMESPACE
+          value: {{ $namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ $namespace | quote }}
+        - name: TERM
+          value: "xterm"
+        {{- if (.Values.env) }}
+            {{- .Values.env | toYaml | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+        - name: cta-conf-volume
+          mountPath: /etc/cta/cta-cli.conf
+          subPath: cta-cli.conf
+        - mountPath: /etc/config/eos
+          name: eosconfig
+        - mountPath: /tmp/eos.keytab
+          name: sss-keytab
+          subPath: eos.keytab
+        - mountPath: /etc/krb5.conf
+          name: krb5-config-volume
+          subPath: krb5.conf
+        - mountPath: /root/user1.keytab
+          name: user1-keytab
+          subPath: user1.keytab
+        - mountPath: /root/eosadmin1.keytab
+          name: eosadmin1-keytab
+          subPath: eosadmin1.keytab
+        - mountPath: /root/poweruser1.keytab
+          name: poweruser1-keytab
+          subPath: poweruser1.keytab
+        - mountPath: /root/ctaadmin2.keytab
+          name: ctaadmin2-keytab
+          subPath: ctaadmin2.keytab
+        {{ include "client.volumeMounts" . | nindent 8 }}
+      volumes:
+      - name: scripts-volume
+        configMap:
+          name: scripts-client
+          defaultMode: 0777
+      - name: cta-conf-volume
+        configMap:
+          name: etc-cta-client
+      - name: eosconfig
+        configMap:
+          name: eos-config-base
+      - name: sss-keytab
+        secret:
+          secretName: eos-sss-keytab
+      - name: krb5-config-volume
+        configMap:
+          name: krb5-config
+      - name: user1-keytab
+        secret:
+          secretName: user1-keytab
+      - name: eosadmin1-keytab
+        secret:
+          secretName: eosadmin1-keytab
+      - name: poweruser1-keytab
+        secret:
+          secretName: poweruser1-keytab
+      - name: ctaadmin2-keytab
+        secret:
+          secretName: ctaadmin2-keytab
+      {{ include "client.volumes" . | nindent 6 }}

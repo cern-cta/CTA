@@ -56,7 +56,7 @@ if [[ ${PREPARE} -eq 1 ]]; then
   fi
 fi
 
-CLIENT_POD="client"
+CLIENT_POD="client-0"
 EOS_MGM_POD="ctaeos"
 EOS_MGM_HOST="ctaeos"
 
