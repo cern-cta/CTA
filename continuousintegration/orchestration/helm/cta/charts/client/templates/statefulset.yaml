@@ -21,17 +21,27 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
       {{ include "client.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
+      - name: fix-sss-keytab-ownership
+        image: busybox:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
+            chmod 600 /root/sss_keytab/output/eos.keytab
+        volumeMounts:
+          - name: eos-sss-keytab
+            mountPath: /root/sss_keytab/input/eos.keytab
+            subPath: eos.keytab
+          - name: eos-sss-keytab-fixedownership
+            mountPath: /root/sss_keytab/output
       containers:
       - name: {{ $name }}
         image: {{ include "client.image" . }}
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          cat /tmp/eos.keytab > /etc/eos.keytab;
-          chmod 600 /etc/eos.keytab;
-          bash /scripts/client.sh;
+        command: ["/bin/bash", "/scripts/client.sh"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "rpm -q cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client"]
@@ -67,8 +77,8 @@ spec:
           subPath: cta-cli.conf
         - mountPath: /etc/config/eos
           name: eosconfig
-        - mountPath: /tmp/eos.keytab
-          name: sss-keytab
+        - mountPath: /etc/eos.keytab
+          name: eos-sss-keytab-fixedownership
           subPath: eos.keytab
         - mountPath: /etc/krb5.conf
           name: krb5-config-volume
@@ -97,9 +107,11 @@ spec:
       - name: eosconfig
         configMap:
           name: eos-config-base
-      - name: sss-keytab
+      - name: eos-sss-keytab
         secret:
           secretName: eos-sss-keytab
+      - name: eos-sss-keytab-fixedownership
+        emptyDir: {}
       - name: krb5-config-volume
         configMap:
           name: krb5-config
