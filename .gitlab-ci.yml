@@ -1,38 +1,61 @@
 stages:
-  - prepare
+  - validation
+  - setup
   - analysis
   - build
   - build:image
   - test
+  - system-test
   - release:changelog
   - release:internal
   - release:external
 
 variables:
-  # Git related
+  # Building Configuration
+  BUILD_GENERATOR: "Unix Makefiles"
+  CMAKE_BUILD_TYPE: "Debug"
+
+  # CTA Configuration
+  CTA_VERSION: 5
+  SCHED_TYPE: "objectstore"
+  ORACLE_SUPPORT: "ON"
+
+  # Tests
+  VALGRIND_DB_UNIT_TESTS: false
+
+  # System Tests
+  SYSTEMTESTS_ONLY: "FALSE"
+  SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
+  BASH_LOGGING_ENABLED: 1 # For the k8s test scripts
+
+  # Pipeline Type. Supported types:
+  #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
+  #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
+  #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
+  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
+  PIPELINE_TYPE: "COMMIT"
+
+  # Image building. Used by EOS Regression and Image build pipeline types
+  CUSTOM_XRD_TAG: ""
+  CUSTOM_EOS_TAG: ""
+  CUSTOM_CTA_TAG: ""
+
+  # Meta CI
+  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
+
+  # Git CI Configuration
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
-  # CTA related
-  CMAKE_BUILD_TYPE: "Debug"
-  CTA_VERSION: 5
-  SCHED_TYPE: "objectstore"
-  ORACLE_SUPPORT: "ON"
-  SYSTEMTESTS_ONLY: "FALSE"
-  SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
-  BUILD_GENERATOR: "Unix Makefiles"
-  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Scheduler: $SCHED_TYPE, Oracle support: $ORACLE_SUPPORT"
-  VALGRIND_DB_UNIT_TESTS: false
-  BASH_LOGGING_ENABLED: 1 # For the cirunner scripts
   # Images
-  EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  PYTHON3_IMAGE: python:3-alpine
-  DOCKER_IMAGE_BUILDER_IMAGE: gitlab-registry.cern.ch/ci-tools/docker-image-builder
-  CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
-  GITLAB_RELEASE_CLI_IMAGE: registry.gitlab.com/gitlab-org/release-cli:latest
+  IMAGE_EL9: gitlab-registry.cern.ch/linuxsupport/alma9-base
+  IMAGE_PYTHON3: python:3-alpine
+  IMAGE_DOCKER_IMAGE_BUILDER: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+  IMAGE_CPPCHECK: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
+  IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
 
 default:
   interruptible: true
@@ -42,7 +65,7 @@ workflow:
   auto_cancel:
     on_job_failure: all
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_job_failure: none
     # Note that the web pipeline source could also concern tagged pipelines
@@ -53,7 +76,6 @@ workflow:
         paths:
           - '**/*'
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
-
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

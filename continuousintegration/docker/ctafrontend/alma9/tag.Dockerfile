@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2023 CERN
+# @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -21,37 +21,36 @@ ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
+COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 
-# Custom Yum repo setup
-ARG YUM_REPOS_DIR=continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/
+
+# Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
+# Format: X.YY.ZZ.A-B
+ARG PUBLIC_REPO_VER
 ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
 
-COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
 
 # Install necessary packages
-# Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
 RUN yum install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
-      createrepo epel-release \
+      epel-release \
       jq bc \
       sqlite \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)
-    chmod 0644 /etc/logrotate.d/* \
-  && \
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64
+    chmod 0644 /etc/logrotate.d/*
 
-COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
-# Populate local repository and enable it
+# Install cta-release
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
-    createrepo ${CTAREPODIR} \
+    yum-config-manager --enable cta-public-testing \
   && \
-    echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
+    yum install -y cta-release-${PUBLIC_REPO_VER}.el9 \
+  && \
+    rm /etc/yum/pluginconf.d/versionlock.cta \
   && \
     yum clean all \
   && \
@@ -59,7 +58,4 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   ; \
     rm -f /etc/rc.d/rc.local
 
-# Check that CTA packages are in container (from previous artifacts)
-RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-RUN yum-config-manager --enable cta-artifacts
+COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list

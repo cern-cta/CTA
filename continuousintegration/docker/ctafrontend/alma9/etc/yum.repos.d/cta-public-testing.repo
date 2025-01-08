@@ -1,0 +1,8 @@
+# CTA's public testing repo. Disabled by default as it is only used in CI
+# when creating a CTA Generic container image from repositories.
+[cta-public-testing]
+name=CTA Public Repo with testing RPMs
+baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/
+priority=4
+gpgcheck=0
+enabled=0

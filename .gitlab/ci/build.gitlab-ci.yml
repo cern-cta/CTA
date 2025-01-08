@@ -1,5 +1,3 @@
-# Generic build job
-
 .build-cta:
   retry: 1
   rules:
@@ -7,7 +5,11 @@
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-  image: $EL9_IMAGE
+    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
+      when: never
+    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+      when: never
+  image: $IMAGE_EL9
   artifacts:
     expire_in: 30 days
     paths:
@@ -47,6 +49,7 @@ build-cta-rpm:
     - job: build-cta-srpm
     - job: modify-versionlock
       optional: true
+      artifacts: true
   rules:
     - !reference [.build-cta, rules]
     - when: on_success
@@ -58,7 +61,7 @@ build-cta-rpm:
       if [ -z "${CI_COMMIT_TAG}" ]; then
         export VCS_VERSION=$CTA_BUILD_ID
       else
-        export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F'[v-]' '{print $2}')
+        export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
         echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
       fi
