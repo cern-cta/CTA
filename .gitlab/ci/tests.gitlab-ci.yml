@@ -110,6 +110,7 @@ unit-test-postgresql:
     - cat /var/log/postgres/cta_test_postgres.log
   artifacts:
     expire_in: 5 days
+    when: always
     paths:
       - /var/log/postgres
 
