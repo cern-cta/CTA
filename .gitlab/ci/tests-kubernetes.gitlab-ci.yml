@@ -50,7 +50,7 @@
     - |
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
-          IMAGE_TAG=$(./continuousintegration/ci_helpers/get_laIMAGE_TEST_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
+          IMAGE_TAG=$(./continuousintegration/ci_helpers/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
           IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
         fi
