@@ -106,6 +106,10 @@ unit-test-postgresql:
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+  artifacts:
+    expire_in: 5 days
+    paths:
+      - /var/log/postgres
 
 unit-test-oracle:
   stage: test
