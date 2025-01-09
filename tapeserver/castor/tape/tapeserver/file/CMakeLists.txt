@@ -16,7 +16,7 @@ cmake_minimum_required (VERSION 3.17)
 
 find_package (xrootd REQUIRED)
 
-#include_directories(/usr/include/shift)
+include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 include_directories(/usr/include/tirpc) # rpc headers are now provided by libtirpc-devel 
