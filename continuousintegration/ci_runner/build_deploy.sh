@@ -52,7 +52,9 @@ usage() {
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
-  echo "      --upgrade:                        Upgrades the existing CTA instance instead of deleting and spawning a new one."
+  echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
+  echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
+  echo "      --eos-version:                    Version of EOS to spawn. If not provided, will default to the version specified in the create_instance script."
   exit 1
 }
 
@@ -71,7 +73,6 @@ print_header() {
   echo "${separator}"
   echo
 }
-
 
 build_deploy() {
 
@@ -92,11 +93,13 @@ build_deploy() {
   local scheduler_type="objectstore"
   local oracle_support="ON"
   local enable_ccache=true
-  local upgrade=false
+  local upgrade_cta=false
+  local upgrade_eos=false
   local image_cleanup=true
   local extra_spawn_options=""
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local eos_version=""
 
   # Defaults
   local num_jobs=$(nproc)
@@ -127,7 +130,17 @@ build_deploy() {
       --skip-image-reload) skip_image_reload=true ;;
       --skip-image-cleanup) image_cleanup=false ;;
       --force-install) force_install=true ;;
-      --upgrade) upgrade=true ;;
+      --upgrade-cta) upgrade_cta=true ;;
+      --upgrade-eos) upgrade_eos=true ;;
+      --eos-version)
+        if [[ $# -gt 1 ]]; then
+          eos_version="$2"
+          shift
+        else
+          echo "Error: --eos-version requires an argument"
+          usage
+        fi
+        ;;
       --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
@@ -340,7 +353,7 @@ build_deploy() {
   build_iteration_file=/tmp/.build_iteration
   if [ "$skip_image_reload" == "false" ]; then
     print_header "BUILDING CONTAINER IMAGE"
-    if [ "$upgrade" == "false" ]; then
+    if [ "$upgrade_cta" == "false" ]; then
       # Start with the tag dev-0
       local current_build_id=0
       image_tag="dev-$current_build_id"
@@ -389,14 +402,32 @@ build_deploy() {
   # Deploy CTA instance
   #####################################################################################################################
   if [ ${skip_deploy} = false ]; then
-    print_header "DEPLOYING CTA INSTANCE"
-    if [ "$upgrade" == "false" ]; then
+    if [ "$upgrade_cta" = true ]; then
+      print_header "UPGRADING CTA INSTANCE"
+      cd continuousintegration/orchestration
+      upgrade_options=""
+      if [ "$skip_image_reload" == "false" ]; then
+        upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
+      fi
+      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} \
+                                ${upgrade_options} ${extra_spawn_options}
+    elif [ "$upgrade_eos" = true ]; then
+      print_header "UPGRADING EOS INSTANCE"
+      cd continuousintegration/orchestration
+      ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
+                                --eos-image-tag ${eos_version}
+    else
+      print_header "DEPLOYING CTA INSTANCE"
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
       ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
 
       if [ -n "${tapeservers_config}" ]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
+      fi
+
+      if [ -n "${eos_version}" ]; then
+        extra_spawn_options+=" --eos-image-tag ${eos_version}"
       fi
 
       if [ -z "${scheduler_config}" ]; then
@@ -417,19 +448,6 @@ build_deploy() {
                           --reset-catalogue \
                           --reset-scheduler \
                           ${extra_spawn_options}
-    else
-      echo "Upgrading CTA instance"
-      cd continuousintegration/orchestration
-
-      upgrade_options=""
-      if [ "$skip_image_reload" == "false" ]; then
-        upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
-      fi
-
-      # For now we only support changing the image tag on an upgrade
-      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} \
-                            ${upgrade_options} ${extra_spawn_options}
-
     fi
   fi
   print_header "DONE"

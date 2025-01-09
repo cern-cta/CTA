@@ -60,7 +60,7 @@ spec:
         command: ["/bin/bash", "/scripts/ctacli.sh"]
         readinessProbe:
           exec:
-            command: ["sh", "-c", "rpm -q cta-cli cta-debuginfo"]
+            command: ["sh", "-c", "rpm -q cta-cli"]
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60

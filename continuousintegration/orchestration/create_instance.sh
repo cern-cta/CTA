@@ -39,8 +39,8 @@ usage() {
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
-  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
-  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
+  echo "  -r, --cta-image-repository <repo>:  Docker image name for the CTA chart. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
@@ -48,8 +48,8 @@ usage() {
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
   echo "      --max-tapservers <n>:           If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
-  echo "      --eos-tag <tag>:                Docker image tag for the EOS chart."
-  echo "      --eos-repository <repo>:        Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
+  echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
+  echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
   exit 1
 }
@@ -96,8 +96,8 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_tag=5.2.27
-  eos_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
+  eos_image_tag=5.2.27
+  eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
 
   # Parse command line arguments
@@ -143,11 +143,11 @@ create_instance() {
         eos_config="$2"
         test -f "${eos_config}" || die "EOS config file ${eos_config} does not exist"
         shift ;;
-      --eos-repository)
-        eos_repository="$2"
+      --eos-image-repository)
+        eos_image_repository="$2"
         shift ;;
-      --eos-tag)
-        eos_tag="$2"
+      --eos--image-tag)
+        eos_image_tag="$2"
         shift ;;
       *)
         echo "Unsupported argument: $1"
@@ -251,8 +251,8 @@ create_instance() {
   log_run helm install eos ../../../eos-charts/server \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
-                                --set global.repository="${eos_repository}" \
-                                --set global.tag="${eos_tag}" \
+                                --set global.repository="${eos_image_repository}" \
+                                --set global.tag="${eos_image_tag}" \
                                 --set fst.tape.gcd.image.repository="${cta_image_repository}" \
                                 --set fst.tape.gcd.image.tag="${cta_image_tag}" \
                                 --wait --timeout 6m &
