@@ -33,7 +33,6 @@ spec:
         command: ["/bin/bash", "-c"]
         args:
         - |
-          yum install -y krb5-workstation;
           sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
           sukadmin addprinc -randkey cta/cta-frontend;
           sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/cta-frontend;
@@ -47,7 +46,8 @@ spec:
           mountPath: /root/ctafrontend_keytab/output
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
       - name: init2-fix-sss-keytab-ownership
-        image: busybox:latest
+        image: {{ include "common.images.busybox" . }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
         - |

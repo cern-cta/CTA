@@ -243,6 +243,8 @@ create_instance() {
 
   # This sets up the key distribution center and the necessary SSS secrets for communication with eos
   log_run helm ${helm_command} auth helm/auth \
+                                --set image.repository="${cta_image_repository}" \
+                                --set image.tag="${cta_image_tag}" \
                                 --namespace "${namespace}" \
                                 --wait --timeout 2m
 

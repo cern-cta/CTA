@@ -27,7 +27,7 @@ echo "Using scheduler backend: $SCHEDULER_BACKEND"
 # Clean up scheduler
 if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
   echo "Installing the cta-objectstore-tools"
-  yum -y install cta-objectstore-tools
+  dnf install -y cta-objectstore-tools
   echo "Wiping objectstore"
   rm -fr $SCHEDULER_URL
   mkdir -p $SCHEDULER_URL
@@ -35,7 +35,7 @@ if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
   chmod -R 777 $SCHEDULER_URL
 elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   echo "Installing the cta-scheduler-utils"
-  yum -y install cta-scheduler-utils
+  dnf install -y cta-scheduler-utils
   echo "Postgres scheduler config file content: "
   cat /etc/cta/cta-scheduler.conf
   echo "Droping the scheduler DB schema"
@@ -44,8 +44,8 @@ elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
 elif [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   echo "Installing the cta-objectstore-tools"
-  yum-config-manager --enable ceph
-  yum -y install cta-objectstore-tools ceph-common
+  dnf config-manager --enable ceph
+  dnf install -y cta-objectstore-tools ceph-common
   echo "Wiping objectstore"
   if [[ $(rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | wc -l) -gt 0 ]]; then
     echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"

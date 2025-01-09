@@ -35,8 +35,8 @@ spec:
       initContainers:
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
       - name: init1-fix-sss-keytab-ownership
-        image: busybox:latest
-        imagePullPolicy: IfNotPresent
+        image: {{ include "common.images.busybox" . }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
         - |

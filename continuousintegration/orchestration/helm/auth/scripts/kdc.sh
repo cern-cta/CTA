@@ -18,14 +18,14 @@
 set -e
 set -x
 
-# Eventually this should:
+# This can be improved by:
 # - Use a custom image to prevent doing installs here
 # - Do the db initialization in an init container
 # - Run the krb5kdc and kadmind in separate containers
 
 # See: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/configuring_a_kerberos_5_server
-yum -y install epel-release
-yum -y install krb5-libs krb5-server krb5-workstation
+# We only look in a single repo, as the CTA, XRootD and EOS repos are slowing things down significantly
+dnf install -y --disablerepo=* --enablerepo=baseos krb5-server
 
 echo "Initialising key distribution center... "
 KRB5_DB_MASTER_KEY=$(openssl rand -base64 32)

@@ -161,7 +161,7 @@ delete_instance() {
 
   # Finally delete the actual namespace
   echo "Deleting ${namespace} instance"
-  kubectl delete namespace ${namespace} --grace-period=2
+  kubectl delete namespace ${namespace} --now
   echo "Deletion finished"
 }
 

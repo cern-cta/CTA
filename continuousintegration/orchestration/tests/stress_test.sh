@@ -76,9 +76,9 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos fs config 1 scaninterval=0
 
 # install eos-debuginfo (600MB -> only for stress tests)
 # NEEDED because eos does not leave the coredump after a crash
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- yum install -y eos-debuginfo
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- dnfinstall -y eos-debuginfo
 
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- yum install -y xrootd-debuginfo
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- dnfinstall -y xrootd-debuginfo
 
 
 ls | xargs -I{} kubectl -n ${NAMESPACE} cp {} ${CLIENT_POD}:/root/{} -c client

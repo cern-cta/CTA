@@ -3,9 +3,11 @@ isPriviliged: true
 component: kdc
 partOf: kdc
 
+terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+
 image:
-  repository: gitlab-registry.cern.ch/linuxsupport/alma9-base
-  tag: latest
+  repository: gitlab-registry.cern.ch/cta/ctageneric
+  tag: ""
   pullPolicy: IfNotPresent
   pullSecrets: []
 

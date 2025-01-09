@@ -3,6 +3,7 @@ global:
   # Note that the repository and tag are manually overriden by the create_instance script
   repository: gitlab-registry.cern.ch/dss/eos/eos-ci
   tag: 5.2.27
+  pullPolicy: IfNotPresent
 
   eos:
     instancename: ctaeos
@@ -38,7 +39,7 @@ mgm:
   extraEnv:
   - name: LD_PRELOAD
     value: "/usr/lib64/libjemalloc.so.1"
-  # For some reason EOS is on another time zone? Check why this is
+  # For some reason EOS is on another time zone, so set this to CET
   - name: TZ
     value: "CET"
 

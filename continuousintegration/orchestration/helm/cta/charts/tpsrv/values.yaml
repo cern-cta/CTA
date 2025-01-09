@@ -3,7 +3,7 @@ image:
 component: tpsrv
 partOf: cta
 
-terminationGracePeriodSeconds: 0 # This is low on purpose as the current process has no gracefull shutdown process
+terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 
 conf:
   taped:

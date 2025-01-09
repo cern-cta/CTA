@@ -9,6 +9,7 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
+  terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
   containers:
   - name: {{ $name }}
     image: {{ include "kdc.image" . }}

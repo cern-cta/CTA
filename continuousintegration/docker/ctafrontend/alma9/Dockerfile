@@ -29,14 +29,20 @@ ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/
 COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
 COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
 
+RUN dnf install -y dnf-plugins-core && \
+    echo "zchunk=True" >> /etc/dnf/dnf.conf && \
+    echo "deltarpm=True" >> /etc/dnf/dnf.conf && \
+    echo "fastestmirror=True" >> /etc/dnf/dnf.conf
+
 # Install necessary packages
 # Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
-RUN yum install -y \
+RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
       createrepo epel-release \
       jq bc \
       sqlite \
+      krb5-workstation \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)
@@ -47,19 +53,19 @@ RUN yum install -y \
 COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
-RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
+RUN dnf config-manager --enable epel --setopt="epel.priority=4" \
   && \
     createrepo ${CTAREPODIR} \
   && \
     echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
   && \
-    yum clean all \
+    dnf clean all \
   && \
-    rm -rf /var/cache/yum \
-  ; \
+    rm -rf /var/cache/yum; \
+    rm -rf /var/cache/dnf; \
     rm -f /etc/rc.d/rc.local
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
 
-RUN yum-config-manager --enable cta-artifacts
+RUN dnf config-manager --enable cta-artifacts

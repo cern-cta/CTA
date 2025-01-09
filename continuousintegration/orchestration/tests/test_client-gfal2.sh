@@ -54,7 +54,7 @@ CLIENT_POD="client-0"
 EOS_MGM_POD="ctaeos"
 
 echo "Installing gfal2 utility"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install python3-gfal2-util" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y python3-gfal2-util" || exit 1
 
 echo
 echo "Copying test scripts to client pod"
@@ -82,7 +82,7 @@ clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ct
 
 GFAL2_PROTOCOL='root'
 echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install gfal2-plugin-xrootd"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y gfal2-plugin-xrootd"
 
 echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
@@ -135,9 +135,9 @@ fi
 
 echo "Uninstall gfal2-plugin-xrootd before continuing with http tests"
 # The presence of the xrootd package seems to be causing double free/corruption errors in the http plugin
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y remove gfal2-plugin-xrootd"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf -y remove gfal2-plugin-xrootd"
 echo "Installing gfal2-plugin-http for http gfal test."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "yum -y install gfal2-plugin-http" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y gfal2-plugin-http" || exit 1
 echo "Enable insecure certs for gfal2"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf" || exit 1
 echo "Setting up environment for gfal-https tests"

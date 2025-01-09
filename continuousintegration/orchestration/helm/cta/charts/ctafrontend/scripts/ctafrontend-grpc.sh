@@ -19,10 +19,10 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install cta-frontend
+dnf install -y cta-frontend
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
-  yum-config-manager --enable ceph
-  yum -y install ceph-common
+  dnf config-manager --enable ceph
+  dnf install -y ceph-common
 fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"

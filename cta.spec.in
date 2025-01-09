@@ -104,7 +104,7 @@ cmake --build . -j@JOBS_COUNT@
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install
+DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install -j@JOBS_COUNT@
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -112,7 +112,7 @@ DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --buil
 
 %if "%{skip_unit_tests}" == "0"
 cd build
-cmake --build . --target shortunittests
+cmake --build . --target shortunittests -j@JOBS_COUNT@
 %endif
 
 # The main packages will be cta-taped, cta-frontend, cta-cli

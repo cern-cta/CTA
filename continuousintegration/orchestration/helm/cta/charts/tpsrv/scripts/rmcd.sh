@@ -23,7 +23,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 ln -s /dev/${LIBRARY_DEVICE} /dev/smc
 
 # install RPMs
-yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
+dnf install -y mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
 # to get rmcd logs to stdout
 tail -F /var/log/cta/cta-rmcd.log &
