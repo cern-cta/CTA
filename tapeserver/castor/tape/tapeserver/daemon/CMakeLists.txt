@@ -14,7 +14,7 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-#include_directories(/usr/include/shift)
+include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
