@@ -39,7 +39,6 @@ build-cta-srpm:
                                                        --oracle-support ${ORACLE_SUPPORT}
                                                        --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                        --jobs $(nproc)
-                                                       --install
 
 build-cta-rpm:
   stage: build
@@ -65,7 +64,6 @@ build-cta-rpm:
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
         echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
       fi
-    - yum install -y git
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
       if [ -z "$XRD_SSI_VERSION" ]; then
@@ -83,7 +81,7 @@ build-cta-rpm:
                                                       --oracle-support ${ORACLE_SUPPORT}
                                                       --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                       --jobs $(nproc)
-                                                      --install
+                                                      --install-srpms
 
 # Documentation export
 

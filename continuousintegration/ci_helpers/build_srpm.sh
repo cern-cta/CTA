@@ -205,8 +205,6 @@ build_srpm() {
     if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
       # Alma9
       echo "Found Alma 9 install..."
-      cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
       yum install -y epel-release almalinux-release-devel
       yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
       case "${build_generator}" in
