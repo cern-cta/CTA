@@ -52,7 +52,7 @@ fst:
       endpoint: ctafrontend:10955
       resource: /ctafrontend
     gcd:
-      enabled: true
+      enabled: false
 
   extraEnv:
   - name: TZ
