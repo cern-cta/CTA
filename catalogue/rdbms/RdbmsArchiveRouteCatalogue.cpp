@@ -58,28 +58,30 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
   auto conn = m_connPool->getConn();
   if(archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
-      << "->" << tapePoolName << " because it already exists";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
+      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because it already exists";
     throw ue;
   }
 
   if(const auto routes = getArchiveRoutes(conn, storageClassName, tapePoolName); !routes.empty()) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
-      << "->" << tapePoolName << " because a route already exists for this storage class, tape pool and type";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
+      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because storage class " << storageClassName <<
+      " already contains a route pointing to tape pool " << tapePoolName;
     throw ue;
   }
+
   if(!RdbmsCatalogueUtils::storageClassExists(conn, storageClassName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
-      << "->" << tapePoolName << " because storage class " << ":" << storageClassName <<
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
+      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because storage class " << storageClassName <<
       " does not exist";
     throw ue;
   }
   if(!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
-      << "->" << tapePoolName << " because tape pool " << tapePoolName + " does not exist";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
+      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because tape pool " << tapePoolName + " does not exist";
     throw ue;
   }
 

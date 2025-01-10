@@ -22,7 +22,7 @@
 
 namespace cta::admin {
 
-ArchiveRouteType ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRouteType archiveRouteType) {
+common::dataStructures::ArchiveRouteType ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRouteType archiveRouteType) {
 
   using namespace common::dataStructures;
 
@@ -34,7 +34,7 @@ ArchiveRouteType ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRou
   }
 }
 
-ArchiveRouteLsItem::ArchiveRouteType ArchiveRouteTypeFormatToProtobuf(ArchiveRouteType archiveRouteType) {
+ArchiveRouteLsItem::ArchiveRouteType ArchiveRouteTypeFormatToProtobuf(common::dataStructures::ArchiveRouteType archiveRouteType) {
   using namespace common::dataStructures;
 
   switch (archiveRouteType) {
