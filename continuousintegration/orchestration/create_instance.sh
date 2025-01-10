@@ -75,7 +75,8 @@ update_chart_dependencies() {
     "cta/charts/tpsrv"
   )
   for chart in "${charts[@]}"; do
-    helm dependency update helm/"$chart" > /dev/null
+    # We can do skip-refresh here as they are all local charts
+    helm dependency update helm/"$chart" --skip-refresh > /dev/null
   done
 }
 
@@ -250,7 +251,7 @@ create_instance() {
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing EOS, catalogue and scheduler charts..."
-  log_run helm install eos oci://registry.cern.ch/eos/charts/server:0.2.2-tape \
+  log_run helm install eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
                                 --set global.repository="${eos_image_repository}" \
