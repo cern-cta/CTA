@@ -250,7 +250,7 @@ create_instance() {
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   echo "Installing EOS, catalogue and scheduler charts..."
-  log_run helm install eos ../../../eos-charts/server \
+  log_run helm install eos oci://registry.cern.ch/eos/charts/server:0.2.2-tape \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
                                 --set global.repository="${eos_image_repository}" \

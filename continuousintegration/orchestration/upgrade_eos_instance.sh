@@ -97,7 +97,7 @@ upgrade_instance() {
   fi
 
   echo "Upgrading EOS chart..."
-  log_run helm upgrade eos ../../../eos-charts/server \
+  log_run helm upgrade eos oci://registry.cern.ch/eos/charts/server:0.2.2-tape \
                       --namespace ${namespace} \
                       --wait --timeout 6m \
                       --reuse-values \
