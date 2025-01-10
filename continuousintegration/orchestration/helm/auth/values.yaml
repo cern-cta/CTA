@@ -9,7 +9,9 @@ image:
   repository: gitlab-registry.cern.ch/cta/ctageneric
   tag: ""
   pullPolicy: IfNotPresent
-  pullSecrets: []
+  pullSecrets:
+  - ctaregsecret
+  - reg-ctageneric
 
 # Additional environment variables
 env: []

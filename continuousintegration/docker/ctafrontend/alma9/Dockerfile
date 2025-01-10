@@ -29,13 +29,7 @@ ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/
 COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
 COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
 
-RUN dnf install -y dnf-plugins-core && \
-    echo "zchunk=True" >> /etc/dnf/dnf.conf && \
-    echo "deltarpm=True" >> /etc/dnf/dnf.conf && \
-    echo "fastestmirror=True" >> /etc/dnf/dnf.conf
-
 # Install necessary packages
-# Note that we can improve this by using a multi-stage build; the final image does not need all of the below packages.
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
