@@ -74,7 +74,7 @@ void DriveHandlerProxy::resetLogParams() {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")+
                                     watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
