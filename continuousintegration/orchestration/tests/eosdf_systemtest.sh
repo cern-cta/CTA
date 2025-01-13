@@ -60,7 +60,7 @@ wait_for_archive ${EOSINSTANCE} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 echo "File ${TEST_FILE_NAME} archived to tape"
 
 ## Retrieve the file, this should have returned a script error, but still it will work because we don't want to prevent staging due to script missing or having insufficient permissions
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${EOSDF_BUFFER_URL}/testfile1_eosdf)
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOSDF_BUFFER_URL}/testfile1_eosdf)
 # Wait for the copy to appear on disk
 wait_for_retrieve ${EOSINSTANCE} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 
