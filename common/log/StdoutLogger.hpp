@@ -50,6 +50,11 @@ public:
    */
   void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
 
+  /**
+   * Refresh the underlying logger setup
+   */
+  void refresh() final { /* intentionally-blank override of pure virtual method */ }
+
 protected:
   /**
    * Writes the specified msg to the underlying logging system

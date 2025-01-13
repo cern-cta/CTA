@@ -82,6 +82,7 @@ public:
   MOCK_METHOD1(deleteLogParams, void(const std::list<std::string>& paramNames));
   MOCK_METHOD0(resetLogParams, void());
   MOCK_METHOD2(labelError, void(const std::string& unitName, const std::string& message));
+  MOCK_METHOD(void, setRefreshLoggerHandler, (std::function<void()> handler));
 };
 
 class ProcessManagerMock : public cta::tape::daemon::ProcessManager {

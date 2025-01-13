@@ -20,11 +20,16 @@
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
-  m_socketPair.close(server::SocketPair::Side::parent);  
-}
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc): m_socketPair(socketPair), m_lc(lc) {}
 
-// TODO: me might want to group the messages to reduce the rate.
+DriveHandlerProxy::~DriveHandlerProxy() {
+  if (m_refreshLoggerClosingSock) {
+    m_refreshLoggerClosing = true;
+    // Send a signal to stop the waiting thread
+    m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
+    m_refreshLoggerAsyncFut.wait();
+  }
+}
 
 void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
   serializers::WatchdogMessage watchdogMessage;
@@ -40,7 +45,7 @@ void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames) {
@@ -56,7 +61,7 @@ void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::resetLogParams() {
@@ -69,12 +74,54 @@ void DriveHandlerProxy::resetLogParams() {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")+
                                     watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
   // TODO
   throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
+}
+
+void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
+  // Setup async thread to handle incoming requests to refresh the logger
+  if (!m_refreshLoggerHandler) {
+    m_refreshLoggerHandler = handler;
+    m_refreshLoggerClosingSock = std::make_unique<cta::server::SocketPair>();
+    m_refreshLoggerAsyncFut = std::async(std::launch::async, [this] {
+      try {
+        server::SocketPair::pollMap pollList;
+        pollList["0"] = &m_socketPair;
+        pollList["1"] = m_refreshLoggerClosingSock.get();
+        m_lc.log(log::INFO, "In DriveHandlerProxy::setRefreshLoggerHandler(): Waiting for refresh logger signal.");
+        while (!m_refreshLoggerClosing) {
+          try {
+            server::SocketPair::poll(pollList, 300,
+                                     server::SocketPair::Side::parent); // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
+          } catch (server::SocketPair::Timeout &) {
+            // Do nothing
+            continue;
+          }
+          m_socketPair.receive(server::SocketPair::Side::parent);
+          auto handler = m_refreshLoggerHandler.value();
+          handler();
+        }
+      } catch(cta::exception::Exception & ex) {
+        log::ScopedParamContainer exParams(m_lc);
+        exParams.add("exceptionMessage", ex.getMessageValue());
+        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
+        m_lc.logBacktrace(log::INFO, ex.backtrace());
+        throw ex;
+      } catch(std::exception &ex) {
+        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
+        throw ex;
+      } catch(...) {
+        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an unknown exception.");
+        throw;
+      }
+    });
+  } else {
+    throw cta::exception::Exception("In DriveHandlerProxy::setRefreshLoggerHandler(): refresh logger handler is already set");
+  }
 }
 
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
@@ -88,7 +135,7 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
@@ -105,7 +152,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair.send(buffer, server::SocketPair::Side::parent);
 }
 
 } // namespace cta::tape::daemon

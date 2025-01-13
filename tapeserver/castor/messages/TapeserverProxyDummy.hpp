@@ -42,6 +42,7 @@ public:
 
   void resetLogParams() override;
 
+  void setRefreshLoggerHandler(std::function<void()> handler) override;
 }; // class TapeserverProxyDummy
 
 } // namespace castor::messages

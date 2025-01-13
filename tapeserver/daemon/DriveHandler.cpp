@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <chrono>
 #include <sys/wait.h>
 #include <sys/prctl.h>
 
@@ -163,8 +164,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
       // Compute the next timeout
       m_processingStatus.nextTimeout = nextTimeout();
-      // Register our socket pair side for epoll after closing child side.
-      m_socketPair->close(server::SocketPair::Side::child);
+      // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
@@ -288,7 +288,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair->receive();
+    auto datagram = m_socketPair->receive(server::SocketPair::Side::child);
     if (!message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);
@@ -320,20 +320,18 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       m_socketPair.reset(nullptr);
     }
     else {
-      m_lc.log(log::ERR,
-                                        "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
+      m_lc.log(log::ERR, "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
     }
     // We expect to be woken up by the child's signal.
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::DEBUG,
-                                      "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
+    m_lc.log(log::DEBUG, "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR,
-                                      "In DriveHandler::processEvent(): failed");
+    m_lc.log(log::ERR, "In DriveHandler::processEvent(): failed. Backtrace follows.");
+    m_lc.logBacktrace(log::INFO, ex.backtrace());
     return m_processingStatus;
   }
 }
@@ -497,6 +495,23 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     // And record we do not have a process anymore.
     m_pid = -1;
   }
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processRefreshLoggerRequest
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() {
+  // This subclass does not need to do refresh logger requests.
+  // If this function is called it means something went wrong.
+  throw cta::exception::Exception("In DriveHandler::processRefreshLoggerRequest(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::refreshLogger
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::refreshLogger() {
+  m_socketPair->send("refresh_logger", server::SocketPair::Side::child);
   return m_processingStatus;
 }
 
@@ -731,8 +746,15 @@ int DriveHandler::runChild() {
     }
   }
 
+  // Add handler for when we receive a message to refresh the logger
+  driveHandlerProxy->setRefreshLoggerHandler([this]() {
+    m_processManager.logContext().logger().refresh();
+  });
+
   resetLogParams(driveHandlerProxy.get());
-  return executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
+  auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
+
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -1032,7 +1054,7 @@ std::shared_ptr<cta::tape::daemon::TapedProxy> DriveHandler::createDriveHandlerP
   if (!m_socketPair) {
     throw exception::Exception("In DriveHandler::createDriveHandlerProxy(): socket pair is null.");
   }
-  return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair);
+  return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair, m_lc);
 }
 
 } // namespace cta::tape::daemon

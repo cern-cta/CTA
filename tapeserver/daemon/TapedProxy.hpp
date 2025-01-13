@@ -25,12 +25,13 @@
 #include <stdint.h>
 #include <string>
 #include <list>
+#include <functional>
 
 namespace cta::tape::daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
- * possible notifications sent back to main tape daemon (taped)
+ * possible notifications sent back to main tape daemon (taped), as well as the notifications received from it
  */
 class TapedProxy {
 public:
@@ -87,6 +88,13 @@ public:
    */
   virtual void labelError(const std::string &unitName,
     const std::string &message) = 0;
+
+  /**
+   * Add a callback function to handle the request to refresh the logger.
+   *
+   * @param handler to be run to refresh the logger
+   */
+  virtual void setRefreshLoggerHandler(std::function<void()> handler) = 0;
 
 }; // class TapeserverProxy
 

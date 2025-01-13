@@ -85,6 +85,8 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
+      // Close parent side of socket.
+      m_socketPair->close(server::SocketPair::Side::parent);
       return ret;
     } else {
       // We are in the parent process
@@ -217,6 +219,23 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
+// MaintenanceHandler::processRefreshLoggerRequest
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus MaintenanceHandler::processRefreshLoggerRequest() {
+  // This subclass does not need to do refresh logger requests.
+  // If this function is called it means something went wrong.
+  throw cta::exception::Exception("In MaintenanceHandler::processRefreshLoggerRequest(): should not have been called");
+}
+
+//------------------------------------------------------------------------------
+// MaintenanceHandler::refreshLogger
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus MaintenanceHandler::refreshLogger() {
+  m_socketPair->send(REFRESH_LOGGER_MSG, server::SocketPair::Side::child);
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
 // MaintenanceHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
@@ -316,7 +335,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   try {
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
-    bool receivedMessage=false;
+    bool receivedShutdownMessage=false;
     do {
       utils::Timer t;
       m_processManager.logContext().log(log::DEBUG,
@@ -333,7 +352,12 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
                                         "In MaintenanceHandler::exceptionThrowingRunChild(): After runRepackRequestManager().");
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
-       receivedMessage=true;
+        std::string message = m_socketPair->receive();
+        if (message == SHUTDOWN_MSG) {
+          receivedShutdownMessage=true;
+        } else if (message == REFRESH_LOGGER_MSG) {
+          m_processManager.logContext().logger().refresh();
+        }
       } catch (server::SocketPair::Timeout &) {
         // Timing out while waiting for message is not a problem for us
         // as we retry in the next loop iteration.
@@ -341,7 +365,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       m_processManager.logContext().log(log::DEBUG,
                                         "In MaintenanceHandler::exceptionThrowingRunChild(): Waiting for a message ended.");
 
-    } while (!receivedMessage);
+    } while (!receivedShutdownMessage);
     m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
@@ -376,7 +400,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::shutdown(): no socket pair");
   } else {
     m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
-    m_socketPair->send("\0");
+    m_socketPair->send(SHUTDOWN_MSG, server::SocketPair::Side::child);
   }
   return m_processingStatus;
 }

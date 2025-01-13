@@ -76,6 +76,9 @@ int ProcessManager::run() {
     // Manage fork requests
     auto forkStatus = runForkManagement();
     if (forkStatus.doExit) return forkStatus.exitCode;
+    // Manage refresh logger requests
+    auto refreshLoggerStatus = runRefreshLoggerManagement();
+    if (refreshLoggerStatus.doExit) return refreshLoggerStatus.exitCode;
     // All subprocesses requests have been handled. We can now switch to the 
     // event handling per se.
     runEventLoop();
@@ -227,6 +230,22 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   return RunPartStatus();
 }
 
+ProcessManager::RunPartStatus ProcessManager::runRefreshLoggerManagement() {
+  // Go through all subprocesses.
+  // If one asked for the logger to be refreshed, pass the command to all other subprocesses.
+  for(auto & sp: m_subprocessHandlers) {
+    // Iterate until all messages have been broadcast
+    while(sp.status.refreshLoggerRequested) {
+      auto newStatus = sp.handler->processRefreshLoggerRequest();
+      // Broadcast message to all subprocess handlers (including itself!)
+      for (auto &sp_target: m_subprocessHandlers) {
+        sp_target.status = sp_target.handler->refreshLogger();
+      }
+      sp.status = newStatus;
+    }
+  }
+  return RunPartStatus();
+}
 
 void ProcessManager::runEventLoop() {
   // Compute the next timeout. Epoll expects milliseconds.
@@ -238,7 +257,7 @@ void ProcessManager::runEventLoop() {
       sp.status = sp.handler->processTimeout();
       // If the handler requested kill, shutdown or fork, we can go back to handlers, 
       // which means we exit from the loop here.
-      if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.sigChild) return;
+      if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.refreshLoggerRequested || sp.status.sigChild) return;
       // If new timeout is still in the past, we overlook it (but log it)
       if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
         log::ScopedParamContainer params(m_logContext);

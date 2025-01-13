@@ -29,15 +29,17 @@ class SignalHandler : public SubprocessHandler {
 public:
   explicit SignalHandler(ProcessManager& pm);
   ~SignalHandler() override;
-  SubprocessHandler::ProcessingStatus fork() override;
-  SubprocessHandler::ProcessingStatus getInitialStatus() override;
+  ProcessingStatus fork() override;
+  ProcessingStatus getInitialStatus() override;
   void kill() override;
-  SubprocessHandler::ProcessingStatus processSigChild() override;
+  ProcessingStatus processSigChild() override;
+  ProcessingStatus processRefreshLoggerRequest() override;
+  ProcessingStatus refreshLogger() override;
   void postForkCleanup() override;
-  SubprocessHandler::ProcessingStatus processEvent() override;
-  SubprocessHandler::ProcessingStatus processTimeout() override;
+  ProcessingStatus processEvent() override;
+  ProcessingStatus processTimeout() override;
   int runChild() override;
-  SubprocessHandler::ProcessingStatus shutdown() override;
+  ProcessingStatus shutdown() override;
   template <class C>
   void setTimeout(C timeout) {
     m_timeoutDuration=std::chrono::duration_cast<decltype(m_timeoutDuration)>(timeout);
@@ -47,11 +49,14 @@ private:
   int m_sigFd=-1;
   bool m_shutdownRequested=false;
   bool m_shutdownAcknowlegded=false;
+  bool m_refreshLoggerRequested=false;
   bool m_sigChildPending=false;
   std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
           decltype(m_shutdownStartTime)::max();
   std::chrono::milliseconds m_timeoutDuration=
           std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
+  // The current state we report to process manager
+  ProcessingStatus m_processingStatus;
 };
 
 } // namespace cta::tape::daemon

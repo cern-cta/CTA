@@ -55,3 +55,8 @@ resetLogParams() {
 void castor::messages::TapeserverProxyDummy::labelError(
   const std::string &unitName, const std::string &message) {
 }
+
+//------------------------------------------------------------------------------
+// setRefreshLoggerHandler
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::setRefreshLoggerHandler(std::function<void()> handler) {}
