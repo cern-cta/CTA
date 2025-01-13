@@ -131,13 +131,13 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${EOSDF_BUFFER_URL}
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 echo "Launching eosdf_systemtest.sh with a nonexistent script"
 # rename the script on taped so that it cannot be found
-kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
 # now give it back its original name but remove the executable permission, should still succeed
 echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
-kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
 
 echo
 echo " Launching client_timestamp.sh on client pod"
