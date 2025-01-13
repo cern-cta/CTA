@@ -20,6 +20,9 @@
       when: never
     - when: on_success
   variables:
+    # Keep the namespace name under 64 characters;
+    # The test name can't be included here due to the eos mgm fqdn becoming too long
+    NAMESPACE: "${CTA_BUILD_ID}-${CI_JOB_ID}"
     TEST_SCRIPT:
     # Passed to the run_systemtest.sh script verbatim
     EXTRA_ARGS: ""
@@ -30,8 +33,6 @@
   before_script:
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
-    # Keep the namespace name under 64 characters;
-    - export NAMESPACE="${CTA_BUILD_ID}-${CI_JOB_ID}"
     # Which scheduler to use
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
@@ -76,7 +77,11 @@
       fi
     # Run test
     - cd continuousintegration/orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
+    - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} --keep-namespace "${extra_args[@]}"
+  after_script:
+    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
+    - cd continuousintegration/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE}
   artifacts:
     when: always
     expire_in: 30 days
