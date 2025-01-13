@@ -176,7 +176,6 @@ uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& inst
 //------------------------------------------------------------------------------
 uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath, std::string& diskInstanceName, std::string& spaceName, const std::string& jsonInput, log::LogContext& lc){
   cta::threading::SubProcess *sp;
-  lc.log(log::INFO, "In fetchFreeDiskSpaceWithScript, about to try and spawn subprocess");
   try {
     sp = new cta::threading::SubProcess(scriptPath,{scriptPath, diskInstanceName, spaceName},jsonInput);
   }

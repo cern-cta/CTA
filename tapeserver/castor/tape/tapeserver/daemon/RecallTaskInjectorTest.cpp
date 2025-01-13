@@ -185,7 +185,7 @@ namespace unitTests
     rti.requestInjection(true);
     rti.finish();
     ASSERT_NO_THROW(rti.waitThreads());
-    ASSERT_EQ(nbJobs+1, trm.getJobs); // this fails, nbJobs + 1 is 16, trm.getJobs is 6
+    ASSERT_EQ(nbJobs+1, trm.getJobs);
 
     //pushed nbFile*2 files + 1 end of work
     ASSERT_EQ(nbJobs+1, diskWrite.m_tasks.size());
