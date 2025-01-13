@@ -16,7 +16,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        collect-varlog: "true"
     spec:
       restartPolicy: Always
       imagePullSecrets:

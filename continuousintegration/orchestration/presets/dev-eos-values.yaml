@@ -36,9 +36,6 @@ mgm:
     taperestapi:
       sitename: cern-cta-ctaeosci
 
-  customLabels:
-    collect-varlog: "true"
-
   extraEnv:
   - name: LD_PRELOAD
     value: "/usr/lib64/libjemalloc.so.1"
@@ -56,9 +53,6 @@ fst:
       resource: /ctafrontend
     gcd:
       enabled: false
-
-  customLabels:
-    collect-varlog: "true"
 
   extraEnv:
   - name: TZ

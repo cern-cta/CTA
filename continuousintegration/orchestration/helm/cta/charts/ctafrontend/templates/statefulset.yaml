@@ -18,7 +18,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        collect-varlog: "true"
       annotations:
         catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
     spec:
