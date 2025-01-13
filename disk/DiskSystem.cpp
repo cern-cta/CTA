@@ -95,7 +95,6 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   // Key = diskSystemName, Value = failureReason
   std::map<std::string, cta::exception::Exception> failedToFetchDiskSystems;
   cta::log::ScopedParamContainer spc(lc);
-  spc.log(cta::log::INFO, "In fetchDiskSystemFreeSpace, konskov, number of disk systems is " + std::to_string(diskSystems.size()));
   for (auto const & ds : diskSystems) {
     uint64_t freeSpace = 0;
     bool updateCatalogue = false;
@@ -105,10 +104,8 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       std::vector<std::string> regexResult;
       const auto currentTime = static_cast<uint64_t>(time(nullptr));
       if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
-        spc.log(log::INFO, "lastRefreshTime is " + std::to_string(diskInstanceSpace.lastRefreshTime) + "refreshInterval is " + std::to_string(diskInstanceSpace.refreshInterval) + "and currentTime is " + std::to_string(currentTime));
         // use the value in the catalogue, it is still fresh
         freeSpace = diskSystem.diskInstanceSpace.freeSpace;
-        spc.log(cta::log::INFO, "In fetchDiskSystemFreeSpace, using the value from the catalogue, which is " + std::to_string(freeSpace));
         goto found;
       }
       updateCatalogue = true;
@@ -117,7 +114,6 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       // eos:ctaeos:default
       if (regexResult.size()) {
         try {
-          spc.log(cta::log::INFO, "In fetchDiskSystemFreeSpace, will call the script");
           cta::disk::JSONDiskSystem jsoncDiskSystem(diskSystem);
           std::string diskInstanceName = regexResult.at(1);
           std::string spaceName = regexResult.at(2);
@@ -138,7 +134,6 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       }
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
-        spc.log(cta::log::INFO, "In fetchDiskSystemFreeSpace, will fetch constant value for freediskspace");
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
         goto found;
       }
