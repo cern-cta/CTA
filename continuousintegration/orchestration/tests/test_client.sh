@@ -140,6 +140,12 @@ echo "Launching eosdf_systemtest.sh with correct script without executable permi
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+# Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
+echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
+# fake instance not reachable
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i \"s|root://$diskInstance|root://nonexistentinstance|g\" /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod +x /usr/bin/eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
 
 echo
 echo " Launching client_timestamp.sh on client pod"
