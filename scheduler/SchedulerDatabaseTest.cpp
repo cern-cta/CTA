@@ -890,7 +890,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
-    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), cta::SCRIPT_ERROR); // this here fails, it is actually TRUE
+    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), cta::SCRIPT_ERROR);
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());

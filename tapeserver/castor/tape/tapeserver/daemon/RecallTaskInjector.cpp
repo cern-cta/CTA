@@ -152,7 +152,6 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     auto diskSystemName = job->diskSystemName();
     if (diskSystemName) {
       diskSpaceReservation.addRequest(diskSystemName.value(), job->archiveFile.fileSize);
-      m_lc.log(cta::log::INFO, "In reserveSpaceForNextJobBatch, there is a diskSystem for the job, its name is " + diskSystemName.value());
     }
   }
 
