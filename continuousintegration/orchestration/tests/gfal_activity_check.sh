@@ -24,7 +24,7 @@ xrdcp /root/test_act_gfal root://${EOS_MGM_HOST}/${EOS_DIR}/test_invalid_instanc
 wait_for_archive ${EOS_MGM_HOST} ${EOS_DIR}/test_valid_instance ${EOS_DIR}/test_invalid_instance
 
 # Query .well-known tape rest api endpoint to get the sitename
-site_name=$(curl --insecure https://eos-mgm:8443/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
+site_name=$(curl --insecure https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api 2>/dev/null | jq .sitename)
 
 # Generate metadata string with correct site name
 valid_metadata="{${site_name}: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"

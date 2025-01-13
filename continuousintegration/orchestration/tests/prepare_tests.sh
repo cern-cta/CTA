@@ -82,12 +82,12 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
 
 echo "Cleaning up leftovers from potential previous runs."
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/ 2>/dev/null
-kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm /eos/ctaeos/cta/* 2>/dev/null
+kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf /eos/ctaeos/cta/* 2>/dev/null
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_1}/ 2>/dev/null
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_2}/ 2>/dev/null
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf ${MULTICOPY_DIR_3}/ 2>/dev/null
 kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -- eos rm -rf {} 2>/dev/null
-kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c eos-mgm -c cta-cli -- cta-admin --json tape ls --all  |             \
+kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all  |             \
   jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli --            \
   cta-admin tape rm -v {}
 
@@ -342,7 +342,7 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dri
 
 # A bit of reporting
 echo "EOS server version is used:"
-kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- rpm -qa|grep eos-server
+kubectl --namespace ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- rpm -qa | grep eos-server
 
 
 # Super client capabilities

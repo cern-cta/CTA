@@ -123,6 +123,12 @@ run_systemtest() {
         cta_image_tag="$2"
         spawn_options+=" --cta-image-tag ${cta_image_tag}"
         shift ;;
+      --eos-image-repository)
+        spawn_options+=" --eos-image-repository $2"
+        shift ;;
+      --eos-image-tag)
+        spawn_options+=" --eos-image-tag $2"
+        shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"
         test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"

@@ -31,7 +31,7 @@ mgm:
   tape:
     enabled: true
     wfe:
-      endpoint: ctafrontend:10955
+      endpoint: cta-frontend:10955
       resource: /ctafrontend
     taperestapi:
       sitename: cern-cta-ctaeosci
@@ -49,7 +49,7 @@ fst:
   tape:
     enabled: true
     wfe:
-      endpoint: ctafrontend:10955
+      endpoint: cta-frontend:10955
       resource: /ctafrontend
     gcd:
       enabled: false

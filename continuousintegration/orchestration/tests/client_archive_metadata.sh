@@ -38,7 +38,6 @@ eospower_kinit &>/dev/null
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
 EOS_MGM_HOST="eos-mgm"
 
-ENDPOINT=https://${EOS_MGM_HOST}:8444/${FILE_LOCATION}
 METADATA="$1"
 
 NOW=$(date +%s)
@@ -60,4 +59,4 @@ TMP_FILE=$(mktemp)
 echo "Dummy" > "${TMP_FILE}"
 
 echo "Making curl request"
-curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOSINSTANCE}:8443/${FILE_LOCATION}" --upload-file "${TMP_FILE}"
+curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8443/${FILE_LOCATION}" --upload-file "${TMP_FILE}"
