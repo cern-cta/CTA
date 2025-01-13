@@ -44,7 +44,7 @@ fi
 
 CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="eos-mgm-0"
-EOS_MGM_HOST="ctaeos"
+EOS_MGM_HOST="eos-mgm"
 
 executeReclaim() {
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin ta reclaim -v $1

@@ -51,7 +51,7 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
 

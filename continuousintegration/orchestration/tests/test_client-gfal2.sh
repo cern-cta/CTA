@@ -51,7 +51,7 @@ if [ $? -ne 0 ]; then
 fi
 
 CLIENT_POD="client-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 
 echo "Installing gfal2 utility"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y python3-gfal2-util" || exit 1
