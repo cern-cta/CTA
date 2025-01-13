@@ -4028,9 +4028,6 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::testReserveDiskSpace(co
   // if the problem is that the script is throwing errors (and not that the disk space is insufficient),
   // we will issue a warning, but otherwise we will not sleep the queues and we will act like no disk
   // system was present 
-  cta::log::ScopedParamContainer(logContext)
-      .log(cta::log::INFO,
-          "In OStoreDB::RetrieveMount::testReserveDiskSpace(), konskov");
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -4058,7 +4055,6 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::testReserveDiskSpace(co
             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
             "for disk system using external script, backpressure will not be applied");
     }
-    cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning Script_Error");
     return SCRIPT_ERROR;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
@@ -4100,11 +4096,9 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::testReserveDiskSpace(co
 
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
-      cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning INSUFFICIENT_SPACE");
       return INSUFFICIENT_SPACE;
     }
   }
-  cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning SUCCESS");
   return SUCCESS;
 }
 
@@ -4183,14 +4177,6 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::reserveDiskSpace(const 
 
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
-      cta::log::ScopedParamContainer(logContext)
-        .add("diskSystemName", ds)
-        .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
-        .add("existingReservations", previousDrivesReservationTotal)
-        .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
-        .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace)
-        .log(cta::log::WARNING,
-             "In OStoreDB::RetrieveMount::reserveDiskSpace():returning INSUFFICIENT_SPACE");
       return INSUFFICIENT_SPACE;
     }
   }
@@ -4199,9 +4185,6 @@ cta::DiskSpaceReservationResult OStoreDB::RetrieveMount::reserveDiskSpace(const 
                                                         mountInfo.mountId,
                                                         diskSpaceReservationRequest,
                                                         logContext);
-  cta::log::ScopedParamContainer(logContext)
-      .log(cta::log::INFO,
-          "In OStoreDB::RetrieveMount::reserveDiskSpace(), returning SUCCESS");
   return SUCCESS;
 }
 
