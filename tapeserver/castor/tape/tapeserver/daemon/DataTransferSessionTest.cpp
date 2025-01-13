@@ -1593,7 +1593,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
     struct stat statBuf;
     memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
-    ASSERT_EQ(0, statRc); // this here fails, should be 0 but is actually -1
+    ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
   }
 
