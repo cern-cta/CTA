@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -x
 
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
 
@@ -45,7 +46,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   xrdcp_error="ERROR with xrootd transfer for file ${subdir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
-  command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || ${xrdcp_error}"
+  command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || (echo ${xrdcp_error} && exit 1)"
   start=$(date +%s)
   echo "Starting at ${start}"
   seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
