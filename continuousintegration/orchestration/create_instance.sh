@@ -283,7 +283,7 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
-  echo "Installing cta chart..."
+  echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
                                 --set global.image.repository="${cta_image_repository}" \
