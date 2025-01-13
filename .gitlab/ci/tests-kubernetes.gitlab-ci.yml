@@ -116,7 +116,7 @@ test-repack:
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
+    TEST_SCRIPT: "tests/test_repack.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
 test-cta-admin:

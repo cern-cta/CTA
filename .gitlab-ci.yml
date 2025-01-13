@@ -11,6 +11,9 @@ stages:
   - release:external
 
 variables:
+  # GitLab configuration
+  FF_TIMESTAMPS: true
+
   # Building Configuration
   BUILD_GENERATOR: "Unix Makefiles"
   CMAKE_BUILD_TYPE: "Debug"
