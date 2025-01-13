@@ -59,7 +59,7 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y 
 echo
 echo "Copying test scripts to client pod"
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
 
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_helper.sh && admin_kinit"
 
@@ -151,7 +151,7 @@ echo "Track progress of test"
 TRACKER_PID=$!
 
 echo
-echo "Launching client_archive.sh on client pod using ${TEST_PROTOCOL} protocol"
+echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo " Archiving files: gfal-copy as user1 via https"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -198,7 +198,7 @@ echo "Launching xrootd_activity_check.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/xrootd_activity_check.sh" || exit 1
 
 echo "Checking activity was set..."
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
 exit 0

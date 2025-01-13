@@ -59,4 +59,4 @@ fi
 
 cd "$(dirname "$0")"
 kubectl cp --namespace "${NAMESPACE}" ./configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
-kubectl exec --namespace "${NAMESPACE}" -it ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
+kubectl exec --namespace "${NAMESPACE}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
