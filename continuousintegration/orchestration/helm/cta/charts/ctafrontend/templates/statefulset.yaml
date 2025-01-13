@@ -18,6 +18,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
       annotations:
         catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
     spec:

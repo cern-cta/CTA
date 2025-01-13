@@ -109,7 +109,7 @@ save_logs() {
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
     local CLIENT_POD="client-0"
-    kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
+    kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" -c client || echo "Failed to copy trackerdb.db"
     # Prevent polluting the runner by cleaning up the original dir in /tmp
     rm -rf ${tmpdir}
   fi

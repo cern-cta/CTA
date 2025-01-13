@@ -115,7 +115,7 @@ echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh cta-frontend:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 # install cta-cli that provides `cta-restore-deleted-files`
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm -q cta-cli || dnfinstall -y cta-cli'
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm -q cta-cli || dnf install -y cta-cli'
 
 echo
 echo "RESTORE FILES"

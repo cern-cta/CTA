@@ -15,8 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-set -x
-
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
 
 eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."

@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       restartPolicy: Always
       imagePullSecrets:

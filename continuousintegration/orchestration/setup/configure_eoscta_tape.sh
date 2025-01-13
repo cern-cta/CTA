@@ -33,9 +33,9 @@ eos vid set membership "$(id -u eosadmin2)" +sudo
 
 # Configure directories
 
-DISK_INSTANCE_NAME=ctaeos
+EOS_INSTANCE_NAME=ctaeos
 CTA_STORAGE_CLASS=ctaStorageClass
-CTA_PROC_DIR=/eos/${DISK_INSTANCE_NAME}/proc/cta
+CTA_PROC_DIR=/eos/${EOS_INSTANCE_NAME}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 
 eos mkdir -p ${CTA_PROC_DIR}
@@ -56,7 +56,7 @@ eos attr set sys.workflow.sync::delete.default="proto" ${CTA_WF_DIR}
 # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
 # this is achieved through the ACLs.
 # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
-CTA_PREPROD_DIR=/eos/${DISK_INSTANCE_NAME}/preprod
+CTA_PREPROD_DIR=/eos/${EOS_INSTANCE_NAME}/preprod
 eos mkdir -p ${CTA_PREPROD_DIR}
 eos chmod 555 ${CTA_PREPROD_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_PREPROD_DIR}
@@ -67,7 +67,7 @@ eos attr link ${CTA_WF_DIR} ${CTA_PREPROD_DIR} # Link workflows
 # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
 # this is achieved through the ACLs.
 # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
-CTA_TEST_DIR=/eos/${DISK_INSTANCE_NAME}/cta
+CTA_TEST_DIR=/eos/${EOS_INSTANCE_NAME}/cta
 eos mkdir ${CTA_TEST_DIR}
 eos chmod 555 ${CTA_TEST_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_TEST_DIR}
