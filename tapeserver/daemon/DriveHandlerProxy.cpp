@@ -45,7 +45,14 @@ void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  try {
+    m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  } catch (cta::exception::Exception& e) {
+      log::ScopedParamContainer exParams(m_lc);
+      exParams.add("bufferLength", buffer.length());
+      m_lc.log(log::ERR, "In DriveHandlerProxy::addLogParams(): Socket send failed.");
+      throw e;
+  }
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames) {
@@ -61,7 +68,14 @@ void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  try {
+    m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  } catch (cta::exception::Exception& e) {
+      log::ScopedParamContainer exParams(m_lc);
+      exParams.add("bufferLength", buffer.length());
+      m_lc.log(log::ERR, "In DriveHandlerProxy::deleteLogParams(): Socket send failed.");
+      throw e;
+  }
 }
 
 void DriveHandlerProxy::resetLogParams() {
@@ -74,7 +88,14 @@ void DriveHandlerProxy::resetLogParams() {
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")+
                                     watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  try {
+    m_socketPair.send(buffer, server::SocketPair::Side::parent);
+  } catch (cta::exception::Exception& e) {
+      log::ScopedParamContainer exParams(m_lc);
+      exParams.add("bufferLength", buffer.length());
+      m_lc.log(log::ERR, "In DriveHandlerProxy::resetLogParams(): Socket send failed.");
+      throw e;
+  }
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
