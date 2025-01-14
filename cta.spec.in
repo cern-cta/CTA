@@ -124,7 +124,6 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: eos-client
 Requires: xrootd-client-libs = %{xrootdVersion}
 %description -n cta-taped
 CERN Tape Archive:
