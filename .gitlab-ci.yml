@@ -57,7 +57,7 @@ variables:
   IMAGE_TEST: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-test:2025-01-08-9814116
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-release:2025-01-08-9814116
   IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
-  IMAGE_DOCKER_IMAGE_BUILDER: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+  IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
   # This Python image will eventually be replaced by IMAGE_RELEASE
 
 default:
