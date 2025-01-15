@@ -214,16 +214,14 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
         });
 
       if (nonBrokenState != std::end(tapeFileStateList)) {
-        ex.getMessage() << "WARNING: File with archive file ID " << archiveFileId
-          << " exits in CTA namespace but is temporarily unavailable on " << nonBrokenState->second << " tape "
-          << nonBrokenState->first;
+        ex.getMessage() << "WARNING: The requested file is on tape " << nonBrokenState->first
+                        << ", which is temporarily unavailable (" << nonBrokenState->second << "). Please retry later.";
         throw ex;
       }
       const auto& [brokenTape, brokenState] = tapeFileStateList.front();
       //All tape files are on broken tapes, just generate an error about the first
-      ex.getMessage() << "ERROR: File with archive file ID " << archiveFileId
-        << " exits in CTA namespace but is permanently unavailable on " << brokenState << " tape "
-        << brokenTape;
+      ex.getMessage() << "ERROR: The requested file is on tape " << brokenTape
+                      << ", which is permanently unavailable (" << brokenState << ").";
       throw ex;
     }
     if (mountPolicyName.has_value() && !mountPolicyName.value().empty()) {
