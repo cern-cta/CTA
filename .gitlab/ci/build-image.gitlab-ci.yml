@@ -41,6 +41,7 @@ build-ctageneric-from-artifacts:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
 build-ctageneric-from-repos:
   extends:
@@ -62,3 +63,4 @@ build-ctageneric-from-repos:
                        --dockerfile continuousintegration/docker/ctafrontend/alma9/tag.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
