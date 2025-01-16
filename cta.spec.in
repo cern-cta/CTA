@@ -626,6 +626,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 Summary: External script to get free disk space
 Group: Application/CTA
 Requires: eos-client
+Requires: jq
 %description -n cta-eosdf
 eosdf is a script that runs on taped and returns
 the free disk space in the defalut namespace
