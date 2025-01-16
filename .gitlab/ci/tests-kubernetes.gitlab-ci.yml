@@ -31,7 +31,7 @@
     - bash ./continuousintegration/ci_helpers/install_helm.sh
   script:
     # Keep the namespace name under 64 characters;
-    - export NAMESPACE="${CI_JOB_NAME_SLUG:0:10}-${CTA_BUILD_ID}-${CI_JOB_ID}"
+    - export NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
     # Which scheduler to use
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
@@ -76,7 +76,14 @@
       fi
     # Run test
     - cd continuousintegration/orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
+    - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --keep-namespace --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
+  after_script:
+    # The namespace exported before is not visible
+    # This namespace should match the on in script:
+    - export NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
+    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
+    - cd continuousintegration/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE}
   artifacts:
     when: always
     expire_in: 30 days
@@ -88,7 +95,7 @@
 
 # Tests
 
-k8s-test-client:
+test-client:
   stage: system-test
   extends:
     - .kubernetes-test
@@ -96,23 +103,23 @@ k8s-test-client:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
-k8s-test-client-gfal2:
+test-client-gfal2:
   stage: system-test
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/test_client-gfal2.sh"
+    TEST_SCRIPT: "tests/test_client_gfal2.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
-k8s-test-repack:
+test-repack:
   stage: system-test
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
+    TEST_SCRIPT: "tests/test_repack.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
-k8s-test-cta-admin:
+test-cta-admin:
   stage: system-test
   extends:
     - .kubernetes-test
@@ -123,7 +130,7 @@ k8s-test-cta-admin:
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
-    TEST_SCRIPT: "tests/test_cta-admin.sh"
+    TEST_SCRIPT: "tests/test_cta_admin.sh"
     EXTRA_ARGS: "--test-timeout 2400"
 
 # Manually triggered
@@ -145,7 +152,7 @@ k8s-test-cta-admin:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
 
-k8s-test-liquibase-update:
+test-liquibase-update:
   stage: system-test
   extends:
     - .kubernetes-test
@@ -168,17 +175,17 @@ k8s-test-liquibase-update:
     # Note that we need to do this here as the image-tag is not available yet in the variables part
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
-k8s-test-external-tape-formats:
+test-external-tape-formats:
   stage: system-test
   extends:
     - .kubernetes-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/external_tapes_test.sh"
+    TEST_SCRIPT: "tests/test_external_tape_formats.sh"
     EXTRA_OPTIONS: "--test-timeout 2400"
 
-k8s-test-regression-dCache:
+test-regression-dCache:
   stage: system-test
   extends:
     - .kubernetes-test
