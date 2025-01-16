@@ -4045,8 +4045,9 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied) because
+    // we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
@@ -4125,8 +4126,9 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied) because
+    // we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
