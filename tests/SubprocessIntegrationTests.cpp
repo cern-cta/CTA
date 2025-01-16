@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-namespace systemTests {  
+namespace integrationTests {
 TEST(SubProcessHelper, basicTests) {
   cta::threading::SubProcess sp("/usr/bin/echo", std::list<std::string>({"/usr/bin/echo", "Hello,", "world."}));
   sp.wait();

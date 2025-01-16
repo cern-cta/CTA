@@ -36,9 +36,9 @@ test-cta-valgrind:
   before_script:
     - *before-script-alma9
   script:
-    - /usr/bin/cta-unitPlusSystemTests.sh
+    - /usr/bin/cta-unitPlusIntegrationTests.sh
 
-system-test-cta:
+integration-test-cta:
   stage: test
   needs:
     - job: build-cta-rpm
@@ -58,7 +58,7 @@ system-test-cta:
   before_script:
     - *before-script-alma9
   script:
-    - /usr/bin/cta-systemTests
+    - /usr/bin/cta-integrationTests
 
 unit-test-postgresql:
   stage: test
