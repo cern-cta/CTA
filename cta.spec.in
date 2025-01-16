@@ -441,9 +441,9 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
 %endif
 
-#cta-systemtests installs libraries so we need ldconfig.
-%post -n cta-systemtests -p /sbin/ldconfig
-%postun -n cta-systemtests -p /sbin/ldconfig
+#cta-integrationtests installs libraries so we need ldconfig.
+%post -n cta-integrationtests -p /sbin/ldconfig
+%postun -n cta-integrationtests -p /sbin/ldconfig
 
 %package -n cta-catalogueutils
 Summary: Utilities to faciliate working with the CTA catalogue
