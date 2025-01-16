@@ -35,7 +35,7 @@ public:
    * @param filePath path to the log file.
    * @param logMask The log mask.
    */
-  FileLogger(std::string_view hostName, std::string_view programName, std::string_view filePath, int logMask);
+  FileLogger(std::string_view hostName, std::string_view programName, const std::string& filePath, int logMask);
 
   /**
    * Destructor
@@ -69,7 +69,7 @@ protected:
   /**
    * Log file path
    */
-  std::string_view m_filePath;
+  const std::string m_filePath;
 
   /**
    * Writes the specified msg to the underlying logging system

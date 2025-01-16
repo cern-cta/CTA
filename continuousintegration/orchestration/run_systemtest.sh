@@ -92,6 +92,8 @@ run_systemtest() {
   create_instance_timeout=600 # time out for the create_instance.sh script
   preflighttest_script='tests/preflighttest.sh'
   preflighttest_timeout=60 # default preflight checks timeout is 60 seconds
+  postflighttest_script='tests/look_for_coredumps.sh'
+  postflighttest_timeout=30 # default preflight checks timeout is 60 seconds
 
   # Argument defaults
   keepnamespace=0 # keep or drop namespace after systemtest_script? By default drop it.
@@ -205,6 +207,14 @@ run_systemtest() {
   execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" \
                        "${log_dir}/$(basename ${systemtest_script} | cut -d. -f1).log" \
                        ${systemtestscript_timeout}
+  cd "${orchestration_dir}"
+
+  # Launch any final checks
+  cd $(dirname "${postflighttest_script}")
+  echo "Launching post-test checks: ${postflighttest_script}"
+  execute_cmd_with_log "./$(basename ${postflighttest_script}) -n ${namespace}" \
+                        "${log_dir}/$(basename ${postflighttest_script} | cut -d. -f1).log" \
+                        ${postflighttest_timeout}
   cd "${orchestration_dir}"
 
   # delete instance?

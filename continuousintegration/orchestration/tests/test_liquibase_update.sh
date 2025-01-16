@@ -98,4 +98,5 @@ echo "Checking if liquibase rollback was successful"
 check_schema_version ${prev_catalogue_schema_version}
 
 echo "Liquibase update and rollback were successful"
+
 exit 0

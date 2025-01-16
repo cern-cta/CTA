@@ -88,11 +88,13 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
     m_refreshLoggerHandler = handler;
     m_refreshLoggerClosingSock = std::make_unique<cta::server::SocketPair>();
     m_refreshLoggerAsyncFut = std::async(std::launch::async, [this] {
+      // Create a new log context to ensure we don't have concurrent modifications on m_params
+      cta::log::LogContext lc(m_lc.logger());
       try {
         server::SocketPair::pollMap pollList;
         pollList["0"] = &m_socketPair;
         pollList["1"] = m_refreshLoggerClosingSock.get();
-        m_lc.log(log::INFO, "In DriveHandlerProxy::setRefreshLoggerHandler(): Waiting for refresh logger signal.");
+        lc.log(log::INFO, "In DriveHandlerProxy::setRefreshLoggerHandler(): Waiting for refresh logger signal.");
         while (!m_refreshLoggerClosing) {
           try {
             server::SocketPair::poll(pollList, 300,
@@ -106,16 +108,16 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
           handler();
         }
       } catch(cta::exception::Exception & ex) {
-        log::ScopedParamContainer exParams(m_lc);
+        log::ScopedParamContainer exParams(lc);
         exParams.add("exceptionMessage", ex.getMessageValue());
-        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
-        m_lc.logBacktrace(log::INFO, ex.backtrace());
+        lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
+        lc.logBacktrace(log::INFO, ex.backtrace());
         throw ex;
       } catch(std::exception &ex) {
-        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
+        lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
         throw ex;
       } catch(...) {
-        m_lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an unknown exception.");
+        lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an unknown exception.");
         throw;
       }
     });
