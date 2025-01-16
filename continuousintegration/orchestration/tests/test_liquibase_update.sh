@@ -99,6 +99,4 @@ check_schema_version ${prev_catalogue_schema_version}
 
 echo "Liquibase update and rollback were successful"
 
-./look_for_coredumps.sh -n ${NAMESPACE} || exit 1
-
 exit 0

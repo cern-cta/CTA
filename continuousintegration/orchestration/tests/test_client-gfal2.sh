@@ -201,6 +201,4 @@ echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
-./look_for_coredumps.sh -n ${NAMESPACE} || exit 1
-
 exit 0

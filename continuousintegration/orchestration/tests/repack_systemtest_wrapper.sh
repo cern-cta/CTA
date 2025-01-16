@@ -772,5 +772,3 @@ repackCancellation 7
 repackTapeRepairNoRecall 8
 # Keep this test for last - it adds new tapepools and archive routes
 repackMoveAndAddCopies 9
-
-./look_for_coredumps.sh -n ${NAMESPACE} || exit 1

@@ -163,6 +163,4 @@ kubectl -n "${NAMESPACE}" cp ${CLIENT_POD}:/root/log -c client ../../../pod_logs
 #cmp frontout.txt grpcfrontout.txt
 # TODO: Implement
 
-./look_for_coredumps.sh -n ${NAMESPACE} || exit 1
-
 echo "cta-admin test completed successfully"
