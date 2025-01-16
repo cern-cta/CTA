@@ -29,7 +29,7 @@
 
 namespace cta {
 
-  enum DiskSpaceReservationResult {SUCCESS, SCRIPT_ERROR, INSUFFICIENT_SPACE};
+  // enum DiskSpaceReservationResult {SUCCESS, SCRIPT_ERROR, INSUFFICIENT_SPACE};
   /**
    * A placeholder class from which will derive ArchiveSession and RetrieveSession.
    * It's just here to allow RTTI.

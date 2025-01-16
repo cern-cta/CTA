@@ -205,14 +205,14 @@ void cta::RetrieveMount::requeueJobBatch(std::vector<std::unique_ptr<cta::Retrie
 //------------------------------------------------------------------------------
 // reserveDiskSpace()
 //------------------------------------------------------------------------------
-cta::DiskSpaceReservationResult cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
+bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
   return m_dbMount->reserveDiskSpace(request, m_externalFreeDiskSpaceScript, logContext);
 }
 
 //------------------------------------------------------------------------------
 // testReserveDiskSpace()
 //------------------------------------------------------------------------------
-cta::DiskSpaceReservationResult cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
+bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
   return m_dbMount->testReserveDiskSpace(request, m_externalFreeDiskSpaceScript, logContext);
 }
 

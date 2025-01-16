@@ -346,11 +346,11 @@ public:
     void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                          log::LogContext& logContext) override;
 
-    cta::DiskSpaceReservationResult reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
                           const std::string& externalFreeDiskSpaceScript,
                           log::LogContext& logContext) override;
 
-    cta::DiskSpaceReservationResult testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
                               const std::string& externalFreeDiskSpaceScript,
                               log::LogContext& logContext) override;
 

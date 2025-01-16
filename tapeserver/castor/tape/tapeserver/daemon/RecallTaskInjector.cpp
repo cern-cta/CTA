@@ -128,19 +128,19 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     }
   }
 
-  cta::DiskSpaceReservationResult ret = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
-  if (ret == cta::SUCCESS) {
+  bool ret = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
+  if (ret == true) {
     m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
     return true;
-  } else if (ret == cta::INSUFFICIENT_SPACE) {
+  } else {
     m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     return false;
   }
-  else {
-    m_lc.log(cta::log::INFO, "Disk space reservation test passed because disk system will be ignored, can mount tape");
-    return true;
-  }
+  // else {
+  //   m_lc.log(cta::log::INFO, "Disk space reservation test passed because disk system will be ignored, can mount tape");
+  //   return true;
+  // }
 }
 
 //------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     m_lc.log(cta::log::DEBUG, "Disk space reservation for next job batch");
   }
 
-  cta::DiskSpaceReservationResult ret = cta::SUCCESS;
+  bool ret = true;
   try {
     ret = m_retrieveMount.reserveDiskSpace(diskSpaceReservation, m_lc);
   } catch (std::out_of_range&) {
@@ -177,7 +177,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     return true;
   }
 
-  if (ret == cta::INSUFFICIENT_SPACE) {
+  if (ret == false) {
     for (auto &jobptr : nextJobBatch) {
       m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(jobptr.release()));
     }
@@ -188,14 +188,15 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
       "requeued all pending jobs");
     m_diskSpaceReservationFailed = true;
     return false;
-  } else if (ret == cta::SUCCESS) {
+  } else {
     m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation for next job batch succeeded");
     return true;
-  } else {
-     m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed because of the freeDiskSpaceScript, "
-     "processing job batch as if it had no disk system");
-     return true;
   }
+  // } else {
+  //    m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed because of the freeDiskSpaceScript, "
+  //    "processing job batch as if it had no disk system");
+  //    return true;
+  // }
 }
 
 //------------------------------------------------------------------------------
