@@ -69,7 +69,7 @@ protected:
   /**
    * Log file path
    */
-  std::string_view m_filePath;
+  const std::string m_filePath;
 
   /**
    * Writes the specified msg to the underlying logging system

@@ -50,7 +50,7 @@ save_logs() {
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
 
   # Iterate over pods
-  echo "${pods}" | jq -r '.items[] | .metadata.name' | while read -r pod; do
+  for pod in $(echo "${pods}" | jq -r '.items[] | .metadata.name'); do
     # Check if logs are accessible
     if ! kubectl --namespace "${namespace}" logs "${pod}" > /dev/null 2>&1; then
       echo "Pod: ${pod} failed to start. Logging describe output"
@@ -105,7 +105,7 @@ save_logs() {
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
     local CLIENT_POD="client-0"
-    kubectl -n "${namespace}" cp ${client_pod}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" || echo "Failed to copy trackerdb.db"
+    kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" -c client || echo "Failed to copy trackerdb.db"
     # Prevent polluting the runner by cleaning up the original dir in /tmp
     rm -rf ${tmpdir}
   fi

@@ -243,4 +243,6 @@ echo
 echo "Launching refresh_log_fd.sh on ${CTA_TPSRV_POD} pod"
 kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash /root/refresh_log_fd.sh || exit 1
 
+./look_for_coredumps.sh -n ${NAMESPACE} || exit 1
+
 exit 0
