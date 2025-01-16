@@ -4046,8 +4046,8 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
     // Could not get free space for one of the disk systems due to a script error.
-    // The queue will not be put to sleep (backpressure will not be applied) because
-    // we want to allow staging files for retrieve in case of script errors.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return true
+    // because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
@@ -4127,8 +4127,8 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
     // Could not get free space for one of the disk systems due to a script error.
-    // The queue will not be put to sleep (backpressure will not be applied) because
-    // we want to allow staging files for retrieve in case of script errors.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return
+    // true, because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
@@ -4137,7 +4137,6 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
             "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
             "disk system using external script, backpressure will not be applied");
     }
-    cta::log::ScopedParamContainer(logContext).log(cta::log::INFO, "Returning Script_Error");
     return true;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
