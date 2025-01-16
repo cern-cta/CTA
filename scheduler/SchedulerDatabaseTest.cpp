@@ -897,8 +897,10 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   ASSERT_EQ(1, mi->potentialMounts.size());
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
   ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
-  ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount); // not a sleeping mount because we do not apply backpressure when we can't get the free disk space
-  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor); // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
+  // not a sleeping mount because we do not apply backpressure when we can't get the free disk space
+  ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount);
+  // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
+  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor);
 }
 
 #undef TEST_MOCK_DB
