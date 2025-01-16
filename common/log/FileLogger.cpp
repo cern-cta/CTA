@@ -28,8 +28,12 @@ namespace cta::log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(std::string_view hostName, std::string_view programName, const std::string& filePath, int logMask) :
-  Logger(hostName, programName, logMask), m_filePath(filePath) {
+FileLogger::FileLogger(std::string_view hostName,
+                       std::string_view programName,
+                       const std::string& filePath,
+                       int logMask)
+    : Logger(hostName, programName, logMask),
+      m_filePath(filePath) {
   m_fd = ::open(m_filePath.data(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH );
   exception::Errnum::throwOnMinusOne(m_fd, std::string("In FileLogger::FileLogger(): failed to open log file: ") + std::string(m_filePath));
 }
@@ -61,7 +65,7 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, std:
   // Append the message to the file
   threading::MutexLocker lock(m_mutex);
   exception::Errnum::throwOnMinusOne(::write(m_fd, logLine.str().c_str(), logLine.str().size()),
-    "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
+                                     "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
 //------------------------------------------------------------------------------
