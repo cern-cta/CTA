@@ -128,8 +128,8 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     }
   }
 
-  bool ret = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
-  if (ret == true) {
+  bool reservationTestSuccessful = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
+  if (reservationTestSuccessful) {
     m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
     return true;
   } else {
