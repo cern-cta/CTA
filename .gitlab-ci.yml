@@ -54,11 +54,11 @@ variables:
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
   # Images
-  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-analysis:2025-01-08-9814116
+  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-analysis:2025-01-17-9911846
   IMAGE_CPPCHECK: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-build:2025-01-08-9814116
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-test:2025-01-08-9814116
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-release:2025-01-08-9814116
+  IMAGE_BUILD: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-build:2025-01-17-9911846
+  IMAGE_TEST: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-test:2025-01-17-9911846
+  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-ci-release:2025-01-17-9911846
   IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
   IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
   # This Python image will eventually be replaced by IMAGE_RELEASE
