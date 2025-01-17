@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 EOS_INSTANCE_NAME="ctaeos"
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 LOGFILE_PATH=$(mktemp -d)/restore_files.log
 TEST_FILE_NAME=$(uuidgen)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10

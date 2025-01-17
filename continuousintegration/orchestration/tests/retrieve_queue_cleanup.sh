@@ -49,7 +49,7 @@
 #
 ################################################################################
 
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy

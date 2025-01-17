@@ -31,7 +31,7 @@ CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 # This should be the service name; not the pod name
 EOS_INSTANCE_NAME="ctaeos"
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 NEW_STORAGE_CLASS_NAME=newStorageClassName
 
 FILE_1=$(uuidgen)

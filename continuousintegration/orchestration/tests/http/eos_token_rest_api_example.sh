@@ -1,5 +1,5 @@
 #!/bin/bash
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 PORT=9000
 EXPIRE=`date +%s`; let LATER=$EXPIRE+64000
 token=`eos token --path /eos/ctaeos/tape/ --expires $LATER --tree --owner owner_username --group owner_group_name`

@@ -18,7 +18,7 @@
 set -a
 
 touch /tmp/RC
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 DATA_SOURCE=/dev/urandom

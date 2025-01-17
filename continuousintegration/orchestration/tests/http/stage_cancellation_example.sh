@@ -2,7 +2,7 @@
 
 # Usage: ./stage_cancellation.sh stage_request_id
 
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 PORT=9000
 
 json='

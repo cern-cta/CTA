@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 #default CI EOS instance
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300

@@ -39,7 +39,7 @@ compare_timestamps() {
 }
 
 
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta
 

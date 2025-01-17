@@ -38,7 +38,7 @@
 #
 ################################################################################
 
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 
 EOS_BASEDIR=/eos/ctaeos
 EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta

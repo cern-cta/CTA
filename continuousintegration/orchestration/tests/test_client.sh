@@ -59,7 +59,7 @@ fi
 CTA_TPSRV_POD="cta-tpsrv01-0"
 CLIENT_POD="client-0"
 EOS_MGM_POD="eos-mgm-0"
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 
 echo
 echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."

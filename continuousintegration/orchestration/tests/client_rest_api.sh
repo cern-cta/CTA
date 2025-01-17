@@ -26,7 +26,7 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 

@@ -160,7 +160,7 @@ touch ${log_file}
 . /root/client_helper.sh
 
 EOS_INSTANCE_NAME="ctaeos"
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null

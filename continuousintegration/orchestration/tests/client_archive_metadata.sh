@@ -36,7 +36,7 @@ eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null
 
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 
 METADATA="$1"
 

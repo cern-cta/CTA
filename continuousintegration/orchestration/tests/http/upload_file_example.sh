@@ -1,5 +1,5 @@
 #!/bin/bash
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 PORT=9000
 DESTDIR=/eos/ctaeos/tape/
 SOURCEFILE=file.txt

@@ -42,7 +42,7 @@
 ################################################################################
 
 
-EOS_MGM_HOST="eos-mgm"
+EOS_MGM_HOST="ctaeos"
 EOS_BASEDIR=/eos/ctaeos/cta
 EVICT_COUNTER_ATTR="sys.retrieve.evict_counter"
 
